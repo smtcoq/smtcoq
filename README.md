@@ -16,9 +16,7 @@ The current stable version is the version 1.2.
 
 ### Installation
 
-To come.
-
-<!-- See the INSTALL.md file for instructions. -->
+See the INSTALL.md file for instructions.
 
 
 ### License
