@@ -74,7 +74,6 @@ To check the result given by zChaff on an unsatisfiable dimacs file
   produces a proof witness file named `resolve_trace`.
 
 - In a Coq file `file.v`, put:
-
 ```
 Require Import SMTCoq.
 Zchaff_Checker "file.cnf" "resolve_trace".
@@ -85,12 +84,10 @@ Zchaff_Checker "file.cnf" "resolve_trace".
 
 - You can also produce Coq theorems from zChaff proof witnesses: the
   commands
-
 ```
 Require Import SMTCoq.
 Zchaff_Theorem theo "file.cnf" "resolve_trace".
 ```
-
 will produce a Coq term `theo` whose type is the theorem stated in
 `file.cnf`.
 
@@ -98,11 +95,9 @@ will produce a Coq term `theo` whose type is the theorem stated in
 ##### zChaff as a Coq decision procedure
 
 The `zchaff` tactic can be used to solve any goal of the form:
-
 ```
 forall l, b1 = b2
 ```
-
 where `l` is a list of Booleans (that can be concrete terms).
 
 
@@ -119,14 +114,12 @@ To check the result given by veriT on an unsatisfiable SMT-LIB2 file
 `file.smt2`:
 
 - Produce a veriT proof witness:
-
 ```
-veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-e --disable-ackermann --input=smtlib2 --proof=file.log file.smt2```
-
+veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-e --disable-ackermann --input=smtlib2 --proof=file.log file.smt2
+```
 This command produces a proof witness file named `file.log`.
 
 - In a Coq file `file.v`, put:
-
 ```
 Require Import SMTCoq.
 Section File.
@@ -139,14 +132,12 @@ End File.
 
 - You can also produce Coq theorems from zChaff proof witnesses: the
   commands
-
 ```
 Require Import SMTCoq.
 Section File.
   Verit_Theorem theo "file.smt2" "file.log".
 End File.
 ```
-
 will produce a Coq term `theo` whose type is the theorem stated in
 `file.smt2`.
 
@@ -157,11 +148,9 @@ The theories that are currently supported are `QF_UF`, `QF_LIA`,
 ##### veriT as a Coq decision procedure
 
 The `verit` tactic can be used to solve any goal of the form:
-
 ```
 forall l, b1 = b2
 ```
-
 where `l` is a list of Booleans. Those Booleans can be any concrete
 terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL` and their combinations.
