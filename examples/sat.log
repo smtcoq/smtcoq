@@ -1,0 +1,5 @@
+CL: 5 <= 2 1 4
+VAR: 1 L: 2 V: 0 A: 2 Lits: 3 4
+VAR: 2 L: 1 V: 0 A: 3 Lits: 5 6
+VAR: 3 L: 0 V: 0 A: 5 Lits: 7
+CONF: 0 == 2 4 6

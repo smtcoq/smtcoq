@@ -1,0 +1,5 @@
+(set-logic QF_UF)
+(declare-fun a () Bool)
+(assert (let ((?v_1 (not (not a))) (?v_2 (not a))) (and ?v_1 ?v_2)))
+(check-sat)
+(exit)

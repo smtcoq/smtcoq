@@ -1,0 +1,8 @@
+(set-logic QF_UF)
+(declare-sort U 0)
+(declare-fun a () U)
+(declare-fun b () U)
+(declare-fun c () U)
+(assert (and (not (distinct a b c)) (not (= a b)) (not (= a c)) (not (= c b))))
+(check-sat)
+(exit)

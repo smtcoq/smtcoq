@@ -1,0 +1,5 @@
+(set-logic QF_LIA)
+(declare-fun x () Int)
+(assert (not (=> (and (<= (- x 3) 7) (<= 7 (- x 3))) (>= x 10))))
+(check-sat)
+(exit)
