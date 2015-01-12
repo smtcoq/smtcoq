@@ -65,6 +65,10 @@ Goal forall a, negb (a || negb a) = false.
   zchaff.
 Qed.
 
+Goal forall a, negb (negb (a || negb a)).
+  zchaff.
+Qed.
+
 Goal forall a, (a && negb a) = false.
   zchaff.
 Qed.
