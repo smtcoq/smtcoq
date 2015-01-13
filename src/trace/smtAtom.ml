@@ -100,7 +100,7 @@ module Btype =
 	| Tindex it -> t.(it.index) <- it.hval
 	| _ -> () in
       Hashtbl.iter set reify.tbl;
-      Term.mkArray (Lazy.force ctyp_eqb, t)
+      Structures.mkArray (Lazy.force ctyp_eqb, t)
 
     let to_list reify =
       let set _ t acc = match t with
@@ -291,7 +291,7 @@ module Op =
       let set _ v = 
 	t.(v.index) <- mk_Tval v.hval.tparams v.hval.tres v.hval.op_val in
       Hashtbl.iter set reify.tbl;
-      Term.mkArray (tval, t)
+      Structures.mkArray (tval, t)
 
     let to_list reify =
       let set _ op acc =
@@ -651,7 +651,7 @@ module Atom =
 
     let interp_tbl reify =
       let t = to_array reify (Lazy.force dft_atom) a_to_coq in
-      Term.mkArray (Lazy.force catom, t)
+      Structures.mkArray (Lazy.force catom, t)
 
 
     (** Producing a Coq term corresponding to the interpretation of an atom *)

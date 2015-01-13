@@ -18,15 +18,11 @@ open Coqlib
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
 (* Int63 *)
-let int63_modules = [["Coq";"Numbers";"Cyclic";"Int63";"Int63Native"]]
-
-let cint = gen_constant int63_modules "int"
-let ceq63 = gen_constant int63_modules "eqb"
+let cint = gen_constant Structures.int63_modules "int"
+let ceq63 = gen_constant Structures.int63_modules "eqb"
 
 (* PArray *)
-let parray_modules = [["Coq";"Array";"PArray"]]
-
-let carray = gen_constant parray_modules "array"
+let carray = gen_constant Structures.parray_modules "array"
 
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];

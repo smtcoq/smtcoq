@@ -53,7 +53,7 @@ module Atom =
       t
 
     let interp_tbl reify =
-      Term.mkArray (Lazy.force cbool, atom_tbl reify)
+      Structures.mkArray (Lazy.force cbool, atom_tbl reify)
 
   end
 

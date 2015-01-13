@@ -157,13 +157,13 @@ let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    Term.mkArray (Lazy.force cint, res) in
+    Structures.mkArray (Lazy.force cint, res) in
   let used_roots =
     let l = List.length used_roots in
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Term.mkArray (Lazy.force cint, res)|] in
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
   let ce3 =
     { const_entry_body = roots;
       const_entry_type = None;
@@ -238,12 +238,12 @@ let theorem name fsmt fproof =
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Term.mkArray (Lazy.force cint, res)|] in
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
   let rootsCstr =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    Term.mkArray (Lazy.force cint, res) in
+    Structures.mkArray (Lazy.force cint, res) in
 
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
@@ -298,13 +298,13 @@ let checker fsmt fproof =
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Term.mkArray (Lazy.force cint, res)|] in
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
   let t9 = Unix.time () in  (* for debug *)
   let rootsCstr =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    Term.mkArray (Lazy.force cint, res) in
+    Structures.mkArray (Lazy.force cint, res) in
   let t10 = Unix.time () in  (* for debug *)
 
   let t_i = make_t_i rt in

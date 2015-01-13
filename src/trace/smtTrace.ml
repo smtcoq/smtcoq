@@ -295,7 +295,7 @@ let to_coq to_lit (cstep,
 	      l := tl
 	  | _ -> assert false 
 	done;
-	mklApp cRes [|mkInt (get_pos c); Term.mkArray (Lazy.force cint, args)|]
+	mklApp cRes [|mkInt (get_pos c); Structures.mkArray (Lazy.force cint, args)|]
     | Other other ->
 	begin match other with
 	| ImmFlatten (c',f) -> mklApp cImmFlatten [|out_c c;out_c c'; out_f f|]
@@ -330,25 +330,25 @@ let to_coq to_lit (cstep,
     | _ -> assert false in
   let step = Lazy.force cstep in
   let def_step = 
-    mklApp cRes [|mkInt 0; Term.mkArray (Lazy.force cint, [|mkInt 0|]) |] in
+    mklApp cRes [|mkInt 0; Structures.mkArray (Lazy.force cint, [|mkInt 0|]) |] in
   let r = ref confl in
   let nc = ref 0 in
   while not (isRoot !r.kind) do r := prev !r; incr nc done;
   let last_root = !r in
   let size = !nc in
-  let max = (Parray.trunc_size (Uint63.of_int 4194303)) - 1 in
+  let max = Structures.max_array_size - 1 in
   let q,r1 = size / max, size mod max in
 
   let trace = 
     let len = if r1 = 0 then q + 1 else q + 2 in
-    Array.make len (Term.mkArray (step, [|def_step|])) in
+    Array.make len (Structures.mkArray (step, [|def_step|])) in
   for j = 0 to q - 1 do
-    let tracej = Array.make (Parray.trunc_size (Uint63.of_int 4194303)) def_step in
+    let tracej = Array.make Structures.max_array_size def_step in
     for i = 0 to max - 1 do
       r := next !r;
       tracej.(i) <- step_to_coq !r; 
     done;
-    trace.(j) <- Term.mkArray (step, tracej)
+    trace.(j) <- Structures.mkArray (step, tracej)
   done;
   if r1 <> 0 then begin
     let traceq = Array.make (r1 + 1) def_step in
@@ -356,10 +356,10 @@ let to_coq to_lit (cstep,
     r := next !r; 
     traceq.(i) <- step_to_coq !r; 
     done;
-    trace.(q) <- Term.mkArray (step, traceq)
+    trace.(q) <- Structures.mkArray (step, traceq)
   end;
 
-  (Term.mkArray (mklApp carray [|step|], trace), last_root)
+  (Structures.mkArray (mklApp carray [|step|], trace), last_root)
 
 
 

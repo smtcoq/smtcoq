@@ -13,35 +13,14 @@
 (*                                                                        *)
 (**************************************************************************)
 
+(* Int63 *)
+let int63_modules = [["Coq";"Numbers";"Cyclic";"Int63";"Int63Native"]]
 
-(** Sharing of coq Int *)
-let cInt_tbl = Hashtbl.create 17 
+let mkInt i = Term.mkInt (Uint63.of_int i)
 
-let mkInt i = 
-  try Hashtbl.find cInt_tbl i 
-  with Not_found ->
-    let ci = Structures.mkInt i in
-    Hashtbl.add cInt_tbl i ci;
-    ci
 
-(** Generic representation of shared object *)
-type 'a gen_hashed = { index : int; hval : 'a }
+(* PArray *)
+let parray_modules = [["Coq";"Array";"PArray"]]
 
-(** Functions over constr *)
-
-let mklApp f args = Term.mkApp (Lazy.force f, args)
-
-(* TODO : Set -> Type *)
-let coqtype = lazy Term.mkSet
-
-let declare_new_type t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (Pp.dummy_loc,t);
-  Term.mkVar t
-
-let declare_new_variable v constr_t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (Pp.dummy_loc,v);
-  Term.mkVar v
-
-let mkName s =
-  let id = Names.id_of_string s in
-  Names.Name id
+let max_array_size = Parray.trunc_size (Uint63.of_int 4194303)
+let mkArray = Term.mkArray

@@ -3,7 +3,7 @@
 set -e
 
 if [ $@ -a $@ = -standard ]; then
-    cp Makefile.standard Makefile
+    cp versions/standard/Makefile Makefile
 else
-    cp Makefile.native Makefile
+    cp versions/native/Makefile Makefile
 fi
