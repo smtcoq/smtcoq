@@ -13,14 +13,36 @@
 (*                                                                        *)
 (**************************************************************************)
 
+
+open Entries
+
+
 (* Int63 *)
 let int63_modules = [["Coq";"Numbers";"Cyclic";"Int63";"Int63Native"]]
 
-let mkInt i = Term.mkInt (Uint63.of_int i)
+let mkInt : int -> Term.constr =
+  fun i -> Term.mkInt (Uint63.of_int i)
 
 
 (* PArray *)
 let parray_modules = [["Coq";"Array";"PArray"]]
 
-let max_array_size = Parray.trunc_size (Uint63.of_int 4194303)
-let mkArray = Term.mkArray
+let max_array_size : int =
+  Parray.trunc_size (Uint63.of_int 4194303)
+let mkArray : Term.types * Term.constr array -> Term.constr =
+  Term.mkArray
+
+
+(* Differences between the two versions of Coq *)
+let dummy_loc = Pp.dummy_loc
+
+let mkConst c =
+  { const_entry_body = c;
+    const_entry_type = None;
+    const_entry_secctx = None;
+    const_entry_opaque = false;
+    const_entry_inline_code = false}
+
+let glob_term_CbvVm = Glob_term.CbvVm None
+
+let error = Errors.error

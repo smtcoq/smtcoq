@@ -145,12 +145,7 @@ let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
   let (tres, last_root) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) certif_ops confl in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
-  let ce4 =
-    { const_entry_body = certif;
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce4 = Structures.mkConst certif in
   let _ = declare_constant trace (DefinitionEntry ce4, IsDefinition Definition) in
   let used_roots = compute_roots roots last_root in
   let roots =
@@ -164,49 +159,19 @@ let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
     mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
-  let ce3 =
-    { const_entry_body = roots;
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce3 = Structures.mkConst roots in
   let _ = declare_constant root (DefinitionEntry ce3, IsDefinition Definition) in
-  let ce3' =
-    { const_entry_body = used_roots;
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce3' = Structures.mkConst used_roots in
   let _ = declare_constant used_root (DefinitionEntry ce3', IsDefinition Definition) in
   let t_i' = make_t_i rt in
   let t_func' = make_t_func ro t_i' in
-  let ce5 =
-    { const_entry_body = t_i';
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce5 = Structures.mkConst t_i' in
   let _ = declare_constant t_i (DefinitionEntry ce5, IsDefinition Definition) in
-  let ce6 =
-    { const_entry_body = t_func';
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce6 = Structures.mkConst t_func' in
   let _ = declare_constant t_func (DefinitionEntry ce6, IsDefinition Definition) in
-  let ce1 =
-    { const_entry_body = Atom.interp_tbl ra;
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce1 = Structures.mkConst (Atom.interp_tbl ra) in
   let _ = declare_constant t_atom (DefinitionEntry ce1, IsDefinition Definition) in
-  let ce2 =
-    { const_entry_body = snd (Form.interp_tbl rf);
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce2 = Structures.mkConst (snd (Form.interp_tbl rf)) in
   let _ = declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition) in
   ()
 
@@ -263,12 +228,7 @@ let theorem name fsmt fproof =
      [|Term.mkRel 2; Term.mkRel 1; Term.mkRel 6; Term.mkRel 5; Term.mkRel 4; Term.mkRel 7; Term.mkRel 3;
 	vm_cast_true
 	  (mklApp cchecker [|Term.mkRel 2; Term.mkRel 1; Term.mkRel 6; Term.mkRel 5; Term.mkRel 4; Term.mkRel 7; Term.mkRel 3|])|]))))))) in
-  let ce =
-    { const_entry_body = theorem_proof;
-      const_entry_type = Some theorem_concl;
-      const_entry_secctx = None;
-      const_entry_opaque = true;
-      const_entry_inline_code = false} in
+  let ce = Structures.mkConst theorem_proof in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
     ()
 
@@ -421,7 +381,7 @@ let call_verit rt ro fl root =
   try
     import_trace logfilename (Some root)
   with
-    | VeritSyntax.Sat -> Errors.error "veriT can't prove this"
+    | VeritSyntax.Sat -> Structures.error "veriT can't prove this"
 
 
 let cchecker_b_correct =

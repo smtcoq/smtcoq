@@ -170,7 +170,7 @@ let make_certif_ops modules =
   gen_constant modules "LiaMicromega", gen_constant modules "LiaDiseq", gen_constant modules "SplArith", gen_constant modules "SplDistinctElim")
   
 
-(** Usefull construction *)
+(** Useful construction *)
 
 let ceq_refl_true = 
   lazy (SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])

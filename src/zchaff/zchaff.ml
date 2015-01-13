@@ -200,24 +200,14 @@ let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
-  let ce1 =
-    { const_entry_body = d;
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce1 = Structures.mkConst d in
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_) = SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
   let certif = 
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in 
-  let ce2 =
-    { const_entry_body = certif;
-      const_entry_type = None;
-      const_entry_secctx = None;
-      const_entry_opaque = false;
-      const_entry_inline_code = false} in
+  let ce2 = Structures.mkConst certif in
   let _ = declare_constant trace (DefinitionEntry ce2, IsDefinition Definition) in
   ()
 
@@ -250,12 +240,7 @@ let theorem name fdimacs ftrace =
 		  vm_cast_true 
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
                   Term.mkRel 1(*v*)|]))) in
-  let ce =
-    { const_entry_body = theorem_proof;
-      const_entry_type = Some theorem_type;
-      const_entry_secctx = None;
-      const_entry_opaque = true;
-      const_entry_inline_code = false} in
+  let ce = Structures.mkConst theorem_proof in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 
@@ -273,7 +258,7 @@ let checker fdimacs ftrace =
 
   let tm = mklApp cchecker [|d; certif|] in
   let expr = Constrextern.extern_constr true Environ.empty_env tm in
-  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some (Glob_term.CbvVm None), None, expr))
+  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some Structures.glob_term_CbvVm, None, expr))
 
 
 
@@ -479,7 +464,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
   let (reloc, resfilename, logfilename, last) =
     call_zchaff (Form.nvars reify_form) root in
   (try check_unsat resfilename with
-    | Sat model -> Errors.error (List.fold_left (fun acc i ->
+    | Sat model -> Structures.error (List.fold_left (fun acc i ->
       let index = if i > 0 then i-1 else -i-1 in
       let ispos = i > 0 in
       try (

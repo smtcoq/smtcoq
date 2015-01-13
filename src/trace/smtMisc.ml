@@ -35,11 +35,11 @@ let mklApp f args = Term.mkApp (Lazy.force f, args)
 let coqtype = lazy Term.mkSet
 
 let declare_new_type t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (Pp.dummy_loc,t);
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (Structures.dummy_loc,t);
   Term.mkVar t
 
 let declare_new_variable v constr_t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (Pp.dummy_loc,v);
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (Structures.dummy_loc,v);
   Term.mkVar v
 
 let mkName s =
