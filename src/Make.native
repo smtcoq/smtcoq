@@ -27,7 +27,6 @@
 -I verit
 -I zchaff
 
-# -custom "cd ../unit-tests; make" "" "logs"
 -custom "cd ../unit-tests; make" "" "test"
 
 -custom "$(CAMLLEX) $<" "%.mll" "%.ml"
@@ -87,5 +86,3 @@ SMTCoq.v
 SMT_terms.v
 State.v
 Trace.v
-
-# tests/Tests.v
