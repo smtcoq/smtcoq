@@ -282,7 +282,7 @@ Section FLATTEN.
       | Some a => PArray.fold_left frec largs a
       | None => l::largs
     end.
-  Register flatten_op_body as PrimInline.
+  (* Register flatten_op_body as PrimInline. *)
 
 
   Definition flatten_op_lit (get_op:_lit -> option (array _lit)) max :=
@@ -331,7 +331,7 @@ Section FLATTEN.
                 | Fatom a1, Fatom a2 => check_neg_atom a1 a2
                 | _, _ => false (* We maybe need to extend the rule here ... *)
               end.
-  Register check_flatten_body as PrimInline.
+  (* Register check_flatten_body as PrimInline. *)
 
   Definition check_flatten_aux l lf :=
     foldi_cont (fun _ => check_flatten_body) 0 (PArray.length t_form) (fun _ _ => false) l lf.

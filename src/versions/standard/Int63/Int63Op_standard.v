@@ -15,7 +15,7 @@
 (**************************************************************************)
 
 
-Require Import Int63Lib Cyclic63.
+Require Import Int31 Cyclic31.
 Require Export Int63Native.
 Require Import BigNumPrelude.
 Require Import Bvector.
@@ -24,7 +24,7 @@ Require Import Bvector.
 Local Open Scope int63_scope.
 
 (** The number of digits as a int *)
-Definition digits := zdigits.
+Definition digits := 31%int31.
 
 (** The bigger int *)
 Definition max_int := Eval vm_compute in 0 - 1.
@@ -69,36 +69,36 @@ Definition addc_def x y :=
   let r := x + y in
   if r < x then C1 r else C0 r.
 (* the same but direct implementation for efficiancy *)
-Definition addc : int -> int -> carry int := add63c.
+Definition addc : int -> int -> carry int := add31c.
 Notation "n '+c' m" := (addc n m) (at level 50, no associativity) : int63_scope.
 
 Definition addcarryc_def x y :=
   let r := addcarry x y in
   if r <= x then C1 r else C0 r.
 (* the same but direct implementation for efficiancy *)
-Definition addcarryc : int -> int -> carry int := add63carryc.
+Definition addcarryc : int -> int -> carry int := add31carryc.
 
 Definition subc_def x y :=
   if y <= x then C0 (x - y) else C1 (x - y).
 (* the same but direct implementation for efficiancy *)
-Definition subc : int -> int -> carry int := sub63c.
+Definition subc : int -> int -> carry int := sub31c.
 Notation "n '-c' m" := (subc n m) (at level 50, no associativity) : int63_scope.
 
 Definition subcarryc_def x y :=
   if y < x then C0 (x - y - 1) else C1 (x - y - 1).
 (* the same but direct implementation for efficiancy *)
-Definition subcarryc : int -> int -> carry int := sub63carryc.
+Definition subcarryc : int -> int -> carry int := sub31carryc.
 
 Definition diveucl_def x y := (x/y, x\%y).
 (* the same but direct implementation for efficiancy *)
-Definition diveucl : int -> int -> int * int := div63.
+Definition diveucl : int -> int -> int * int := div31.
 
-Definition diveucl_21 : int -> int -> int -> int * int := div6321.
+Definition diveucl_21 : int -> int -> int -> int * int := div3121.
 
 Definition addmuldiv_def p x y :=
   (x << p) lor (y >> (digits - p)).
 (* the same but direct implementation for efficiancy *)
-Definition addmuldiv : int -> int -> int -> int := addmuldiv63.
+Definition addmuldiv : int -> int -> int -> int := addmuldiv31.
 
 Definition oppc (i:int) := 0 -c i.
 
@@ -111,14 +111,14 @@ Definition compare_def x y :=
   if x < y then Lt
   else if (x == y) then Eq else Gt.
 
-Definition compare : int -> int -> comparison := compare63.
+Definition compare : int -> int -> comparison := compare31.
 Notation "n ?= m" := (compare n m) (at level 70, no associativity) : int63_scope.
 
 (** Exotic operations *)
 
 (** I should add the definition (like for compare) *)
-Definition head0 : int -> int := head063.
-Definition tail0 : int -> int := tail063.
+Definition head0 : int -> int := head031.
+Definition tail0 : int -> int := tail031.
 
 (** Iterators *)
 
@@ -183,7 +183,7 @@ Definition gcd := gcd_rec (2*size).
 
 Definition sqrt_step (rec: int -> int -> int) (i j: int)  :=
   let quo := i/j in
-  if quo < j then rec i ((j + i/j) >> 1)
+  if quo < j then rec i ((j + (i/j)%int) >> 1)
   else j.
 
 Definition iter_sqrt :=

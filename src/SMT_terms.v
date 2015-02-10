@@ -14,7 +14,6 @@
 (**************************************************************************)
 
 
-Add LoadPath "." as SMTCoq.
 Require Import Bool List Int63 PArray.
 Require Import Misc State.
 
@@ -93,7 +92,7 @@ Module Form.
             t_b.[i <- interp_aux (PArray.get t_b) hf])
         (PArray.make (PArray.length t_form) true) t_form.
 
-      Fixpoint lt_form i h:=
+      Fixpoint lt_form i h {struct h} :=
         match h with
         | Fatom _ | Ftrue | Ffalse => true
         | Fnot2 _ l => Lit.blit l < i
@@ -180,7 +179,7 @@ Module Form.
       let t_interp := t_interp t_form in
       PArray.get t_interp.
 
-    Register interp_aux as PrimInline.
+    (* Register interp_aux as PrimInline. *)
     Definition interp t_form := interp_aux (interp_state_var t_form).
 
     Lemma wf_interp_form_lt :

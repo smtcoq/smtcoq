@@ -19,9 +19,11 @@
    trees *)
 
 
+Require Import Int31.
 Require Export Int63.
-Require Import Ring63.
-Require Int63Lib.
+(* Require Export Int63. *)
+(* Require Import Ring63. *)
+(* Require Int63Lib. *)
 Require FMapAVL.
 
 Local Open Scope int63_scope.
@@ -87,7 +89,7 @@ Local Open Scope array_scope.
 
 Set Vm Optimize.
 
-Definition max_array_length := Eval vm_compute in (Int63Lib.phi_inv 4194302).
+Definition max_array_length := 4194302%int31.
 
 (** Axioms *)
 Axiom get_outofbound : forall A (t:array A) i, (i < length t) = false -> t.[i] = default t.

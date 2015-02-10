@@ -17,7 +17,8 @@
 
 Require Import Zgcd_alt.
 Require Import Bvector.
-Require Import Int63Lib Cyclic63.
+(* Require Import Int63Lib Cyclic63. *)
+Require Import Int31 Cyclic31.
 Require Export Int63Axioms.
 Require Import Eqdep_dec.
 Require Import Psatz.
@@ -285,7 +286,7 @@ Qed.
 
 Lemma opp_spec : forall x : int, [|- x|] = - [|x|] mod wB.
 Proof.
- unfold opp;intros;rewrite sub_spec, to_Z_0;trivial.
+ unfold opp;intros. rewrite sub_spec, to_Z_0;trivial.
 Qed.
 
 Lemma oppcarry_spec : forall x, [|oppcarry x|] = wB - [|x|] - 1.
@@ -405,7 +406,7 @@ Proof.
  unfold sqrt_step.
  case_eq ((i / j < j)%int);[ | rewrite <- Bool.not_true_iff_false];
   rewrite ltb_spec, div_spec;intros.
- assert ([| j + i / j|] = [|j|] + [|i|]/[|j|]).
+ assert ([| j + (i / j)%int|] = [|j|] + [|i|]/[|j|]).
    rewrite add_spec, Zmod_small;rewrite div_spec;auto with zarith.
  apply Hrec;rewrite lsr_spec, H0, to_Z_1;change (2^1) with 2.
  split; [ | apply sqrt_test_false;auto with zarith].
@@ -429,11 +430,11 @@ Lemma iter_sqrt_correct n rec i j: 0 < [|i|] -> 0 < [|j|] ->
   [|iter_sqrt n rec i j|] ^ 2 <= [|i|] < ([|iter_sqrt n rec i j|] + 1) ^ 2.
 Proof.
  revert rec i j; elim n; unfold iter_sqrt; fold iter_sqrt; clear n.
- intros rec i j Hi Hj Hij H31 Hrec. replace (and (Z.le (Z.pow (to_Z match ltb (div i j) j return int with | true => rec i (lsr (add63 j (div i j)) In) | false => j end) (Zpos (xO xH))) (to_Z i)) (Z.lt (to_Z i) (Z.pow (Z.add (to_Z match ltb (div i j) j return int with | true => rec i (lsr (add63 j (div i j)) In) | false => j end) (Zpos xH)) (Zpos (xO xH))))) with ([|sqrt_step rec i j|] ^ 2 <= [|i|] < ([|sqrt_step rec i j|] + 1) ^ 2) by reflexivity. apply sqrt_step_correct; auto with zarith.
+ intros rec i j Hi Hj Hij H31 Hrec. replace (and (Z.le (Z.pow (to_Z match ltb (div i j) j return int with | true => rec i (lsr (add31 j (div i j)) In) | false => j end) (Zpos (xO xH))) (to_Z i)) (Z.lt (to_Z i) (Z.pow (Z.add (to_Z match ltb (div i j) j return int with | true => rec i (lsr (add31 j (div i j)) In) | false => j end) (Zpos xH)) (Zpos (xO xH))))) with ([|sqrt_step rec i j|] ^ 2 <= [|i|] < ([|sqrt_step rec i j|] + 1) ^ 2) by reflexivity. apply sqrt_step_correct; auto with zarith.
  intros; apply Hrec; auto with zarith.
  rewrite Zpower_0_r; auto with zarith.
  intros n Hrec rec i j Hi Hj Hij H31 HHrec.
- replace (and (Z.le (Z.pow (to_Z match ltb (div i j) j return int with | true => iter_sqrt n (iter_sqrt n rec) i (lsr (add63 j (div i j)) In) | false => j end) (Zpos (xO xH))) (to_Z i)) (Z.lt (to_Z i) (Z.pow (Z.add (to_Z match ltb (div i j) j return int with | true => iter_sqrt n (iter_sqrt n rec) i (lsr (add63 j (div i j)) In) | false => j end) (Zpos xH)) (Zpos (xO xH))))) with ([|sqrt_step (iter_sqrt n (iter_sqrt n rec)) i j|] ^ 2 <= [|i|] < ([|sqrt_step (iter_sqrt n (iter_sqrt n rec)) i j|] + 1) ^ 2) by reflexivity.
+ replace (and (Z.le (Z.pow (to_Z match ltb (div i j) j return int with | true => iter_sqrt n (iter_sqrt n rec) i (lsr (add31 j (div i j)) In) | false => j end) (Zpos (xO xH))) (to_Z i)) (Z.lt (to_Z i) (Z.pow (Z.add (to_Z match ltb (div i j) j return int with | true => iter_sqrt n (iter_sqrt n rec) i (lsr (add31 j (div i j)) In) | false => j end) (Zpos xH)) (Zpos (xO xH))))) with ([|sqrt_step (iter_sqrt n (iter_sqrt n rec)) i j|] ^ 2 <= [|i|] < ([|sqrt_step (iter_sqrt n (iter_sqrt n rec)) i j|] + 1) ^ 2) by reflexivity.
  apply sqrt_step_correct; auto.
  intros j1 Hj1  Hjp1; apply Hrec; auto with zarith.
  intros j2 Hj2 H2j2 Hjp2 Hj31; apply Hrec; auto with zarith.
@@ -775,7 +776,7 @@ Proof.
  unfold Zgcd_bound.
  generalize (to_Z_bounded b).
  destruct [|b|].
- unfold size; intros _; change Int63Lib.size with 63%nat; omega.
+ unfold size; intros _; change Int31.size with 31%nat; omega.
  intros (_,H).
  cut (Psize p <= size)%nat; [ omega | rewrite <- Zpower2_Psize; auto].
  intros (H,_); compute in H; elim H; auto.
@@ -903,7 +904,7 @@ Proof.
 Qed.
 
 
-Coercion b2i (b: bool) : int63 := if b then 1%int else 0%int.
+Coercion b2i (b: bool) : int := if b then 1%int else 0%int.
 
 Lemma bit_0 n : bit 0 n = false.
 Proof. unfold bit; rewrite lsr_0_l; auto. Qed.
@@ -1011,7 +1012,7 @@ Proof.
  intros n IH i1 i2 H1i1 H2i1 H1i2 H2i2 H.
  rewrite (bit_split i1), (bit_split i2).
  rewrite H.
- apply f_equal2 with (f := add63); auto.
+ apply f_equal2 with (f := add31); auto.
  apply f_equal2 with (f := lsl); auto.
  apply IH; try rewrite lsr_spec;
    replace (2^[|1|]) with 2%Z;  auto with zarith.
@@ -1477,8 +1478,8 @@ Proof.
  2: generalize (Hn 0%int); do 2 case bit; auto; intros [ ]; auto.
  rewrite lsl_add_distr.
  rewrite (bit_split x) at 1; rewrite (bit_split y) at 1.
- rewrite <-!add_assoc; apply f_equal2 with (f := add63); auto.
- rewrite add_comm, <-!add_assoc; apply f_equal2 with (f := add63); auto.
+ rewrite <-!add_assoc; apply f_equal2 with (f := add31); auto.
+ rewrite add_comm, <-!add_assoc; apply f_equal2 with (f := add31); auto.
  rewrite add_comm; auto.
  intros Heq.
  generalize (add_le_r x y); rewrite Heq, lor_le; intro Hb.

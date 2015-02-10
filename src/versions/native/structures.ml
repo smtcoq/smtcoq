@@ -17,12 +17,18 @@
 open Entries
 
 
+
+let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+
+
+
 (* Int63 *)
 let int63_modules = [["Coq";"Numbers";"Cyclic";"Int63";"Int63Native"]]
 
 let mkInt : int -> Term.constr =
   fun i -> Term.mkInt (Uint63.of_int i)
 
+let cint = gen_constant Structures.int63_modules "int"
 
 (* PArray *)
 let parray_modules = [["Coq";"Array";"PArray"]]

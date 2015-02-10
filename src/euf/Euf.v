@@ -36,7 +36,7 @@ Section certif.
       end
     | _ => C._true
     end.
-  Register get_eq as PrimInline.
+  (* Register get_eq as PrimInline. *)
 
   Fixpoint check_trans_aux (t1 t2:int)
       (eqs:list _lit) (res:_lit) (clause:C.t) : C.t :=

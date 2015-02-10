@@ -41,7 +41,7 @@ End Valuation.
 Module Var.
 
   Definition _true : var := 0. (* true *)
-  Register _true as PrimInline.
+  (* Register _true as PrimInline. *)
 
   Definition _false : var := 1. (* false *)
 
@@ -60,34 +60,34 @@ Notation _lit := int (only parsing).
 Module Lit.
 
   Definition is_pos (l:_lit) := is_even l.
-  Register is_pos as PrimInline.
+  (* Register is_pos as PrimInline. *)
 
   Definition blit (l:_lit) : var := l >> 1.
-  Register blit as PrimInline.
+  (* Register blit as PrimInline. *)
 
   Definition lit (x:var) : _lit := x << 1.
-  Register lit as PrimInline.
+  (* Register lit as PrimInline. *)
 
   Definition neg (l:_lit) : _lit := l lxor 1.
-  Register neg as PrimInline.
+  (* Register neg as PrimInline. *)
 
   Definition nlit (x:var) : _lit := neg (lit x).
-  Register nlit as PrimInline.
+  (* Register nlit as PrimInline. *)
 
   Definition _true : _lit := Eval compute in lit Var._true.
-  Register _true as PrimInline.
+  (* Register _true as PrimInline. *)
 
   Lemma lit_true : _true = lit Var._true.
   Proof. reflexivity. Qed.
 
   Definition _false : _lit := Eval compute in lit Var._false.
-  Register _false as PrimInline.
+  (* Register _false as PrimInline. *)
 
   Lemma lit_false : _false = lit Var._false.
   Proof. reflexivity. Qed.
 
   Definition eqb (l l' : _lit) := l == l'.
-  Register eqb as PrimInline.
+  (* Register eqb as PrimInline. *)
 
   Lemma eqb_spec : forall l l', eqb l l' = true <-> l = l'.
   Proof eqb_spec.
@@ -435,12 +435,12 @@ Module S.
   Definition t := array C.t.
 
   Definition get (s:t) (cid:clause_id) := s.[cid].
-  Register get as PrimInline.
+  (* Register get as PrimInline. *)
 
   (* Do not use this function outside this module *)
   (* expect if you are sure that [c = sort_uniq c] *)
   Definition internal_set (s:t) (cid:clause_id) (c:C.t) : t := s.[cid <- c].
-  Register internal_set as PrimInline.
+  (* Register internal_set as PrimInline. *)
 
   Definition make (nclauses : int) : t :=
     PArray.make nclauses C._true.
@@ -474,7 +474,7 @@ Module S.
       forall c, C.valid rho c ->
         forall id, valid rho (set s id c).
   Proof.
-    unfold valid, get, set;simpl;intros.
+    unfold valid, get;simpl;intros.
     destruct (Int63Properties.reflect_eqb id id0);subst.
     case_eq (id0 < length s);intros.
     rewrite PArray.get_set_same;trivial.

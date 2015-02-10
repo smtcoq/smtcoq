@@ -18,7 +18,7 @@ open Coqlib
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
 (* Int63 *)
-let cint = gen_constant Structures.int63_modules "int"
+let cint = Structures.cint
 let ceq63 = gen_constant Structures.int63_modules "eqb"
 
 (* PArray *)

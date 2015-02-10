@@ -21,7 +21,6 @@ Require Import RingMicromega.
 Require Import ZMicromega.
 Require Import Tauto.
 Require Import Psatz.
-(* Add LoadPath ".." as SMTCoq. *)
 
 Require Import Misc State.
 Require Import SMT_terms.
@@ -40,7 +39,7 @@ Section certif.
 
   Import EnvRing Atom.
 
-  Register option_map as PrimInline.
+  (* Register option_map as PrimInline. *)
 
   Section BuildPositive.
     Variable build_positive : hatom -> option positive.
@@ -62,7 +61,7 @@ Section certif.
       (PArray.length t_atom) 0 (fun _ => None).
 
   Definition build_positive_atom := build_positive_atom_aux build_positive.
-  Register build_positive_atom as PrimInline.
+  (* Register build_positive_atom as PrimInline. *)
 
   Section BuildZ.
 
@@ -321,7 +320,7 @@ Section certif.
         | _ => C._true
       end
       else C._true.
-  Register get_eq as PrimInline.
+  (* Register get_eq as PrimInline. *)
 
   Definition get_not_le (l:_lit) (f : Atom.hatom -> Atom.hatom -> C.t) :=
     if negb (Lit.is_pos l) then
@@ -334,7 +333,7 @@ Section certif.
       | _ => C._true
     end
       else C._true.
-  Register get_not_le as PrimInline.
+  (* Register get_not_le as PrimInline. *)
 
   Definition check_micromega cl c : C.t :=
     match build_clause empty_vmap cl with

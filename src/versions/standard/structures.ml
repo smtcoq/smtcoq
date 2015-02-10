@@ -15,22 +15,47 @@
 
 
 open Entries
+open Coqlib
+
+
+let mklApp f args = Term.mkApp (Lazy.force f, args)
+let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
 
 (* Int63 *)
-let int63_modules = [["SMTCoq";"Int63Native"]]
+let int63_modules = [["SMTCoq";"versions";"standard";"Int63";"Int63Native"]]
 
-let mkInt : int -> Term.constr =
-  failwith "Not implemented yet"
+let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
+let cD0 = gen_constant int31_module "D0"
+let cD1 = gen_constant int31_module "D1"
+let cI31 = gen_constant int31_module "I31"
 
+let mkInt : int -> Term.constr = fun i ->
+  let a = Array.make 31 (Lazy.force cD0) in
+  let j = ref i in
+  let k = ref 30 in
+  while !j <> 0 do
+    if !j land 1 = 1 then a.(!k) <- Lazy.force cD1;
+    j := !j lsr 1;
+    decr k
+  done;
+  mklApp cI31 a
+
+let cint = gen_constant int31_module "int31"
 
 (* PArray *)
-let parray_modules = [["SMTCoq";"PArray"]]
+let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
 
-let max_array_size : int =
-  failwith "Not implemented yet"
+let cmake = gen_constant parray_modules "make"
+let cset = gen_constant parray_modules "set"
+
+let max_array_size : int = 4194302
 let mkArray : Term.types * Term.constr array -> Term.constr =
-  failwith "Not implemented yet"
+  fun (ty, a) ->
+  snd (Array.fold_left (fun (i,acc) c ->
+                        let acc' = mklApp cset [|ty; acc; mkInt i; c|] in
+                        (i+1,acc')
+                       ) (0,mklApp cmake [|ty; mkInt (Array.length a); a.(0)|]) a)
 
 
 (* Differences between the two versions of Coq *)

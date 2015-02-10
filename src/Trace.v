@@ -51,7 +51,7 @@ Section trace.
   Definition _checker_ (s: S.t) (t: _trace_) (confl:clause_id) : bool :=
     let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in
     is_false (S.get s' confl).
-  Register _checker_ as PrimInline.
+  (* Register _checker_ as PrimInline. *)
 
   (* For debugging *)
   (*

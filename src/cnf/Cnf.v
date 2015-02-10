@@ -13,8 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Require Import PArray List Bool.
 (* Add LoadPath ".." as SMTCoq. *)
+Require Import PArray List Bool.
 Require Import Misc State SMT_terms.
 
 Import Form.
@@ -28,11 +28,11 @@ Unset Strict Implicit.
 Definition or_of_imp args :=
   let last := PArray.length args - 1 in
   PArray.mapi (fun i l => if i == last then l else Lit.neg l) args.
-Register or_of_imp as PrimInline.
+(* Register or_of_imp as PrimInline. *)
 
 Lemma length_or_of_imp : forall args,
   PArray.length (or_of_imp args) = PArray.length args.
-Proof. intro; apply length_mapi. Qed.
+Proof. intro; unfold or_of_imp; apply length_mapi. Qed.
 
 Lemma get_or_of_imp : forall args i,
   i < (PArray.length args) - 1 -> (or_of_imp args).[i] = Lit.neg (args.[i]).
@@ -271,7 +271,7 @@ Section CHECKER.
 
   Lemma valid_check_False : C.valid rho check_False.
   Proof.
-    unfold check_False, C.valid;simpl.
+    unfold check_False, C.valid. change (Lit.interp rho (Lit.neg Lit._false) || false = true).
     rewrite Lit.interp_neg.
     assert (W:= Lit.interp_false _ Hwfrho).
     destruct (Lit.interp rho Lit._false);trivial;elim W;red;trivial.

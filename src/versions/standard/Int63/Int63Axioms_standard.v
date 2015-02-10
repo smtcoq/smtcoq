@@ -17,7 +17,8 @@
 
 Require Import Bvector.
 Require Export BigNumPrelude.
-Require Import Int63Lib.
+(* Require Import Int63Lib. *)
+Require Import Int31.
 Require Export Int63Native.
 Require Export Int63Op.
 
