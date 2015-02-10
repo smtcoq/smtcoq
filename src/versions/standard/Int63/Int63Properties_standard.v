@@ -17,8 +17,10 @@
 
 Require Import Zgcd_alt.
 Require Import Bvector.
+Require Import Int63Lib Cyclic63.
 Require Export Int63Axioms.
 Require Import Eqdep_dec.
+Require Import Psatz.
 
 Local Open Scope int63_scope.
 Local Open Scope Z_scope.
@@ -54,15 +56,15 @@ Qed.
 
 Lemma eqb_false_complete : forall x y, x <> y -> (x == y) = false.
 Proof.
- intros x y;rewrite eqb_false_spec;trivial. 
+ intros x y;rewrite eqb_false_spec;trivial.
 Qed.
 
 Lemma eqb_false_correct : forall x y, (x == y) = false -> x <> y.
 Proof.
  intros x y;rewrite eqb_false_spec;trivial.
-Qed.  
- 
-Definition eqs (i j : int) : {i = j} + { i <> j } := 
+Qed.
+
+Definition eqs (i j : int) : {i = j} + { i <> j } :=
   (if i == j as b return ((b = true -> i = j) -> (b = false -> i <> j) -> {i=j} + {i <> j} )
     then fun (Heq : true = true -> i = j) _ => left _ (Heq (eq_refl true))
     else fun _ (Hdiff : false = false -> i <> j) => right _ (Hdiff (eq_refl false)))
@@ -99,7 +101,7 @@ Qed.
 Lemma eqo_diff : forall i j, i == j = false -> eqo i j = None.
 Proof.
  unfold eqo;intros; generalize (eqb_correct i j).
- rewrite H;trivial. 
+ rewrite H;trivial.
 Qed.
 
 (** translation with Z *)
@@ -116,21 +118,21 @@ Proof.
 Qed.
 
 Lemma to_Z_bounded : forall x, 0 <= [|x|] < wB.
-Proof.
- unfold to_Z, wB;induction size;intros.
- simpl;auto with zarith.
- rewrite inj_S;simpl;assert (W:= IHn (x >> 1)%int63).
- rewrite Zpower_Zsucc;auto with zarith.
- destruct (is_even x).
- rewrite Zdouble_mult;auto with zarith.
- rewrite Zdouble_plus_one_mult;auto with zarith.
-Qed.
+Proof. apply phi_bounded. Qed.
+(*  unfold to_Z, wB;induction size;intros. *)
+(*  simpl;auto with zarith. *)
+(*  rewrite inj_S;simpl;assert (W:= IHn (x >> 1)%int). *)
+(*  rewrite Zpower_Zsucc;auto with zarith. *)
+(*  destruct (is_even x). *)
+(*  rewrite Zdouble_mult;auto with zarith. *)
+(*  rewrite Zdouble_plus_one_mult;auto with zarith. *)
+(* Qed. *)
 
 (* TODO: move_this *)
-Lemma orb_true_iff : forall b1 b2, b1 || b2 = true <-> b1 = true \/ b2 = true.
-Proof.
- split;intros;[apply orb_prop | apply orb_true_intro];trivial.
-Qed.
+(* Lemma orb_true_iff : forall b1 b2, b1 || b2 = true <-> b1 = true \/ b2 = true. *)
+(* Proof. *)
+(*  split;intros;[apply orb_prop | apply orb_true_intro];trivial. *)
+(* Qed. *)
 
 Lemma to_Z_eq : forall x y, [|x|] = [|y|] <-> x = y.
 Proof.
@@ -138,7 +140,7 @@ Proof.
  apply to_Z_inj;trivial.
 Qed.
 
-Lemma leb_ltb_eqb : forall x y, ((x <= y) = (x < y) || (x == y))%int63.
+Lemma leb_ltb_eqb : forall x y, ((x <= y) = (x < y) || (x == y))%int.
 Proof.
  intros.
  apply eq_true_iff_eq.
@@ -152,17 +154,17 @@ Lemma compare_spec :
   forall x y, compare x y = ([|x|] ?= [|y|]).
 Proof.
  intros;rewrite compare_def_spec;unfold compare_def.
- case_eq (x < y)%int63;intros Heq.
+ case_eq (x < y)%int;intros Heq.
  rewrite ltb_spec in Heq.
  red in Heq;rewrite Heq;trivial.
  rewrite <- not_true_iff_false, ltb_spec in Heq.
- case_eq (x == y)%int63;intros Heq1.
+ case_eq (x == y)%int;intros Heq1.
  rewrite eqb_spec in Heq1;rewrite Heq1, Zcompare_refl;trivial.
  rewrite <- not_true_iff_false, eqb_spec in Heq1.
  symmetry;change ([|x|] > [|y|]);rewrite <- to_Z_eq in Heq1;omega.
 Qed.
 
-Lemma is_zero_spec : forall x : int, is_zero x = true <-> x = 0%int63.
+Lemma is_zero_spec : forall x : int, is_zero x = true <-> x = 0%int.
 Proof.
  unfold is_zero;intros;apply eqb_spec.
 Qed.
@@ -174,7 +176,7 @@ Lemma addc_spec  : forall x y, [+|x +c y|] = [|x|] + [|y|].
 Proof.
  intros;rewrite addc_def_spec;unfold addc_def.
  assert (W1 := to_Z_bounded x); assert (W2 := to_Z_bounded y).
- case_eq ((x + y < x)%int63).
+ case_eq ((x + y < x)%int).
  rewrite ltb_spec;intros.
  change (wB + [|x+y|] = [|x|] + [|y|]).
  rewrite add_spec in H |- *.
@@ -195,8 +197,9 @@ Proof.
  rewrite Zmod_small;auto with zarith.
 Qed.
 
+
 Lemma succc_spec : forall x, [+|succc x|] = [|x|] + 1.
-Proof. intros; apply addc_spec. Qed.
+Proof. intros; unfold succc; apply addc_spec. Qed.
 
 Lemma addcarry_spec : forall x y, [|addcarry x y|] = ([|x|] + [|y|] + 1) mod wB.
 Proof.
@@ -208,7 +211,7 @@ Lemma addcarryc_spec : forall x y, [+|addcarryc x y|] = [|x|] + [|y|] + 1.
 Proof.
  intros;rewrite addcarryc_def_spec;unfold addcarryc_def.
  assert (W1 := to_Z_bounded x); assert (W2 := to_Z_bounded y).
- case_eq ((addcarry x y <= x)%int63).
+ case_eq ((addcarry x y <= x)%int).
  rewrite leb_spec;intros.
  change (wB + [|(addcarry x y)|] = [|x|] + [|y|] + 1).
  rewrite addcarry_spec in H |- *.
@@ -237,7 +240,7 @@ Lemma subc_spec : forall x y, [-|x -c y|] = [|x|] - [|y|].
 Proof.
  intros;rewrite subc_def_spec;unfold subc_def.
  assert (W1 := to_Z_bounded x); assert (W2 := to_Z_bounded y).
- case_eq (y <= x)%int63.
+ case_eq (y <= x)%int.
  rewrite leb_spec;intros.
  change ([|x - y|] = [|x|] - [|y|]).
  rewrite sub_spec.
@@ -252,7 +255,7 @@ Qed.
 
 Lemma subcarry_spec :
    forall x y, [|subcarry x y|] = ([|x|] - [|y|] - 1) mod wB.
-Proof. 
+Proof.
  unfold subcarry; intros.
  rewrite sub_spec,sub_spec,Zminus_mod_idemp_l;trivial.
 Qed.
@@ -260,8 +263,9 @@ Qed.
 Lemma subcarryc_spec : forall x y, [-|subcarryc x y|] = [|x|] - [|y|] - 1.
  intros;rewrite subcarryc_def_spec;unfold subcarryc_def.
  assert (W1 := to_Z_bounded x); assert (W2 := to_Z_bounded y).
- fold (subcarry x y).
- case_eq (y < x)%int63.
+ (* fold (subcarry x y). *)
+ replace ((x - y - 1)%int) with (subcarry x y) by reflexivity.
+ case_eq (y < x)%int.
  rewrite ltb_spec;intros.
  change ([|subcarry x y|] = [|x|] - [|y|] - 1).
  rewrite subcarry_spec.
@@ -295,13 +299,13 @@ Proof.
 Qed.
 
 Lemma predc_spec : forall x, [-|predc x|] = [|x|] - 1.
-Proof. intros; apply subc_spec. Qed.
+Proof. intros; unfold predc; apply subc_spec. Qed.
 
 Lemma pred_spec : forall x, [|pred x|] = ([|x|] - 1) mod wB.
-Proof. intros; apply sub_spec. Qed.
+Proof. intros; unfold pred; apply sub_spec. Qed.
 
-Lemma diveucl_spec : 
-  forall x y, 
+Lemma diveucl_spec :
+  forall x y,
     let (q,r) := diveucl x y in
     ([|q|],[|r|]) = Zdiv_eucl [|x|] [|y|].
 Proof.
@@ -387,6 +391,7 @@ Proof.
  apply Z_mult_div_ge; auto with zarith.
 Qed.
 
+
 Lemma sqrt_step_correct rec i j:
   0 < [|i|] -> 0 < [|j|] -> [|i|] < ([|j|] + 1) ^ 2 ->
    2 * [|j|] < wB ->
@@ -398,7 +403,7 @@ Proof.
  assert (Hp2: 0 < [|2|]) by exact (refl_equal Lt).
  intros Hi Hj Hij H31 Hrec.
  unfold sqrt_step.
- case_eq ((i / j < j)%int63);[ | rewrite <- Bool.not_true_iff_false];
+ case_eq ((i / j < j)%int);[ | rewrite <- Bool.not_true_iff_false];
   rewrite ltb_spec, div_spec;intros.
  assert ([| j + i / j|] = [|j|] + [|i|]/[|j|]).
    rewrite add_spec, Zmod_small;rewrite div_spec;auto with zarith.
@@ -415,7 +420,7 @@ Proof.
  apply sqrt_main;auto with zarith.
  split;[apply sqrt_test_true | ];auto with zarith.
 Qed.
- 
+
 Lemma iter_sqrt_correct n rec i j: 0 < [|i|] -> 0 < [|j|] ->
   [|i|] < ([|j|] + 1) ^ 2 -> 2 * [|j|] < wB ->
   (forall j1, 0 < [|j1|] -> 2^(Z_of_nat n) + [|j1|] <= [|j|] ->
@@ -424,10 +429,11 @@ Lemma iter_sqrt_correct n rec i j: 0 < [|i|] -> 0 < [|j|] ->
   [|iter_sqrt n rec i j|] ^ 2 <= [|i|] < ([|iter_sqrt n rec i j|] + 1) ^ 2.
 Proof.
  revert rec i j; elim n; unfold iter_sqrt; fold iter_sqrt; clear n.
- intros rec i j Hi Hj Hij H31 Hrec; apply sqrt_step_correct; auto with zarith.
+ intros rec i j Hi Hj Hij H31 Hrec. replace (and (Z.le (Z.pow (to_Z match ltb (div i j) j return int with | true => rec i (lsr (add63 j (div i j)) In) | false => j end) (Zpos (xO xH))) (to_Z i)) (Z.lt (to_Z i) (Z.pow (Z.add (to_Z match ltb (div i j) j return int with | true => rec i (lsr (add63 j (div i j)) In) | false => j end) (Zpos xH)) (Zpos (xO xH))))) with ([|sqrt_step rec i j|] ^ 2 <= [|i|] < ([|sqrt_step rec i j|] + 1) ^ 2) by reflexivity. apply sqrt_step_correct; auto with zarith.
  intros; apply Hrec; auto with zarith.
  rewrite Zpower_0_r; auto with zarith.
  intros n Hrec rec i j Hi Hj Hij H31 HHrec.
+ replace (and (Z.le (Z.pow (to_Z match ltb (div i j) j return int with | true => iter_sqrt n (iter_sqrt n rec) i (lsr (add63 j (div i j)) In) | false => j end) (Zpos (xO xH))) (to_Z i)) (Z.lt (to_Z i) (Z.pow (Z.add (to_Z match ltb (div i j) j return int with | true => iter_sqrt n (iter_sqrt n rec) i (lsr (add63 j (div i j)) In) | false => j end) (Zpos xH)) (Zpos (xO xH))))) with ([|sqrt_step (iter_sqrt n (iter_sqrt n rec)) i j|] ^ 2 <= [|i|] < ([|sqrt_step (iter_sqrt n (iter_sqrt n rec)) i j|] + 1) ^ 2) by reflexivity.
  apply sqrt_step_correct; auto.
  intros j1 Hj1  Hjp1; apply Hrec; auto with zarith.
  intros j2 Hj2 H2j2 Hjp2 Hj31; apply Hrec; auto with zarith.
@@ -463,13 +469,13 @@ Qed.
 
 Lemma sqrt2_step_def rec ih il j:
    sqrt2_step rec ih il j =
-   if (ih < j)%int63 then
+   if (ih < j)%int then
     let quo := fst (diveucl_21 ih il j) in
-    if (quo < j)%int63 then
+    if (quo < j)%int then
      let m :=
       match j +c quo with
       | C0 m1 => m1 >> 1
-      | C1 m1 => (m1 >> 1 + 1 << (digits -1))%int63
+      | C1 m1 => (m1 >> 1 + 1 << (digits -1))%int
       end in
      rec ih il m
     else j
@@ -493,7 +499,8 @@ Proof.
  apply Zle_trans with ([|ih|] * wB)%Z;try rewrite Zpower_2; auto with zarith.
 Qed.
 
-Lemma div2_phi ih il j: 
+
+Lemma div2_phi ih il j:
   [|fst (diveucl_21 ih il j)|] = [|| WW ih il||] /[|j|].
 Proof.
  generalize (diveucl_21_spec ih il j).
@@ -508,7 +515,7 @@ Qed.
 
 
 Lemma sqrt2_step_correct rec ih il j:
-  2 ^ (Z_of_nat (size - 2)) <= [|ih|] -> 
+  2 ^ (Z_of_nat (size - 2)) <= [|ih|] ->
   0 < [|j|] -> [|| WW ih il||] < ([|j|] + 1) ^ 2 ->
   (forall j1, 0 < [|j1|] < [|j|] ->  [|| WW ih il||] < ([|j1|] + 1) ^ 2 ->
      [|rec ih il j1|] ^ 2 <= [||WW ih il||] < ([|rec ih il j1|] + 1) ^ 2) ->
@@ -526,7 +533,7 @@ Proof.
   apply Zmult_lt_0_compat; auto with zarith.
   apply Zlt_le_trans with (2:= Hih); auto with zarith.
  cbv zeta.
- case_eq (ih < j)%int63;intros Heq.
+ case_eq (ih < j)%int;intros Heq.
  rewrite ltb_spec in Heq.
  2: rewrite <-not_true_iff_false, ltb_spec in Heq.
  2: split; auto.
@@ -535,13 +542,13 @@ Proof.
  2: assert (0 <= [|il|]/[|j|]) by (apply Z_div_pos; auto with zarith).
  2: rewrite Zmult_comm, Z_div_plus_full_l; unfold base; auto with zarith.
  case (Zle_or_lt (2^(Z_of_nat size -1)) [|j|]); intros Hjj.
- case_eq (fst (diveucl_21 ih il j) < j)%int63;intros Heq0.
+ case_eq (fst (diveucl_21 ih il j) < j)%int;intros Heq0.
  2: rewrite <-not_true_iff_false, ltb_spec, div2_phi in Heq0.
  2: split; auto; apply sqrt_test_true; auto with zarith.
  rewrite ltb_spec, div2_phi in Heq0.
  match goal with |- context[rec _ _ ?X] =>
   set (u := X)
- end. 
+ end.
  assert (H: [|u|] = ([|j|] + ([||WW ih il||])/([|j|]))/2).
   unfold u; generalize (addc_spec j (fst (diveucl_21 ih il j)));
   case addc;unfold interp_carry;rewrite div2_phi;simpl zn2z_to_Z.
@@ -561,7 +568,7 @@ Proof.
  apply Hrec; rewrite H; clear u H.
  assert (Hf1: 0 <= [||WW ih il||]/ [|j|]) by (apply Z_div_pos; auto with zarith).
  case (Zle_lt_or_eq 1 ([|j|])); auto with zarith; intros Hf2.
- 2: contradict Heq0; apply Zle_not_lt; rewrite <- Hf2, Zdiv_1_r; auto with zarith.
+ 2: contradict Heq0; apply Zle_not_lt; rewrite <- Hf2, Zdiv_1_r; assert (H10: forall (x:Z), 0 < x -> 1 <= x) by (intros; omega); auto.
  split.
  replace ([|j|] + [||WW ih il||]/ [|j|])%Z with
         (1 * 2 + (([|j|] - 2) + [||WW ih il||] / [|j|])); try ring.
@@ -578,6 +585,7 @@ Proof.
  apply Zle_trans with ([|ih|] * wB); auto with zarith.
  unfold zn2z_to_Z, wB; auto with zarith.
 Qed.
+
 
 
 Lemma iter2_sqrt_correct n rec ih il j:
@@ -602,6 +610,7 @@ Proof.
  apply Zle_trans with (2 ^Z_of_nat n + [|j2|])%Z; auto with zarith.
  apply Zle_0_nat.
 Qed.
+
 
 Lemma sqrt2_spec : forall x y,
        wB/ 4 <= [|x|] ->
@@ -632,7 +641,7 @@ Lemma sqrt2_spec : forall x y,
  generalize (subc_spec il il1).
  case subc; intros il2 Hil2.
  simpl interp_carry in Hil2.
- case_eq (ih1  < ih)%int63;  [idtac | rewrite <- not_true_iff_false];
+ case_eq (ih1  < ih)%int;  [idtac | rewrite <- not_true_iff_false];
   rewrite ltb_spec; intros Heq.
  unfold interp_carry; rewrite Zmult_1_l.
  rewrite Zpower_2, Hihl1, Hil2.
@@ -653,7 +662,7 @@ Lemma sqrt2_spec : forall x y,
  intros H2; split.
  unfold zn2z_to_Z; rewrite <- H2; ring.
  replace (wB + ([|il|] - [|il1|])) with ([||WW ih il||] - ([|s|] * [|s|])).
- rewrite <-Hbin in Hs2; auto with zarith.
+ rewrite <-Hbin in Hs2; assert (([||WW ih il||] < [|s|] * [|s|] + 2 * [|s|] + 1) -> ([||WW ih il||] - [|s|] * [|s|] <= 2 * [|s|])) by omega; auto.
  rewrite Hihl1; unfold zn2z_to_Z; rewrite <- H2; ring.
  unfold interp_carry.
  case (Zle_lt_or_eq [|ih|] [|ih1|]); auto with zarith; intros H.
@@ -670,7 +679,7 @@ Lemma sqrt2_spec : forall x y,
  unfold zn2z_to_Z; ring[Hil2 H].
  replace [|il2|] with ([||WW ih il||] - [||WW ih1 il1||]).
  unfold zn2z_to_Z at 2; rewrite <-Hihl1.
- rewrite <-Hbin in Hs2; auto with zarith.
+ rewrite <-Hbin in Hs2; assert (([||WW ih il||] < [|s|] * [|s|] + 2 * [|s|] + 1) -> ([||WW ih il||] - [|s|] * [|s|] <= 2 * [|s|])) by omega; auto.
  unfold zn2z_to_Z; rewrite H, Hil2; ring.
  unfold interp_carry in Hil2 |- *.
  assert (Hsih: [|ih - 1|] = [|ih|] - 1).
@@ -678,7 +687,7 @@ Lemma sqrt2_spec : forall x y,
   case (to_Z_bounded ih); intros H1 H2.
   split; auto with zarith.
   apply Zle_trans with (wB/4 - 1); auto with zarith.
- case_eq (ih1 < ih - 1)%int63;  [idtac | rewrite <- not_true_iff_false];
+ case_eq (ih1 < ih - 1)%int;  [idtac | rewrite <- not_true_iff_false];
   rewrite ltb_spec, Hsih; intros Heq.
  rewrite Zpower_2, Hihl1.
  case (Zle_lt_or_eq ([|ih1|] + 2) [|ih|]); auto with zarith.
@@ -702,7 +711,7 @@ Lemma sqrt2_spec : forall x y,
  rewrite <-Hil2; ring.
  replace (1 * wB + [|il2|]) with ([||WW ih il||] - [||WW ih1 il1||]).
  unfold zn2z_to_Z at 2; rewrite <-Hihl1.
- rewrite <-Hbin in Hs2; auto with zarith.
+ rewrite <-Hbin in Hs2; assert (([||WW ih il||] < [|s|] * [|s|] + 2 * [|s|] + 1) -> ([||WW ih il||] - [|s|] * [|s|] <= 2 * [|s|])) by omega; auto.
  unfold zn2z_to_Z; rewrite <-H2.
  replace [|il|] with (([|il|] - [|il1|]) + [|il1|]); try ring.
  rewrite <-Hil2; ring.
@@ -730,7 +739,7 @@ Lemma sqrt2_spec : forall x y,
  rewrite <-Hil2; ring.
  replace [|il2|] with ([||WW ih il||] - [||WW ih1 il1||]).
  unfold zn2z_to_Z at 2; rewrite <- Hihl1.
- rewrite <-Hbin in Hs2; auto with zarith.
+ rewrite <-Hbin in Hs2; assert (([||WW ih il||] < [|s|] * [|s|] + 2 * [|s|] + 1) -> ([||WW ih il||] - [|s|] * [|s|] <= 2 * [|s|])) by omega; auto.
  unfold zn2z_to_Z.
  rewrite <-H1.
  ring_simplify.
@@ -747,7 +756,7 @@ Proof.
  reflexivity.
  simpl.
  generalize (to_Z_bounded j)(to_Z_bounded i); intros.
- case_eq (j == 0)%int63.
+ case_eq (j == 0)%int.
  rewrite eqb_spec;intros H1;rewrite H1.
  replace [|0|] with 0;trivial;rewrite Z.abs_eq;auto with zarith.
  rewrite <- not_true_iff_false, eqb_spec;intros.
@@ -766,14 +775,14 @@ Proof.
  unfold Zgcd_bound.
  generalize (to_Z_bounded b).
  destruct [|b|].
- unfold size; auto with zarith.
+ unfold size; intros _; change Int63Lib.size with 63%nat; omega.
  intros (_,H).
  cut (Psize p <= size)%nat; [ omega | rewrite <- Zpower2_Psize; auto].
  intros (H,_); compute in H; elim H; auto.
 Qed.
 
 Lemma head00_spec:  forall x, [|x|] = 0 -> [|head0 x|] = [|digits|].
-Proof. 
+Proof.
  change 0 with [|0|];intros x Heq.
  apply to_Z_inj in Heq;rewrite Heq;trivial.
 Qed.
@@ -785,7 +794,7 @@ Proof.
 Qed.
 
 (* lsr lsl *)
-Lemma lsl_0_l i: 0 << i = 0%int63.
+Lemma lsl_0_l i: 0 << i = 0%int.
 Proof.
  apply to_Z_inj.
  generalize (lsl_spec 0 i).
@@ -799,7 +808,7 @@ Proof.
  apply Zmod_small; apply (to_Z_bounded i).
 Qed.
 
-Lemma lsl_M_r x i (H: (digits <= i = true)%int63) : x << i = 0%int63.
+Lemma lsl_M_r x i (H: (digits <= i = true)%int) : x << i = 0%int.
 Proof.
  apply to_Z_inj.
  rewrite lsl_spec, to_Z_0.
@@ -811,7 +820,7 @@ Proof.
  case (to_Z_bounded digits); auto with zarith.
 Qed.
 
-Lemma lsr_0_l i: 0 >> i = 0%int63.
+Lemma lsr_0_l i: 0 >> i = 0%int.
 Proof.
  apply to_Z_inj.
  generalize (lsr_spec 0 i).
@@ -824,7 +833,7 @@ Proof.
  rewrite lsr_spec, to_Z_0, Zdiv_1_r; auto.
 Qed.
 
-Lemma lsr_M_r x i (H: (digits <= i = true)%int63) : x >> i = 0%int63.
+Lemma lsr_M_r x i (H: (digits <= i = true)%int) : x >> i = 0%int.
 Proof.
  apply to_Z_inj.
  rewrite lsr_spec, to_Z_0.
@@ -837,8 +846,8 @@ Proof.
  apply Zpower_le_monotone; auto with zarith.
 Qed.
 
-Lemma add_le_r m n: 
-  if  (n <= m + n)%int63 then  ([|m|] + [|n|] < wB)%Z else  (wB <= [|m|] + [|n|])%Z.
+Lemma add_le_r m n:
+  if  (n <= m + n)%int then  ([|m|] + [|n|] < wB)%Z else  (wB <= [|m|] + [|n|])%Z.
 Proof.
  case (to_Z_bounded m); intros H1m H2m.
  case (to_Z_bounded n); intros H1n H2n.
@@ -849,20 +858,20 @@ Proof.
      rewrite Zplus_mod, Z_mod_same_full, Zplus_0_r, !Zmod_small; auto with zarith.
      rewrite !Zmod_small; auto with zarith.
      apply f_equal2 with (f := Zmod); auto with zarith.
-   case_eq (n <= m + n)%int63; auto.
+   case_eq (n <= m + n)%int; auto.
    rewrite leb_spec, H1; auto with zarith.
  assert (H1: ([| m + n |] = [|m|] + [|n|])%Z).
    rewrite add_spec, Zmod_small; auto with zarith.
- replace (n <= m + n)%int63 with true; auto.
+ replace (n <= m + n)%int with true; auto.
  apply sym_equal; rewrite leb_spec, H1; auto with zarith.
 Qed.
 
-Lemma lsr_add i m n: ((i >> m) >> n = if n <= m + n then i >> (m + n) else 0)%int63.
+Lemma lsr_add i m n: ((i >> m) >> n = if n <= m + n then i >> (m + n) else 0)%int.
 Proof.
  case (to_Z_bounded m); intros H1m H2m.
  case (to_Z_bounded n); intros H1n H2n.
  case (to_Z_bounded i); intros H1i H2i.
- generalize (add_le_r m n); case (n <= m + n)%int63; intros H.
+ generalize (add_le_r m n); case (n <= m + n)%int; intros H.
    apply to_Z_inj; rewrite !lsr_spec, Zdiv_Zdiv, <- Zpower_exp; auto with zarith.
    rewrite add_spec, Zmod_small; auto with zarith.
  apply to_Z_inj; rewrite !lsr_spec, Zdiv_Zdiv, <- Zpower_exp; auto with zarith.
@@ -872,12 +881,12 @@ Proof.
  apply Zpower2_le_lin; auto with zarith.
 Qed.
 
-Lemma lsl_add i m n: ((i << m) << n = if n <= m + n then i << (m + n) else 0)%int63.
+Lemma lsl_add i m n: ((i << m) << n = if n <= m + n then i << (m + n) else 0)%int.
 Proof.
  case (to_Z_bounded m); intros H1m H2m.
  case (to_Z_bounded n); intros H1n H2n.
  case (to_Z_bounded i); intros H1i H2i.
- generalize (add_le_r m n); case (n <= m + n)%int63; intros H.
+ generalize (add_le_r m n); case (n <= m + n)%int; intros H.
    apply to_Z_inj; rewrite !lsl_spec, Zmult_mod, Zmod_mod, <- Zmult_mod.
    rewrite <-Zmult_assoc, <- Zpower_exp; auto with zarith.
    apply f_equal2 with (f := Zmod); auto.
@@ -885,7 +894,7 @@ Proof.
  apply to_Z_inj; rewrite !lsl_spec, Zmult_mod, Zmod_mod, <- Zmult_mod.
  rewrite <-Zmult_assoc, <- Zpower_exp; auto with zarith.
  unfold wB.
- replace ([|m|] + [|n|])%Z with 
+ replace ([|m|] + [|n|])%Z with
          ((([|m|] + [|n|]) - Z_of_nat size) + Z_of_nat size)%Z.
  2: ring.
  rewrite Zpower_exp, Zmult_assoc, Z_mod_mult; auto with zarith.
@@ -893,7 +902,8 @@ Proof.
  apply Zpower2_lt_lin; auto with zarith.
 Qed.
 
-Coercion b2i (b: bool) : int := if b then 1%int63 else 0%int63.
+
+Coercion b2i (b: bool) : int63 := if b then 1%int else 0%int.
 
 Lemma bit_0 n : bit 0 n = false.
 Proof. unfold bit; rewrite lsr_0_l; auto. Qed.
@@ -904,7 +914,7 @@ Proof.
  rewrite eqb_spec; intros H; rewrite H, lsr_0_r.
  apply refl_equal.
  intros Hn.
- assert (H1n : (1 >> n = 0)%int63); auto.
+ assert (H1n : (1 >> n = 0)%int); auto.
  apply to_Z_inj; rewrite lsr_spec.
  apply Zdiv_small; rewrite to_Z_1; split; auto with zarith.
  change 1%Z with (2^0)%Z.
@@ -925,20 +935,20 @@ Proof.
  rewrite lsl_0_l; apply refl_equal.
 Qed.
 
-Lemma bit_M i n (H: (digits <= n = true)%int63): bit i n = false.
+Lemma bit_M i n (H: (digits <= n = true)%int): bit i n = false.
 Proof. unfold bit; rewrite lsr_M_r; auto. Qed.
 
-Lemma bit_half i n (H: (n < digits = true)%int63) : bit (i>>1) n = bit i (n+1).
+Lemma bit_half i n (H: (n < digits = true)%int) : bit (i>>1) n = bit i (n+1).
 Proof.
  unfold bit.
  rewrite lsr_add.
- case_eq (n <= (1 + n))%int63.
- replace (1+n)%int63 with (n+1)%int63; [auto|idtac].
+ case_eq (n <= (1 + n))%int.
+ replace (1+n)%int with (n+1)%int; [auto|idtac].
  apply to_Z_inj; rewrite !add_spec, Zplus_comm; auto.
  intros H1; assert (H2: n = max_int).
  2: generalize H; rewrite H2; discriminate.
  case (to_Z_bounded n); intros H1n H2n.
- case (Zle_lt_or_eq [|n|] (wB - 1)); auto with zarith; 
+ case (Zle_lt_or_eq [|n|] (wB - 1)); auto with zarith;
    intros H2; apply to_Z_inj; auto.
  generalize (add_le_r 1 n); rewrite H1.
  change [|max_int|] with (wB - 1)%Z.
@@ -980,7 +990,7 @@ Proof.
  rewrite to_Z_eq; auto.
 Qed.
 
-Lemma bit_split i : (i = (i>>1)<<1 + bit i 0)%int63.
+Lemma bit_split i : (i = (i>>1)<<1 + bit i 0)%int.
 Proof.
  apply to_Z_inj.
  rewrite add_spec, lsl_spec, lsr_spec, bit_0_spec, Zplus_mod_idemp_l.
@@ -988,6 +998,7 @@ Proof.
  rewrite Zmult_comm, <-Z_div_mod_eq; auto with zarith.
  rewrite Zmod_small; auto; case (to_Z_bounded i); auto.
 Qed.
+
 
 Lemma bit_eq i1 i2:
   i1 = i2 <-> forall i, bit i1 i = bit i2 i.
@@ -1000,7 +1011,7 @@ Proof.
  intros n IH i1 i2 H1i1 H2i1 H1i2 H2i2 H.
  rewrite (bit_split i1), (bit_split i2).
  rewrite H.
- apply f_equal2 with (f := add); auto.
+ apply f_equal2 with (f := add63); auto.
  apply f_equal2 with (f := lsl); auto.
  apply IH; try rewrite lsr_spec;
    replace (2^[|1|]) with 2%Z;  auto with zarith.
@@ -1017,23 +1028,23 @@ Proof.
 Qed.
 
 Lemma bit_lsr x i j :
- (bit (x >> i) j = if j <= i + j then bit x (i + j) else false)%int63.
+ (bit (x >> i) j = if j <= i + j then bit x (i + j) else false)%int.
 Proof.
  unfold bit; rewrite lsr_add; case leb; auto.
 Qed.
 
-Lemma bit_lsl x i j : bit (x << i) j = 
-(if (j < i) || (digits <= j) then false else bit x (j - i))%int63.
+Lemma bit_lsl x i j : bit (x << i) j =
+(if (j < i) || (digits <= j) then false else bit x (j - i))%int.
 Proof.
  assert (F1: 1 >= 0) by discriminate.
- case_eq (digits <= j)%int63; intros H.
+ case_eq (digits <= j)%int; intros H.
  rewrite orb_true_r, bit_M; auto.
  set (d := [|digits|]).
  case (Zle_or_lt d [|j|]); intros H1.
  case (leb_spec digits j); rewrite H; auto with zarith.
  intros _ HH; generalize (HH H1); discriminate.
  clear H.
- generalize (ltb_spec j i); case ltb; intros H2; unfold bit; simpl.
+ generalize (ltb_spec j i); case ltb; intros H2; unfold bit; [change (if true || false then false else negb (is_zero ((x >> (j - i)) << (digits - 1)))) with false | change (if false || false then false else negb (is_zero ((x >> (j - i)) << (digits - 1)))) with (negb (is_zero ((x >> (j - i)) << (digits - 1))))].
  assert (F2: ([|j|] < [|i|])%Z) by (case H2; auto); clear H2.
  replace (is_zero (((x << i) >> j) << (digits - 1))) with true; auto.
  case (to_Z_bounded j); intros  H1j H2j.
@@ -1068,22 +1079,22 @@ Proof.
  replace d with ((d - [|i|]) + [|i|])%Z.
  2: ring.
  case (to_Z_bounded i); intros  H1i H2i.
- rewrite Zpower_exp; auto with zarith.
+ rewrite Zpower_exp; [ |apply Z.le_ge; lia|apply Z.le_ge; assumption].
  rewrite Zmult_mod_distr_r.
  case (to_Z_bounded j); intros  H1j H2j.
  replace [|j - i|] with ([|j|] - [|i|])%Z.
  2: rewrite sub_spec, Zmod_small; auto with zarith.
  set (d1 := (d - [|i|])%Z).
  set (d2 := ([|j|] - [|i|])%Z).
- pattern [|j|] at 1; 
+ pattern [|j|] at 1;
    replace [|j|] with (d2 + [|i|])%Z.
  2: unfold d2; ring.
  rewrite Zpower_exp; auto with zarith.
  rewrite Zdiv_mult_cancel_r; auto with zarith.
  2: unfold d2; auto with zarith.
  rewrite (Z_div_mod_eq [|x|] (2^d1)) at 2; auto with zarith.
- 2: apply Zlt_gt; apply Zpower_gt_0; unfold d1; auto with zarith.
- pattern d1 at 2; 
+ 2: apply Zlt_gt; apply Zpower_gt_0; unfold d1; lia.
+ pattern d1 at 2;
    replace d1 with (d2 + (1+ (d - [|j|] - 1)))%Z.
  2: unfold d1, d2; ring.
  rewrite Zpower_exp; auto with zarith.
@@ -1096,6 +1107,7 @@ Proof.
  rewrite <-!Zmult_assoc, Zmult_comm, Z_mod_mult, Zplus_0_l; auto.
 Qed.
 
+
 Lemma bit_b2i (b: bool) i : bit b i = (i == 0) && b.
 Proof.
  case b; unfold bit; simpl b2i.
@@ -1103,7 +1115,7 @@ Proof.
  rewrite lsr_1; case (i == 0); auto.
 Qed.
 
-Lemma bit_or_split i : (i = (i>>1)<<1 lor bit i 0)%int63.
+Lemma bit_or_split i : (i = (i>>1)<<1 lor bit i 0)%int.
 Proof.
  rewrite bit_eq.
  intros n; rewrite lor_spec.
@@ -1112,12 +1124,12 @@ Proof.
  case (Zle_lt_or_eq _ _ Hi).
  2: replace 0%Z with [|0|]; auto; rewrite to_Z_eq.
  2: intros H; rewrite <-H.
- 2: replace (0 < 1)%int63 with true; auto.
+ 2: replace (0 < 1)%int with true; auto.
  intros H; clear Hi.
  case_eq (n == 0).
  rewrite eqb_spec; intros H1; generalize H; rewrite H1; discriminate.
  intros _; rewrite orb_false_r.
- case_eq (n < 1)%int63.
+ case_eq (n < 1)%int.
  rewrite ltb_spec, to_Z_1; intros HH; contradict HH; auto with zarith.
  intros _.
  generalize (@bit_M i n); case leb.
@@ -1127,7 +1139,7 @@ Proof.
  assert (F1: [|n - 1|] = ([|n|] - 1)%Z).
  rewrite sub_spec, Zmod_small; rewrite to_Z_1; auto with zarith.
  generalize (add_le_r 1 (n - 1)); case leb; rewrite F1, to_Z_1; intros HH.
- replace (1 + (n -1))%int63 with n; auto.
+ replace (1 + (n -1))%int with n; auto.
  apply to_Z_inj; rewrite add_spec, F1, Zmod_small; rewrite to_Z_1;
   auto with zarith.
  rewrite bit_M; auto; rewrite leb_spec.
@@ -1169,13 +1181,13 @@ Qed.
 
 (* More land *)
 
-Lemma land_0_l i: 0 land i = 0%int63.
+Lemma land_0_l i: 0 land i = 0%int.
 Proof.
  apply bit_eq; intros n.
  rewrite land_spec, bit_0; auto.
 Qed.
 
-Lemma land_0_r i: i land 0 = 0%int63.
+Lemma land_0_r i: i land 0 = 0%int.
 Proof.
  apply bit_eq; intros n.
  rewrite land_spec, bit_0, andb_false_r; auto.
@@ -1187,6 +1199,7 @@ Proof.
  apply bit_eq; intros n.
  rewrite !land_spec, andb_assoc; auto.
 Qed.
+
 
 Lemma land_comm i j : i land j = j land i.
 Proof.
@@ -1272,21 +1285,21 @@ Lemma land_lsr i1 i2 i: (i1 land i2) >> i = (i1 >> i) land (i2 >> i).
 Proof.
  apply bit_eq; intros n.
  rewrite land_spec, !bit_lsr, land_spec.
- case (_ <= _)%int63; auto.
+ case (_ <= _)%int; auto.
 Qed.
 
 Lemma lor_lsr i1 i2 i: (i1 lor i2) >> i = (i1 >> i) lor (i2 >> i).
 Proof.
  apply bit_eq; intros n.
  rewrite lor_spec, !bit_lsr, lor_spec.
- case (_ <= _)%int63; auto.
+ case (_ <= _)%int; auto.
 Qed.
 
 Lemma lxor_lsr i1 i2 i: (i1 lxor i2) >> i = (i1 >> i) lxor (i2 >> i).
 Proof.
  apply bit_eq; intros n.
  rewrite lxor_spec, !bit_lsr, lxor_spec.
- case (_ <= _)%int63; auto.
+ case (_ <= _)%int; auto.
 Qed.
 
 Lemma is_even_and i j : is_even (i land j) = is_even i || is_even j.
@@ -1304,25 +1317,25 @@ Proof.
  rewrite !is_even_bit, lxor_spec; do 2 case bit; auto.
 Qed.
 
-Lemma lsl_add_distr x y n: (x + y) << n = ((x << n) + (y << n))%int63.
+Lemma lsl_add_distr x y n: (x + y) << n = ((x << n) + (y << n))%int.
 Proof.
  apply to_Z_inj; rewrite !lsl_spec, !add_spec, Zmult_mod_idemp_l.
  rewrite !lsl_spec, <-Zplus_mod.
  apply f_equal2 with (f := Zmod); auto with zarith.
 Qed.
 
-Lemma add_assoc x y z: (x + (y + z) = (x + y) + z)%int63.
+Lemma add_assoc x y z: (x + (y + z) = (x + y) + z)%int.
 Proof.
  apply to_Z_inj; rewrite !add_spec.
  rewrite Zplus_mod_idemp_l, Zplus_mod_idemp_r, Zplus_assoc; auto.
 Qed.
 
-Lemma add_comm x y: (x + y = y + x)%int63.
+Lemma add_comm x y: (x + y = y + x)%int.
 Proof.
  apply to_Z_inj; rewrite !add_spec, Zplus_comm; auto.
 Qed.
 
-Lemma lsr_add_distr x y n: (x + y) << n = ((x << n) + (y << n))%int63.
+Lemma lsr_add_distr x y n: (x + y) << n = ((x << n) + (y << n))%int.
 Proof.
  apply to_Z_inj.
  rewrite add_spec, !lsl_spec, add_spec.
@@ -1330,7 +1343,7 @@ Proof.
  apply f_equal2 with (f := Zmod); auto with zarith.
 Qed.
 
-Lemma is_even_add x y : 
+Lemma is_even_add x y :
   is_even (x + y) = negb (xorb (negb (is_even x)) (negb (is_even y))).
 Proof.
  assert (F : [|x + y|] mod 2 = ([|x|] mod 2 + [|y|] mod 2) mod 2).
@@ -1356,13 +1369,13 @@ Proof.
  rewrite <-is_even_bit, is_even_add, !is_even_bit.
  do 2 case bit; auto.
 Qed.
- 
-Lemma add_cancel_l x y z : (x + y = x + z)%int63 -> y = z.
+
+Lemma add_cancel_l x y z : (x + y = x + z)%int -> y = z.
 Proof.
- intros H; case (to_Z_bounded x); case (to_Z_bounded y); case (to_Z_bounded z); 
+ intros H; case (to_Z_bounded x); case (to_Z_bounded y); case (to_Z_bounded z);
   intros H1z H2z H1y H2y H1x H2x.
  generalize (add_le_r y x) (add_le_r z x); rewrite (add_comm y x), H, (add_comm z x).
- case_eq  (x <= x + z)%int63; intros H1 H2 H3.
+ case_eq  (x <= x + z)%int; intros H1 H2 H3.
  apply to_Z_inj; generalize H; rewrite <-to_Z_eq, !add_spec, !Zmod_small; auto with zarith.
  apply to_Z_inj; assert ([|x|] + [|y|] = [|x|] + [|z|]); auto with zarith.
  assert (F1: wB > 0) by apply refl_equal.
@@ -1380,7 +1393,7 @@ Proof.
  generalize (Zdiv_lt_upper_bound _ _ _ (Zgt_lt _ _ F1) F2); auto with zarith.
 Qed.
 
-Lemma add_cancel_r x y z : (y + x = z + x)%int63 -> y = z.
+Lemma add_cancel_r x y z : (y + x = z + x)%int -> y = z.
 Proof.
   rewrite !(fun t => add_comm t x); intros Hl; apply (add_cancel_l x); auto.
 Qed.
@@ -1393,7 +1406,7 @@ Proof.
     rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
     apply Zdiv_lt_upper_bound; auto with zarith.
   rewrite (bit_split x) at 1.
-  rewrite add_spec, Zmod_small, lsl_spec, to_Z_1, Zpower_1_r, Zmod_small; 
+  rewrite add_spec, Zmod_small, lsl_spec, to_Z_1, Zpower_1_r, Zmod_small;
     split; auto with zarith.
   change wB with ((wB/2)*2); auto with zarith.
   rewrite lsl_spec, to_Z_1, Zpower_1_r, Zmod_small; auto with zarith.
@@ -1405,13 +1418,13 @@ Proof.
   case bit; discriminate.
 Qed.
 
-Lemma lor_le x y : (y <= x lor y)%int63 = true.
+Lemma lor_le x y : (y <= x lor y)%int = true.
 Proof.
  generalize x y (to_Z_bounded x) (to_Z_bounded y); clear x y.
  unfold wB; elim size.
  replace (2^Z_of_nat 0) with 1%Z; auto with zarith.
- intros x y Hx Hy; replace x with 0%int63.
- replace y with 0%int63; auto.
+ intros x y Hx Hy; replace x with 0%int.
+ replace y with 0%int; auto.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  intros n IH x y; rewrite inj_S.
@@ -1430,14 +1443,14 @@ Proof.
 Qed.
 
 
-Lemma bit_add_or x y: 
-  (forall n, bit x n = true -> bit y n = true -> False) <-> (x + y)%int63= x lor y.
+Lemma bit_add_or x y:
+  (forall n, bit x n = true -> bit y n = true -> False) <-> (x + y)%int= x lor y.
 Proof.
  generalize x y (to_Z_bounded x) (to_Z_bounded y); clear x y.
  unfold wB; elim size.
  replace (2^Z_of_nat 0) with 1%Z; auto with zarith.
- intros x y Hx Hy; replace x with 0%int63.
- replace y with 0%int63.
+ intros x y Hx Hy; replace x with 0%int.
+ replace y with 0%int.
  split; auto; intros _ n; rewrite !bit_0; discriminate.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
@@ -1446,26 +1459,26 @@ Proof.
  intros Hx Hy.
  split.
  intros Hn.
- assert (F1: ((x >> 1) + (y >> 1))%int63 = (x >> 1) lor (y >> 1)).
+ assert (F1: ((x >> 1) + (y >> 1))%int = (x >> 1) lor (y >> 1)).
    apply IH.
    rewrite lsr_spec, Zpower_1_r; split; auto with zarith.
    apply Zdiv_lt_upper_bound; auto with zarith.
    rewrite lsr_spec, Zpower_1_r; split; auto with zarith.
    apply Zdiv_lt_upper_bound; auto with zarith.
    intros m H1 H2.
-   case_eq (digits <= m)%int63;  [idtac | rewrite <- not_true_iff_false];
+   case_eq (digits <= m)%int;  [idtac | rewrite <- not_true_iff_false];
      intros Heq.
    rewrite bit_M in H1; auto; discriminate.
    rewrite leb_spec in Heq.
-   apply (Hn (m + 1)%int63);
+   apply (Hn (m + 1)%int);
      rewrite <-bit_half; auto; rewrite ltb_spec; auto with zarith.
  rewrite (bit_split (x lor y)), lor_lsr, <- F1, lor_spec.
- replace (b2i (bit x 0 || bit y 0)) with (bit x 0 + bit y 0)%int63.
- 2: generalize (Hn 0%int63); do 2 case bit; auto; intros [ ]; auto.
+ replace (b2i (bit x 0 || bit y 0)) with (bit x 0 + bit y 0)%int.
+ 2: generalize (Hn 0%int); do 2 case bit; auto; intros [ ]; auto.
  rewrite lsl_add_distr.
  rewrite (bit_split x) at 1; rewrite (bit_split y) at 1.
- rewrite <-!add_assoc; apply f_equal2 with (f := add); auto.
- rewrite add_comm, <-!add_assoc; apply f_equal2 with (f := add); auto.
+ rewrite <-!add_assoc; apply f_equal2 with (f := add63); auto.
+ rewrite add_comm, <-!add_assoc; apply f_equal2 with (f := add63); auto.
  rewrite add_comm; auto.
  intros Heq.
  generalize (add_le_r x y); rewrite Heq, lor_le; intro Hb.
@@ -1474,7 +1487,7 @@ Proof.
          <-!add_assoc, (add_comm (bit y 0)), add_assoc, <-lsr_add_distr.
  rewrite (bit_split (x lor y)), lor_spec.
  intros Heq.
- assert (F: (bit x 0 + bit y 0)%int63 = (bit x 0 || bit y 0)).
+ assert (F: (bit x 0 + bit y 0)%int = (bit x 0 || bit y 0)).
   assert (F1: (2 | wB)) by (apply Zpower_divide; apply refl_equal).
   assert (F2: 0 < wB) by (apply refl_equal).
   assert (F3: [|bit x  0 + bit y 0|] mod 2 = [|bit x 0 || bit y 0|] mod 2).
@@ -1492,11 +1505,11 @@ Proof.
  rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
  apply Zdiv_lt_upper_bound; auto with zarith.
  intros _ HH m; case (to_Z_bounded m); intros H1m H2m.
- case_eq (digits <= m)%int63.
+ case_eq (digits <= m)%int.
  intros Hlm; rewrite bit_M; auto; discriminate.
  rewrite <- not_true_iff_false, leb_spec; intros Hlm.
  case (Zle_lt_or_eq 0 [|m|]); auto; intros Hm.
- replace m with ((m -1) + 1)%int63.
+ replace m with ((m -1) + 1)%int.
  rewrite <-(bit_half x), <-(bit_half y); auto with zarith.
  apply HH.
  rewrite <-lor_lsr.
@@ -1522,7 +1535,7 @@ Proof.
  rewrite ltb_spec, sub_spec, to_Z_1, Zmod_small; auto with zarith.
  apply to_Z_inj.
  rewrite add_spec, sub_spec, Zplus_mod_idemp_l, to_Z_1, Zmod_small; auto with zarith.
- replace m with 0%int63.
+ replace m with 0%int.
  intros Hbx Hby; generalize F; rewrite <-to_Z_eq, Hbx, Hby; discriminate.
  apply to_Z_inj; auto.
 Qed.
@@ -1541,13 +1554,13 @@ Proof.
  generalize (add_le_r (digits - p) n).
  case leb; try discriminate.
  rewrite sub_spec, Zmod_small; auto with zarith; intros H1.
- case_eq (n < p)%int63; try discriminate.
+ case_eq (n < p)%int; try discriminate.
  rewrite <- not_true_iff_false, ltb_spec; intros H2.
  case leb; try discriminate.
  intros _; rewrite bit_M; try discriminate.
  rewrite leb_spec, add_spec, Zmod_small, sub_spec, Zmod_small; auto with zarith.
  rewrite sub_spec, Zmod_small; auto with zarith.
-Qed. 
+Qed.
 
 Lemma lxor_comm: forall i1 i2 : int, i1 lxor i2 = i2 lxor i1.
 Proof.
@@ -1572,7 +1585,7 @@ Proof.
  intros;rewrite lxor_comm;apply lxor_0_l.
 Qed.
 
-Lemma lxor_nilpotent: forall i, i lxor i = 0%int63.
+Lemma lxor_nilpotent: forall i, i lxor i = 0%int.
 Proof.
  intros;apply bit_eq;intros.
  rewrite lxor_spec, xorb_nilpotent, bit_0;trivial.
@@ -1589,7 +1602,7 @@ Proof.
  intros;rewrite lor_comm;apply lor_0_l.
 Qed.
 
-Lemma reflect_leb : forall i j, reflect ([|i|] <= [|j|])%Z (i <= j)%int63.
+Lemma reflect_leb : forall i j, reflect ([|i|] <= [|j|])%Z (i <= j)%int.
 Proof.
  intros; apply iff_reflect.
  symmetry;apply leb_spec.
@@ -1601,7 +1614,7 @@ Proof.
  symmetry;apply eqb_spec.
 Qed.
 
-Lemma reflect_ltb : forall i j, reflect ([|i|] < [|j|])%Z (i < j)%int63.
+Lemma reflect_ltb : forall i j, reflect ([|i|] < [|j|])%Z (i < j)%int.
 Proof.
  intros; apply iff_reflect.
  symmetry;apply ltb_spec.
@@ -1620,18 +1633,18 @@ Proof.
  assert (W2 := to_Z_bounded n);clear n0.
  assert (W3 : [|n-1|] = [|n|] - 1).
    rewrite sub_spec, to_Z_1, Zmod_small;trivial;omega.
- assert (H1 : n = ((n-1)+1)%int63).
+ assert (H1 : n = ((n-1)+1)%int).
    apply to_Z_inj;rewrite add_spec, W3.
    rewrite Zmod_small;rewrite to_Z_1; omega.
  destruct (reflect_ltb (n-1) digits).
   rewrite <- ltb_spec in l.
   rewrite H1, <- !bit_half, H;trivial.
- assert ((digits <= n)%int63 = true).
+ assert ((digits <= n)%int = true).
   rewrite leb_spec;omega.
  rewrite !bit_M;trivial.
 Qed.
 
-Lemma lsr1_bit : forall i k, (bit i k >> 1 = 0)%int63.
+Lemma lsr1_bit : forall i k, (bit i k >> 1 = 0)%int.
 Proof.
  intros;destruct (bit i k);trivial.
 Qed.
@@ -1651,7 +1664,7 @@ Qed.
 Local Open Scope int63_scope.
 
 Lemma succ_max_int : forall x,
-  (x < max_int)%int63 = true -> (0 < x + 1)%int63 = true.
+  (x < max_int)%int = true -> (0 < x + 1)%int = true.
 Proof.
  intros x;rewrite ltb_spec, ltb_spec, add_spec.
  intros; assert (W:= to_Z_bounded x); assert (W1:= to_Z_bounded max_int).
@@ -1659,7 +1672,7 @@ Proof.
  rewrite Zmod_small;omega.
 Qed.
 
-Lemma leb_max_int : forall x, (x <= max_int)%int63 = true.
+Lemma leb_max_int : forall x, (x <= max_int)%int = true.
 Proof.
  intros x;rewrite leb_spec;assert (W:= to_Z_bounded x).
  change [|max_int|] with (wB - 1)%Z;omega.
@@ -1728,7 +1741,7 @@ Proof.
  intros x y;assert (W:= to_Z_bounded x);assert (W0:= to_Z_bounded y);
    rewrite leb_spec;intros;rewrite sub_spec, Zmod_small;omega.
 Qed.
- 
+
 Lemma not_0_ltb : forall x, x <> 0 <-> 0 < x = true.
 Proof.
  intros x;rewrite ltb_spec, to_Z_0;assert (W:=to_Z_bounded x);split.
@@ -1749,7 +1762,7 @@ Proof.
  generalize (leb_ltb_trans _ _ _ (leb_0 y) H).
  rewrite ltb_spec, leb_spec, to_Z_0, to_Z_1;auto with zarith.
 Qed.
- 
+
 Lemma to_Z_sub_1_diff : forall x, x <> 0 -> ([| x - 1|] = [|x|] - 1)%Z.
 Proof.
   intros x;rewrite not_0_ltb;apply to_Z_sub_1.
@@ -1760,7 +1773,7 @@ Proof.
   intros x y;assert (W:= to_Z_bounded x);assert (W0:= to_Z_bounded y);
    rewrite ltb_spec;intros;rewrite add_spec, to_Z_1, Zmod_small;omega.
 Qed.
- 
+
 Lemma ltb_leb_sub1 : forall x i,  x <> 0 -> (i < x = true <-> i <= x - 1 = true).
 Proof.
  intros x i Hdiff.
@@ -1778,8 +1791,8 @@ Qed.
 
 (** Iterators *)
 
-Lemma foldi_gt : forall A f from to (a:A), 
-  (to < from)%int63 = true -> foldi f from to a = a.
+Lemma foldi_gt : forall A f from to (a:A),
+  (to < from)%int = true -> foldi f from to a = a.
 Proof.
  intros;unfold foldi;rewrite foldi_cont_gt;trivial.
 Qed.
@@ -1790,14 +1803,14 @@ Proof.
  intros;unfold foldi;rewrite foldi_cont_eq;trivial.
 Qed.
 
-Lemma foldi_lt : forall A f from to (a:A), 
-  (from < to)%int63 = true -> foldi f from to a = foldi f (from + 1) to (f from a).
+Lemma foldi_lt : forall A f from to (a:A),
+  (from < to)%int = true -> foldi f from to a = foldi f (from + 1) to (f from a).
 Proof.
  intros;unfold foldi;rewrite foldi_cont_lt;trivial.
 Qed.
 
-Lemma fold_gt : forall A f from to (a:A), 
-  (to < from)%int63 = true -> fold f from to a = a.
+Lemma fold_gt : forall A f from to (a:A),
+  (to < from)%int = true -> fold f from to a = a.
 Proof.
  intros;apply foldi_gt;trivial.
 Qed.
@@ -1808,14 +1821,14 @@ Proof.
  intros;apply foldi_eq;trivial.
 Qed.
 
-Lemma fold_lt : forall A f from to (a:A), 
-  (from < to)%int63 = true -> fold f from to a = fold f (from + 1) to (f a).
+Lemma fold_lt : forall A f from to (a:A),
+  (from < to)%int = true -> fold f from to a = fold f (from + 1) to (f a).
 Proof.
  intros;apply foldi_lt;trivial.
 Qed.
 
 Lemma foldi_down_lt : forall A f from downto (a:A),
-  (from < downto)%int63 = true -> foldi_down f from downto a = a.
+  (from < downto)%int = true -> foldi_down f from downto a = a.
 Proof.
  intros;unfold foldi_down;rewrite foldi_down_cont_lt;trivial.
 Qed.
@@ -1827,15 +1840,15 @@ Proof.
 Qed.
 
 Lemma foldi_down_gt : forall A f from downto (a:A),
-  (downto < from)%int63 = true-> 
-  foldi_down f from downto a = 
+  (downto < from)%int = true->
+  foldi_down f from downto a =
   foldi_down f (from-1) downto (f from a).
 Proof.
  intros;unfold foldi_down;rewrite foldi_down_cont_gt;trivial.
 Qed.
 
 Lemma fold_down_lt : forall A f from downto (a:A),
-  (from < downto)%int63 = true -> fold_down f from downto a = a.
+  (from < downto)%int = true -> fold_down f from downto a = a.
 Proof.
  intros;apply foldi_down_lt;trivial.
 Qed.
@@ -1847,8 +1860,8 @@ Proof.
 Qed.
 
 Lemma fold_down_gt : forall A f from downto (a:A),
-  (downto < from)%int63 = true-> 
-  fold_down f from downto a = 
+  (downto < from)%int = true->
+  fold_down f from downto a =
   fold_down f (from-1) downto (f a).
 Proof.
  intros;apply foldi_down_gt;trivial.
@@ -1857,8 +1870,8 @@ Qed.
 Require Import Wf_Z.
 
 Lemma int_ind : forall (P:int -> Type),
-  P 0%int63 ->
-  (forall i, (i < max_int)%int63 = true -> P i -> P (i + 1)%int63) ->
+  P 0%int ->
+  (forall i, (i < max_int)%int = true -> P i -> P (i + 1)%int) ->
   forall i, P i.
 Proof.
  intros P HP0 Hrec.
@@ -1868,7 +1881,7 @@ Proof.
  assert (W:= to_Z_bounded i).
  assert ([|i - 1|] = [|i|] - 1)%Z.
   rewrite sub_spec, Zmod_small;rewrite to_Z_1;auto with zarith.
- assert (i = i - 1 + 1)%int63.
+ assert (i = i - 1 + 1)%int.
   apply to_Z_inj.
   rewrite add_spec, H2.
   rewrite Zmod_small;rewrite to_Z_1;auto with zarith.
@@ -1878,7 +1891,7 @@ Proof.
  intros;apply (X [|i|]);trivial.
  destruct (to_Z_bounded i);trivial.
 Qed.
- 
+
 Lemma int_ind_bounded : forall (P:int-> Type) min max,
   min <= max =true ->
   P max ->
@@ -1888,22 +1901,22 @@ Proof.
  intros P min max Hle.
  intros Hmax Hrec.
  assert (W1:= to_Z_bounded max);assert (W2:= to_Z_bounded min).
- assert (forall z, (0 <= z)%Z -> (z <= [|max|] - [|min|])%Z  -> forall i, z = [|i|] -> P (max - i)%int63).
+ assert (forall z, (0 <= z)%Z -> (z <= [|max|] - [|min|])%Z  -> forall i, z = [|i|] -> P (max - i)%int).
  intros z H1;pattern z;apply natlike_rec2;intros;trivial.
- assert (max - i = max)%int63.
+ assert (max - i = max)%int.
   apply to_Z_inj;rewrite sub_spec, <- H0, Zminus_0_r, Zmod_small;auto using to_Z_bounded.
  rewrite H2;trivial.
  assert (W3:= to_Z_bounded i);apply Hrec.
  rewrite leb_spec,add_spec, sub_spec, to_Z_1, (Zmod_small ([|max|] - [|i|])), Zmod_small;auto with zarith.
  rewrite ltb_spec, sub_spec, Zmod_small;auto with zarith.
- assert (max - i + 1 = max - (i - 1))%int63.
+ assert (max - i + 1 = max - (i - 1))%int.
   apply to_Z_inj;rewrite add_spec, !sub_spec, to_Z_1.
   rewrite (Zmod_small ([|max|] - [|i|]));auto with zarith.
   rewrite (Zmod_small ([|i|] - 1));auto with zarith.
   apply f_equal2;auto with zarith.
  rewrite H3;apply X;auto with zarith.
  rewrite sub_spec, to_Z_1, <- H2, Zmod_small;auto with zarith.
- rewrite leb_spec in Hle;assert (min = max - (max - min))%int63.
+ rewrite leb_spec in Hle;assert (min = max - (max - min))%int.
   apply to_Z_inj.
   rewrite !sub_spec, !Zmod_small;auto with zarith.
   rewrite Zmod_small;auto with zarith.
@@ -1933,11 +1946,12 @@ Proof.
  rewrite foldi_cont_gt;trivial;apply Ha;rewrite <- ltb_spec;trivial.
 Qed.
 
-Lemma of_pos_spec : forall p, [|of_pos p|] = Zpos p mod wB. 
+
+Lemma of_pos_spec : forall p, [|of_pos p|] = Zpos p mod wB.
 Proof.
  unfold of_pos.
  unfold wB.
- assert (forall k, (k <= size)%nat -> 
+ assert (forall k, (k <= size)%nat ->
    forall p : positive, [|of_pos_rec k p|] = Zpos p mod 2 ^ Z_of_nat k).
   induction k.
   simpl;intros;rewrite to_Z_0,Zmod_1_r;trivial.
@@ -1969,7 +1983,7 @@ Transparent Z_of_nat.
   intros n H1 H2.
   rewrite bit_1, eqb_spec in H2;subst.
   rewrite bit_lsl in H1;discriminate H1.
-  
+
   change (Zpos p~0) with (2*(Zpos p))%Z.
   rewrite lsl_spec, IHk, to_Z_1.
   rewrite Zmult_comm, Zmod_small.
@@ -1988,7 +2002,7 @@ Transparent Z_of_nat.
   split;auto with zarith.
   apply Zpower_gt_1;auto with zarith.
   rewrite inj_S;auto with zarith.
-  
+
   apply H;auto with zarith.
 Qed.
 
@@ -2036,15 +2050,15 @@ Proof.
  apply foldi_cont_ZInd;trivial.
 Qed.
 
-Lemma foldi_ZInd : forall A (P : Z -> A -> Prop) f min max a,  
+Lemma foldi_ZInd : forall A (P : Z -> A -> Prop) f min max a,
   (max < min = true -> P ([|max|] + 1)%Z a) ->
   P [|min|] a ->
-  (forall i a, min <= i = true -> i <= max = true -> 
+  (forall i a, min <= i = true -> i <= max = true ->
       P [|i|] a -> P ([|i|] + 1)%Z (f i a)) ->
   P ([|max|]+1)%Z (foldi f min max a).
 Proof.
  unfold foldi;intros A P f min max a Hlt;intros.
- set (P' z cont := 
+ set (P' z cont :=
        if Zlt_bool [|max|] z then cont = (fun a0 : A => a0)
        else forall a, P z a -> P ([|max|]+1)%Z (cont a)).
  assert (P' [|min|] (foldi_cont (fun (i : int) (cont : A -> A) (a0 : A) => cont (f i a0)) min
@@ -2062,17 +2076,17 @@ Proof.
  rewrite <- Zlt_is_lt_bool, <- ltb_spec;intros;rewrite foldi_cont_gt;auto.
 Qed.
 
-Lemma foldi_Ind : forall A (P : int -> A -> Prop) f min max a,  
+Lemma foldi_Ind : forall A (P : int -> A -> Prop) f min max a,
   (max < max_int = true) ->
   (max < min = true -> P (max + 1) a) ->
   P min a ->
-  (forall i a, min <= i = true -> i <= max = true -> 
+  (forall i a, min <= i = true -> i <= max = true ->
       P i a -> P (i + 1) (f i a)) ->
   P (max+1) (foldi f min max a).
 Proof.
  intros.
  set (P' z a := (0 <= z < wB)%Z -> P (of_Z z) a).
- assert (W:= to_Z_add_1 _ _ H). 
+ assert (W:= to_Z_add_1 _ _ H).
  assert (P' ([|max|]+1)%Z (foldi f min max a)).
  apply foldi_ZInd;unfold P';intros.
  rewrite <- W, of_to_Z;auto.
@@ -2102,7 +2116,7 @@ Qed.
 
 Lemma foldi_down_cont_ZInd :
    forall A B (P: Z -> (A -> B) -> Prop) (f:int -> (A -> B) -> (A -> B)) max min cont,
-   (forall z, (z < [|min|])%Z -> P z cont) -> 
+   (forall z, (z < [|min|])%Z -> P z cont) ->
    (forall i cont, min <= i = true -> i <= max = true -> P ([|i|] - 1)%Z cont -> P [|i|] (f i cont)) ->
    P [|max|] (foldi_down_cont f max min cont).
 Proof.
@@ -2150,12 +2164,12 @@ Qed.
 Lemma foldi_down_ZInd :
    forall A (P: Z -> A -> Prop) (f:int -> A -> A) max min a,
    (max < min = true -> P ([|min|] - 1)%Z a) ->
-   (P [|max|] a) -> 
+   (P [|max|] a) ->
    (forall i a, min <= i = true -> i <= max = true -> P [|i|]%Z a -> P ([|i|]-1)%Z (f i a)) ->
    P ([|min|] - 1)%Z (foldi_down f max min a).
 Proof.
  unfold foldi_down;intros A P f max min a Hlt;intros.
- set (P' z cont := 
+ set (P' z cont :=
        if Zlt_bool z [|min|] then cont = (fun a0 : A => a0)
        else forall a, P z a -> P ([|min|] - 1)%Z (cont a)).
  assert (P' [|max|] (foldi_down_cont (fun (i : int) (cont : A -> A) (a0 : A) => cont (f i a0)) max
@@ -2193,13 +2207,13 @@ Lemma foldi_down_Ind :
    forall A (P: int -> A -> Prop) (f:int -> A -> A) max min a,
    0 < min = true ->
    (max < min = true -> P (min - 1) a) ->
-   (P max a) -> 
+   (P max a) ->
    (forall i a, min <= i = true -> i <= max = true -> P i a -> P (i - 1) (f i a)) ->
    P (min - 1) (foldi_down f max min a).
 Proof.
  intros.
  set (P' z a := (0 <= z < wB)%Z -> P (of_Z z) a).
- assert (W:= to_Z_sub_1 _ _ H). 
+ assert (W:= to_Z_sub_1 _ _ H).
  assert (P' ([|min|]-1)%Z (foldi_down f max min a)).
  apply foldi_down_ZInd;unfold P';intros.
  rewrite <- W, of_to_Z;auto.
@@ -2211,13 +2225,13 @@ Proof.
  unfold P' in H3;rewrite <- W, of_to_Z in H3;apply H3;apply to_Z_bounded.
 Qed.
 
-Lemma foldi_down_min : 
+Lemma foldi_down_min :
   forall A f min max (a:A),
   min < max_int = true->
   (min <= max) = true ->
   foldi_down f max min a = f min (foldi_down f max (min + 1) a).
 Proof.
-  intros. 
+  intros.
   set (P:= fun i => i <= max - min = true ->
        forall a, foldi_down f (min + i) min a = f min (foldi_down f (min + i) (min + 1) a)).
   assert (min < min + 1 = true).
@@ -2230,7 +2244,7 @@ Proof.
     intros i Hi Hrec Hi1 a'.
     rewrite add_assoc.
     assert (Wi:= to_Z_add_1 _ _ Hi).
-    assert (Wmin:= to_Z_add_1 _ _ H). 
+    assert (Wmin:= to_Z_add_1 _ _ H).
     assert ((min + 1) <= (min + i + 1) = true).
       assert (W1 := to_Z_bounded min); assert (W2:= to_Z_bounded max); assert (W3:= to_Z_bounded i).
       replace (min + i + 1) with (min + 1 + i).
@@ -2247,7 +2261,7 @@ Proof.
       apply Hrec.
       apply leb_trans with (i+1);[rewrite leb_spec;omega | trivial].
       apply to_Z_inj;rewrite sub_spec, (add_spec (min + i)), to_Z_1, Zminus_mod_idemp_l.
-      replace ([|min + i|] + 1 - 1)%Z with [|min + i|] by ring.
+      assert (H100: forall (x:Z), (x + 1 - 1)%Z = x) by (intros; ring). rewrite H100.
       rewrite Zmod_small;auto using to_Z_bounded.
       apply leb_ltb_trans with (2:= Hlt).
       rewrite leb_spec;omega.
@@ -2513,7 +2527,7 @@ Proof.
 Qed.
 
 
-Lemma forallb_spec : forall f from to, 
+Lemma forallb_spec : forall f from to,
   forallb f from to = true <->
   forall i, from <= i = true -> i <= to = true -> f i = true.
 Proof.
@@ -2568,10 +2582,11 @@ Proof.
  rewrite H2, H;trivial.
 Qed.
 
-Lemma bit_max_int : forall i, (i < digits)%int63 = true -> bit max_int i = true.
+
+Lemma bit_max_int : forall i, (i < digits)%int = true -> bit max_int i = true.
 Proof.
  intros;apply (forallb_spec (bit max_int) 0 (digits - 1)).
- compute;trivial.
+ vm_compute;trivial.
  apply leb_0.
  rewrite ltb_spec in H.
  destruct (to_Z_bounded i);rewrite leb_spec.
@@ -2594,3 +2609,47 @@ Proof.
  intros;rewrite land_comm;apply land_max_int_l.
 Qed.
 
+
+(* int is an OrderedType *)
+
+Require Import OrderedType.
+
+Module IntOrderedType <: OrderedType.
+
+  Definition t := int.
+
+  Definition eq x y := (x == y) = true.
+
+  Definition lt x y := (x < y) = true.
+
+  Lemma eq_refl x : eq x x.
+  Proof. unfold eq. rewrite eqb_spec. reflexivity. Qed.
+
+  Lemma eq_sym x y : eq x y -> eq y x.
+  Proof. unfold eq. rewrite !eqb_spec. intros ->. reflexivity. Qed.
+
+  Lemma eq_trans x y z : eq x y -> eq y z -> eq x z.
+  Proof. unfold eq. rewrite !eqb_spec. intros -> ->. reflexivity. Qed.
+
+  Lemma lt_trans x y z : lt x y -> lt y z -> lt x z.
+  Proof. apply ltb_trans. Qed.
+
+  Lemma lt_not_eq x y : lt x y -> ~ eq x y.
+  Proof. unfold lt, eq. rewrite ltb_negb_geb, eqb_spec. intros H1 H2. rewrite H2, leb_refl in H1. discriminate. Qed.
+
+  Definition compare x y : Compare lt eq x y.
+  Proof.
+    case_eq (x < y); intro e.
+      exact (LT e).
+      case_eq (x == y); intro e2.
+        exact (EQ e2). apply GT. unfold lt. rewrite ltb_negb_geb, leb_ltb_eqb, e, e2. reflexivity.
+  Defined.
+
+  Definition eq_dec x y : { eq x y } + { ~ eq x y }.
+  Proof.
+    case_eq (x == y); intro e.
+      left; exact e.
+      right. intro H. rewrite H in e. discriminate.
+  Defined.
+
+End IntOrderedType.

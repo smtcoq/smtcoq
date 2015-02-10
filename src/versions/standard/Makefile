@@ -147,6 +147,9 @@ VFILES:=Trace.v\
   versions/standard/Int63/Int63Axioms.v\
   versions/standard/Int63/Int63Op.v\
   versions/standard/Int63/Int63Native.v\
+  versions/standard/Int63/Ring63.v\
+  versions/standard/Int63/Cyclic63.v\
+  versions/standard/Int63/Int63Lib.v\
   versions/standard/Int63/Int63.v
 
 -include $(addsuffix .d,$(VFILES))

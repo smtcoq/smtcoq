@@ -15,39 +15,79 @@
 (**************************************************************************)
 
 
+(* Software implementation of arrays, based on finite maps using AVL
+   trees *)
+
+
 Require Export Int63.
+Require Import Ring63.
+Require Int63Lib.
+Require FMapAVL.
 
-Register array : Type -> Type as array_type.
+Local Open Scope int63_scope.
 
-Register make : forall {A:Type}, int -> A -> array A as array_make.
 
-Register get : forall {A:Type}, array A -> int -> A as array_get.
+Module Map := FMapAVL.Make(IntOrderedType).
 
-Register default : forall {A:Type}, array A -> A as array_default.
+Definition array (A:Type) : Type :=
+  (Map.t A * A * int)%type.
 
-Register set : forall {A:Type}, array A -> int -> A -> array A as array_set.
+Definition make {A:Type} (l:int) (d:A) : array A :=
+  let r :=
+      if l == 0 then
+        Map.empty A
+      else
+        foldi (fun j m => Map.add j d m) 0 (l-1) (Map.empty A) in
+  (r, d, l).
 
-Register length : forall {A:Type}, array A -> int as array_length.
+Definition get {A:Type} (t:array A) (i:int) : A :=
+  let (td,_) := t in
+  let (t,d) := td in
+  match Map.find i t with
+    | Some x => x
+    | None => d
+  end.
 
-Register copy : forall {A:Type}, array A -> array A as array_copy.
+Definition default {A:Type} (t:array A) : A :=
+  let (td,_) := t in let (_,d) := td in d.
 
-Register reroot : forall {A:Type}, array A -> array A as array_reroot.
+Definition set {A:Type} (t:array A) (i:int) (a:A) : array A :=
+  let (td,l) := t in
+  if l <= i then
+    t
+  else
+    let (t,d) := td in
+    (Map.add i a t, d, l).
 
-(* Not done with the vm *)
-Register init : forall {A:Type}, int -> (int -> A) -> A -> array A as array_init.
+Definition length {A:Type} (t:array A) : int :=
+  let (_,l) := t in l.
 
-Register map : forall {A B:Type}, (A -> B) -> array A -> array B as array_map.
+Definition copy {A:Type} (t:array A) : array A := t.
+
+Definition reroot : forall {A:Type}, array A -> array A := @copy.
+
+Definition init {A:Type} (l:int) (f:int -> A) (d:A) : array A :=
+  let r :=
+      if l == 0 then
+        Map.empty A
+      else
+        foldi (fun j m => Map.add j (f j) m) 0 (l-1) (Map.empty A) in
+  (r, d, l).
+
+Definition map {A B:Type} (f:A -> B) (t:array A) : array B :=
+  let (td,l) := t in
+  let (t,d) := td in
+  (Map.map f t, f d, l).
 
 Delimit Scope array_scope with array.
 Notation "t '.[' i ']'" := (get t i) (at level 50) : array_scope.
 Notation "t '.[' i '<-' a ']'" := (set t i a) (at level 50) : array_scope.
 
-Local Open Scope int63_scope.
 Local Open Scope array_scope.
 
 Set Vm Optimize.
 
-Definition max_array_length := 4194302.
+Definition max_array_length := Eval vm_compute in (Int63Lib.phi_inv 4194302).
 
 (** Axioms *)
 Axiom get_outofbound : forall A (t:array A) i, (i < length t) = false -> t.[i] = default t.
@@ -62,7 +102,7 @@ Axiom default_make : forall A (a:A) size, (default (make size a)) = a.
 
 Axiom ltb_length : forall A (t:array A), length t <= max_array_length = true.
 
-Axiom length_make : forall A size (a:A), 
+Axiom length_make : forall A size (a:A),
   length (make size a) = if size <= max_array_length then size else max_array_length.
 Axiom length_set : forall A t i (a:A),
   length (t.[i<-a]) = length t.
@@ -125,22 +165,22 @@ Definition mapi {A B:Type} (f:int->A->B) (t:array A) :=
 
 Definition foldi_left {A B:Type} (f:int -> A -> B -> A) a (t:array B) :=
   let len := length t in
-  if 0 == len then a 
+  if 0 == len then a
   else foldi (fun i a => f i a (t.[i])) 0 (len - 1) a.
 
 Definition fold_left {A B:Type} (f: A -> B -> A) a (t:array B) :=
   let len := length t in
-  if 0 == len then a 
+  if 0 == len then a
   else foldi (fun i a => f a (t.[i])) 0 (length t - 1) a.
 
 Definition foldi_right {A B:Type} (f:int -> A -> B -> B) (t:array A) b :=
   let len := length t in
-  if 0 == len then b 
+  if 0 == len then b
   else foldi_down (fun i b => f i (t.[i]) b) (len - 1) 0 b.
 
 Definition fold_right {A B:Type} (f: A -> B -> B) (t:array A) b :=
   let len := length t in
-  if 0 == len then b 
+  if 0 == len then b
   else foldi_down (fun i b => f (t.[i]) b) (len - 1) 0 b.
 
 (* Lemmas *)
@@ -150,7 +190,6 @@ Proof.
  intros A t;assert (length t < length t = false).
   apply Bool.not_true_is_false; apply leb_not_gtb; apply leb_refl.
  rewrite <- (get_outofbound _ (copy t) (length t)), <- (get_outofbound _ t (length t)), get_copy;trivial.
- rewrite length_copy;trivial.
 Qed.
 
 Lemma reroot_default : forall A (t:array A), default (reroot t) = default t.
@@ -158,10 +197,9 @@ Proof.
  intros A t;assert (length t < length t = false).
   apply Bool.not_true_is_false; apply leb_not_gtb; apply leb_refl.
  rewrite <- (get_outofbound _ (reroot t) (length t)), <- (get_outofbound _ t (length t)), get_reroot;trivial.
- rewrite length_reroot;trivial.
 Qed.
 
-Lemma get_set_same_default : 
+Lemma get_set_same_default :
    forall (A : Type) (t : array A) (i : int) ,
        (t .[ i <- default t]) .[ i] = default t.
 Proof.
@@ -172,14 +210,14 @@ Proof.
 Qed.
 
 Lemma get_not_default_lt : forall A (t:array A) x,
- t.[x] <> default t -> (x < length t)%int63 = true.
+ t.[x] <> default t -> x < length t = true.
 Proof.
  intros A t x Hd.
  case_eq (x < length t);intros Heq;[trivial | ].
  elim Hd;rewrite get_outofbound;trivial.
 Qed.
 
-Lemma foldi_left_Ind : 
+Lemma foldi_left_Ind :
      forall A B (P : int -> A -> Prop) (f : int -> A -> B -> A) (t:array B),
      (forall a i, i < length t = true -> P i a -> P (i+1) (f i a (t.[i]))) ->
      forall a, P 0 a ->
@@ -196,7 +234,7 @@ Proof.
  intros;apply H;trivial. rewrite ltb_leb_sub1;auto.
 Qed.
 
-Lemma fold_left_Ind : 
+Lemma fold_left_Ind :
      forall A B (P : int -> A -> Prop) (f : A -> B -> A) (t:array B),
      (forall a i, i < length t = true -> P i a -> P (i+1) (f a (t.[i]))) ->
      forall a, P 0 a ->
@@ -206,7 +244,7 @@ Proof.
  apply (foldi_left_Ind A B P (fun i => f));trivial.
 Qed.
 
-Lemma fold_left_ind : 
+Lemma fold_left_ind :
      forall A B (P : A -> Prop) (f : A -> B -> A) (t:array B),
      (forall a i, i < length t = true -> P a -> P (f a (t.[i]))) ->
      forall a, P a ->
@@ -215,7 +253,7 @@ Proof.
  intros;apply (fold_left_Ind A B (fun _ => P));trivial.
 Qed.
 
-Lemma foldi_right_Ind : 
+Lemma foldi_right_Ind :
      forall A B (P : int -> A -> Prop) (f : int -> B -> A -> A) (t:array B),
      (forall a i, i < length t = true -> P (i+1) a -> P i (f i (t.[i]) a)) ->
      forall a, P (length t) a ->
@@ -237,8 +275,8 @@ Proof.
  rewrite <-(to_Z_add_1 _ _ H4), of_to_Z in H3;auto.
  exact H1.
 Qed.
- 
-Lemma fold_right_Ind : 
+
+Lemma fold_right_Ind :
      forall A B (P : int -> A -> Prop) (f : B -> A -> A) (t:array B),
      (forall a i, i < length t = true -> P (i+1) a -> P i (f (t.[i]) a)) ->
      forall a, P (length t) a ->
@@ -247,7 +285,7 @@ Proof.
  intros;apply (foldi_right_Ind A B P (fun i => f));trivial.
 Qed.
 
-Lemma fold_right_ind : 
+Lemma fold_right_ind :
      forall A B (P : A -> Prop) (f : B -> A -> A) (t:array B),
      (forall a i, i < length t = true -> P a -> P (f (t.[i]) a)) ->
      forall a, P a ->
@@ -292,7 +330,7 @@ Qed.
 
 Local Open Scope list_scope.
 
-Definition to_list_ntr A (t:array A) := 
+Definition to_list_ntr A (t:array A) :=
   let len := length t in
   if 0 == len then nil
   else foldi_ntr _ (fun i l => t.[i] :: l) 0 (len - 1) nil.
@@ -311,7 +349,7 @@ Proof.
  assert (0%Z <> [|length t|]);[ | omega].
    intros Heq;elim n;apply to_Z_inj;trivial.
 Qed.
-    
+
 Lemma fold_left_to_list : forall (A B:Type) (t:array A) (f: B -> A -> B) b,
    fold_left f b t = List.fold_left f (to_list t) b.
 Proof.
@@ -336,7 +374,7 @@ Local Open Scope bool_scope.
 
 Definition eqb {A:Type} (Aeqb: A->A->bool) (t1 t2:array A) :=
   (length t1 == length t2) &&
-  Aeqb (default t1) (default t2) && 
+  Aeqb (default t1) (default t2) &&
   forallbi (fun i a1 => Aeqb a1 (t2.[i])) t1.
 
 Lemma reflect_eqb : forall (A:Type) (Aeqb:A->A->bool),
@@ -358,5 +396,3 @@ Proof.
  intros i _; rewrite <- (reflect_iff _ _ (HA _ _));trivial.
  rewrite <- not_true_iff_false, <- (reflect_iff _ _ (HA _ _)) in H0;apply H0;trivial.
 Qed.
-
- 
