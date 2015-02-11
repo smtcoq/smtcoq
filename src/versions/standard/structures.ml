@@ -52,10 +52,15 @@ let cset = gen_constant parray_modules "set"
 let max_array_size : int = 4194302
 let mkArray : Term.types * Term.constr array -> Term.constr =
   fun (ty, a) ->
+  let l = (Array.length a) - 1 in
   snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' = mklApp cset [|ty; acc; mkInt i; c|] in
+                        let acc' =
+                          if i = l then
+                            acc
+                          else
+                            mklApp cset [|ty; acc; mkInt i; c|] in
                         (i+1,acc')
-                       ) (0,mklApp cmake [|ty; mkInt (Array.length a); a.(0)|]) a)
+                       ) (0,mklApp cmake [|ty; mkInt l; a.(l)|]) a)
 
 
 (* Differences between the two versions of Coq *)
