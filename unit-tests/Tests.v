@@ -1,4 +1,3 @@
-(* Add LoadPath ".." as SMTCoq. *)
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith.
 
@@ -14,8 +13,8 @@ Time Zchaff_Checker "sat5.cnf" "sat5.zlog".
 Time Zchaff_Checker "sat6.cnf" "sat6.zlog".
 Time Zchaff_Checker "sat7.cnf" "sat7.zlog".
 Time Zchaff_Checker "hole4.cnf" "hole4.zlog".
-Time Zchaff_Checker "cmu-bmc-barrel6.cnf" "cmu-bmc-barrel6.zlog".
-Time Zchaff_Checker "velev-sss-1.0-05.cnf" "velev-sss-1.0-05.zlog".
+(* Time Zchaff_Checker "cmu-bmc-barrel6.cnf" "cmu-bmc-barrel6.zlog". *)
+(* Time Zchaff_Checker "velev-sss-1.0-05.cnf" "velev-sss-1.0-05.zlog". *)
 
 
 Time Zchaff_Theorem sat1 "sat1.cnf" "sat1.zlog".
@@ -48,11 +47,11 @@ Compute Sat_Checker.checker d7 t7.
 Parse_certif_zchaff dhole4 thole4 "hole4.cnf" "hole4.zlog".
 Compute Sat_Checker.checker dhole4 thole4.
 
-Parse_certif_zchaff dcmubmcbarrel6 tcmubmcbarrel6 "cmu-bmc-barrel6.cnf" "cmu-bmc-barrel6.zlog".
-Compute Sat_Checker.checker dcmubmcbarrel6 tcmubmcbarrel6.
+(* Parse_certif_zchaff dcmubmcbarrel6 tcmubmcbarrel6 "cmu-bmc-barrel6.cnf" "cmu-bmc-barrel6.zlog". *)
+(* Compute Sat_Checker.checker dcmubmcbarrel6 tcmubmcbarrel6. *)
 
-Parse_certif_zchaff dvelevsss1005 tvelevsss1005 "velev-sss-1.0-05.cnf" "velev-sss-1.0-05.zlog".
-Compute Sat_Checker.checker dvelevsss1005 tvelevsss1005.
+(* Parse_certif_zchaff dvelevsss1005 tvelevsss1005 "velev-sss-1.0-05.cnf" "velev-sss-1.0-05.zlog". *)
+(* Compute Sat_Checker.checker dvelevsss1005 tvelevsss1005. *)
 
 
 (* zChaff tactic *)
