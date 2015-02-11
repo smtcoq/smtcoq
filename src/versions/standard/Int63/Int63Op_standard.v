@@ -241,18 +241,91 @@ Definition sqrt2 ih il :=
 
 (* Extra function on equality *)
 
-Definition cast i j :=
-     (if i == j as b return ((b = true -> i = j) -> option (forall P : int -> Type, P i -> P j))
-      then fun Heq : true = true -> i = j =>
-             Some
-             (fun (P : int -> Type) (Hi : P i) =>
-               match Heq (eq_refl true) in (_ = y) return (P y) with
-               | eq_refl => Hi
-               end)
-      else fun _ : false = true -> i = j => None) (eqb_correct i j).
+Definition cast_digit d1 d2 :
+  option (forall P : Int31.digits -> Type, P d1 -> P d2) :=
+  match d1, d2 with
+  | D0, D0 | D1, D1 => Some (fun P h => h)
+  | _, _ => None
+  end.
 
-Definition eqo i j :=
-   (if i == j as b return ((b = true -> i = j) -> option (i=j))
-    then fun Heq : true = true -> i = j =>
-             Some (Heq (eq_refl true))
-     else fun _ : false = true -> i = j => None) (eqb_correct i j).
+(* TODO: improve this definition... *)
+Definition cast i j :
+  option (forall P : int -> Type, P i -> P j) :=
+  match i, j return option (forall P : int -> Type, P i -> P j) with
+  | I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30, I31 d'0 d'1 d'2 d'3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30 =>
+    match
+      cast_digit d0 d'0,
+      cast_digit d1 d'1,
+      cast_digit d2 d'2,
+      cast_digit d3 d'3,
+      cast_digit d4 d'4,
+      cast_digit d5 d'5,
+      cast_digit d6 d'6,
+      cast_digit d7 d'7,
+      cast_digit d8 d'8,
+      cast_digit d9 d'9,
+      cast_digit d10 d'10,
+      cast_digit d11 d'11,
+      cast_digit d12 d'12,
+      cast_digit d13 d'13,
+      cast_digit d14 d'14,
+      cast_digit d15 d'15,
+      cast_digit d16 d'16,
+      cast_digit d17 d'17,
+      cast_digit d18 d'18,
+      cast_digit d19 d'19,
+      cast_digit d20 d'20,
+      cast_digit d21 d'21,
+      cast_digit d22 d'22,
+      cast_digit d23 d'23,
+      cast_digit d24 d'24,
+      cast_digit d25 d'25,
+      cast_digit d26 d'26,
+      cast_digit d27 d'27,
+      cast_digit d28 d'28,
+      cast_digit d29 d'29,
+      cast_digit d30 d'30
+    with
+    | Some k0,
+      Some k1,
+      Some k2,
+      Some k3,
+      Some k4,
+      Some k5,
+      Some k6,
+      Some k7,
+      Some k8,
+      Some k9,
+      Some k10,
+      Some k11,
+      Some k12,
+      Some k13,
+      Some k14,
+      Some k15,
+      Some k16,
+      Some k17,
+      Some k18,
+      Some k19,
+      Some k20,
+      Some k21,
+      Some k22,
+      Some k23,
+      Some k24,
+      Some k25,
+      Some k26,
+      Some k27,
+      Some k28,
+      Some k29,
+      Some k30 =>
+      Some (fun P h =>
+              k0 (fun d0 => P (I31 d0 d'1 d'2 d'3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k1 (fun d1 => P (I31 d0 d1 d'2 d'3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k2 (fun d2 => P (I31 d0 d1 d2 d'3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k3 (fun d3 => P (I31 d0 d1 d2 d3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k4 (fun d4 => P (I31 d0 d1 d2 d3 d4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k5 (fun d5 => P (I31 d0 d1 d2 d3 d4 d5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k6 (fun d6 => P (I31 d0 d1 d2 d3 d4 d5 d6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k7 (fun d7 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k8 (fun d8 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k9 (fun d9 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k10 (fun d10 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k11 (fun d11 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k12 (fun d12 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k13 (fun d13 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k14 (fun d14 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k15 (fun d15 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k16 (fun d16 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k17 (fun d17 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k18 (fun d18 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k19 (fun d19 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k20 (fun d20 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k21 (fun d21 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k22 (fun d22 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k23 (fun d23 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d'24 d'25 d'26 d'27 d'28 d'29 d'30)) (k24 (fun d24 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d'25 d'26 d'27 d'28 d'29 d'30)) (k25 (fun d25 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d'26 d'27 d'28 d'29 d'30)) (k26 (fun d26 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d'27 d'28 d'29 d'30)) (k27 (fun d27 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d'28 d'29 d'30)) (k28 (fun d28 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d'29 d'30)) (k29 (fun d29 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d'30)) (k30 (fun d30 => P (I31 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30)) h)))))))))))))))))))))))))))))))
+    | _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ => None
+    end
+  end.
+
+
+Definition eqo i j : option (i = j) :=
+  match cast i j with
+  | Some k => Some (k (fun j => i = j) (refl_equal i))
+  | None => None
+  end.

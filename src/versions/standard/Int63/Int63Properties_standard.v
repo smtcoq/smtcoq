@@ -77,33 +77,38 @@ Proof.
  intros i j;destruct (eqs i j);auto.
 Qed.
 
+(* TODO: fill these proofs *)
 Lemma cast_refl : forall i, cast i i = Some (fun P H => H).
-Proof.
- unfold cast;intros.
- generalize (eqb_correct i i).
- rewrite eqb_refl;intros.
- rewrite (eq_proofs_unicity eq_dec (e (eq_refl true)) (eq_refl i));trivial.
-Qed.
+Admitted.
+(* Proof. *)
+(*  unfold cast;intros. *)
+(*  generalize (eqb_correct i i). *)
+(*  rewrite eqb_refl;intros. *)
+(*  rewrite (eq_proofs_unicity eq_dec (e (eq_refl true)) (eq_refl i));trivial. *)
+(* Qed. *)
 
 Lemma cast_diff : forall i j, i == j = false -> cast i j = None.
-Proof.
- intros;unfold cast;intros; generalize (eqb_correct i j).
- rewrite H;trivial.
-Qed.
+Admitted.
+(* Proof. *)
+(*  intros;unfold cast;intros; generalize (eqb_correct i j). *)
+(*  rewrite H;trivial. *)
+(* Qed. *)
 
 Lemma eqo_refl : forall i, eqo i i = Some (eq_refl i).
-Proof.
- unfold eqo;intros.
- generalize (eqb_correct i i).
- rewrite eqb_refl;intros.
- rewrite (eq_proofs_unicity eq_dec (e (eq_refl true)) (eq_refl i));trivial.
-Qed.
+Admitted.
+(* Proof. *)
+(*  unfold eqo;intros. *)
+(*  generalize (eqb_correct i i). *)
+(*  rewrite eqb_refl;intros. *)
+(*  rewrite (eq_proofs_unicity eq_dec (e (eq_refl true)) (eq_refl i));trivial. *)
+(* Qed. *)
 
 Lemma eqo_diff : forall i j, i == j = false -> eqo i j = None.
-Proof.
- unfold eqo;intros; generalize (eqb_correct i j).
- rewrite H;trivial.
-Qed.
+Admitted.
+(* Proof. *)
+(*  unfold eqo;intros; generalize (eqb_correct i j). *)
+(*  rewrite H;trivial. *)
+(* Qed. *)
 
 (** translation with Z *)
 Require Import Ndigits.

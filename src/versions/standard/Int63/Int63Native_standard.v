@@ -117,18 +117,6 @@ Definition modulo : int -> int -> int :=
 Notation "n '\%' m" := (modulo n m) (at level 40, left associativity) : int63_scope.
 
 (* Comparisons *)
-(* We do not use eqb63 to be able to easily prove eqb_correct *)
-(* Definition eqb_digits d1 d2 := *)
-(*   match d1, d2 with *)
-(*     | D0, D0 | D1, D1 => true *)
-(*     | _, _ => false *)
-(*   end. *)
-
-(* Definition eqb i j := *)
-(*   match i, j with *)
-(*     | I63 d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 d32 d33 d34 d35 d36 d37 d38 d39 d40 d41 d42 d43 d44 d45 d46 d47 d48 d49 d50 d51 d52 d53 d54 d55 d56 d57 d58 d59 d60 d61 d62, I63 d'0 d'1 d'2 d'3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30 d'31 d'32 d'33 d'34 d'35 d'36 d'37 d'38 d'39 d'40 d'41 d'42 d'43 d'44 d'45 d'46 d'47 d'48 d'49 d'50 d'51 d'52 d'53 d'54 d'55 d'56 d'57 d'58 d'59 d'60 d'61 d'62 => *)
-(*       (eqb_digits d0 d'0) && (eqb_digits d1 d'1) && (eqb_digits d2 d'2) && (eqb_digits d3 d'3) && (eqb_digits d4 d'4) && (eqb_digits d5 d'5) && (eqb_digits d6 d'6) && (eqb_digits d7 d'7) && (eqb_digits d8 d'8) && (eqb_digits d9 d'9) && (eqb_digits d10 d'10) && (eqb_digits d11 d'11) && (eqb_digits d12 d'12) && (eqb_digits d13 d'13) && (eqb_digits d14 d'14) && (eqb_digits d15 d'15) && (eqb_digits d16 d'16) && (eqb_digits d17 d'17) && (eqb_digits d18 d'18) && (eqb_digits d19 d'19) && (eqb_digits d20 d'20) && (eqb_digits d21 d'21) && (eqb_digits d22 d'22) && (eqb_digits d23 d'23) && (eqb_digits d24 d'24) && (eqb_digits d25 d'25) && (eqb_digits d26 d'26) && (eqb_digits d27 d'27) && (eqb_digits d28 d'28) && (eqb_digits d29 d'29) && (eqb_digits d30 d'30) && (eqb_digits d31 d'31) && (eqb_digits d32 d'32) && (eqb_digits d33 d'33) && (eqb_digits d34 d'34) && (eqb_digits d35 d'35) && (eqb_digits d36 d'36) && (eqb_digits d37 d'37) && (eqb_digits d38 d'38) && (eqb_digits d39 d'39) && (eqb_digits d40 d'40) && (eqb_digits d41 d'41) && (eqb_digits d42 d'42) && (eqb_digits d43 d'43) && (eqb_digits d44 d'44) && (eqb_digits d45 d'45) && (eqb_digits d46 d'46) && (eqb_digits d47 d'47) && (eqb_digits d48 d'48) && (eqb_digits d49 d'49) && (eqb_digits d50 d'50) && (eqb_digits d51 d'51) && (eqb_digits d52 d'52) && (eqb_digits d53 d'53) && (eqb_digits d54 d'54) && (eqb_digits d55 d'55) && (eqb_digits d56 d'56) && (eqb_digits d57 d'57) && (eqb_digits d58 d'58) && (eqb_digits d59 d'59) && (eqb_digits d60 d'60) && (eqb_digits d61 d'61) && (eqb_digits d62 d'62) *)
-(*   end. *)
 Definition eqb := eqb31.
 Notation "m '==' n" := (eqb m n) (at level 70, no associativity) : int63_scope.
 
@@ -140,23 +128,10 @@ Definition leb : int -> int -> bool :=
   fun i j => match compare31 i j with | Gt => false | _ => true end.
 Notation "m <= n" := (leb m n) : int63_scope.
 
-(* This operator has the following reduction rule
-     eqb_correct i i (eq_refl true) ---> (eq_refl i) *)
-(* Lemma eqb_digits_correct : *)
-(*   forall d1 d2, eqb_digits d1 d2 = true <-> d1 = d2. *)
-(* Proof. intros [|] [|]; split; try reflexivity; discriminate. Defined. *)
 
-(* Lemma andb_true_iff : forall b1 b2, *)
-(*   b1 && b2 = true <-> b1 = true /\ b2 = true. *)
-(* Proof. intros [|] [|]; repeat split; try reflexivity; try discriminate; intros [H1 H2]; discriminate. Defined. *)
-
+(* TODO: fill this proof (should be in the stdlib) *)
 Lemma eqb_correct : forall i j, (i==j)%int = true -> i = j.
 Admitted.
-(* Proof. *)
-(*   unfold eqb. intros [d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 d32 d33 d34 d35 d36 d37 d38 d39 d40 d41 d42 d43 d44 d45 d46 d47 d48 d49 d50 d51 d52 d53 d54 d55 d56 d57 d58 d59 d60 d61 d62] [d'0 d'1 d'2 d'3 d'4 d'5 d'6 d'7 d'8 d'9 d'10 d'11 d'12 d'13 d'14 d'15 d'16 d'17 d'18 d'19 d'20 d'21 d'22 d'23 d'24 d'25 d'26 d'27 d'28 d'29 d'30 d'31 d'32 d'33 d'34 d'35 d'36 d'37 d'38 d'39 d'40 d'41 d'42 d'43 d'44 d'45 d'46 d'47 d'48 d'49 d'50 d'51 d'52 d'53 d'54 d'55 d'56 d'57 d'58 d'59 d'60 d'61 d'62]. *)
-(*   do 62 (rewrite andb_true_iff; intros [H1 H2]; rewrite eqb_digits_correct in H2; subst; revert H1). *)
-(*   rewrite eqb_digits_correct. intros ->. reflexivity. *)
-(* Defined. *)
 
 
 (* Iterators *)
