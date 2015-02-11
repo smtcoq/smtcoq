@@ -170,9 +170,9 @@ Definition foldi_cont
     cont
   else
     let (_,r) := iter_int31 (to - from) _ (fun (jy: (int * (A -> B))%type) =>
-                     let (j,y) := jy in ((j+1)%int, f j y)
-                                      ) (from, cont) in
-    f to r.
+                     let (j,y) := jy in ((j-1)%int, f j y)
+                                      ) (to, cont) in
+    f from r.
 
 Definition foldi_down_cont
     {A B         : Type}
@@ -183,9 +183,9 @@ Definition foldi_down_cont
     cont
   else
     let (_,r) := iter_int31 (from - downto) _ (fun (jy: (int * (A -> B))%type) =>
-                     let (j,y) := jy in ((j-1)%int, f j y)
-                                      ) (from, cont) in
-    f downto r.
+                     let (j,y) := jy in ((j+1)%int, f j y)
+                                      ) (downto, cont) in
+    f from r.
 
 (* Fake print *)
 
