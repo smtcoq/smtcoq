@@ -26,7 +26,7 @@ This version is sufficient to check small certificates and to solve
 small goals. However, if you want to check larger certificates, we
 recommend using SMTCoq with the
 [version of Coq with native data-structures](https://github.com/maximedenes/native-coq),
-following the instructions in Section [Installation from the sources][].
+following the instructions in Section [Installation from the sources].
 
 
 ## Installation of the provers
@@ -55,7 +55,7 @@ We recommend this latter for efficiency.
 ### With the version of Coq with native data-structures
 
 1. Download the git version of Coq with native compilation:
-     `git clone git://github.com/maximedenes/native-coq.git`
+```git clone git://github.com/maximedenes/native-coq.git```
    and compile it by following the instructions available in the
    repository. We recommand that you do not install it, but only compile
    it in local:
@@ -66,7 +66,7 @@ make
 
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
-     `export COQBIN=/home/jdoe/native-coq/bin/`
+```export COQBIN=/home/jdoe/native-coq/bin/```
    (the final slash is mandatory).
 
 3. Compile and install SMTCoq by using the commands:
