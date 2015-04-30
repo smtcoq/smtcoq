@@ -41,7 +41,28 @@ Currently, these solvers are:
 Please download the solvers you would like to use via the above links
 (since SMTCoq might not support later versions), and follow the
 instructions available for each solver in order to compile them **in a
-proof production mode**.
+proof production mode**, as detailed below.
+
+
+### veriT
+
+The
+[above link](http://prosecco.gforge.inria.fr/personal/ckeller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
+points to a snapshot of veriT which is known to be compatible with
+SMTCoq, and is already in proof production mode. If you encounter
+problems to compile it, please report an issue.
+
+
+### zChaff
+
+zChaff is not actively maintained, so you might encounter problems to
+compile it on modern platforms.
+[This patch](http://prosecco.gforge.inria.fr/personal/ckeller/Documents-recherche/Smtcoq/zchaff64.patch)
+might solve your problems (thanks to Sylvain Boulmé for it); if not,
+please report an issue.
+
+To turn proof production on, you need to uncomment the line
+`// #define VERIFY_ON ` in `zchaff_solver.cpp`.
 
 
 ## Installation from the sources
