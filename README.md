@@ -8,8 +8,8 @@ vernacular commands and tactics to interface with the SAT solver zChaff
 and the SMT solver veriT are provided. It is designed in a modular way
 allowing to extend it easily to other solvers.
 
-Since version 1.2, SMTCoq also provides the possibility to extract the
-checker to OCaml.
+Since version 1.2, SMTCoq also provides an extracted version of the
+checker, available only with native-coq.
 
 The current stable version is the version 1.2.
 
@@ -159,9 +159,11 @@ terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 The `src/extraction` directory contains the OCaml extracted checker, as
 well as additional files to make use of it. You can compile it using the
 given `Makefile` (after compiling SMTCoq): it will produce an executable
-in the example directory for testing.
+`smtcoq` that can be run independently of SMTCoq in this way:
+- `smtcoq -zchaff foo.cnf foo.zlog` runs the ZChaff checker on a DIMACS
+  file and the corresponding ZChaff certificate
+- `smtcoq -verit foo.smt2 foo.vtlog` runs the veriT checker on a SMTLIB2
+  file and the corresponding veriT certificate.
 
-To use it, you can inspire from the file `example/example.ml`. Edit the
-first two lines of `src/extraction/Makefile` to compile your own files.
-Note that even the extracted version of SMTCoq requires both Coq and
-SMTCoq to be compiled (mainly since it relies on other Coq plugins).
+Note that even the extracted version of SMTCoq requires both native-coq
+and SMTCoq to be compiled (mainly since it relies on other Coq plugins).
