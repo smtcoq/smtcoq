@@ -1,2 +1,0 @@
-ceci est un test
-
