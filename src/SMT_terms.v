@@ -479,7 +479,8 @@ Module Atom.
    | UO_xI
    | UO_Zpos 
    | UO_Zneg
-   | UO_Zopp.
+   | UO_Zopp
+   | UO_index : int -> unop.
 
   Inductive binop : Type :=
    | BO_Zplus
@@ -523,6 +524,7 @@ Module Atom.
    | UO_Zpos, UO_Zpos 
    | UO_Zneg, UO_Zneg
    | UO_Zopp, UO_Zopp => true
+   | UO_index i1, UO_index i2 => Int63Native.eqb i1 i2 
    | _,_ => false
    end.
 
@@ -577,21 +579,26 @@ Module Atom.
 
   Lemma reflect_cop_eqb : forall o1 o2, reflect (o1 = o2) (cop_eqb o1 o2).
   Proof.
-   intros;destruct o1;destruct o2;simpl.
-   constructor. trivial.
-   constructor. discriminate.
-   simpl. constructor. discriminate.
-   constructor. discriminate.
-   constructor. trivial.
-   constructor. discriminate.
-   constructor. discriminate.
-   constructor. discriminate.
-   apply iff_reflect;split;apply reflect_cop_eqb_CO_int.
+   destruct o1;destruct o2;simpl;try (constructor;trivial;discriminate);apply iff_reflect;split;apply reflect_cop_eqb_CO_int.
+  Qed.
+
+
+  Lemma reflect_cop_eqb_UO_index : forall i1 i2, (i1 == i2) <-> (UO_index i1 = UO_index i2).
+  Proof.
+    intros;split;intro;assert (i1 = i2).
+    apply eqb_spec.
+    apply H.
+    rewrite H0.
+    trivial.
+    inversion H.
+    trivial.
+    apply eqb_spec.
+    trivial.
   Qed.
 
   Lemma reflect_uop_eqb : forall o1 o2, reflect (o1 = o2) (uop_eqb o1 o2).
   Proof.
-   destruct o1;destruct o2;simpl;constructor;trivial;discriminate.
+   destruct o1;destruct o2;simpl;try (constructor;trivial;discriminate);apply iff_reflect;split;apply reflect_cop_eqb_UO_index.
   Qed.
  
   Lemma reflect_bop_eqb : forall o1 o2, reflect (o1 = o2) (bop_eqb o1 o2).
@@ -688,6 +695,7 @@ Module Atom.
         | UO_Zpos => (Typ.Tpositive, Typ.TZ)
         | UO_Zneg => (Typ.Tpositive, Typ.TZ)
         | UO_Zopp => (Typ.TZ, Typ.TZ)
+        | UO_index i => (Typ.Tint, Typ.Tbool)
         end.
 
       Definition typ_bop o := 
@@ -789,7 +797,7 @@ Module Atom.
         exists Typ.TZ; auto.
         exists Typ.Tint; auto.
         (* Unary operators *)
-        destruct op; simpl; try (case (Typ.eqb (get_type h) Typ.Tpositive); [left; exists Typ.Tpositive|right; intro; rewrite andb_false_r]; reflexivity); try (case (Typ.eqb (get_type h) Typ.Tpositive); [left; exists Typ.TZ|right; intro; rewrite andb_false_r]; reflexivity);case (Typ.eqb (get_type h) Typ.TZ); [left; exists Typ.TZ|right; intro; rewrite andb_false_r]; reflexivity.
+        destruct op; simpl; try (case (Typ.eqb (get_type h) Typ.Tpositive); [left; exists Typ.Tpositive|right; intro; rewrite andb_false_r]; reflexivity); try (case (Typ.eqb (get_type h) Typ.Tpositive); [left; exists Typ.TZ|right; intro; rewrite andb_false_r]; reflexivity);try (case (Typ.eqb (get_type h) Typ.TZ); [left; exists Typ.TZ|right; intro; rewrite andb_false_r]; reflexivity);case (Typ.eqb (get_type h) Typ.Tint); [left; exists Typ.Tbool|right; intro; rewrite andb_false_r]; reflexivity.
         (* Binary operators *)
         destruct op; simpl; try (case (Typ.eqb (get_type h1) Typ.TZ); [case (Typ.eqb (get_type h2) Typ.TZ); [left; exists Typ.TZ|right; intro; rewrite andb_false_r]|right; intro; rewrite andb_false_r]; reflexivity); try (case (Typ.eqb (get_type h1) Typ.TZ); [case (Typ.eqb (get_type h2) Typ.TZ); [left; exists Typ.Tbool|right; intro; rewrite andb_false_r]|right; intro; rewrite andb_false_r]; reflexivity); try (case (Typ.eqb (get_type h1) t); [case (Typ.eqb (get_type h2) t); [left; exists Typ.Tbool|right; intro; rewrite andb_false_r]|right; intro; rewrite andb_false_r]; reflexivity); case (Typ.eqb (get_type h1) Typ.Tint); [case (Typ.eqb (get_type h2) Typ.Tint); [left; exists Typ.Tint|right; intro; rewrite andb_false_r]|right; intro; rewrite andb_false_r]; reflexivity.
         (* N-ary operators *)
@@ -858,6 +866,7 @@ Module Atom.
         | UO_Zpos => apply_unop Typ.Tpositive Typ.TZ Zpos
         | UO_Zneg => apply_unop Typ.Tpositive Typ.TZ Zneg
         | UO_Zopp => apply_unop Typ.TZ Typ.TZ Zopp
+        | UO_index a => apply_unop Typ.Tint Typ.Tbool (Int63Op.get_digit a)
         end.
 
       Definition interp_bop o :=
@@ -1020,12 +1029,13 @@ Module Atom.
         exists 0%Z; auto.
         exists i%int63; auto.
         (* Unary operators *)
-        destruct op; intros [i| | | | ]; simpl; try discriminate; rewrite Typ.eqb_spec; intro H1; destruct (check_aux_interp_hatom h) as [x Hx]; rewrite Hx; simpl; generalize x Hx; rewrite H1; intros y Hy; rewrite Typ.cast_refl.
+        destruct op; intros [j| | | | ]; simpl; try discriminate; rewrite Typ.eqb_spec; intro H1; destruct (check_aux_interp_hatom h) as [x Hx]; rewrite Hx; simpl; generalize x Hx; rewrite H1; intros y Hy; rewrite Typ.cast_refl.
         exists (y~0)%positive; auto.
         exists (y~1)%positive; auto.
         exists (Zpos y); auto.
         exists (Zneg y); auto.
         exists (- y)%Z; auto.
+        exists (get_digit i y); auto.
         (* Binary operators *)
         destruct op as [ | | | | | | | |A]; intros [i| | | | ]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff; try (change (Typ.eqb (get_type h1) Typ.TZ = true /\ Typ.eqb (get_type h2) Typ.TZ = true) with (is_true (Typ.eqb (get_type h1) Typ.TZ) /\ is_true (Typ.eqb (get_type h2) Typ.TZ)); rewrite !Typ.eqb_spec; intros [H1 H2]; destruct (check_aux_interp_hatom h1) as [x1 Hx1]; rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl; generalize x1 Hx1 x2 Hx2; rewrite H1, H2; intros y1 Hy1 y2 Hy2; rewrite !Typ.cast_refl).
         exists (y1 + y2)%Z; auto.
@@ -1076,7 +1086,7 @@ Module Atom.
         discriminate (H Typ.TZ).
         discriminate (H Typ.Tint).
         (* Unary operators *)
-        destruct op; simpl; intro H; destruct (check_aux_interp_hatom h) as [v Hv]; rewrite Hv; simpl; rewrite Typ.neq_cast; try (pose (H2 := H Typ.Tpositive); simpl in H2; rewrite H2; auto); pose (H2 := H Typ.TZ); simpl in H2; rewrite H2; auto.
+        destruct op; simpl; intro H; destruct (check_aux_interp_hatom h) as [v Hv]; rewrite Hv; simpl; rewrite Typ.neq_cast; try (pose (H2 := H Typ.Tpositive); simpl in H2; rewrite H2; auto); try (pose (H2 := H Typ.TZ); simpl in H2; rewrite H2; auto); pose (H2 := H Typ.Tbool);simpl in H2; rewrite H2;auto.
         (* Binary operators *)
         destruct op; simpl; intro H; destruct (check_aux_interp_hatom h1) as [v1 Hv1]; destruct (check_aux_interp_hatom h2) as [v2 Hv2]; rewrite Hv1, Hv2; simpl; try (pose (H2 := H Typ.TZ); simpl in H2; rewrite andb_false_iff in H2; destruct H2 as [H2|H2]; [rewrite (Typ.neq_cast (get_type h1)), H2|rewrite (Typ.neq_cast (get_type h2)), H2; case (Typ.cast (get_type h1) Typ.TZ)]; auto); try (pose (H2 := H Typ.Tint); simpl in H2; rewrite andb_false_iff in H2; destruct H2 as [H2|H2]; [rewrite (Typ.neq_cast (get_type h1)), H2|rewrite (Typ.neq_cast (get_type h2)), H2; case (Typ.cast (get_type h1) Typ.Tint)]; auto); try (pose (H2 := H Typ.Tbool); simpl in H2; rewrite andb_false_iff in H2; destruct H2 as [H2|H2]; [rewrite (Typ.neq_cast (get_type h1)), H2|rewrite (Typ.neq_cast (get_type h2)), H2; case (Typ.cast (get_type h1) Typ.TZ)]; auto); case (Typ.cast (get_type h1) t); auto.
         (* N-ary operators *)
@@ -1241,12 +1251,13 @@ Module Atom.
         exists 0%Z; auto.
         exists i%int63; auto.
         (* Unary operators *)
-        intros [ | | | | ] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
+        intros [ | | | | | ] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~0)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~1)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists (Zpos (k interp_t x)); auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists (Zneg (k interp_t x)); auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.TZ); simpl; try (exists true; auto); intro k; exists (- k interp_t x)%Z; auto.
+        case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tint); simpl; try (intro k; exists (get_digit i0 (k interp_t x)); auto); try (exists true; auto).
         (* Binary operators *)
         intros [ | | | | | | | |A] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.

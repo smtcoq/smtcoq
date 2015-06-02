@@ -787,10 +787,10 @@ Transparent build_z_atom.
 Opaque build_z_atom interp_aux.
      case a;simpl;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     intro u; destruct u; intros i vm vm' pe Ht;
+     intro u; destruct u; intros j vm vm' pe Ht;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     generalize (Hb i vm); clear Hb.
-     destruct (build_pexpr vm i) as (vm0,pe0); intro IH.
+     generalize (Hb j vm); clear Hb.
+     destruct (build_pexpr vm j) as (vm0,pe0); intro IH.
      intros Heq Hwf;inversion Heq;clear Heq;subst.
      assert (W:= IH vm' pe0 Ht (refl_equal _) Hwf).
      decompose [and] W;clear W IH.
