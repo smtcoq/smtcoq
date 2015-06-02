@@ -22,6 +22,8 @@ Require Import ZMicromega.
 Require Import Tauto.
 Require Import Psatz.
 
+Add LoadPath ".." as SMTCoq.
+
 Require Import Misc State.
 Require Import SMT_terms.
 Require Import SMTCoq.euf.Euf.
@@ -445,7 +447,7 @@ Section certif.
     Proof.
      intros a z.
      destruct a;simpl;try discriminate;auto.
-     destruct c;[discriminate | intros Heq;inversion Heq;trivial].
+     destruct c;[discriminate | intros Heq;inversion Heq;trivial |discriminate].
      destruct u;try discriminate;
        case_eq (build_positive i);try discriminate;
        intros p Hp Heq;inversion Heq;clear Heq;subst;

@@ -15,8 +15,8 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-(* Add LoadPath ".." as SMTCoq. *)
-(* Add LoadPath "../lia" as SMTCoq.lia. *)
+Add LoadPath ".." as SMTCoq.
+Add LoadPath "../lia" as SMTCoq.lia.
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
@@ -235,7 +235,7 @@ Section CheckAtom.
     forall h1 h2, check_neg_hatom h1 h2 ->
       interp_form_hatom t_i t_func t_atom h1 = negb (interp_form_hatom t_i t_func t_atom h2).
   Proof.
-    unfold interp_form_hatom. intros Hwt H1 H2 h1 h2 H3. unfold interp_bool. generalize (check_neg_hatom_correct Hwt H1 H2 _ _ H3). case (interp_hatom t_i t_func t_atom h1). case (interp_hatom t_i t_func t_atom h2). simpl. intros [i| | | ] v1 [j| | | ] v2; intro H; inversion H. rewrite Typ.cast_refl. auto.
+    unfold interp_form_hatom. intros Hwt H1 H2 h1 h2 H3. unfold interp_bool. generalize (check_neg_hatom_correct Hwt H1 H2 _ _ H3). case (interp_hatom t_i t_func t_atom h1). case (interp_hatom t_i t_func t_atom h2). simpl. intros [i| | | | ] v1 [j| | | | ] v2; intro H; inversion H. rewrite Typ.cast_refl. auto.
   Qed.
 
 End CheckAtom.
