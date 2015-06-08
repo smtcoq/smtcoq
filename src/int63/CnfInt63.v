@@ -62,7 +62,7 @@ Section Checker.
     end.
 
 
- Definition check_BuildDefint lits :=
+ Definition check_BuildDefInt lits :=
   let n := PArray.length lits in
   if (n == Int63Op.digits + 1)&&(Lit.is_pos (lits.[0]))
   then (
@@ -104,3 +104,45 @@ Section Checker.
   else C._true
   .
 
+
+Definition check_BuildProjInt lits i :=
+  let n := PArray.length lits in
+  if (n == Int63Op.digits + 1)&&(i < Int63Op.digits)
+  then (
+    match get_form (Lit.blit (lits.[0])) with
+    | Fatom a => 
+      match get_atom a with
+      | Abop b h1 h2 => 
+        match (b,get_atom h1,get_atom h2) with
+        | (BO_eq Tint,Acop (CO_int x),Acop (CO_int y)) => 
+          let fonction_map i l := if i == 0 then l else (if Lit.is_pos l then l else Lit.neg l) in
+          let test_correct i0 l :=
+            if i0 == 0
+            then true
+            else (
+              match get_form (Lit.blit l) with
+              | Fatom a0 =>
+                match get_atom a0 with
+                | Abop b0 h10 h20 =>
+                  match (b0,get_atom h10,get_atom h20) with
+                  | (BO_eq Tbool,Auop (UO_index x) j,Auop (UO_index y) k) => (j == i0-1)&&(k == j)
+                  | _ => false
+                  end
+                | _ => false
+                end
+              | _ => false
+              end
+                 )
+          in
+          if test_correct i (lits.[i+1]) 
+          then (fonction_map i (lits.[i+1]))::(Lit.nlit (Lit.blit (lits.[0])))::nil
+          else C._true
+        | _ => C._true
+        end
+      | _ => C._true
+      end
+    | _ => C._true
+    end
+       )
+  else C._true
+  .
