@@ -54,39 +54,53 @@ Section Checker.
     | _ => 0%int63
     end.
 
-  Fixpoint clean A (l:list A) := 
+  Fixpoint clean {A:Type} (l:list A) := 
     match l with 
     | nil => nil
     | a::nil => a::nil
     | a::b::c => a::(clean c)
     end.
 
-  Definition check_BuildDefint l a :=
-    let n := PArray.length a in
-    if n == 126
-    then (
-      match (a.[0],a.[1]) with
-      | (Auop (UO_index i1) j1,Auop (UO_index i2) j2) =>
-        let x := atom_to_int (a.[0]) in
-        let y := atom_to_int (a.[1]) in
 
-        let f := fun i u => 
-          match (u,is_even i) with
-          |(Auop (UO_index x) j,true) => j == (i/2)
-          |(Auop (UO_index y) j,false) => j == ((i-1)/2)
-          | _ => false
-          end
-        in
-        if forallbi f a
-        then (
-          match (get_form Lit.blit l) with
-          | Fatom (Abop (BO_eq atom) h1 h2) =>
-          | _ => C._true
-          end
-             )
-        else C._true
+ Definition check_BuildDefint lits :=
+  let n := PArray.length lits in
+  if (n == Int63Op.digits + 1)&&(Lit.is_pos (lits.[0]))
+  then (
+    match get_form (Lit.blit (lits.[0])) with
+    | Fatom a => 
+      match get_atom a with
+      | Abop b h1 h2 => 
+        match (b,get_atom h1,get_atom h2) with
+        | (BO_eq Tint,Acop (CO_int x),Acop (CO_int y)) => 
+          let fonction_map i l := if i == 0 then l else (if Lit.is_pos l then Lit.neg l else l) in
+          let test_correct i0 l :=
+            if i0 == 0
+            then true
+            else (
+              match get_form (Lit.blit l) with
+              | Fatom a0 =>
+                match get_atom a0 with
+                | Abop b0 h10 h20 =>
+                  match (b0,get_atom h10,get_atom h20) with
+                  | (BO_eq Tbool,Auop (UO_index x) j,Auop (UO_index y) k) => (j == i0-1)&&(k == j)
+                  | _ => false
+                  end
+                | _ => false
+                end
+              | _ => false
+              end
+                 )
+          in
+          if forallbi (fun i l => test_correct i l) lits
+          then PArray.to_list (PArray.mapi fonction_map lits)
+          else C._true
+        | _ => C._true
+        end
       | _ => C._true
       end
-         )
-    else C._true
-    .
+    | _ => C._true
+    end
+       )
+  else C._true
+  .
+
