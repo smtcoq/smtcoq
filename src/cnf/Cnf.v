@@ -15,6 +15,7 @@
 
 (* Add LoadPath ".." as SMTCoq. *)
 Require Import PArray List Bool.
+Add LoadPath ".." as SMTCoq.
 Require Import Misc State SMT_terms.
 
 Import Form.
