@@ -34,6 +34,7 @@ Local Open Scope int63_scope.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+
 Section Checker.
 
   Import Atom.
@@ -46,6 +47,7 @@ Section Checker.
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
 
   Variable s : S.t.
+
 
   Definition atom_to_int (a : atom) :=
     match a with
@@ -61,7 +63,7 @@ Section Checker.
     | a::b::c => a::(clean c)
     end.
 
-
+(*TODO : remplace egalité booléène par equivalent*)
  Definition check_BuildDefInt lits :=
   let n := PArray.length lits in
   if (n == Int63Op.digits + 1)&&(Lit.is_pos (lits.[0]))
@@ -78,11 +80,11 @@ Section Checker.
             then true
             else (
               match get_form (Lit.blit l) with
-              | Fatom a0 =>
-                match get_atom a0 with
-                | Abop b0 h10 h20 =>
-                  match (b0,get_atom h10,get_atom h20) with
-                  | (BO_eq Tbool,Auop (UO_index x) j,Auop (UO_index y) k) => (j == i0-1)&&(k == j)
+              | Fiff l1 l2 =>
+                match (get_form (Lit.blit l1),get_form (Lit.blit l2)) with
+                | (Fatom a1,Fatom a2) =>
+                  match (get_atom a1,get_atom a2) with
+                  | (Auop (UO_index x) j,Auop (UO_index y) k) => (j == i0-1)&&(k == j)
                   | _ => false
                   end
                 | _ => false
@@ -121,11 +123,11 @@ Definition check_BuildProjInt lits i :=
             then true
             else (
               match get_form (Lit.blit l) with
-              | Fatom a0 =>
-                match get_atom a0 with
-                | Abop b0 h10 h20 =>
-                  match (b0,get_atom h10,get_atom h20) with
-                  | (BO_eq Tbool,Auop (UO_index x) j,Auop (UO_index y) k) => (j == i0-1)&&(k == j)
+              | Fiff l1 l2 =>
+                match (get_form (Lit.blit l1),get_form (Lit.blit l2)) with
+                | (Fatom a1,Fatom a2) =>
+                  match (get_atom a1,get_atom a2) with
+                  | (Auop (UO_index x) j,Auop (UO_index y) k) => (j == i0-1)&&(k == j)
                   | _ => false
                   end
                 | _ => false
@@ -146,3 +148,5 @@ Definition check_BuildProjInt lits i :=
        )
   else C._true
   .
+
+ 
