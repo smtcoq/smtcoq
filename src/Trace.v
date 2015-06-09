@@ -18,9 +18,10 @@ Add LoadPath "cnf" as SMTCoq.cnf.
 Add LoadPath "euf" as SMTCoq.euf.
 Add LoadPath "lia" as SMTCoq.lia.
 Add LoadPath "spl" as SMTCoq.spl.
+Add LoadPath "int63" as SMTCoq.int63.
 
 Require Import Bool Int63 PArray.
-Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators.
+Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators CnfInt63.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -220,7 +221,7 @@ Module Cnf_Checker.
     | BuildProj pos l i => S.set_clause s pos (check_BuildProj t_form l i)
     | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid) 
     | ImmBuildDef2 pos cid => S.set_clause s pos (check_ImmBuildDef2 t_form s cid)
-    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i) 
+    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i)
     end.
 
   Lemma step_checker_correct : forall rho t_form,
@@ -303,6 +304,131 @@ Module Cnf_Checker.
  Qed.
 
 End Cnf_Checker.
+
+Module Cnf_CheckerInt.
+  
+  Inductive step :=
+  | Res (pos:int) (res:resolution)
+  | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit) 
+  | CTrue (pos:int)       
+  | CFalse (pos:int)
+  | BuildDef (pos:int) (l:_lit)
+  | BuildDef2 (pos:int) (l:_lit)
+  | BuildProj (pos:int) (l:_lit) (i:int)
+  | ImmBuildDef (pos:int) (cid:clause_id)
+  | ImmBuildDef2 (pos:int) (cid:clause_id)
+  | ImmBuildProj (pos:int) (cid:clause_id) (i:int)
+  | BuildDefInt (pos:int) (l:array _lit)
+  | BuildProjInt (pos:int) (l:array _lit) (i:int).
+
+  Local Open Scope list_scope.
+
+  Local Notation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 == i2) (fun _ _ => false)) (only parsing).
+
+  Definition step_checker t_form t_atom s (st:step) :=
+    match st with
+    | Res pos res => S.set_resolve s pos res
+    | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_form s cid lf) 
+    | CTrue pos => S.set_clause s pos Cnf.check_True
+    | CFalse pos => S.set_clause s pos Cnf.check_False
+    | BuildDef pos l => S.set_clause s pos (check_BuildDef t_form l)
+    | BuildDef2 pos l => S.set_clause s pos (check_BuildDef2 t_form l)
+    | BuildProj pos l i => S.set_clause s pos (check_BuildProj t_form l i)
+    | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid) 
+    | ImmBuildDef2 pos cid => S.set_clause s pos (check_ImmBuildDef2 t_form s cid)
+    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i) 
+    | BuildDefInt pos l => S.set_clause s pos (check_BuildDefInt t_form t_atom l)
+    | BuildProjInt pos l i => S.set_clause s pos (check_BuildProjInt t_form t_atom l i)
+    end.
+
+Lemma step_checker_correct : forall rho t_form t_atom,
+    Form.check_form t_form -> Atom.check_atom t_atom ->
+    forall s, S.valid (Form.interp_state_var rho t_form) s ->
+      forall st : step, S.valid (Form.interp_state_var rho t_form)
+        (step_checker t_form t_atom s st).
+  Proof.
+    intros rho t_form t_atom Ht s H; destruct (Form.check_form_correct rho _ Ht) as [[Ht1 Ht2] Ht3];intro;intros [pos res|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l|pos l i]; simpl; try apply S.valid_set_clause; auto.
+    apply S.valid_set_resolve; auto.
+    apply valid_check_flatten; auto; try discriminate; intros a1 a2; unfold is_true; rewrite Int63Properties.eqb_spec; intro; subst a1; auto.
+    apply valid_check_True; auto.
+    apply valid_check_False; auto.
+    apply valid_check_BuildDef; auto.
+    apply valid_check_BuildDef2; auto.
+    apply valid_check_BuildProj; auto.
+    apply valid_check_ImmBuildDef; auto.
+    apply valid_check_ImmBuildDef2; auto.
+    apply valid_check_ImmBuildProj; auto.
+    (*apply valid_check_BuildDefInt; auto.*)
+    (*apply valid_check_BuildProjInt; auto.*)
+    admit.
+    admit.
+  Qed.
+
+
+  Definition cnf_checker t_form t_atom s t :=
+    _checker_ (step_checker t_form t_atom) s t.
+
+
+  Lemma cnf_checker_correct : forall rho t_form t_atom,
+    Form.check_form t_form -> Atom.check_atom t_atom ->
+    forall s t confl,
+      cnf_checker t_form t_atom C.is_false s t confl ->
+      ~ (S.valid (Form.interp_state_var rho t_form) s).
+  Proof.
+    unfold cnf_checker; intros rho t_form t_atom Ht Ht1; apply _checker__correct.
+    intros c H; apply C.is_false_correct; auto.
+    apply step_checker_correct; auto.
+  Qed.
+
+
+ Inductive certif :=
+   | Certif : int -> _trace_ step -> int -> certif.
+
+ Definition checker t_form t_atom l (c:certif) :=
+   let (nclauses, t, confl) := c in   
+   Form.check_form t_form && Atom.check_atom t_atom &&
+   cnf_checker t_form t_atom C.is_false (S.set_clause (S.make nclauses) 0 (l::nil)) t confl.
+
+
+ Lemma checker_correct : forall t_form t_atom l c,
+    checker t_form t_atom l c = true ->
+    forall rho, ~ (Lit.interp (Form.interp_state_var rho t_form) l).
+ Proof.
+   unfold checker. intros t_form t_atom l (nclauses, t, confl); unfold is_true; rewrite andb_true_iff; intros [H1 H2] rho H. apply andb_true_iff in H1. destruct H1. apply (cnf_checker_correct (rho:=rho) H0 H1 H2). destruct (Form.check_form_correct rho _ H0) as [[Ht1 Ht2] Ht3]; apply S.valid_set_clause; auto.
+   apply S.valid_make; auto.
+   unfold C.valid; simpl; rewrite H; auto.
+ Qed.
+
+ Definition checker_b t_form t_atom l (b:bool) (c:certif) :=
+   let l := if b then Lit.neg l else l in
+   checker t_form t_atom l c.
+
+ Lemma checker_b_correct : forall t_var t_form t_atom l b c,
+    checker_b t_form t_atom l b c = true ->
+    Lit.interp (Form.interp_state_var (PArray.get t_var) t_form) l = b.
+ Proof.
+   unfold checker_b; intros t_var t_form t_atom l b c. case b; case_eq (Lit.interp (Form.interp_state_var (get t_var) t_form) l); auto; intros H1 H2; elim (checker_correct H2 (rho:=get t_var)); auto; rewrite Lit.interp_neg, H1; auto.
+ Qed.
+
+ Definition checker_eq t_form t_atom l1 l2 l (c:certif) :=
+   negb (Lit.is_pos l) && 
+   match t_form.[Lit.blit l] with
+   | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
+   | _ => false
+   end && 
+   checker t_form t_atom l c.
+
+ Lemma checker_eq_correct : forall t_var t_form t_atom l1 l2 l c,
+   checker_eq t_form t_atom l1 l2 l c = true ->
+    Lit.interp (Form.interp_state_var (PArray.get t_var) t_form) l1 =
+    Lit.interp (Form.interp_state_var (PArray.get t_var) t_form) l2.
+ Proof.
+   unfold checker_eq; intros t_var t_form t_atom l1 l2 l c; rewrite !andb_true_iff; case_eq (t_form .[ Lit.blit l]); [intros _ _|intros _|intros _|intros _ _ _|intros _ _|intros _ _|intros _ _|intros _ _ _|intros l1' l2' Heq|intros _ _ _ _]; intros [[H1 H2] H3]; try discriminate; rewrite andb_true_iff in H2; rewrite !Int63Properties.eqb_spec in H2; destruct H2 as [H2 H4]; subst l1' l2'; case_eq (Lit.is_pos l); intro Heq'; rewrite Heq' in H1; try discriminate; clear H1; assert (H:PArray.default t_form = Form.Ftrue /\ Form.wf t_form).
+   unfold checker in H3; destruct c as (nclauses, t, confl); rewrite andb_true_iff in H3; destruct H3 as [H3 _]; apply andb_true_iff in H3. destruct H3. destruct (Form.check_form_correct (get t_var) _ H) as [[Ht1 Ht2] Ht3]; split; auto.
+   destruct H as [H1 H2]; case_eq (Lit.interp (Form.interp_state_var (get t_var) t_form) l1); intro Heq1; case_eq (Lit.interp (Form.interp_state_var (get t_var) t_form) l2); intro Heq2; auto; elim (checker_correct H3 (rho:=get t_var)); unfold Lit.interp; rewrite Heq'; unfold Var.interp; rewrite Form.wf_interp_form; auto; rewrite Heq; simpl; rewrite Heq1, Heq2; auto.
+ Qed.
+
+End Cnf_CheckerInt.
 
 
 (* Application to resolution + cnf justification + euf + lia *)
