@@ -129,7 +129,7 @@ module MakeCnf (Form:FORM) =
 		  let na, nb = Form.neg a, Form.neg b in
 		  link_Other (BuildDef nl) [nl;a;nb];
 		  link_Other (BuildDef pl) [pl;na;nb];
-		  link_Other (BuildDef2 nl) [pl;na;b];
+		  link_Other (BuildDef2 nl) [nl;na;b];
 		  link_Other (BuildDef2 pl) [pl;a;b];
 		  set_done l;
 		  cnf a;
