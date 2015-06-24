@@ -15,8 +15,8 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-(* Add LoadPath ".." as SMTCoq. *)
-(* Add LoadPath "../lia" as SMTCoq.lia. *)
+Add LoadPath ".." as SMTCoq.
+Add LoadPath "../lia" as SMTCoq.lia.
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
@@ -120,8 +120,10 @@ Section CheckAtom.
       (* Unary operators *)
       intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; try (case op1; discriminate).
       case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [_ H]; rewrite (check_hatom_correct _ _ H); auto).
-      case_eq (get_atom i2); try discriminate; intros [ | | | | ] i Heq H; try discriminate; simpl; unfold apply_unop; rewrite (check_hatom_correct _ _ H); unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i2), Heq; simpl; unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
-      case_eq (get_atom i1); try discriminate; intros [ | | | | ] i Heq H; try discriminate; simpl; unfold apply_unop; rewrite <- (check_hatom_correct _ _ H); unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i1), Heq; simpl; unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
+      case_eq (get_atom i2); try discriminate; intros [ | | | | | ] i Heq H; try discriminate; simpl; unfold apply_unop; rewrite (check_hatom_correct _ _ H); unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i2), Heq; simpl; unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
+      case_eq (get_atom i1); try discriminate; intros [ | | | | | ] i Heq H; try discriminate; simpl; unfold apply_unop; rewrite <- (check_hatom_correct _ _ H); unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i1), Heq; simpl; unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
+      intros. apply andb_true_iff in H. destruct H. assert (i0 = i). apply (Int63Properties.eqb_spec). apply reflect_cop_eqb_UO_index. assert (reflect (UO_index i0 = UO_index i) (uop_eqb (UO_index i0) (UO_index i))). apply reflect_uop_eqb. apply reflect_iff in H1. apply H1. apply H. rewrite H1. apply check_hatom_correct in H0. rewrite H0. trivial.
+      
       (* Binary operators *)
       intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); auto).
       unfold is_true, interp_bop, apply_binop. rewrite orb_true_iff, !andb_true_iff. intros [[H1 H2]|[H1 H2]]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.add_comm; reflexivity.
@@ -235,7 +237,7 @@ Section CheckAtom.
     forall h1 h2, check_neg_hatom h1 h2 ->
       interp_form_hatom t_i t_func t_atom h1 = negb (interp_form_hatom t_i t_func t_atom h2).
   Proof.
-    unfold interp_form_hatom. intros Hwt H1 H2 h1 h2 H3. unfold interp_bool. generalize (check_neg_hatom_correct Hwt H1 H2 _ _ H3). case (interp_hatom t_i t_func t_atom h1). case (interp_hatom t_i t_func t_atom h2). simpl. intros [i| | | ] v1 [j| | | ] v2; intro H; inversion H. rewrite Typ.cast_refl. auto.
+    unfold interp_form_hatom. intros Hwt H1 H2 h1 h2 H3. unfold interp_bool. generalize (check_neg_hatom_correct Hwt H1 H2 _ _ H3). case (interp_hatom t_i t_func t_atom h1). case (interp_hatom t_i t_func t_atom h2). simpl. intros [i| | | | ] v1 [j| | | | ] v2; intro H; inversion H. rewrite Typ.cast_refl. auto.
   Qed.
 
 End CheckAtom.
