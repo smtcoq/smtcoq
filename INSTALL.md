@@ -7,73 +7,10 @@ clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64).
 
 
-## Quick installation
-
-The simplest way to install SMTCoq is to use the OPAM package, available
-in the
-[Coq unstable repository](https://github.com/coq/repo-unstable.git).
-Once you have OPAM installed on your system:
-```
-opam repo add coq-stable https://github.com/coq/repo-stable.git
-opam repo add coq-unstable https://github.com/coq/repo-unstable.git
-opam update
-opam install coq coq:smtcoq
-```
-For more information of opam packages for Coq, see
-[Use OPAM for Coq](http://coq-blog.clarus.me/use-opam-for-coq.html).
-
-This version is sufficient to check small certificates and to solve
-small goals. However, if you want to check larger certificates, we
-recommend using SMTCoq with the
-[version of Coq with native data-structures](https://github.com/maximedenes/native-coq),
-following the instructions in Section "Installation from the sources".
-
-
-## Installation of the provers
-
-To use SMTCoq, you also need one or more solvers supported by SMTCoq.
-Currently, these solvers are:
-
-- [veriT](http://prosecco.gforge.inria.fr/personal/ckeller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
-
-- [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
-
-Please download the solvers you would like to use via the above links
-(since SMTCoq might not support later versions), and follow the
-instructions available for each solver in order to compile them **in a
-proof production mode**, as detailed below.
-
-
-### veriT
-
-The
-[above link](http://prosecco.gforge.inria.fr/personal/ckeller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
-points to a snapshot of veriT which is known to be compatible with
-SMTCoq, and is already in proof production mode. If you encounter
-problems to compile it, please report an issue.
-
-
-### zChaff
-
-zChaff is not actively maintained, so you might encounter problems to
-compile it on modern platforms.
-[This patch](http://prosecco.gforge.inria.fr/personal/ckeller/Documents-recherche/Smtcoq/zchaff64.patch)
-might solve your problems (thanks to Sylvain Boulmé for it); if not,
-please report an issue.
-
-To turn proof production on, you need to uncomment the line
-`// #define VERIFY_ON ` in `zchaff_solver.cpp`.
-
-
 ## Installation from the sources
 
-From the sources, SMTCoq can be built either with the standard version
-of Coq or with the
-[version of Coq with native data-structures](https://github.com/maximedenes/native-coq).
-We recommend this latter for efficiency.
-
-
-### With the version of Coq with native data-structures
+Currently, SMTCoq can be built only from the sources, using the
+[version of Coq with native data-structures](https://github.com/maximedenes/native-coq). The design of an opam package is under progress.
 
 1. Download the git version of Coq with native compilation:
 ```
@@ -103,22 +40,37 @@ make install
    in the src directory.
 
 
-### With the standard version of Coq
+## Installation of the provers
 
-1. Install the standard version of Coq (>= 8.4) by any means that give
-   access to the sources (e.g. via OPAM or from the sources).
+To use SMTCoq, you need one or more solvers supported by SMTCoq.
+Currently, these solvers are:
 
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```
-export COQBIN=/home/jdoe/coq-8.4pl5/bin/
-```
-   (the final slash is mandatory).
+- [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
 
-3. Compile and install SMTCoq by using the commands:
-```
-./configure.sh -standard
-make
-make install
-```
-   in the src directory.
+- [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
+
+Please download the solvers you would like to use via the above links
+(since SMTCoq might not support later versions), and follow the
+instructions available for each solver in order to compile them **in a
+proof production mode**, as detailed below.
+
+
+### veriT
+
+The
+[above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
+points to a snapshot of veriT which is known to be compatible with
+SMTCoq, and is already in proof production mode. If you encounter
+problems to compile it, please report an issue.
+
+
+### zChaff
+
+zChaff is not actively maintained, so you might encounter problems to
+compile it on modern platforms.
+[This patch](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/zchaff64.patch)
+might solve your problems (thanks to Sylvain Boulmé for it); if not,
+please report an issue.
+
+To turn proof production on, you need to uncomment the line
+`// #define VERIFY_ON ` in `zchaff_solver.cpp`.
