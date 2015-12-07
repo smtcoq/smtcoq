@@ -10,11 +10,11 @@ amd64).
 ## Installation from the sources
 
 Currently, SMTCoq can be built only from the sources, using the
-[version of Coq with native data-structures](https://github.com/maximedenes/native-coq). The design of an opam package is under progress.
+[version of Coq with native data-structures](https://github.com/smtcoq/native-coq). The design of an opam package is under progress.
 
 1. Download the git version of Coq with native compilation:
 ```
-git clone git://github.com/maximedenes/native-coq.git
+git clone https://github.com/smtcoq/native-coq.git
 ```
    and compile it by following the instructions available in the
    repository. We recommand that you do not install it, but only compile
