@@ -15,7 +15,7 @@
 
 
 Require Import Bool List Int63 PArray.
-Require Import Misc State.
+Require Import SMTCoq.Misc SMTCoq.State.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.

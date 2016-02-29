@@ -20,7 +20,7 @@ Add LoadPath "lia" as SMTCoq.lia.
 Add LoadPath "spl" as SMTCoq.spl.
 
 Require Import Bool Int63 PArray.
-Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators.
+Require Import SMTCoq.Misc SMTCoq.State SMTCoq.SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
