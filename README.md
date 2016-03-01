@@ -8,10 +8,10 @@ vernacular commands and tactics to interface with the SAT solver zChaff
 and the SMT solver veriT are provided. It is designed in a modular way
 allowing to extend it easily to other solvers.
 
-Since version 1.2, SMTCoq also provides an extracted version of the
-checker, available only with native-coq.
+SMTCoq also provides an extracted version of the checker, that can be
+run outside Coq.
 
-The current stable version is the version 1.2.
+The current stable version is version 1.3.
 
 
 ### Installation
