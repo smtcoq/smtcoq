@@ -42,6 +42,7 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 OCAMLLIBS?=-I zchaff\
   -I verit\
   -I trace\
+  -I smtlib2\
   -I lia\
   -I euf\
   -I cnf
@@ -162,11 +163,11 @@ MLFILES:=lia/lia.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
   verit/veritParser.ml\
-  verit/smtlib2_util.ml\
-  verit/smtlib2_parse.ml\
-  verit/smtlib2_lex.ml\
-  verit/smtlib2_genConstr.ml\
-  verit/smtlib2_ast.ml\
+  smtlib2/smtlib2_util.ml\
+  smtlib2/smtlib2_parse.ml\
+  smtlib2/smtlib2_lex.ml\
+  smtlib2/smtlib2_genConstr.ml\
+  smtlib2/smtlib2_ast.ml\
   trace/smtTrace.ml\
   trace/smtMisc.ml\
   trace/smtForm.ml\
@@ -251,10 +252,10 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx verit/smtlib2_util.cmx verit/smtlib2_ast.cmx verit/smtlib2_parse.cmx verit/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx verit/smtlib2_genConstr.cmx verit/verit.cmx trace/smt_tactic.cmx
+$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx verit/verit.cmx trace/smt_tactic.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
-ml: verit/veritParser.ml verit/veritLexer.ml verit/smtlib2_parse.ml verit/smtlib2_lex.ml
+ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
 
 
 %.ml %.mli: %.mly
@@ -341,7 +342,7 @@ clean:
 	- rm -rf vtest
 	- rm -rf ztest
 	- rm -rf test
-	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml verit/smtlib2_parse.mli verit/smtlib2_parse.ml verit/smtlib2_lex.ml
+	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
 
 archclean:
 	rm -f *.cmx *.o
