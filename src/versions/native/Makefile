@@ -270,6 +270,12 @@ ml: verit/veritParser.ml verit/veritLexer.ml verit/smtlib2_parse.ml verit/smtlib
 %.ml: %.mll
 	$(CAMLLEX) $<
 
+vtest: 
+	cd ../unit-tests; make verit
+
+ztest: 
+	cd ../unit-tests; make zchaff
+
 test: 
 	cd ../unit-tests; make
 
@@ -339,8 +345,10 @@ clean:
 	- rm -rf $(CMXS)
 	- rm -rf $(CMXA)
 	- rm -rf ml
+	- rm -rf vtest
+	- rm -rf ztest
 	- rm -rf test
-	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml verit/smtlib2_parse.mli verit/smtlib2_parse.ml verit/smtlib2_lex.ml
+	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml verit/smtlib2_parse.mli verit/smtlib2_parse.ml verit/smtlib2_lex.ml
 
 archclean:
 	rm -f *.cmx *.o
