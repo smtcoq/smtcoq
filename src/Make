@@ -14,7 +14,7 @@
 ## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA and VCMXS. ##
 ## Change the "install" target: change CMO into CMX.                  ##
 ## Finally, suppress the "Makefile" target and add to the "clean" target: ##
-##   - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml ##
+##   - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a ##
 ########################################################################
 
 
@@ -22,6 +22,7 @@
 
 -I cnf
 -I euf
+-I lfsc
 -I lia
 -I smtlib2
 -I trace
@@ -31,12 +32,13 @@
 -custom "cd ../unit-tests; make" "" "test"
 -custom "cd ../unit-tests; make zchaff" "" "ztest"
 -custom "cd ../unit-tests; make verit" "" "vtest"
+-custom "cd ../unit-tests; make lfsc" "" "lfsctest"
 
 -custom "$(CAMLLEX) $<" "%.mll" "%.ml"
 -custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"
--custom "" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml" "ml"
+-custom "" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml" "ml"
 
--custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx trace/smt_tactic.cmx" "$(CMXA)"
+-custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/lfscSyntax.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx trace/smt_tactic.cmx" "$(CMXA)"
 -custom "$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^" "$(CMXA)" "$(CMXS)"
 
 CMXA = trace/smtcoq.cmxa
@@ -70,6 +72,12 @@ verit/veritLexer.ml
 verit/verit.ml
 verit/veritSyntax.ml
 verit/veritSyntax.mli
+
+lfsc/lfscParser.ml
+lfsc/lfscLexer.ml
+lfsc/lfsc.ml
+lfsc/lfscSyntax.ml
+lfsc/lfscSyntax.mli
 
 zchaff/cnfParser.ml
 zchaff/satParser.ml

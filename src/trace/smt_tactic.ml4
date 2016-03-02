@@ -46,6 +46,13 @@ VERNAC COMMAND EXTEND Parse_certif_verit
   ]
 END
 
+VERNAC COMMAND EXTEND Parse_certif_lfsc
+| [ "Lfsc_Checker" string(fsmt) string(fproof) ] ->
+  [
+    Lfsc.checker fsmt fproof
+  ]
+END
+
 TACTIC EXTEND zchaff
 | [ "zchaff" ] -> [ Zchaff.tactic ]
 END
