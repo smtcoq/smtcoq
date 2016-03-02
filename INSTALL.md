@@ -33,7 +33,6 @@ export COQBIN=/home/jdoe/native-coq/bin/
 
 3. Compile and install SMTCoq by using the commands:
 ```
-./configure.sh
 make
 make install
 ```
