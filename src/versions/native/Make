@@ -29,6 +29,8 @@
 -I versions/native
 
 -custom "cd ../unit-tests; make" "" "test"
+-custom "cd ../unit-tests; make zchaff" "" "ztest"
+-custom "cd ../unit-tests; make verit" "" "vtest"
 
 -custom "$(CAMLLEX) $<" "%.mll" "%.ml"
 -custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"
