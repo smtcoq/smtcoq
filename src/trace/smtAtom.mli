@@ -173,3 +173,7 @@ module Form : SmtForm.FORM with type hatom = hatom
 module Trace : sig
   val share_prefix : Form.t SmtCertif.clause -> int -> unit
 end
+
+
+val make_t_i : Btype.reify_tbl -> Term.constr
+val make_t_func : Op.reify_tbl -> Term.constr -> Term.constr

@@ -746,3 +746,16 @@ module Atom =
 
 module Form = SmtForm.Make(Atom)
 module Trace = SmtTrace.MakeOpt(Form)
+
+
+(* Interpretation tables *)
+
+let mk_ftype cod dom =
+  let typeb = Lazy.force ctype in
+  let typea = mklApp clist [|typeb|] in
+  let a = Array.fold_right (fun bt acc -> mklApp ccons [|typeb; Btype.to_coq bt; acc|]) cod (mklApp cnil [|typeb|]) in
+  let b = Btype.to_coq dom in
+  mklApp cpair [|typea;typeb;a;b|]
+
+let make_t_i rt = Btype.interp_tbl rt
+let make_t_func ro t_i = Op.interp_tbl (mklApp ctval [|t_i|]) (fun cod dom value -> mklApp cTval [|t_i; mk_ftype cod dom; value|]) ro

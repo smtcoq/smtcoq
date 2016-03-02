@@ -224,3 +224,16 @@ let declare_commands rt ro ra rf acc = function
     let _ = declare_fun rt ro sym arg cod in acc
   | CAssert (_, t) -> (make_root ra rf t)::acc
   | _ -> acc
+
+
+(* Import function *)
+
+let import_smtlib2 rt ro ra rf filename =
+  let chan = open_in filename in
+  let lexbuf = Lexing.from_channel chan in
+  let commands = Smtlib2_parse.main Smtlib2_lex.token lexbuf in
+  close_in chan;
+  match commands with
+    | None -> []
+    | Some (Smtlib2_ast.Commands (_,(_,res))) ->
+      List.rev (List.fold_left (declare_commands rt ro ra rf) [] res)

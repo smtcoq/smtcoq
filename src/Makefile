@@ -164,13 +164,14 @@ MLFILES:=lia/lia.ml\
   verit/veritLexer.ml\
   verit/veritParser.ml\
   smtlib2/smtlib2_util.ml\
-  smtlib2/smtlib2_parse.ml\
-  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_genConstr.ml\
   smtlib2/smtlib2_ast.ml\
+  smtlib2/smtlib2_lex.ml\
+  smtlib2/smtlib2_parse.ml\
   trace/smtTrace.ml\
   trace/smtMisc.ml\
   trace/smtForm.ml\
+  trace/smtCommands.ml\
   trace/smtCnf.ml\
   trace/smtCertif.ml\
   trace/smtAtom.ml\
@@ -252,7 +253,7 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx verit/verit.cmx trace/smt_tactic.cmx
+$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx trace/smt_tactic.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
