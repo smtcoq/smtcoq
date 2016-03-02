@@ -538,6 +538,7 @@ Section Checker_Lia7.
   Verit_Checker "lia7.smt2" "lia7.vtlog".
 End Checker_Lia7.
 
+(*
 Section Checker_Let1.
   Verit_Checker "let1.smt2" "let1.vtlog".
 End Checker_Let1.
@@ -545,6 +546,7 @@ End Checker_Let1.
 Section Checker_Let2.
   Verit_Checker "let2.smt2" "let2.vtlog".
 End Checker_Let2.
+*)
 
 
 Section Sat1.
@@ -682,6 +684,7 @@ Section Lia7.
   Compute Euf_Checker.checker t_i_lia7 t_func_lia7 t_atom_lia7 t_form_lia7 root_lia7 used_roots_lia7 trace_lia7.
 End Lia7.
 
+(*
 Section Let1.
   Parse_certif_verit t_i_let1 t_func_let1 t_atom_let1 t_form_let1 root_let1 used_roots_let1 trace_let1 "let1.smt2" "let1.vtlog".
   Compute Euf_Checker.checker t_i_let1 t_func_let1 t_atom_let1 t_form_let1 root_let1 used_roots_let1 trace_let1.
@@ -691,6 +694,7 @@ Section Let2.
   Parse_certif_verit t_i_let2 t_func_let2 t_atom_let2 t_form_let2 root_let2 used_roots_let2 trace_let2 "let2.smt2" "let2.vtlog".
   Compute Euf_Checker.checker t_i_let2 t_func_let2 t_atom_let2 t_form_let2 root_let2 used_roots_let2 trace_let2.
 End Let2.
+*)
 
 
 Section Theorem_Sat1.
@@ -801,6 +805,7 @@ Section Theorem_Lia7.
   Time Verit_Theorem theorem_lia7 "lia7.smt2" "lia7.vtlog".
 End Theorem_Lia7.
 
+(*
 Section Theorem_Let1.
   Time Verit_Theorem theorem_let1 "let1.smt2" "let1.vtlog".
 End Theorem_Let1.
@@ -808,6 +813,7 @@ End Theorem_Let1.
 Section Theorem_Let2.
   Time Verit_Theorem theorem_let2 "let2.smt2" "let2.vtlog".
 End Theorem_Let2.
+*)
 
 
 (* verit tactic *)
