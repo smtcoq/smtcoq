@@ -1,5 +1,5 @@
 open Type
-
+open Ast
 
 
 
@@ -109,7 +109,7 @@ let rec print_hyp_inputs = function
               
   | List l -> List.iter print_hyp_inputs l
 
-let _ =
+let test1 () =
 
   let filename = Sys.argv.(1) in
   let chan = open_in filename in
@@ -127,3 +127,25 @@ let _ =
   (* print_list Format.std_formatter r; *)
 
   exit 0
+
+
+let test2 () =
+  let chan =
+    try
+      let filename = Sys.argv.(1) in
+      open_in filename
+    with Invalid_argument _ -> stdin
+  in
+  let buf = Lexing.from_channel chan in
+
+  try
+    let proof = Parser.proof Lexer.main buf in
+    Format.printf "LFSC proof:@.%a@." Ast.print_proof proof
+
+  with Ast.TypingError (t1, t2) ->
+    Format.eprintf "Typing error: expected %a, got %a@."
+      Ast.print_term t1
+      Ast.print_term t2
+
+
+let _ = test2 ()

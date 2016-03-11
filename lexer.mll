@@ -3,6 +3,7 @@
 
   open Printf
   open Lexing
+  open Parser
 
   let char_for_backslash = function
     | 'n' -> '\010'
@@ -63,6 +64,14 @@
       type t
       val lparen : t
       val rparen : t
+      val lambda : t
+      val biglam : t
+      val pi : t
+      val colon : t
+      val hole : t
+      val sc : t
+      val integer : string -> t
+      val ident : string -> t
       val eof : t
       val simple_string : string -> t
       val hash_semi : t
@@ -73,10 +82,28 @@
     end
   end
 
+
+  (* Create and populate a hashtable *)
+  let mk_hashtbl init =
+    let tbl = List.length init |> Hashtbl.create in
+    init |> List.iter (fun (k, v) -> Hashtbl.add tbl k v) ;
+    tbl
+
+  let keywords = mk_hashtbl [
+    ("check", CHECK);
+    ("define", DEFINE);
+    ("declare", DECLARE);
+    ("type", TYPE);
+    ("kind", KIND);
+    ("mpz", MPZ);
+    ("mpq", MPQ);
+  ]
+
   module Make (X : T) : sig
     val main : ?buf:Buffer.t -> Lexing.lexbuf -> X.Token.t
   end = struct (* BEGIN FUNCTOR BODY CONTAINING GENERATED CODE *)
     open X
+
 }
 
 let lf = '\010'
@@ -90,6 +117,10 @@ let hexdigit = digit | ['a'-'f' 'A'-'F']
 let unquoted_start =
   unquoted # ['#' '|'] | '#' unquoted # ['|'] | '|' unquoted # ['#']
 
+let integer = ['0' - '9'] ['0' - '9']*
+let ident = ('_')* ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
+
+
 rule main buf = parse
   | lf | dos_newline { found_newline lexbuf 0;
                        main buf lexbuf }
@@ -97,8 +128,15 @@ rule main buf = parse
   | (';' (_ # lf_cr)*) as text { Token.comment text ~main buf lexbuf }
   | '(' { Token.lparen }
   | ')' { Token.rparen }
+  | '\\' { Token.lambda }
+  | '!' { Token.pi }
+  | '%' { Token.biglam }
+  | '_' { Token.hole }
+  | ':' { Token.colon }
+  | '^' { Token.sc }
+  | integer as i { Token.integer i }
   | '"'
-      {
+      { 
         let pos = Lexing.lexeme_start_p lexbuf in
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf pos lexbuf;
@@ -274,8 +312,20 @@ and scan_block_comment buf locs = parse
         let eof = EOF
         let lparen = LPAREN
         let rparen = RPAREN
+        let lambda = LAMBDA
+        let pi = PI
+        let biglam =  BIGLAMBDA
+        let hole = HOLE
+        let colon = COLON
+        let sc = SC
         let hash_semi = HASH_SEMI
-        let simple_string x = STRING x
+        let integer i = INT (Big_int.big_int_of_string i)
+        let ident i =
+          (* Format.eprintf "ident? : %s@." i; *)
+          try Hashtbl.find keywords i with Not_found -> STRING i
+        let simple_string x =
+          (* Format.eprintf "string? : %s@." x; *)
+          try Hashtbl.find keywords x with Not_found -> STRING x
         let quoted_string _ buf = STRING (Buffer.contents buf)
         let block_comment _pos ~main buf lexbuf =
           main buf lexbuf

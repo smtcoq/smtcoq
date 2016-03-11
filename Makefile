@@ -1,8 +1,8 @@
 native:
-	ocamlbuild lfsctosmtcoq.native
+	ocamlbuild -libs nums lfsctosmtcoq.native
 
 byte:
-	ocamlbuild lfsctosmtcoq.byte
+	ocamlbuild -libs nums lfsctosmtcoq.byte
 
 clean:
 	ocamlbuild -clean
