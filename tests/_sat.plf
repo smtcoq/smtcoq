@@ -1,0 +1,92 @@
+(declare bool type)
+(declare tt bool)
+(declare ff bool)
+
+(declare var type)
+
+(declare formula type)
+(declare th_holds (! f formula type))
+
+(declare Bool sort)				
+
+(declare term (! t sort type))
+
+(declare p_app (! x (term Bool) formula))
+                
+(declare lit type)
+(declare pos (! x var lit))
+(declare neg (! x var lit))
+
+(declare clause type)
+(declare cln clause)
+(declare clc (! x lit (! c clause clause)))
+
+; constructs for general clauses for R, Q, satlem
+
+(declare concat (! c1 clause (! c2 clause clause)))
+(declare clr (! l lit (! c clause clause)))
+
+; code to check resolutions
+
+
+;; resolution proofs
+
+(declare holds (! c clause type))
+
+(declare decl_atom
+  (! f formula
+  (! u (! v var
+       (! a formula
+         (holds cln)))
+    (holds cln))))
+
+(declare R (! c1 clause (! c2 clause
+           (! u1 (holds c1)
+           (! u2 (holds c2)
+           (! n var
+            (holds (concat (clr (pos n) c1)
+                     (clr (neg n) c2)))))))))
+
+(declare Q (! c1 clause (! c2 clause
+           (! u1 (holds c1)
+           (! u2 (holds c2)
+           (! n var
+            (holds (concat (clr (neg n) c1)
+                     (clr (pos n) c2)))))))))
+
+(declare satlem_simplify
+                (! c1 clause
+                (! c2 clause
+                (! c3 clause
+                (! u1 (holds c1)
+                (! r (^ (simplify_clause c1) c2)
+                (! u2 (! x (holds c2) (holds c3))
+                   (holds c3))))))))
+
+
+(declare satlem
+  (! c clause
+  (! c2 clause
+  (! u (holds c)
+  (! u2 (! v (holds c) (holds c2))
+    (holds c2))))))
+
+; A little example to demonstrate simplify_clause.
+; It can handle nested clr's of both polarities,
+; and correctly cleans up marks when it leaves a
+; clr or clc scope.  Uncomment and run with
+; --show-runs to see it in action.
+;
+; (check
+;   (% v1 var
+;   (% u1 (holds (concat (clr (neg v1) (clr (pos v1) (clc (pos v1) (clr (pos v1) (clc (pos v1) (clc (neg v1) cln))))))
+;                    (clc (pos v1) (clc (pos v1) cln))))
+;    (satlem _ _ _ u1 (\ x x))))))
+
+
+
+;(check
+;   (% v1 var
+;   (% u1 (holds (clr (neg v1) (concat (clc (neg v1) cln)
+;                                      (clr (neg v1) (clc (neg v1) cln)))))
+;    (satlem _ _ _ u1 (\ x x))))))

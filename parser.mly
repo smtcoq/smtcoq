@@ -139,6 +139,10 @@ term:
   | LPAREN PI HOLE
     LPAREN SC sexp_but_no_comment sexp_but_no_comment RPAREN term RPAREN
     { $9 }
+
+  | LPAREN PI STRING LPAREN STRING term_list RPAREN RPAREN     { mk_app $5 $6 }
+ /* | LPAREN PI STRING STRING LPAREN PI STRING LPAREN STRING term_list RPAREN LPAREN STRING term_list RPAREN RPAREN RPAREN { mk_app $13 $14 } */
+
   | LPAREN PI binding term RPAREN
     { let s = $3 in
       let t = $4 in

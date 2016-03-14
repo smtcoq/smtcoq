@@ -1,13 +1,12 @@
 open Format
 
 type mpz = Big_int.big_int
-type mpq = Num.num
-             
+type mpq = Num.num             
 
-type symbol_name = Name of string | S_Hole
-type symbol = { name : symbol_name; s_ty : term }
+type name = Name of string | S_Hole
+type symbol = { sname : name; stype : term }
 
-and pterm =
+and dterm =
   | Type
   | Kind
   | Mpz
@@ -19,7 +18,7 @@ and pterm =
   | Lambda of symbol * term
   | Hole
 
-and term = { value: pterm; ty: term }
+and term = { tname: dterm; ttype: term }
 
 
 type command =
@@ -35,22 +34,22 @@ let symbols = Hashtbl.create 21
 
 exception TypingError of term * term
 
-let rec kind = { value = Kind; ty = kind }
+let rec kind = { tname = Kind; ttype = kind }
 
-let lfsc_type = { value = Type; ty = kind }
+let lfsc_type = { tname = Type; ttype = kind }
 
-let mpz = { value = Mpz; ty = lfsc_type }
+let mpz = { tname = Mpz; ttype = lfsc_type }
 
-let mpq = { value = Mpq; ty = lfsc_type }
+let mpq = { tname = Mpq; ttype = lfsc_type }
 
-let mk_mpz n = { value = Int n; ty = mpz }
+let mk_mpz n = { tname = Int n; ttype = mpz }
 
-let mk_mpq n = { value = Rat n; ty = mpq }
+let mk_mpq n = { tname = Rat n; ttype = mpq }
 
 
-let mk_symbol n s_ty = { name = Name n; s_ty }
+let mk_symbol n strm = { sname = Name n; stype = strm }
 
-let mk_symbol_hole s_ty = { name = S_Hole; s_ty }
+let mk_symbol_hole strm = { sname = S_Hole; stype = strm }
 
 
 let fresh_alpha =
@@ -59,52 +58,52 @@ let fresh_alpha =
     mk_symbol ("'a"^string_of_int !cpt) ty
 
 let rec rename s s' t =
-  if t.value = Kind then t else
-  let ty = rename s s' t.ty in
-  let t = if t.ty == ty then t else {t with ty} in
-  match t.value with
+  if t.tname = Kind then t else
+  let ttype = rename s s' t.ttype in
+  let t = if t.ttype == ttype then t else {t with ttype} in
+  match t.tname with
   | Type | Kind | Mpz | Mpq | Int _ | Rat _ | Hole -> t
     
   | App (x, args) ->
     let nargs = List.map (rename s s') args in
-    if x.name = s.name then {t with value = App(s', nargs)}
+    if x.sname = s.sname then {t with tname = App(s', nargs)}
     else if nargs == args then t
-    else {t with value = App(x, nargs)}
+    else {t with tname = App(x, nargs)}
       
   | Pi (x, ty) ->
-    if x.name = s.name then t
+    if x.sname = s.sname then t
     else
       let nty = rename s s' ty in
       if nty == ty then t
-      else {t with value = Pi (x, nty)}
+      else {t with tname = Pi (x, nty)}
       
   | Lambda (x, ty) ->
-    if x.name = s.name then t
+    if x.sname = s.sname then t
     else
       let nty = rename s s' ty in
       if nty == ty then t
-      else {t with value = Lambda (x, nty)}
+      else {t with tname = Lambda (x, nty)}
 
 
-let rec equal t1 t2 = match t1.value, t2.value with
+let rec equal t1 t2 = match t1.tname, t2.tname with
   | Type, Type  
   | Kind, Kind
   | Mpz, Mpz
-  | Mpq, Mpz
+  | Mpq, Mpq
   | Hole, Hole -> true
   | Int z1, Int z2 -> Big_int.eq_big_int z1 z2
   | Rat q1, Rat q2 -> Num.eq_num q1 q2
     
   | App (s1, args1), App (s2, args2) ->
-    s1.name = s2.name &&
+    s1.sname = s2.sname &&
     List.for_all2 equal args1 args2
       
   | Pi (s1, t1), Pi (s2, t2) ->
-    let a = fresh_alpha s1.s_ty in
+    let a = fresh_alpha s1.stype in
     equal (rename s1 a t1) (rename s2 a t2)
 
   | Lambda (s1, t1), Lambda (s2, t2) ->
-    let a = fresh_alpha s1.s_ty in
+    let a = fresh_alpha s1.stype in
     equal (rename s1 a t1) (rename s2 a t2)
 
   | _ -> false
@@ -114,10 +113,10 @@ let unify ty1 ty2 =
   if not (equal ty1 ty2) then raise (TypingError (ty1, ty2))
 
 
-let rec ty_of_app ty args = match ty.value, args with
+let rec ty_of_app ty args = match ty.tname, args with
   | Pi (s, t), a :: rargs ->
     (* eprintf "tyapp1@."; *)
-    unify s.s_ty a.ty;
+    unify s.stype a.ttype;
     (* eprintf "tyapp2@."; *)
     ty_of_app t rargs
   | _, [] -> ty
@@ -126,42 +125,42 @@ let rec ty_of_app ty args = match ty.value, args with
 
 let mk_app x args =
   (* eprintf "@.mk_App : %s ...@.@." x; *)
-  let s_ty = Hashtbl.find symbols (Name x) in
-  let s = mk_symbol x s_ty in
-  { value = App (s, args); ty = ty_of_app s.s_ty args }
+  let sy_ty = Hashtbl.find symbols (Name x) in
+  let s = mk_symbol x sy_ty in
+  { tname = App (s, args); ttype = ty_of_app s.stype args }
 
-let mk_hole ty = { value = Hole; ty }
+(* let mk_hole ty = { tname = Hole; ty } *)
 
-let mk_hole_hole () = { value = Hole; ty = mk_hole lfsc_type }
+let mk_hole_hole () = { tname = Hole; ttype = lfsc_type }
 
 
 let mk_pi s t =
-  Hashtbl.add symbols s.name s.s_ty;
-  let x = { value = Pi (s, t); ty = lfsc_type } in
-  Hashtbl.remove symbols s.name;
+  Hashtbl.add symbols s.sname s.stype;
+  let x = { tname = Pi (s, t); ttype = lfsc_type } in
+  Hashtbl.remove symbols s.sname;
   x
 
 
 let mk_lambda s t =
-  Hashtbl.add symbols s.name s.s_ty;
-  let x = { value = Lambda (s, t);
-            ty = mk_pi (mk_symbol_hole s.s_ty) t.ty } in
-  Hashtbl.remove symbols s.name;
+  Hashtbl.add symbols s.sname s.stype;
+  let x = { tname = Lambda (s, t);
+            ttype = mk_pi (mk_symbol_hole s.stype) t.ttype } in
+  Hashtbl.remove symbols s.sname;
   x
 
 
-let mk_ascr ty t =
+let mk_ascr ttype t =
   eprintf "mkascr@.";
-  unify ty t.ty;
+  unify ttype t.ttype;
   eprintf "mkascrend@.";
-  { t with ty }
+  { t with ttype }
 
 
-let rec print_symbol fmt { name } = match name with
+let rec print_symbol fmt { sname } = match sname with
   | Name n -> pp_print_string fmt n
   | S_Hole -> pp_print_string fmt "_"
 
-and print_term fmt { value } = match value with
+and print_term fmt { tname } = match tname with
   | Type -> fprintf fmt "type"
   | Kind -> fprintf fmt "kind"
   | Mpz -> fprintf fmt "mpz"
@@ -176,7 +175,7 @@ and print_term fmt { value } = match value with
   | Pi (s, t) ->
     fprintf fmt "(! %a@ %a@ %a)"
       print_symbol s
-      print_term s.s_ty
+      print_term s.stype
       print_term t
   | Lambda (s, t) ->
     fprintf fmt "(\\ %a@ %a)" print_symbol s print_term t
@@ -196,10 +195,10 @@ let print_proof fmt =
 
 
 let register_symbol s =
-  Hashtbl.add symbols s.name s.s_ty
+  Hashtbl.add symbols s.sname s.stype
 
 let remove_symbol s =
-  Hashtbl.remove symbols s.name
+  Hashtbl.remove symbols s.sname
 
 let sort =
   let s = mk_symbol "sort" lfsc_type in

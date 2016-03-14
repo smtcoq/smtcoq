@@ -1,10 +1,11 @@
 type mpz = Big_int.big_int
 type mpq = Num.num
-             
-type symbol_name = Name of string | S_Hole
-type symbol = { name : symbol_name; s_ty : term }
 
-and pterm =
+
+type name = Name of string | S_Hole
+type symbol = { sname : name; stype : term }
+
+and dterm =
   | Type
   | Kind
   | Mpz
@@ -16,8 +17,7 @@ and pterm =
   | Lambda of symbol * term
   | Hole
 
-and term = { value: pterm; ty: term }
-
+and term = { tname: dterm; ttype: term }
 
 type command =
   | Check of term
@@ -50,7 +50,7 @@ val mk_symbol_hole : term -> symbol
 
 val mk_app : string -> term list -> term
 
-val mk_hole : term -> term
+(* val mk_hole : term -> term *)
 
 val mk_hole_hole : unit -> term
 
