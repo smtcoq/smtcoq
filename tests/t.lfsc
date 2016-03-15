@@ -1,1 +1,75 @@
 (check (: mpz 0))
+
+
+(declare formula type)
+(declare th_holds (! f formula type))
+
+; standard logic definitions
+(declare true formula)
+(declare false formula)
+(declare not (! f formula formula))
+(declare and (! f1 formula (! f2 formula formula)))
+(declare or (! f1 formula (! f2 formula formula)))
+(declare impl (! f1 formula (! f2 formula formula)))
+(declare iff (! f1 formula (! f2 formula formula)))
+(declare xor (! f1 formula (! f2 formula formula)))
+(declare ifte (! b formula (! f1 formula (! f2 formula formula))))
+
+; terms
+(declare sort type)
+(declare term (! t sort type))	; declared terms in formula
+
+
+(declare Bool sort)
+(declare true (term Bool))
+(declare false (term Bool))
+
+(declare Int sort) 
+(declare int (! x mpz (term Int)))
+
+; standard definitions for =, ite, let and flet
+(declare = (! s sort
+           (! x (term s)
+           (! y (term s)
+             formula))))
+
+(declare symm (! s sort
+              (! x (term s)
+              (! y (term s)
+              (! u (th_holds (= _ x y))
+                (th_holds (= _ y x)))))))
+
+(declare trans (! s sort
+               (! x (term s)
+               (! y (term s)
+               (! z (term s)
+               (! u (th_holds (= _ x y))
+               (! u (th_holds (= _ y z))
+                 (th_holds (= _ x z)))))))))
+
+
+(declare trust_f (! f formula (th_holds f)))
+
+
+(check (: formula (= Int (int 0) (int 1))))
+
+(check (: formula (= _ (int 0) (int 1))))
+
+(check (: (! x mpz (term Int)) (\ x (int 0))))
+
+(define trust_eq_int
+  (\ caca (\ boudin (trust_f (= _ (int caca) (int boudin))))))
+
+(check
+ (: (th_holds (= _ (int _) (int 1)))
+    (symm _ _ _
+          (trust_f (= _ (int 1) (int 0))))
+    ))
+
+(check
+ (: (th_holds (= _ (int 0) (int 1)))
+    (symm _ _ _
+          (trust_eq_int 1 0))
+    ))
+
+(check (: (term _) ((\ x (int x)) 0)))

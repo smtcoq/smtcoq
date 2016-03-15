@@ -108,9 +108,9 @@ term:
   | MPQ { mpq }
   | MPZ { mpz }
   | INT { mk_mpz $1 }
-  | STRING { mk_app $1 [] }
+  | STRING { mk_const $1 }
   | HOLE { mk_hole_hole () }
-  | LPAREN STRING term_list RPAREN { mk_app $2 $3 }
+  | LPAREN term term_list RPAREN { mk_app $2 $3 }
   | LPAREN LAMBDA untyped_sym term RPAREN
     { let s = $3  in
       let t = $4 in
@@ -158,7 +158,9 @@ command:
   | LPAREN CHECK term RPAREN {
     mk_check $3;
     Check $3 }
-  | LPAREN DEFINE STRING term RPAREN { Define ($3, $4) }
+  | LPAREN DEFINE STRING term RPAREN {
+    mk_define $3 $4;
+    Define ($3, $4) }
   | LPAREN DECLARE STRING term RPAREN {
     mk_declare $3 $4;
     let d = Declare ($3, $4) in

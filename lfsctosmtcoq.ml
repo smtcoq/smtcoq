@@ -143,9 +143,17 @@ let test2 () =
     Format.printf "LFSC proof:@.%a@." Ast.print_proof proof
 
   with Ast.TypingError (t1, t2) ->
-    Format.eprintf "Typing error: expected %a, got %a@."
+    Format.eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1
       Ast.print_term t2
 
 
 let _ = test2 ()
+
+
+(* 
+   Local Variables:
+   compile-command: "make"
+   indent-tabs-mode: nil
+   End: 
+*)

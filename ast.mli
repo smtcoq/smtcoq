@@ -1,7 +1,7 @@
 type mpz = Big_int.big_int
 type mpq = Num.num
              
-type symbol_name = Name of string | S_Hole
+type symbol_name = Name of string | S_Hole of int
 type symbol = { name : symbol_name; s_ty : term }
 
 and pterm =
@@ -9,14 +9,15 @@ and pterm =
   | Kind
   | Mpz
   | Mpq
-  | App of symbol * term list
+  | Const of symbol
+  | App of term * term list
   | Int of mpz
   | Rat of mpq
   | Pi of symbol * term
   | Lambda of symbol * term
-  | Hole
+  | Hole of int
 
-and term = { value: pterm; ty: term }
+and term = { mutable value: pterm; ty: term }
 
 
 type command =
@@ -42,13 +43,15 @@ val mk_mpz : mpz -> term
 
 val mk_mpq : mpq -> term
 
-val unify : term -> term -> unit
+(* val unify : term -> term -> unit *)
 
 val mk_symbol : string -> term -> symbol
 
 val mk_symbol_hole : term -> symbol
 
-val mk_app : string -> term list -> term
+val mk_const : string -> term
+
+val mk_app : term -> term list -> term
 
 val mk_hole : term -> term
 
@@ -69,6 +72,8 @@ val print_proof : Format.formatter -> proof -> unit
 
 
 val mk_declare : string -> term -> unit
+
+val mk_define : string -> term -> unit
 
 val mk_check : term -> unit
 
