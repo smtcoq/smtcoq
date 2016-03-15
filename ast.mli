@@ -1,10 +1,10 @@
 type mpz = Big_int.big_int
 type mpq = Num.num
              
-type symbol_name = Name of string | S_Hole of int
-type symbol = { name : symbol_name; s_ty : term }
+type name = Name of string | S_Hole of int
+type symbol = { sname : name; stype : term }
 
-and pterm =
+and dterm =
   | Type
   | Kind
   | Mpz
@@ -17,7 +17,7 @@ and pterm =
   | Lambda of symbol * term
   | Hole of int
 
-and term = { mutable value: pterm; ty: term }
+and term = { mutable value: dterm; ttype: term }
 
 
 type command =

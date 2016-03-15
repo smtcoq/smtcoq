@@ -8,10 +8,10 @@ type mpz = Big_int.big_int
 type mpq = Num.num
              
 
-type symbol_name = Name of string | S_Hole of int
-type symbol = { name : symbol_name; s_ty : term }
+type name = Name of string | S_Hole of int
+type symbol = { sname : name; stype : term }
 
-and pterm =
+and dterm =
   | Type
   | Kind
   | Mpz
@@ -24,7 +24,7 @@ and pterm =
   | Lambda of symbol * term
   | Hole of int
 
-and term = { mutable value: pterm; ty: term }
+and term = { mutable value: dterm; ttype: term }
 
 
 type command =
@@ -40,7 +40,7 @@ type proof = command list
 (* Pretty printing *)
 (*******************)
 
-let rec print_symbol fmt { name } = match name with
+let rec print_symbol fmt { sname } = match sname with
   | Name n -> pp_print_string fmt n
   | S_Hole i -> fprintf fmt "_s%d" i
 
@@ -59,7 +59,7 @@ and print_tval pty fmt { value } = match value with
   | Pi (s, t) ->
     fprintf fmt "(! %a@ %a@ %a)"
       print_symbol s
-      (print_term false) s.s_ty
+      (print_term false) s.stype
       (print_term pty) t
   | Lambda (s, t) ->
     fprintf fmt "(\\ %a@ %a)" print_symbol s (print_term pty) t
@@ -68,12 +68,12 @@ and print_tval pty fmt { value } = match value with
 
 and print_term pty fmt t = match t with
   | {value = Type | Kind}
-  | {ty = {value = Type | Kind} } ->
+  | {ttype = {value = Type | Kind} } ->
     print_tval pty fmt t
-  | _  when t.ty == t ->
+  | _  when t.ttype == t ->
     print_tval pty fmt t
   | _ when pty ->
-    fprintf fmt "[@[%a:%a@]]" (print_tval pty) t (print_term pty) t.ty
+    fprintf fmt "[@[%a:%a@]]" (print_tval pty) t (print_term pty) t.ttype
   | _ ->
     fprintf fmt "@[%a@]" (print_tval pty) t
 
@@ -83,7 +83,7 @@ let print_term = print_term false
 
 let print_command fmt = function
   | Check t ->
-    fprintf fmt "(check@ (: %a@ %a))" print_term t.ty print_term t
+    fprintf fmt "(check@ (: %a@ %a))" print_term t.ttype print_term t
   | Define (s, t) ->
     fprintf fmt ";; (define %s@ %a)" s print_term t
   | Declare (s, t) ->
@@ -110,38 +110,38 @@ exception TypingError of term * term
 (**************************)
 
 
-let rec kind = { value = Kind; ty = kind }
+let rec kind = { value = Kind; ttype = kind }
 
-let lfsc_type = { value = Type; ty = kind }
+let lfsc_type = { value = Type; ttype = kind }
 
-let mpz = { value = Mpz; ty = lfsc_type }
+let mpz = { value = Mpz; ttype = lfsc_type }
 
-let mpq = { value = Mpq; ty = lfsc_type }
+let mpq = { value = Mpq; ttype = lfsc_type }
 
-let mk_mpz n = { value = Int n; ty = mpz }
+let mk_mpz n = { value = Int n; ttype = mpz }
 
-let mk_mpq n = { value = Rat n; ty = mpq }
+let mk_mpq n = { value = Rat n; ttype = mpq }
 
 
-let mk_symbol n s_ty = { name = Name n; s_ty }
+let mk_symbol n stype = { sname = Name n; stype }
 
 let mk_symbol_hole =
   let cpt = ref 0 in
-  fun s_ty ->
-    { name = S_Hole !cpt; s_ty }
+  fun stype ->
+    { sname = S_Hole !cpt; stype }
 
 let is_hole = function { value = Hole _ } -> true | _ -> false
 
-let is_hole_symbol = function { name = S_Hole _ } -> true | _ -> false
+let is_hole_symbol = function { sname = S_Hole _ } -> true | _ -> false
 
 let mk_hole =
   let cpt = ref 0 in
-  fun ty ->
+  fun ttype ->
     incr cpt;
-    { value = Hole !cpt; ty }
+    { value = Hole !cpt; ttype }
 
 (* let mk_rec_hole () = *)
-(*   let rec h = { value = Hole !cpt; ty = h } in *)
+(*   let rec h = { value = Hole !cpt; ttype = h } in *)
 (*   h *)
 
 let mk_hole_hole () =
@@ -159,13 +159,13 @@ let fresh_alpha =
 
 let rec rename s s' t =
   if t.value = Kind then t else
-  let ty = rename s s' t.ty in
-  let t = if t.ty == ty then t else {t with ty} in
+  let ttype = rename s s' t.ttype in
+  let t = if t.ttype == ttype then t else {t with ttype} in
   match t.value with
   | Type | Kind | Mpz | Mpq | Int _ | Rat _ | Hole _ -> t
     
   | Const x ->
-    if x.name = s.name then {t with value = Const s'}
+    if x.sname = s.sname then {t with value = Const s'}
     else t
 
   | App (x, args) ->
@@ -175,14 +175,14 @@ let rec rename s s' t =
     else {t with value = App(nx, nargs)}
       
   | Pi (x, ty) ->
-    if x.name = s.name then t
+    if x.sname = s.sname then t
     else
       let nty = rename s s' ty in
       if nty == ty then t
       else {t with value = Pi (x, nty)}
       
   | Lambda (x, ty) ->
-    if x.name = s.name then t
+    if x.sname = s.sname then t
     else
       let nty = rename s s' ty in
       if nty == ty then t
@@ -198,7 +198,7 @@ let get_t ?(gen=true) sigma s =
   with Not_found -> try
       Hashtbl.find definitions s
     with Not_found ->
-      { value = Const s; ty = s.s_ty }
+      { value = Const s; ttype = s.stype }
 
 
 let print_subst fmt sigma =
@@ -229,8 +229,8 @@ let rec fill_hole sigma h t =
     let t' = (* apply_subst sigma *) t in
     h.value <- t'.value;
     eprintf ">>>>>>>>> @[%a@]@." print_term_type h;
-    (* fill_hole sigma h.ty t'.ty; *)
-    (try compat_with sigma t'.ty h.ty with _ -> ());
+    (* fill_hole sigma h.ttype t'.ttype; *)
+    (try compat_with sigma t'.ttype h.ttype with _ -> ());
   | _ -> ()
 
 
@@ -256,18 +256,18 @@ and compat_with ?(apsub=true) sigma t1 t2 =
         let a1 = get_t ~gen:(not (is_hole a2)) sigma s1 in
         compat_with sigma ~apsub:false a1 a2
       else
-        if s1.name <> s2.name then raise Exit
+        if s1.sname <> s2.sname then raise Exit
 
     | App (f1, args1), App (f2, args2) ->
       compat_with sigma f1 f2;
       List.iter2 (compat_with sigma) args1 args2
 
     | Pi (s1, t1), Pi (s2, t2) ->
-      let a = fresh_alpha s1.s_ty in
+      let a = fresh_alpha s1.stype in
       compat_with sigma (rename s1 a t1) (rename s2 a t2)
 
     | Lambda (s1, t1), Lambda (s2, t2) ->
-      let a = fresh_alpha s1.s_ty in
+      let a = fresh_alpha s1.stype in
       compat_with sigma (rename s1 a t1) (rename s2 a t2)
 
     | Hole _, Hole _ ->
@@ -305,21 +305,21 @@ let empty_subst = []
 let rec ty_of_app sigma ty args = match ty.value, args with
   | Pi (s, t), a :: rargs ->
     let sigma = (s, a) :: sigma in
-    compat_with sigma s.s_ty a.ty;
+    compat_with sigma s.stype a.ttype;
     ty_of_app sigma t rargs
   | _, [] -> apply_subst sigma ty
   | _ -> failwith ("Type of function not a pi-type.")
 
 
 let mk_const x =
-  let s_ty = Hashtbl.find symbols (Name x) in
-  let s = mk_symbol x s_ty in
-  { value = Const s; ty = s_ty }
+  let stype = Hashtbl.find symbols (Name x) in
+  let s = mk_symbol x stype in
+  { value = Const s; ttype = stype }
   
 
 let rec mk_app ?(lookup=true) sigma f args =
   (* eprintf "mk_App : %a@." (print_tval true) *)
-  (*   { value = App (f, args); ty = lfsc_type } *)
+  (*   { value = App (f, args); ttype = lfsc_type } *)
   (* ; *)
   (* find the definition if it has one *)
   match f.value, args with
@@ -337,38 +337,38 @@ let rec mk_app ?(lookup=true) sigma f args =
 
     (* Delayed beta-reduction *)
     let r = apply_subst sigma f in
-    let r = { r with ty = apply_subst sigma f.ty } in
+    let r = { r with ttype = apply_subst sigma f.ttype } in
     (* eprintf "BETA ::: %a@.@." print_term_type r; *)
     r
       
   | _ ->
     (* eprintf "APP normal@."; *)
     (* TODO: check if empty_subst or sigma *)
-    { value = App (f, args); ty = ty_of_app empty_subst f.ty args }
+    { value = App (f, args); ttype = ty_of_app empty_subst f.ttype args }
 
 let mk_app = mk_app empty_subst
 
 
 let mk_pi s t =
-  let s = if is_hole_symbol s then fresh_alpha s.s_ty else s in
-  { value = Pi (s, t); ty = lfsc_type }
+  let s = if is_hole_symbol s then fresh_alpha s.stype else s in
+  { value = Pi (s, t); ttype = lfsc_type }
 
 let mk_lambda s t =
-  let s = if is_hole_symbol s then fresh_alpha s.s_ty else s in
+  let s = if is_hole_symbol s then fresh_alpha s.stype else s in
   { value = Lambda (s, t);
-    ty = mk_pi (mk_symbol_hole s.s_ty) t.ty }
+    ttype = mk_pi (mk_symbol_hole s.stype) t.ttype }
 
   
 let mk_ascr ty t =
-  compat_with empty_subst ty t.ty;
-  { t with ty }
+  compat_with empty_subst ty t.ttype;
+  { t with ttype = ty }
 
 
 let register_symbol s =
-  Hashtbl.add symbols s.name s.s_ty
+  Hashtbl.add symbols s.sname s.stype
 
 let remove_symbol s =
-  Hashtbl.remove symbols s.name
+  Hashtbl.remove symbols s.sname
 
 
 let mk_declare n ty =
@@ -378,7 +378,7 @@ let mk_declare n ty =
 
 let mk_define n t =
   (* eprintf "@.declare : %s @.@." n; *)
-  let s = mk_symbol n t.ty in
+  let s = mk_symbol n t.ttype in
   register_symbol s;
   add_definition s t
 
