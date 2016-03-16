@@ -139,9 +139,11 @@ let test2 () =
   let buf = Lexing.from_channel chan in
 
   try
-    let proof = Parser.proof Lexer.main buf in
-    Format.printf "LFSC proof:@.%a@." Ast.print_proof proof
+    (* let proof = Parser.proof Lexer.main buf in *)
+    (* Format.printf "LFSC proof:@.%a@." Ast.print_proof proof *)
 
+    Parser.proof_print Lexer.main buf
+    
   with Ast.TypingError (t1, t2) ->
     Format.eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1

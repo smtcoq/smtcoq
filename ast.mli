@@ -65,6 +65,8 @@ val mk_ascr : term -> term -> term
 
 
 val print_term : Format.formatter -> term -> unit
+
+val print_symbol : Format.formatter -> symbol -> unit
   
 val print_command : Format.formatter -> command -> unit
 
@@ -77,9 +79,7 @@ val mk_define : string -> term -> unit
 
 val mk_check : term -> unit
 
-val mk_command : command -> unit
 
-val mk_proof : proof -> unit
 
 val register_symbol : symbol -> unit
 

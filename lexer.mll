@@ -97,6 +97,7 @@
     ("kind", KIND);
     ("mpz", MPZ);
     ("mpq", MPQ);
+    ("program", PROGRAM);
   ]
 
   module Make (X : T) : sig
@@ -118,7 +119,7 @@ let unquoted_start =
   unquoted # ['#' '|'] | '#' unquoted # ['|'] | '|' unquoted # ['#']
 
 let integer = ['0' - '9'] ['0' - '9']*
-let ident = ('_')* ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
+let ident = ('_')* ['a'-'z' 'A'-'Z' '\'' ]['a'-'z' 'A'-'Z' '0'-'9' '\\' '_']*
 
 
 rule main buf = parse
@@ -321,10 +322,8 @@ and scan_block_comment buf locs = parse
         let hash_semi = HASH_SEMI
         let integer i = INT (Big_int.big_int_of_string i)
         let ident i =
-          (* Format.eprintf "ident? : %s@." i; *)
           try Hashtbl.find keywords i with Not_found -> STRING i
         let simple_string x =
-          (* Format.eprintf "string? : %s@." x; *)
           try Hashtbl.find keywords x with Not_found -> STRING x
         let quoted_string _ buf = STRING (Buffer.contents buf)
         let block_comment _pos ~main buf lexbuf =

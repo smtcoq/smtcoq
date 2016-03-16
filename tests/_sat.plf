@@ -34,10 +34,12 @@
 
 (declare holds (! c clause type))
 
+;; (declare atom (! v var (! f formula type)))
+
 (declare decl_atom
   (! f formula
   (! u (! v var
-       (! a formula
+       (! a (atom v f)
          (holds cln)))
     (holds cln))))
 

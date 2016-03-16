@@ -12,6 +12,16 @@ let parse_failure what =
       pos.pos_lnum (pos.pos_cnum - pos.pos_bol) what in
   failwith msg
 
+let scope = ref []
+
+let renamings = Hashtbl.create 21
+
+let register_rename = Hashtbl.add renamings
+
+let remove_rename = Hashtbl.remove renamings
+
+
+
 %}
 
 %token <string> STRING
@@ -20,10 +30,13 @@ let parse_failure what =
 %token LAMBDA PI BIGLAMBDA COLON
 %token CHECK DEFINE DECLARE
 %token MPQ MPZ HOLE TYPE KIND
-%token SC
+%token SC PROGRAM
 
 %start proof
 %type <Ast.proof> proof
+
+%start proof_print
+%type <unit> proof_print
 
 %start one_command
 %type <Ast.command> one_command
@@ -80,6 +93,11 @@ sexps
   | EOF { [] }
 ;
 
+ignore_sexp_list :
+  | { () }
+  | sexp ignore_sexp_list { () }
+;
+
 term_list:
   | term { [$1]}
   | term term_list { $1 :: $2 }
@@ -87,9 +105,11 @@ term_list:
 
 binding:
   | STRING term {
-    let s = mk_symbol $1 $2 in
+    let n = String.concat "." (List.rev ($1 :: !scope)) in
+    let s = mk_symbol n $2 in
     register_symbol s;
-    s
+    register_rename $1 n;
+    s, $1
   }
 ;
 
@@ -108,7 +128,11 @@ term:
   | MPQ { mpq }
   | MPZ { mpz }
   | INT { mk_mpz $1 }
-  | STRING { mk_const $1 }
+  | STRING
+    {
+      let n = try Hashtbl.find renamings $1 with Not_found -> $1 in
+      mk_const n
+    }
   | HOLE { mk_hole_hole () }
   | LPAREN term term_list RPAREN { mk_app $2 $3 }
   | LPAREN LAMBDA untyped_sym term RPAREN
@@ -123,10 +147,11 @@ term:
       let t = $4 in
       mk_lambda s t }
   | LPAREN BIGLAMBDA binding term RPAREN
-    { let s = $3 in
+    { let s, old = $3 in
       let t = $4 in
       let r = mk_lambda s t in
       remove_symbol s;
+      remove_rename old;
       r
     }
   | LPAREN BIGLAMBDA HOLE term term RPAREN
@@ -140,10 +165,11 @@ term:
     LPAREN SC sexp_but_no_comment sexp_but_no_comment RPAREN term RPAREN
     { $9 }
   | LPAREN PI binding term RPAREN
-    { let s = $3 in
+    { let s, old = $3 in
       let t = $4 in
       let r = mk_pi s t in
       remove_symbol s;
+      remove_rename old;
       r
     }
   | LPAREN PI HOLE term term RPAREN
@@ -154,20 +180,37 @@ term:
     { mk_ascr $3 $4 }
 ;
 
+declare:
+  | DECLARE STRING { scope := [$2]; $2 }
+;
+
+define:
+  | DEFINE STRING { scope := [$2]; $2 }
+;
+
+
+
 command:
   | LPAREN CHECK term RPAREN {
     mk_check $3;
     Check $3 }
-  | LPAREN DEFINE STRING term RPAREN {
-    mk_define $3 $4;
-    Define ($3, $4) }
-  | LPAREN DECLARE STRING term RPAREN {
-    mk_declare $3 $4;
-    let d = Declare ($3, $4) in
-    (* printf "\n%a\n@." print_command d; *)
-    d
+  | LPAREN define term RPAREN {
+    mk_define $2 $3;
+    scope := [];
+    Define ($2, $3) }
+  | LPAREN declare term RPAREN {
+    mk_declare $2 $3;
+    scope := [];
+    Declare ($2, $3)
   }
 ;
+
+command_print:
+  | command { printf "@[<hov 1>%a@]@\n@." Ast.print_command $1 }
+  | LPAREN PROGRAM STRING ignore_sexp_list RPAREN
+    { printf "Ignored program %s\n@." $3 }
+;
+
 
 one_command:
   | command EOF { $1 }
@@ -178,7 +221,16 @@ command_list:
   | command command_list { $1 :: $2 }
 ;
 
+command_print_list:
+  | { () }
+  | command_print command_print_list { () }
+;
 
 proof:
   | command_list EOF { $1 }
 ;
+
+proof_print:
+  | command_print_list EOF { () }
+;
+

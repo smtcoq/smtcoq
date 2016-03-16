@@ -1,5 +1,7 @@
 open Format
 
+let debug = false
+
 (********************************)
 (* Type definitions for the AST *)
 (********************************)
@@ -40,11 +42,17 @@ type proof = command list
 (* Pretty printing *)
 (*******************)
 
+let address_of (x:'a) : nativeint =
+  if Obj.is_block (Obj.repr x) then
+    Nativeint.shift_left (Nativeint.of_int (Obj.magic x)) 1 (* magic *)
+  else
+    invalid_arg "Can only find address of boxed values.";;
+ 
 let rec print_symbol fmt { sname } = match sname with
   | Name n -> pp_print_string fmt n
   | S_Hole i -> fprintf fmt "_s%d" i
 
-and print_tval pty fmt { value } = match value with
+and print_tval pty fmt t = match t.value with
   | Type -> fprintf fmt "type"
   | Kind -> fprintf fmt "kind"
   | Mpz -> fprintf fmt "mpz"
@@ -62,8 +70,13 @@ and print_tval pty fmt { value } = match value with
       (print_term false) s.stype
       (print_term pty) t
   | Lambda (s, t) ->
-    fprintf fmt "(\\ %a@ %a)" print_symbol s (print_term pty) t
-  | Hole i -> fprintf fmt "_%d" i
+    fprintf fmt "(%% %a@ %a@ %a)" print_symbol s (print_term pty) s.stype
+      (print_term pty) t
+  | Hole i ->
+    if debug then
+      fprintf fmt "_%d[%nd]" i (address_of t)
+    else 
+      fprintf fmt "_%d" i
 
 
 and print_term pty fmt t = match t with
@@ -85,7 +98,7 @@ let print_command fmt = function
   | Check t ->
     fprintf fmt "(check@ (: %a@ %a))" print_term t.ttype print_term t
   | Define (s, t) ->
-    fprintf fmt ";; (define %s@ %a)" s print_term t
+    fprintf fmt "(define %s@ %a)" s print_term t
   | Declare (s, t) ->
     fprintf fmt "(declare %s@ %a)" s print_term t
 
@@ -123,11 +136,14 @@ let mk_mpz n = { value = Int n; ttype = mpz }
 let mk_mpq n = { value = Rat n; ttype = mpq }
 
 
-let mk_symbol n stype = { sname = Name n; stype }
+let mk_symbol n stype =
+  { sname = Name n ; stype }
+  (* { sname = Name (String.concat "." (List.rev (n :: scope))) ; stype } *)
 
 let mk_symbol_hole =
   let cpt = ref 0 in
   fun stype ->
+    incr cpt;
     { sname = S_Hole !cpt; stype }
 
 let is_hole = function { value = Hole _ } -> true | _ -> false
@@ -157,37 +173,6 @@ let fresh_alpha =
   fun ty -> incr cpt;
     mk_symbol ("'a"^string_of_int !cpt) ty
 
-let rec rename s s' t =
-  if t.value = Kind then t else
-  let ttype = rename s s' t.ttype in
-  let t = if t.ttype == ttype then t else {t with ttype} in
-  match t.value with
-  | Type | Kind | Mpz | Mpq | Int _ | Rat _ | Hole _ -> t
-    
-  | Const x ->
-    if x.sname = s.sname then {t with value = Const s'}
-    else t
-
-  | App (x, args) ->
-    let nx = rename s s' x in
-    let nargs = List.map (rename s s') args in
-    if nx == x && nargs == args then t
-    else {t with value = App(nx, nargs)}
-      
-  | Pi (x, ty) ->
-    if x.sname = s.sname then t
-    else
-      let nty = rename s s' ty in
-      if nty == ty then t
-      else {t with value = Pi (x, nty)}
-      
-  | Lambda (x, ty) ->
-    if x.sname = s.sname then t
-    else
-      let nty = rename s s' ty in
-      if nty == ty then t
-      else {t with value = Lambda (x, nty)}
-
 
 
 let get_t ?(gen=true) sigma s =
@@ -208,38 +193,67 @@ let print_subst fmt sigma =
   fprintf fmt " ]@]"
 
 
-let rec apply_subst sigma t = match t.value with
-  | Type | Kind |  Mpz | Mpq | Int _ | Rat _ | Hole _ -> t
-  | Const s -> get_t sigma s
+type substres = T of term | V of dterm
+
+let rec apply_subst_val sigma tval = match tval with
+  | Type | Kind |  Mpz | Mpq | Int _ | Rat _ | Hole _ -> raise Exit
+  | Const s when is_hole_symbol s -> raise Exit
+  | Const s -> T (get_t sigma s)
   | App (f, args) ->
-    { t with value = App(apply_subst sigma f,
-                         List.map (apply_subst sigma) args) }
+    let nf = apply_subst sigma f in
+    let nargs = List.map (apply_subst sigma) args in
+    if nf == f && List.for_all2 (==) nargs args then V tval
+    else V (App(nf, nargs))
+      
   | Pi (s, x) ->
-    { t with value = Pi (s, apply_subst sigma x) }
+    let s = { s with stype = apply_subst sigma s.stype } in
+    let sigma = List.remove_assoc s sigma in
+    let newx = apply_subst sigma x in
+    if x == newx then V tval
+    else V (Pi (s, newx))
 
   | Lambda (s, x) ->
-    { t with value = Lambda (s, apply_subst sigma x) }
-    
+    let s = { s with stype = apply_subst sigma s.stype } in
+    let sigma = List.remove_assoc s sigma in
+    let newx = apply_subst sigma x in
+    if x == newx then V tval
+    else V (Lambda (s, newx))
+
+
+and apply_subst sigma t =
+  try
+    match apply_subst_val sigma t.value with
+    | T t -> t
+    | V value ->
+      let ttype = apply_subst sigma t.ttype in
+      if value == t.value && ttype == t.ttype then t
+      else { value; ttype }
+  with Exit -> t
+
 
 let rec fill_hole sigma h t =
   match h.value with
   | Hole _ ->
-    eprintf ">>>>> Fill hole @[%a@] with @[%a@]@."
-      print_term_type h print_term_type t;
-    let t' = (* apply_subst sigma *) t in
+    if debug then
+      eprintf ">>>>> Fill hole @[%a@] with @[%a@]@."
+        print_term_type h print_term_type t;
+    let t' = apply_subst sigma t in
     h.value <- t'.value;
-    eprintf ">>>>>>>>> @[%a@]@." print_term_type h;
-    (* fill_hole sigma h.ttype t'.ttype; *)
-    (try compat_with sigma t'.ttype h.ttype with _ -> ());
+    if debug then
+      eprintf ">>>>>>>>> @[%a@]@." print_term_type h;
+    fill_hole sigma h.ttype t'.ttype;
+    (* (try compat_with sigma t'.ttype h.ttype with _ -> ()); *)
   | _ -> ()
 
 
 (* Raise TypingError if t2 is not compatible with t1 *)
 (* apsub is false if we want to prevent application of substitutions *)
 and compat_with ?(apsub=true) sigma t1 t2 =
-  eprintf "compat_with(%b): @[<hov>%a@] and @[<hov>%a@]@."
-    apsub print_term t1 print_term t2;
-  eprintf "  with sigma = %a@." print_subst sigma;
+  if debug then (
+    eprintf "compat_with(%b): @[<hov>%a@] and @[<hov>%a@]@."
+      apsub print_term t1 print_term t2;
+    eprintf "  with sigma = %a@." print_subst sigma
+  );
   try
     match t1.value, t2.value with
     | Type, Type  
@@ -263,13 +277,17 @@ and compat_with ?(apsub=true) sigma t1 t2 =
       List.iter2 (compat_with sigma) args1 args2
 
     | Pi (s1, t1), Pi (s2, t2) ->
-      let a = fresh_alpha s1.stype in
-      compat_with sigma (rename s1 a t1) (rename s2 a t2)
+      compat_with sigma s1.stype s2.stype;
+      let a = s2 in
+      let ta = { value = Const a; ttype = a.stype } in
+      compat_with ((s1, ta) :: sigma) t1 t2;
 
     | Lambda (s1, t1), Lambda (s2, t2) ->
-      let a = fresh_alpha s1.stype in
-      compat_with sigma (rename s1 a t1) (rename s2 a t2)
-
+      compat_with sigma s1.stype s2.stype;
+      let a = s2 in
+      let ta = { value = Const a; ttype = a.stype } in
+      compat_with ((s1, ta) :: sigma) t1 t2;
+        
     | Hole _, Hole _ ->
       failwith ("Cannot infer type of holes, too many holes.")
 
@@ -312,56 +330,53 @@ let rec ty_of_app sigma ty args = match ty.value, args with
 
 
 let mk_const x =
-  let stype = Hashtbl.find symbols (Name x) in
-  let s = mk_symbol x stype in
-  { value = Const s; ttype = stype }
-  
+  if debug then eprintf "mk_const %s@." x;
+  try
+    let stype = Hashtbl.find symbols (Name x) in
+    let s = mk_symbol x stype in
+    try Hashtbl.find definitions s
+    with Not_found -> { value = Const s; ttype = stype }
+  with Not_found -> failwith ("Symbol " ^ x ^ " is not declared.")
+
+
 
 let rec mk_app ?(lookup=true) sigma f args =
-  (* eprintf "mk_App : %a@." (print_tval true) *)
-  (*   { value = App (f, args); ttype = lfsc_type } *)
-  (* ; *)
+  if debug then
+    eprintf "mk_App : %a@." (print_tval true)
+      { value = App (f, args); ttype = lfsc_type } ;
   (* find the definition if it has one *)
   match f.value, args with
   | Lambda (x, r), a :: rargs ->
-    (* eprintf "LAMBDA@."; *)
+    let sigma = List.remove_assoc x sigma in
     mk_app ((x, a) :: sigma) r rargs
       
   | Const s, _ when lookup ->
-    (* eprintf "CONST@."; *)
     let f = get_t sigma s in
-    (* eprintf "........... found %a ----> %a@." print_symbol s print_term f; *)
     mk_app ~lookup:false sigma f args
 
   | x, [] ->
-
     (* Delayed beta-reduction *)
-    let r = apply_subst sigma f in
-    let r = { r with ttype = apply_subst sigma f.ttype } in
-    (* eprintf "BETA ::: %a@.@." print_term_type r; *)
-    r
+    apply_subst sigma f
       
   | _ ->
-    (* eprintf "APP normal@."; *)
     (* TODO: check if empty_subst or sigma *)
     { value = App (f, args); ttype = ty_of_app empty_subst f.ttype args }
 
 let mk_app = mk_app empty_subst
 
-
 let mk_pi s t =
-  let s = if is_hole_symbol s then fresh_alpha s.stype else s in
+  (* let s = if is_hole_symbol s then fresh_alpha s.stype else s in *)
   { value = Pi (s, t); ttype = lfsc_type }
 
 let mk_lambda s t =
-  let s = if is_hole_symbol s then fresh_alpha s.stype else s in
+  (* let s = if is_hole_symbol s then fresh_alpha s.stype else s in *)
   { value = Lambda (s, t);
-    ttype = mk_pi (mk_symbol_hole s.stype) t.ttype }
+    ttype = mk_pi s t.ttype }
 
   
 let mk_ascr ty t =
-  compat_with empty_subst ty t.ttype;
-  { t with ttype = ty }
+  compat_with empty_subst ty t.ttype; t
+  (* { t with ttype = ty } *)
 
 
 let register_symbol s =
@@ -372,35 +387,19 @@ let remove_symbol s =
 
 
 let mk_declare n ty =
-  (* eprintf "@.declare : %s @.@." n; *)
   let s = mk_symbol n ty in
   register_symbol s
 
 let mk_define n t =
-  (* eprintf "@.declare : %s @.@." n; *)
   let s = mk_symbol n t.ttype in
   register_symbol s;
   add_definition s t
 
-
-let mk_check t =
-  (* eprintf "@.check : %a @.@." print_term t; *)
-  ()
-
-
-let mk_command = function
-  | Check t ->
-    mk_check t
-  | Declare (n, ty) ->
-    mk_declare n ty
-  | _ -> assert false
-
-let mk_proof = List.iter mk_command
+let mk_check t = ()
 
 
 (* TODO:
    - side conditions
-   - lazy alpha renaming
 *)
 
 
