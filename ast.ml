@@ -109,10 +109,13 @@ let print_proof fmt =
 
 
 let symbols = Hashtbl.create 21
-let definitions = Hashtbl.create 21
+let register_symbol s = Hashtbl.add symbols s.sname s.stype
+let remove_symbol s = Hashtbl.remove symbols s.sname
 
-let add_definition s t =
-  Hashtbl.add definitions s t
+
+let definitions = Hashtbl.create 21
+let add_definition s t = Hashtbl.add definitions s t
+let remove_definition s = Hashtbl.remove definitions s
 
 
 exception TypingError of term * term
@@ -378,12 +381,6 @@ let mk_ascr ty t =
   compat_with empty_subst ty t.ttype; t
   (* { t with ttype = ty } *)
 
-
-let register_symbol s =
-  Hashtbl.add symbols s.sname s.stype
-
-let remove_symbol s =
-  Hashtbl.remove symbols s.sname
 
 
 let mk_declare n ty =

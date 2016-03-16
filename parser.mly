@@ -30,7 +30,7 @@ let remove_rename = Hashtbl.remove renamings
 %token LAMBDA PI BIGLAMBDA COLON
 %token CHECK DEFINE DECLARE
 %token MPQ MPZ HOLE TYPE KIND
-%token SC PROGRAM
+%token SC PROGRAM AT
 
 %start proof
 %type <Ast.proof> proof
@@ -121,6 +121,16 @@ untyped_sym:
   }
 ;
 
+let_binding:
+  | STRING term {
+    let t = $2 in
+    let s = mk_symbol $1 t.ttype in
+    register_symbol s;
+    add_definition s t;
+    s
+  }
+;
+
 
 term:
   | TYPE { lfsc_type }
@@ -134,6 +144,7 @@ term:
       mk_const n
     }
   | HOLE { mk_hole_hole () }
+  | LPAREN AT let_binding term RPAREN { remove_definition $3; $4 }
   | LPAREN term term_list RPAREN { mk_app $2 $3 }
   | LPAREN LAMBDA untyped_sym term RPAREN
     { let s = $3  in
@@ -206,7 +217,7 @@ command:
 ;
 
 command_print:
-  | command { printf "@[<hov 1>%a@]@\n@." Ast.print_command $1 }
+  | command { printf "@[<hov 1>%a@]@\n@." print_command $1 }
   | LPAREN PROGRAM STRING ignore_sexp_list RPAREN
     { printf "Ignored program %s\n@." $3 }
 ;

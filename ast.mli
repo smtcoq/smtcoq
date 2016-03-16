@@ -84,3 +84,9 @@ val mk_check : term -> unit
 val register_symbol : symbol -> unit
 
 val remove_symbol : symbol -> unit
+
+
+val add_definition : symbol -> term -> unit
+
+val remove_definition : symbol -> unit
+

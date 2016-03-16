@@ -101,6 +101,10 @@
 
 (check (% s sort (% x (term (arrow Int s)) (id (apply _ _ x (int 0))))))
 
+(check (% s sort (% x (term (arrow Int s)) (@ z (int 0)
+                                                (id (apply _ _ x z))))))
+
+
 (declare array (! s1 sort (! s2 sort sort)))	; s1 is index, s2 is element
 
 ; functions

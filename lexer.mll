@@ -70,6 +70,7 @@
       val colon : t
       val hole : t
       val sc : t
+      val at : t
       val integer : string -> t
       val ident : string -> t
       val eof : t
@@ -135,6 +136,7 @@ rule main buf = parse
   | '_' { Token.hole }
   | ':' { Token.colon }
   | '^' { Token.sc }
+  | '@' { Token.at }
   | integer as i { Token.integer i }
   | '"'
       { 
@@ -319,6 +321,7 @@ and scan_block_comment buf locs = parse
         let hole = HOLE
         let colon = COLON
         let sc = SC
+        let at = AT
         let hash_semi = HASH_SEMI
         let integer i = INT (Big_int.big_int_of_string i)
         let ident i =
