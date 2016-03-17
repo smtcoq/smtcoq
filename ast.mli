@@ -19,6 +19,7 @@ and dterm =
 
 and term = { mutable value: dterm; ttype: term }
 
+val term_equal : term -> term -> bool
 
 type command =
   | Check of term
@@ -65,6 +66,7 @@ val mk_ascr : term -> term -> term
 
 
 val print_term : Format.formatter -> term -> unit
+val print_term_type : Format.formatter -> term -> unit
 
 val print_symbol : Format.formatter -> symbol -> unit
   

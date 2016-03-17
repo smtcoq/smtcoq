@@ -323,6 +323,15 @@ and compat_with ?(apsub=true) sigma t1 t2 =
 let empty_subst = []
 
 
+
+let term_equal t1 t2 =
+  try
+    compat_with empty_subst t1 t2;
+    true
+  with
+  | TypingError _ | Failure _ -> false
+
+
 let rec ty_of_app sigma ty args = match ty.value, args with
   | Pi (s, t), a :: rargs ->
     let sigma = (s, a) :: sigma in

@@ -1,6 +1,7 @@
 open Type
 open Ast
-
+open Format
+open Builtin
 
 
 let smt2_of_lfsc t =
@@ -69,27 +70,27 @@ let sharp_tbl = Hashtbl.create 13
 let cpt = ref 1
   
 let rec print_input fmt s = match s with
-  | Atom a -> Format.pp_print_string fmt a
+  | Atom a -> pp_print_string fmt a
 
   | List [Atom "not"; s'] ->
-    Format.fprintf fmt "(not %a)" print_input s'
+    fprintf fmt "(not %a)" print_input s'
 
   | List l ->
     try
       let nb = Hashtbl.find sharp_tbl s in
-      Format.fprintf fmt "#%d" nb
+      fprintf fmt "#%d" nb
     with Not_found ->
       Hashtbl.add sharp_tbl s !cpt;
-      Format.fprintf fmt "#%d:(" !cpt;
+      fprintf fmt "#%d:(" !cpt;
       incr cpt;
       let first = ref true in
       List.iter (fun s ->
-          Format.fprintf fmt "%s%a"
+          fprintf fmt "%s%a"
             (if !first then "" else " ")
             print_input s;
           first := false;
         ) l;
-      Format.fprintf fmt ")"
+      fprintf fmt ")"
 
 
 let set_cpt = ref 1
@@ -101,7 +102,7 @@ let rec print_hyp_inputs = function
     (* hypothesis of the form (% A1 (th_holds s) ...) *)
 
     let smt2t = lfsc_term_to_smt2 s in
-    Format.printf "(set .c%d %a)@." !set_cpt print_input smt2t;
+    printf "(set .c%d %a)@." !set_cpt print_input smt2t;
     incr set_cpt;
     print_hyp_inputs rest
 
@@ -116,15 +117,15 @@ let test1 () =
   let buf = Lexing.from_channel chan in
   let r = Parser.sexps Lexer.main buf in
 
-  Format.printf "Size of proof: %d@." (size_list r);
-  Format.printf "\nInputs in veriT:@.";
+  printf "Size of proof: %d@." (size_list r);
+  printf "\nInputs in veriT:@.";
   begin
     match r with
     | [proof] -> print_hyp_inputs proof;
     | _ -> ()
   end;
 
-  (* print_list Format.std_formatter r; *)
+  (* print_list std_formatter r; *)
 
   exit 0
 
@@ -140,14 +141,29 @@ let test2 () =
 
   try
     (* let proof = Parser.proof Lexer.main buf in *)
-    (* Format.printf "LFSC proof:@.%a@." Ast.print_proof proof *)
+    (* printf "LFSC proof:@.%a@." Ast.print_proof proof *)
 
-    Parser.proof_print Lexer.main buf
+    Parser.proof_print Lexer.main buf;
+
+    (* Some tests for side conditions *)
+    printf "\n\
+            Some tests for side conditions:\n\
+            -------------------------------\n@.";
+
+    let res = append cln cln in
+    printf "append cln cln = %a@." print_term res;
+
+    let res2 = append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) in
+    printf "append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) = %a@."
+      print_term res2;
+
+    
     
   with Ast.TypingError (t1, t2) ->
-    Format.eprintf "@[<hov>Typing error: expected %a, got %a@]@."
+    eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1
       Ast.print_term t2
+
 
 
 let _ = test2 ()
