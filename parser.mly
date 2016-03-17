@@ -94,8 +94,8 @@ sexps
 ;
 
 ignore_sexp_list :
-  | { () }
-  | sexp ignore_sexp_list { () }
+  | { }
+  | sexp ignore_sexp_list { }
 ;
 
 term_list:
@@ -233,8 +233,8 @@ command_list:
 ;
 
 command_print_list:
-  | { () }
-  | command_print command_print_list { () }
+  | { }
+  | command_print command_print_list { }
 ;
 
 proof:
@@ -242,6 +242,6 @@ proof:
 ;
 
 proof_print:
-  | command_print_list EOF { () }
+  | command_print_list EOF { }
 ;
 
