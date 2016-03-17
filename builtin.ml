@@ -8,7 +8,7 @@ let declare_get s ty =
 let pi n ty t =
   let s = mk_symbol n ty in
   register_symbol s;
-  let pi_abstr = mk_pi s (t ()) in
+  let pi_abstr = mk_pi s (Lazy.force t) in
   remove_symbol s;
   pi_abstr
 
@@ -18,13 +18,10 @@ let lit = declare_get "lit" lfsc_type
 let clause = declare_get "clause" lfsc_type
 let cln = declare_get "cln" clause
 
-let pos_s = declare_get "pos" (pi "x" var (fun _ -> lit))
-let neg_s = declare_get "neg" (pi "x" var (fun _ -> lit))
-    
-let clc_s =
-  declare_get "clc"
-    (pi "x" lit (fun _ ->
-         (pi "c" clause (fun _ -> clause))))
+let pos_s = declare_get "pos" (pi "x" var (lazy lit))
+let neg_s = declare_get "neg" (pi "x" var (lazy lit))
+let clc_s = declare_get "clc" (pi "x" lit (lazy (pi "c" clause (lazy clause))))
+
 
 let pos v = mk_app pos_s [v] 
 let neg v = mk_app neg_s [v] 
