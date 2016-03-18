@@ -50,6 +50,23 @@ let mkConst c =
     const_entry_opaque = false;
     const_entry_inline_code = false}
 
-let glob_term_CbvVm = Glob_term.CbvVm None
-
 let error = Errors.error
+
+let coqtype = lazy Term.mkSet
+
+let declare_new_type t =
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (dummy_loc, t);
+  Term.mkVar t
+
+let declare_new_variable v constr_t =
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (dummy_loc, v);
+  Term.mkVar v
+
+let extern_constr = Constrextern.extern_constr true Environ.empty_env
+
+let vernacentries_interp expr =
+  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some (Glob_term.CbvVm None), None, expr))
+
+let pr_constr_env = Printer.pr_constr_env
+
+let lift = Term.lift

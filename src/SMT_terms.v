@@ -418,6 +418,9 @@ Module Typ.
 
 End Typ.
 
+Arguments Typ.Cast {_} {_} _.
+Arguments Typ.NoCast {_} {_}.
+
 (* TODO move this *)
 Inductive dlist (A:Type) (P:A->Type) : list A -> Type :=
 | Dnil : dlist A P nil
@@ -1305,3 +1308,5 @@ Module Atom.
   Qed.
 
 End Atom.
+
+Arguments Atom.Val {_} {_} _ _.

@@ -3,9 +3,10 @@
 (*     SMTCoq                                                             *)
 (*     Copyright (C) 2011 - 2015                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
+(*                                                                        *)
+(*       from the Int63 library of native-coq                             *)
+(*       by Benjamin Gregoire and Laurent Thery                           *)
 (*                                                                        *)
 (*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
 (*                                                                        *)
@@ -14,27 +15,12 @@
 (**************************************************************************)
 
 
-(** Sharing of coq Int *)
-let cInt_tbl = Hashtbl.create 17 
+(** Naive software representation of Int63. To improve. Anyway, if you
+    want efficiency, rather use native-coq. **)
 
-let mkInt i = 
-  try Hashtbl.find cInt_tbl i 
-  with Not_found ->
-    let ci = Structures.mkInt i in
-    Hashtbl.add cInt_tbl i ci;
-    ci
-
-(** Generic representation of shared object *)
-type 'a gen_hashed = { index : int; hval : 'a }
-
-(** Functions over constr *)
-
-let mklApp f args = Term.mkApp (Lazy.force f, args)
-
-(* TODO : Set -> Type *)
-let declare_new_type = Structures.declare_new_type
-let declare_new_variable = Structures.declare_new_variable
-
-let mkName s =
-  let id = Names.id_of_string s in
-  Names.Name id
+(* Require Export Cyclic31. *)
+Require Export Ring31.
+Require Export Int63Native.
+Require Export Int63Op.
+Require Export Int63Axioms.
+Require Export Int63Properties.

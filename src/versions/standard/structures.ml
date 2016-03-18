@@ -1,0 +1,98 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2015                                          *)
+(*                                                                        *)
+(*     Michaël Armand                                                     *)
+(*     Benjamin Grégoire                                                  *)
+(*     Chantal Keller                                                     *)
+(*                                                                        *)
+(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
+open Entries
+open Coqlib
+
+
+let mklApp f args = Term.mkApp (Lazy.force f, args)
+let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+
+
+(* Int63 *)
+let int63_modules = [["SMTCoq";"versions";"standard";"Int63";"Int63Native"]]
+
+let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
+let cD0 = gen_constant int31_module "D0"
+let cD1 = gen_constant int31_module "D1"
+let cI31 = gen_constant int31_module "I31"
+
+let mkInt : int -> Term.constr = fun i ->
+  let a = Array.make 31 (Lazy.force cD0) in
+  let j = ref i in
+  let k = ref 30 in
+  while !j <> 0 do
+    if !j land 1 = 1 then a.(!k) <- Lazy.force cD1;
+    j := !j lsr 1;
+    decr k
+  done;
+  mklApp cI31 a
+
+let cint = gen_constant int31_module "int31"
+
+(* PArray *)
+let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
+
+let cmake = gen_constant parray_modules "make"
+let cset = gen_constant parray_modules "set"
+
+let max_array_size : int = 4194302
+let mkArray : Term.types * Term.constr array -> Term.constr =
+  fun (ty, a) ->
+  let l = (Array.length a) - 1 in
+  snd (Array.fold_left (fun (i,acc) c ->
+                        let acc' =
+                          if i = l then
+                            acc
+                          else
+                            mklApp cset [|ty; acc; mkInt i; c|] in
+                        (i+1,acc')
+                       ) (0,mklApp cmake [|ty; mkInt l; a.(l)|]) a)
+
+
+(* Differences between the two versions of Coq *)
+let dummy_loc = Loc.ghost
+
+let mkConst c =
+  { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty), Safe_typing.empty_private_constants);
+    const_entry_secctx      = None;
+    const_entry_feedback    = None;
+    const_entry_type        = None;
+    const_entry_polymorphic = false;
+    const_entry_universes   = Univ.UContext.empty;
+    const_entry_opaque      = false;
+    const_entry_inline_code = false }
+
+let error = Errors.error
+
+let coqtype = Future.from_val Term.mkSet
+
+let declare_new_type t =
+  let _ = Command.declare_assumption false (Decl_kinds.Local, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, t) in
+  Term.mkVar t
+
+let declare_new_variable v constr_t =
+  let _ = Command.declare_assumption false (Decl_kinds.Local, false, Decl_kinds.Definitional) (constr_t, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
+  Term.mkVar v
+
+let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty
+
+let vernacentries_interp expr =
+  Vernacentries.interp (dummy_loc, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
+
+let pr_constr_env env = Printer.pr_constr_env env Evd.empty
+
+let lift = Vars.lift

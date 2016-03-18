@@ -15,8 +15,6 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-(* Add LoadPath ".." as SMTCoq. *)
-(* Add LoadPath "../lia" as SMTCoq.lia. *)
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
@@ -168,7 +166,7 @@ Section CheckAtom.
   Proof.
     intros x y;assert (W:=Zge_cases x y);destruct (Zge_bool x y).
     split;auto.
-    split;[intros;elimtype false;auto with zarith | discriminate].
+    split;[intros;auto with zarith | discriminate].
   Qed.
 
 

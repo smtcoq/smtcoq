@@ -177,8 +177,8 @@ let build_body rt ro ra rf l b (max_id, confl) =
   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
   Term.mkLetIn (nc, certif, Lazy.force ccertif,
-  Term.mkLetIn (nti, Term.lift 3 t_i, mklApp carray [|Lazy.force ctyp_eqb|],
-  Term.mkLetIn (ntfunc, Term.lift 4 t_func, mklApp carray [|mklApp ctval [|t_i|]|],
+  Term.mkLetIn (nti, Structures.lift 3 t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+  Term.mkLetIn (ntfunc, Structures.lift 4 t_func, mklApp carray [|mklApp ctval [|t_i|]|],
   mklApp cchecker_b_correct
 	 [|vti;vtfunc;vtatom; vtform; l; b; vc;
 	   vm_cast_true (mklApp cchecker_b [|vti;vtfunc;vtatom;vtform;l;b;vc|])|])))))
@@ -209,8 +209,8 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
   Term.mkLetIn (nc, certif, Lazy.force ccertif,
-  Term.mkLetIn (nti, Term.lift 3 t_i, mklApp carray [|Lazy.force ctyp_eqb|],
-  Term.mkLetIn (ntfunc, Term.lift 4 t_func, mklApp carray [|mklApp ctval [|t_i|]|],
+  Term.mkLetIn (nti, Structures.lift 3 t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+  Term.mkLetIn (ntfunc, Structures.lift 4 t_func, mklApp carray [|mklApp ctval [|t_i|]|],
   mklApp cchecker_eq_correct
 	 [|vti;vtfunc;vtatom; vtform; l1; l2; l; vc;
 	   vm_cast_true (mklApp cchecker_eq [|vti;vtfunc;vtatom;vtform;l1;l2;l;vc|])|])))))

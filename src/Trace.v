@@ -13,11 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Add LoadPath "." as SMTCoq.
-Add LoadPath "cnf" as SMTCoq.cnf.
-Add LoadPath "euf" as SMTCoq.euf.
-Add LoadPath "lia" as SMTCoq.lia.
-Add LoadPath "spl" as SMTCoq.spl.
 
 Require Import Bool Int63 PArray.
 Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators.

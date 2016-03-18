@@ -14,6 +14,9 @@
 (**************************************************************************)
 
 
+(* Uncomment for 8.5 *)
+(* DECLARE PLUGIN "SMTCoq_plugin" *)
+
 VERNAC COMMAND EXTEND Parse_certif_zchaff
 | [ "Parse_certif_zchaff" 
     ident(dimacs) ident(trace) string(fdimacs) string(fproof) ] ->
@@ -27,7 +30,7 @@ VERNAC COMMAND EXTEND Parse_certif_zchaff
 | [ "Zchaff_Theorem" ident(name) string(fdimacs) string(fproof) ] ->
   [
     Zchaff.theorem name fdimacs fproof
-  ] 
+  ]
 END
 
 VERNAC COMMAND EXTEND Parse_certif_verit
@@ -46,6 +49,7 @@ VERNAC COMMAND EXTEND Parse_certif_verit
   ]
 END
 
+(* Comment for 8.5 *)
 TACTIC EXTEND zchaff
 | [ "zchaff" ] -> [ Zchaff.tactic ]
 END

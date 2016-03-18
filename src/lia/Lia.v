@@ -473,7 +473,7 @@ Section certif.
     Fixpoint bounded_pexpr (p:positive) (pe:PExpr Z) :=
       match pe with
       | PEc _ => true
-      | PEX x => Zlt_bool (Zpos x) (Zpos p)
+      | @PEX _ x => Zlt_bool (Zpos x) (Zpos p)
       | PEadd pe1 pe2
       | PEsub pe1 pe2
       | PEmul pe1 pe2 => bounded_pexpr p pe1 && bounded_pexpr p pe2
@@ -486,7 +486,7 @@ Section certif.
 
     Fixpoint bounded_bformula (p:positive) (bf:BFormula (Formula Z)) :=
       match bf with
-      | TT | FF | X _ => true
+      | @TT _ | @FF _ | @X _ _ => true
       | A f => bounded_formula p f
       | Cj bf1 bf2
       | D bf1 bf2

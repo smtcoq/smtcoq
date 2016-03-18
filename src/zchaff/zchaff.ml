@@ -257,8 +257,8 @@ let checker fdimacs ftrace =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let tm = mklApp cchecker [|d; certif|] in
-  let expr = Constrextern.extern_constr true Environ.empty_env tm in
-  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some Structures.glob_term_CbvVm, None, expr))
+  let expr = Structures.extern_constr tm in
+  Structures.vernacentries_interp expr
 
 
 
@@ -473,7 +473,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
           | Fatom a ->
             let t = atom_tbl.(a) in
             let value = if ispos then " = true" else " = false" in
-            acc^"  "^(Pp.string_of_ppcmds (Printer.pr_constr_env env t))^value
+            acc^"  "^(Pp.string_of_ppcmds (Structures.pr_constr_env env t))^value
           | Fapp _ -> acc
       ) with | Invalid_argument _ -> acc (* Because cnf computation does not put the new formulas in the table... Perhaps it should? *)
     ) "zchaff found a counterexample:\n" model)

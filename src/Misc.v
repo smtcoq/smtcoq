@@ -403,7 +403,7 @@ Lemma afold_right_Ind :
       P 0 (afold_right A B default OP F t).
 Proof.
   intros A B P default OP F t;
-    apply (afoldi_right_Ind P default (fun _ => OP)); trivial.
+    apply (afoldi_right_Ind P default (fun _ => OP) F).
 Qed.
 
 
