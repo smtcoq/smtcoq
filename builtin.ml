@@ -312,7 +312,40 @@ let simplify_clause c =
   let c', _ = simplify_clause empty_marks c in
   c'
 
-      
+
+
+let callbacks_table =
+  let h = Hashtbl.create 7 in
+  List.iter (fun (s, f) -> Hashtbl.add h s f)
+    [
+
+      "append",
+      (function
+        | [c1; c2] -> append c1 c2
+        | _ -> failwith "append: Wrong number of arguments");
+
+      "simplify_clause",
+      (function
+        | [c] -> simplify_clause c
+        | _ -> failwith "simplify_clause: Wrong number of arguments");
+
+    ];
+  h
+
+
+let callback name l =
+  try
+    let f = Hashtbl.find callbacks_table name in
+    f l
+  with Not_found ->
+    failwith ("No side condition for " ^ name)
+
+
+let check_side_condition name l expected =
+  if not (term_equal (callback name l) expected) then
+    failwith ("Side condition " ^ name ^ " failed")
+
+
 
 (* For testing *)
 
