@@ -21,6 +21,8 @@ and term = { mutable value: dterm; ttype: term }
 
 val term_equal : term -> term -> bool
 
+val compare_term : term -> term -> int
+
 type command =
   | Check of term
   | Define of string * term

@@ -332,6 +332,54 @@ let term_equal t1 t2 =
   | TypingError _ | Failure _ -> false
 
 
+let compare_symbol s1 s2 = match s1.sname, s2.sname with
+  | Name n1, Name n2 -> String.compare n1 n2
+  | Name _, _ -> -1
+  | _, Name _ -> 1
+  | S_Hole i1, S_Hole i2 -> Pervasives.compare i1 i2
+
+
+let rec compare_term t1 t2 = match t1.value, t2.value with
+  | Type, Type | Kind, Kind | Mpz, Mpz | Mpq, Mpz -> 0
+  | Type, _ -> -1 | _, Type -> 1
+  | Kind, _ -> -1 | _, Kind -> 1
+  | Mpz, _ -> -1 | _, Mpz -> 1
+  | Mpq, _ -> -1 | _, Mpq -> 1
+  | Int n1, Int n2 -> Big_int.compare_big_int n1 n2
+  | Int _, _ -> -1 | _, Int _ -> 1
+  | Rat q1, Rat q2 -> Num.compare_num q1 q2
+  | Rat _, _ -> -1 | _, Rat _ -> 1
+  | Const s1, Const s2 -> compare_symbol s1 s2
+  | Const _, _ -> -1 | _, Const _ -> 1
+  | App (f1, l1), App (f2, l2) ->
+    compare_term_list (f1 :: l1) (f2 :: l2)
+  | App _, _ -> -1 | _, App _ -> 1
+    
+  | Pi (s1, t1), Pi (s2, t2) ->
+    let c = compare_symbol s1 s2 in
+    if c <> 0 then c
+    else compare_term t1 t2
+  | Pi _, _ -> -1 | _, Pi _ -> 1
+
+  | Lambda (s1, t1), Lambda (s2, t2) ->
+    let c = compare_symbol s1 s2 in
+    if c <> 0 then c
+    else compare_term t1 t2
+  | Lambda _, _ -> -1 | _, Lambda _ -> 1
+
+  | Hole i1, Hole i2 -> Pervasives.compare i1 i2
+
+
+and compare_term_list l1 l2 = match l1, l2 with
+  | [], [] -> 0
+  | [], _ -> -1
+  | _, [] -> 1
+  | t1 :: r1, t2 :: r2 ->
+    let c = compare_term t1 t2 in
+    if c <> 0 then c
+    else compare_term_list r1 r2
+
+
 let rec ty_of_app sigma ty args = match ty.value, args with
   | Pi (s, t), a :: rargs ->
     let sigma = (s, a) :: sigma in

@@ -157,8 +157,15 @@ let test2 () =
     printf "append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) = %a@."
       print_term res2;
 
-    
-    
+
+    let res3 = simplify_clause
+        (concat
+           (clr (neg v1) (clc (neg v1) cln))
+           (clr (pos v1) (clc (pos v1) cln))) in
+    printf "simplied clause : %a@." print_term res3;
+
+
+
   with Ast.TypingError (t1, t2) ->
     eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1
