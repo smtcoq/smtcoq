@@ -75,15 +75,15 @@ trace/smtTrace.ml
 
 smtlib2/smtlib2_parse.ml
 smtlib2/smtlib2_parse.mli
-smtlib2/smtlib2_lex.ml
 smtlib2/smtlib2_ast.ml
 smtlib2/smtlib2_genConstr.ml
+smtlib2/smtlib2_lex.ml
 smtlib2/smtlib2_util.ml
 
 verit/veritParser.ml
 verit/veritParser.mli
-verit/veritLexer.ml
 verit/verit.ml
+verit/veritLexer.ml
 verit/veritSyntax.ml
 verit/veritSyntax.mli
 

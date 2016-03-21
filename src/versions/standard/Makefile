@@ -219,13 +219,13 @@ MLFILES:=versions/standard/structures.ml\
   trace/smtMisc.ml\
   trace/smtTrace.ml\
   smtlib2/smtlib2_parse.ml\
-  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_ast.ml\
   smtlib2/smtlib2_genConstr.ml\
+  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_util.ml\
   verit/veritParser.ml\
-  verit/veritLexer.ml\
   verit/verit.ml\
+  verit/veritLexer.ml\
   verit/veritSyntax.ml\
   zchaff/cnfParser.ml\
   zchaff/satParser.ml\
@@ -475,9 +475,6 @@ $(filter-out $(addsuffix .cmx,$(foreach lib,$(MLPACKFILES:.mlpack=_MLPACK_DEPEND
 
 $(addsuffix .d,$(MLFILES)): %.ml.d: %.ml
 	$(OCAMLDEP) -slash $(OCAMLLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
-
-# $(filter-out $(MLLIBFILES:.mllib=.cmxs),$(MLFILES:.ml=.cmxs) $(ML4FILES:.ml4=.cmxs) $(MLPACKFILES:.mlpack=.cmxs)): %.cmxs: %.cmx
-# 	$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -shared -o $@ $<
 
 $(MLLIBFILES:.mllib=.cmxs): %.cmxs: %.cmxa
 	$(CAMLOPTLINK) $(ZDEBUG) $(ZFLAGS) -linkall -shared -o $@ $<
