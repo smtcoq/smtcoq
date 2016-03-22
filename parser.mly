@@ -4,6 +4,7 @@
 open Ast
 open Lexing
 open Format
+open Builtin
 
 let parse_failure what =
   let pos = Parsing.symbol_start_pos () in
@@ -37,6 +38,9 @@ let remove_rename = Hashtbl.remove renamings
 
 %start proof_print
 %type <unit> proof_print
+
+%start proof_ignore
+%type <unit> proof_ignore
 
 %start one_command
 %type <Ast.command> one_command
@@ -131,6 +135,12 @@ let_binding:
   }
 ;
 
+/*
+ignore_string_or_hole:
+  | STRING { }
+  | HOLE { }
+;
+*/
 
 term:
   | TYPE { lfsc_type }
@@ -169,12 +179,6 @@ term:
     { let t = $5 in
       let s = mk_symbol_hole $4 in
       mk_lambda s t }
-  | LPAREN PI STRING
-    LPAREN SC sexp_but_no_comment sexp_but_no_comment RPAREN term RPAREN
-    { $9 }
-  | LPAREN PI HOLE
-    LPAREN SC sexp_but_no_comment sexp_but_no_comment RPAREN term RPAREN
-    { $9 }
   | LPAREN PI binding term RPAREN
     { let s, old = $3 in
       let t = $4 in
@@ -187,6 +191,11 @@ term:
     { let s = mk_symbol_hole $4 in
       let t = $5 in
       mk_pi s t }
+  | LPAREN PI STRING /* ignore_string_or_hole */
+    LPAREN SC LPAREN STRING term_list RPAREN term RPAREN term RPAREN
+    {
+      add_sc $7 $8 $10 $12
+    }
   | LPAREN COLON term term RPAREN
     { mk_ascr $3 $4 }
 ;
@@ -222,6 +231,11 @@ command_print:
     { printf "Ignored program %s\n@." $3 }
 ;
 
+command_ignore:
+  | command { () }
+  | LPAREN PROGRAM STRING ignore_sexp_list RPAREN { () }
+;
+
 
 one_command:
   | command EOF { $1 }
@@ -237,11 +251,20 @@ command_print_list:
   | command_print command_print_list { }
 ;
 
+command_ignore_list:
+  | { }
+  | command_ignore command_ignore_list { }
+;
+
 proof:
   | command_list EOF { $1 }
 ;
 
 proof_print:
   | command_print_list EOF { }
+;
+
+proof_ignore:
+  | command_ignore_list EOF { }
 ;
 

@@ -16,6 +16,8 @@ and dterm =
   | Pi of symbol * term
   | Lambda of symbol * term
   | Hole of int
+  | Ptr of term
+  | SideCond of string * term list * term * term
 
 and term = { mutable value: dterm; ttype: term }
 
@@ -47,6 +49,8 @@ val mk_mpz : mpz -> term
 val mk_mpq : mpq -> term
 
 (* val unify : term -> term -> unit *)
+
+val  get_real : term -> term
 
 val mk_symbol : string -> term -> symbol
 
@@ -94,3 +98,8 @@ val add_definition : symbol -> term -> unit
 
 val remove_definition : symbol -> unit
 
+
+val callbacks_table : (string, term list -> term) Hashtbl.t
+
+
+val add_sc : string -> term list -> term -> term -> term

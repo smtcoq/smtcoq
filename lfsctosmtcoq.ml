@@ -144,25 +144,26 @@ let test2 () =
     (* printf "LFSC proof:@.%a@." Ast.print_proof proof *)
 
     Parser.proof_print Lexer.main buf;
+    (* Parser.proof_ignore Lexer.main buf; *)
 
     (* Some tests for side conditions *)
-    printf "\n\
-            Some tests for side conditions:\n\
-            -------------------------------\n@.";
+    (* printf "\n\ *)
+    (*         Some tests for side conditions:\n\ *)
+    (*         -------------------------------\n@."; *)
 
-    let res = append cln cln in
-    printf "append cln cln = %a@." print_term res;
+    (* let res = append cln cln in *)
+    (* printf "append cln cln = %a@." print_term res; *)
 
-    let res2 = append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) in
-    printf "append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) = %a@."
-      print_term res2;
+    (* let res2 = append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) in *)
+    (* printf "append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) = %a@." *)
+    (*   print_term res2; *)
 
 
-    let res3 = simplify_clause
-        (concat
-           (clr (neg v1) (clc (neg v1) cln))
-           (clr (pos v1) (clc (pos v1) cln))) in
-    printf "simplied clause : %a@." print_term res3;
+    (* let res3 = simplify_clause *)
+    (*     (concat *)
+    (*        (clr (neg v1) (clc (neg v1) cln)) *)
+    (*        (clr (pos v1) (clc (pos v1) cln))) in *)
+    (* printf "simplied clause : %a@." print_term res3; *)
 
 
 

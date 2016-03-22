@@ -25,7 +25,7 @@
 ;; BB atom mapping
 ;; Bit-blasting definitional clauses 
 ;; Bit-blasting learned clauses 
-(satlem_simplify _ _ _ (Q _ _ .pb4 .pb6 .v2)(\.cl8
-(satlem_simplify _ _ _ (Q _ _ .pb5 .cl8 .v3)(\.cl9
-(satlem_simplify _ _ _ (Q _ _ .pb7 .cl9 .v4)(\empty empty)))))))))))))))))))))))))))))))))
+(satlem_simplify _ _ _ (Q _ _ .pb4 .pb6 .v2)(\ .cl8
+(satlem_simplify _ _ _ (Q _ _ .pb5 .cl8 .v3)(\ .cl9
+(satlem_simplify _ _ _ (Q _ _ .pb7 .cl9 .v4)(\ empty empty)))))))))))))))))))))))))))))))))
 ;;
