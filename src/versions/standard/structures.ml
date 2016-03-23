@@ -67,12 +67,16 @@ let mkArray : Term.types * Term.constr array -> Term.constr =
 let dummy_loc = Loc.ghost
 
 let mkConst c =
-  { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty), Safe_typing.empty_private_constants);
+  let env = Global.env () in
+  let evd = Evd.from_env env in
+  let evd, ty = Typing.type_of env evd c in
+  { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
+                                               Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
     const_entry_feedback    = None;
-    const_entry_type        = None;
+    const_entry_type        = Some ty;
     const_entry_polymorphic = false;
-    const_entry_universes   = Univ.UContext.empty;
+    const_entry_universes   = snd (Evd.universe_context evd);
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 

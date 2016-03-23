@@ -17,11 +17,6 @@ Time Zchaff_Checker "hole4.cnf" "hole4.zlog".
 (* Time Zchaff_Checker "velev-sss-1.0-05.cnf" "velev-sss-1.0-05.zlog". *)
 
 
-(* Some strange bug (bug 4629) in Coq8.5 forces me to write this for the moment *)
-Definition foo:= (@make (array int) 2 (make 0 0)).
-Definition bar:= (PArray.set (@make (array int) 2 (make 0 0)) 0 (make 0 0)).
-
-
 Time Zchaff_Theorem sat1 "sat1.cnf" "sat1.zlog".
 Time Zchaff_Theorem sat2 "sat2.cnf" "sat2.zlog".
 Time Zchaff_Theorem sat3 "sat3.cnf" "sat3.zlog".
