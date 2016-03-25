@@ -42,6 +42,12 @@ let clc x c = mk_app clc_s [x; c]
 let clr l c = mk_app clr_s [l; c]
 let concat c1 c2 = mk_app concat_s [c1; c2]
 
+let lit_term l =
+  match l.value with
+    | App (p, [x]) when term_equal p pos_s -> x
+    | App (p, [x]) when term_equal p neg_s -> x
+    | _ -> failwith "No match found"
+
 (**
 (program eqlit ((l1 lit) (l2 lit)) bool
 (match l1 (
@@ -351,6 +357,7 @@ let () =
         | _ -> failwith "simplify_clause: Wrong number of arguments");
 
     ]
+
 
 
 
