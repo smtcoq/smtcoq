@@ -34,7 +34,7 @@
 
 (declare holds (! c clause type))
 
-;; (declare atom (! v var (! f formula type)))
+(declare atom (! v var (! f formula type)))
 
 (declare decl_atom
   (! f formula
