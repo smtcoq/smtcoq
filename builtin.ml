@@ -263,7 +263,6 @@ let rec simplify_clause mark_map c =
   | _ -> failwith "Match failure11"
 
 
-
 let simplify_clause c =
   let c', _ = simplify_clause empty_marks c in
   c'

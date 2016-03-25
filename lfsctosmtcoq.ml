@@ -3,6 +3,35 @@ open Ast
 open Format
 open Builtin
 
+open Verit
+
+(* Captures the output and exit status of a unix command : aux func *)
+let syscall cmd =
+  let ic, oc = Unix.open_process cmd in
+  let buf = Buffer.create 16 in
+  (try
+     while true do
+       Buffer.add_channel buf ic 1
+     done
+   with End_of_file -> ());
+  ignore(Unix.close_process (ic, oc));
+  Buffer.contents buf
+
+(* Set width of pretty printing boxes to number of columns *)
+let vt_width =
+  try
+    let scol = syscall "tput cols" in
+    let w = int_of_string (String.trim scol) in
+    set_margin w;
+    w
+  with Not_found | Failure _ -> 80
+
+
+let _ =
+  pp_set_margin std_formatter vt_width;
+  pp_set_margin err_formatter vt_width;
+  set_max_indent (get_margin () / 3)
+
 
 let smt2_of_lfsc t =
   try
@@ -130,6 +159,7 @@ let test1 () =
   exit 0
 
 
+
 let test2 () =
   let chan =
     try
@@ -146,8 +176,8 @@ let test2 () =
     Parser.proof_print Lexer.main buf;
     (* Parser.proof_ignore Lexer.main buf; *)
 
-(*     Some tests for side conditions *)
-     printf "\n\ 
+    (* Some tests for side conditions *)
+    printf "\n\ 
              Some tests for side conditions:\n\ 
              -------------------------------\n@."; 
 
@@ -174,7 +204,6 @@ let test2 () =
       Ast.print_term t2
 
 
-
 let _ =
   let c1 = (clc (neg v1) (clc (neg v3) (clc (pos v2) (clc (pos v1) (clc (pos v3) (clc (neg v3) (clc (pos v1) cln)) ))))) in
   let c2 = (clr (pos v3) (clc (neg v1) (clc (neg v3) (clc (pos v2) (clc (pos v1) (clc (pos v3) (clc (neg v3) (clc (pos v1) cln)) )))))) in
@@ -197,8 +226,9 @@ let _ =
 (*      Format.printf "clause afer clearance2: %a@." print_term clearance2;*)
       Format.printf "final clearance: %a@." print_term dd2;;
         
-        
+
 let _ = test2 ()
+
 
 (* 
    Local Variables:

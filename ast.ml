@@ -42,6 +42,13 @@ type command =
 type proof = command list
 
 
+
+let is_rule t =
+  match t.ttype.value with
+  | App ({value=Const{sname=Name ("holds"|"th_holds")}}, _) -> true
+  | _ -> false
+
+
 (*******************)
 (* Pretty printing *)
 (*******************)
@@ -62,19 +69,29 @@ and print_tval pty fmt t = match t.value with
   | Mpz -> fprintf fmt "mpz"
   | Mpq -> fprintf fmt "mpz"
   | Const s -> print_symbol fmt s
+  | App (f, args) when pty && is_rule t ->
+    let color = (Hashtbl.hash f.value mod 216) + 16 in
+    let op, cl = sprintf "\x1b[38;5;%dm" color, "\x1b[0m" in
+    fprintf fmt "@[@<0>%s(%a@<0>%s%a@<0>%s)@,@<0>%s@]"
+      op
+      (print_tval false) f
+      cl
+      (fun fmt -> List.iter (fprintf fmt "@ %a" (print_term pty))) args
+      op cl
   | App (f, args) ->
-    fprintf fmt "(%a%a)"
+    fprintf fmt "@[(%a%a)@,@]"
       (print_tval false) f
       (fun fmt -> List.iter (fprintf fmt "@ %a" (print_term pty))) args
+
   | Int n -> pp_print_string fmt (Big_int.string_of_big_int n)
   | Rat q -> pp_print_string fmt (Num.string_of_num q)
   | Pi (s, t) ->
-    fprintf fmt "(! %a@ %a@ %a)"
+    fprintf fmt "(! %a@ %a@ %a)@,"
       print_symbol s
       (print_term false) s.stype
       (print_term pty) t
   | Lambda (s, t) ->
-    fprintf fmt "(%% %a@ %a@ %a)" print_symbol s (print_term pty) s.stype
+    fprintf fmt "(%% %a@ %a@ %a)@," print_symbol s (print_term pty) s.stype
       (print_term pty) t
   | Hole i ->
     if false && debug then
@@ -95,15 +112,23 @@ and print_tval pty fmt t = match t.value with
 
 
 and print_term pty fmt t = match t with
-  | {value = Type | Kind}
-  | {ttype = {value = Type | Kind} } ->
+  | {value = Type | Kind | Ptr _ | Const _}
+  | {ttype = {value = Type | Kind | Const _ | Ptr _}} ->
     print_tval pty fmt t
   | _  when t.ttype == t ->
     print_tval pty fmt t
   (* | _ when pty -> *)
   (*   fprintf fmt "[@[%a:%a@]]" (print_tval pty) t (print_term pty) t.ttype *)
-  | _ when pty ->
-    fprintf fmt "@[(:@ %a@ %a)@]" (print_term pty) t.ttype (print_tval pty) t
+  | _ when pty && is_rule t ->
+    let op, cl = "\x1b[30m", "\x1b[0m" in
+    fprintf fmt "@\n@[@<0>%s(: %a@<0>%s@\n%a@<0>%s)@<0>%s@,@]"
+      op (print_term false) t.ttype cl (print_tval pty) t op cl
+  (* | _ when pty -> *)
+  (*   fprintf fmt "@[(:@ %a@ %a)@]" *)
+  (*     (print_term false) t.ttype (print_tval pty) t *)
+  (* | _ when pty -> *)
+  (*   fprintf fmt "@[%a\x1b[30m:%a\x1b[0m)@]" *)
+  (*     (print_tval pty) t (print_term false) t.ttype *)
   | _ ->
     fprintf fmt "@[%a@]" (print_tval pty) t
 
@@ -113,14 +138,15 @@ let print_term = print_term false
 
 let print_command fmt = function
   | Check t ->
-    fprintf fmt "(check@ (:@\n@\n %a@ @\n@\n%a))" print_term t.ttype print_term t
+    fprintf fmt "(check@ (:@\n@\n %a@ @\n@\n%a))"
+      print_term t.ttype print_term_type t
   | Define (s, t) ->
     fprintf fmt "(define %s@ %a)" s print_term t
   | Declare (s, t) ->
     fprintf fmt "(declare %s@ %a)" s print_term t
 
 let print_proof fmt =
-  List.iter (fprintf fmt "@[<hov 1>%a@]@\n@." print_command) 
+  List.iter (fprintf fmt "@[<1>%a@]@\n@." print_command) 
 
 
 
@@ -574,6 +600,9 @@ let mk_const x =
     with Not_found -> { value = Const s; ttype = stype }
   with Not_found -> failwith ("Symbol " ^ x ^ " is not declared.")
 
+
+let symbol_to_const s = { value = Const s; ttype = s.stype }
+  
 
 
 let rec mk_app ?(lookup=true) sigma f args =

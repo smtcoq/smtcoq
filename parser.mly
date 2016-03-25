@@ -241,9 +241,17 @@ one_command:
   | command EOF { $1 }
 ;
 
+command_or_prog:
+  | command { Some $1 }
+  | LPAREN PROGRAM STRING ignore_sexp_list RPAREN
+    { None }
+;
+
+  
 command_list:
   | { [] }
-  | command command_list { $1 :: $2 }
+  | command_or_prog command_list
+    { match $1 with Some c -> c :: $2 | None -> $2 }
 ;
 
 command_print_list:
