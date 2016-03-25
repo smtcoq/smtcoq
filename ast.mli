@@ -58,6 +58,8 @@ val mk_symbol_hole : term -> symbol
 
 val mk_const : string -> term
 
+val symbol_to_const : symbol -> term
+
 val mk_app : term -> term list -> term
 
 val mk_hole : term -> term

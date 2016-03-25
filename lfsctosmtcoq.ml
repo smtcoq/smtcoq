@@ -3,6 +3,35 @@ open Ast
 open Format
 open Builtin
 
+open Verit
+
+(* Captures the output and exit status of a unix command : aux func *)
+let syscall cmd =
+  let ic, oc = Unix.open_process cmd in
+  let buf = Buffer.create 16 in
+  (try
+     while true do
+       Buffer.add_channel buf ic 1
+     done
+   with End_of_file -> ());
+  ignore(Unix.close_process (ic, oc));
+  Buffer.contents buf
+
+(* Set width of pretty printing boxes to number of columns *)
+let vt_width =
+  try
+    let scol = syscall "tput cols" in
+    let w = int_of_string (String.trim scol) in
+    set_margin w;
+    w
+  with Not_found | Failure _ -> 80
+
+
+let _ =
+  pp_set_margin std_formatter vt_width;
+  pp_set_margin err_formatter vt_width;
+  set_max_indent (get_margin () / 3)
+
 
 let smt2_of_lfsc t =
   try
@@ -130,6 +159,7 @@ let test1 () =
   exit 0
 
 
+
 let test2 () =
   let chan =
     try
@@ -145,7 +175,8 @@ let test2 () =
 
     Parser.proof_print Lexer.main buf;
     (* Parser.proof_ignore Lexer.main buf; *)
-
+    
+    
     (* Some tests for side conditions *)
     (* printf "\n\ *)
     (*         Some tests for side conditions:\n\ *)
@@ -174,7 +205,35 @@ let test2 () =
 
 
 
-let _ = test2 ()
+let test3 () =
+  let chan =
+    try
+      let filename = Sys.argv.(1) in
+      open_in filename
+    with Invalid_argument _ -> stdin
+  in
+  let buf = Lexing.from_channel chan in
+
+  try
+    let proof = Parser.proof Lexer.main buf in
+
+    printf "LFSC proof:\n\n%a\n\n@." print_proof proof;
+
+    printf "Verit proof:\n@.";
+
+    match List.rev proof with
+    | Check p :: _ -> Verit.convert p
+    | _ -> eprintf "No proof@."; exit 1
+    
+
+  with Ast.TypingError (t1, t2) ->
+    eprintf "@[<hov>Typing error: expected %a, got %a@]@."
+      Ast.print_term t1
+      Ast.print_term t2
+
+
+
+let _ = test3 ()
 
 
 (* 

@@ -644,6 +644,8 @@
 ;(! p3 (term (arrow Int (arrow Int Bool)))	; arrow is right assoc.
 ;(! F (th_holds (p_app (apply _ _ (apply _ _ p3 a) b))) ; apply is left assoc.
 ;  ...
+
+
 (check
  ;; Declarations
 (% I sort
