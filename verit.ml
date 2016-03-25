@@ -57,7 +57,7 @@ let cpt = ref 0
 let rec print_apply fmt t = match app_name t with
   | Some ("apply", [_; _; f; a]) ->
     fprintf fmt "%a %a" print_apply f print_term a
-  | None -> print_term fmt t
+  | _ -> print_term fmt t
   
 
 and print_term fmt t =

@@ -22,6 +22,9 @@ let lit = declare_get "lit" lfsc_type
 let clause = declare_get "clause" lfsc_type
 let cln = declare_get "cln" clause
 
+let okay = declare_get "okay" lfsc_type
+let ok = declare_get "ok" okay
+
 let pos_s = declare_get "pos" (pi "x" var (lazy lit))
 let neg_s = declare_get "neg" (pi "x" var (lazy lit))
 let clc_s = declare_get "clc" (pi "x" lit (lazy (pi "c" clause (lazy clause))))
@@ -38,6 +41,77 @@ let neg v = mk_app neg_s [v]
 let clc x c = mk_app clc_s [x; c]
 let clr l c = mk_app clr_s [l; c]
 let concat c1 c2 = mk_app concat_s [c1; c2]
+
+let lit_term l =
+  match l.value with
+    | App (p, [x]) when term_equal p pos_s -> x
+    | App (p, [x]) when term_equal p neg_s -> x
+    | _ -> failwith "No match found"
+
+(**
+(program eqlit ((l1 lit) (l2 lit)) bool
+(match l1 (
+  (pos v1)
+    (match l2
+      ((pos v2) (eqvar v1 v2))
+      ((neg v2) ff)))
+  ((neg v1)
+    (match l2
+      ((pos v2) ff)
+      ((neg v2) (eqvar v1 v2))))))
+**)
+
+
+let eqlit l1 l2 =
+  match l1.value with
+    | App (p1, [v1]) when term_equal p1 pos_s -> (
+    match l2.value with
+      | App (p2, [v2]) when term_equal p2 pos_s -> term_equal v1 v2
+      | App (n2, [v2]) when term_equal n2 neg_s -> false
+    )
+    | App (n1, [v1]) when term_equal n1 neg_s -> (
+    match l2.value with
+      | App (p3, [v2]) when term_equal p3 pos_s -> false
+      | App (n3, [v2]) when term_equal n3 neg_s -> term_equal v1 v2
+    )
+
+
+(**
+(program in ((l lit) (c clause)) Ok
+(match c
+  ((clc l' c')
+    (match (eqlit l l')
+      (tt ok) (ff (in l c'))))
+(cln (fail Ok)))
+)
+**)
+
+let rec includes l c =
+  match c.value with
+    | App (f, [l'; c']) when term_equal f clc_s -> (
+    match eqlit l l' with
+      | true  -> ok
+      | false -> (includes l c')
+    )
+    | Const _ when term_equal c cln -> failwith "Not found"
+
+(**
+(program remove ((l lit) (c clause)) clause
+(match c
+  (cln cln)
+  ((clc l' c') (let u (remove l c')
+    (match (eqlit l l')
+      (tt u)
+      (ff (clc l' u)))))))
+**)
+
+let rec remove l c =
+  match c.value with
+    | Const _ when term_equal c cln -> cln
+    | App (f, [l'; c']) when term_equal f clc_s -> (
+    let u = remove l c' in
+      if eqlit l l' then u else clc l' u
+    )
 
 
 module Int = struct
@@ -283,6 +357,7 @@ let () =
         | _ -> failwith "simplify_clause: Wrong number of arguments");
 
     ]
+
 
 
 
