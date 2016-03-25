@@ -157,13 +157,14 @@ let test2 () =
      let res2 = append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) in 
      printf "append (clc (pos v1) (clc (neg v3) cln)) (clc (neg v2) cln) = %a@." 
        print_term res2; 
+       
 
 
      let res3 = simplify_clause 
          (concat 
             (clr (neg v1) (clc (neg v1) cln)) 
             (clr (pos v1) (clc (pos v1) cln))) in 
-     printf "simplied clause : %a@." print_term res3; 
+     printf "simplified clause : %a@." print_term res3; 
 
 
 
@@ -174,8 +175,30 @@ let test2 () =
 
 
 
+let _ =
+  let c1 = (clc (neg v1) (clc (neg v3) (clc (pos v2) (clc (pos v1) (clc (pos v3) (clc (neg v3) (clc (pos v1) cln)) ))))) in
+  let c2 = (clr (pos v3) (clc (neg v1) (clc (neg v3) (clc (pos v2) (clc (pos v1) (clc (pos v3) (clc (neg v3) (clc (pos v1) cln)) )))))) in
+  let c3 = (clr (neg v3) (clc (neg v1) (clc (neg v3) (clc (pos v2) (clc (pos v1) (clc (pos v3) (clc (neg v3) (clc (pos v1) cln)) )))))) in
+    let rmv1 = remove (pos v3) c1 in
+    let rmv2 = remove (neg v3) c1 in
+    let app  = append rmv1 rmv2 in
+    let dd   = dropdups app in
+    let rsv  = resolve c1 c1 v3 in
+    let clearance1 = simplify_clause c2 in
+    let clearance2 = simplify_clause c3 in
+    let app2 = append clearance1 clearance2 in
+    let dd2  = dropdups app2 in
+(*      Format.printf "removal1: %a@." print_term rmv1;*)
+(*      Format.printf "removal2: %a@." print_term rmv2;*)
+(*      Format.printf "append afer removals (pos) (neg): %a@." print_term app;*)
+      Format.printf "clause afer dropping duplicates: %a@." print_term dd;
+      Format.printf "clause afer resolve: %a@." print_term rsv;
+(*      Format.printf "clause afer clearance1: %a@." print_term clearance1;*)
+(*      Format.printf "clause afer clearance2: %a@." print_term clearance2;*)
+      Format.printf "final clearance: %a@." print_term dd2;;
+        
+        
 let _ = test2 ()
-
 
 (* 
    Local Variables:

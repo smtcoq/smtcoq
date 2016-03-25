@@ -13,7 +13,7 @@ let pi n ty t =
   pi_abstr
 
 
-let bool_lfsc = declare_get "bool" lfsc_type
+let bool_lfsc = declare_get "bool_lfsc" lfsc_type
 let tt = declare_get "tt" bool_lfsc
 let ff = declare_get "ff" bool_lfsc
 
@@ -41,78 +41,6 @@ let neg v = mk_app neg_s [v]
 let clc x c = mk_app clc_s [x; c]
 let clr l c = mk_app clr_s [l; c]
 let concat c1 c2 = mk_app concat_s [c1; c2]
-
-let lit_term l =
-  match l.value with
-    | App (p, [x]) when term_equal p pos_s -> x
-    | App (p, [x]) when term_equal p neg_s -> x
-    | _ -> failwith "No match found"
-
-(**
-(program eqlit ((l1 lit) (l2 lit)) bool
-(match l1 (
-  (pos v1)
-    (match l2
-      ((pos v2) (eqvar v1 v2))
-      ((neg v2) ff)))
-  ((neg v1)
-    (match l2
-      ((pos v2) ff)
-      ((neg v2) (eqvar v1 v2))))))
-**)
-
-
-let eqlit l1 l2 =
-  match l1.value with
-    | App (p1, [v1]) when term_equal p1 pos_s -> (
-    match l2.value with
-      | App (p2, [v2]) when term_equal p2 pos_s -> term_equal v1 v2
-      | App (n2, [v2]) when term_equal n2 neg_s -> false
-    )
-    | App (n1, [v1]) when term_equal n1 neg_s -> (
-    match l2.value with
-      | App (p3, [v2]) when term_equal p3 pos_s -> false
-      | App (n3, [v2]) when term_equal n3 neg_s -> term_equal v1 v2
-    )
-
-
-(**
-(program in ((l lit) (c clause)) Ok
-(match c
-  ((clc l' c')
-    (match (eqlit l l')
-      (tt ok) (ff (in l c'))))
-(cln (fail Ok)))
-)
-**)
-
-let rec includes l c =
-  match c.value with
-    | App (f, [l'; c']) when term_equal f clc_s -> (
-    match eqlit l l' with
-      | true  -> ok
-      | false -> (includes l c')
-    )
-    | Const _ when term_equal c cln -> failwith "Not found"
-
-(**
-(program remove ((l lit) (c clause)) clause
-(match c
-  (cln cln)
-  ((clc l' c') (let u (remove l c')
-    (match (eqlit l l')
-      (tt u)
-      (ff (clc l' u)))))))
-**)
-
-let rec remove l c =
-  match c.value with
-    | Const _ when term_equal c cln -> cln
-    | App (f, [l'; c']) when term_equal f clc_s -> (
-    let u = remove l c' in
-      if eqlit l l' then u else clc l' u
-    )
-
 
 module Int = struct
   type t = int
@@ -358,9 +286,171 @@ let () =
 
     ]
 
+let lit_term l =
+  match l.value with
+    | App (p, [x]) when term_equal p pos_s -> x
+    | App (p, [x]) when term_equal p neg_s -> x
+    | _ -> failwith "No match found"
+    
+
+(**
+(program eqvar ((v1 var) (v2 var)) bool
+  (do (markvar v1)
+    (let s (ifmarked v2 tt ff)
+  (do (markvar v1) s))))
+**)
+
+let eqvar mark_map v1 v2 = 
+  let mark_map = markvar mark_map v1 in
+    let s, mark_map = (ifmarked mark_map v2
+      (fun mark_map -> tt, mark_map)
+      (fun mark_map -> ff, mark_map)) in
+        let mark_map = markvar mark_map v1 in
+          s, mark_map 
+            
+let eqvar v1 v2 =
+  let c', _ = eqvar empty_marks v1 v2 in
+  c'  
+  
+
+(**
+(program eqlit ((l1 lit) (l2 lit)) bool
+(match l1 (
+  (pos v1)
+    (match l2
+      ((pos v2) (eqvar v1 v2))
+      ((neg v2) ff)))
+  ((neg v1)
+    (match l2
+      ((pos v2) ff)
+      ((neg v2) (eqvar v1 v2))))))
+
+let eqlit l1 l2 =
+  match l1.value with
+    | App (p1, [v1]) when term_equal p1 pos_s -> (
+    match l2.value with
+      | App (p2, [v2]) when term_equal p2 pos_s -> term_equal v1 v2
+      | App (n2, [v2]) when term_equal n2 neg_s -> false
+    )
+    | App (n1, [v1]) when term_equal n1 neg_s -> (
+    match l2.value with
+      | App (p3, [v2]) when term_equal p3 pos_s -> false
+      | App (n3, [v2]) when term_equal n3 neg_s -> term_equal v1 v2
+    )
+**)
+    
+let eqlit l1 l2 =
+  match l1.value with
+    | App (p1, [v1]) when term_equal p1 pos_s -> (
+    match l2.value with
+      | App (p2, [v2]) when term_equal p2 pos_s -> eqvar v1 v2
+      | App (n2, [v2]) when term_equal n2 neg_s -> ff
+    )
+    | App (n1, [v1]) when term_equal n1 neg_s -> (
+    match l2.value with
+      | App (p3, [v2]) when term_equal p3 pos_s -> ff
+      | App (n3, [v2]) when term_equal n3 neg_s -> eqvar v1 v2
+    )
 
 
 
+(**
+(program in ((l lit) (c clause)) Ok
+(match c
+  ((clc l' c')
+    (match (eqlit l l')
+      (tt ok) (ff (in l c'))))
+(cln (fail Ok)))
+)
+**)
+
+let rec includes l c =
+  match c.value with
+    | App (f, [l'; c']) when term_equal f clc_s -> (
+    let u = eqlit l l' in
+      match u.value with
+        | Const _ when term_equal u tt -> ok
+        | Const _ when term_equal u ff -> (includes l c')
+    )
+    | Const _ when term_equal c cln -> failwith "Not found"
+
+(**
+(program remove ((l lit) (c clause)) clause
+(match c
+  (cln cln)
+  ((clc l' c') 
+    (let u (remove l c')
+      (match (eqlit l l')
+        (tt u)
+        (ff (clc l' u)))))))
+**)
+
+let rec remove l c =
+  match c.value with
+    | Const _ when term_equal c cln -> cln
+    | App (f, [l'; c']) when term_equal f clc_s -> (
+    let u = remove l c' in
+      let v = eqlit l l' in
+        match v.value with
+          | Const _ when term_equal v tt -> u
+          | Const _ when term_equal v ff -> clc l' u
+    )
+
+
+
+
+(**
+(program dropdups ((c1 clause)) clause
+(match c1 
+  (cln cln)
+  ((clc l c1’)
+    (let v (litvar l) (ifmarked v (dropdups c1’) (do (markvar v) (let r (clc l (dropdups c1’)) (do (markvar v) r)))))
+  )))
+**)
+
+
+let rec dropdups mark_map c1 =
+  match c1.value with
+    | Const _ when term_equal c1 cln -> cln, mark_map
+    | App (f, [l; c1']) when term_equal f clc_s -> 
+    (   
+        let v = lit_term l in 
+          (ifmarked mark_map v
+            (fun mark_map -> dropdups mark_map c1')
+            (fun mark_map ->
+            let mark_map = markvar mark_map v in
+            let d, mark_map = dropdups mark_map c1' in
+            let r = clc l d in
+            let mark_map = markvar mark_map v in
+            r, mark_map))
+     )
+     
+
+let dropdups c =
+  let c', _ = dropdups empty_marks c in
+  c'
+
+     
+(**
+(program resolve ((c1 clause) (c2 clause) (v var)) clause
+  (let pl (pos v) (let nl (neg v)
+    (do (in pl c1) (in nl c2) 
+      (let d (append (remove pl c1) (remove nl c2))
+(drop_dups d)))))) 
+**)
+
+let resolve mark_map c1 c2 v =
+  let pl = pos v in
+    let nl = neg v in
+      (includes pl c1); (includes nl c2);
+	  let d = append (remove pl c1) (remove nl c2) in
+	    dropdups d
+
+let resolve c1 c2 v =
+  let c' = resolve empty_marks c1 c2 v in
+  c';;
+  
+  
 (* For testing *)
 
 let v1 = declare_get "v1" var
