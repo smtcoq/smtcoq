@@ -61,6 +61,7 @@ let rec print_apply fmt t = match app_name t with
   
 
 and print_term fmt t =
+  let t = get_real t in (* TODO not great *)
   try Hashtbl.find sharp_tbl t |> fprintf fmt "#%d"
   with Not_found ->
     match name t with
@@ -91,6 +92,8 @@ and print_term fmt t =
 
       | _ -> assert false
         
+
+(* let print_term = Ast.print_term *)
 
 
 let rec print_clause elim_or fmt t = match name t with
@@ -173,67 +176,92 @@ let rec trim_junk_satlem p = match app_name p with
       | _ -> assert false
     end
 
-  | Some ("clausify_false", [p])
-  | Some ("contra", [_; p]) -> trim_junk_satlem p
+  | Some ("clausify_false", [p]) -> trim_junk_satlem p
+                                      
+  | Some ("contra", [_; p1; p2]) ->
+    begin match name p1, name p2 with
+      | None, Some _ -> trim_junk_satlem p1
+      | Some _, None -> trim_junk_satlem p2
+      | Some _, Some _ -> trim_junk_satlem p2
+      | _ -> assert false
+    end
 
   | _ -> p
 
 
 
-let rec or_elim result_id p = match app_name p with
-  | Some (("or_elim_1"|"or_elim_2"), [_; _; _; p]) -> or_elim result_id p
+let rec or_impl_elim p = match app_name p with
+  | Some (("or_elim_1"|"or_elim_2"), [_; _; _; p]) -> or_impl_elim p
 
-  | _ ->
-    let cl = th_res p in
-    incr cl_cpt;
-    let id = !cl_cpt in
-    Hashtbl.add abbrev cl id;
-    fprintf fmt "%d:(or %a %d)@." id print_clause_elim_or cl result_id;
-    id
+  | Some ("impl_elim", [_; _; r]) ->
+    th_res p, "implies", r
 
-
-(* let or_impl_elim p = match app_name p with *)
-(*   | Some (("or_elim_1"|"or_elim_2"), [_; _; _; p]) -> or_elim result_id p *)
+  | _ -> th_res p, "or", p
 
   
 
-let rec cnf_convertion result p = match app_name p with
+let rec cnf_convertion p = match app_name p with
   
   | Some ("and_elim_1", [_; _; r]) ->
     begin match app_name r with
       | Some ("not_impl_elim", [_; _; w]) ->
-        let res, acc = cnf_convertion result w in
-        let result = th_res p in
-        let id = "00" in
-        let st =
-          { id; rule = "not_implies1"; result; args = [res]; pos = [] } in
-         id, st :: acc
+        let arg_id = cnf_convertion w in
+        let cl = th_res p in
+        incr cl_cpt;
+        let id = !cl_cpt in
+        Hashtbl.add abbrev cl id;
+        fprintf fmt "%d:(not_implies1 %a %d)@." id print_clause cl arg_id;
+        id
       | _ ->
-        let res, acc = cnf_convertion result r in
-        let result = th_res p in
-        let id = "00" in
-        let st = { id; rule = "and"; result; args = [res]; pos = [0] } in
-        id, st :: acc
+        let arg_id = cnf_convertion r in
+        let cl = th_res p in
+        incr cl_cpt;
+        let id = !cl_cpt in
+        Hashtbl.add abbrev cl id;
+        fprintf fmt "%d:(and %a %d 0)@." id print_clause cl arg_id;
+        id
     end
 
   | Some ("and_elim_2", [_; _; r]) ->
     begin match app_name r with
       | Some ("not_impl_elim", [_; _; w]) ->
-        let res, acc = cnf_convertion result w in
-        let result = th_res p in
-        let id = "00" in
-        let st =
-          { id; rule = "not_implies2"; result; args = [res]; pos = [] } in
-         id, st :: acc
+        let arg_id = cnf_convertion w in
+        let cl = th_res p in
+        incr cl_cpt;
+        let id = !cl_cpt in
+        Hashtbl.add abbrev cl id;
+        fprintf fmt "%d:(not_implies2 %a %d)@." id print_clause cl arg_id;
+        id
       | _ ->
-        let res, acc = cnf_convertion result r in
-        let result = th_res p in
-        let id = "00" in
-        let st = { id; rule = "and"; result; args = [res]; pos = [1] } in
-        id, st :: acc
+        let arg_id = cnf_convertion r in
+        let cl = th_res p in
+        incr cl_cpt;
+        let id = !cl_cpt in
+        Hashtbl.add abbrev cl id;
+        fprintf fmt "%d:(and %a %d 1)@." id print_clause cl arg_id;
+        id
     end
+
+  | Some (("or_elim_1"|"or_elim_2"|"impl_elim"), _) ->
+
+    let cl, rule, r = or_impl_elim p in
+    let arg_id = cnf_convertion r in
+    incr cl_cpt;
+    let id = !cl_cpt in
+    Hashtbl.add abbrev cl id;
+    fprintf fmt "%d:(%s %a %d)@." id rule print_clause_elim_or cl arg_id;
+    id
     
-  | _ -> assert false (* TODO *) 
+  | Some (x, _) ->
+
+    eprintf "failure on %s@." x;
+    assert false (* TODO *) 
+
+  | None ->
+    
+    let cl = th_res p in
+    (* should be an input clause *)
+    Hashtbl.find abbrev cl
 
 
 type resores = RStep of string * term * term | Stop
@@ -249,46 +277,64 @@ let result_satlem p = match value p with
     
   | _ -> assert false
 
-let rec satlem acc p = match app_name p with
+
+let rec satlem p = match app_name p with
   
   | Some ("satlem", [_; _; lem; p]) ->
-
-    let id, result, p = result_satlem p in
     
-    satlem acc p
+    let _, cl, p = result_satlem p in
+
+    let cnf_final_id =
+      trim_junk_satlem lem
+      |> cnf_convertion
+    in
+
+    Hashtbl.add abbrev cl cnf_final_id;
     
+    satlem p
     
-  | None -> p
-
-  | _ -> assert false
+  | _ -> p
 
 
+
+let clause_qr p = match app_name (deref p).ttype with
+  | Some ("holds", [cl]) -> Hashtbl.find abbrev cl
+  | _ -> raise Not_found
 
 
 let rec reso_of_QR acc qr = match app_name qr with
   | Some (("Q"|"R"), [_; _; u1; u2; _]) ->
+
+    reso_of_QR (reso_of_QR acc u1) u2
     
-    begin match name u1, name u2 with
-      | Some cl1, Some cl2 -> cl1 :: cl2 :: acc
-      | Some cl1, None -> reso_of_QR (cl1 :: acc) u2
-      | None, Some cl2 -> reso_of_QR (cl2 :: acc) u1
-      | _ -> assert false
-    end
+    (* begin match name u1, name u2 with *)
+    (*   | Some cl1, Some cl2 -> cl1 :: cl2 :: acc *)
+    (*   | Some cl1, None -> reso_of_QR (cl1 :: acc) u2 *)
+    (*   | None, Some cl2 -> reso_of_QR (cl2 :: acc) u1 *)
+    (*   | _ -> assert false *)
+    (* end *)
 
-  | _ -> assert false
+  | _ -> clause_qr qr :: acc
 
 
 
-let rec reso_of_satlem_simplify acc p = match app_name p with
+let rec reso_of_satlem_simplify p = match app_name p with
 
   | Some ("satlem_simplify", [_; _; _; qr; p]) ->
 
     let clauses = reso_of_QR [] qr in
-    let id, result, p = result_satlem p in
-    let st = { id; rule = "resolution"; result; args = clauses; pos = [] } in
-    reso_of_satlem_simplify (st :: acc) p
+    let _, res, p = result_satlem p in
+
+    incr cl_cpt;
+    let id = !cl_cpt in
     
-  | None when name p <> None -> acc
+    Hashtbl.add abbrev res id;
+    fprintf fmt "%d:(resolution %a%a)@." id print_clause res
+      (fun fmt -> List.iter (fprintf fmt " %d")) clauses;
+
+    reso_of_satlem_simplify  p
+    
+  | None when name p <> None -> ()
 
   | _ -> assert false
 
@@ -298,4 +344,5 @@ let convert p =
   |> ignore_decls
   |> produce_inputs
   |> register_prop_vars
-  |> ignore
+  |> satlem
+  |> reso_of_satlem_simplify
