@@ -190,11 +190,14 @@ let rec trim_junk_satlem p = match app_name p with
 
 
 
-let rec or_impl_elim p = match app_name p with
-  | Some (("or_elim_1"|"or_elim_2"), [_; _; _; p]) -> or_impl_elim p
+let rec generic_clause_elim p = match app_name p with
+  | Some (("or_elim_1"|"or_elim_2"), [_; _; _; p]) -> generic_clause_elim p
 
   | Some ("impl_elim", [_; _; r]) ->
     th_res p, "implies", r
+
+  | Some ("not_and_elim", [_; _; r]) ->
+    th_res p, "not_and", r
 
   | _ -> th_res p, "or", p
 
@@ -211,6 +214,14 @@ let rec cnf_convertion p = match app_name p with
         let id = !cl_cpt in
         Hashtbl.add abbrev cl id;
         fprintf fmt "%d:(not_implies1 %a %d)@." id print_clause cl arg_id;
+        id
+      | Some ("not_or_elim", [_; _; w]) ->
+        let arg_id = cnf_convertion w in
+        let cl = th_res p in
+        incr cl_cpt;
+        let id = !cl_cpt in
+        Hashtbl.add abbrev cl id;
+        fprintf fmt "%d:(not_or %a %d 0)@." id print_clause cl arg_id;
         id
       | _ ->
         let arg_id = cnf_convertion r in
@@ -232,6 +243,14 @@ let rec cnf_convertion p = match app_name p with
         Hashtbl.add abbrev cl id;
         fprintf fmt "%d:(not_implies2 %a %d)@." id print_clause cl arg_id;
         id
+      | Some ("not_or_elim", [_; _; w]) ->
+        let arg_id = cnf_convertion w in
+        let cl = th_res p in
+        incr cl_cpt;
+        let id = !cl_cpt in
+        Hashtbl.add abbrev cl id;
+        fprintf fmt "%d:(not_or %a %d 1)@." id print_clause cl arg_id;
+        id
       | _ ->
         let arg_id = cnf_convertion r in
         let cl = th_res p in
@@ -242,9 +261,9 @@ let rec cnf_convertion p = match app_name p with
         id
     end
 
-  | Some (("or_elim_1"|"or_elim_2"|"impl_elim"), _) ->
+  | Some (("or_elim_1"|"or_elim_2"|"impl_elim"|"not_and_elim"), _) ->
 
-    let cl, rule, r = or_impl_elim p in
+    let cl, rule, r = generic_clause_elim p in
     let arg_id = cnf_convertion r in
     incr cl_cpt;
     let id = !cl_cpt in
