@@ -3,6 +3,6 @@
 (declare-fun b () Bool)
 (declare-fun c () Bool)
 (declare-fun d () Bool)
-(assert (and a b c (or (not a) (not b) d) (or (not d) (not c))))
+(assert (and a (and b (and c (and (or (not a) (or (not b) d)) (or (not d) (not c)))))))
 (check-sat)
 (exit)
