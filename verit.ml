@@ -127,8 +127,10 @@ let th_res p = match app_name (deref p).ttype with
 
 type clause_res_id = NewCl of int | OldCl of int
 
-let new_clause_id cl =
-  try OldCl (Hashtbl.find abbrev cl)
+let new_clause_id ?(reuse=true) cl =
+  try
+    if not reuse then raise Not_found;
+    OldCl (Hashtbl.find abbrev cl)
   with Not_found ->
     incr cl_cpt;
     let id = !cl_cpt in
@@ -282,7 +284,7 @@ let rec cnf_conversion p = match app_name p with
 
     let cl, rule, r = generic_clause_elim p in
     let arg_id = cnf_conversion r in
-    (match new_clause_id cl with
+    (match new_clause_id ~reuse:false cl with
      | NewCl id ->
        fprintf fmt "%d:(%s %a %d)@." id rule print_clause_elim_or cl arg_id;
        id
