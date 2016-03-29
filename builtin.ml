@@ -12,6 +12,13 @@ let pi n ty t =
   remove_symbol s;
   pi_abstr
 
+let pi_d n ty ft =
+  let s = mk_symbol n ty in
+  register_symbol s;
+  let pi_abstr = mk_pi s (ft (symbol_to_const s)) in
+  remove_symbol s;
+  pi_abstr
+
 
 let bool_lfsc = declare_get "bool_lfsc" lfsc_type
 let tt = declare_get "tt" bool_lfsc
@@ -34,13 +41,60 @@ let concat_s = declare_get "concat_cl"
 
 let clr_s = declare_get "clr" (pi "l" lit (lazy (pi "c" clause (lazy clause))))
 
+let formula = declare_get "formula" lfsc_type
+let th_holds_s = declare_get "th_holds" (pi "f" formula (lazy lfsc_type))
 
+let ttrue = declare_get "true" formula
+let tfalse = declare_get "false" formula
+
+(* some definitions *)
+let _ =
+  mk_define "formula_op1" (pi "f" formula (lazy formula));
+  mk_define "formula_op2"
+    (pi "f1" formula (lazy
+    (pi "f2" formula (lazy formula))));
+  mk_define "formula_op3"
+    (pi "f1" formula (lazy
+    (pi "f2" formula (lazy
+    (pi "f3" formula (lazy formula))))))
+
+let not_s = declare_get "not" (mk_const "formula_op1")
+let and_s = declare_get "and" (mk_const "formula_op2")
+let or_s = declare_get "or" (mk_const "formula_op2")
+let impl_s = declare_get "impl" (mk_const "formula_op2")
+let iff_s = declare_get "iff" (mk_const "formula_op2")
+let xor_s = declare_get "xor" (mk_const "formula_op2")
+let ifte_s = declare_get "ifte" (mk_const "formula_op3")
+
+
+let sort = declare_get "sort" lfsc_type
+let term_s = declare_get "term" (pi "t" sort (lazy lfsc_type))
+let term x = mk_app term_s [x] 
+let tBool = declare_get "Bool" sort
+let p_app_s = declare_get "p_app" (pi "x" (term tBool) (lazy formula))
+let p_app b = mk_app p_app_s [b]
+
+let eq_s = declare_get "="
+    (pi_d "s" sort (fun s ->
+    (pi "x" (term s) (lazy
+    (pi "y" (term s) (lazy formula))))))
+
+let eq ty x y = mk_app eq_s [ty; x; y]
 
 let pos v = mk_app pos_s [v] 
 let neg v = mk_app neg_s [v] 
 let clc x c = mk_app clc_s [x; c]
 let clr l c = mk_app clr_s [l; c]
 let concat c1 c2 = mk_app concat_s [c1; c2]
+
+
+let mk_not a = mk_app not_s [a]
+let mk_and a b = mk_app and_s [a; b]
+let mk_or a b = mk_app or_s [a; b]
+let mk_impl a b = mk_app impl_s [a; b]
+let mk_iff a b = mk_app iff_s [a; b]
+let mk_xor a b = mk_app xor_s [a; b]
+let mk_ifte a b c = mk_app ifte_s [a; b; c]
 
 module Int = struct
   type t = int

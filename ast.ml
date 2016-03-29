@@ -99,7 +99,7 @@ and print_tval pty fmt t = match t.value with
     else 
       fprintf fmt "_%d" i
         
-  | Ptr t when debug -> fprintf fmt "*%a" (print_term pty) t
+  | Ptr t when (* true || *) debug -> fprintf fmt "*%a" (print_term pty) t
 
   | Ptr t -> print_term pty fmt t
     
