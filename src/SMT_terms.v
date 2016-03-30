@@ -42,17 +42,58 @@ Module Form.
   | Fiff (_:_lit) (_:_lit)
   | Fite (_:_lit) (_:_lit) (_:_lit).
 
+ (**burak**)
+  Inductive b_form : Type :=
+    | b_Fatom: forall a:atom, b_form
+    | b_Ftrue: b_form
+    | b_Ffalse: b_form
+    | b_Fnot2: forall (i: int) (l: _lit), b_form
+    | b_Fand: forall f: fargs, b_form
+    | b_For: forall f: fargs, b_form
+    | b_Fimp: forall f: fargs, b_form
+    | b_Fxor: forall (l1 l2 :_lit), b_form
+    | b_Fiff: forall (l1 l2: _lit), b_form
+    | b_Fite: forall (l1 l2 l3: _lit), b_form.
+
   Definition is_Ftrue h :=
     match h with Ftrue => true | _ => false end.
+
+  (** burak **)
+  Definition b_is_Ftrue h :=
+    match h with 
+      | b_Ftrue => true 
+      | _ => false
+    end.
 
   Definition is_Ffalse h :=
     match h with Ffalse => true | _ => false end.
 
+  (** burak **)
+  Definition b_is_Ffalse h :=
+    match h with 
+      | b_Ffalse => true 
+      | _ => false
+    end.
+
   Lemma is_Ftrue_correct : forall h, is_Ftrue h -> h = Ftrue.
-  Proof. destruct h;trivial;discriminate. Qed.
+  Proof. destruct h; trivial;discriminate. Qed.
+
+  (** burak **)
+  Lemma b_is_Ftrue_correct : forall h, b_is_Ftrue h -> h = b_Ftrue.
+  Proof. intro h.
+         destruct h; try discriminate.
+         intros; reflexivity.
+  Qed.
 
   Lemma is_Ffalse_correct : forall h, is_Ffalse h -> h = Ffalse.
   Proof. destruct h;trivial;discriminate. Qed.
+
+  (** burak **)
+  Lemma b_is_Ffalse_correct : forall h, b_is_Ffalse h -> h = b_Ffalse.
+  Proof. intro h.
+         destruct h; try discriminate.
+         intros; reflexivity.
+  Qed.
 
   Section Interp.
     Variable interp_atom : atom -> bool.
@@ -81,10 +122,78 @@ Module Form.
           else Lit.interp interp_var c
         end.
 
+      Definition b_interp_aux (h:b_form) : bool :=
+        match h with
+        | b_Fatom a => interp_atom a
+        | b_Ftrue => true
+        | b_Ffalse => false
+        | b_Fnot2 i l => fold (fun b => negb (negb b)) 1 i (Lit.interp interp_var l)
+        | b_Fand args => afold_left _ _ true andb (Lit.interp interp_var) args
+        | b_For args => afold_left _ _ false orb (Lit.interp interp_var) args
+        | b_Fimp args => afold_right _ _ true implb (Lit.interp interp_var) args
+        | b_Fxor a b => xorb (Lit.interp interp_var a) (Lit.interp interp_var b)
+        | b_Fiff a b => Bool.eqb (Lit.interp interp_var a) (Lit.interp interp_var b)
+        | b_Fite a b c =>
+          if Lit.interp interp_var a then Lit.interp interp_var b
+          else Lit.interp interp_var c
+        end.
+
     End Interp_form.
 
     Section Interp_get.
 
+(*
+  Eval compute in
+       (let t := (make 2 _) in 
+         (let t := (set t 0 50) in 
+           (let t := (set t 1 49) in 
+            (forallb is_even t)
+            ))).
+
+    Eval compute in
+       (let t := (make 2 (make 3 _)) in
+         (let t1 := (make 3 _) in
+         (let t2 := (make 3 _) in
+           (let t1 := (set t1 0 10) in 
+           (let t1 := (set t1 1 11) in
+           (let t1 := (set t1 2 12) in
+           (let t2 := (set t2 0 20) in 
+           (let t2 := (set t2 1 21) in
+           (let t2 := (set t2 2 22) in
+             (let t := (set t 0 t1) in 
+             (let t := (set t 1 t2) in
+               t          
+            ))))))))))).
+
+ Parameters (A: Type) (f: int -> A -> A).
+ Parameters a a1 a2 a3: A.
+
+  Definition t : array A :=
+     (let t := (make 3 a) in 
+         (let t := (set t 0 a1) in 
+            (let t := (set t 1 a2) in 
+              (let t := (set t 2 a3) in t
+            )))).
+
+ Eval compute in foldi f 0 (length t) (t.[2]).
+
+Definition foldi {A} (f:int -> A -> A) from to :=
+  foldi_cont (fun i cont a => cont (f i a)) from to (fun a => a).
+
+  Parameters B: Type.
+  Parameters b b1 b2 b3: B.
+  Parameter g: int -> A -> B -> A.
+
+  Definition t2 : array B :=
+     (let t := (make 3 b) in 
+         (let t := (set t 0 b1) in 
+            (let t := (set t 1 b2) in 
+              (let t := (set t 2 b3) in t
+            )))).
+
+  Eval compute in foldi_left g a t2.
+  
+ *)
       Variable t_form : PArray.array form.
 
       Definition t_interp : PArray.array bool :=

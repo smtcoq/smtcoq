@@ -464,7 +464,8 @@ Module S.
 
   Lemma valid_get : forall rho s, valid rho s ->
     forall id, C.valid rho (get s id).
-  Proof. auto. Qed.
+  Proof. intros rho s H id. unfold valid in H. unfold Valuation.t in rho. apply H. Qed.
+  (** Proof. auto. Qed. **)
 
 
   (* Specification of internal_set *)
@@ -550,13 +551,16 @@ Module S.
 
   (* Resolution *)
 
+Open Scope int63_scope.
+
   Definition set_resolve (s:t) pos (r:resolution) : t :=
     let len := PArray.length r in
     if len == 0 then s
     else
-      let c := foldi (fun i c => C.resolve (get s (r.[i])) c) 1 (len - 1)
-         (get s (r.[0])) in
+      let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 (len - 1) (get s (r.[0])) in
       internal_set s pos c.
+
+ Check set_resolve.
 
   Lemma valid_set_resolve :
     forall rho s, Valuation.wf rho -> valid rho s ->
@@ -566,7 +570,7 @@ Module S.
     destruct (Int63Properties.reflect_eqb (length r) 0);[trivial | ].
     apply valid_internal_set;trivial.
     apply foldi_ind;auto.
-    intros i c _ _ Hc;apply C.resolve_correct;auto;apply Hv.
+    intros i c _ _ Hc. apply C.resolve_correct;auto;apply Hv.
   Qed.
 
 End S.

@@ -48,16 +48,23 @@ Section trace.
   Variable is_false : C.t -> bool.
   Hypothesis is_false_correct : forall c, is_false c -> ~ C.interp rho c.
 
-  Definition _checker_ (s: S.t) (t: _trace_) (confl:clause_id) : bool :=
+(*
+  Parameter (s: array (list _lit)) (t: array (array step)) (i: int) (b: array step).
+  Check PArray.fold_left check_step s b.
+  Check (fun s' a => PArray.fold_left check_step s' a).
+  Check PArray.fold_left (fun s' a => PArray.fold_left check_step s' a) s t.
+  Check let s'' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in
+    is_false (S.get s'' i).
+*)
+
+  Definition _checker_ (s: S.t) (t: _trace_) (confl: clause_id) : bool :=
     let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in
     is_false (S.get s' confl).
   (* Register _checker_ as PrimInline. *)
 
   (* For debugging *)
   (*
-
   Variable check_step_debug : S.t -> step -> option S.t.
-
   Definition _checker_debug_ (s: S.t) (t: _trace_) : sum S.t ((int*int)*S.t) :=
     let s' := PArray.foldi_left (fun i s a => PArray.foldi_left (fun j s' a' =>
       match s' with
@@ -69,7 +76,6 @@ Section trace.
         | u => u
       end) s a) (inl s) t in
     s'.
-
   Definition _checker_partial_ (s: S.t) (t: _trace_) (max:int) : S.t :=
     PArray.fold_left (fun s a => PArray.foldi_left (fun i s' a' => if i < max then check_step s' a' else s') s a) s t.
   *)
@@ -102,8 +108,14 @@ Module Sat_Checker.
  Inductive step :=
    | Res (_:int) (_:resolution).
 
+(*
+ Parameters (s s': (list _lit) -> bool) (t: (array (list _lit))) (i: int) (r: resolution).
+ Check (fun s (st:step) => let (pos, r) := st in S.set_resolve s pos r).
+ Check (_checker_ (fun s' (st:step) => let (pos, r) := st in S.set_resolve s' pos r) s t).
+*)
+
  Definition resolution_checker s t :=
-    _checker_ (fun s (st:step) => let (pos, r) := st in S.set_resolve s pos r) s t.
+    _checker_ (fun s' (st:step) => let (pos, r) := st in S.set_resolve s' pos r) s t.
 
  Lemma resolution_checker_correct :
     forall rho, Valuation.wf rho ->
@@ -190,6 +202,16 @@ Qed.
  Qed.
 
 End Sat_Checker.
+
+Module LFSC_Checker.
+
+ Inductive step: Type :=
+   | .
+
+
+
+End LFSC_Checker.
+
 
 Module Cnf_Checker.
   
