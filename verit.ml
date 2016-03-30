@@ -23,10 +23,6 @@ let propvars = Hashtbl.create 201
 
 let cl_cpt = ref 0
 
-let rec deref t = match t.value with
-  | Ptr t -> deref t
-  | _ -> t
-
 
 let value t = (deref t).value
 
@@ -358,11 +354,29 @@ let rec cnf_conversion p = match app_name p with
 
     let cl, rule, r = generic_clause_elim p in
     let arg_id = cnf_conversion r in
-    (match new_clause_id ~reuse:false cl with
-     | NewCl id ->
-       fprintf fmt "%d:(%s %a %d)@." id rule print_clause cl arg_id;
-       id
-     | OldCl id -> assert false)
+    (match rule, Hashtbl.find ids_clauses arg_id with
+      | _, [] -> assert false
+      | "not_and", na :: ( _::_ as r) ->
+        let a = match app_name na with Some ("not",[a]) -> a | _ -> mk_not na in
+        let cltmp = a :: cl in
+        let clres = cl @ r in
+        let tmpid = match new_clause_id cltmp with
+          | NewCl id ->
+            fprintf fmt "%d:(and_neg %a)@." id print_clause cltmp; id
+          | OldCl id -> id in
+        (match new_clause_id clres with
+          | NewCl id ->
+            fprintf fmt "%d:(resolution %a %d %d)@."
+              id print_clause clres tmpid arg_id;
+            id
+          | OldCl id -> id)
+      | _ ->
+        match new_clause_id ~reuse:false cl with
+        | NewCl id ->
+          fprintf fmt "%d:(%s %a %d)@." id rule print_clause cl arg_id;
+          id
+        | OldCl id -> assert false
+    )
 
   | Some (("symm"|"negsymm"), [_; _; _; r]) ->
     let id = cnf_conversion r in
@@ -478,7 +492,7 @@ let rec cnf_conversion p = match app_name p with
      | OldCl id -> id
     in
 
-    (if id1 = -1 then id2 (* , Reso (fx_eq_fy, cl, x_eq_y)  *)
+    (if id1 = -1 then id2
      else
        let clres = match List.rev (Hashtbl.find ids_clauses id1) with
          | [] -> assert false
@@ -510,7 +524,7 @@ let rec cnf_conversion p = match app_name p with
      | OldCl id -> id
     in
 
-    (if id1 = -1 then id2 (* , Reso (fx_eq_fy, cl, x_eq_y)  *)
+    (if id1 = -1 then id2
      else
        let clres = match List.rev (Hashtbl.find ids_clauses id1) with
          | [] -> assert false
@@ -588,18 +602,8 @@ let clause_qr p = match app_name (deref p).ttype with
 
 
 let rec reso_of_QR acc qr = match app_name qr with
-  | Some (("Q"|"R"), [_; _; u1; u2; _]) ->
-
-    reso_of_QR (reso_of_QR acc u1) u2
-    
-    (* begin match name u1, name u2 with *)
-    (*   | Some cl1, Some cl2 -> cl1 :: cl2 :: acc *)
-    (*   | Some cl1, None -> reso_of_QR (cl1 :: acc) u2 *)
-    (*   | None, Some cl2 -> reso_of_QR (cl2 :: acc) u1 *)
-    (*   | _ -> assert false *)
-    (* end *)
-
-  | _ -> clause_qr qr :: acc
+  | Some (("Q"|"R"), [_; _; u1; u2; _]) -> reso_of_QR (reso_of_QR acc u1) u2
+  | _ -> clause_qr qr :: acc |> List.rev
 
 
 

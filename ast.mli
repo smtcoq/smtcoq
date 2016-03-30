@@ -36,6 +36,10 @@ type proof = command list
 
 exception TypingError of term * term
 
+
+(** follow pointers *)
+val deref : term -> term
+
 val lfsc_type : term
 
 val kind : term

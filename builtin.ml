@@ -143,12 +143,6 @@ let markvar4 m v = markvar_with 4 m v
 (* Side conditions *)
 (*******************)
 
-(* follow pointers *)
-
-let rec deref t = match t.value with
-  | Ptr t -> deref t
-  | _ -> t
-
 let value t = (deref t).value
                 
 

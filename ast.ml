@@ -49,6 +49,10 @@ let is_rule t =
   | _ -> false
 
 
+let rec deref t = match t.value with
+  | Ptr t -> deref t
+  | _ -> t
+
 (*******************)
 (* Pretty printing *)
 (*******************)
@@ -457,7 +461,7 @@ let rec fill_hole sigma h t =
         print_term h print_term t;
     let t' = apply_subst sigma t in
     (* h.value <- t'.value; (\* KLUDGE *\) *)
-    if not (occur_check h t') then h.value <- Ptr t';
+    if not (occur_check h t') then h.value <- Ptr (deref t');
     if debug then
       eprintf ">>>>>>>>> @[%a@]@." print_term_type h;
     fill_hole sigma h.ttype t'.ttype;
