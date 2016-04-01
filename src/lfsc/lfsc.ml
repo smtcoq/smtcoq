@@ -60,10 +60,19 @@ let rec size_list = function
 
 
 let import_trace filename =
+  (* What you have to do: parse the certificate, and produce the
+     corresponding veriT steps linearly, as you are currently doing: the
+     difference is that instead of pretty-printing, you should produce
+     something in the format of SmtCertif, and return the (last)
+     conflicting step *)
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
-  let _ = LfscParser.certif LfscLexer.token lexbuf in
-  ()
+  let confl = LfscParser.certif LfscLexer.token lexbuf in
+  (* Afterwards, the SMTCoq libraries will produce the remaining, you do
+     not have to care *)
+  SmtTrace.select confl;
+  occur confl;
+  (alloc first, confl)
 
 
 let clear_all () =
@@ -78,19 +87,14 @@ let import_all fsmt fproof =
   let ra = LfscSyntax.ra in
   let rf = LfscSyntax.rf in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let () = import_trace fproof in
-  ()
-  
+  let (max_id, confl) = import_trace fproof in
+  (rt, ro, ra, rf, roots, max_id, confl)
 
 
-
-(* let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof = *)
-(*   SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace (import_all fsmt fproof) *)
-(* let theorem name fsmt fproof = SmtCommands.theorem name (import_all fsmt fproof) *)
-(* let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof) *)
-let checker fsmt fproof =
-  let () = import_all fsmt fproof in
-  Format.eprintf "     = %s\n     : bool@." "false"
+let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
+  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace (import_all fsmt fproof)
+let theorem name fsmt fproof = SmtCommands.theorem name (import_all fsmt fproof)
+let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 
 
 
