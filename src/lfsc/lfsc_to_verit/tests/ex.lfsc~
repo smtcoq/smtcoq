@@ -1,0 +1,30 @@
+(check
+ ;; Declarations
+(% c (term Bool)
+(% b (term Bool)
+(% a (term Bool)
+(% A0 (th_holds true)
+(% A1 (th_holds (@ let2 (p_app a)(@ let3 (p_app b)(@ let5 (p_app c)(not (impl (and (impl let2 let3) (impl let3 let5)) (impl let2 let5)))))))
+(: (holds cln)
+
+ ;; Printing deferred declarations 
+
+ ;; In the preprocessor we trust 
+(th_let_pf _ (trust_f (@ let11 (p_app a)(@ let12 (p_app b)(@ let14 (p_app c)(not (impl (and (impl let11 let12) (impl let12 let14)) (impl let11 let14))))))) (\ .PA215
+
+;; Printing mapping from preprocessed assertions into atoms 
+(decl_atom (p_app a) (\ .v2 (\ .a2
+(decl_atom (p_app b) (\ .v3 (\ .a3
+(decl_atom (p_app c) (\ .v4 (\ .a4
+(satlem _ _ (ast _ _ _ .a4 (\ .l9 (clausify_false (contra _ .l9 (and_elim_2 _ _ (not_impl_elim _ _ (and_elim_2 _ _ (not_impl_elim _ _ .PA215)))))))) (\ .pb7
+(satlem _ _ (asf _ _ _ .a4 (\ .l8 (ast _ _ _ .a3 (\ .l7 (clausify_false (contra _ (or_elim_1 _ _ (not_not_intro _ .l7) (impl_elim _ _ (and_elim_2 _ _ (and_elim_1 _ _ (not_impl_elim _ _ .PA215))))) .l8)))))) (\ .pb5
+(satlem _ _ (asf _ _ _ .a3 (\ .l6 (ast _ _ _ .a2 (\ .l5 (clausify_false (contra _ (or_elim_1 _ _ (not_not_intro _ .l5) (impl_elim _ _ (and_elim_1 _ _ (and_elim_1 _ _ (not_impl_elim _ _ .PA215))))) .l6)))))) (\ .pb4
+(satlem _ _ (asf _ _ _ .a2 (\ .l4 (clausify_false (contra _ (and_elim_1 _ _ (not_impl_elim _ _ (and_elim_2 _ _ (not_impl_elim _ _ .PA215)))) .l4)))) (\ .pb6
+ ;; Theory Lemmas 
+;; BB atom mapping
+;; Bit-blasting definitional clauses 
+;; Bit-blasting learned clauses 
+(satlem_simplify _ _ _ (Q _ _ .pb4 .pb6 .v2)(\ .cl8
+(satlem_simplify _ _ _ (Q _ _ .pb5 .cl8 .v3)(\ . cl9
+(satlem_simplify _ _ _ (Q _ _ .pb7 .cl9 .v4)(\ empty empty))))))))))))))))))))))))))))))))
+;;

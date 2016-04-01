@@ -1,0 +1,44 @@
+(check
+ ;; Declarations
+(% U sort
+(% c (term U)
+(% b (term U)
+(% a (term U)
+(% f (term (arrow U (arrow U U)))
+(% A0 (th_holds true)
+(% A1 (th_holds (@ let2 a(or (= U let2 b) (= U let2 c))))
+(% A2 (th_holds (@ let9 b(not (= U (apply _ _ (apply _ _ f a)b) (apply _ _ (apply _ _ f c)b)))))
+(% A3 (th_holds (@ let16 b(not (= U (apply _ _ (apply _ _ f a)b) (apply _ _ (apply _ _ f b)b)))))
+(: (holds cln)
+
+ ;; Printing deferred declarations 
+
+ ;; In the preprocessor we trust 
+(th_let_pf _ (trust_f (@ let22 b(not (= U (apply _ _ (apply _ _ f a)b) (apply _ _ (apply _ _ f b)b))))) (\ .PA217
+(th_let_pf _ (trust_f (@ let28 b(not (= U (apply _ _ (apply _ _ f a)b) (apply _ _ (apply _ _ f c)b))))) (\ .PA221
+(th_let_pf _ (trust_f (@ let34 a(or (= U let34 b) (= U let34 c)))) (\ .PA224
+
+;; Printing mapping from preprocessed assertions into atoms 
+(decl_atom (@ let41 b(= U (apply _ _ (apply _ _ f a)b) (apply _ _ (apply _ _ f b)b))) (\ .v2 (\ .a2
+(decl_atom (@ let46 b(= U (apply _ _ (apply _ _ f a)b) (apply _ _ (apply _ _ f c)b))) (\ .v3 (\ .a3
+(decl_atom (= U a c) (\ .v5 (\ .a5
+(decl_atom (= U a b) (\ .v4 (\ .a4
+(satlem _ _ (asf _ _ _ .a4 (\ .l8 (asf _ _ _ .a5 (\ .l10 (clausify_false (contra _ (or_elim_1 _ _ .l8 .PA224) .l10)))))) (\ .pb6
+(satlem _ _ (ast _ _ _ .a3 (\ .l7 (clausify_false (contra _ .l7 .PA221)))) (\ .pb5
+(satlem _ _ (ast _ _ _ .a2 (\ .l5 (clausify_false (contra _ .l5 .PA217)))) (\ .pb4
+ ;; Theory Lemmas 
+;; BB atom mapping
+;; Bit-blasting definitional clauses 
+;; Bit-blasting learned clauses 
+(satlem _ _ (ast _ _ _ .a4 (\ .l9 (asf _ _ _ .a2 (\ .l4  ;; UF Theory Lemma 
+;;(not (= a b)) (= (f a b) (f b b)) 
+(clausify_false (contra _ (cong _ _ _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) .l9) (refl _ b)) .l4))
+))))( \ .lemc8
+(satlem _ _ (ast _ _ _ .a5 (\ .l11 (asf _ _ _ .a3 (\ .l6  ;; UF Theory Lemma 
+;;(not (= a c)) (= (f a b) (f c b)) 
+(clausify_false (contra _ (cong _ _ _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) .l11) (refl _ b)) .l6))
+))))( \ .lemc7
+(satlem_simplify _ _ _ (R _ _ .lemc7 .pb5 .v3)(\.cl9
+(satlem_simplify _ _ _ (R _ _ .pb6 .cl9 .v5)(\.cl10
+(satlem_simplify _ _ _ (R _ _ (Q _ _ .lemc8 .cl10 .v4).pb4 .v2)(\empty empty)))))))))))))))))))))))))))))))))))))))))))))
+;;
