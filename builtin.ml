@@ -1,3 +1,19 @@
+(**************************************************************************)
+(*                                                                        *)
+(*                            LFSCtoSmtCoq                                *)
+(*                                                                        *)
+(*                         Copyright (C) 2016                             *)
+(*          by the Board of Trustees of the University of Iowa            *)
+(*                                                                        *)
+(*                    Alain Mebsout and Burak Ekici                       *)
+(*                       The University of Iowa                           *)
+(*                                                                        *)
+(*                                                                        *)
+(*  This file is distributed under the terms of the Apache Software       *)
+(*  License version 2.0                                                   *)
+(*                                                                        *)
+(**************************************************************************)
+
 open Ast
 open Format
 
@@ -88,25 +104,20 @@ let clr l c = mk_app clr_s [l; c]
 let concat c1 c2 = mk_app concat_s [c1; c2]
 
 
-let mk_not a = mk_app not_s [a]
-let mk_and a b = mk_app and_s [a; b]
-let mk_or a b = mk_app or_s [a; b]
-let mk_impl a b = mk_app impl_s [a; b]
-let mk_iff a b = mk_app iff_s [a; b]
-let mk_xor a b = mk_app xor_s [a; b]
-let mk_ifte a b c = mk_app ifte_s [a; b; c]
+let not_ a = mk_app not_s [a]
+let and_ a b = mk_app and_s [a; b]
+let or_ a b = mk_app or_s [a; b]
+let impl_ a b = mk_app impl_s [a; b]
+let iff_ a b = mk_app iff_s [a; b]
+let xor_ a b = mk_app xor_s [a; b]
+let ifte_ a b c = mk_app ifte_s [a; b; c]
 
-module Int = struct
-  type t = int
-  let compare = Pervasives.compare
-end
 
-module Term = struct
-  type t = term
-  let compare = compare_term
-end
+module MInt = Map.Make (struct
+    type t = int
+    let compare = Pervasives.compare
+  end)
 
-module MInt = Map.Make (Int)
 module STerm = Set.Make (Term)
 
 type mark_map = STerm.t MInt.t

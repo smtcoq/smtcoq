@@ -644,8 +644,6 @@
 ;(! p3 (term (arrow Int (arrow Int Bool)))	; arrow is right assoc.
 ;(! F (th_holds (p_app (apply _ _ (apply _ _ p3 a) b))) ; apply is left assoc.
 ;  ...
-
-
 (check
  ;; Declarations
 (% I sort
@@ -663,170 +661,170 @@
 (% A7 (th_holds (@ let41 a(not (= I (apply _ _ (apply _ _ f b)let41) (apply _ _ (apply _ _ f c)let41)))))
 (% A8 (th_holds (@ let47 a(not (= I (apply _ _ (apply _ _ f let47)let47) (apply _ _ (apply _ _ f c)let47)))))
 (% A9 (th_holds (@ let53 a(not (= I (apply _ _ (apply _ _ f let53)let53) (apply _ _ (apply _ _ f b)let53)))))
-(% A10 (th_holds (@ let59 c(@ let60 a(@ let65 b(or (not (= I (apply _ _ (apply _ _ f let59)(apply _ _ (apply _ _ f let59)let60)) let60)) (or (not (= I (apply _ _ (apply _ _ f let59)(apply _ _ (apply _ _ f let59)let65)) let65)) (not (= I (apply _ _ (apply _ _ f let59)(apply _ _ (apply _ _ f let59)let59)) let59)) ))))))
-(% A11 (th_holds (@ let75 b(@ let76 a(@ let85 c(or (not (= I (apply _ _ (apply _ _ f let75)(apply _ _ (apply _ _ f let75)let76)) let76)) (or (not (= I (apply _ _ (apply _ _ f let75)(apply _ _ (apply _ _ f let75)let75)) let75)) (not (= I (apply _ _ (apply _ _ f let75)(apply _ _ (apply _ _ f let75)let85)) let85)) ))))))
-(% A12 (th_holds (@ let91 a(@ let96 b(@ let101 c(or (not (= I (apply _ _ (apply _ _ f let91)(apply _ _ (apply _ _ f let91)let91)) let91)) (or (not (= I (apply _ _ (apply _ _ f let91)(apply _ _ (apply _ _ f let91)let96)) let96)) (not (= I (apply _ _ (apply _ _ f let91)(apply _ _ (apply _ _ f let91)let101)) let101)) ))))))
-(% A13 (th_holds (@ let107 c(not (= I (apply _ _ (apply _ _ f let107)let107) let107))))
-(% A14 (th_holds (@ let111 b(not (= I (apply _ _ (apply _ _ f let111)let111) let111))))
-(% A15 (th_holds (@ let115 a(not (= I (apply _ _ (apply _ _ f let115)let115) let115))))
-(% A16 (th_holds (@ let119 a(@ let120 c(@ let123 b(or (= I (apply _ _ (apply _ _ f let119)let120) let119) (or (= I (apply _ _ (apply _ _ f let123)let120) let123) (= I (apply _ _ (apply _ _ f let120)let120) let120) ))))))
-(% A17 (th_holds (@ let129 a(@ let130 b(@ let135 c(or (= I (apply _ _ (apply _ _ f let129)let130) let129) (or (= I (apply _ _ (apply _ _ f let130)let130) let130) (= I (apply _ _ (apply _ _ f let135)let130) let135) ))))))
-(% A18 (th_holds (@ let139 a(@ let142 b(@ let145 c(or (= I (apply _ _ (apply _ _ f let139)let139) let139) (or (= I (apply _ _ (apply _ _ f let142)let139) let142) (= I (apply _ _ (apply _ _ f let145)let139) let145) ))))))
-(% A19 (th_holds (@ let149 a(@ let151 c(@ let153 b(or (= I (apply _ _ (apply _ _ f let149)let149) let151) (or (= I (apply _ _ (apply _ _ f let153)let153) let151) (= I (apply _ _ (apply _ _ f let151)let151) let151) ))))))
-(% A20 (th_holds (@ let159 a(@ let161 b(@ let165 c(or (= I (apply _ _ (apply _ _ f let159)let159) let161) (or (= I (apply _ _ (apply _ _ f let161)let161) let161) (= I (apply _ _ (apply _ _ f let165)let165) let161) ))))))
-(% A21 (th_holds (@ let169 a(@ let172 b(@ let175 c(or (= I (apply _ _ (apply _ _ f let169)let169) let169) (or (= I (apply _ _ (apply _ _ f let172)let172) let169) (= I (apply _ _ (apply _ _ f let175)let175) let169) ))))))
-(% A22 (th_holds (@ let179 c(@ let180 (apply _ _ (apply _ _ f let179)let179)(or (= I let180 a) (or (= I let180 b) (= I let180 let179) )))))
-(% A23 (th_holds (@ let187 c(@ let188 b(@ let189 (apply _ _ (apply _ _ f let187)let188)(or (= I let189 a) (or (= I let189 let188) (= I let189 let187) ))))))
-(% A24 (th_holds (@ let195 c(@ let196 a(@ let197 (apply _ _ (apply _ _ f let195)let196)(or (= I let197 let196) (or (= I let197 b) (= I let197 let195) ))))))
-(% A25 (th_holds (@ let203 b(@ let204 c(@ let205 (apply _ _ (apply _ _ f let203)let204)(or (= I let205 a) (or (= I let205 let203) (= I let205 let204) ))))))
-(% A26 (th_holds (@ let211 b(@ let212 (apply _ _ (apply _ _ f let211)let211)(or (= I let212 a) (or (= I let212 let211) (= I let212 c) )))))
-(% A27 (th_holds (@ let219 b(@ let220 a(@ let221 (apply _ _ (apply _ _ f let219)let220)(or (= I let221 let220) (or (= I let221 let219) (= I let221 c) ))))))
-(% A28 (th_holds (@ let227 a(@ let228 c(@ let229 (apply _ _ (apply _ _ f let227)let228)(or (= I let229 let227) (or (= I let229 b) (= I let229 let228) ))))))
-(% A29 (th_holds (@ let235 a(@ let236 b(@ let237 (apply _ _ (apply _ _ f let235)let236)(or (= I let237 let235) (or (= I let237 let236) (= I let237 c) ))))))
-(% A30 (th_holds (@ let243 a(@ let244 (apply _ _ (apply _ _ f let243)let243)(or (= I let244 let243) (or (= I let244 b) (= I let244 c) )))))
+(% A10 (th_holds (@ let59 c(@ let60 a(@ let65 b(or (not (= I (apply _ _ (apply _ _ f let59)(apply _ _ (apply _ _ f let59)let60)) let60)) (or (not (= I (apply _ _ (apply _ _ f let59)(apply _ _ (apply _ _ f let59)let65)) let65)) (not (= I (apply _ _ (apply _ _ f let59)(apply _ _ (apply _ _ f let59)let59)) let59))))))))
+(% A11 (th_holds (@ let76 b(@ let77 a(@ let86 c(or (not (= I (apply _ _ (apply _ _ f let76)(apply _ _ (apply _ _ f let76)let77)) let77)) (or (not (= I (apply _ _ (apply _ _ f let76)(apply _ _ (apply _ _ f let76)let76)) let76)) (not (= I (apply _ _ (apply _ _ f let76)(apply _ _ (apply _ _ f let76)let86)) let86))))))))
+(% A12 (th_holds (@ let93 a(@ let98 b(@ let103 c(or (not (= I (apply _ _ (apply _ _ f let93)(apply _ _ (apply _ _ f let93)let93)) let93)) (or (not (= I (apply _ _ (apply _ _ f let93)(apply _ _ (apply _ _ f let93)let98)) let98)) (not (= I (apply _ _ (apply _ _ f let93)(apply _ _ (apply _ _ f let93)let103)) let103))))))))
+(% A13 (th_holds (@ let110 c(not (= I (apply _ _ (apply _ _ f let110)let110) let110))))
+(% A14 (th_holds (@ let114 b(not (= I (apply _ _ (apply _ _ f let114)let114) let114))))
+(% A15 (th_holds (@ let118 a(not (= I (apply _ _ (apply _ _ f let118)let118) let118))))
+(% A16 (th_holds (@ let122 a(@ let123 c(@ let126 b(or (= I (apply _ _ (apply _ _ f let122)let123) let122) (or (= I (apply _ _ (apply _ _ f let126)let123) let126) (= I (apply _ _ (apply _ _ f let123)let123) let123)))))))
+(% A17 (th_holds (@ let133 a(@ let134 b(@ let139 c(or (= I (apply _ _ (apply _ _ f let133)let134) let133) (or (= I (apply _ _ (apply _ _ f let134)let134) let134) (= I (apply _ _ (apply _ _ f let139)let134) let139)))))))
+(% A18 (th_holds (@ let144 a(@ let147 b(@ let150 c(or (= I (apply _ _ (apply _ _ f let144)let144) let144) (or (= I (apply _ _ (apply _ _ f let147)let144) let147) (= I (apply _ _ (apply _ _ f let150)let144) let150)))))))
+(% A19 (th_holds (@ let155 a(@ let157 c(@ let159 b(or (= I (apply _ _ (apply _ _ f let155)let155) let157) (or (= I (apply _ _ (apply _ _ f let159)let159) let157) (= I (apply _ _ (apply _ _ f let157)let157) let157)))))))
+(% A20 (th_holds (@ let166 a(@ let168 b(@ let172 c(or (= I (apply _ _ (apply _ _ f let166)let166) let168) (or (= I (apply _ _ (apply _ _ f let168)let168) let168) (= I (apply _ _ (apply _ _ f let172)let172) let168)))))))
+(% A21 (th_holds (@ let177 a(@ let180 b(@ let183 c(or (= I (apply _ _ (apply _ _ f let177)let177) let177) (or (= I (apply _ _ (apply _ _ f let180)let180) let177) (= I (apply _ _ (apply _ _ f let183)let183) let177)))))))
+(% A22 (th_holds (@ let188 c(@ let189 (apply _ _ (apply _ _ f let188)let188)(or (= I let189 a) (or (= I let189 b) (= I let189 let188))))))
+(% A23 (th_holds (@ let197 c(@ let198 b(@ let199 (apply _ _ (apply _ _ f let197)let198)(or (= I let199 a) (or (= I let199 let198) (= I let199 let197)))))))
+(% A24 (th_holds (@ let206 c(@ let207 a(@ let208 (apply _ _ (apply _ _ f let206)let207)(or (= I let208 let207) (or (= I let208 b) (= I let208 let206)))))))
+(% A25 (th_holds (@ let215 b(@ let216 c(@ let217 (apply _ _ (apply _ _ f let215)let216)(or (= I let217 a) (or (= I let217 let215) (= I let217 let216)))))))
+(% A26 (th_holds (@ let224 b(@ let225 (apply _ _ (apply _ _ f let224)let224)(or (= I let225 a) (or (= I let225 let224) (= I let225 c))))))
+(% A27 (th_holds (@ let233 b(@ let234 a(@ let235 (apply _ _ (apply _ _ f let233)let234)(or (= I let235 let234) (or (= I let235 let233) (= I let235 c)))))))
+(% A28 (th_holds (@ let242 a(@ let243 c(@ let244 (apply _ _ (apply _ _ f let242)let243)(or (= I let244 let242) (or (= I let244 b) (= I let244 let243)))))))
+(% A29 (th_holds (@ let251 a(@ let252 b(@ let253 (apply _ _ (apply _ _ f let251)let252)(or (= I let253 let251) (or (= I let253 let252) (= I let253 c)))))))
+(% A30 (th_holds (@ let260 a(@ let261 (apply _ _ (apply _ _ f let260)let260)(or (= I let261 let260) (or (= I let261 b) (= I let261 c))))))
 (: (holds cln)
 
  ;; Printing deferred declarations 
 
  ;; In the preprocessor we trust 
-(th_let_pf _ (trust_f (@ let251 b(not (= I (apply _ _ (apply _ _ f let251)let251) (apply _ _ (apply _ _ f c)let251))))) (\ .PA310
-(th_let_pf _ (trust_f (@ let257 c(not (= I let257 (apply _ _ (apply _ _ f let257)let257))))) (\ .PA361
-(th_let_pf _ (trust_f (@ let261 a(not (= I (apply _ _ (apply _ _ f let261)let261) (apply _ _ (apply _ _ f b)let261))))) (\ .PA300
-(th_let_pf _ (trust_f (@ let267 a(@ let268 (apply _ _ (apply _ _ f let267)let267)(or (= I let267 let268) (or (= I b let268) (= I c let268) ))))) (\ .PA320
-(th_let_pf _ (trust_f (@ let275 b(@ let276 a(@ let281 c(or (= I let275 (apply _ _ (apply _ _ f let276)let276)) (or (= I let275 (apply _ _ (apply _ _ f let275)let275)) (= I let275 (apply _ _ (apply _ _ f let281)let281)) )))))) (\ .PA354
-(th_let_pf _ (trust_f (@ let285 a(not (= I (apply _ _ (apply _ _ f let285)let285) (apply _ _ (apply _ _ f c)let285))))) (\ .PA302
-(th_let_pf _ (trust_f (@ let292 a(not (= I (apply _ _ (apply _ _ f b)let292) (apply _ _ (apply _ _ f c)let292))))) (\ .PA304
-(th_let_pf _ (trust_f (@ let298 a(@ let299 c(@ let300 (apply _ _ (apply _ _ f let299)let298)(or (= I let298 let300) (or (= I b let300) (= I let299 let300) )))))) (\ .PA344
-(th_let_pf _ (trust_f (@ let306 b(not (= I let306 (apply _ _ (apply _ _ f let306)let306))))) (\ .PA360
-(th_let_pf _ (trust_f (@ let311 b(not (= I (apply _ _ (apply _ _ f a)let311) (apply _ _ (apply _ _ f let311)let311))))) (\ .PA306
-(th_let_pf _ (trust_f (@ let317 c(@ let318 b(@ let319 (apply _ _ (apply _ _ f let317)let318)(or (= I a let319) (or (= I let318 let319) (= I let317 let319) )))))) (\ .PA348
-(th_let_pf _ (trust_f (@ let324 a(not (= I let324 (apply _ _ (apply _ _ f let324)let324))))) (\ .PA359
-(th_let_pf _ (trust_f (@ let329 b(not (= I (apply _ _ (apply _ _ f a)let329) (apply _ _ (apply _ _ f c)let329))))) (\ .PA308
-(th_let_pf _ (trust_f (@ let335 a(@ let338 b(@ let341 c(or (= I let335 (apply _ _ (apply _ _ f let335)let335)) (or (= I let338 (apply _ _ (apply _ _ f let338)let335)) (= I let341 (apply _ _ (apply _ _ f let341)let335)) )))))) (\ .PA356
-(th_let_pf _ (trust_f (@ let345 c(@ let346 a(@ let349 b(or (= I let345 (apply _ _ (apply _ _ f let346)let346)) (or (= I let345 (apply _ _ (apply _ _ f let349)let349)) (= I let345 (apply _ _ (apply _ _ f let345)let345)) )))))) (\ .PA355
-(th_let_pf _ (trust_f (@ let355 a(@ let356 b(@ let361 c(or (= I let355 (apply _ _ (apply _ _ f let355)let356)) (or (= I let356 (apply _ _ (apply _ _ f let356)let356)) (= I let361 (apply _ _ (apply _ _ f let361)let356)) )))))) (\ .PA357
-(th_let_pf _ (trust_f (@ let365 a(@ let368 b(@ let371 c(or (= I let365 (apply _ _ (apply _ _ f let365)let365)) (or (= I let365 (apply _ _ (apply _ _ f let368)let368)) (= I let365 (apply _ _ (apply _ _ f let371)let371)) )))))) (\ .PA353
-(th_let_pf _ (trust_f (@ let375 a(@ let376 c(@ let381 b(or (not (= I let375 (apply _ _ (apply _ _ f let376)(apply _ _ (apply _ _ f let376)let375)))) (or (not (= I let381 (apply _ _ (apply _ _ f let376)(apply _ _ (apply _ _ f let376)let381)))) (not (= I let376 (apply _ _ (apply _ _ f let376)(apply _ _ (apply _ _ f let376)let376)))) )))))) (\ .PA382
+(th_let_pf _ (trust_f (@ let269 b(not (= I (apply _ _ (apply _ _ f let269)let269) (apply _ _ (apply _ _ f c)let269))))) (\  .PA328
+(th_let_pf _ (trust_f (@ let275 c(not (= I let275 (apply _ _ (apply _ _ f let275)let275))))) (\  .PA394
+(th_let_pf _ (trust_f (@ let279 a(not (= I (apply _ _ (apply _ _ f let279)let279) (apply _ _ (apply _ _ f b)let279))))) (\  .PA318
+(th_let_pf _ (trust_f (@ let285 a(@ let286 (apply _ _ (apply _ _ f let285)let285)(or (= I let285 let286) (or (= I b let286) (= I c let286) ))))) (\  .PA339
+(th_let_pf _ (trust_f (@ let293 b(@ let294 a(@ let299 c(or (= I let293 (apply _ _ (apply _ _ f let294)let294)) (or (= I let293 (apply _ _ (apply _ _ f let293)let293)) (= I let293 (apply _ _ (apply _ _ f let299)let299)) )))))) (\  .PA383
+(th_let_pf _ (trust_f (@ let303 a(not (= I (apply _ _ (apply _ _ f let303)let303) (apply _ _ (apply _ _ f c)let303))))) (\  .PA320
+(th_let_pf _ (trust_f (@ let310 a(not (= I (apply _ _ (apply _ _ f b)let310) (apply _ _ (apply _ _ f c)let310))))) (\  .PA322
+(th_let_pf _ (trust_f (@ let316 a(@ let317 c(@ let318 (apply _ _ (apply _ _ f let317)let316)(or (= I let316 let318) (or (= I b let318) (= I let317 let318) )))))) (\  .PA369
+(th_let_pf _ (trust_f (@ let324 b(not (= I let324 (apply _ _ (apply _ _ f let324)let324))))) (\  .PA393
+(th_let_pf _ (trust_f (@ let329 b(not (= I (apply _ _ (apply _ _ f a)let329) (apply _ _ (apply _ _ f let329)let329))))) (\  .PA324
+(th_let_pf _ (trust_f (@ let335 c(@ let336 b(@ let337 (apply _ _ (apply _ _ f let335)let336)(or (= I a let337) (or (= I let336 let337) (= I let335 let337) )))))) (\  .PA374
+(th_let_pf _ (trust_f (@ let342 a(not (= I let342 (apply _ _ (apply _ _ f let342)let342))))) (\  .PA392
+(th_let_pf _ (trust_f (@ let347 b(not (= I (apply _ _ (apply _ _ f a)let347) (apply _ _ (apply _ _ f c)let347))))) (\  .PA326
+(th_let_pf _ (trust_f (@ let353 a(@ let356 b(@ let359 c(or (= I let353 (apply _ _ (apply _ _ f let353)let353)) (or (= I let356 (apply _ _ (apply _ _ f let356)let353)) (= I let359 (apply _ _ (apply _ _ f let359)let353)) )))))) (\  .PA387
+(th_let_pf _ (trust_f (@ let363 c(@ let364 a(@ let367 b(or (= I let363 (apply _ _ (apply _ _ f let364)let364)) (or (= I let363 (apply _ _ (apply _ _ f let367)let367)) (= I let363 (apply _ _ (apply _ _ f let363)let363)) )))))) (\  .PA385
+(th_let_pf _ (trust_f (@ let373 a(@ let374 b(@ let379 c(or (= I let373 (apply _ _ (apply _ _ f let373)let374)) (or (= I let374 (apply _ _ (apply _ _ f let374)let374)) (= I let379 (apply _ _ (apply _ _ f let379)let374)) )))))) (\  .PA389
+(th_let_pf _ (trust_f (@ let383 a(@ let386 b(@ let389 c(or (= I let383 (apply _ _ (apply _ _ f let383)let383)) (or (= I let383 (apply _ _ (apply _ _ f let386)let386)) (= I let383 (apply _ _ (apply _ _ f let389)let389)) )))))) (\  .PA381
+(th_let_pf _ (trust_f (@ let393 a(@ let394 c(@ let399 b(or (not (= I let393 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let393)))) (or (not (= I let399 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let399)))) (not (= I let394 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let394)))) )))))) (\  .PA418
 
 ;; Printing mapping from preprocessed assertions into atoms 
-(decl_atom (@ let391 b(= I (apply _ _ (apply _ _ f let391)let391) (apply _ _ (apply _ _ f c)let391))) (\ .v43 (\ .a43
-(decl_atom (@ let396 a(= I (apply _ _ (apply _ _ f let396)let396) (apply _ _ (apply _ _ f b)let396))) (\ .v38 (\ .a38
-(decl_atom (@ let402 a(= I b (apply _ _ (apply _ _ f let402)let402))) (\ .v3 (\ .a3
-(decl_atom (@ let406 c(= I b (apply _ _ (apply _ _ f let406)let406))) (\ .v27 (\ .a27
-(decl_atom (@ let409 a(= I (apply _ _ (apply _ _ f let409)let409) (apply _ _ (apply _ _ f c)let409))) (\ .v39 (\ .a39
-(decl_atom (@ let415 a(= I (apply _ _ (apply _ _ f b)let415) (apply _ _ (apply _ _ f c)let415))) (\ .v40 (\ .a40
-(decl_atom (= I b (apply _ _ (apply _ _ f c)a)) (\ .v21 (\ .a21
-(decl_atom (@ let425 a(= I let425 (apply _ _ (apply _ _ f c)let425))) (\ .v20 (\ .a20
-(decl_atom (@ let430 b(= I (apply _ _ (apply _ _ f a)let430) (apply _ _ (apply _ _ f let430)let430))) (\ .v41 (\ .a41
-(decl_atom (= I a (apply _ _ (apply _ _ f c)b)) (\ .v23 (\ .a23
-(decl_atom (@ let439 b(= I let439 (apply _ _ (apply _ _ f c)let439))) (\ .v24 (\ .a24
-(decl_atom (@ let444 b(= I (apply _ _ (apply _ _ f a)let444) (apply _ _ (apply _ _ f c)let444))) (\ .v42 (\ .a42
-(decl_atom (@ let449 b(= I let449 (apply _ _ (apply _ _ f let449)a))) (\ .v12 (\ .a12
-(decl_atom (@ let453 c(= I let453 (apply _ _ (apply _ _ f let453)a))) (\ .v22 (\ .a22
-(decl_atom (@ let457 c(= I let457 (apply _ _ (apply _ _ f let457)let457))) (\ .v28 (\ .a28
-(decl_atom (@ let461 a(= I c (apply _ _ (apply _ _ f let461)let461))) (\ .v4 (\ .a4
-(decl_atom (@ let465 b(= I c (apply _ _ (apply _ _ f let465)let465))) (\ .v16 (\ .a16
-(decl_atom (@ let468 b(= I let468 (apply _ _ (apply _ _ f let468)let468))) (\ .v15 (\ .a15
-(decl_atom (@ let471 c(= I let471 (apply _ _ (apply _ _ f let471)b))) (\ .v25 (\ .a25
-(decl_atom (@ let475 a(= I let475 (apply _ _ (apply _ _ f let475)b))) (\ .v5 (\ .a5
-(decl_atom (@ let479 a(= I let479 (apply _ _ (apply _ _ f let479)let479))) (\ .v2 (\ .a2
-(decl_atom (@ let483 b(= I a (apply _ _ (apply _ _ f let483)let483))) (\ .v14 (\ .a14
-(decl_atom (@ let487 c(= I a (apply _ _ (apply _ _ f let487)let487))) (\ .v26 (\ .a26
-(decl_atom (@ let490 b(@ let491 c(= I let490 (apply _ _ (apply _ _ f let491)(apply _ _ (apply _ _ f let491)let490))))) (\ .v36 (\ .a36
-(decl_atom (@ let495 a(@ let496 c(= I let495 (apply _ _ (apply _ _ f let496)(apply _ _ (apply _ _ f let496)let495))))) (\ .v35 (\ .a35
-(decl_atom (@ let500 c(= I let500 (apply _ _ (apply _ _ f let500)(apply _ _ (apply _ _ f let500)let500)))) (\ .v37 (\ .a37
-(satlem _ _ (ast _ _ _ .a37 (\ .l75 (ast _ _ _ .a35 (\ .l71 (ast _ _ _ .a36 (\ .l73 (clausify_false (contra _ .l75 (or_elim_1 _ _ (not_not_intro _ .l73) (or_elim_1 _ _ (not_not_intro _ .l71) .PA382)))))))))) (\ .pb24
-(satlem _ _ (asf _ _ _ .a26 (\ .l52 (asf _ _ _ .a14 (\ .l28 (asf _ _ _ .a2 (\ .l4 (clausify_false (contra _ (or_elim_1 _ _ .l28 (or_elim_1 _ _ .l4 .PA353)) .l52)))))))) (\ .pb13
-(satlem _ _ (asf _ _ _ .a5 (\ .l10 (asf _ _ _ .a25 (\ .l50 (asf _ _ _ .a15 (\ .l30 (clausify_false (contra _ (or_elim_1 _ _ .l30 (or_elim_1 _ _ .l10 .PA357)) .l50)))))))) (\ .pb17
-(satlem _ _ (asf _ _ _ .a16 (\ .l32 (asf _ _ _ .a4 (\ .l8 (asf _ _ _ .a28 (\ .l56 (clausify_false (contra _ (or_elim_1 _ _ .l32 (or_elim_1 _ _ .l8 .PA355)) .l56)))))))) (\ .pb15
-(satlem _ _ (asf _ _ _ .a22 (\ .l44 (asf _ _ _ .a12 (\ .l24 (asf _ _ _ .a2 (\ .l4 (clausify_false (contra _ (or_elim_1 _ _ .l24 (or_elim_1 _ _ .l4 .PA356)) .l44)))))))) (\ .pb16
-(satlem _ _ (ast _ _ _ .a42 (\ .l85 (clausify_false (contra _ .l85 .PA308)))) (\ .pb29
-(satlem _ _ (ast _ _ _ .a2 (\ .l5 (clausify_false (contra _ .l5 .PA359)))) (\ .pb19
-(satlem _ _ (asf _ _ _ .a24 (\ .l48 (asf _ _ _ .a23 (\ .l46 (asf _ _ _ .a25 (\ .l50 (clausify_false (contra _ (or_elim_1 _ _ .l48 (or_elim_1 _ _ .l46 .PA348)) .l50)))))))) (\ .pb11
-(satlem _ _ (ast _ _ _ .a41 (\ .l83 (clausify_false (contra _ .l83 .PA306)))) (\ .pb28
-(satlem _ _ (ast _ _ _ .a15 (\ .l31 (clausify_false (contra _ .l31 .PA360)))) (\ .pb20
-(satlem _ _ (asf _ _ _ .a22 (\ .l44 (asf _ _ _ .a20 (\ .l40 (asf _ _ _ .a21 (\ .l42 (clausify_false (contra _ (or_elim_1 _ _ .l42 (or_elim_1 _ _ .l40 .PA344)) .l44)))))))) (\ .pb10
-(satlem _ _ (ast _ _ _ .a40 (\ .l81 (clausify_false (contra _ .l81 .PA304)))) (\ .pb27
-(satlem _ _ (ast _ _ _ .a39 (\ .l79 (clausify_false (contra _ .l79 .PA302)))) (\ .pb26
-(satlem _ _ (asf _ _ _ .a27 (\ .l54 (asf _ _ _ .a3 (\ .l6 (asf _ _ _ .a15 (\ .l30 (clausify_false (contra _ (or_elim_1 _ _ .l30 (or_elim_1 _ _ .l6 .PA354)) .l54)))))))) (\ .pb14
-(satlem _ _ (asf _ _ _ .a4 (\ .l8 (asf _ _ _ .a3 (\ .l6 (asf _ _ _ .a2 (\ .l4 (clausify_false (contra _ (or_elim_1 _ _ .l6 (or_elim_1 _ _ .l4 .PA320)) .l8)))))))) (\ .pb4
-(satlem _ _ (ast _ _ _ .a38 (\ .l77 (clausify_false (contra _ .l77 .PA300)))) (\ .pb25
-(satlem _ _ (ast _ _ _ .a28 (\ .l57 (clausify_false (contra _ .l57 .PA361)))) (\ .pb21
-(satlem _ _ (ast _ _ _ .a43 (\ .l87 (clausify_false (contra _ .l87 .PA310)))) (\ .pb30
+(decl_atom (@ let409 b(= I (apply _ _ (apply _ _ f let409)let409) (apply _ _ (apply _ _ f c)let409))) (\  .v43 (\  .a43
+(decl_atom (@ let414 a(= I (apply _ _ (apply _ _ f let414)let414) (apply _ _ (apply _ _ f b)let414))) (\  .v38 (\  .a38
+(decl_atom (@ let420 a(= I b (apply _ _ (apply _ _ f let420)let420))) (\  .v3 (\  .a3
+(decl_atom (@ let424 c(= I b (apply _ _ (apply _ _ f let424)let424))) (\  .v27 (\  .a27
+(decl_atom (@ let427 a(= I (apply _ _ (apply _ _ f let427)let427) (apply _ _ (apply _ _ f c)let427))) (\  .v39 (\  .a39
+(decl_atom (@ let433 a(= I (apply _ _ (apply _ _ f b)let433) (apply _ _ (apply _ _ f c)let433))) (\  .v40 (\  .a40
+(decl_atom (= I b (apply _ _ (apply _ _ f c)a)) (\  .v21 (\  .a21
+(decl_atom (@ let443 a(= I let443 (apply _ _ (apply _ _ f c)let443))) (\  .v20 (\  .a20
+(decl_atom (@ let448 b(= I (apply _ _ (apply _ _ f a)let448) (apply _ _ (apply _ _ f let448)let448))) (\  .v41 (\  .a41
+(decl_atom (= I a (apply _ _ (apply _ _ f c)b)) (\  .v23 (\  .a23
+(decl_atom (@ let457 b(= I let457 (apply _ _ (apply _ _ f c)let457))) (\  .v24 (\  .a24
+(decl_atom (@ let462 b(= I (apply _ _ (apply _ _ f a)let462) (apply _ _ (apply _ _ f c)let462))) (\  .v42 (\  .a42
+(decl_atom (@ let467 b(= I let467 (apply _ _ (apply _ _ f let467)a))) (\  .v12 (\  .a12
+(decl_atom (@ let471 c(= I let471 (apply _ _ (apply _ _ f let471)a))) (\  .v22 (\  .a22
+(decl_atom (@ let475 c(= I let475 (apply _ _ (apply _ _ f let475)let475))) (\  .v28 (\  .a28
+(decl_atom (@ let479 a(= I c (apply _ _ (apply _ _ f let479)let479))) (\  .v4 (\  .a4
+(decl_atom (@ let483 b(= I c (apply _ _ (apply _ _ f let483)let483))) (\  .v16 (\  .a16
+(decl_atom (@ let486 b(= I let486 (apply _ _ (apply _ _ f let486)let486))) (\  .v15 (\  .a15
+(decl_atom (@ let489 c(= I let489 (apply _ _ (apply _ _ f let489)b))) (\  .v25 (\  .a25
+(decl_atom (@ let493 a(= I let493 (apply _ _ (apply _ _ f let493)b))) (\  .v5 (\  .a5
+(decl_atom (@ let497 a(= I let497 (apply _ _ (apply _ _ f let497)let497))) (\  .v2 (\  .a2
+(decl_atom (@ let501 b(= I a (apply _ _ (apply _ _ f let501)let501))) (\  .v14 (\  .a14
+(decl_atom (@ let505 c(= I a (apply _ _ (apply _ _ f let505)let505))) (\  .v26 (\  .a26
+(decl_atom (@ let508 b(@ let509 c(= I let508 (apply _ _ (apply _ _ f let509)(apply _ _ (apply _ _ f let509)let508))))) (\  .v36 (\  .a36
+(decl_atom (@ let513 a(@ let514 c(= I let513 (apply _ _ (apply _ _ f let514)(apply _ _ (apply _ _ f let514)let513))))) (\  .v35 (\  .a35
+(decl_atom (@ let518 c(= I let518 (apply _ _ (apply _ _ f let518)(apply _ _ (apply _ _ f let518)let518)))) (\  .v37 (\  .a37
+(satlem _ _ (ast _ _ _  .a37 (\  .l75 (ast _ _ _  .a35 (\  .l71 (ast _ _ _  .a36 (\  .l73 (clausify_false (contra _  .l75 (or_elim_1 _ _ (not_not_intro _  .l73) (or_elim_1 _ _ (not_not_intro _  .l71)  .PA418)))))))))) (\  .pb24
+(satlem _ _ (asf _ _ _  .a26 (\  .l52 (asf _ _ _  .a14 (\  .l28 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l28 (or_elim_1 _ _  .l4  .PA381))  .l52)))))))) (\  .pb13
+(satlem _ _ (asf _ _ _  .a5 (\  .l10 (asf _ _ _  .a25 (\  .l50 (asf _ _ _  .a15 (\  .l30 (clausify_false (contra _ (or_elim_1 _ _  .l30 (or_elim_1 _ _  .l10  .PA389))  .l50)))))))) (\  .pb17
+(satlem _ _ (asf _ _ _  .a16 (\  .l32 (asf _ _ _  .a4 (\  .l8 (asf _ _ _  .a28 (\  .l56 (clausify_false (contra _ (or_elim_1 _ _  .l32 (or_elim_1 _ _  .l8  .PA385))  .l56)))))))) (\  .pb15
+(satlem _ _ (asf _ _ _  .a22 (\  .l44 (asf _ _ _  .a12 (\  .l24 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l24 (or_elim_1 _ _  .l4  .PA387))  .l44)))))))) (\  .pb16
+(satlem _ _ (ast _ _ _  .a42 (\  .l85 (clausify_false (contra _  .l85  .PA326)))) (\  .pb29
+(satlem _ _ (ast _ _ _  .a2 (\  .l5 (clausify_false (contra _  .l5  .PA392)))) (\  .pb19
+(satlem _ _ (asf _ _ _  .a24 (\  .l48 (asf _ _ _  .a23 (\  .l46 (asf _ _ _  .a25 (\  .l50 (clausify_false (contra _ (or_elim_1 _ _  .l48 (or_elim_1 _ _  .l46  .PA374))  .l50)))))))) (\  .pb11
+(satlem _ _ (ast _ _ _  .a41 (\  .l83 (clausify_false (contra _  .l83  .PA324)))) (\  .pb28
+(satlem _ _ (ast _ _ _  .a15 (\  .l31 (clausify_false (contra _  .l31  .PA393)))) (\  .pb20
+(satlem _ _ (asf _ _ _  .a22 (\  .l44 (asf _ _ _  .a20 (\  .l40 (asf _ _ _  .a21 (\  .l42 (clausify_false (contra _ (or_elim_1 _ _  .l42 (or_elim_1 _ _  .l40  .PA369))  .l44)))))))) (\  .pb10
+(satlem _ _ (ast _ _ _  .a40 (\  .l81 (clausify_false (contra _  .l81  .PA322)))) (\  .pb27
+(satlem _ _ (ast _ _ _  .a39 (\  .l79 (clausify_false (contra _  .l79  .PA320)))) (\  .pb26
+(satlem _ _ (asf _ _ _  .a27 (\  .l54 (asf _ _ _  .a3 (\  .l6 (asf _ _ _  .a15 (\  .l30 (clausify_false (contra _ (or_elim_1 _ _  .l30 (or_elim_1 _ _  .l6  .PA383))  .l54)))))))) (\  .pb14
+(satlem _ _ (asf _ _ _  .a4 (\  .l8 (asf _ _ _  .a3 (\  .l6 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l6 (or_elim_1 _ _  .l4  .PA339))  .l8)))))))) (\  .pb4
+(satlem _ _ (ast _ _ _  .a38 (\  .l77 (clausify_false (contra _  .l77  .PA318)))) (\  .pb25
+(satlem _ _ (ast _ _ _  .a28 (\  .l57 (clausify_false (contra _  .l57  .PA394)))) (\  .pb21
+(satlem _ _ (ast _ _ _  .a43 (\  .l87 (clausify_false (contra _  .l87  .PA328)))) (\  .pb30
  ;; Theory Lemmas 
 ;; BB atom mapping
 ;; Bit-blasting definitional clauses 
 ;; Bit-blasting learned clauses 
-(satlem _ _ (asf _ _ _ .a37 (\ .l74 (ast _ _ _ .a26 (\ .l53 (ast _ _ _ .a22 (\ .l45  ;; UF Theory Lemma 
+(satlem _ _ (asf _ _ _  .a37 (\  .l74 (ast _ _ _  .a26 (\  .l53 (ast _ _ _  .a22 (\  .l45  ;; UF Theory Lemma 
 ;;(= c (f c (f c c))) (not (= a (f c c))) (not (= c (f c a))) 
-(clausify_false (contra _ (trans _ _ _ _ .l45 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _ .l53)))) .l74))
-))))))( \ .lemc44
-(satlem _ _ (ast _ _ _ .a14 (\ .l29 (ast _ _ _ .a5 (\ .l11 (ast _ _ _ .a16 (\ .l33 (ast _ _ _ .a22 (\ .l45 (asf _ _ _ .a41 (\ .l82  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _  .l45 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _  .l53))))  .l74))
+))))))( \  .lemc44
+(satlem _ _ (ast _ _ _  .a14 (\  .l29 (ast _ _ _  .a5 (\  .l11 (ast _ _ _  .a16 (\  .l33 (ast _ _ _  .a22 (\  .l45 (asf _ _ _  .a41 (\  .l82  ;; UF Theory Lemma 
 ;;(not (= a (f b b))) (not (= a (f a b))) (not (= c (f b b))) (not (= c (f c a))) (= (f a b) (f b b)) 
-(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _ .l11) .l29) .l82))
-))))))))))( \ .lemc45
-(satlem _ _ (ast _ _ _ .a25 (\ .l51 (ast _ _ _ .a16 (\ .l33 (asf _ _ _ .a43 (\ .l86  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _  .l11)  .l29)  .l82))
+))))))))))( \  .lemc45
+(satlem _ _ (ast _ _ _  .a25 (\  .l51 (ast _ _ _  .a16 (\  .l33 (asf _ _ _  .a43 (\  .l86  ;; UF Theory Lemma 
 ;;(not (= c (f c b))) (not (= c (f b b))) (= (f b b) (f c b)) 
-(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _ .l33) .l51) .l86))
-))))))( \ .lemc46
-(satlem _ _ (ast _ _ _ .a4 (\ .l9 (ast _ _ _ .a22 (\ .l45 (asf _ _ _ .a39 (\ .l78  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _  .l33)  .l51)  .l86))
+))))))( \  .lemc46
+(satlem _ _ (ast _ _ _  .a4 (\  .l9 (ast _ _ _  .a22 (\  .l45 (asf _ _ _  .a39 (\  .l78  ;; UF Theory Lemma 
 ;;(not (= c (f a a))) (not (= c (f c a))) (= (f a a) (f c a)) 
-(clausify_false (contra _ (trans _ _ _ _ (trans _ _ _ _  (symm _ _ _ .l9).l9) (symm _ _ _ (trans _ _ _ _ (symm _ _ _ .l45) .l9))) .l78))
-))))))( \ .lemc38
-(satlem _ _ (ast _ _ _ .a12 (\ .l25 (ast _ _ _ .a3 (\ .l7 (asf _ _ _ .a38 (\ .l76  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (trans _ _ _ _  (symm _ _ _  .l9) .l9) (symm _ _ _ (trans _ _ _ _ (symm _ _ _  .l45)  .l9)))  .l78))
+))))))( \  .lemc38
+(satlem _ _ (ast _ _ _  .a12 (\  .l25 (ast _ _ _  .a3 (\  .l7 (asf _ _ _  .a38 (\  .l76  ;; UF Theory Lemma 
 ;;(not (= b (f b a))) (not (= b (f a a))) (= (f a a) (f b a)) 
-(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _ .l7) .l25) .l76))
-))))))( \ .lemc47
-(satlem _ _ (asf _ _ _ .a36 (\ .l72 (ast _ _ _ .a25 (\ .l51 (ast _ _ _ .a27 (\ .l55  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _  .l7)  .l25)  .l76))
+))))))( \  .lemc47
+(satlem _ _ (asf _ _ _  .a36 (\  .l72 (ast _ _ _  .a25 (\  .l51 (ast _ _ _  .a27 (\  .l55  ;; UF Theory Lemma 
 ;;(= b (f c (f c b))) (not (= c (f c b))) (not (= b (f c c))) 
-(clausify_false (contra _ (trans _ _ _ _ .l55 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _ .l51)))) .l72))
-))))))( \ .lemc40
-(satlem _ _ (asf _ _ _ .a37 (\ .l74 (ast _ _ _ .a25 (\ .l51 (ast _ _ _ .a27 (\ .l55  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _  .l55 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _  .l51))))  .l72))
+))))))( \  .lemc40
+(satlem _ _ (asf _ _ _  .a37 (\  .l74 (ast _ _ _  .a25 (\  .l51 (ast _ _ _  .a27 (\  .l55  ;; UF Theory Lemma 
 ;;(= c (f c (f c c))) (not (= c (f c b))) (not (= b (f c c))) 
-(clausify_false (contra _ (trans _ _ _ _ .l51 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _ .l55)))) .l74))
-))))))( \ .lemc37
-(satlem _ _ (ast _ _ _ .a27 (\ .l55 (ast _ _ _ .a26 (\ .l53 (ast _ _ _ .a5 (\ .l11 (ast _ _ _ .a24 (\ .l49 (asf _ _ _ .a42 (\ .l84  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _  .l51 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _  .l55))))  .l74))
+))))))( \  .lemc37
+(satlem _ _ (ast _ _ _  .a27 (\  .l55 (ast _ _ _  .a26 (\  .l53 (ast _ _ _  .a5 (\  .l11 (ast _ _ _  .a24 (\  .l49 (asf _ _ _  .a42 (\  .l84  ;; UF Theory Lemma 
 ;;(not (= b (f c c))) (not (= a (f c c))) (not (= a (f a b))) (not (= b (f c b))) (= (f a b) (f c b)) 
-(clausify_false (contra _ (trans _ _ _ _ (trans _ _ _ _ (trans _ _ _ _ (trans _ _ _ _ (symm _ _ _ .l11) .l53) (symm _ _ _ .l55)) .l55) (symm _ _ _ (trans _ _ _ _ (symm _ _ _ .l49) .l55))) .l84))
-))))))))))( \ .lemc34
-(satlem _ _ (ast _ _ _ .a14 (\ .l29 (ast _ _ _ .a12 (\ .l25 (ast _ _ _ .a5 (\ .l11 (asf _ _ _ .a41 (\ .l82  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (trans _ _ _ _ (trans _ _ _ _ (trans _ _ _ _ (symm _ _ _  .l11)  .l53) (symm _ _ _  .l55))  .l55) (symm _ _ _ (trans _ _ _ _ (symm _ _ _  .l49)  .l55)))  .l84))
+))))))))))( \  .lemc34
+(satlem _ _ (ast _ _ _  .a14 (\  .l29 (ast _ _ _  .a12 (\  .l25 (ast _ _ _  .a5 (\  .l11 (asf _ _ _  .a41 (\  .l82  ;; UF Theory Lemma 
 ;;(not (= a (f b b))) (not (= b (f b a))) (not (= a (f a b))) (= (f a b) (f b b)) 
-(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _ .l11) .l29) .l82))
-))))))))( \ .lemc35
-(satlem _ _ (ast _ _ _ .a23 (\ .l47 (ast _ _ _ .a5 (\ .l11 (asf _ _ _ .a42 (\ .l84  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _  .l11)  .l29)  .l82))
+))))))))( \  .lemc35
+(satlem _ _ (ast _ _ _  .a23 (\  .l47 (ast _ _ _  .a5 (\  .l11 (asf _ _ _  .a42 (\  .l84  ;; UF Theory Lemma 
 ;;(not (= a (f c b))) (not (= a (f a b))) (= (f a b) (f c b)) 
-(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _ .l11) .l47) .l84))
-))))))( \ .lemc36
-(satlem _ _ (asf _ _ _ .a35 (\ .l70 (ast _ _ _ .a20 (\ .l41  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _  .l11)  .l47)  .l84))
+))))))( \  .lemc36
+(satlem _ _ (asf _ _ _  .a35 (\  .l70 (ast _ _ _  .a20 (\  .l41  ;; UF Theory Lemma 
 ;;(= a (f c (f c a))) (not (= a (f c a))) 
-(clausify_false (contra _ (trans _ _ _ _ .l41 (symm _ _ _ (cong _ _ _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ .l41)))) .l70))
-))))( \ .lemc41
-(satlem _ _ (ast _ _ _ .a21 (\ .l43 (ast _ _ _ .a12 (\ .l25 (asf _ _ _ .a40 (\ .l80  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _  .l41 (symm _ _ _ (cong _ _ _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _  .l41))))  .l70))
+))))( \  .lemc41
+(satlem _ _ (ast _ _ _  .a21 (\  .l43 (ast _ _ _  .a12 (\  .l25 (asf _ _ _  .a40 (\  .l80  ;; UF Theory Lemma 
 ;;(not (= b (f c a))) (not (= b (f b a))) (= (f b a) (f c a)) 
-(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _ .l25) .l43) .l80))
-))))))( \ .lemc42
-(satlem _ _ (asf _ _ _ .a35 (\ .l70 (ast _ _ _ .a26 (\ .l53 (ast _ _ _ .a22 (\ .l45  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _ (symm _ _ _  .l25)  .l43)  .l80))
+))))))( \  .lemc42
+(satlem _ _ (asf _ _ _  .a35 (\  .l70 (ast _ _ _  .a26 (\  .l53 (ast _ _ _  .a22 (\  .l45  ;; UF Theory Lemma 
 ;;(= a (f c (f c a))) (not (= a (f c c))) (not (= c (f c a))) 
-(clausify_false (contra _ (trans _ _ _ _ .l53 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _ .l45)))) .l70))
-))))))( \ .lemc57
-(satlem _ _ (asf _ _ _ .a36 (\ .l72 (ast _ _ _ .a24 (\ .l49  ;; UF Theory Lemma 
+(clausify_false (contra _ (trans _ _ _ _  .l53 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _  .l45))))  .l70))
+))))))( \  .lemc57
+(satlem _ _ (asf _ _ _  .a36 (\  .l72 (ast _ _ _  .a24 (\  .l49  ;; UF Theory Lemma 
 ;;(= b (f c (f c b))) (not (= b (f c b))) 
-(clausify_false (contra _ (trans _ _ _ _ .l49 (symm _ _ _ (cong _ _ _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ .l49)))) .l72))
-))))( \ .lemc59
-(satlem_simplify _ _ _ (R _ _ (Q _ _ (R _ _ (R _ _ (R _ _ (R _ _ (Q _ _ (R _ _ (Q _ _ (R _ _ .lemc34 .pb29 .v42).pb13 .v26).pb19 .v2).pb11 .v24).lemc35 .v14).pb28 .v41).lemc36 .v23).pb29 .v42).pb17 .v5).pb20 .v15)(\ .cl39
-(satlem_simplify _ _ _ (R _ _ (Q _ _ (R _ _ (Q _ _ (R _ _ (R _ _ (R _ _ (Q _ _ (R _ _ (R _ _ (Q _ _ (Q _ _ (Q _ _ (Q _ _ (R _ _ .lemc40 .pb24 .v36).lemc37 .v37).cl39 .v25).lemc41 .v35).pb10 .v20).lemc42 .v21).pb27 .v40).pb16 .v12).pb19 .v2).lemc38 .v22).pb26 .v39).pb14 .v27).pb20 .v15).pb4 .v4).pb19 .v2)(\ .cl43
-(satlem_simplify _ _ _ (R _ _ (Q _ _ .lemc47 .cl43 .v3).pb25 .v38)(\ .cl48
-(satlem_simplify _ _ _ (R _ _ (R _ _ .pb16 .cl48 .v12).pb19 .v2)(\ .cl49
-(satlem_simplify _ _ _ (R _ _ (Q _ _ .lemc38 .cl49 .v22).pb26 .v39)(\ .cl50
-(satlem_simplify _ _ _ (R _ _ (R _ _ .pb15 .cl50 .v4).pb21 .v28)(\ .cl51
-(satlem_simplify _ _ _ (R _ _ (Q _ _ .lemc46 .cl51 .v16).pb30 .v43)(\ .cl52
-(satlem_simplify _ _ _ (R _ _ (R _ _ .pb17 .cl52 .v25).pb20 .v15)(\ .cl53
-(satlem_simplify _ _ _ (R _ _ (Q _ _ (Q _ _ (Q _ _ .lemc45 .cl53 .v5).cl51 .v16).cl49 .v22).pb28 .v41)(\ .cl54
-(satlem_simplify _ _ _ (R _ _ (R _ _ .pb13 .cl54 .v14).pb19 .v2)(\ .cl55
-(satlem_simplify _ _ _ (Q _ _ (Q _ _ .lemc44 .cl55 .v26).cl49 .v22)(\ .cl56
-(satlem_simplify _ _ _ (Q _ _ (Q _ _ .lemc57 .cl55 .v26).cl49 .v22)(\ .cl58
-(satlem_simplify _ _ _ (R _ _ (Q _ _ .lemc36 .cl53 .v5).pb29 .v42)(\ .cl60
-(satlem_simplify _ _ _ (R _ _ (R _ _ .pb11 .cl60 .v23).cl52 .v25)(\ .cl61
-(satlem_simplify _ _ _ (Q _ _ .lemc59 .cl61 .v24)(\ .cl62
-(satlem_simplify _ _ _ (Q _ _ (Q _ _ (Q _ _ .pb24 .cl56 .v37).cl58 .v35).cl62 .v36)(\ empty empty))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+(clausify_false (contra _ (trans _ _ _ _  .l49 (symm _ _ _ (cong _ _ _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _  .l49))))  .l72))
+))))( \  .lemc59
+(satlem_simplify _ _ _ (R _ _ (Q _ _ (R _ _ (R _ _ (R _ _ (R _ _ (Q _ _ (R _ _ (Q _ _ (R _ _  .lemc34  .pb29  .v42) .pb13  .v26) .pb19  .v2) .pb11  .v24) .lemc35  .v14) .pb28  .v41) .lemc36  .v23) .pb29  .v42) .pb17  .v5) .pb20  .v15)(\ .cl39
+(satlem_simplify _ _ _ (R _ _ (Q _ _ (R _ _ (Q _ _ (R _ _ (R _ _ (R _ _ (Q _ _ (R _ _ (R _ _ (Q _ _ (Q _ _ (Q _ _ (Q _ _ (R _ _  .lemc40  .pb24  .v36) .lemc37  .v37) .cl39  .v25) .lemc41  .v35) .pb10  .v20) .lemc42  .v21) .pb27  .v40) .pb16  .v12) .pb19  .v2) .lemc38  .v22) .pb26  .v39) .pb14  .v27) .pb20  .v15) .pb4  .v4) .pb19  .v2)(\ .cl43
+(satlem_simplify _ _ _ (R _ _ (Q _ _  .lemc47  .cl43  .v3) .pb25  .v38)(\ .cl48
+(satlem_simplify _ _ _ (R _ _ (R _ _  .pb16  .cl48  .v12) .pb19  .v2)(\ .cl49
+(satlem_simplify _ _ _ (R _ _ (Q _ _  .lemc38  .cl49  .v22) .pb26  .v39)(\ .cl50
+(satlem_simplify _ _ _ (R _ _ (R _ _  .pb15  .cl50  .v4) .pb21  .v28)(\ .cl51
+(satlem_simplify _ _ _ (R _ _ (Q _ _  .lemc46  .cl51  .v16) .pb30  .v43)(\ .cl52
+(satlem_simplify _ _ _ (R _ _ (R _ _  .pb17  .cl52  .v25) .pb20  .v15)(\ .cl53
+(satlem_simplify _ _ _ (R _ _ (Q _ _ (Q _ _ (Q _ _  .lemc45  .cl53  .v5) .cl51  .v16) .cl49  .v22) .pb28  .v41)(\ .cl54
+(satlem_simplify _ _ _ (R _ _ (R _ _  .pb13  .cl54  .v14) .pb19  .v2)(\ .cl55
+(satlem_simplify _ _ _ (Q _ _ (Q _ _  .lemc44  .cl55  .v26) .cl49  .v22)(\ .cl56
+(satlem_simplify _ _ _ (Q _ _ (Q _ _  .lemc57  .cl55  .v26) .cl49  .v22)(\ .cl58
+(satlem_simplify _ _ _ (R _ _ (Q _ _  .lemc36  .cl53  .v5) .pb29  .v42)(\ .cl60
+(satlem_simplify _ _ _ (R _ _ (R _ _  .pb11  .cl60  .v23) .cl52  .v25)(\ .cl61
+(satlem_simplify _ _ _ (Q _ _  .lemc59  .cl61  .v24)(\ .cl62
+(satlem_simplify _ _ _ (Q _ _ (Q _ _ (Q _ _  .pb24  .cl56  .v37) .cl58  .v35) .cl62  .v36)(\ empty  empty))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 ;;

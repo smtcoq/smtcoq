@@ -1,3 +1,19 @@
+(**************************************************************************)
+(*                                                                        *)
+(*                            LFSCtoSmtCoq                                *)
+(*                                                                        *)
+(*                         Copyright (C) 2016                             *)
+(*          by the Board of Trustees of the University of Iowa            *)
+(*                                                                        *)
+(*                    Alain Mebsout and Burak Ekici                       *)
+(*                       The University of Iowa                           *)
+(*                                                                        *)
+(*                                                                        *)
+(*  This file is distributed under the terms of the Apache Software       *)
+(*  License version 2.0                                                   *)
+(*                                                                        *)
+(**************************************************************************)
+
 type mpz = Big_int.big_int
 type mpq = Num.num
              
@@ -24,6 +40,7 @@ and term = { mutable value: dterm; ttype: term }
 val term_equal : term -> term -> bool
 
 val compare_term : term -> term -> int
+val compare_term_list : term list -> term list -> int
 
 type command =
   | Check of term
@@ -109,3 +126,13 @@ val callbacks_table : (string, term list -> term) Hashtbl.t
 
 
 val add_sc : string -> term list -> term -> term -> term
+
+
+val hash_term : term -> int
+
+module Term : sig
+  type t = term
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+  val hash : t -> int
+end

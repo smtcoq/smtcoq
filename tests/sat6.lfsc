@@ -644,8 +644,6 @@
 ;(! p3 (term (arrow Int (arrow Int Bool)))	; arrow is right assoc.
 ;(! F (th_holds (p_app (apply _ _ (apply _ _ p3 a) b))) ; apply is left assoc.
 ;  ...
-
-
 (check
  ;; Declarations
 (% d (term Bool)
@@ -661,24 +659,24 @@
  ;; Printing deferred declarations 
 
  ;; In the preprocessor we trust 
-(th_let_pf _ (trust_f (and (p_app a) (p_app b))) (\ .PA211
-(th_let_pf _ (trust_f (or (p_app c) (p_app d))) (\ .PA213
-(th_let_pf _ (trust_f (not (or (p_app c) (and (p_app a) (and (p_app b) (p_app d) ))))) (\ .PA220
+(th_let_pf _ (trust_f (and (p_app a) (p_app b))) (\  .PA211
+(th_let_pf _ (trust_f (or (p_app c) (p_app d))) (\  .PA213
+(th_let_pf _ (trust_f (not (or (p_app c) (and (p_app a) (and (p_app b) (p_app d) ))))) (\  .PA220
 
 ;; Printing mapping from preprocessed assertions into atoms 
-(decl_atom (p_app c) (\ .v4 (\ .a4
-(decl_atom (p_app a) (\ .v2 (\ .a2
-(decl_atom (p_app b) (\ .v3 (\ .a3
-(decl_atom (p_app d) (\ .v5 (\ .a5
-(satlem _ _ (ast _ _ _ .a5 (\ .l11 (ast _ _ _ .a3 (\ .l7 (ast _ _ _ .a2 (\ .l5 (clausify_false (contra _ .l11 (or_elim_1 _ _ (not_not_intro _ .l7) (not_and_elim _ _ (or_elim_1 _ _ (not_not_intro _ .l5) (not_and_elim _ _ (and_elim_2 _ _ (not_or_elim _ _ .PA220)))))))))))))) (\ .pb8
-(satlem _ _ (asf _ _ _ .a5 (\ .l10 (asf _ _ _ .a4 (\ .l8 (clausify_false (contra _ (or_elim_1 _ _ .l8 .PA213) .l10)))))) (\ .pb6
-(satlem _ _ (ast _ _ _ .a4 (\ .l9 (clausify_false (contra _ .l9 (and_elim_1 _ _ (not_or_elim _ _ .PA220)))))) (\ .pb7
-(satlem _ _ (asf _ _ _ .a3 (\ .l6 (clausify_false (contra _ (and_elim_2 _ _ .PA211) .l6)))) (\ .pb5
-(satlem _ _ (asf _ _ _ .a2 (\ .l4 (clausify_false (contra _ (and_elim_1 _ _ .PA211) .l4)))) (\ .pb4
+(decl_atom (p_app c) (\  .v4 (\  .a4
+(decl_atom (p_app a) (\  .v2 (\  .a2
+(decl_atom (p_app b) (\  .v3 (\  .a3
+(decl_atom (p_app d) (\  .v5 (\  .a5
+(satlem _ _ (ast _ _ _  .a5 (\  .l11 (ast _ _ _  .a3 (\  .l7 (ast _ _ _  .a2 (\  .l5 (clausify_false (contra _  .l11 (or_elim_1 _ _ (not_not_intro _  .l7) (not_and_elim _ _ (or_elim_1 _ _ (not_not_intro _  .l5) (not_and_elim _ _ (and_elim_2 _ _ (not_or_elim _ _  .PA220)))))))))))))) (\  .pb8
+(satlem _ _ (asf _ _ _  .a5 (\  .l10 (asf _ _ _  .a4 (\  .l8 (clausify_false (contra _ (or_elim_1 _ _  .l8  .PA213)  .l10)))))) (\  .pb6
+(satlem _ _ (ast _ _ _  .a4 (\  .l9 (clausify_false (contra _  .l9 (and_elim_1 _ _ (not_or_elim _ _  .PA220)))))) (\  .pb7
+(satlem _ _ (asf _ _ _  .a3 (\  .l6 (clausify_false (contra _ (and_elim_2 _ _  .PA211)  .l6)))) (\  .pb5
+(satlem _ _ (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (and_elim_1 _ _  .PA211)  .l4)))) (\  .pb4
  ;; Theory Lemmas 
 ;; BB atom mapping
 ;; Bit-blasting definitional clauses 
 ;; Bit-blasting learned clauses 
-(satlem_simplify _ _ _ (R _ _ .pb6 .pb7 .v4)(\ .cl9
-(satlem_simplify _ _ _ (Q _ _ (Q _ _ (Q _ _ .pb8 .cl9 .v5).pb5 .v3).pb4 .v2)(\ empty empty))))))))))))))))))))))))))))))))))))))))))
+(satlem_simplify _ _ _ (R _ _  .pb6  .pb7  .v4)(\ .cl9
+(satlem_simplify _ _ _ (Q _ _ (Q _ _ (Q _ _  .pb8  .cl9  .v5) .pb5  .v3) .pb4  .v2)(\ empty  empty))))))))))))))))))))))))))))))))))))))))))
 ;;

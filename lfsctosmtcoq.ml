@@ -1,3 +1,19 @@
+(**************************************************************************)
+(*                                                                        *)
+(*                            LFSCtoSmtCoq                                *)
+(*                                                                        *)
+(*                         Copyright (C) 2016                             *)
+(*          by the Board of Trustees of the University of Iowa            *)
+(*                                                                        *)
+(*                    Alain Mebsout and Burak Ekici                       *)
+(*                       The University of Iowa                           *)
+(*                                                                        *)
+(*                                                                        *)
+(*  This file is distributed under the terms of the Apache Software       *)
+(*  License version 2.0                                                   *)
+(*                                                                        *)
+(**************************************************************************)
+
 open Type
 open Ast
 open Format
@@ -106,7 +122,9 @@ let test3 () =
 (* let _ = test3 () *)
 
 
-let to_verit () =
+
+(** Translate to veriT proof format and print pretty LFSC proof with colors *)
+let pretty_to_verit () =
   let chan =
     try
       let filename = Sys.argv.(1) in
@@ -133,8 +151,30 @@ let to_verit () =
       Ast.print_term t2
 
 
+(** Translate to veriT proof format *)
+let to_verit () =
+  let chan =
+    try
+      let filename = Sys.argv.(1) in
+      open_in filename
+    with Invalid_argument _ -> stdin
+  in
+  let buf = Lexing.from_channel chan in
 
-let _ = to_verit ()
+  try
+
+    match Parser.last_command Lexer.main buf with
+    | Some (Check p) -> Verit.convert p
+    | _ -> eprintf "No proof@."; exit 1
+
+  with Ast.TypingError (t1, t2) ->
+    eprintf "@[<hov>Typing error: expected %a, got %a@]@."
+      Ast.print_term t1
+      Ast.print_term t2
+
+
+
+let _ = pretty_to_verit ()
 
 
 

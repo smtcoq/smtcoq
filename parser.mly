@@ -1,5 +1,21 @@
 %{
-  (* Parser: Grammar Specification for Parsing S-expressions *)
+(**************************************************************************)
+(*                                                                        *)
+(*                            LFSCtoSmtCoq                                *)
+(*                                                                        *)
+(*                         Copyright (C) 2016                             *)
+(*          by the Board of Trustees of the University of Iowa            *)
+(*                                                                        *)
+(*                    Alain Mebsout and Burak Ekici                       *)
+(*                       The University of Iowa                           *)
+(*                                                                        *)
+(*                                                                        *)
+(*  This file is distributed under the terms of the Apache Software       *)
+(*  License version 2.0                                                   *)
+(*                                                                        *)
+(**************************************************************************)
+
+(* This parser is adapted from Jane Street sexplib parser *)
 
 open Ast
 open Lexing
@@ -35,6 +51,9 @@ let remove_rename = Hashtbl.remove renamings
 
 %start proof
 %type <Ast.proof> proof
+
+%start last_command
+%type <Ast.command option> last_command
 
 %start proof_print
 %type <unit> proof_print
@@ -208,21 +227,32 @@ define:
   | DEFINE STRING { scope := [$2]; $2 }
 ;
 
-
-
-command:
-  | LPAREN CHECK term RPAREN {
-    mk_check $3;
-    Check $3 }
-  | LPAREN define term RPAREN {
-    mk_define $2 $3;
-    scope := [];
-    Define ($2, $3) }
+declare_command:
   | LPAREN declare term RPAREN {
     mk_declare $2 $3;
     scope := [];
     Declare ($2, $3)
   }
+;
+
+
+define_command:
+  | LPAREN define term RPAREN {
+    mk_define $2 $3;
+    scope := [];
+    Define ($2, $3) }
+;
+
+check_command:
+  | LPAREN CHECK term RPAREN {
+    mk_check $3;
+    Check $3 }
+;
+
+command:
+  | check_command { $1 }
+  | define_command { $1 }
+  | declare_command { $1 }
 ;
 
 command_print:
@@ -235,7 +265,6 @@ command_ignore:
   | command { () }
   | LPAREN PROGRAM STRING ignore_sexp_list RPAREN { () }
 ;
-
 
 one_command:
   | command EOF { $1 }
@@ -276,3 +305,8 @@ proof_ignore:
   | command_ignore_list EOF { }
 ;
 
+
+last_command:
+  | command_or_prog { $1 }
+  | command_or_prog last_command { $2 }
+;

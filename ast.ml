@@ -1,3 +1,19 @@
+(**************************************************************************)
+(*                                                                        *)
+(*                            LFSCtoSmtCoq                                *)
+(*                                                                        *)
+(*                         Copyright (C) 2016                             *)
+(*          by the Board of Trustees of the University of Iowa            *)
+(*                                                                        *)
+(*                    Alain Mebsout and Burak Ekici                       *)
+(*                       The University of Iowa                           *)
+(*                                                                        *)
+(*                                                                        *)
+(*  This file is distributed under the terms of the Apache Software       *)
+(*  License version 2.0                                                   *)
+(*                                                                        *)
+(**************************************************************************)
+
 open Format
 
 let debug =
@@ -162,6 +178,8 @@ let compare_symbol s1 s2 = match s1.sname, s2.sname with
 
 
 let rec compare_term t1 t2 = match t1.value, t2.value with
+  | Ptr t1, _ -> compare_term t1 t2
+  | _, Ptr t2 -> compare_term t1 t2
   | Type, Type | Kind, Kind | Mpz, Mpz | Mpq, Mpz -> 0
   | Type, _ -> -1 | _, Type -> 1
   | Kind, _ -> -1 | _, Kind -> 1
@@ -193,9 +211,6 @@ let rec compare_term t1 t2 = match t1.value, t2.value with
   | SideCond (_, _, _, t), _ -> compare_term t t2
   | _, SideCond (_, _, _, t) -> compare_term t1 t
 
-  | Ptr t1, _ -> compare_term t1 t2
-  | _, Ptr t2 -> compare_term t1 t2
-
   | Hole i1, Hole i2 -> Pervasives.compare i1 i2
 
 
@@ -207,6 +222,20 @@ and compare_term_list l1 l2 = match l1, l2 with
     let c = compare_term t1 t2 in
     if c <> 0 then c
     else compare_term_list r1 r2
+
+
+let rec hash_term t = match t.value with
+  | Ptr t -> hash_term t
+  | v -> Hashtbl.hash_param 100 500 v
+
+
+module Term = struct
+  type t = term
+  let compare = compare_term
+  let equal x y = compare_term x y = 0
+  let hash = hash_term
+end
+
 
 
 
