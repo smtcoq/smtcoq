@@ -47,6 +47,11 @@ VERNAC COMMAND EXTEND Parse_certif_verit
 END
 
 VERNAC COMMAND EXTEND Parse_certif_lfsc
+| [ "Parse_certif_lfsc"
+    ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
+  [
+    Lfsc.parse_certif t_i t_func t_atom t_form root used_roots trace fsmt fproof
+  ]
 | [ "Lfsc_Checker" string(fsmt) string(fproof) ] ->
   [
     Lfsc.checker fsmt fproof
