@@ -614,7 +614,7 @@ let rec cnf_conversion p = match app_name p with
 
 
 let mk_clause rule cl args =
-  match new_clause_id ~reuse:false cl with
+  match new_clause_id ~reuse:true cl with
   | NewCl id ->
     fprintf fmt "%d:(%s %a%a)@." id rule print_clause cl
       (fun fmt -> List.iter (fprintf fmt " %d")) args;
@@ -812,10 +812,10 @@ and lem mpred clauses p = match app_name p with
     mk_clause "eq_congruent_pred" cl [] :: clauses
 
   (* Congruence *)
-  | Some ("cong", [_; _; pp; _; x; y; _; _]) ->
+  | Some ("cong", [_; _; _; _; _; _; _; _]) ->
     let neqs, clauses = cong [] mpred clauses p in
     let fx_fy = th_res p in
-    let cl = List.rev (fx_fy :: neqs) in
+    let cl = neqs @ [fx_fy] in
     mk_clause "eq_congruent" cl [] :: clauses
     
   | Some ("refl", [_; _]) ->
@@ -855,10 +855,10 @@ let rec satlem p = match app_name p with
   | Some ("satlem", [_; _; l; p]) ->
     let _, cl, p = result_satlem p in
     let clauses = trim_junk_satlem l |> lem MTerm.empty [] in
-    eprintf "SATLEM ---@.";
+    (* eprintf "SATLEM ---@."; *)
     let satlem_id = mk_inter_resolution cl clauses in
     register_clause_id cl satlem_id;
-    eprintf "--- SATLEM@.";
+    (* eprintf "--- SATLEM@."; *)
     satlem p
     
   | _ -> p
