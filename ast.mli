@@ -73,6 +73,11 @@ val mk_mpq : mpq -> term
 
 val  get_real : term -> term
 
+(** Remove pointers in term and type *)
+val flatten_term : term -> unit
+
+val has_ptr : term -> bool
+
 val mk_symbol : string -> term -> symbol
 
 val mk_symbol_hole : term -> symbol

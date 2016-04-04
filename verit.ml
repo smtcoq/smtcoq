@@ -19,6 +19,7 @@ open Ast
 open Builtin
 
 
+module HS = Hashtbl
 module MTerm = Map.Make (Term)
 module HT = Hashtbl.Make (Term)
 module HCl = Hashtbl.Make (struct
@@ -28,16 +29,22 @@ module HCl = Hashtbl.Make (struct
   end)
 
 
+
 let fmt = std_formatter
 
 let clauses_ids = HCl.create 201
 let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let sharp_tbl = HT.create 13
+let inputs = HS.create 13
 
 let cpt = ref 0
 let cl_cpt = ref 0
 
+
+let print_sharps () =
+  HT.iter (fun t id ->
+      printf "#%d --> %a@." id Ast.print_term_type t) sharp_tbl
 
 
 let value t = (deref t).value
@@ -103,10 +110,7 @@ and print_term fmt t =
 
       | _ -> assert false
 
-let print_term fmt t = print_term fmt (get_real t) (* TODO not great *)
-
-
-(* let print_term = Ast.print_term *)
+let print_term fmt t = print_term fmt t (* (get_real t) *)
 
 
 let rec print_clause elim_or fmt t = match name t with
@@ -180,7 +184,6 @@ let register_termclause_id t id =
 
 
 let new_clause_id ?(reuse=true) cl =
-  let cl = List.map get_real cl in (* KLUDGE: bleh *)
   try
     if not reuse then raise Not_found;
     OldCl (HCl.find clauses_ids cl)
@@ -195,6 +198,15 @@ let new_clause_id ?(reuse=true) cl =
 let new_termclause_id ?(reuse=true) t =
   let cl = to_clause t in
   new_clause_id ~reuse cl
+
+
+let mk_clause rule cl args =
+  match new_clause_id ~reuse:true cl with
+  | NewCl id ->
+    fprintf fmt "%d:(%s %a%a)@." id rule print_clause cl
+      (fun fmt -> List.iter (fprintf fmt " %d")) args;
+    id
+  | OldCl id -> id
 
 
 let rec ignore_all_decls p = match value p with
@@ -219,6 +231,14 @@ let rec ignore_preproc p = match app_name p with
     end
   | _ -> p
 
+let mk_input name formula =
+  match new_clause_id [formula] with
+   | NewCl id ->
+     register_termclause_id formula id;
+     HS.add inputs name id;
+     fprintf fmt "%d:(input (%a))@." id print_term formula
+   | OldCl _ -> ()
+
 
 let rec produce_inputs_preproc p = match app_name p with
   | Some ("th_let_pf", [_; _; p]) ->
@@ -226,12 +246,7 @@ let rec produce_inputs_preproc p = match app_name p with
       | Lambda ({sname = Name h; stype}, p) ->
         begin match app_name stype with
           | Some ("th_holds", [formula]) ->
-            (match new_clause_id [formula] with
-             | NewCl id ->
-               register_termclause_id formula id;
-               fprintf fmt "%d:(input (%a))@." id print_term formula
-             | OldCl _ -> ()
-            );
+            mk_input h formula;
             produce_inputs_preproc p
           | _ -> assert false
         end
@@ -265,7 +280,9 @@ let rec register_prop_vars p = match app_name p with
   | Some ("decl_atom", [formula; p]) ->
     begin match value p with
       | Lambda (v, p) ->
-        HT.add propvars (symbol_to_const v) formula;
+        let vt = (symbol_to_const v) in
+        (* eprintf "register prop var: %a@." print_term_type vt; *)
+        HT.add propvars vt formula;
         begin match value p with
           | Lambda (_, p) -> register_prop_vars p
           | _ -> assert false
@@ -296,15 +313,6 @@ let rec trim_junk_satlem p = match app_name p with
 
   | _ -> p
 
-
-
-let mk_clause rule cl args =
-  match new_clause_id ~reuse:true cl with
-  | NewCl id ->
-    fprintf fmt "%d:(%s %a%a)@." id rule print_clause cl
-      (fun fmt -> List.iter (fprintf fmt " %d")) args;
-    id
-  | OldCl id -> id
 
 
 
@@ -496,26 +504,27 @@ and lem ax mpred clauses p = match app_name p with
     let x_z = eq ty x z in
     mk_clause "eq_transitive" (neqs @ [x_z]) [] :: clauses, true
 
-  (* | Some ("trans", [ty; x; y; z; p1; p2]) -> *)
+  (* | Some ("trans", [ty; x; y; z; p1; p2]) ->
     
-  (*   (\* let clauses1 = lem mpred clauses p1 in *\) *)
-  (*   (\* let clauses2 = lem mpred clauses p2 in *\) *)
+    (* let clauses1 = lem mpred clauses p1 in *)
+    (* let clauses2 = lem mpred clauses p2 in *)
     
-  (*   (\* TODO: intermediate resolution step *\) *)
-  (*   let clauses = lem mpred (lem mpred clauses p1) p2 in *)
+    (* TODO: intermediate resolution step *)
+    let clauses = lem mpred (lem mpred clauses p1) p2 in
     
-  (*   let x_y = th_res p1 in *)
-  (*   let y_z = th_res p2 in *)
-  (*   let x_z = eq ty x z in *)
-  (*   let clauses = mk_clause "eq_transitive" [not_ x_y; not_ y_z; x_z] [] :: clauses in *)
+    let x_y = th_res p1 in
+    let y_z = th_res p2 in
+    let x_z = eq ty x z in
+    let clauses = mk_clause "eq_transitive" [not_ x_y; not_ y_z; x_z] [] :: clauses in
 
-  (*   (\* let cl1 = [th_res p1] in *\) *)
-  (*   (\* let cl2 = [th_res p2] in *\) *)
-  (*   (\* let clauses = [ *\) *)
-  (*   (\*   mk_inter_resolution cl1 clauses1; *\) *)
-  (*   (\*   mk_inter_resolution cl2 clauses2] *\) *)
-  (*   (\* in *\) *)
-  (*   clauses *)
+    (* let cl1 = [th_res p1] in *)
+    (* let cl2 = [th_res p2] in *)
+    (* let clauses = [ *)
+    (*   mk_inter_resolution cl1 clauses1; *)
+    (*   mk_inter_resolution cl2 clauses2] *)
+    (* in *)
+    clauses
+  *)
     
   (* Congruence with predicates *)
   | Some ("cong", [_; rty; pp; _; x; y; _; _]) when is_ty_Bool rty ->
@@ -538,7 +547,7 @@ and lem ax mpred clauses p = match app_name p with
     let neqs, clauses = cong [] ax mpred clauses p in
     let fx_fy = th_res p in
     let cl = neqs @ [fx_fy] in
-    mk_clause "eq_congruent" cl [] :: clauses, ax
+    mk_clause "eq_congruent" cl [] :: clauses, true
     
   | Some ("refl", [_; _]) ->
     let x_x = th_res p in
@@ -551,10 +560,13 @@ and lem ax mpred clauses p = match app_name p with
 
   | None ->
 
-    let cl = th_res p |> to_clause in
-    (* should be an input clause *)
-    try HCl.find clauses_ids cl :: clauses, ax
-    with Not_found -> clauses, true
+    match name p with
+    | Some h ->
+      (* should be an input clause *)
+      (try HS.find inputs h :: clauses, ax
+       with Not_found -> clauses, true)
+
+    | None -> clauses, true
 
 
 

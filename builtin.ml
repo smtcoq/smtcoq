@@ -17,18 +17,37 @@
 open Ast
 open Format
 
-let declare_get s ty =
-  mk_declare s ty;
-  mk_const s
+let scope = ref []
 
-let pi n ty t =
+
+let declare_get s =
+  scope := [s];
+  fun ty ->
+  mk_declare s ty;
+  let c = mk_const s in
+  scope := [];
+  c
+
+
+let define s =
+  scope := [s];
+  fun t ->
+    mk_define s t;
+    scope := []
+
+
+let pi n ty =
+  let n = String.concat "." (List.rev (n :: !scope)) in
   let s = mk_symbol n ty in
   register_symbol s;
-  let pi_abstr = mk_pi s (Lazy.force t) in
-  remove_symbol s;
-  pi_abstr
+  fun t ->
+    let pi_abstr = mk_pi s t in
+    remove_symbol s;
+    pi_abstr
+
 
 let pi_d n ty ft =
+  let n = String.concat "." (List.rev (n :: !scope)) in
   let s = mk_symbol n ty in
   register_symbol s;
   let pi_abstr = mk_pi s (ft (symbol_to_const s)) in
@@ -48,31 +67,31 @@ let cln = declare_get "cln" clause
 let okay = declare_get "okay" lfsc_type
 let ok = declare_get "ok" okay
 
-let pos_s = declare_get "pos" (pi "x" var (lazy lit))
-let neg_s = declare_get "neg" (pi "x" var (lazy lit))
-let clc_s = declare_get "clc" (pi "x" lit (lazy (pi "c" clause (lazy clause))))
+let pos_s = declare_get "pos" (pi "x" var lit)
+let neg_s = declare_get "neg" (pi "x" var lit)
+let clc_s = declare_get "clc" (pi "x" lit (pi "c" clause clause))
 
 let concat_s = declare_get "concat_cl"
-    (pi "c1" clause (lazy (pi "c2" clause (lazy clause))))
+    (pi "c1" clause (pi "c2" clause clause))
 
-let clr_s = declare_get "clr" (pi "l" lit (lazy (pi "c" clause (lazy clause))))
+let clr_s = declare_get "clr" (pi "l" lit (pi "c" clause clause))
 
 let formula = declare_get "formula" lfsc_type
-let th_holds_s = declare_get "th_holds" (pi "f" formula (lazy lfsc_type))
+let th_holds_s = declare_get "th_holds" (pi "f" formula lfsc_type)
 
 let ttrue = declare_get "true" formula
 let tfalse = declare_get "false" formula
 
 (* some definitions *)
 let _ =
-  mk_define "formula_op1" (pi "f" formula (lazy formula));
-  mk_define "formula_op2"
-    (pi "f1" formula (lazy
-    (pi "f2" formula (lazy formula))));
-  mk_define "formula_op3"
-    (pi "f1" formula (lazy
-    (pi "f2" formula (lazy
-    (pi "f3" formula (lazy formula))))))
+  define "formula_op1" (pi "f" formula formula);
+  define "formula_op2"
+    (pi "f1" formula
+    (pi "f2" formula formula));
+  define "formula_op3"
+    (pi "f1" formula
+    (pi "f2" formula
+    (pi "f3" formula formula)))
 
 let not_s = declare_get "not" (mk_const "formula_op1")
 let and_s = declare_get "and" (mk_const "formula_op2")
@@ -84,16 +103,16 @@ let ifte_s = declare_get "ifte" (mk_const "formula_op3")
 
 
 let sort = declare_get "sort" lfsc_type
-let term_s = declare_get "term" (pi "t" sort (lazy lfsc_type))
+let term_s = declare_get "term" (pi "t" sort lfsc_type)
 let term x = mk_app term_s [x] 
 let tBool = declare_get "Bool" sort
-let p_app_s = declare_get "p_app" (pi "x" (term tBool) (lazy formula))
+let p_app_s = declare_get "p_app" (pi "x" (term tBool) formula)
 let p_app b = mk_app p_app_s [b]
 
 let eq_s = declare_get "="
     (pi_d "s" sort (fun s ->
-    (pi "x" (term s) (lazy
-    (pi "y" (term s) (lazy formula))))))
+    (pi "x" (term s)
+    (pi "y" (term s) formula))))
 
 let eq ty x y = mk_app eq_s [ty; x; y]
 

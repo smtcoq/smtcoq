@@ -139,9 +139,11 @@ let pretty_to_verit () =
     printf "LFSC proof:\n\n%a\n\n@." print_proof proof;
 
     printf "Verit proof:\n@.";
-
+    
     match List.rev proof with
-    | Check p :: _ -> Verit.convert p
+    | Check p :: _ ->
+      flatten_term p;
+      Verit.convert p
     | _ -> eprintf "No proof@."; exit 1
     
 

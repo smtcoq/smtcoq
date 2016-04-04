@@ -233,7 +233,7 @@ module Term = struct
   type t = term
   let compare = compare_term
   let equal x y = compare_term x y = 0
-  let hash = hash_term
+  let hash t = Hashtbl.hash_param 100 500 t.value (* hash_term *)
 end
 
 
@@ -446,11 +446,48 @@ and apply_subst sigma t =
 
 
 
-let get_real t =
-  apply_subst [] t
-  (* match t.value with *)
-  (* | Ptr t -> get_real t *)
-  (* | _ -> t *)
+let get_real t = apply_subst [] t
+
+
+let rec flatten_term_value t = match t.value with
+  | Hole _ | Type | Kind |  Mpz | Mpq | Int _ | Rat _  -> ()
+  | SideCond (_, args, exp, t) ->
+    List.iter flatten_term args;
+    flatten_term exp;
+    flatten_term t
+  | Const s -> flatten_term s.stype
+  | App (f, args) ->
+    flatten_term f;
+    List.iter flatten_term args 
+  | Pi (s, x) | Lambda (s, x) ->
+    flatten_term s.stype;
+    flatten_term x    
+  | Ptr t' ->
+    t.value <- t'.value;
+    flatten_term t
+
+
+and flatten_term t =
+  flatten_term_value t;
+  match t.value with
+  | Type | Kind -> ()
+  | _ -> flatten_term t.ttype
+
+
+let rec has_ptr_val t = match t.value with
+  | Hole _ | Type | Kind |  Mpz | Mpq | Int _ | Rat _  -> false
+  | SideCond (_, args, exp, t) ->
+    List.exists has_ptr args || has_ptr exp || has_ptr t
+  | Const s -> has_ptr s.stype
+  | App (f, args) -> has_ptr f || List.exists has_ptr args
+  | Pi (s, x) | Lambda (s, x) -> has_ptr s.stype || has_ptr x    
+  | Ptr _ -> true
+
+and has_ptr t = 
+  has_ptr_val t ||
+  match t.value with
+  | Type | Kind -> false
+  | _ -> has_ptr t.ttype
 
 
 let add_subst x v sigma =
