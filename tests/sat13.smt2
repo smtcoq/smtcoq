@@ -2,6 +2,6 @@
 (declare-sort U 0)
 (declare-fun a () U)
 (declare-fun b () U)
-(assert (and (not (distinct a b)) (not (= a b))))
+(assert (and (not (not (= a b))) (not (= a b))))
 (check-sat)
 (exit)

@@ -277,8 +277,6 @@ let rec register_prop_vars p = match app_name p with
 
 
 
-
-
 let rec trim_junk_satlem p = match app_name p with
   | Some (("asf"|"ast"), [_; _; _; _; p]) ->
     begin match value p with
@@ -297,319 +295,6 @@ let rec trim_junk_satlem p = match app_name p with
     end
 
   | _ -> p
-
-
-
-type howtores = Keep | Reso of term * term * term
-
-
-let rec generic_clause_elim p = match app_name p with
-  | Some (("or_elim_1"|"or_elim_2"), [_; _; _; p]) -> generic_clause_elim p
-
-  | Some ("impl_elim", [_; _; r]) ->
-    to_clause (th_res p), "implies", r
-
-  | Some ("not_and_elim", [_; _; r]) ->
-    to_clause (th_res p), "not_and", r
-
-  | _ -> to_clause (th_res p), "or", p
-
-  
-
-let rec cnf_conversion p = match app_name p with
-  
-  | Some ("and_elim_1", [_; _; r]) ->
-    begin match app_name r with
-
-      | Some ("not_impl_elim", [_; _; w]) ->
-        let arg_id = cnf_conversion w in
-        let cl = [th_res p] in
-        (match new_clause_id cl with
-         | NewCl id ->
-           fprintf fmt "%d:(not_implies1 %a %d)@." id print_clause cl arg_id;
-           id
-         | OldCl id -> id)
-
-      | Some ("not_or_elim", [_; _; w]) ->
-        let arg_id = cnf_conversion w in
-        let cl = [th_res p] in
-        (match new_clause_id cl with
-         | NewCl id ->
-           fprintf fmt "%d:(not_or %a %d 0)@." id print_clause cl arg_id;
-           id
-         | OldCl id -> id)
-           
-      | _ ->
-        let arg_id = cnf_conversion r in
-        if arg_id <> -1 then
-          let cl = [th_res p] in
-          match new_clause_id cl with
-          | NewCl id ->
-            fprintf fmt "%d:(and %a %d 0)@." id print_clause cl arg_id;
-            id
-          | OldCl id -> id
-
-        else
-          let cl = [not_ (th_res r); th_res p] in
-          match new_clause_id cl with
-          | NewCl id ->
-            fprintf fmt "%d:(and_pos %a 0)@." id print_clause cl;
-            id
-          | OldCl id -> id
-
-    end
-
-  | Some ("and_elim_2", [_; _; r]) ->
-    begin match app_name r with
-      | Some ("not_impl_elim", [_; _; w]) ->
-        let arg_id = cnf_conversion w in
-        let cl = [th_res p] in
-        (match new_clause_id cl with
-         | NewCl id ->
-           fprintf fmt "%d:(not_implies2 %a %d)@." id print_clause cl arg_id;
-           id
-         | OldCl id -> id)
-        
-      | Some ("not_or_elim", [_; _; w]) ->
-        let arg_id = cnf_conversion w in
-        let cl = [th_res p] in
-        (match new_clause_id cl with
-         | NewCl id ->
-           fprintf fmt "%d:(not_or %a %d 1)@." id print_clause cl arg_id;
-           id
-         | OldCl id -> id)
-
-      | _ ->
-        let arg_id = cnf_conversion r in
-        if arg_id <> -1 then
-          let cl = [th_res p] in
-          match new_clause_id cl with
-          | NewCl id ->
-            fprintf fmt "%d:(and %a %d 1)@." id print_clause cl arg_id;
-            id
-          | OldCl id -> id
-        else
-          let cl = [not_ (th_res r); th_res p] in
-          match new_clause_id cl with
-          | NewCl id ->
-            fprintf fmt "%d:(and_pos %a 1)@." id print_clause cl;
-            id
-          | OldCl id -> id
-
-    end
-
-  | Some (("or_elim_1"|"or_elim_2"|"impl_elim"|"not_and_elim"), _) ->
-
-    let cl, rule, r = generic_clause_elim p in
-    let arg_id = cnf_conversion r in
-    (match rule, Hashtbl.find ids_clauses arg_id with
-      | _, [] -> assert false
-      | "not_and", na :: ( _::_ as r) ->
-        let a = match app_name na with Some ("not",[a]) -> a | _ -> not_ na in
-        let cltmp = a :: cl in
-        let clres = cl @ r in
-        let tmpid = match new_clause_id cltmp with
-          | NewCl id ->
-            fprintf fmt "%d:(and_neg %a)@." id print_clause cltmp; id
-          | OldCl id -> id in
-        (match new_clause_id clres with
-          | NewCl id ->
-            fprintf fmt "%d:(resolution %a %d %d)@."
-              id print_clause clres tmpid arg_id;
-            id
-          | OldCl id -> id)
-      | _ ->
-        match new_clause_id ~reuse:false cl with
-        | NewCl id ->
-          fprintf fmt "%d:(%s %a %d)@." id rule print_clause cl arg_id;
-          id
-        | OldCl id -> assert false
-    )
-
-  | Some (("symm"|"negsymm"), [_; _; _; r]) ->
-    let id = cnf_conversion r in
-    id
-    (* let cl = [th_res p] in *)
-    (* if id <> -1 then register_clause_id cl id; *)
-    (* id *)
-      
-    (* ignore symmetry of equality rules *)
-    (* (match new_clause_id cl with *)
-    (*  | NewCl id -> *)
-    (*    fprintf fmt "%d:(eq_symmetry %a %d)@." id print_clause cl aid; *)
-    (*    id *)
-    (*  | OldCl id -> id) *)
-
-  | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) ->
-    cnf_conversion r
-    (* let cl = th_res p in *)
-    (* if id <> -1 then register_clause_id cl id; *)
-    (* id *)
-
-  | Some ("trans", [_; _; _; z; p_x_eq_y; p_y_eq_z]) ->
-
-    begin match name z with
-    | Some ("t_true"|"t_false") ->
-      let id1 = cnf_conversion p_x_eq_y in
-      (* let id2 = cnf_conversion p_y_eq_z in *)
-      let cl = [th_res p] in
-      if id1 <> -1 then register_clause_id cl id1;
-      (* if id2 <> -1 then register_clause_id cl id2; *)
-      (* if id1 <> -1 || id2 <> -1 then -1 else *)
-      id1
-
-    | _ ->
-      let id1 = cnf_conversion p_x_eq_y in
-      let id2 = cnf_conversion p_y_eq_z in
-      let x_eq_y = th_res p_x_eq_y in
-      let y_eq_z = th_res p_y_eq_z in
-      let x_eq_z = th_res p in
-
-      let cl = [not_ x_eq_y; not_ y_eq_z; x_eq_z] in
-      let id3 = match new_clause_id ~reuse:true cl with
-        | NewCl id ->
-          fprintf fmt "%d:(eq_transitive %a)@." id print_clause cl;
-          id
-        | OldCl id -> id
-      in
-
-      (match id1, id2 with
-       | -1, -1 -> id3
-       | -1, _ ->
-         (let clres = match List.rev (Hashtbl.find ids_clauses id2) with
-            | [] -> assert false
-            | [_] -> [not_ x_eq_y; x_eq_z]
-            | _ :: r -> List.rev (x_eq_z :: not_ x_eq_y :: r)
-          in
-          match new_clause_id clres with
-          | NewCl id ->
-            fprintf fmt "%d:(resolution %a %d %d)@."
-              id print_clause clres id2 id3;
-            id (* -1 *)
-          | OldCl id -> id (* -1 *))
-       | _, -1 ->
-         (let clres = match List.rev (Hashtbl.find ids_clauses id1) with
-            | [] -> assert false
-            | [_] -> [not_ y_eq_z; x_eq_z]
-            | _ :: r -> List.rev (x_eq_z :: not_ y_eq_z :: r)
-          in
-          match new_clause_id clres with
-          | NewCl id ->
-            fprintf fmt "%d:(resolution %a %d %d)@."
-              id print_clause clres id1 id3;
-            id (* -1 *)
-          | OldCl id -> id (* -1 *))
-       | _ ->
-         let clres =
-           match List.rev (Hashtbl.find ids_clauses id1),
-                 List.rev (Hashtbl.find ids_clauses id2) with
-           | [], _ | _, [] -> assert false
-           | [_], [_] -> [x_eq_z]
-           | _ :: r, [_] -> List.rev (x_eq_z :: r)
-           | [_], _ :: r -> List.rev (x_eq_z :: r)
-           | _ :: r1, _ :: r2 -> List.rev (x_eq_z :: r1 @ r2)
-         in
-         match new_clause_id clres with
-         | NewCl id ->
-           fprintf fmt "%d:(resolution %a %d %d %d)@."
-             id print_clause clres id1 id2 id3;
-           id
-         | OldCl id -> id
-      )
-
-    end
-    
-  | Some ("cong", [_; rty; pp; _; _; _; p_pp_eq_pp; p_x_eq_y])
-    when (match name rty with Some "Bool" -> true | _ -> false) -> 
-    let id1 = cnf_conversion p_x_eq_y in
-    (* ignore proof of f = f, they should be the same symbol. TODO:add assert *)
-    (match name pp with
-     | Some _ -> ()
-     | _ -> cnf_conversion p_pp_eq_pp |> ignore);
-    let x_eq_y = th_res p_x_eq_y in
-    let px, py = match app_name (th_res p) with
-      | Some ("=", [_; apx; apy]) -> p_app apx, p_app apy
-      | _ -> assert false
-    in
-
-    let cl = [not_ x_eq_y; not_ px; py] in
-    let id2 = match new_clause_id ~reuse:true cl with
-     | NewCl id ->
-       fprintf fmt "%d:(eq_congruent_pred %a)@." id print_clause cl;
-       id
-     | OldCl id -> id
-    in
-
-    (if id1 = -1 then id2
-     else
-       let clres = match List.rev (Hashtbl.find ids_clauses id1) with
-         | [] -> assert false
-         | [_] -> [not_ px; py]
-         | _ :: r -> List.rev (py :: not_ px :: r)
-       in
-       match new_clause_id clres with
-       | NewCl id ->
-         fprintf fmt "%d:(resolution %a %d %d)@."
-           id print_clause clres id1 id2;
-         id
-       | OldCl id -> id)
-
-
-  | Some ("cong", [_; _; f; _; _; _; p_f_eq_f; p_x_eq_y]) ->
-    let id1 = cnf_conversion p_x_eq_y in
-    (* ignore proof of f = f, they should be the same symbol. TODO:add assert *)
-    (match name f with
-     | Some _ -> ()
-     | _ -> cnf_conversion p_f_eq_f |> ignore);
-    let x_eq_y = th_res p_x_eq_y in
-    let fx_eq_fy = th_res p in
-
-    let cl = [not_ x_eq_y; fx_eq_fy] in
-    let id2 = match new_clause_id ~reuse:true cl with
-     | NewCl id ->
-       fprintf fmt "%d:(eq_congruent %a)@." id print_clause cl;
-       id
-     | OldCl id -> id
-    in
-
-    (if id1 = -1 then id2
-     else
-       let clres = match List.rev (Hashtbl.find ids_clauses id1) with
-         | [] -> assert false
-         | [_] -> [fx_eq_fy]
-         | _ :: r -> List.rev (fx_eq_fy :: r)
-       in
-       match new_clause_id clres with
-       | NewCl id ->
-         fprintf fmt "%d:(resolution %a %d %d)@."
-           id print_clause clres id1 id2;
-         id
-       | OldCl id -> id)
-
-
-  | Some ("refl", [_; _]) ->
-    let clx_eq_x = [th_res p] in
-    (match new_clause_id clx_eq_x with
-     | NewCl id ->
-       fprintf fmt "%d:(eq_reflexive %a)@." id print_clause clx_eq_x;
-       id
-     | OldCl id -> id)
-
-  | Some (rule, _) ->
-
-    (* TODO *)
-    (* (-2) *)
-    failwith (sprintf "Rule %s not implemented" rule)
-
-  | None ->
-    
-    let cl = th_res p |> to_clause in
-    (* should be an input clause *)
-    try HCl.find clauses_ids cl
-    with Not_found -> -1
-      (* eprintf "Did not find %a@." Ast.print_term p; *)
-      (* raise Not_found *)
-
 
 
 
@@ -634,34 +319,34 @@ let is_ty_Bool ty = match name ty with
   | _ -> false
 
 
-let rec cong neqs mpred clauses p = match app_name p with
+let rec cong neqs ax mpred clauses p = match app_name p with
   | Some ("cong", [ty; rty; f; f'; x; y; p_f_eq_f'; r]) ->
 
     let neqs = not_ (eq ty x y) :: neqs in
-    let clauses = lem mpred clauses r in
+    let clauses, ax = lem ax mpred clauses r in
     
     begin match name f, name f' with
       | Some n, Some n' when n = n' -> neqs, clauses
-      | None, None -> cong neqs mpred clauses p_f_eq_f'
+      | None, None -> cong neqs ax mpred clauses p_f_eq_f'
       | _ -> assert false
     end
 
   | Some (("symm"|"negsymm"), [_; _; _; r])
   | Some ("trans", [_; _; _; _; r; _])
-  | Some ("refl", [_; r]) -> cong neqs mpred clauses r
+  | Some ("refl", [_; r]) -> cong neqs ax mpred clauses r
 
   | _ ->
     eprintf "something went wrong in congruence@.";
     neqs, clauses
 
 
-and trans neqs mpred clauses p = match app_name p with
+and trans neqs ax mpred clauses p = match app_name p with
   | Some ("trans", [ty; x; y; z; p1; p2]) ->
 
     (* let clauses = lem mpred (lem mpred clauses p1) p2 in *)
 
-    let neqs1, clauses = trans neqs mpred clauses p1 in
-    let neqs2, clauses = trans neqs mpred clauses p2 in
+    let neqs1, clauses = trans neqs ax mpred clauses p1 in
+    let neqs2, clauses = trans neqs ax mpred clauses p2 in
     
     let x_y = th_res p1 in
     let y_z = th_res p2 in
@@ -678,80 +363,117 @@ and trans neqs mpred clauses p = match app_name p with
     (* let x_z = eq ty x z in *)
     (* let clauses = mk_clause "eq_transitive" [not_ x_y; not_ y_z; x_z] [] :: clauses in *)
 
-  | Some (("symm"|"negsymm"), [_; _; _; r]) -> trans neqs mpred clauses r
+  | Some (("symm"|"negsymm"), [_; _; _; r]) -> trans neqs ax mpred clauses r
 
   | _ ->
     
-    let clauses = lem mpred clauses p in
+    let clauses, ax = lem ax mpred clauses p in
     neqs, clauses
 
     (* let clauses = lem mpred clauses p in *)
     (* mk_clause "eq_transitive" neqs [] :: clauses *)
 
 
-and lem mpred clauses p = match app_name p with
+and lem ax mpred clauses p = match app_name p with
   | Some (("or_elim_1"|"or_elim_2"), [_; _; _; r])
     when (match app_name r with
           Some (("impl_elim"|"not_and_elim"), _) -> true | _ -> false)
     ->
-    lem mpred clauses r
+    let clauses, _ = lem ax mpred clauses r in
+    clauses, true
 
   | Some (("or_elim_1"|"or_elim_2"), [a; b; _; r]) ->
-    let clauses = lem mpred clauses r in
-    let a_or_b = th_res r in
-    mk_clause "or_pos" [not_ a_or_b; a; b] [] :: clauses
+    let clauses, ax = lem ax mpred clauses r in
+    (match clauses with
+     | [_] when not ax -> mk_clause "or" [a; b] clauses :: [], true
+     | _ ->
+       let a_or_b = th_res r in
+       mk_clause "or_pos" [not_ a_or_b; a; b] [] :: clauses, true
+    )
 
   | Some ("impl_elim", [a; b; r]) ->
-    let clauses = lem mpred clauses r in
-    let a_impl_b = th_res r in
-    mk_clause "implies_pos" [not_ a_impl_b; not_ a; b] [] :: clauses
-
+    let clauses, ax = lem ax mpred clauses r in
+    (match clauses with
+     | [_] when not ax -> mk_clause "implies" [not_ a; b] clauses :: [], ax
+     | _ ->
+       let a_impl_b = th_res r in
+       mk_clause "implies_pos" [not_ a_impl_b; not_ a; b] [] :: clauses, ax
+    )
+    
   | Some ("not_and_elim", [a; b; r]) ->
-    let clauses = lem mpred clauses r in
-    let a_and_b = and_ a b in
-    mk_clause "and_neg" [a_and_b; not_ a; not_ b] [] :: clauses
+    let clauses, ax = lem ax mpred clauses r in
+    (match clauses with
+     | [_] when not ax -> mk_clause "not_and" [not_ a; not_ b] clauses :: [], ax
+     | _ ->
+       let a_and_b = and_ a b in
+       mk_clause "and_neg" [a_and_b; not_ a; not_ b] [] :: clauses, ax
+    )
 
   | Some ("and_elim_1", [a; _; r]) ->
     begin match app_name r with
       | Some ("not_impl_elim", [a; b; r]) ->
-        let clauses = lem mpred clauses r in
-        let a_impl_b = impl_ a b in
-        mk_clause "implies_neg1" [not_ a_impl_b; a] [] :: clauses
-
+        let clauses, ax = lem ax mpred clauses r in
+        (match clauses with
+         | [_] when not ax -> mk_clause "not_implies1" [a] clauses :: [], ax
+         | _ ->
+           let a_impl_b = impl_ a b in
+           mk_clause "implies_neg1" [a_impl_b; a] [] :: clauses, ax
+        )
+        
       | Some ("not_or_elim", [a; b; r]) ->
-        let clauses = lem mpred clauses r in
-        let a_or_b = or_ a b in
-        mk_clause "or_neg" [a_or_b; not_ a] [0] :: clauses
-
+        let clauses, ax = lem ax mpred clauses r in
+        (match clauses with
+         | [id] when not ax -> mk_clause "not_or" [not_ a] [id; 0] :: [], ax
+         | _ ->
+           let a_or_b = or_ a b in
+           mk_clause "or_neg" [a_or_b; not_ a] [0] :: clauses, ax
+        )
+        
       | _ ->
-        let clauses = lem mpred clauses r in
-        let a_and_b = th_res r in
-        mk_clause "and_pos" [not_ a_and_b; a] [0] :: clauses
+        let clauses, ax = lem ax mpred clauses r in
+        (match clauses with
+         | [id] when not ax -> mk_clause "and" [a] [id; 0] :: [], ax
+         | _ ->
+           let a_and_b = th_res r in
+           mk_clause "and_pos" [not_ a_and_b; a] [0] :: clauses, ax
+        )
     end
 
   | Some ("and_elim_2", [a; b; r]) ->
     begin match app_name r with
       | Some ("not_impl_elim", [a; b; r]) ->
-        let clauses = lem mpred clauses r in
-        let a_impl_b = impl_ a b in
-        mk_clause "implies_neg2" [not_ a_impl_b; not_ b] [] :: clauses
+        let clauses, ax = lem ax mpred clauses r in
+        (match clauses with
+         | [_] when not ax -> mk_clause "not_implies2" [not_ b] clauses :: [], ax
+         | _ ->
+           let a_impl_b = impl_ a b in
+           mk_clause "implies_neg2" [a_impl_b; not_ b] [] :: clauses, ax
+        )
 
       | Some ("not_or_elim", [a; b; r]) ->
-        let clauses = lem mpred clauses r in
-        let a_or_b = or_ a b in
-        mk_clause "or_neg" [a_or_b; not_ b] [1] :: clauses
+        let clauses, ax = lem ax mpred clauses r in
+        (match clauses with
+         | [id] when not ax -> mk_clause "not_or" [not_ b] [id; 1] :: [], ax
+         | _ ->
+           let a_or_b = or_ a b in
+           mk_clause "or_neg" [a_or_b; not_ b] [1] :: clauses, ax
+        )
 
       | _ ->
-        let clauses = lem mpred clauses r in
-        let a_and_b = th_res r in
-        mk_clause "and_pos" [not_ a_and_b; b] [1] :: clauses
+        let clauses, ax = lem ax mpred clauses r in
+        (match clauses with
+         | [id] when not ax -> mk_clause "and" [b] [id; 1] :: [], ax
+         | _ ->
+           let a_and_b = th_res r in
+           mk_clause "and_pos" [not_ a_and_b; b] [1] :: clauses, ax
+        )
     end
 
   (* Ignore symmetry of equlity rules *)
-  | Some (("symm"|"negsymm"), [_; _; _; r]) -> lem mpred clauses r
+  | Some (("symm"|"negsymm"), [_; _; _; r]) -> lem ax mpred clauses r
 
   (* Should not be traversed anyway *)
-  | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem mpred clauses r
+  | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem ax mpred clauses r
 
   | Some ("trans", [_; _; _; _; r; w])
     when (match app_name w with
@@ -766,13 +488,13 @@ and lem mpred clauses p = match app_name p with
       | _ -> assert false
     in
     
-    lem mpred clauses r
+    lem ax mpred clauses r
 
   | Some ("trans", [ty; x; y; z; p1; p2]) ->
     
-    let neqs, clauses = trans [] mpred clauses p in
+    let neqs, clauses = trans [] ax mpred clauses p in
     let x_z = eq ty x z in
-    mk_clause "eq_transitive" (neqs @ [x_z]) [] :: clauses
+    mk_clause "eq_transitive" (neqs @ [x_z]) [] :: clauses, true
 
   (* | Some ("trans", [ty; x; y; z; p1; p2]) -> *)
     
@@ -797,7 +519,7 @@ and lem mpred clauses p = match app_name p with
     
   (* Congruence with predicates *)
   | Some ("cong", [_; rty; pp; _; x; y; _; _]) when is_ty_Bool rty ->
-    let neqs, clauses = cong [] mpred clauses p in
+    let neqs, clauses = cong [] ax mpred clauses p in
     let cptr, cpfa = match app_name (th_res p) with
       | Some ("=", [_; apx; apy]) ->
         (match MTerm.find apx mpred, MTerm.find apy mpred with
@@ -809,18 +531,18 @@ and lem mpred clauses p = match app_name p with
       | _ -> assert false
     in
     let cl = neqs @ [cpfa; cptr] in
-    mk_clause "eq_congruent_pred" cl [] :: clauses
+    mk_clause "eq_congruent_pred" cl [] :: clauses, true
 
   (* Congruence *)
   | Some ("cong", [_; _; _; _; _; _; _; _]) ->
-    let neqs, clauses = cong [] mpred clauses p in
+    let neqs, clauses = cong [] ax mpred clauses p in
     let fx_fy = th_res p in
     let cl = neqs @ [fx_fy] in
-    mk_clause "eq_congruent" cl [] :: clauses
+    mk_clause "eq_congruent" cl [] :: clauses, ax
     
   | Some ("refl", [_; _]) ->
     let x_x = th_res p in
-    mk_clause "eq_reflexive" [x_x] [] :: clauses
+    mk_clause "eq_reflexive" [x_x] [] :: clauses, ax
 
 
   | Some (rule, _) ->
@@ -831,8 +553,8 @@ and lem mpred clauses p = match app_name p with
 
     let cl = th_res p |> to_clause in
     (* should be an input clause *)
-    try HCl.find clauses_ids cl :: clauses
-    with Not_found -> clauses
+    try HCl.find clauses_ids cl :: clauses, ax
+    with Not_found -> clauses, true
 
 
 
@@ -854,7 +576,7 @@ let rec satlem p = match app_name p with
   
   | Some ("satlem", [_; _; l; p]) ->
     let _, cl, p = result_satlem p in
-    let clauses = trim_junk_satlem l |> lem MTerm.empty [] in
+    let clauses, _ = trim_junk_satlem l |> lem false MTerm.empty [] in
     (* eprintf "SATLEM ---@."; *)
     let satlem_id = mk_inter_resolution cl clauses in
     register_clause_id cl satlem_id;
