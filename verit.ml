@@ -318,7 +318,7 @@ let rec trim_junk_satlem p = match app_name p with
 
 let mk_inter_resolution cl clauses = match clauses with
   | [id] -> id
-  | _ -> mk_clause "resolution" cl (List.rev clauses)
+  | _ -> mk_clause "resolution" cl clauses
 
 
 
