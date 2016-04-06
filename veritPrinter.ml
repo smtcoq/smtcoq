@@ -583,17 +583,22 @@ let result_satlem p = match value p with
     
   | _ -> assert false
 
+let continuation_satlem p = match value p with
+  | Lambda (_, r) -> r
+  | _ -> assert false
+
+
 
 let rec satlem p = match app_name p with
   
-  | Some ("satlem", [_; _; l; p]) ->
-    let _, cl, p = result_satlem p in
+  | Some ("satlem", [c; _; l; p]) ->
+    let cl = to_clause c in
     let clauses, _ = trim_junk_satlem l |> lem false MTerm.empty [] in
     (* eprintf "SATLEM ---@."; *)
     let satlem_id = mk_inter_resolution cl clauses in
     register_clause_id cl satlem_id;
     (* eprintf "--- SATLEM@."; *)
-    satlem p
+    satlem (continuation_satlem p)
     
   | _ -> p
 

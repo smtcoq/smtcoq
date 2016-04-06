@@ -19,7 +19,7 @@
 
   open Printf
   open Lexing
-  open Parser
+  open LfscParser
 
   let char_for_backslash = function
     | 'n' -> '\010'
@@ -325,7 +325,7 @@ and scan_block_comment buf locs = parse
         let of_buffer b = b
       end
       module Token = struct
-        open Parser
+        open LfscParser
         type t = token
         type s = Quoted_string_buffer.t -> Lexing.lexbuf -> t
         let eof = EOF

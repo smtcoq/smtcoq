@@ -18,7 +18,7 @@ open Type
 open Ast
 open Format
 open Builtin
-open Verit
+open VeritPrinter
 
 
 (* Captures the output and exit status of a unix command : aux func *)
@@ -62,11 +62,11 @@ let test2 () =
   let buf = Lexing.from_channel chan in
 
   try
-    (* let proof = Parser.proof Lexer.main buf in *)
+    (* let proof = LfscParser.proof LfscLexer.main buf in *)
     (* printf "LFSC proof:@.%a@." Ast.print_proof proof *)
 
-    Parser.proof_print Lexer.main buf;
-    (* Parser.proof_ignore Lexer.main buf; *)
+    LfscParser.proof_print LfscLexer.main buf;
+    (* LfscParser.proof_ignore LfscLexer.main buf; *)
 
     (* Some tests for side conditions *)
     printf "\n\ 
@@ -134,7 +134,7 @@ let pretty_to_verit () =
   let buf = Lexing.from_channel chan in
 
   try
-    let proof = Parser.proof Lexer.main buf in
+    let proof = LfscParser.proof LfscLexer.main buf in
 
     printf "LFSC proof:\n\n%a\n\n@." print_proof proof;
 
@@ -143,7 +143,7 @@ let pretty_to_verit () =
     match List.rev proof with
     | Check p :: _ ->
       flatten_term p;
-      Verit.convert p
+      VeritPrinter.convert p
     | _ -> eprintf "No proof@."; exit 1
     
 
@@ -165,8 +165,10 @@ let to_verit () =
 
   try
 
-    match Parser.last_command Lexer.main buf with
-    | Some (Check p) -> Verit.convert p
+    match LfscParser.last_command LfscLexer.main buf with
+    | Some (Check p) ->
+      flatten_term p;
+      VeritPrinter.convert p
     | _ -> eprintf "No proof@."; exit 1
 
   with Ast.TypingError (t1, t2) ->
