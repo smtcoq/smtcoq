@@ -33,32 +33,8 @@ open SmtAtom
 
 (* TODO: replace these dummy functions with complete ones *)
 
-  (** Type of S-expressions *)
-type t = Atom of string | List of t list
-
-
-let rec print fmt = function
-  | Atom s -> Format.pp_print_string fmt s
-  | List l ->
-    Format.fprintf fmt "(";
-    List.iter (Format.fprintf fmt "%a " print) l;
-    Format.fprintf fmt ")"
-
-let rec print_list fmt = function
-  | [] -> ()
-  | s :: r ->
-    Format.fprintf fmt "%a@." print s;
-    print_list fmt r
-
-let rec size = function
-  | Atom _ -> 1
-  | List l -> List.fold_left (fun acc s -> size s + acc) 0 l
-
-let rec size_list = function
-  | [] -> 0
-  | s :: r -> size s + size_list r
-
-
+let _ = Printexc.record_backtrace true
+    
 let import_trace filename =
   (* What you have to do: parse the certificate, and produce the
      corresponding veriT steps linearly, as you are currently doing: the
@@ -67,25 +43,50 @@ let import_trace filename =
      conflicting step *)
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
-  let confl = LfscParser.certif LfscLexer.token lexbuf in
-  (* Afterwards, the SMTCoq libraries will produce the remaining, you do
-     not have to care *)
-  SmtTrace.select confl;
-  occur confl;
-  (alloc first, confl)
+  try
+
+    match LfscParser.last_command LfscLexer.main lexbuf with
+    
+    | Some (Ast.Check p) ->
+      close_in chan;
+      Ast.flatten_term p;
+      let confl_num = Lfsctoverit.convert p in
+      let confl = VeritSyntax.get_clause confl_num in
+      (* Afterwards, the SMTCoq libraries will produce the remaining, you do
+         not have to care *)
+      SmtTrace.select confl;
+      occur confl;
+      (* TODO alloc which? *)
+      let first = VeritSyntax.get_clause 1 in (* TODO change *)
+      (alloc first, confl)
+
+    | _ -> failwith "No proof"
+
+  with Ast.TypingError (t1, t2) ->
+    Format.eprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+      Ast.print_term t1
+      Ast.print_term t2;
+    exit 1
+      
+     | e ->
+       let backtrace = Printexc.get_backtrace () in
+       Format.eprintf "Fatal error: %s@." (Printexc.to_string e);
+       Format.eprintf "Backtrace:@\n%s@." backtrace;
+       exit 1
+       
 
 
 let clear_all () =
   SmtTrace.clear ();
-  LfscSyntax.clear ()
+  Lfsctoverit.clear ()
 
 
 let import_all fsmt fproof =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
-  let ra = LfscSyntax.ra in
-  let rf = LfscSyntax.rf in
+  let ra = VeritSyntax.ra in
+  let rf = VeritSyntax.rf in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
   let (max_id, confl) = import_trace fproof in
   (rt, ro, ra, rf, roots, max_id, confl)

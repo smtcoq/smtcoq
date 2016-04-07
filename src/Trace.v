@@ -203,15 +203,6 @@ Qed.
 
 End Sat_Checker.
 
-Module LFSC_Checker.
-
- Inductive step: Type :=
-   | .
-
-
-
-End LFSC_Checker.
-
 
 Module Cnf_Checker.
   

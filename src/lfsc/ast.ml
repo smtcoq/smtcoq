@@ -47,7 +47,7 @@ and dterm =
   | SideCond of string * term list * term * term
 
 and term = { mutable value: dterm; ttype: term }
-
+(* TODO: remove type annotations in terms *)
 
 type command =
   | Check of term
