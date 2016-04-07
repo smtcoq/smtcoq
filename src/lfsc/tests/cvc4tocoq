@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+name=${1%.*}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "Running CVC4..."
+cvc4 --dump-proof --no-simplification $1 | sed -e '1d; s/\./\ ./g; s/\empty/\ empty/g' > $name.tmp.lfsc
+
+echo "Writing LFSC proof..."
+cat $DIR/signatures/{sat,smt,th_base}.plf $name.tmp.lfsc > $name.lfsc
+
+echo "Creating Coq file..."
+cat > ${name}_lfsc.v <<EOF
+Require Import SMTCoq.
+Section File.
+  Lfsc_Checker "$name.smt2" "$name.lfsc".
+End File.
+EOF
+
+echo "Checking LFSC proof with Coq directly..."
+$COQBIN/coqc ${name}_lfsc.v
+
+exit 0
