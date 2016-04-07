@@ -57,26 +57,27 @@ let atom a = Form.get rf (Fatom a)
 
 
 let rec term_smtcoq t = match value t with
-  | Const {sname=Name "true"} -> form (Form.pform_true)
-  | Const {sname=Name "false"} -> form Form.pform_true
-  | Const {sname=Name n} -> atom (Atom.get ra (Aapp (get_fun n,[||])))
-  | Int bi -> atom (Atom.hatom_Z_of_bigint ra bi)
+  | Const {sname=Name "true"} -> Form Form.pform_true
+  | Const {sname=Name "false"} -> Form Form.pform_false
+  | Const {sname=Name n} -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
+  | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
   | App _ ->
     begin match app_name t with
-      | Some ("not", [f]) -> Form.neg (term_smtcoq f)
-      | Some ("and", args) -> form (Fapp (Fand, args_smtcoq args))
-      | Some ("or", args) -> form (Fapp (For, args_smtcoq args))
-      | Some ("impl", args) -> form (Fapp (Fimp, args_smtcoq args))
-      | Some ("xor", args) -> form (Fapp (Fxor, args_smtcoq args))
-      | Some (("ite"|"ifte"), args) -> form (Fapp (Fite, args_smtcoq args))
-      | Some ("iff", args) -> form (Fapp (Fiff, args_smtcoq args))
+      | Some ("not", [f]) ->
+        Lit (Form.neg (lit_of_atom_form_lit rf (term_smtcoq f)))
+      | Some ("and", args) -> Form (Fapp (Fand, args_smtcoq args))
+      | Some ("or", args) -> Form (Fapp (For, args_smtcoq args))
+      | Some ("impl", args) -> Form (Fapp (Fimp, args_smtcoq args))
+      | Some ("xor", args) -> Form (Fapp (Fxor, args_smtcoq args))
+      | Some (("ite"|"ifte"), args) -> Form (Fapp (Fite, args_smtcoq args))
+      | Some ("iff", args) -> Form (Fapp (Fiff, args_smtcoq args))
       | Some ("=", [_; a; b]) ->
         let h1, h2 =
-          match Form.pform (term_smtcoq a), Form.pform (term_smtcoq b) with
-          | Fatom h1, Fatom h2 -> h1, h2
+          match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
           | _ -> assert false
         in
-        atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
+        Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
       | Some ("apply", _) -> uncurry [] t
       | Some ("p_app", [p]) -> term_smtcoq p
       | Some (n, _) -> failwith (n ^ " not implemented")        
@@ -95,19 +96,32 @@ let rec term_smtcoq t = match value t with
   | SideCond _ -> failwith ("LFSC side conditions not supported")
   | _ -> assert false
 
-and args_smtcoq args = Array.of_list (List.map term_smtcoq args)
+and args_smtcoq args =
+  List.map (fun t -> lit_of_atom_form_lit rf (term_smtcoq t)) args
+  |> Array.of_list
 
 and uncurry acc t = match app_name t with
   | Some ("apply", [_; _; f; a]) ->
-    (match Form.pform (term_smtcoq a) with
-     | Fatom h -> uncurry (h :: acc) f
+    (match term_smtcoq a with
+     | Atom h -> uncurry (h :: acc) f
      | _ ->  assert false
     )
-  | Some (n, []) ->
-    let args = Array.of_list (List.rev acc) in
-    atom (Atom.get ra (Aapp (get_fun n, args)))
-  | _ -> assert false
+  | None ->
+    (match name t with
+     | Some n ->
+       let args = Array.of_list acc in
+       Atom (Atom.get ra (Aapp (get_fun n, args)))
+     | _ -> assert false
+    )
+  | _ ->
+    eprintf "uncurry fail: %a@." Ast.print_term t;
+    assert false
 
+
+
+let term_smtcoq t =
+  (* eprintf "translate term %a@." Ast.print_term t; *)
+  lit_of_atom_form_lit rf (term_smtcoq t)
 
 
 let rec clause_smtcoq acc t = match name t with
@@ -172,14 +186,14 @@ let new_termclause_id ?(reuse=true) t =
 let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
-    Format.eprintf "mk_clause %d : %a@." id print_clause cl;
+    (* Format.eprintf "mk_clause %d : %a@." id print_clause cl; *)
     VeritSyntax.mk_clause (id, rule, cl, args)
   | OldCl id -> id
 
 
 let mk_clause_term rule cl args =
-  Format.eprintf "mk_clause_term %a@." Ast.print_term cl;
-  mk_clause ~reuse:false rule (to_clause cl) args
+  (* Format.eprintf "mk_clause_term %a@." Ast.print_term cl; *)
+  mk_clause ~reuse:true rule (to_clause cl) args
 
 let mk_clause_cl rule cl args = mk_clause rule (List.map term_smtcoq cl) args
 
@@ -213,7 +227,7 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     Format.eprintf "mk_input %d@." id;
+     (* Format.eprintf "mk_input %d@." id; *)
      VeritSyntax.mk_clause (id, Inpu, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -277,14 +291,15 @@ let rec trim_junk_satlem p = match app_name p with
   | Some ("clausify_false", [p]) -> trim_junk_satlem p
                                       
   | Some ("contra", [_; p1; p2]) ->
-    begin match name p1, name p2 with
-      | None, Some _ -> trim_junk_satlem p1
-      | Some _, None -> trim_junk_satlem p2
-      | Some _, Some _ -> trim_junk_satlem p2
-      | _ -> assert false
-    end
+    trim_junk_satlem p1 @ trim_junk_satlem p2
+    (* begin match name p1, name p2 with *)
+    (*   | None, Some _ -> trim_junk_satlem p1 *)
+    (*   | Some _, None -> trim_junk_satlem p2 *)
+    (*   | Some _, Some _ -> trim_junk_satlem p2 *)
+    (*   | _ -> assert false *)
+    (* end *)
 
-  | _ -> p
+  | _ -> [p]
 
 
 
@@ -565,7 +580,11 @@ let continuation_satlem p = match value p with
 let rec satlem p = match app_name p with
   
   | Some ("satlem", [c; _; l; p]) ->
-    let clauses, _ = trim_junk_satlem l |> lem false MTerm.empty [] in
+    
+    let clauses =
+      trim_junk_satlem l
+      |> List.map (fun p -> fst (lem false MTerm.empty [] p))
+      |> List.flatten in
     (* eprintf "SATLEM ---@."; *)
     let satlem_id = mk_inter_resolution c clauses in
     register_termclause_id c satlem_id;

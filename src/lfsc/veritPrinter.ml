@@ -293,7 +293,6 @@ let rec register_prop_vars p = match app_name p with
     
 
 
-
 let rec trim_junk_satlem p = match app_name p with
   | Some (("asf"|"ast"), [_; _; _; _; p]) ->
     begin match value p with
@@ -304,14 +303,15 @@ let rec trim_junk_satlem p = match app_name p with
   | Some ("clausify_false", [p]) -> trim_junk_satlem p
                                       
   | Some ("contra", [_; p1; p2]) ->
-    begin match name p1, name p2 with
-      | None, Some _ -> trim_junk_satlem p1
-      | Some _, None -> trim_junk_satlem p2
-      | Some _, Some _ -> trim_junk_satlem p2
-      | _ -> assert false
-    end
+    trim_junk_satlem p1 @ trim_junk_satlem p2
+    (* begin match name p1, name p2 with *)
+    (*   | None, Some _ -> trim_junk_satlem p1 *)
+    (*   | Some _, None -> trim_junk_satlem p2 *)
+    (*   | Some _, Some _ -> trim_junk_satlem p2 *)
+    (*   | _ -> assert false *)
+    (* end *)
 
-  | _ -> p
+  | _ -> [p]
 
 
 
@@ -593,7 +593,10 @@ let rec satlem p = match app_name p with
   
   | Some ("satlem", [c; _; l; p]) ->
     let cl = to_clause c in
-    let clauses, _ = trim_junk_satlem l |> lem false MTerm.empty [] in
+    let clauses =
+      trim_junk_satlem l
+      |> List.map (fun p -> fst (lem false MTerm.empty [] p))
+      |> List.flatten in
     (* eprintf "SATLEM ---@."; *)
     let satlem_id = mk_inter_resolution cl clauses in
     register_clause_id cl satlem_id;

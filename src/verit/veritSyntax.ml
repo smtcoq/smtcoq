@@ -191,9 +191,7 @@ let clauses : (int,Form.t clause) Hashtbl.t = Hashtbl.create 17
 let get_clause id =
   try Hashtbl.find clauses id
   with | Not_found -> failwith ("VeritSyntax.get_clause : clause number "^(string_of_int id)^" not found\n")
-let add_clause id cl =
-  Format.eprintf "add_clause %d@." id;
-  Hashtbl.add clauses id cl
+let add_clause id cl = Hashtbl.add clauses id cl
 let clear_clauses () = Hashtbl.clear clauses
 
 let mk_clause (id,typ,value,ids_params) =
