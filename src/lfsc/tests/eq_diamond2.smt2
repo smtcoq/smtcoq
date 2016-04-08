@@ -16,14 +16,14 @@ Translator: Leonardo de Moura. |)
 (declare-fun y1 () U)
 (declare-fun z1 () U)
 (assert
- (and (=> (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1))) (= x0 x1))
-      (and (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1))) (not (= x0 x1))))
- )
-;;  (and (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1)))
-;;       (not (= x0 x1))))
+ ;; Original formula 
+ ;; (and (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1)))
+ ;;      (not (= x0 x1)))
 
-;; (and (=> (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1))) (= x0 x1))
-;;       (and (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1))) (not (= x0 x1))))
+ ;; after pre-processing by CVC4 with --no-simplification
+ (and (=>  (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1))) (= x0 x1))
+      (and (or (and (= x0 y0) (= y0 x1)) (and (= x0 z0) (= z0 x1))) (not (= x0 x1))))
+)
 
 (check-sat)
 (exit)

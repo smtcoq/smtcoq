@@ -22,6 +22,6 @@ End File.
 EOF
 
 echo "Checking with Coq..."
-coqc $name.v
+${COQBIN}coqc $name.v
 
 exit 0
