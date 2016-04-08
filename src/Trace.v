@@ -328,6 +328,7 @@ Module Euf_Checker.
 
   Inductive step :=
   | Res (pos:int) (res:resolution)
+  | Weaken (pos:int) (cid:clause_id) (w:array _lit)
   | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
   | CTrue (pos:int)
   | CFalse (pos:int)
@@ -352,6 +353,7 @@ Module Euf_Checker.
   Definition step_checker t_atom t_form s (st:step) :=
     match st with
       | Res pos res => S.set_resolve s pos res
+      | Weaken pos cid w => S.set_weaken s pos cid w
       | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_atom t_form s cid lf)
       | CTrue pos => S.set_clause s pos Cnf.check_True
       | CFalse pos => S.set_clause s pos Cnf.check_False
@@ -377,26 +379,27 @@ Module Euf_Checker.
       forall s, S.valid rho s ->
         forall st : step, S.valid rho (step_checker t_atom t_form s st).
   Proof.
-    intros t_i t_func t_atom t_form rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res]; simpl; try apply S.valid_set_clause; auto.
-    apply S.valid_set_resolve; auto.
-    apply valid_check_flatten; auto; intros h1 h2 H.
-    rewrite (Syntactic.check_hatom_correct_bool _ _ _ Ha1 Ha2 _ _ H); auto.
-    rewrite (Syntactic.check_neg_hatom_correct_bool _ _ _ H10 Ha1 Ha2 _ _ H); auto.
-    apply valid_check_True; auto.
-    apply valid_check_False; auto.
-    apply valid_check_BuildDef; auto.
-    apply valid_check_BuildDef2; auto.
-    apply valid_check_BuildProj; auto.
-    apply valid_check_ImmBuildDef; auto.
-    apply valid_check_ImmBuildDef2; auto.
-    apply valid_check_ImmBuildProj; auto.
-    apply valid_check_trans; auto.
-    apply valid_check_congr; auto.
-    apply valid_check_congr_pred; auto.
-    apply valid_check_micromega; auto.
-    apply valid_check_diseq; auto.
-    apply valid_check_spl_arith; auto.
-    apply valid_check_distinct_elim; auto.
+    intros t_i t_func t_atom t_form rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res]; simpl; try apply S.valid_set_clause; auto.
+    - apply S.valid_set_resolve; auto.
+    - apply S.valid_set_weaken; auto.
+    - apply valid_check_flatten; auto; intros h1 h2 H.
+      + rewrite (Syntactic.check_hatom_correct_bool _ _ _ Ha1 Ha2 _ _ H); auto.
+      + rewrite (Syntactic.check_neg_hatom_correct_bool _ _ _ H10 Ha1 Ha2 _ _ H); auto.
+    - apply valid_check_True; auto.
+    - apply valid_check_False; auto.
+    - apply valid_check_BuildDef; auto.
+    - apply valid_check_BuildDef2; auto.
+    - apply valid_check_BuildProj; auto.
+    - apply valid_check_ImmBuildDef; auto.
+    - apply valid_check_ImmBuildDef2; auto.
+    - apply valid_check_ImmBuildProj; auto.
+    - apply valid_check_trans; auto.
+    - apply valid_check_congr; auto.
+    - apply valid_check_congr_pred; auto.
+    - apply valid_check_micromega; auto.
+    - apply valid_check_diseq; auto.
+    - apply valid_check_spl_arith; auto.
+    - apply valid_check_distinct_elim; auto.
   Qed.
 
   Definition euf_checker t_atom t_form s t :=

@@ -160,7 +160,7 @@ let cis_true = gen_constant smt_modules "is_true"
 
 let make_certif_ops modules = 
  (gen_constant modules "step", 
-  gen_constant modules "Res", gen_constant modules "ImmFlatten", 
+  gen_constant modules "Res", gen_constant modules "Weaken", gen_constant modules "ImmFlatten", 
   gen_constant modules "CTrue", gen_constant modules "CFalse", 
   gen_constant modules "BuildDef", gen_constant modules "BuildDef2", 
   gen_constant modules "BuildProj", 

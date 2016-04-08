@@ -551,7 +551,7 @@ Module S.
 
   (* Resolution *)
 
-Open Scope int63_scope.
+  Open Scope int63_scope.
 
   Definition set_resolve (s:t) pos (r:resolution) : t :=
     let len := PArray.length r in
@@ -559,8 +559,6 @@ Open Scope int63_scope.
     else
       let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 (len - 1) (get s (r.[0])) in
       internal_set s pos c.
-
- Check set_resolve.
 
   Lemma valid_set_resolve :
     forall rho s, Valuation.wf rho -> valid rho s ->
@@ -571,6 +569,24 @@ Open Scope int63_scope.
     apply valid_internal_set;trivial.
     apply foldi_ind;auto.
     intros i c _ _ Hc. apply C.resolve_correct;auto;apply Hv.
+  Qed.
+
+
+  (* Weakening *)
+
+  Definition set_weaken (s:t) pos (cid:clause_id) (w:array _lit) : t :=
+    let c := foldi (fun i => insert (w.[i])) 0 ((PArray.length w) - 1) (get s cid) in
+    internal_set s pos c.
+
+  Lemma valid_set_weaken :
+    forall rho s, Valuation.wf rho -> valid rho s ->
+      forall pos cid w, valid rho (set_weaken s pos cid w).
+  Proof.
+    unfold set_weaken. intros rho s Hrho Hs pos cid w.
+    apply valid_internal_set; trivial.
+    apply foldi_ind; auto.
+    intros i c _ _ Hc. unfold C.valid. rewrite insert_correct; auto.
+    simpl. now rewrite Hc, orb_true_r.
   Qed.
 
 End S.

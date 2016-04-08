@@ -21,6 +21,11 @@ type used = int
 type clause_id  = int
 
 type 'hform rule =
+  (* Weakening *)
+  | Weaken of 'hform clause * 'hform list
+     (*  * weaken          : {a_1 ... a_n} --> {a_1 ... a_n b_1 ... b_n} *)
+
+  (* Simplification *)
   | ImmFlatten of 'hform clause * 'hform 
 
   (* CNF Transformations *)
@@ -134,7 +139,7 @@ and 'hform resolution = {
 let used_clauses r =
   match r with
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
-  | ImmFlatten (c,_)  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
+  | Weaken (c,_) | ImmFlatten (c,_)  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _ -> []

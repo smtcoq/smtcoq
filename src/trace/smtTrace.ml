@@ -273,7 +273,7 @@ let build_certif first_root confl =
 
 
 let to_coq to_lit (cstep,
-    cRes, cImmFlatten,
+    cRes, cWeaken, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,  
     cEqTr, cEqCgr, cEqCgrP, 
@@ -298,6 +298,18 @@ let to_coq to_lit (cstep,
 	mklApp cRes [|mkInt (get_pos c); Structures.mkArray (Lazy.force cint, args)|]
     | Other other ->
 	begin match other with
+        | Weaken (c',l') ->
+           (let size = List.length l' in
+            let lits = Array.make size (mkInt 0) in
+            let l = ref l' in
+            for i = 0 to size - 1 do
+              match !l with
+                | [] -> assert false
+                | f::tl ->
+                   (lits.(i) <- out_f f;
+                    l := tl)
+            done;
+            mklApp cWeaken [|out_c c;out_c c'; Structures.mkArray (Lazy.force cint, lits)|])
 	| ImmFlatten (c',f) -> mklApp cImmFlatten [|out_c c;out_c c'; out_f f|]
         | True -> mklApp cTrue [|out_c c|]
 	| False -> mklApp cFalse [|out_c c|]
