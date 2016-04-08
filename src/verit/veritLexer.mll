@@ -60,6 +60,7 @@
         "qnt_simplify_ax", QNTS;
         "qnt_merge_ax", QNTM;
         "resolution", RESO;
+        "weaken", WEAK;
         "and", AND;
         "not_or", NOR;
         "or", OR;
