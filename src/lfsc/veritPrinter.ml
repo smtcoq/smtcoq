@@ -19,6 +19,7 @@ open Ast
 open Builtin
 
 
+
 module HS = Hashtbl
 module MTerm = Map.Make (Term)
 module HT = Hashtbl.Make (Term)
@@ -28,6 +29,21 @@ module HCl = Hashtbl.Make (struct
     let hash = List.fold_left (fun acc t -> Term.hash t + acc) 0 
   end)
 
+
+type env = {
+  clauses : int list;
+  ax : bool;
+  mpred : bool MTerm.t;
+  assum : string list;
+}
+
+
+let empty = {
+  clauses = [];
+  ax = false;
+  mpred = MTerm.empty;
+  assum = [];
+}
 
 
 let fmt = std_formatter
@@ -301,11 +317,13 @@ let rec get_assumptions acc p = match app_name p with
   | _ -> acc, p
 
 
-let rec rm_unused assumptions t = match name t with
+let rec rm_unused' assumptions t = match name t with
   | Some x -> List.filter (fun y -> y <> x) assumptions
   | None -> match app_name t with
-    | Some (_, l) -> List.fold_left rm_unused assumptions l
+    | Some (_, l) -> List.fold_left rm_unused' assumptions l
     | None -> assumptions
+
+let rm_unused env t = { env with assum = rm_unused' env.assum t }
 
 
 let rec trim_junk_satlem p = match app_name p with
@@ -328,34 +346,34 @@ let is_ty_Bool ty = match name ty with
   | _ -> false
 
 
-let rec cong neqs ax mpred assum clauses p = match app_name p with
+let rec cong neqs env p = match app_name p with
   | Some ("cong", [ty; rty; f; f'; x; y; p_f_eq_f'; r]) ->
 
     let neqs = not_ (eq ty x y) :: neqs in
-    let clauses, ax, assum = lem ax mpred assum clauses r in
+    let env = lem env r in
     
     begin match name f, name f' with
-      | Some n, Some n' when n = n' -> neqs, clauses, assum
-      | None, None -> cong neqs ax mpred assum clauses p_f_eq_f'
+      | Some n, Some n' when n = n' -> neqs, env
+      | None, None -> cong neqs env p_f_eq_f'
       | _ -> assert false
     end
 
   | Some (("symm"|"negsymm"), [_; _; _; r])
   | Some ("trans", [_; _; _; _; r; _])
-  | Some ("refl", [_; r]) -> cong neqs ax mpred assum clauses r
+  | Some ("refl", [_; r]) -> cong neqs env r
 
   | _ ->
     eprintf "something went wrong in congruence@.";
-    neqs, clauses, assum
+    neqs, env
 
 
-and trans neqs ax mpred assum clauses p = match app_name p with
+and trans neqs env p = match app_name p with
   | Some ("trans", [ty; x; y; z; p1; p2]) ->
 
     (* let clauses = lem mpred assum (lem mpred assum clauses p1) p2 in *)
 
-    let neqs1, clauses, assum = trans neqs ax mpred assum clauses p1 in
-    let neqs2, clauses, assum = trans neqs ax mpred assum clauses p2 in
+    let neqs1, env = trans neqs env p1 in
+    let neqs2, env = trans neqs env p2 in
     
     let x_y = th_res p1 in
     let y_z = th_res p2 in
@@ -367,125 +385,127 @@ and trans neqs ax mpred assum clauses p = match app_name p with
       | _, _ -> neqs1 @ neqs2
     in
 
-    neqs, clauses, assum
-    
-    (* let x_z = eq ty x z in *)
-    (* let clauses = mk_clause "eq_transitive" [not_ x_y; not_ y_z; x_z] [] :: clauses in *)
+    neqs, env
 
-  | Some (("symm"|"negsymm"), [_; _; _; r]) ->
-    trans neqs ax mpred assum clauses r
+  | Some (("symm"|"negsymm"), [_; _; _; r]) -> trans neqs env r
 
-  | _ ->
-    
-    let clauses, ax, assum = lem ax mpred assum clauses p in
-    neqs, clauses, assum
-
-    (* let clauses = lem mpred clauses p in *)
-    (* mk_clause "eq_transitive" neqs [] :: clauses *)
+  | _ -> neqs, lem env p
 
 
-and lem ax mpred assum clauses p = match app_name p with
+
+and lem env p = match app_name p with
   | Some (("or_elim_1"|"or_elim_2"), [_; _; x; r])
     when (match app_name r with
           Some (("impl_elim"|"not_and_elim"), _) -> true | _ -> false)
     ->
-    let assum = rm_unused assum x in
-    let clauses, _, assum = lem ax mpred assum clauses r in
-    clauses, true, assum
+    let env = rm_unused env x in
+    let env = lem env r in
+    { env with ax = true }
 
   | Some (("or_elim_1"|"or_elim_2"), [a; b; x; r]) ->
-    let assum = rm_unused assum x in
-    let clauses, ax, assum = lem ax mpred assum clauses r in
-    (match clauses with
-     | [_] when not ax -> mk_clause "or" [a; b] clauses :: [], true, assum
-     | _ ->
-       let a_or_b = th_res r in
-       mk_clause "or_pos" [not_ a_or_b; a; b] [] :: clauses, true, assum
-    )
+    let env = rm_unused env x in
+    let env = lem env r in
+    let clauses = match env.clauses with
+      | [_] when not env.ax -> mk_clause "or" [a; b] env.clauses :: []
+      | _ ->
+        let a_or_b = th_res r in
+        mk_clause "or_pos" [not_ a_or_b; a; b] [] :: env.clauses
+    in
+    { env with clauses; ax = true }
 
   | Some ("impl_elim", [a; b; r]) ->
-    let clauses, ax, assum = lem ax mpred assum clauses r in
-    (match clauses with
-     | [_] when not ax -> mk_clause "implies" [not_ a; b] clauses :: [], ax, assum
-     | _ ->
-       let a_impl_b = th_res r in
-       mk_clause "implies_pos" [not_ a_impl_b; not_ a; b] [] :: clauses, ax, assum
-    )
+    let env = lem env r in
+    let clauses = match env.clauses with
+      | [_] when not env.ax -> mk_clause "implies" [not_ a; b] env.clauses :: []
+      | _ ->
+        let a_impl_b = th_res r in
+        mk_clause "implies_pos" [not_ a_impl_b; not_ a; b] [] :: env.clauses
+    in
+    { env with clauses }
     
   | Some ("not_and_elim", [a; b; r]) ->
-    let clauses, ax, assum = lem ax mpred assum clauses r in
-    (match clauses with
-     | [_] when not ax -> mk_clause "not_and" [not_ a; not_ b] clauses :: [], ax, assum
-     | _ ->
-       let a_and_b = and_ a b in
-       mk_clause "and_neg" [a_and_b; not_ a; not_ b] [] :: clauses, ax, assum
-    )
+    let env = lem env r in
+    let clauses = match env.clauses with
+      | [_] when not env.ax ->
+        mk_clause "not_and" [not_ a; not_ b] env.clauses :: []
+      | _ ->
+        let a_and_b = and_ a b in
+        mk_clause "and_neg" [a_and_b; not_ a; not_ b] [] :: env.clauses
+    in
+    { env with clauses }
 
   | Some ("and_elim_1", [a; _; r]) ->
     begin match app_name r with
       | Some ("not_impl_elim", [a; b; r]) ->
-        let clauses, ax, assum = lem ax mpred assum clauses r in
-        (match clauses with
-         | [_] when not ax -> mk_clause "not_implies1" [a] clauses :: [], ax, assum
+        let env = lem env r in
+        let clauses = match env.clauses with
+         | [_] when not env.ax -> mk_clause "not_implies1" [a] env.clauses :: []
          | _ ->
            let a_impl_b = impl_ a b in
-           mk_clause "implies_neg1" [a_impl_b; a] [] :: clauses, ax, assum
-        )
+           mk_clause "implies_neg1" [a_impl_b; a] [] :: env.clauses
+        in
+        { env with clauses }
         
       | Some ("not_or_elim", [a; b; r]) ->
-        let clauses, ax, assum = lem ax mpred assum clauses r in
-        (match clauses with
-         | [id] when not ax -> mk_clause "not_or" [not_ a] [id; 0] :: [], ax, assum
-         | _ ->
-           let a_or_b = or_ a b in
-           mk_clause "or_neg" [a_or_b; not_ a] [0] :: clauses, ax, assum
-        )
+        let env = lem env r in
+        let clauses = match env.clauses with
+          | [id] when not env.ax -> mk_clause "not_or" [not_ a] [id; 0] :: []
+          | _ ->
+            let a_or_b = or_ a b in
+            mk_clause "or_neg" [a_or_b; not_ a] [0] :: env.clauses
+        in
+        { env with clauses }
         
       | _ ->
-        let clauses, ax, assum = lem ax mpred assum clauses r in
-        (match clauses with
-         | [id] when not ax -> mk_clause "and" [a] [id; 0] :: [], ax, assum
-         | _ ->
-           let a_and_b = th_res r in
-           mk_clause "and_pos" [not_ a_and_b; a] [0] :: clauses, ax, assum
-        )
+        let env = lem env r in
+        let clauses = match env.clauses with
+          | [id] when not env.ax -> mk_clause "and" [a] [id; 0] :: []
+          | _ ->
+            let a_and_b = th_res r in
+            mk_clause "and_pos" [not_ a_and_b; a] [0] :: env.clauses
+        in
+        { env with clauses }
     end
 
   | Some ("and_elim_2", [a; b; r]) ->
     begin match app_name r with
       | Some ("not_impl_elim", [a; b; r]) ->
-        let clauses, ax, assum = lem ax mpred assum clauses r in
-        (match clauses with
-         | [_] when not ax -> mk_clause "not_implies2" [not_ b] clauses :: [], ax, assum
-         | _ ->
-           let a_impl_b = impl_ a b in
-           mk_clause "implies_neg2" [a_impl_b; not_ b] [] :: clauses, ax, assum
-        )
+        let env = lem env r in
+        let clauses = match env.clauses with
+          | [_] when not env.ax ->
+            mk_clause "not_implies2" [not_ b] env.clauses :: []
+          | _ ->
+            let a_impl_b = impl_ a b in
+            mk_clause "implies_neg2" [a_impl_b; not_ b] [] :: env.clauses
+        in
+        { env with clauses }
 
       | Some ("not_or_elim", [a; b; r]) ->
-        let clauses, ax, assum = lem ax mpred assum clauses r in
-        (match clauses with
-         | [id] when not ax -> mk_clause "not_or" [not_ b] [id; 1] :: [], ax, assum
-         | _ ->
-           let a_or_b = or_ a b in
-           mk_clause "or_neg" [a_or_b; not_ b] [1] :: clauses, ax, assum
-        )
+        let env = lem env r in
+        let clauses = match env.clauses with
+          | [id] when not env.ax -> mk_clause "not_or" [not_ b] [id; 1] :: []
+          | _ ->
+            let a_or_b = or_ a b in
+            mk_clause "or_neg" [a_or_b; not_ b] [1] :: env.clauses
+        in
+        { env with clauses }
 
       | _ ->
-        let clauses, ax, assum = lem ax mpred assum clauses r in
-        (match clauses with
-         | [id] when not ax -> mk_clause "and" [b] [id; 1] :: [], ax, assum
-         | _ ->
-           let a_and_b = th_res r in
-           mk_clause "and_pos" [not_ a_and_b; b] [1] :: clauses, ax, assum
-        )
+        let env = lem env r in
+        let clauses = match env.clauses with
+          | [id] when not env.ax -> mk_clause "and" [b] [id; 1] :: []
+          | _ ->
+            let a_and_b = th_res r in
+            mk_clause "and_pos" [not_ a_and_b; b] [1] :: env.clauses
+        in
+        { env with clauses }
     end
 
   (* Ignore symmetry of equlity rules *)
-  | Some (("symm"|"negsymm"), [_; _; _; r]) -> lem ax mpred assum clauses r
+  | Some (("symm"|"negsymm"), [_; _; _; r]) -> lem env r
 
   (* Should not be traversed anyway *)
-  | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem ax mpred assum clauses r
+  | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem env r
 
   | Some ("trans", [_; _; _; _; r; w])
     when (match app_name w with
@@ -495,18 +515,20 @@ and lem ax mpred assum clauses p = match app_name p with
     (* Remember which direction of the implication we want for congruence over
        predicates *)
     let mpred = match app_name w with
-      | Some ("pred_eq_t", [pt; _]) -> MTerm.add pt false mpred
-      | Some ("pred_eq_f", [pt; _]) -> MTerm.add pt true mpred
+      | Some ("pred_eq_t", [pt; _]) -> MTerm.add pt false env.mpred
+      | Some ("pred_eq_f", [pt; _]) -> MTerm.add pt true env.mpred
       | _ -> assert false
     in
     
-    lem ax mpred assum clauses r
+    lem { env with mpred } r
 
   | Some ("trans", [ty; x; y; z; p1; p2]) ->
     
-    let neqs, clauses, assum = trans [] ax mpred assum clauses p in
+    let neqs, env = trans [] env p in
     let x_z = eq ty x z in
-    mk_clause "eq_transitive" (neqs @ [x_z]) [] :: clauses, true, assum
+    { env with
+      clauses = mk_clause "eq_transitive" (neqs @ [x_z]) [] :: env.clauses;
+      ax = true }
 
   (* | Some ("trans", [ty; x; y; z; p1; p2]) ->
     
@@ -532,10 +554,10 @@ and lem ax mpred assum clauses p = match app_name p with
     
   (* Congruence with predicates *)
   | Some ("cong", [_; rty; pp; _; x; y; _; _]) when is_ty_Bool rty ->
-    let neqs, clauses, assum = cong [] ax mpred assum clauses p in
+    let neqs, env = cong [] env p in
     let cptr, cpfa = match app_name (th_res p) with
       | Some ("=", [_; apx; apy]) ->
-        (match MTerm.find apx mpred, MTerm.find apy mpred with
+        (match MTerm.find apx env.mpred, MTerm.find apy env.mpred with
          | true, false -> p_app apx, not_ (p_app apy)
          | false, true -> p_app apy, not_ (p_app apx)
          | true, true -> p_app apx, p_app apy
@@ -544,18 +566,22 @@ and lem ax mpred assum clauses p = match app_name p with
       | _ -> assert false
     in
     let cl = neqs @ [cpfa; cptr] in
-    mk_clause "eq_congruent_pred" cl [] :: clauses, true, assum
+    { env with
+      clauses = mk_clause "eq_congruent_pred" cl [] :: env.clauses;
+      ax = true }
 
   (* Congruence *)
   | Some ("cong", [_; _; _; _; _; _; _; _]) ->
-    let neqs, clauses, assum = cong [] ax mpred assum clauses p in
+    let neqs, env = cong [] env p in
     let fx_fy = th_res p in
     let cl = neqs @ [fx_fy] in
-    mk_clause "eq_congruent" cl [] :: clauses, true, assum
+    { env with
+      clauses = mk_clause "eq_congruent" cl [] :: env.clauses;
+      ax = true }
     
   | Some ("refl", [_; _]) ->
     let x_x = th_res p in
-    mk_clause "eq_reflexive" [x_x] [] :: clauses, ax, assum
+    { env with clauses = mk_clause "eq_reflexive" [x_x] [] :: env.clauses }
 
 
   | Some (rule, _) ->
@@ -567,11 +593,14 @@ and lem ax mpred assum clauses p = match app_name p with
     match name p with
     | Some h ->
       (* should be an input clause *)
-      (try HS.find inputs h :: clauses, ax, assum
-       with Not_found -> clauses, true, List.filter (fun a -> a <> h) assum
+      (try { env with clauses = HS.find inputs h :: env.clauses }
+       with Not_found ->
+         { env with
+           ax = true;
+           assum = List.filter (fun a -> a <> h) env.assum }
       )
 
-    | None -> clauses, true, assum
+    | None -> { env with ax = true }
 
 
 
@@ -601,20 +630,29 @@ let rec satlem p = match app_name p with
     (* eprintf "SATLEM ---@."; *)
     let assumptions, l = get_assumptions [] l in
     let l = trim_junk_satlem l in
-    let clauses, assumptions =
-      List.fold_left (fun (clauses, assumptions) p ->
-          let ncls, _, assumptions =
-            lem false MTerm.empty assumptions [] p in
-          List.rev_append ncls clauses, assumptions
-        ) ([], assumptions) l
+    let env = { empty with assum = assumptions } in
+    let env =
+      List.fold_left (fun env p ->
+          let local_env =
+            { clauses = [];
+              ax = false;
+              mpred = MTerm.empty;
+              assum = assumptions
+            } in
+          let local_env = lem local_env p in
+          { env with
+            clauses = List.rev_append local_env.clauses env.clauses;
+            assum = local_env.assum
+          }
+        ) env l
     in
-    let clauses = List.rev clauses in
+    let clauses = List.rev env.clauses in
     let id = mk_inter_resolution clauses in
     (* eprintf "remaining assumptions:"; *)
-    (* List.iter (eprintf "%s, ") assumptions; *)
+    (* List.iter (eprintf "%s, ") env.assu; *)
     (* eprintf "@."; *)
     let satlem_id =
-      if assumptions = [] then id else mk_clause "weaken" cl [id]
+      if env.assum = [] then id else mk_clause "weaken" cl [id]
     in
     register_clause_id cl satlem_id;
     (* eprintf "--- SATLEM@."; *)

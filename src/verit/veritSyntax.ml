@@ -185,6 +185,12 @@ let mkDistinctElim old value =
   Other (SplDistinctElim (old,find_res l1 value))
 
 
+(* Clause difference (wrt to their sets of literals) *)
+
+let clause_diff c1 c2 =
+  List.filter (fun t1 -> not (List.exists (fun t2 -> t1 == t2) c2)) c1
+
+
 (* Generating clauses *)
 
 let clauses : (int,Form.t clause) Hashtbl.t = Hashtbl.create 17
@@ -264,13 +270,13 @@ let mk_clause (id,typ,value,ids_params) =
       (* Clause weakening *)
       | Weak ->
         (match ids_params with
-         | [id] ->
-           let cres = get_clause id in
-           (match cres.value with
-           | None ->
-             Other (Weaken (cres, value))
-           | Some c ->
-             Other (Weaken (cres, value @ c))
+         | [id] -> (* Other (Weaken (get_clause id, value)) *)
+           let cid = get_clause id in
+           (match cid.value with
+           | None -> Other (Weaken (cid, value))
+           | Some c -> Other (Weaken (cid, value @ c))
+            (* need to add c, otherwise dosen't terminate or returns false,
+               we would like instead: clause_diff value c *)
            )
           | _ -> assert false)
       (* Simplifications *)
