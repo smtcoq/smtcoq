@@ -57,6 +57,17 @@ exception TypingError of term * term
 (** follow pointers *)
 val deref : term -> term
 
+(** derefenced value *)
+val value : term -> dterm
+
+(** get dereferenced constant name (None if it's not a constant or it has no
+    name) *)
+val name : term -> string option
+
+(** get dereferenced application name and its arguments (None if it's not a
+    function application or the function symbol has no name) *)
+val app_name : term -> (string * term list) option
+
 val lfsc_type : term
 
 val kind : term

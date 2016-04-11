@@ -69,6 +69,20 @@ let rec deref t = match t.value with
   | Ptr t -> deref t
   | _ -> t
 
+
+let value t = (deref t).value
+
+
+let rec name c = match value c with
+  | Const {sname=Name n} -> Some n
+  | _ -> None
+
+
+let rec app_name r = match value r with
+  | App ({value=Const{sname=Name n}}, args) -> Some (n, args)
+  | _ -> None
+
+
 (*******************)
 (* Pretty printing *)
 (*******************)

@@ -161,7 +161,8 @@ MLFILES:=lia/lia.ml\
   zchaff/satParser.ml\
   zchaff/cnfParser.ml\
   lfsc/lfsc.ml\
-  lfsc/lfsctoverit.ml\
+  lfsc/converter.ml\
+  lfsc/tosmtcoq.ml\
   lfsc/builtin.ml\
   lfsc/ast.ml\
   lfsc/type.ml\
@@ -191,6 +192,8 @@ MLFILES:=lia/lia.ml\
 .SECONDARY: $(addsuffix .d,$(MLFILES))
 
 MLIFILES:=lfsc/ast.mli\
+  lfsc/translator_sig.mli\
+  lfsc/tosmtcoq.mli\
   verit/veritSyntax.mli\
   trace/smtForm.mli\
   trace/smtAtom.mli
@@ -262,7 +265,7 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/lfsctoverit.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx trace/smt_tactic.cmx
+$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx trace/smt_tactic.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml

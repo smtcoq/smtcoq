@@ -34,7 +34,10 @@ open SmtAtom
 (* TODO: replace these dummy functions with complete ones *)
 
 let _ = Printexc.record_backtrace true
-    
+
+
+module C = Converter.Make (Tosmtcoq)
+
 let import_trace filename =
   (* What you have to do: parse the certificate, and produce the
      corresponding veriT steps linearly, as you are currently doing: the
@@ -46,18 +49,18 @@ let import_trace filename =
   try
 
     match LfscParser.last_command LfscLexer.main lexbuf with
-    
+
     | Some (Ast.Check p) ->
       close_in chan;
       Ast.flatten_term p;
-      let confl_num = Lfsctoverit.convert p in
+      let confl_num = C.convert p in
       let confl = VeritSyntax.get_clause confl_num in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)
       SmtTrace.select confl;
       occur confl;
-      (* TODO alloc which? *)
-      let first = VeritSyntax.get_clause 1 in (* TODO change *)
+      let first = VeritSyntax.get_clause 1 in
+      (* TODO change when function export is written *)
       (alloc first, confl)
 
     | _ -> failwith "No proof"
@@ -67,7 +70,7 @@ let import_trace filename =
       Ast.print_term t1
       Ast.print_term t2;
     exit 1
-      
+
      | e ->
        let backtrace = Printexc.get_backtrace () in
        Format.eprintf "Fatal error: %s@." (Printexc.to_string e);
@@ -78,7 +81,7 @@ let import_trace filename =
 
 let clear_all () =
   SmtTrace.clear ();
-  Lfsctoverit.clear ()
+  C.clear ()
 
 
 let import_all fsmt fproof =

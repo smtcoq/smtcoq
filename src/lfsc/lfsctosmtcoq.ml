@@ -121,6 +121,8 @@ let test3 () =
 (* let _ = test3 () *)
 
 
+module C = Converter.Make (VeritPrinter)
+
 
 (** Translate to veriT proof format and print pretty LFSC proof with colors *)
 let pretty_to_verit () =
@@ -142,7 +144,7 @@ let pretty_to_verit () =
     match List.rev proof with
     | Check p :: _ ->
       flatten_term p;
-      VeritPrinter.convert p
+      C.convert p |> ignore
     | _ -> eprintf "No proof@."; exit 1
     
 
@@ -167,7 +169,7 @@ let to_verit () =
     match LfscParser.last_command LfscLexer.main buf with
     | Some (Check p) ->
       flatten_term p;
-      VeritPrinter.convert p
+      C.convert p |> ignore
     | _ -> eprintf "No proof@."; exit 1
 
   with Ast.TypingError (t1, t2) ->
