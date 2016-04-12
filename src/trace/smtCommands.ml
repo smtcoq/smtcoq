@@ -34,19 +34,19 @@ let compute_roots roots last_root =
 
   let rec find_root i root = function
     | [] -> assert false
-    | t::q -> if Form.equal t root then (i,q) else find_root (i+1) root q in
+    | t::q -> if Form.equal t root then i else find_root (i+1) root q in
 
-  let rec used_roots acc i roots r =
+  let rec used_roots acc r =
     if isRoot r.kind then
       match r.value with
         | Some [root] ->
-           let (j,roots') = find_root i root roots in
-           used_roots (j::acc) (j+1) roots' (next r)
+           let j = find_root 0 root roots in
+           used_roots (j::acc) (next r)
         | _ -> assert false
-    else
-      acc in
-
-  used_roots [] 0 roots !r
+    else acc
+  in
+  
+  used_roots [] !r
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
