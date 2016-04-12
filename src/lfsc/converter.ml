@@ -78,8 +78,8 @@ module Make (T : Translator_sig.S) = struct
 
   
   (** Produce input clauses from the result of CVC4's pre-processing. This may
-      not match the actual inputs in the original SMT2 file but they correspond to
-      what the proof uses. *)
+      not match the actual inputs in the original SMT2 file but they correspond
+      to what the proof uses. *)
   let rec produce_inputs_preproc p = match app_name p with
     | Some ("th_let_pf", [_; _; p]) ->
       begin match value p with
@@ -479,7 +479,7 @@ module Make (T : Translator_sig.S) = struct
             }
           ) env l
       in
-      let clauses = (* List.rev *) env.clauses in
+      let clauses = List.rev env.clauses in
       let id = mk_inter_resolution clauses in
       (* eprintf "remaining assumptions:"; *)
       (* List.iter (eprintf "%s, ") env.assu; *)
