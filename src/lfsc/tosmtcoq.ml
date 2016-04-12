@@ -37,7 +37,7 @@ module HCl = Hashtbl
 let clauses_ids = HCl.create 201
 let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
-let inputs = HS.create 13
+let inputs : (string, int) Hashtbl.t = HS.create 13
 
 let cl_cpt = ref 0
 
