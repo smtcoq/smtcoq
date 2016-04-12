@@ -27,14 +27,16 @@ module Make (T : Translator_sig.S) = struct
   module MTerm = Map.Make (Term)
 
 
+  (** Environment for {!lem} *)
   type env = {
-    clauses : int list;
-    ax : bool;
-    mpred : bool MTerm.t;
-    assum : string list;
+    clauses : int list;   (** Accumulated clauses *)
+    ax : bool;            (** Force use of axiomatic rules? *)
+    mpred : bool MTerm.t; (** map for positivity of predicates in cong *)
+    assum : string list;  (** Assumptions that were not used *)
   }
 
 
+  (** Empty environment *)
   let empty = {
     clauses = [];
     ax = false;
@@ -43,17 +45,19 @@ module Make (T : Translator_sig.S) = struct
   }
 
 
+  (** Returns the formula of which p is a proof of *)
   let th_res p = match app_name (deref p).ttype with
     | Some ("th_holds", [r]) -> r
     | _ -> assert false
 
   
-
+  (** Ignore declarations at begining of proof *)
   let rec ignore_all_decls p = match value p with
     | Lambda (s, p) -> ignore_all_decls p
     | _ -> p
 
-
+  
+  (** Ignore declarations but keep assumptions *)
   let rec ignore_decls p = match value p with
     | Lambda (s, p) ->
       (match s.sname with
@@ -62,7 +66,8 @@ module Make (T : Translator_sig.S) = struct
       )
     | _ -> p
 
-
+  
+  (** Ignore result of preprocessing *)
   let rec ignore_preproc p = match app_name p with
     | Some ("th_let_pf", [_; _; p]) ->
       begin match value p with
@@ -71,7 +76,10 @@ module Make (T : Translator_sig.S) = struct
       end
     | _ -> p
 
-
+  
+  (** Produce input clauses from the result of CVC4's pre-processing. This may
+      not match the actual inputs in the original SMT2 file but they correspond to
+      what the proof uses. *)
   let rec produce_inputs_preproc p = match app_name p with
     | Some ("th_let_pf", [_; _; p]) ->
       begin match value p with
@@ -87,6 +95,7 @@ module Make (T : Translator_sig.S) = struct
     | _ -> p
 
 
+  (** Produce inputs from the assumptions *)
   let rec produce_inputs p = match value p with
     | Lambda ({sname = Name h; stype}, p) ->
       begin match app_name stype with
@@ -99,8 +108,9 @@ module Make (T : Translator_sig.S) = struct
       end
     | _ -> p
 
-
-
+  
+  (** Registers a propositional variable as an abstraction for a
+      formula. Proofs in SMTCoq have to be given in terms of formulas. *)
   let rec register_prop_vars p = match app_name p with
     | Some ("decl_atom", [formula; p]) ->
       begin match value p with
@@ -117,8 +127,7 @@ module Make (T : Translator_sig.S) = struct
     | _ -> p
 
 
-
-
+  (** Returns the name of the local assumptions made in [satlem] *)
   let rec get_assumptions acc p = match app_name p with
     | Some (("asf"|"ast"), [_; _; _; _; p]) ->
       begin match value p with
@@ -135,9 +144,12 @@ module Make (T : Translator_sig.S) = struct
       (* | Some (_, l) -> List.fold_left rm_used' assumptions l *)
       (* | None -> *) assumptions
 
+  (** Remove used assumptions from the environment *)
   let rm_used env t = { env with assum = rm_used' env.assum t }
 
 
+  (** Remove superfluous applications at the top of [satlem] and returns a list
+      of proofs whose resulting clauses need to be resolved. *)
   let rec trim_junk_satlem p = match app_name p with
     | Some ("clausify_false", [p]) -> trim_junk_satlem p
     | Some ("contra", [_; p1; p2]) ->
@@ -145,7 +157,9 @@ module Make (T : Translator_sig.S) = struct
     | _ -> [p]
 
 
-
+  (** Create an intermediate resolution step in [satlem] with the accumulated
+      clauses. {!Reso} ignores the resulting clause so we can just give the
+      empty clause here. *)
   let mk_inter_resolution clauses = match clauses with
     | [id] -> id
     | _ -> mk_clause ~reuse:false Reso [] clauses
@@ -157,7 +171,8 @@ module Make (T : Translator_sig.S) = struct
     | _ -> false
 
 
-
+  (** Accumulates equalities for congruence. This is useful for when [f] takes
+      multiples arguments. *)
   let rec cong neqs env p = match app_name p with
     | Some ("cong", [ty; rty; f; f'; x; y; p_f_eq_f'; r]) ->
 
@@ -178,6 +193,8 @@ module Make (T : Translator_sig.S) = struct
       eprintf "something went wrong in congruence@.";
       neqs, env
 
+
+  (** Accumulates equalities for transitivity to chain them together. *)
   and trans neqs env p = match app_name p with
     | Some ("trans", [ty; x; y; z; p1; p2]) ->
 
@@ -204,7 +221,8 @@ module Make (T : Translator_sig.S) = struct
 
 
 
-
+  (** Convert the local proof of a [satlem]. We use decductive style rule when
+      possible but revert to axiomatic ones when the context forces us to. *)
   and lem env p = match app_name p with
     | Some (("or_elim_1"|"or_elim_2"), [_; _; x; r])
       when (match app_name r with
@@ -419,7 +437,7 @@ module Make (T : Translator_sig.S) = struct
       | None -> { env with ax = true }
 
   
-
+  (** Returns the name given to this lemma, its type and the continuation. *)
   let result_satlem p = match value p with
     | Lambda ({sname=Name n} as s, r) ->
 
@@ -430,11 +448,15 @@ module Make (T : Translator_sig.S) = struct
 
     | _ -> assert false
 
+  (** Returns the continuation of a [satlem]. *)
   let continuation_satlem p = match value p with
     | Lambda (_, r) -> r
     | _ -> assert false
 
-
+  
+  (** Convert [satlem]. Clauses are chained together with an intermediate
+      resolution step when needed, and when CVC4 uses superfluous local
+      assumption, the clause is weakened. *)
   let rec satlem p = match app_name p with
 
     | Some ("satlem", [c; _; l; p]) ->
@@ -474,6 +496,7 @@ module Make (T : Translator_sig.S) = struct
 
 
 
+  (** Returns the clause used in a resolution step *)
   let clause_qr p = match app_name (deref p).ttype with
     | Some ("holds", [cl]) -> get_clause_id (to_clause cl)
     | _ -> raise Not_found
@@ -483,9 +506,11 @@ module Make (T : Translator_sig.S) = struct
     | Some (("Q"|"R"), [_; _; u1; u2; _]) -> reso_of_QR (reso_of_QR acc u1) u2
     | _ -> clause_qr qr :: acc
 
+  (** Returns clauses used in a linear resolution chain *)
   let reso_of_QR qr = reso_of_QR [] qr |> List.rev
 
 
+  (** convert resolution proofs of [satlem_simplify] *)
   let rec reso_of_satlem_simplify pid p = match app_name p with
 
     | Some ("satlem_simplify", [_; _; _; qr; p]) ->
@@ -503,6 +528,7 @@ module Make (T : Translator_sig.S) = struct
     | _ -> assert false
 
 
+  (** Convert an LFSC proof (this is the entry point) *)
   let convert p =
     p
     |> ignore_all_decls
@@ -515,6 +541,7 @@ module Make (T : Translator_sig.S) = struct
     |> reso_of_satlem_simplify 0
 
 
+  (** Clean global environments *)
   let clear () = T.clear ()
 
 
