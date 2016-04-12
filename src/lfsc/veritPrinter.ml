@@ -67,6 +67,7 @@ let get_rule = function
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
   | Eqre -> "eq_reflexive"
+  | Lage -> "la_generic"
 
 
 let print_sharps () =
@@ -79,6 +80,15 @@ let smt2_of_lfsc = function
   | "ifte" -> "ite"
   | "flet" -> "let"
   | "impl" -> "=>"
+  | ">_Int" -> ">"
+  | ">=_Int" -> ">="
+  | "<_Int" -> "<"
+  | "<=_Int" -> "<="
+  | "+_Int" -> "+"
+  | "-_Int" -> "-"
+  | "*_Int" -> "*"
+  | "/_Int" -> "/" (* Maybe div? *)
+  | "u-_Int" -> "-"
   | t -> t
 
 
@@ -114,6 +124,9 @@ and print_term fmt t =
 
       | Some ("p_app", [a]) -> print_term fmt a
 
+      | Some ("a_int", [{value = Int n}]) ->
+        fprintf fmt "%s" (Big_int.string_of_big_int n)
+
       | Some (n, l) ->
         let n = smt2_of_lfsc n in
         incr cpt;
@@ -121,7 +134,8 @@ and print_term fmt t =
         fprintf fmt "#%d:(%s%a)" !cpt n
           (fun fmt -> List.iter (fprintf fmt " %a" print_term)) l
 
-      | _ -> assert false
+      | None -> assert false
+
 
 let print_term fmt t = print_term fmt t (* (get_real t) *)
 

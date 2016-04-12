@@ -63,6 +63,7 @@ let get_rule = function
   | Eqcp -> VeritSyntax.Eqcp
   | Eqco -> VeritSyntax.Eqco
   | Eqre -> VeritSyntax.Eqre
+  | Lage -> VeritSyntax.Lage
 
 
 
@@ -82,14 +83,62 @@ let rec term_smtcoq t = match value t with
       | Some (("ite"|"ifte"), args) -> Form (Fapp (Fite, args_smtcoq args))
       | Some ("iff", args) -> Form (Fapp (Fiff, args_smtcoq args))
       | Some ("=", [_; a; b]) ->
-        let h1, h2 =
-          match term_smtcoq a, term_smtcoq b with
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
           | Atom h1, Atom h2 -> h1, h2
           | _ -> assert false
         in
         Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
       | Some ("apply", _) -> uncurry [] t
       | Some ("p_app", [p]) -> term_smtcoq p
+      | Some ("a_int", [{value = Int bi}]) -> Atom (Atom.hatom_Z_of_bigint ra bi)
+      | Some ("<_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_lt ra h1 h2)
+      | Some ("<=_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_le ra h1 h2)
+      | Some (">_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_gt ra h1 h2)
+      | Some (">=_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_ge ra h1 h2)
+      | Some ("+_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_plus ra h1 h2)
+      | Some ("-_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_minus ra h1 h2)
+      | Some ("*_Int", [a; b]) ->
+        let h1, h2 = match term_smtcoq a, term_smtcoq b with
+          | Atom h1, Atom h2 -> h1, h2
+          | _ -> assert false
+        in
+        Atom (Atom.mk_mult ra h1 h2)
+      | Some ("u-_Int", [a]) ->
+        let h = match term_smtcoq a with
+          | Atom h -> h
+          | _ -> assert false
+        in
+        Atom (Atom.mk_opp ra h)
       | Some (n, _) -> failwith (n ^ " not implemented")        
       | _ -> assert false        
     end

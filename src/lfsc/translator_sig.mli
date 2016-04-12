@@ -46,6 +46,7 @@ type rule =
   | Eqcp
   | Eqco
   | Eqre
+  | Lage
     
 
 

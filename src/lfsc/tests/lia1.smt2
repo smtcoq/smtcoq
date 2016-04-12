@@ -1,0 +1,7 @@
+(set-logic QF_UFLIA)
+(declare-fun x () Int)
+(declare-fun y () Int)
+(declare-fun z () Int)
+(assert (not (=> (and (not (>= x 4)) (or (not (>= y 8)) (not (>= z 10)))) (or (not (>= (+ x y) 11)) (not (>= (+ x z) 13))))))
+(check-sat)
+(exit)

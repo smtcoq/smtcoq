@@ -147,16 +147,7 @@ module Make (T : Translator_sig.S) = struct
   (** Remove used assumptions from the environment *)
   let rm_used env t = { env with assum = rm_used' env.assum t }
 
-
-  (** Remove superfluous applications at the top of [satlem] and returns a list
-      of proofs whose resulting clauses need to be resolved. *)
-  let rec trim_junk_satlem p = match app_name p with
-    | Some ("clausify_false", [p]) -> trim_junk_satlem p
-    | Some ("contra", [_; p1; p2]) ->
-      trim_junk_satlem p1 @ trim_junk_satlem p2
-    | _ -> [p]
-
-
+  
   (** Create an intermediate resolution step in [satlem] with the accumulated
       clauses. {!Reso} ignores the resulting clause so we can just give the
       empty clause here. *)
@@ -334,6 +325,9 @@ module Make (T : Translator_sig.S) = struct
     (* Ignore symmetry of equlity rules *)
     | Some (("symm"|"negsymm"), [_; _; _; r]) -> lem (rm_used env r) r
 
+    (* Ignore double negation *)
+    | Some (("not_not_elim"|"not_not_intro"), [_; r]) -> lem env r
+
     (* Should not be traversed anyway *)
     | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem env r
 
@@ -448,6 +442,25 @@ module Make (T : Translator_sig.S) = struct
 
     | _ -> assert false
 
+
+  exception ArithLemma
+
+  (** Remove superfluous applications at the top of [satlem] and returns a list
+      of proofs whose resulting clauses need to be resolved.
+
+      @raises {!ArithLemma} if the proof is a trust statement (we assume it is
+      the case for now).  *)
+  let rec trim_junk_satlem p = match app_name p with
+    | Some ("clausify_false", [p]) ->
+      (match name p with
+       | Some "trust" -> raise ArithLemma
+       | _ -> trim_junk_satlem p
+      )
+    | Some ("contra", [_; p1; p2]) ->
+      trim_junk_satlem p1 @ trim_junk_satlem p2
+    | _ -> [p]
+
+  
   (** Returns the continuation of a [satlem]. *)
   let continuation_satlem p = match value p with
     | Lambda (_, r) -> r
@@ -461,35 +474,43 @@ module Make (T : Translator_sig.S) = struct
 
     | Some ("satlem", [c; _; l; p]) ->
       (* eprintf "SATLEM ---@."; *)
-      let assumptions, l = get_assumptions [] l in
-      let l = trim_junk_satlem l in
-      let env = { empty with assum = assumptions } in
-      let env =
-        List.fold_left (fun env p ->
-            let local_env =
-              { env with
-                clauses = [];
-                ax = false;
-                mpred = MTerm.empty;
-              } in
-            let local_env = lem local_env p in
-            { env with
-              clauses = List.rev_append local_env.clauses env.clauses;
-              assum = local_env.assum
-            }
-          ) env l
-      in
-      let clauses = List.rev env.clauses in
-      let id = mk_inter_resolution clauses in
-      (* eprintf "remaining assumptions:"; *)
-      (* List.iter (eprintf "%s, ") env.assu; *)
-      (* eprintf "@."; *)
       let cl = to_clause c in
-      let satlem_id =
-        if env.assum = [] then id else mk_clause Weak cl [id]
-      in
-      register_clause_id cl satlem_id;
-      (* eprintf "--- SATLEM@."; *)
+      (try
+        let assumptions, l = get_assumptions [] l in
+        let l = trim_junk_satlem l in
+        let env = { empty with assum = assumptions } in
+        let env =
+          List.fold_left (fun env p ->
+              let local_env =
+                { env with
+                  clauses = [];
+                  ax = false;
+                  mpred = MTerm.empty;
+                } in
+              let local_env = lem local_env p in
+              { env with
+                clauses = List.rev_append local_env.clauses env.clauses;
+                assum = local_env.assum
+              }
+            ) env l
+        in
+        let clauses = List.rev env.clauses in
+        let id = mk_inter_resolution clauses in
+        (* eprintf "remaining assumptions:"; *)
+        (* List.iter (eprintf "%s, ") env.assu; *)
+        (* eprintf "@."; *)
+        let satlem_id =
+          if env.assum = [] then id else mk_clause Weak cl [id]
+        in
+        register_clause_id cl satlem_id
+        (* eprintf "--- SATLEM@."; *)
+        
+       with ArithLemma ->
+         let satlem_id = mk_clause Lage cl [] in
+         register_clause_id cl satlem_id
+
+      );
+      
       satlem (continuation_satlem p)
 
     | _ -> p
