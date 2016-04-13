@@ -59,6 +59,14 @@ let get_rule = function
   | Orn -> VeritSyntax.Orn
   | And -> VeritSyntax.And
   | Andp -> VeritSyntax.Andp
+  | Equ1 -> VeritSyntax.Equ1
+  | Equ2 -> VeritSyntax.Equ2
+  | Nequ1 -> VeritSyntax.Nequ1
+  | Nequ2 -> VeritSyntax.Nequ2
+  | Equp1 -> VeritSyntax.Equp1
+  | Equp2 -> VeritSyntax.Equp2
+  | Equn1 -> VeritSyntax.Equn1
+  | Equn2 -> VeritSyntax.Equn2
   | Eqtr -> VeritSyntax.Eqtr
   | Eqcp -> VeritSyntax.Eqcp
   | Eqco -> VeritSyntax.Eqco
@@ -83,64 +91,28 @@ let rec term_smtcoq t = match value t with
       | Some (("ite"|"ifte"), args) -> Form (Fapp (Fite, args_smtcoq args))
       | Some ("iff", args) -> Form (Fapp (Fiff, args_smtcoq args))
       | Some ("=", [_; a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
+        let h1, h2 = term_smtcoq_atom a, term_smtcoq_atom b in
         Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
       | Some ("apply", _) -> uncurry [] t
       | Some ("p_app", [p]) -> term_smtcoq p
       | Some ("a_int", [{value = Int bi}]) -> Atom (Atom.hatom_Z_of_bigint ra bi)
       | Some ("<_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_lt ra h1 h2)
+        Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("<=_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_le ra h1 h2)
+        Atom (Atom.mk_le ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (">_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_gt ra h1 h2)
+        Atom (Atom.mk_gt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (">=_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_ge ra h1 h2)
+        Atom (Atom.mk_ge ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("+_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_plus ra h1 h2)
+        Atom (Atom.mk_plus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("-_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_minus ra h1 h2)
+        Atom (Atom.mk_minus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("*_Int", [a; b]) ->
-        let h1, h2 = match term_smtcoq a, term_smtcoq b with
-          | Atom h1, Atom h2 -> h1, h2
-          | _ -> assert false
-        in
-        Atom (Atom.mk_mult ra h1 h2)
-      | Some ("u-_Int", [a]) ->
-        let h = match term_smtcoq a with
-          | Atom h -> h
-          | _ -> assert false
-        in
-        Atom (Atom.mk_opp ra h)
+        Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+      | Some ("u-_Int", [a]) -> Atom (Atom.mk_opp ra (term_smtcoq_atom a))
       | Some (n, _) -> failwith (n ^ " not implemented")        
-      | _ -> assert false        
+      | _ -> assert false
     end
 
   | Rat _ -> failwith ("LFSC rationals not supported")
@@ -155,16 +127,17 @@ let rec term_smtcoq t = match value t with
   | SideCond _ -> failwith ("LFSC side conditions not supported")
   | _ -> assert false
 
+
+and term_smtcoq_atom a = match term_smtcoq a with
+  | Atom h -> h
+  | _ ->  assert false
+
 and args_smtcoq args =
   List.map (fun t -> lit_of_atom_form_lit rf (term_smtcoq t)) args
   |> Array.of_list
 
 and uncurry acc t = match app_name t with
-  | Some ("apply", [_; _; f; a]) ->
-    (match term_smtcoq a with
-     | Atom h -> uncurry (h :: acc) f
-     | _ ->  assert false
-    )
+  | Some ("apply", [_; _; f; a]) -> uncurry (term_smtcoq_atom a :: acc) f
   | None ->
     (match name t with
      | Some n ->

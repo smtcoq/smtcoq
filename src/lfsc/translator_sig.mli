@@ -42,6 +42,14 @@ type rule =
   | Orn
   | And
   | Andp
+  | Equ1
+  | Equ2
+  | Nequ1
+  | Nequ2
+  | Equp1
+  | Equp2
+  | Equn1
+  | Equn2
   | Eqtr
   | Eqcp
   | Eqco

@@ -140,9 +140,9 @@ module Make (T : Translator_sig.S) = struct
 
   let rec rm_used' assumptions t = match name t with
     | Some x -> List.filter (fun y -> y <> x) assumptions
-    | None -> (* match app_name t with *)
-      (* | Some (_, l) -> List.fold_left rm_used' assumptions l *)
-      (* | None -> *) assumptions
+    | None -> match app_name t with
+      | Some (_, l) -> List.fold_left rm_used' assumptions l
+      | None -> assumptions
 
   (** Remove used assumptions from the environment *)
   let rm_used env t = { env with assum = rm_used' env.assum t }
@@ -217,7 +217,10 @@ module Make (T : Translator_sig.S) = struct
   and lem env p = match app_name p with
     | Some (("or_elim_1"|"or_elim_2"), [_; _; x; r])
       when (match app_name r with
-            Some (("impl_elim"|"not_and_elim"), _) -> true | _ -> false)
+            Some (("impl_elim"
+                  |"not_and_elim"
+                  |"iff_elim_1"
+                  |"iff_elim_2"), _) -> true | _ -> false)
       ->
       let env = rm_used env x in
       let env = lem env r in
@@ -243,6 +246,54 @@ module Make (T : Translator_sig.S) = struct
           mk_clause_cl Impp [not_ a_impl_b; not_ a; b] [] :: env.clauses
       in
       { env with clauses }
+
+    | Some ("iff_elim_1", [a; b; r]) ->
+      begin match app_name r with
+        | Some ("not_iff_elim", [a; b; r]) ->
+          let env = lem env r in
+          let clauses = match env.clauses with
+            | [_] when not env.ax ->
+              mk_clause_cl Nequ2 [not_ a; not_ b] env.clauses :: []
+            | _ ->
+              let a_iff_b = iff_ a b in
+              mk_clause_cl Equn1 [a_iff_b; not_ a; not_ b] [] :: env.clauses
+          in
+          { env with clauses }
+        | _ ->
+          let env = lem env r in
+          let clauses = match env.clauses with
+            | [_] when not env.ax ->
+              mk_clause_cl Equ1 [not_ a; b] env.clauses :: []
+            | _ ->
+              let a_iff_b = th_res r in
+              mk_clause_cl Equp2 [not_ a_iff_b; not_ a; b] [] :: env.clauses
+          in
+          { env with clauses }
+      end
+
+      | Some ("iff_elim_2", [a; b; r]) ->
+      begin match app_name r with
+        | Some ("not_iff_elim", [a; b; r]) ->
+          let env = lem env r in
+          let clauses = match env.clauses with
+            | [_] when not env.ax ->
+              mk_clause_cl Nequ1 [a; b] env.clauses :: []
+            | _ ->
+              let a_iff_b = iff_ a b in
+              mk_clause_cl Equn2 [a_iff_b; a; b] [] :: env.clauses
+          in
+          { env with clauses }
+        | _ ->
+          let env = lem env r in
+          let clauses = match env.clauses with
+            | [_] when not env.ax ->
+              mk_clause_cl Equ2 [a; not_ b] env.clauses :: []
+            | _ ->
+              let a_iff_b = th_res r in
+              mk_clause_cl Equp1 [not_ a_iff_b; a; not_ b] [] :: env.clauses
+          in
+          { env with clauses }
+      end
 
     | Some ("not_and_elim", [a; b; r]) ->
       let env = lem env r in
