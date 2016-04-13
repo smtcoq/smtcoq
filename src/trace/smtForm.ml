@@ -80,6 +80,10 @@ module type FORM =
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
 
+      (** Turn n-ary [Fand] and [For] into their right-associative
+          counter-parts *)
+      val right_assoc : reify -> t -> t
+
       (** Producing Coq terms *) 
 
       val to_coq : t -> Term.constr
@@ -406,6 +410,22 @@ module Make (Atom:ATOM) =
 	      flatten_or reify acc args
 	  | _ -> flatten_or reify (flatten reify a :: acc) args
 
+
+    let rec right_assoc reify f = 
+      match pform f with
+      | Fapp(Fand, args) when Array.length args > 2 ->
+        let a = args.(0) in
+        let rargs = Array.sub args 1 (Array.length args - 1) in
+        let f' = right_assoc reify (get reify (Fapp (Fand, rargs))) in
+        set_sign f (get reify (Fapp (Fand, [|a; f'|])))
+      | Fapp(For, args) when Array.length args > 2 ->
+        let a = args.(0) in
+        let rargs = Array.sub args 1 (Array.length args - 1) in
+        let f' = right_assoc reify (get reify (Fapp (For, rargs))) in
+        set_sign f (get reify (Fapp (For, [|a; f'|])))
+      | _ -> f
+
+    
     (** Producing Coq terms *) 
 
     let to_coq hf = mkInt (to_lit hf)

@@ -65,3 +65,7 @@ END
 TACTIC EXTEND verit
 | [ "verit" ] -> [ Verit.tactic ]
 END
+
+TACTIC EXTEND cvc4
+| [ "cvc4" ] -> [ Lfsc.tactic ]
+END
