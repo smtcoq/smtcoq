@@ -119,6 +119,8 @@ val mpq : term
 (** Constructor for LFSC integers. *)
 val mk_mpz : mpz -> term
 
+val mpz_of_int : int -> term
+
 (** Constructor for LFSC rationals. *)
 val mk_mpq : mpq -> term
 

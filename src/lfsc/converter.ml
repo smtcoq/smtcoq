@@ -212,7 +212,7 @@ module Make (T : Translator_sig.S) = struct
 
 
 
-  (** Convert the local proof of a [satlem]. We use decductive style rule when
+  (** Convert the local proof of a [satlem]. We use decductive style rules when
       possible but revert to axiomatic ones when the context forces us to. *)
   and lem env p = match app_name p with
     | Some (("or_elim_1"|"or_elim_2"), [_; _; x; r])

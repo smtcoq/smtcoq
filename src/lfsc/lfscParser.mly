@@ -116,10 +116,36 @@ sexps
   | EOF { [] }
 ;
 
+
+atom_ignore:
+  | STRING {}
+  | CHECK {}
+  | DEFINE {}
+  | DECLARE {}
+  | TYPE {}
+  | KIND {}
+  | MPZ {}
+  | MPQ {}
+  | PROGRAM {}
+  | INT {}
+  | LAMBDA {}
+  | PI {}
+  | HOLE {}
+  | SC {}
+  | AT {}
+  | COLON {}
+;
+
+sexp_ignore :
+  | atom_ignore {}
+  | LPAREN ignore_sexp_list RPAREN {}
+;
+  
 ignore_sexp_list :
   | { }
-  | sexp ignore_sexp_list { }
+  | sexp_ignore ignore_sexp_list { }
 ;
+
 
 term_list:
   | term { [$1]}
@@ -219,6 +245,8 @@ term:
     { mk_ascr $3 $4 }
 ;
 
+
+  
 declare:
   | DECLARE STRING { scope := [$2]; $2 }
 ;

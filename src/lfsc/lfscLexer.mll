@@ -135,7 +135,7 @@ let hexdigit = digit | ['a'-'f' 'A'-'F']
 let unquoted_start =
   unquoted # ['#' '|'] | '#' unquoted # ['|'] | '|' unquoted # ['#']
 
-let integer = ['0' - '9'] ['0' - '9']*
+let integer = digit+
 let ident = ('_')* ['a'-'z' 'A'-'Z' '\'' ]['a'-'z' 'A'-'Z' '0'-'9' '\\' '_']*
 
 
@@ -153,6 +153,7 @@ rule main buf = parse
   | ':' { Token.colon }
   | '^' { Token.sc }
   | '@' { Token.at }
+  | '(' '~' (integer as i) ')' {Token.integer ("-"^i) }
   | integer as i { Token.integer i }
   | '"'
       { 

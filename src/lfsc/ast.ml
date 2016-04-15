@@ -312,6 +312,8 @@ let mpq = { value = Mpq; ttype = lfsc_type }
 
 let mk_mpz n = { value = Int n; ttype = mpz }
 
+let mpz_of_int n = { value = Int (Big_int.big_int_of_int n); ttype = mpz }
+
 let mk_mpq n = { value = Rat n; ttype = mpq }
 
 
@@ -751,8 +753,10 @@ let mk_define n t =
 
 let mk_check t =
   List.iter (fun (name, l, expected) ->
-              if not (term_equal (callback name l) expected) then
-    failwith ("Side condition " ^ name ^ " failed");
+      let res = callback name l in
+      if not (term_equal res expected) then
+        failwith (asprintf "Side condition %s failed: Got %a, expected %a"
+                    name print_term res print_term expected);
     ) (!sc_to_check);
   sc_to_check := [];
   ()
