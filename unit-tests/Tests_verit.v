@@ -6,6 +6,10 @@ Local Open Scope int63_scope.
 
 (* veriT vernacular commands *)
 
+Section Checker_Sat0.
+  Verit_Checker "sat0.smt2" "sat0.vtlog".
+End Checker_Sat0.
+
 Section Checker_Sat1.
   Verit_Checker "sat1.smt2" "sat1.vtlog".
 End Checker_Sat1.
@@ -128,6 +132,11 @@ Section Checker_Let2.
 End Checker_Let2.
 *)
 
+
+Section Sat0.
+  Parse_certif_verit t_i1 t_func1 t_atom1 t_form1 root1 used_roots1 trace1 "sat1.smt2" "sat1.vtlog".
+  Compute Euf_Checker.checker t_i1 t_func1 t_atom1 t_form1 root1 used_roots1 trace1.
+End Sat0.
 
 Section Sat1.
   Parse_certif_verit t_i1 t_func1 t_atom1 t_form1 root1 used_roots1 trace1 "sat1.smt2" "sat1.vtlog".
@@ -276,6 +285,10 @@ Section Let2.
 End Let2.
 *)
 
+
+Section Theorem_Sat0.
+  Time Verit_Theorem theorem_sat1 "sat0.smt2" "sat0.vtlog".
+End Theorem_Sat0.
 
 Section Theorem_Sat1.
   Time Verit_Theorem theorem_sat1 "sat1.smt2" "sat1.vtlog".
