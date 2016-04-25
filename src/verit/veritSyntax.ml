@@ -55,14 +55,14 @@ let is_eq l =
 
 let rec process_trans a b prem res =
   try
-    let (l,(c,c')) = List.find (fun (l,(a',b')) -> (a' = b || b' = b)) prem in
-    let prem = List.filter (fun l' -> l' <> (l,(c,c'))) prem in
-    let c = if c = b then c' else c in
-    if a = c
+    let (l,(c,c')) = List.find (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
+    let prem = List.filter (fun (l',(d,d')) -> (not (Form.equal l' l)) || (not (Atom.equal d c)) || (not (Atom.equal d' c'))) prem in
+    let c = if Atom.equal c b then c' else c in
+    if Atom.equal a c
     then List.rev (l::res)
     else process_trans a c prem (l::res)
   with
-    |Not_found -> if a = b then [] else assert false
+    |Not_found -> if Atom.equal a b then [] else assert false
 
 
 let mkTrans p =
@@ -84,7 +84,7 @@ let rec process_congr a_args b_args prem res =
       (* if a = b *)
       (* then process_congr a_args b_args prem (None::res) *)
       (* else *)
-        let (l,(a',b')) = List.find (fun (l,(a',b')) -> (a = a' && b = b')||(a = b' && b = a')) prem in
+        let (l,(a',b')) = List.find (fun (l,(a',b')) -> ((Atom.equal a a') && (Atom.equal b b'))||((Atom.equal a b') && (Atom.equal b a'))) prem in
         process_congr a_args b_args prem ((Some l)::res)
     | [],[] -> List.rev res
     | _ -> failwith "VeritSyntax.process_congr: incorrect number of arguments in function application"
@@ -108,7 +108,7 @@ let mkCongr p =
           let cert = process_congr a_args b_args prem_val [] in
           Other (EqCgr (c,cert))
         | Aapp (a_f,a_args), Aapp (b_f,b_args) ->
-          if a_f = b_f then
+          if indexed_op_index a_f = indexed_op_index b_f then
             let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
             Other (EqCgr (c,cert))
           else failwith "VeritSyntax.mkCongr: left function is different from right fucntion"
@@ -131,7 +131,7 @@ let mkCongrPred p =
               let cert = process_congr a_args b_args prem_val [] in
               Other (EqCgrP (p_p,c,cert))
             | Aapp (a_f,a_args), Aapp (b_f,b_args) ->
-              if a_f = b_f then
+              if indexed_op_index a_f = indexed_op_index b_f then
                 let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
                 Other (EqCgrP (p_p,c,cert))
               else failwith "VeritSyntax.mkCongrPred: unmatching predicates"

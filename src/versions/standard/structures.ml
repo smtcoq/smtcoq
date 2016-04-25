@@ -85,11 +85,11 @@ let error = Errors.error
 let coqtype = Future.from_val Term.mkSet
 
 let declare_new_type t =
-  let _ = Command.declare_assumption false (Decl_kinds.Local, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, t) in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, t) in
   Term.mkVar t
 
 let declare_new_variable v constr_t =
-  let _ = Command.declare_assumption false (Decl_kinds.Local, false, Decl_kinds.Definitional) (constr_t, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
   Term.mkVar v
 
 let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty
