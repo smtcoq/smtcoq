@@ -100,3 +100,5 @@ let vernacentries_interp expr =
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
 let lift = Vars.lift
+
+let mk_tactic = Proofview.V82.tactic

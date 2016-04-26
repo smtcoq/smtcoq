@@ -70,3 +70,5 @@ let vernacentries_interp expr =
 let pr_constr_env = Printer.pr_constr_env
 
 let lift = Term.lift
+
+let mk_tactic t = t

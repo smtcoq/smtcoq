@@ -390,7 +390,7 @@ let get_arguments concl =
   match args with
   | [ty;a;b] when f = Lazy.force ceq && ty = Lazy.force cbool -> a, b
   | [a] when f = Lazy.force cis_true -> a, Lazy.force ctrue
-  | _ -> failwith ("Zchaff.tactic :can only deal with equality over bool")
+  | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
 
 
 (* Check that the result is Unsat, otherwise raise a model *)
