@@ -61,7 +61,8 @@ module Btype =
     (* reify table *)
     type reify_tbl = 
         { mutable count : int;
-	          tbl : (Term.constr, btype) Hashtbl.t
+	          tbl : (Term.constr, btype) Hashtbl.t;
+          mutable cuts : (Structures.names_id_t * Term.types) list
 	}
 
     let create () = 
@@ -70,7 +71,10 @@ module Btype =
       Hashtbl.add htbl (Lazy.force cbool) Tbool;
       (* Hashtbl.add htbl (Lazy.force cpositive) Tpositive; *)
       { count = 0;
-	tbl = htbl }
+	tbl = htbl;
+        cuts = [] }
+
+    let get_cuts reify = reify.cuts
 
     let declare reify t typ_eqb =
       (* TODO: allows to have only typ_eqb *)
@@ -84,14 +88,23 @@ module Btype =
       try
         Hashtbl.find reify.tbl t
       with | Not_found ->
-        let eq_t = declare_new_variable (Names.id_of_string "eq") (Term.mkArrow t (Term.mkArrow t (Lazy.force cbool))) in
-        let x = mkName "x" in
-        let y = mkName "y" in
-        let rx = Term.mkRel 2 in
-        let ry = Term.mkRel 1 in
-        let eq_refl = Term.mkProd (x,t,Term.mkProd (y,t,mklApp creflect [|mklApp ceq [|t;rx;ry|];mklApp (lazy eq_t) [|rx;ry|]|])) in
-        let eq_refl_v = declare_new_variable (Names.id_of_string ("eq_refl")) eq_refl in
-        let ce = mklApp cTyp_eqb [|t;eq_t;eq_refl_v|] in
+        let n = string_of_int (List.length reify.cuts) in
+        let eq_name = Names.id_of_string ("eq"^n) in
+        let eq_var = Term.mkVar eq_name in
+
+        (* let eq_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in *)
+
+        (* let eq = mkName "eq" in *)
+        (* let x = mkName "x" in *)
+        (* let y = mkName "y" in *)
+        (* let req = Term.mkRel 3 in *)
+        (* let rx = Term.mkRel 2 in *)
+        (* let ry = Term.mkRel 1 in *)
+        (* let eq_refl_ty = Term.mkLambda (eq, eq_ty, Term.mkProd (x,t,Term.mkProd (y,t,mklApp creflect [|mklApp ceq [|t;rx;ry|]; Term.mkApp (req, [|rx;ry|])|]))) in *)
+
+        let eq_ty = mklApp ctyp_eqb_param [|t|] in
+        reify.cuts <- (eq_name, eq_ty)::reify.cuts;
+        let ce = mklApp ctyp_eqb_of_typ_eqb_param [|t; eq_var|] in
         declare reify t ce
 
     let interp_tbl reify =

@@ -230,11 +230,7 @@ let make_proof call_solver rt ro rf l =
   call_solver rt ro fl (root,l)
 
 
-let tactic call_solver rt ro ra rf gl =
-  let env = Tacmach.pf_env gl in
-  let sigma = Tacmach.project gl in
-  let t = Tacmach.pf_concl gl in
-
+let tactic call_solver rt ro ra rf env sigma t =
   let (forall_let, concl) = Term.decompose_prod_assum t in
   let env = Environ.push_rel_context forall_let env in
   let a, b = get_arguments concl in
@@ -253,4 +249,7 @@ let tactic call_solver rt ro ra rf gl =
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
   let res = compose_lam_assum forall_let body in
-  Tactics.exact_no_check res gl
+  let cuts = Btype.get_cuts rt in
+  List.fold_right (fun (eqn, eqt) tac ->
+    Structures.tclTHENLAST (Structures.assert_before (Names.Name eqn) eqt) tac
+  ) cuts (Structures.vm_cast_no_check res)

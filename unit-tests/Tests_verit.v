@@ -842,25 +842,21 @@ Proof.
   verit.
 Qed.
 
-Section Concrete.
-  Goal forall (i j:int),
+Goal forall (i j:int),
     (i == j) && (negb (i == j)) = false.
-  Proof.
-    verit.
-  Qed.
-End Concrete.
+Proof.
+  verit.
+  econstructor; eexact Int63Properties.reflect_eqb.
+Qed.
 
-Section Concrete2.
-  Lemma concrete2 : forall i j, (i == j) || (negb (i == j)).
-  Proof.
-    verit.
-  Qed.
-  Check concrete2.
-End Concrete2.
-Check concrete2.
+Goal forall i j, (i == j) || (negb (i == j)).
+Proof.
+  verit.
+  econstructor; eexact Int63Properties.reflect_eqb.
+Qed.
 
 
-(* Congruence in which some premices are REFL *)
+(* Congruence in which some premises are REFL *)
 
 Goal forall (f:Z -> Z -> Z) x y z,
   implb (Zeq_bool x y) (Zeq_bool (f z x) (f z y)).

@@ -136,7 +136,7 @@ let mkCongrPred p =
                 Other (EqCgrP (p_p,c,cert))
               else failwith "VeritSyntax.mkCongrPred: unmatching predicates"
             | _ -> failwith "VeritSyntax.mkCongrPred : not pred app")
-        |_ ->  failwith "VeritSyntax.mkCongr: no or more than one predicate app premice in congruence")
+        |_ ->  failwith "VeritSyntax.mkCongr: no or more than one predicate app premise in congruence")
     |[] ->  failwith "VeritSyntax.mkCongrPred: no conclusion in congruence"
     |_ -> failwith "VeritSyntax.mkCongrPred: more than one conclusion in congruence"
 

@@ -234,6 +234,22 @@ Record typ_eqb : Type := Typ_eqb {
   te_reflect : forall x y, reflect (x = y) (te_eqb x y)
 }.
 
+Section Typ_eqb_param.
+
+  Variable A : Type.
+
+  Record typ_eqb_param : Type := Typ_eqb_param {
+    te_eqb_param : A -> A -> bool;
+    te_reflect_param : forall x y, reflect (x = y) (te_eqb_param x y)
+  }.
+
+  Variable r : typ_eqb_param.
+
+  Definition typ_eqb_of_typ_eqb_param :=
+    Typ_eqb A (te_eqb_param r) (te_reflect_param r).
+
+End Typ_eqb_param.
+
 (* Common used types into which we interpret *)
 
 (* Unit *)
