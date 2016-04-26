@@ -273,9 +273,9 @@ module Make (Atom:ATOM) =
       | CCunknown
 
     module ConstrHash = struct
-      type t = Constr.constr
-      let equal = Constr.equal
-      let hash = Constr.hash
+      type t = Term.constr
+      let equal = Term.eq_constr
+      let hash = Term.hash_constr
     end
     module ConstrHashtbl = Hashtbl.Make(ConstrHash)
 
@@ -340,7 +340,7 @@ module Make (Atom:ATOM) =
 	match args with
 	| [t] -> 
 	    let c,args = Term.decompose_app t in
-	    if Constr.equal c (Lazy.force cnegb) then
+	    if Term.eq_constr c (Lazy.force cnegb) then
               mk_fnot (i+1) args
 	    else 
               let q,r = i lsr 1 , i land 1 in
@@ -355,7 +355,7 @@ module Make (Atom:ATOM) =
 	| [t1;t2] -> 
 	    let l2 = mk_hform t2 in
 	    let c, args = Term.decompose_app t1 in
-	    if Constr.equal c (Lazy.force candb) then
+	    if Term.eq_constr c (Lazy.force candb) then
               mk_fand (l2::acc) args
 	    else 
 	      let l1 = mk_hform t1 in
@@ -367,7 +367,7 @@ module Make (Atom:ATOM) =
 	| [t1;t2] -> 
 	    let l2 = mk_hform t2 in
 	    let c, args = Term.decompose_app t1 in
-	    if Constr.equal c (Lazy.force corb) then
+	    if Term.eq_constr c (Lazy.force corb) then
               mk_for (l2::acc) args
 	    else 
 	      let l1 = mk_hform t1 in

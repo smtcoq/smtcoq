@@ -388,8 +388,8 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
 let get_arguments concl = 
   let f, args = Term.decompose_app concl in
   match args with
-  | [ty;a;b] when (Constr.equal f (Lazy.force ceq)) && (Constr.equal ty (Lazy.force cbool)) -> a, b
-  | [a] when (Constr.equal f (Lazy.force cis_true)) -> a, Lazy.force ctrue
+  | [ty;a;b] when (Term.eq_constr f (Lazy.force ceq)) && (Term.eq_constr ty (Lazy.force cbool)) -> a, b
+  | [a] when (Term.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
   | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
 
 
@@ -495,9 +495,9 @@ let tactic gl =
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
   let body = 
-    if ((Constr.equal b (Lazy.force ctrue)) || (Constr.equal b (Lazy.force cfalse))) then
+    if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.get reify_atom) reify_form a in
-      let l' = if (Constr.equal b (Lazy.force ctrue)) then Form.neg l else l in
+      let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in

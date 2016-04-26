@@ -842,22 +842,22 @@ Proof.
   verit.
 Qed.
 
-Section Concret.
-  Goal forall i j,
+Section Concrete.
+  Goal forall (i j:int),
     (i == j) && (negb (i == j)) = false.
   Proof.
     verit.
   Qed.
-End Concret.
+End Concrete.
 
-Section Concret2.
-  Lemma concret : forall i j, (i == j) || (negb (i == j)).
+Section Concrete2.
+  Lemma concrete2 : forall i j, (i == j) || (negb (i == j)).
   Proof.
     verit.
   Qed.
-  Check concret.
-End Concret2.
-Check concret.
+  Check concrete2.
+End Concrete2.
+Check concrete2.
 
 
 (* Congruence in which some premices are REFL *)
