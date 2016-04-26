@@ -16,11 +16,11 @@
 (**************************************************************************)
 
 
-Require Import List NArith.
+Require Import List Bool NArith.
 Import ListNotations.
-
 Local Open Scope list_scope.
 Local Open Scope nat_scope.
+Local Open Scope bool_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -267,8 +267,70 @@ Eval compute in append_false' (mk_bv 23 [true; true; true ; true ; true]) 21.
 
 (*(N.to_nat (N.div (N.of_nat (length l)) 2) - 3)*)
 
-Definition eq_bv (a b: bv): bool.
-Admitted.
+Fixpoint beq_list (l m : list bool) {struct l} :=
+  match l, m with
+    | nil, nil => true
+    | x :: l', y :: m' => (Bool.eqb x y) && (beq_list l' m')
+    | _, _ => false
+  end.
+
+Search (nat -> (nat -> bool)).
+
+Definition eq_bv (a b: bv): bool:=
+  match a with
+    | mk_bv s1 l1 =>
+    match b with
+      | mk_bv s2 l2 =>
+      match EqNat.beq_nat s1 s2 with
+       | true =>
+       match beq_list l1 l2 with
+         | true => true
+         | _    => false
+         end
+       | _ => false
+      end
+    end
+ end.
+
+Eval compute in eq_bv (mk_bv 3 [true ; false ; true]) (mk_bv 3 [true; false; true]).
+Eval compute in eq_bv (mk_bv 3 [true ; false ; true]) (mk_bv 3 [false ; true; false; true]).
+Eval compute in eq_bv (mk_bv 3 [true ; false ; true]) (mk_bv 4 [true; false; true]).
+
+About bool_eq.
+SearchAbout EqNat.beq_nat. 
+
+Lemma List_eq : forall (l m: list bool), beq_list l m = true <-> l = m.
+Proof.
+    induction l; destruct m; simpl; split; intro; try (reflexivity || discriminate).
+    - rewrite andb_true_iff in H. destruct H. rewrite eqb_true_iff in H. rewrite H.
+    apply f_equal. apply IHl. exact H0.
+    - inversion H. subst b. subst m. rewrite andb_true_iff. split.
+      + apply eqb_reflx.
+      + apply IHl; reflexivity.
+Qed.
+
+Lemma List_eq_refl : forall (l m: list bool), beq_list l l = true.
+Proof.
+    induction l; simpl; intro; try (reflexivity || discriminate).
+    - rewrite andb_true_iff. split. apply eqb_reflx. apply IHl. exact m.
+Qed.
+
+SearchAbout EqNat.beq_nat. 
+
+Lemma Leq_bv: forall (x y: bv), eq_bv x y = true <-> x = y.
+Proof. intros x y; split. destruct x. destruct y. simpl; auto. intro H.
+       case_eq (EqNat.beq_nat size0 size1); intro H1.
+       case_eq (beq_list bits0 bits1); intro H2.
+         rewrite List_eq in H2.
+         - apply EqNat.beq_nat_true in H1.
+           rewrite H1, H2; reflexivity.
+         - contradict H. rewrite H1, H2. easy.
+         - contradict H. rewrite H1. easy.
+         - intro H. destruct x. destruct y. inversion H.
+           rewrite <- H1. rewrite <- H2. simpl.
+           rewrite <- (EqNat.beq_nat_refl size0).
+           rewrite List_eq_refl; trivial.
+Qed.
 
 Definition add_bv2 (a b: bv) (size: nat) : bv :=
   let c := bv2n_bv a in
@@ -278,7 +340,38 @@ Definition add_bv2 (a b: bv) (size: nat) : bv :=
 
 Eval compute in add_bv2 (mk_bv 3 [true ; false ; true]) (mk_bv 3 [true; true; false]) 5.
 Eval compute in add_bv (mk_bv 3 [false ; false ; false]) (mk_bv 3 [false; false; false]) 3.
- 
+
+(*Chantal's add*)
+
+Fixpoint fold_left2 A B (f: A -> B -> B -> A) (xs ys: list B) (acc:A) : A :=
+  match xs, ys with
+  | nil, _ | _, nil => acc
+  | x::xs, y::ys => @fold_left2 A B f xs ys (f acc x y)
+  end.
+
+Definition add_list (b1 b2 : list bool) : list bool :=
+  List.rev (fst (@fold_left2 (list bool * bool)%type _ (fun a x y =>
+                         let (r, c) := a in
+                         match x, y, c with
+                         | false, false, false => (false::r, false)
+                         | false, false, true
+                         | false, true, false
+                         | true, false, false => (true::r, false)
+                         | true, true, false
+                         | true, false, true
+                         | false, true, true => (false::r, true)
+                         | true, true, true => (true::r, true)
+                         end
+                      ) b1 b2 (nil, false))).
+
+Compute (add_list (false::true::false::false::nil) (false::true::true::false::nil)).
+Search (nat -> (nat -> bool)).
+Definition add_bv_Ch (b1 b2 : (list bool * nat)%type) : (list bool * nat)%type :=
+  let (b1, n1) := b1 in
+  let (b2, n2) := b2 in
+  if EqNat.beq_nat n1 n2 then (add_list b1 b2, n1) else (nil, 0).
+
+(**)
 
 Eval compute in
   let a := (mk_bv 5 [false; false; true; true; true]) in
