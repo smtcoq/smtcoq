@@ -237,16 +237,10 @@ Record typ_eqb : Type := Typ_eqb {
 Section Typ_eqb_param.
 
   Variable A : Type.
+  Variable r : { eq : A -> A -> bool & forall x y, reflect (x = y) (eq x y) }.
 
-  Record typ_eqb_param : Type := Typ_eqb_param {
-    te_eqb_param : A -> A -> bool;
-    te_reflect_param : forall x y, reflect (x = y) (te_eqb_param x y)
-  }.
-
-  Variable r : typ_eqb_param.
-
-  Definition typ_eqb_of_typ_eqb_param :=
-    Typ_eqb A (te_eqb_param r) (te_reflect_param r).
+  Definition typ_eqb_of_typ_eqb_param : typ_eqb :=
+    Typ_eqb A (projT1 r) (projT2 r).
 
 End Typ_eqb_param.
 

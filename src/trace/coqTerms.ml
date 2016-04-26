@@ -85,6 +85,9 @@ let cNone = gen_constant init_modules "None"
 (* Pairs *)
 let cpair = gen_constant init_modules "pair"
 
+(* Dependent pairs *)
+let csigT = gen_constant init_modules "sigT"
+
 (* Logical Operators *)
 let cnot = gen_constant init_modules "not"
 let ceq = gen_constant init_modules "eq"
@@ -112,7 +115,6 @@ let ctyp_eqb = gen_constant smt_modules "typ_eqb"
 let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
 let cte_carrier = gen_constant smt_modules "te_carrier"
 let cte_eqb = gen_constant smt_modules "te_eqb"
-let ctyp_eqb_param = gen_constant smt_modules "typ_eqb_param"
 let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
 

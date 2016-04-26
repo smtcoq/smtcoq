@@ -92,18 +92,19 @@ module Btype =
         let eq_name = Names.id_of_string ("eq"^n) in
         let eq_var = Term.mkVar eq_name in
 
-        (* let eq_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in *)
+        let eq_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
 
-        (* let eq = mkName "eq" in *)
-        (* let x = mkName "x" in *)
-        (* let y = mkName "y" in *)
-        (* let req = Term.mkRel 3 in *)
-        (* let rx = Term.mkRel 2 in *)
-        (* let ry = Term.mkRel 1 in *)
-        (* let eq_refl_ty = Term.mkLambda (eq, eq_ty, Term.mkProd (x,t,Term.mkProd (y,t,mklApp creflect [|mklApp ceq [|t;rx;ry|]; Term.mkApp (req, [|rx;ry|])|]))) in *)
+        let eq = mkName "eq" in
+        let x = mkName "x" in
+        let y = mkName "y" in
+        let req = Term.mkRel 3 in
+        let rx = Term.mkRel 2 in
+        let ry = Term.mkRel 1 in
+        let refl_ty = Term.mkLambda (eq, eq_ty, Term.mkProd (x,t,Term.mkProd (y,t,mklApp creflect [|mklApp ceq [|t;rx;ry|]; Term.mkApp (req, [|rx;ry|])|]))) in
 
-        let eq_ty = mklApp ctyp_eqb_param [|t|] in
-        reify.cuts <- (eq_name, eq_ty)::reify.cuts;
+        let pair_ty = mklApp csigT [|eq_ty; refl_ty|] in
+
+        reify.cuts <- (eq_name, pair_ty)::reify.cuts;
         let ce = mklApp ctyp_eqb_of_typ_eqb_param [|t; eq_var|] in
         declare reify t ce
 
