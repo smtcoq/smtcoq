@@ -1,17 +1,18 @@
 /**************************************************************************/
 /*                                                                        */
 /*     SMTCoq                                                             */
-/*     Copyright (C) 2011 - 2015                                          */
+/*     Copyright (C) 2011 - 2016                                          */
 /*                                                                        */
 /*     Michaël Armand                                                     */
 /*     Benjamin Grégoire                                                  */
 /*     Chantal Keller                                                     */
 /*                                                                        */
-/*     Inria - École Polytechnique - MSR-Inria Joint Lab                  */
+/*     Inria - École Polytechnique - Université Paris-Sud                 */
 /*                                                                        */
 /*   This file is distributed under the terms of the CeCILL-C licence     */
 /*                                                                        */
 /**************************************************************************/
+
 
 %{
   open SmtAtom

@@ -1,16 +1,23 @@
-(************************************************************************)
-(*  v      *   The Coq Proof Assistant  /  The Coq Development Team     *)
-(* <O___,, *   INRIA - CNRS - LIX - LRI - PPS - Copyright 1999-2016     *)
-(*   \VV/  **************************************************************)
-(*    //   *      This file is distributed under the terms of the       *)
-(*         *       GNU Lesser General Public License Version 2.1        *)
-(************************************************************************)
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     Chantal Keller                                                     *)
+(*                                                                        *)
+(*       from the Int31 library                                           *)
+(*         by Arnaud Spiwack and Pierre Letouzey                          *)
+(*       and the Int63 library of native-coq                              *)
+(*         by Benjamin Gregoire and Laurent Thery                         *)
+(*                                                                        *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
 
 (** * Int63 numbers defines indeed a cyclic structure : Z/(2^63)Z *)
-
-(**
-Author: Arnaud Spiwack (+ Pierre Letouzey)
-*)
 
 (* Add LoadPath "." as SMTCoq.versions.standard.Int63. *)
 Require Import List.
