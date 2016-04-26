@@ -219,8 +219,8 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
 let get_arguments concl =
   let f, args = Term.decompose_app concl in
   match args with
-  | [ty;a;b] when f = Lazy.force ceq && ty = Lazy.force cbool -> a, b
-  | [a] when f = Lazy.force cis_true -> a, Lazy.force ctrue
+  | [ty;a;b] when (Constr.equal f (Lazy.force ceq)) && (Constr.equal ty (Lazy.force cbool)) -> a, b
+  | [a] when (Constr.equal f (Lazy.force cis_true)) -> a, Lazy.force ctrue
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
@@ -239,9 +239,9 @@ let tactic call_solver rt ro ra rf gl =
   let env = Environ.push_rel_context forall_let env in
   let a, b = get_arguments concl in
   let body =
-    if (b = Lazy.force ctrue || b = Lazy.force cfalse) then
+    if ((Constr.equal b (Lazy.force ctrue)) || (Constr.equal b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
-      let l' = if b = Lazy.force ctrue then Form.neg l else l in
+      let l' = if (Constr.equal b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver rt ro rf l' in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl
     else
