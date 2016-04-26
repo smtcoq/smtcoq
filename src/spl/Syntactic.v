@@ -17,9 +17,11 @@
 
 (* Add LoadPath ".." as SMTCoq. *)
 (* Add LoadPath "../lia" as SMTCoq.lia. *)
+Add LoadPath "../bva" as SMTCoq.bva.
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
+Require Import SMTCoq.bva.BVList.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
