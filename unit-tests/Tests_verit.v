@@ -411,7 +411,7 @@ End Theorem_Let2.
 
 (* verit tactic *)
 
-(* Simple connectors *)
+(* Simple connectives *)
 
 Goal forall (a:bool), a || negb a.
   verit.
@@ -464,7 +464,7 @@ Goal forall (a:bool), a = a.
 Qed.
 
 
-(* Other connectors *)
+(* Other connectives *)
 
 Goal (false || true) && false = false.
 Proof.
@@ -561,7 +561,7 @@ Proof.
 Qed.
 
 
-(* Le même, mais où a, b et c sont des termes concrets *)
+(* The same, but with a, b and c being concrete terms *)
 
 Goal forall i j k,
   let a := i == j in

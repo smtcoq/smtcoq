@@ -148,7 +148,7 @@ Proof.
 Qed.
 
 
-(* Le même, mais où a, b et c sont des termes concrets *)
+(* The same, but with a, b and c being concrete terms *)
 
 Goal forall i j k,
   ((i == j) || (j == k) || (k == i)) && ((negb (i == j)) || (negb (j == k)) || (negb (k == i))) && ((negb (i == j)) || (j == k)) && ((negb (j == k)) || (k == i)) && ((negb (k == i)) || (i == j)) = false.
@@ -184,7 +184,7 @@ Proof.
 Qed.
 
 
-(* Other connectors *)
+(* Other connectives *)
 
 Goal (false || true) && false = false.
 Proof.
