@@ -206,6 +206,7 @@ Section Fold_left2.
 
 End Fold_left2.
 
+(*list bitwise-AND properties*)
 
 Lemma map2_and_comm: forall (a b: list bool), (map2 andb a b) = (map2 andb b a).
 Proof. intros a. induction a as [| a' xs IHxs].
@@ -260,15 +261,14 @@ Qed.
 Lemma map2_and_idem_comm2:  forall (a b: list bool), (map2 andb (map2 andb a b) b) = (map2 andb b a).
 Proof. intros a b. symmetry. rewrite <- map2_and_comm. symmetry; apply map2_and_idem2. Qed.
 
-Lemma map2_empty_empty1:  forall (a: list bool), (map2 andb a []) = [].
+Lemma map2_and_empty_empty1:  forall (a: list bool), (map2 andb a []) = [].
 Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
 
-Lemma map2_empty_empty2:  forall (a: list bool), (map2 andb [] a) = [].
-Proof. intros a. rewrite map2_and_comm. apply map2_empty_empty1. Qed.
+Lemma map2_and_empty_empty2:  forall (a: list bool), (map2 andb [] a) = [].
+Proof. intros a. rewrite map2_and_comm. apply map2_and_empty_empty1. Qed.
 
 Lemma map2_nth_empty_false:  forall (i: nat), nth i [] false = false.
 Proof. intros i. induction i as [| IHi]; simpl; reflexivity. Qed.
-
 
 Fixpoint mk_list_true (t: nat) (acc: list bool) : list bool :=
   match t with
@@ -278,10 +278,10 @@ Fixpoint mk_list_true (t: nat) (acc: list bool) : list bool :=
 
 Eval compute in length (mk_list_true 10 [false]).
 
-Fixpoint mk_list_false (t: nat) (a: list bool) : list bool :=
+Fixpoint mk_list_false (t: nat) (acc: list bool) : list bool :=
   match t with
-    | O    => a
-    | S t' => mk_list_true t' (false::a)
+    | O    => acc
+    | S t' => mk_list_true t' (false::acc)
   end.
 
 Lemma len_mk_list_true_empty: length (mk_list_true 0 []) = 0%nat.
@@ -291,9 +291,9 @@ Proof. simpl. reflexivity. Qed.
 Lemma length_mk_list_true_full: forall n, length (mk_list_true n []) = n.
 Proof. intro n. induction n as [| n IHn].
          - simpl. reflexivity.
-         - 
+*)
 
-
+(*
 Lemma lmk_list_true: forall n acc, length (mk_list_true n acc) = (n + (length acc))%nat.
 
 Lemma map2_and_ltrue: forall (a: list bool),  (map2 andb a (mk_list_true (length a) [])) = a.
@@ -324,7 +324,7 @@ Proof. induction a as [| a' xs IHxs].
          inversion H; auto.
 Qed.
 
-(*bit vectors properties*)
+(*bitvector bitwise-AND properties*)
 
 Lemma a_bv_and: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_and a b).
 Proof. intros a b H0 H1 H2. destruct a. destruct b. simpl in *. unfold bv_wf in *. simpl in *. 
@@ -371,7 +371,7 @@ Proof. intros a. destruct a. unfold bv_empty.
        unfold bv_and. simpl.
        case_eq (N.compare size0 0); intro H; simpl.
          - apply (N.compare_eq size0 0) in H.
-           rewrite H. simpl. rewrite map2_empty_empty1; reflexivity.
+           rewrite H. simpl. rewrite map2_and_empty_empty1; reflexivity.
          - rewrite N.eqb_compare. rewrite H; reflexivity.
          - rewrite N.eqb_compare. rewrite H; reflexivity.
 Qed.
@@ -402,6 +402,80 @@ Proof. intro a. destruct a. unfold bv_1. simpl in *. simpl in *.
 
 *)
 
+(* lists bitwise-OR properties *)
+
+Lemma map2_or_comm: forall (a b: list bool), (map2 orb a b) = (map2 orb b a).
+Proof. intros a. induction a as [| a' xs IHxs].
+       intros [| b' ys].
+       - simpl. auto.
+       - simpl. auto.
+       - intros [| b' ys].
+         + simpl. auto.
+         + intros. simpl. 
+           cut (a' || b' = b' || a'). intro H. rewrite <- H. apply f_equal.
+           apply IHxs. apply orb_comm.
+Qed.
+
+Lemma map2_or_assoc: forall (a b c: list bool), (map2 orb a (map2 orb b c)) = (map2 orb (map2 orb a b) c).
+Proof. intro a. induction a as [| a' xs IHxs].
+       simpl. auto.
+       intros [| b' ys].
+        -  simpl. auto.
+        - intros [| c' zs].
+          + simpl. auto.
+          + simpl. cut (a' || (b' || c') = a' || b' || c'). intro H. rewrite <- H. apply f_equal.
+            apply IHxs. apply orb_assoc.
+Qed.
+
+Lemma map2_or_length: forall (a b: list bool), length a = length b -> length a = length (map2 orb a b).
+Proof. induction a as [| a' xs IHxs].
+       simpl. auto.
+       intros [| b ys].
+       - simpl. intros. exact H.
+       - intros. simpl in *. apply f_equal. apply IHxs.
+         inversion H; auto.
+Qed.
+
+Lemma map2_or_empty_empty1:  forall (a: list bool), (map2 orb a []) = [].
+Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
+
+Lemma map2_or_empty_empty2:  forall (a: list bool), (map2 orb [] a) = [].
+Proof. intros a. rewrite map2_or_comm. apply map2_or_empty_empty1. Qed.
+
+(*bitvector bitwise-OR properties*)
+
+Lemma a_bv_or: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
+Proof. intros a b H0 H1 H2. destruct a. destruct b. simpl in *. unfold bv_wf in *. simpl in *. 
+       unfold bv_or. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       simpl. rewrite H1, H2 in H0. rewrite H2. rewrite  Nat2N.inj_iff in H0.
+       specialize (@map2_or_length bits0 bits1 H0). intro H3. rewrite <- H3.
+       apply f_equal; auto.
+Qed.
+
+Lemma bv_or_comm: forall a b, (size a) = (size b) -> bv_or a b = bv_or b a.
+Proof. intros a b H0. destruct a. destruct b. simpl in *. simpl in *. 
+       unfold bv_or. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite map2_or_comm. rewrite <- H0; reflexivity.
+Qed.
+
+Lemma bv_or_assoc: forall a b c, (size a) = (size b) -> (size a) = (size c) ->  
+                                  (bv_or a (bv_or b c)) = (bv_or (bv_or a b) c).
+Proof. intros a b c H0 H1. destruct a. destruct b. destruct c. simpl in *. 
+       inversion H0. rewrite H1 in H. symmetry in H. rewrite H. unfold bv_or. simpl.
+       rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite N.compare_refl. simpl.
+       rewrite N.compare_refl. rewrite N.eqb_compare. rewrite N.compare_refl. 
+       rewrite map2_or_assoc; reflexivity. 
+Qed.
+
+Lemma bv_or_empty_empty1: forall a, (bv_or a bv_empty) = bv_empty.
+Proof. intros a. destruct a. unfold bv_empty. 
+       unfold bv_or. simpl.
+       case_eq (N.compare size0 0); intro H; simpl.
+         - apply (N.compare_eq size0 0) in H.
+           rewrite H. simpl. rewrite map2_or_empty_empty1; reflexivity.
+         - rewrite N.eqb_compare. rewrite H; reflexivity.
+         - rewrite N.eqb_compare. rewrite H; reflexivity.
+Qed.
 
 End BITVECTOR_LIST_THEOREMS.
 
