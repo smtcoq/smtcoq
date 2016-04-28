@@ -287,16 +287,66 @@ Fixpoint mk_list_false (t: nat) (acc: list bool) : list bool :=
 Lemma len_mk_list_true_empty: length (mk_list_true 0 []) = 0%nat.
 Proof. simpl. reflexivity. Qed.
 
-(*
+Require Import Psatz.
+
+Lemma add_mk_list_true: forall n acc, length (mk_list_true n acc) = (n + length acc)%nat.
+Proof. intros n.
+       induction n as [| n' IHn].
+         + auto.
+         + intro acc. simpl. rewrite IHn. simpl. lia.
+Qed.
+
+Lemma map2_and_nth_bitOf: forall (a b: list bool) (i: nat), 
+                          (length a) = (length b) ->
+                          (i <= (length a))%nat ->
+                          nth i (map2 andb a b) false = (nth i a false) && (nth i b false).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+         - intros [| b ys].
+           + intros i H0 H1. do 2 rewrite map2_nth_empty_false. reflexivity.
+           + intros i H0 H1. rewrite map2_and_empty_empty2.
+             rewrite map2_nth_empty_false. reflexivity.
+         - intros [| b ys].
+           + intros i H0 H1. rewrite map2_and_empty_empty1.
+             rewrite map2_nth_empty_false. rewrite andb_false_r. reflexivity.
+           + intros i H0 H1. simpl.
+             revert i H1. intros [| i IHi].
+             * simpl. auto.
+             * apply IHxs.
+                 inversion H0; reflexivity.
+                 inversion IHi; lia.
+Qed.
+
 Lemma length_mk_list_true_full: forall n, length (mk_list_true n []) = n.
-Proof. intro n. induction n as [| n IHn].
-         - simpl. reflexivity.
+Proof. intro n. rewrite (@add_mk_list_true n []). auto. Qed.
+
+Lemma mk_list_app: forall n acc, mk_list_true n acc = mk_list_true n [] ++ acc.
+Proof. intro n.
+       induction n as [| n IHn].
+         + auto.
+         + intro acc. simpl in *. rewrite IHn. 
+           cut (mk_list_true n [] ++ [true] = mk_list_true n [true]). intro H.
+           rewrite <- H. rewrite <- app_assoc. unfold app. reflexivity.
+           rewrite <- IHn. reflexivity.
+Qed.
+
+Lemma mk_list_ltrue: forall n, mk_list_true n [true] = mk_list_true (S n) [].
+Proof. intro n. induction n as [| n IHn]; auto. Qed.
+
+(*
+Lemma map2_and_1_neutral: forall (a: list bool), (map2 andb a (mk_list_true (length a) [])) = a.
+Proof. intro a.
+       induction a as [| a xs IHxs]. 
+         + auto.
+         + rewrite <- IHxs. simpl. rewrite IHxs. rewrite mk_list_app. simpl.
+           simpl.
+           cut ((mk_list_true (length xs) []) = []). intro H.
+           rewrite H. simpl. rewrite andb_true_r. apply f_equal. exact IHxs.
+           simpl. rewrite <- IHxs.
 *)
 
 (*
 Lemma lmk_list_true: forall n acc, length (mk_list_true n acc) = (n + (length acc))%nat.
-
-Lemma map2_and_ltrue: forall (a: list bool),  (map2 andb a (mk_list_true (length a) [])) = a.
 *)
 
 (*
@@ -376,7 +426,16 @@ Proof. intros a. destruct a. unfold bv_empty.
          - rewrite N.eqb_compare. rewrite H; reflexivity.
 Qed.
 
-SearchAbout N.compare.
+Lemma bv_and_nth_bitOf: forall a b (i: nat), 
+                          (size a) = (size b) ->
+                          bv_wf a -> bv_wf b ->
+                          (i <= (nat_of_N (size a)))%nat ->
+                          nth i (bits (bv_and a b)) false = (nth i (bits a) false) && (nth i (bits b) false).
+Proof. intros a b i H0 H1 H2 H3. destruct a. destruct b. unfold bv_wf in *. simpl in *.
+       unfold bv_and. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl. simpl.
+       apply map2_and_nth_bitOf. inversion H0. rewrite H1, H2 in H. apply Nat2N.inj in H; exact H.
+       rewrite H1 in H3. rewrite Nat2N.id in H3; exact H3.
+Qed.
 
 Lemma bv_and_empty_empty2: forall a, (bv_and bv_empty a) = bv_empty.
 Proof. intro a. destruct a. unfold bv_and, bv_empty. simpl.
@@ -442,6 +501,28 @@ Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
 Lemma map2_or_empty_empty2:  forall (a: list bool), (map2 orb [] a) = [].
 Proof. intros a. rewrite map2_or_comm. apply map2_or_empty_empty1. Qed.
 
+Lemma map2_or_nth_bitOf: forall (a b: list bool) (i: nat), 
+                          (length a) = (length b) ->
+                          (i <= (length a))%nat ->
+                          nth i (map2 orb a b) false = (nth i a false) || (nth i b false).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+         - intros [| b ys].
+           + intros i H0 H1. do 2 rewrite map2_nth_empty_false. reflexivity.
+           + intros i H0 H1. rewrite map2_or_empty_empty2.
+             rewrite map2_nth_empty_false. contradict H1. simpl. unfold not. intros. easy.
+         - intros [| b ys].
+           + intros i H0 H1. rewrite map2_or_empty_empty1.
+             rewrite map2_nth_empty_false. rewrite orb_false_r. rewrite H0 in H1.
+             contradict H1. simpl. unfold not. intros. easy.
+           + intros i H0 H1. simpl.
+             revert i H1. intros [| i IHi].
+             * simpl. auto.
+             * apply IHxs.
+                 inversion H0; reflexivity.
+                 inversion IHi; lia.
+Qed.
+
 (*bitvector bitwise-OR properties*)
 
 Lemma a_bv_or: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
@@ -476,6 +557,18 @@ Proof. intros a. destruct a. unfold bv_empty.
          - rewrite N.eqb_compare. rewrite H; reflexivity.
          - rewrite N.eqb_compare. rewrite H; reflexivity.
 Qed.
+
+Lemma bv_or_nth_bitOf: forall a b (i: nat), 
+                          (size a) = (size b) ->
+                          bv_wf a -> bv_wf b ->
+                          (i <= (nat_of_N (size a)))%nat ->
+                          nth i (bits (bv_or a b)) false = (nth i (bits a) false) || (nth i (bits b) false).
+Proof. intros a b i H0 H1 H2 H3. destruct a. destruct b. unfold bv_wf in *. simpl in *.
+       unfold bv_or. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl. simpl.
+       apply map2_or_nth_bitOf. inversion H0. rewrite H1, H2 in H. apply Nat2N.inj in H; exact H.
+       rewrite H1 in H3. rewrite Nat2N.id in H3; exact H3.
+Qed.
+
 
 End BITVECTOR_LIST_THEOREMS.
 
