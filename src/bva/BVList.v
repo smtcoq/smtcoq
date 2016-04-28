@@ -19,15 +19,431 @@
 Require Import List Bool NArith.
 Import ListNotations.
 Local Open Scope list_scope.
-Local Open Scope nat_scope.
+Local Open Scope N_scope.
 Local Open Scope bool_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Module Type BITVECTOR.
 
+Parameter bitvector: Type.
+Parameter size     : bitvector -> N.
+Parameter bits     : bitvector -> list bool.
+(*property*)
+Parameter bv_wf    : bitvector -> Prop.
+
+
+(*equality*)
+Parameter bv_eq    : bitvector -> bitvector -> bool.
+
+(*binary operations*)
+Parameter bv_concat: bitvector -> bitvector -> bitvector.
+Parameter bv_and   : bitvector -> bitvector -> bitvector.
+
+(*
+Parameter bv_add   : bitvector -> bitvector -> bitvector.
+Parameter bv_subs  : bitvector -> bitvector -> bitvector.
+Parameter bv_mult  : bitvector -> bitvector -> bitvector.
+Parameter bv_div   : bitvector -> bitvector -> bitvector.
+Parameter bv_or    : bitvector -> bitvector -> bitvector.
+(*unary operations*)
+Parameter bv_not   : bitvector -> bitvector.
+*)
+
+End BITVECTOR.
+
+Module Type BITVECTOR_THEOREMS (BV:BITVECTOR).
+  Import BV.
+
+(*axioms*)
+Axiom a_bv_eq: forall a b, bv_eq a b = true <-> a = b.
+Axiom a_bv_concat: forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_concat a b).
+Axiom a_bv_and: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_and a b).
+(*Lemma a_bv_and: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_and a b).*)
+
+(*
+Axiom a_bv_add   : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_add a b).
+Axiom a_bv_subs  : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_subs a b).
+Axiom a_bv_mult  : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_mult a b).
+Axiom a_bv_div   : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_div a b).
+Axiom a_bv_or    : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
+Axiom a_bv_not   : forall a,   bv_wf a -> bv_wf (bv_not a).
+*)
+
+End BITVECTOR_THEOREMS.
+
+Module BITVECTOR_LIST <: BITVECTOR.
+
+Record bitvector_rec : Type := 
+  mk_bitvector
+  {
+     size : N;
+     bits : list bool
+  }.
+
+ Check size.
+
+Definition bitvector := bitvector_rec.
+
+Definition bv_wf (a: bitvector):= (@size a) = N.of_nat (length (@bits a)). 
+
+Fixpoint beq_list (l m : list bool) {struct l} :=
+  match l, m with
+    | nil, nil => true
+    | x :: l', y :: m' => (Bool.eqb x y) && (beq_list l' m')
+    | _, _ => false
+  end.
+
+Definition bv_eq (a b: bitvector): bool:=
+  match ((size a) =? (size b)) with
+    | true  =>
+    match beq_list (bits a) (bits b) with
+      | true => true
+      | _    => false
+    end
+    | _ => false
+  end.
+
+Definition bv_concat (a b: bitvector) : bitvector.
+Proof. destruct a, b. refine (@mk_bitvector (size0 + size1) (bits0 ++ bits1)). Defined.
+
+Section Map2.
+
+  Variables A B C: Type.
+  Variable f : A -> B -> C.
+
+  Fixpoint map2 (l1 : list A) (l2 : list B) {struct l1} : list C :=
+    match l1, l2 with
+      | b1::tl1, b2::tl2 => (f b1 b2)::(map2 tl1 tl2)
+      | _, _ => nil
+    end.
+
+End Map2.
+
+Definition bv_and (a b : bitvector) : bitvector :=
+  match (@size a) =? (@size b) with
+    | true => mk_bitvector (size a) (map2 andb (@bits a) (@bits b))
+    | _    => mk_bitvector 0 nil
+  end.
+
+End BITVECTOR_LIST.
+
+Module BITVECTOR_LIST_THEOREMS : BITVECTOR_THEOREMS (BITVECTOR_LIST).
+Import BITVECTOR_LIST.
+
+Lemma List_eq : forall (l m: list bool), beq_list l m = true <-> l = m.
+Proof.
+    induction l; destruct m; simpl; split; intro; try (reflexivity || discriminate).
+    - rewrite andb_true_iff in H. destruct H. rewrite eqb_true_iff in H. rewrite H.
+    apply f_equal. apply IHl. exact H0.
+    - inversion H. subst b. subst m. rewrite andb_true_iff. split.
+      + apply eqb_reflx.
+      + apply IHl; reflexivity.
+Qed.
+
+Lemma List_eq_refl : forall (l m: list bool), beq_list l l = true.
+Proof.
+    induction l; simpl; intro; try (reflexivity || discriminate).
+    - rewrite andb_true_iff. split. apply eqb_reflx. apply IHl. exact m.
+Qed.
+
+Lemma a_bv_eq: forall a b, bv_eq a b = true <-> a = b.
+Proof. split. destruct a. destruct b. unfold bitvector; simpl; auto. intro H.
+       case_eq (N.compare size0 size1); intro H1.
+       case_eq (beq_list bits0 bits1); intro H2.
+         rewrite List_eq in H2.
+         - apply (N.compare_eq size0 size1) in H1.
+           rewrite H1, H2; reflexivity.
+         - contradict H. unfold bv_eq. simpl. rewrite H2.
+           rewrite N.eqb_compare. rewrite H1. easy.
+         - contradict H. unfold bv_eq. simpl. rewrite N.eqb_compare.
+           rewrite H1. easy.
+         - contradict H.  unfold bv_eq. simpl. rewrite N.eqb_compare.
+           rewrite H1. easy.
+         - intro H. destruct a. destruct b. inversion H.
+           rewrite <- H2. simpl.
+           unfold bv_eq. simpl.
+           rewrite N.eqb_compare. rewrite N.compare_refl.
+           rewrite List_eq_refl; trivial.
+Qed.
+Check a_bv_eq.
+
+Lemma a_bv_concat: forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_concat a b).
+Proof. intros a b H0 H1. destruct a. destruct b. simpl. unfold bv_wf in *. simpl in *.
+       rewrite app_length. rewrite Nat2N.inj_add. rewrite H0, H1; reflexivity. 
+Qed.
+
+Section Fold_left2.
+
+  Variables A B: Type.
+  Variable f : A -> B -> B -> A.
+
+  Fixpoint fold_left2 (xs ys: list B) (acc:A) {struct xs} : A :=
+    match xs, ys with
+    | nil, _ | _, nil => acc
+    | x::xs, y::ys => fold_left2 xs ys (f acc x y)
+    end.
+
+  Lemma foo : forall (I: A -> Prop) acc, I acc -> 
+              (forall a b1 b2, I a -> I (f a b1 b2)) -> 
+              forall xs ys, I (fold_left2 xs ys acc).
+  Proof. intros I acc H0 H1 xs. revert acc H0.
+         induction xs as [| a xs IHxs]; intros acc H.
+         simpl. auto.
+         intros [| b ys].
+            + simpl. exact H.
+            + simpl. apply IHxs, H1. exact H.
+  Qed.
+
+End Fold_left2.
+
+
+Lemma map2_and_comm: forall (a b: list bool), (map2 andb a b) = (map2 andb b a).
+Proof. intros a. induction a as [| a' xs IHxs].
+       intros [| b' ys].
+       - simpl. auto.
+       - simpl. auto.
+       - intros [| b' ys].
+         + simpl. auto.
+         + intros. simpl. 
+           cut (a' && b' = b' && a'). intro H. rewrite <- H. apply f_equal.
+           apply IHxs. apply andb_comm.
+Qed.
+
+Lemma map2_and_assoc: forall (a b c: list bool), (map2 andb a (map2 andb b c)) = (map2 andb (map2 andb a b) c).
+Proof. intro a. induction a as [| a' xs IHxs].
+       simpl. auto.
+       intros [| b' ys].
+        -  simpl. auto.
+        - intros [| c' zs].
+          + simpl. auto.
+          + simpl. cut (a' && (b' && c') = a' && b' && c'). intro H. rewrite <- H. apply f_equal.
+            apply IHxs. apply andb_assoc.
+Qed.
+
+Lemma map2_and_idem1:  forall (a b: list bool), (map2 andb (map2 andb a b) a) = (map2 andb a b).
+Proof. intros a. induction a as [| a' xs IHxs].
+       intros [| b' ys].
+       - simpl. auto.
+       - simpl. auto.
+       - intros [| b' ys].
+         + simpl. auto.
+         + intros. simpl. 
+           cut (a' && b' && a' = a' && b'). intro H. rewrite H. apply f_equal.
+           apply IHxs. rewrite andb_comm, andb_assoc, andb_diag. reflexivity. 
+Qed.
+
+Lemma map2_and_idem_comm:  forall (a b: list bool), (map2 andb (map2 andb a b) a) = (map2 andb b a).
+Proof. intros a b. symmetry. rewrite <- map2_and_comm. symmetry; apply map2_and_idem1. Qed.
+
+Lemma map2_and_idem2:  forall (a b: list bool), (map2 andb (map2 andb a b) b) = (map2 andb a b).
+Proof. intros a. induction a as [| a' xs IHxs].
+       intros [| b' ys].
+       - simpl. auto.
+       - simpl. auto.
+       - intros [| b' ys].
+         + simpl. auto.
+         + intros. simpl. 
+           cut (a' && b' && b' = a' && b'). intro H. rewrite H. apply f_equal.
+           apply IHxs. rewrite <- andb_assoc. rewrite andb_diag. reflexivity. 
+Qed.
+
+Lemma map2_and_idem_comm2:  forall (a b: list bool), (map2 andb (map2 andb a b) b) = (map2 andb b a).
+Proof. intros a b. symmetry. rewrite <- map2_and_comm. symmetry; apply map2_and_idem2. Qed.
+
+Lemma map2_empty_empty1:  forall (a: list bool), (map2 andb a []) = [].
+Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
+
+Lemma map2_empty_empty2:  forall (a: list bool), (map2 andb [] a) = [].
+Proof. intros a. rewrite map2_and_comm. apply map2_empty_empty1. Qed.
+
+Lemma map2_nth_empty_false:  forall (i: nat), nth i [] false = false.
+Proof. intros i. induction i as [| IHi]; simpl; reflexivity. Qed.
+
+
+Fixpoint mk_list_true (t: nat) (acc: list bool) : list bool :=
+  match t with
+    | O    => acc
+    | S t' => mk_list_true t' (true::acc)
+  end.
+
+Eval compute in length (mk_list_true 10 [false]).
+
+Fixpoint mk_list_false (t: nat) (a: list bool) : list bool :=
+  match t with
+    | O    => a
+    | S t' => mk_list_true t' (false::a)
+  end.
+
+Lemma len_mk_list_true_empty: length (mk_list_true 0 []) = 0%nat.
+Proof. simpl. reflexivity. Qed.
+
+(*
+Lemma length_mk_list_true_full: forall n, length (mk_list_true n []) = n.
+Proof. intro n. induction n as [| n IHn].
+         - simpl. reflexivity.
+         - 
+
+
+Lemma lmk_list_true: forall n acc, length (mk_list_true n acc) = (n + (length acc))%nat.
+
+Lemma map2_and_ltrue: forall (a: list bool),  (map2 andb a (mk_list_true (length a) [])) = a.
+*)
+
+(*
+SearchAbout nth. 
+Check length.
+
+Lemma nt_bitOf_map2_and: forall (a b: list bool) (i: nat), 
+                         (length a) = (length b) ->
+                         (i <= (length a))%nat ->
+                         nth i (map2 andb a b) false = (nth i a false) && (nth i b false).
+Proof. intros a. 
+       induction a as [| a' xs IHxs]; intros b i H0 H1.
+        - do 2 rewrite map2_nth_empty_false. reflexivity.
+        - revert b H0 IHxs. intros [| b' ys]; intro H0.
+         + contradict H0. easy.
+         + intros. here 
+*)
+
+Lemma map2_and_length: forall (a b: list bool), length a = length b -> length a = length (map2 andb a b).
+Proof. induction a as [| a' xs IHxs].
+       simpl. auto.
+       intros [| b ys].
+       - simpl. intros. exact H.
+       - intros. simpl in *. apply f_equal. apply IHxs.
+         inversion H; auto.
+Qed.
+
+(*bit vectors properties*)
+
+Lemma a_bv_and: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_and a b).
+Proof. intros a b H0 H1 H2. destruct a. destruct b. simpl in *. unfold bv_wf in *. simpl in *. 
+       unfold bv_and. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       simpl. rewrite H1, H2 in H0. rewrite H2. rewrite  Nat2N.inj_iff in H0.
+       specialize (@map2_and_length bits0 bits1 H0). intro H3. rewrite <- H3.
+       apply f_equal; auto.
+Qed.
+Check a_bv_and.
+
+Lemma bv_and_comm: forall a b, (size a) = (size b) -> bv_and a b = bv_and b a.
+Proof. intros a b H0. destruct a. destruct b. simpl in *. simpl in *. 
+       unfold bv_and. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite map2_and_comm. rewrite <- H0; reflexivity.
+Qed.
+
+Lemma bv_and_assoc: forall a b c, (size a) = (size b) -> (size a) = (size c) ->  
+                                  (bv_and a (bv_and b c)) = (bv_and (bv_and a b) c).
+Proof. intros a b c H0 H1. destruct a. destruct b. destruct c. simpl in *. 
+       inversion H0. rewrite H1 in H. symmetry in H. rewrite H. unfold bv_and. simpl.
+       rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite N.compare_refl. simpl.
+       rewrite N.compare_refl. rewrite N.eqb_compare. rewrite N.compare_refl. 
+       rewrite map2_and_assoc; reflexivity. 
+Qed.
+
+Lemma bv_and_idem1:  forall a b, (size a) = (size b) -> (bv_and (bv_and a b) a) = (bv_and a b).
+Proof. intros a b H0. destruct a. destruct b. simpl in *. simpl in *. 
+       unfold bv_and. simpl. rewrite H0. do 2 rewrite N.eqb_compare.
+       rewrite N.compare_refl. simpl. rewrite N.compare_refl. 
+       rewrite map2_and_idem1; reflexivity.
+Qed.
+
+Lemma bv_and_idem2: forall a b, (size a) = (size b) -> (bv_and (bv_and a b) b) = (bv_and a b).
+Proof. intros a b H0. destruct a. destruct b. simpl in *. simpl in *. 
+       unfold bv_and. simpl. rewrite H0. do 2 rewrite N.eqb_compare.
+       rewrite N.compare_refl. simpl. rewrite N.compare_refl. 
+       rewrite map2_and_idem2; reflexivity.
+Qed.
+
+Definition bv_empty := mk_bitvector (0)%N nil.
+
+Lemma bv_and_empty_empty1: forall a, (bv_and a bv_empty) = bv_empty.
+Proof. intros a. destruct a. unfold bv_empty. 
+       unfold bv_and. simpl.
+       case_eq (N.compare size0 0); intro H; simpl.
+         - apply (N.compare_eq size0 0) in H.
+           rewrite H. simpl. rewrite map2_empty_empty1; reflexivity.
+         - rewrite N.eqb_compare. rewrite H; reflexivity.
+         - rewrite N.eqb_compare. rewrite H; reflexivity.
+Qed.
+
+SearchAbout N.compare.
+
+Lemma bv_and_empty_empty2: forall a, (bv_and bv_empty a) = bv_empty.
+Proof. intro a. destruct a. unfold bv_and, bv_empty. simpl.
+         induction size0 as [| size0]; reflexivity.
+Qed.
+
+Definition bv_1 (t : nat) : bitvector :=
+  match t with
+    | O    => mk_bitvector 0 nil
+    | S t' => mk_bitvector (N.of_nat (t' + 1)) (mk_list_true t' [true])
+  end.
+
+Definition bv_0 (t : nat) : bitvector :=
+  match t with
+    | O    => mk_bitvector 0 nil
+    | S t' => mk_bitvector (N.of_nat (t' + 1)) (mk_list_false t' [false])
+  end.
+
+(*
+Lemma bv_and_1_neutral: forall a, (bv_and a (bv_1 (nat_of_N (size a)))) = a.
+Proof. intro a. destruct a. unfold bv_1. simpl in *. simpl in *. 
+       unfold bv_and. simpl. rewrite N.eqb_compare. simpl. 
+
+*)
+
+End BITVECTOR_LIST_THEOREMS.
+
+(*
+Definition add_list (b1 b2 : list bool) : list bool :=
+  List.rev (fst (@fold_left2 (list bool * bool)%type _ (fun a x y => 
+                         let (r, c) := a in
+                         match x, y, c with
+                         | false, false, false => (false::r, false)
+                         | false, false, true
+                         | false, true, false
+                         | true, false, false => (true::r, false)
+                         | true, true, false
+                         | true, false, true
+                         | false, true, true => (false::r, true)
+                         | true, true, true => (true::r, true)
+                         end
+                      ) b1 b2 (nil, false))).
+
+Compute (add_list (false::true::false::false::nil) (false::true::false::nil)).
+Search (nat -> (nat -> bool)).
+
+Definition bv_add (a b : bitvector) : bitvector :=
+  match (@size a) =? (@size b) with
+    | true => mk_bitvector (size a) (add_list (@bits a) (@bits b))
+    | _    => mk_bitvector 0 nil
+  end.
+
+Eval compute in bv_add (mk_bitvector 2 [true; true]) (mk_bitvector 2 [false; true; false]).
+
+SearchAbout N.compare.
+
+Lemma add_list_lenght: forall (a b: list bool), length (add_list a b) = (min (length a) (length b)).
+
+
+Lemma a_bv_add': forall a b, (@size a) = (@size b) -> (@size (bv_add a b)) = (@size a).
+Proof. intros a b H. unfold bv_add. rewrite <- N.compare_eq_iff in H.
+       rewrite N.eqb_compare. rewrite H.
+       simpl; reflexivity.
+Qed.
+
+Lemma a_bv_add'': forall a b, (@size a) = (@size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_add a b).
+
+Lemma a_bv_add   : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_add a b).
+*)
+
+
+
+
+ 
 (** Some useful functions *)
-
 Section Map2.
 
 Fixpoint map2 {A B C: Type} (f: A -> B -> C) (l1 : list A) (l2 : list B) : list C :=
@@ -43,11 +459,15 @@ Proof. intros.
            - unfold length in *. rewrite IHl. simpl in *. apply f_equal. induction l; reflexivity.
 Qed.
 
+
 (* Representation of bit vectors as a Coq Record and implementation of standard operations *)
 
 End Map2.
 
+
 Module DTBV.
+
+Local Open Scope nat_scope.
 
 (* Definition vsize := 5. *)
 
@@ -59,7 +479,7 @@ Record bv : Type :=
    (*  wf   : N.of_nat (length bits) = size *)
   }.
 Check bv.
-Check mk_bv.
+Check mk_bv. 
 Check @bits.
 Check bits.
 Check size.
@@ -464,106 +884,6 @@ Proof. intros.
 Qed.
 Check concat_wd.
 
-(*
-
-Lemma and_wd: forall (a b: bv), wd a -> wd b -> wd (and_bv a b).
-Proof. intros a b H0 H1.
-         destruct a, b. unfold wd in *.
-           induction bits0.
-           - induction bits1.
-             + simpl. easy.
-             + simpl. 
-
-*)
-(*
-Lemma add_wd: forall (size: nat) (a b: bv),
-match add_bv2 a b size with
-    | mk_bv s l => (length l) = size
-  end.
-Proof. intros. destruct a, b.
-          induction bits0. 
-           - induction bits1.
-             + unfold add_bv2.
-          destruct (append_false' (n2bv_bv 
-                                    (bv2n_bv {| size := size0; bits := [] |} +    
-                                     bv2n_bv {| size := size1; bits := [] |}) 0) 0). 
-          simpl.
-          destruct (append_false {| size := size0; bits := [] |} (size0 - 0)).
-*)
-
-(*
-Eval compute in add_bv2 (mk_bv 3 [ true ; true ; true; false ]) (mk_bv 4 [false ; false ; true ; true ; true]) 20.
-Eval compute in add_bv (mk_bv 3 [ true ; true ; true ]) (mk_bv 0 []) 3.
-Eval compute in add_bv (mk_bv 0 []) (mk_bv 0 []) 0.
-Eval compute in bv2n_bv (mk_bv 0 []).
-Eval compute in n2bv_bv 0 0.
-Eval compute in add_bv (mk_bv 3 [false ; false ; false]) (mk_bv 3 [false; false; false]) 3.
-Eval compute in 
-  match add_bv (mk_bv 3 [false ; false ; false]) (mk_bv 3 [false; false; false]) 3 with
-    | mk_bv _ l => length l
-  end.
-Eval compute in 
-  match add_bv (mk_bv 3 [true ; true ; true]) (mk_bv 3 [true; false; true]) 3 with
-    | mk_bv _ l => length l
-  end.
-Eval compute in 
-  match mul_bv (mk_bv 3 [true ; true ; true]) (mk_bv 3 [true; true; true]) 5 with
-    | mk_bv _ l => length l
-  end.
-
-Eval compute in neg_bv (mk_bv 0 [ false]).
-Eval compute in bv2n_bv (mk_bv 0 [ false]).
-Eval compute in bv2n_bv (mk_bv 0 [true]).
-Eval compute in exp 2 5.
-Eval compute in neg_bv (mk_bv 2 [ true; true ]) 5.
-*)
-
-(*
-Lemma add_wd: forall (size: nat) (a b: bv), 
-  match (add_bv2 a b size) with
-    | mk_bv s l => length l = size
-  end.
-Proof. destruct a, b. intros. unfold wd in *.
-         induction bits0 as [ | hd1 tl1 ih1 ].
-         - induction bits1 as [ | hd2 tl2 ih2 ].
-           + unfold add_bv2. unfold bv2n_bv. simpl. unfold append_false. simpl.
-         - induction bits1 as [ | hd2 tl2 ih2 ].
-           + simpl in *. easy.
-           + contradict H. simpl. easy.
-
-
-Lemma add_wd: forall (size: nat) (a b: bv), 
-  match a with
-    | mk_bv s1 l1 =>
-    match b with
-      | mk_bv s2 l2 => s1 = s2 -> wd a -> wd b -> wd (add_bv2 a b s1)
-    end
-  end.
-Proof. destruct a, b. intros. destruct H0, H1. unfold wd in *.
-         induction bits0 as [ | hd1 tl1 ih1 ]. 
-         - induction bits1 as [ | hd2 tl2 ih2 ].
-           + simpl in *. easy.
-           + contradict H. simpl. easy.
-         - induction bits1 as [ | hd2 tl2 ih2 ]. 
-           + simpl in *. contradict H. easy.
-           + unfold add_bv2 in *. rewrite H. unfold bv2n_bv in *. unfold b2p_bv in *.
-
- simpl in *.
-           rewrite <- H. apply ih2.
-
- unfold add_bv2. destruct bv2n_bv. simpl.
-
- append_false', n2bv_bv. destruct bv2n_bv. simpl.
-
-
- destruct (add_bv2 (mk_bv  (length (hd1 :: tl1)) (hd1 :: tl1)) (mk_bv (length (hd1 :: tl1)) (hd2 :: tl2)) (length (hd1 :: tl1))).
- destruct (add_bv2 (mk_bv  (length (hd1 :: tl1)) (hd1 :: tl1)) (mk_bv (length tl2) tl2) (length (hd1 :: tl1))).
- simpl in *. unfold add_bv2 in *. destruct bv2n_bv in *. destruct bv2n_bv in *. simpl in *.
-
- SearchRewrite (_ :: _).
- destruct add_bv2.
-*)
-
 Lemma nth_appendl A : forall (l1 l2:list A) (i:nat) (d:A),
     (i < length l1)%nat -> nth i (l1 ++ l2) d = nth i l1 d.
 Proof.
@@ -774,8 +1094,6 @@ Local Open Scope N_scope.
     let n4 := n2 - n3 in
     ((n2b n4), n).
 
-Eval compute in neg ([ true ; false ], 2) 5.
-Eval compute in neg ([ true ; true ], 2) 5.
 
   (** Division *)
   Definition udiv (bv1 : t) (bv2 : t) : t :=
@@ -839,7 +1157,7 @@ Module BVProof.
   Import BV.
   Local Open Scope N_scope.
 
-  (** Bit vectors are well-founded when their length match the length of their list *)
+  (** Bit vectors are well-formed when their length match the length of their list *)
   Definition wf (bv:t) : Prop :=
      let (b,n) := bv in N.of_nat (length b) = n.
 (*  Eval compute in wf ((true::nil), 2). *)
