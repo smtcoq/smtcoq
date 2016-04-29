@@ -16,7 +16,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith.
+Require Import List Bool NArith Psatz.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -368,8 +368,6 @@ Qed.
 
 Lemma len_mk_list_true_empty: length (mk_list_true_acc 0 []) = 0%nat.
 Proof. simpl. reflexivity. Qed.
-
-Require Import Psatz.
 
 Lemma add_mk_list_true: forall n acc, length (mk_list_true_acc n acc) = (n + length acc)%nat.
 Proof. intros n.
