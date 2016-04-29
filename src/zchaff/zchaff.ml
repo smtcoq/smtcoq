@@ -193,7 +193,7 @@ let interp_roots first last =
 
 let sat_checker_modules = [ ["SMTCoq";"Trace";"Sat_Checker"] ]
 
-let certif_ops = CoqTerms.make_certif_ops sat_checker_modules 
+let certif_ops = CoqTerms.make_certif_ops sat_checker_modules None
 let cCertif = gen_constant sat_checker_modules "Certif" 
 
 let parse_certif dimacs trace fdimacs ftrace =
@@ -204,7 +204,7 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_) = SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
   let certif = 
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in 
   let ce2 = Structures.mkConst certif in
@@ -222,8 +222,8 @@ let theorem name fdimacs ftrace =
   let d = make_roots first last in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_) =
-    SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
 
@@ -251,8 +251,8 @@ let checker fdimacs ftrace =
   let d = make_roots first last in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_) =
-    SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
@@ -334,7 +334,7 @@ let call_zchaff nvars root =
 
 let cnf_checker_modules = [ ["SMTCoq";"Trace";"Cnf_Checker"] ]
 
-let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules 
+let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules None
 let ccertif = gen_constant cnf_checker_modules "certif" 
 let cCertif = gen_constant cnf_checker_modules "Certif" 
 let cchecker_b_correct = 
@@ -350,8 +350,8 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let nc = mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
-  let (tres,_) =
-    SmtTrace.to_coq Form.to_coq certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl false in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in
@@ -371,8 +371,8 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let nc = mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
-  let (tres,_) =
-    SmtTrace.to_coq Form.to_coq certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl false in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
   let vtvar = Term.mkRel 3 in

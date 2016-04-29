@@ -274,12 +274,18 @@ let build_certif first_root confl =
   alloc first_root
 
 
-let to_coq to_lit (cstep,
+(* [isCut]: true if we handle holes by adding cuts inside a tactic,
+   false otherwise (then, by adding a section variable) *)
+let to_coq to_lit interp (cstep,
     cRes, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,  
     cEqTr, cEqCgr, cEqCgrP, 
-    cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim) confl =
+    cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
+    cHole) confl isCut =
+
+  let cuts = ref [] in
+
   let out_f f = to_lit f in
   let out_c c = mkInt (get_pos c) in
   let step_to_coq c =
@@ -328,6 +334,20 @@ let to_coq to_lit (cstep,
           let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Coq_micromega.M.coq_proofTerm; Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Coq_micromega.M.coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
+        | Hole res ->
+           let ass_name = Names.id_of_string ("ass"^(string_of_int (
+             if isCut then List.length !cuts else Hashtbl.hash res
+           ))) in
+           let ass_ty = interp res in
+           let ass_var =
+             if isCut then (
+               let ass_var = Term.mkVar ass_name in
+               cuts := (ass_name, ass_ty)::!cuts;
+               ass_var
+             ) else (
+               declare_new_variable ass_name ass_ty
+             ) in
+           mklApp cHole [|out_c c; out_f res; ass_var|]
 	end
     | _ -> assert false in
   let step = Lazy.force cstep in
@@ -361,7 +381,7 @@ let to_coq to_lit (cstep,
     trace.(q) <- Structures.mkArray (step, traceq)
   end;
 
-  (Structures.mkArray (mklApp carray [|step|], trace), last_root)
+  (Structures.mkArray (mklApp carray [|step|], trace), last_root, !cuts)
 
 
 

@@ -163,16 +163,21 @@ let cFite = gen_constant smt_modules "Fite"
 
 let cis_true = gen_constant smt_modules "is_true"
 
-let make_certif_ops modules = 
- (gen_constant modules "step", 
-  gen_constant modules "Res", gen_constant modules "ImmFlatten", 
-  gen_constant modules "CTrue", gen_constant modules "CFalse", 
-  gen_constant modules "BuildDef", gen_constant modules "BuildDef2", 
-  gen_constant modules "BuildProj", 
-  gen_constant modules "ImmBuildProj", gen_constant modules"ImmBuildDef", 
-  gen_constant modules"ImmBuildDef2",
-  gen_constant modules "EqTr", gen_constant modules "EqCgr", gen_constant modules "EqCgrP", 
-  gen_constant modules "LiaMicromega", gen_constant modules "LiaDiseq", gen_constant modules "SplArith", gen_constant modules "SplDistinctElim")
+let make_certif_ops modules args =
+  let gen_constant c =
+    match args with
+      | Some args -> lazy (SmtMisc.mklApp (gen_constant modules c) args)
+      | None -> gen_constant modules c in
+ (gen_constant "step", 
+  gen_constant "Res", gen_constant "ImmFlatten", 
+  gen_constant "CTrue", gen_constant "CFalse", 
+  gen_constant "BuildDef", gen_constant "BuildDef2", 
+  gen_constant "BuildProj", 
+  gen_constant "ImmBuildProj", gen_constant"ImmBuildDef", 
+  gen_constant"ImmBuildDef2",
+  gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
+  gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
+  gen_constant "Hole")
   
 
 (** Useful construction *)

@@ -108,6 +108,9 @@ type 'hform rule =
   (* Elimination of operators *)
   | SplDistinctElim of 'hform clause * 'hform
 
+  (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
+  | Hole of 'hform
+
 and 'hform clause = {
             id    : clause_id;
     mutable kind  : 'hform clause_kind;
@@ -137,4 +140,5 @@ let used_clauses r =
   | ImmFlatten (c,_)  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
-  | LiaMicromega _ | LiaDiseq _ -> []
+  | LiaMicromega _ | LiaDiseq _
+  | Hole _ -> []
