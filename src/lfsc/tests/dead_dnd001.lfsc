@@ -686,25 +686,27 @@
 
  ;; Printing deferred declarations 
 
+
+
  ;; In the preprocessor we trust 
-(th_let_pf _ (trust_f (@ let269 b(not (= I (apply _ _ (apply _ _ f let269)let269) (apply _ _ (apply _ _ f c)let269))))) (\  .PA328
-(th_let_pf _ (trust_f (@ let275 c(not (= I let275 (apply _ _ (apply _ _ f let275)let275))))) (\  .PA394
-(th_let_pf _ (trust_f (@ let279 a(not (= I (apply _ _ (apply _ _ f let279)let279) (apply _ _ (apply _ _ f b)let279))))) (\  .PA318
-(th_let_pf _ (trust_f (@ let285 a(@ let286 (apply _ _ (apply _ _ f let285)let285)(or (= I let285 let286) (or (= I b let286) (= I c let286) ))))) (\  .PA339
-(th_let_pf _ (trust_f (@ let293 b(@ let294 a(@ let299 c(or (= I let293 (apply _ _ (apply _ _ f let294)let294)) (or (= I let293 (apply _ _ (apply _ _ f let293)let293)) (= I let293 (apply _ _ (apply _ _ f let299)let299)) )))))) (\  .PA383
-(th_let_pf _ (trust_f (@ let303 a(not (= I (apply _ _ (apply _ _ f let303)let303) (apply _ _ (apply _ _ f c)let303))))) (\  .PA320
-(th_let_pf _ (trust_f (@ let310 a(not (= I (apply _ _ (apply _ _ f b)let310) (apply _ _ (apply _ _ f c)let310))))) (\  .PA322
-(th_let_pf _ (trust_f (@ let316 a(@ let317 c(@ let318 (apply _ _ (apply _ _ f let317)let316)(or (= I let316 let318) (or (= I b let318) (= I let317 let318) )))))) (\  .PA369
-(th_let_pf _ (trust_f (@ let324 b(not (= I let324 (apply _ _ (apply _ _ f let324)let324))))) (\  .PA393
-(th_let_pf _ (trust_f (@ let329 b(not (= I (apply _ _ (apply _ _ f a)let329) (apply _ _ (apply _ _ f let329)let329))))) (\  .PA324
-(th_let_pf _ (trust_f (@ let335 c(@ let336 b(@ let337 (apply _ _ (apply _ _ f let335)let336)(or (= I a let337) (or (= I let336 let337) (= I let335 let337) )))))) (\  .PA374
-(th_let_pf _ (trust_f (@ let342 a(not (= I let342 (apply _ _ (apply _ _ f let342)let342))))) (\  .PA392
-(th_let_pf _ (trust_f (@ let347 b(not (= I (apply _ _ (apply _ _ f a)let347) (apply _ _ (apply _ _ f c)let347))))) (\  .PA326
-(th_let_pf _ (trust_f (@ let353 a(@ let356 b(@ let359 c(or (= I let353 (apply _ _ (apply _ _ f let353)let353)) (or (= I let356 (apply _ _ (apply _ _ f let356)let353)) (= I let359 (apply _ _ (apply _ _ f let359)let353)) )))))) (\  .PA387
-(th_let_pf _ (trust_f (@ let363 c(@ let364 a(@ let367 b(or (= I let363 (apply _ _ (apply _ _ f let364)let364)) (or (= I let363 (apply _ _ (apply _ _ f let367)let367)) (= I let363 (apply _ _ (apply _ _ f let363)let363)) )))))) (\  .PA385
-(th_let_pf _ (trust_f (@ let373 a(@ let374 b(@ let379 c(or (= I let373 (apply _ _ (apply _ _ f let373)let374)) (or (= I let374 (apply _ _ (apply _ _ f let374)let374)) (= I let379 (apply _ _ (apply _ _ f let379)let374)) )))))) (\  .PA389
-(th_let_pf _ (trust_f (@ let383 a(@ let386 b(@ let389 c(or (= I let383 (apply _ _ (apply _ _ f let383)let383)) (or (= I let383 (apply _ _ (apply _ _ f let386)let386)) (= I let383 (apply _ _ (apply _ _ f let389)let389)) )))))) (\  .PA381
-(th_let_pf _ (trust_f (@ let393 a(@ let394 c(@ let399 b(or (not (= I let393 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let393)))) (or (not (= I let399 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let399)))) (not (= I let394 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let394)))) )))))) (\  .PA418
+(th_let_pf _ (trust_f (@ let269 b(not (= I (apply _ _ (apply _ _ f let269)let269) (apply _ _ (apply _ _ f c)let269))))) (\  .PA322
+(th_let_pf _ (trust_f (@ let275 c(not (= I let275 (apply _ _ (apply _ _ f let275)let275))))) (\  .PA388
+(th_let_pf _ (trust_f (@ let279 a(not (= I (apply _ _ (apply _ _ f let279)let279) (apply _ _ (apply _ _ f b)let279))))) (\  .PA312
+(th_let_pf _ (trust_f (@ let285 a(@ let286 (apply _ _ (apply _ _ f let285)let285)(or (= I let285 let286) (or (= I b let286) (= I c let286) ))))) (\  .PA333
+(th_let_pf _ (trust_f (@ let293 b(@ let294 a(@ let299 c(or (= I let293 (apply _ _ (apply _ _ f let294)let294)) (or (= I let293 (apply _ _ (apply _ _ f let293)let293)) (= I let293 (apply _ _ (apply _ _ f let299)let299)) )))))) (\  .PA377
+(th_let_pf _ (trust_f (@ let303 a(not (= I (apply _ _ (apply _ _ f let303)let303) (apply _ _ (apply _ _ f c)let303))))) (\  .PA314
+(th_let_pf _ (trust_f (@ let310 a(not (= I (apply _ _ (apply _ _ f b)let310) (apply _ _ (apply _ _ f c)let310))))) (\  .PA316
+(th_let_pf _ (trust_f (@ let316 a(@ let317 c(@ let318 (apply _ _ (apply _ _ f let317)let316)(or (= I let316 let318) (or (= I b let318) (= I let317 let318) )))))) (\  .PA363
+(th_let_pf _ (trust_f (@ let324 b(not (= I let324 (apply _ _ (apply _ _ f let324)let324))))) (\  .PA387
+(th_let_pf _ (trust_f (@ let329 b(not (= I (apply _ _ (apply _ _ f a)let329) (apply _ _ (apply _ _ f let329)let329))))) (\  .PA318
+(th_let_pf _ (trust_f (@ let335 c(@ let336 b(@ let337 (apply _ _ (apply _ _ f let335)let336)(or (= I a let337) (or (= I let336 let337) (= I let335 let337) )))))) (\  .PA368
+(th_let_pf _ (trust_f (@ let342 a(not (= I let342 (apply _ _ (apply _ _ f let342)let342))))) (\  .PA386
+(th_let_pf _ (trust_f (@ let347 b(not (= I (apply _ _ (apply _ _ f a)let347) (apply _ _ (apply _ _ f c)let347))))) (\  .PA320
+(th_let_pf _ (trust_f (@ let353 a(@ let356 b(@ let359 c(or (= I let353 (apply _ _ (apply _ _ f let353)let353)) (or (= I let356 (apply _ _ (apply _ _ f let356)let353)) (= I let359 (apply _ _ (apply _ _ f let359)let353)) )))))) (\  .PA381
+(th_let_pf _ (trust_f (@ let363 c(@ let364 a(@ let367 b(or (= I let363 (apply _ _ (apply _ _ f let364)let364)) (or (= I let363 (apply _ _ (apply _ _ f let367)let367)) (= I let363 (apply _ _ (apply _ _ f let363)let363)) )))))) (\  .PA379
+(th_let_pf _ (trust_f (@ let373 a(@ let374 b(@ let379 c(or (= I let373 (apply _ _ (apply _ _ f let373)let374)) (or (= I let374 (apply _ _ (apply _ _ f let374)let374)) (= I let379 (apply _ _ (apply _ _ f let379)let374)) )))))) (\  .PA383
+(th_let_pf _ (trust_f (@ let383 a(@ let386 b(@ let389 c(or (= I let383 (apply _ _ (apply _ _ f let383)let383)) (or (= I let383 (apply _ _ (apply _ _ f let386)let386)) (= I let383 (apply _ _ (apply _ _ f let389)let389)) )))))) (\  .PA375
+(th_let_pf _ (trust_f (@ let393 a(@ let394 c(@ let399 b(or (not (= I let393 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let393)))) (or (not (= I let399 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let399)))) (not (= I let394 (apply _ _ (apply _ _ f let394)(apply _ _ (apply _ _ f let394)let394)))) )))))) (\  .PA412
 
 ;; Printing mapping from preprocessed assertions into atoms 
 (decl_atom (@ let409 b(= I (apply _ _ (apply _ _ f let409)let409) (apply _ _ (apply _ _ f c)let409))) (\  .v43 (\  .a43
@@ -733,28 +735,34 @@
 (decl_atom (@ let508 b(@ let509 c(= I let508 (apply _ _ (apply _ _ f let509)(apply _ _ (apply _ _ f let509)let508))))) (\  .v36 (\  .a36
 (decl_atom (@ let513 a(@ let514 c(= I let513 (apply _ _ (apply _ _ f let514)(apply _ _ (apply _ _ f let514)let513))))) (\  .v35 (\  .a35
 (decl_atom (@ let518 c(= I let518 (apply _ _ (apply _ _ f let518)(apply _ _ (apply _ _ f let518)let518)))) (\  .v37 (\  .a37
-(satlem _ _ (ast _ _ _  .a37 (\  .l75 (ast _ _ _  .a35 (\  .l71 (ast _ _ _  .a36 (\  .l73 (clausify_false (contra _  .l75 (or_elim_1 _ _ (not_not_intro _  .l73) (or_elim_1 _ _ (not_not_intro _  .l71)  .PA418)))))))))) (\  .pb24
-(satlem _ _ (asf _ _ _  .a26 (\  .l52 (asf _ _ _  .a14 (\  .l28 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l28 (or_elim_1 _ _  .l4  .PA381))  .l52)))))))) (\  .pb13
-(satlem _ _ (asf _ _ _  .a5 (\  .l10 (asf _ _ _  .a25 (\  .l50 (asf _ _ _  .a15 (\  .l30 (clausify_false (contra _ (or_elim_1 _ _  .l30 (or_elim_1 _ _  .l10  .PA389))  .l50)))))))) (\  .pb17
-(satlem _ _ (asf _ _ _  .a16 (\  .l32 (asf _ _ _  .a4 (\  .l8 (asf _ _ _  .a28 (\  .l56 (clausify_false (contra _ (or_elim_1 _ _  .l32 (or_elim_1 _ _  .l8  .PA385))  .l56)))))))) (\  .pb15
-(satlem _ _ (asf _ _ _  .a22 (\  .l44 (asf _ _ _  .a12 (\  .l24 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l24 (or_elim_1 _ _  .l4  .PA387))  .l44)))))))) (\  .pb16
-(satlem _ _ (ast _ _ _  .a42 (\  .l85 (clausify_false (contra _  .l85  .PA326)))) (\  .pb29
-(satlem _ _ (ast _ _ _  .a2 (\  .l5 (clausify_false (contra _  .l5  .PA392)))) (\  .pb19
-(satlem _ _ (asf _ _ _  .a24 (\  .l48 (asf _ _ _  .a23 (\  .l46 (asf _ _ _  .a25 (\  .l50 (clausify_false (contra _ (or_elim_1 _ _  .l48 (or_elim_1 _ _  .l46  .PA374))  .l50)))))))) (\  .pb11
-(satlem _ _ (ast _ _ _  .a41 (\  .l83 (clausify_false (contra _  .l83  .PA324)))) (\  .pb28
-(satlem _ _ (ast _ _ _  .a15 (\  .l31 (clausify_false (contra _  .l31  .PA393)))) (\  .pb20
-(satlem _ _ (asf _ _ _  .a22 (\  .l44 (asf _ _ _  .a20 (\  .l40 (asf _ _ _  .a21 (\  .l42 (clausify_false (contra _ (or_elim_1 _ _  .l42 (or_elim_1 _ _  .l40  .PA369))  .l44)))))))) (\  .pb10
-(satlem _ _ (ast _ _ _  .a40 (\  .l81 (clausify_false (contra _  .l81  .PA322)))) (\  .pb27
-(satlem _ _ (ast _ _ _  .a39 (\  .l79 (clausify_false (contra _  .l79  .PA320)))) (\  .pb26
-(satlem _ _ (asf _ _ _  .a27 (\  .l54 (asf _ _ _  .a3 (\  .l6 (asf _ _ _  .a15 (\  .l30 (clausify_false (contra _ (or_elim_1 _ _  .l30 (or_elim_1 _ _  .l6  .PA383))  .l54)))))))) (\  .pb14
-(satlem _ _ (asf _ _ _  .a4 (\  .l8 (asf _ _ _  .a3 (\  .l6 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l6 (or_elim_1 _ _  .l4  .PA339))  .l8)))))))) (\  .pb4
-(satlem _ _ (ast _ _ _  .a38 (\  .l77 (clausify_false (contra _  .l77  .PA318)))) (\  .pb25
-(satlem _ _ (ast _ _ _  .a28 (\  .l57 (clausify_false (contra _  .l57  .PA394)))) (\  .pb21
-(satlem _ _ (ast _ _ _  .a43 (\  .l87 (clausify_false (contra _  .l87  .PA328)))) (\  .pb30
+(satlem _ _ (ast _ _ _  .a37 (\  .l75 (ast _ _ _  .a35 (\  .l71 (ast _ _ _  .a36 (\  .l73 (clausify_false (contra _  .l75 (or_elim_1 _ _ (not_not_intro _  .l73) (or_elim_1 _ _ (not_not_intro _  .l71)  .PA412)))))))))) (\  .pb24
+(satlem _ _ (asf _ _ _  .a26 (\  .l52 (asf _ _ _  .a14 (\  .l28 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l28 (or_elim_1 _ _  .l4  .PA375))  .l52)))))))) (\  .pb13
+(satlem _ _ (asf _ _ _  .a5 (\  .l10 (asf _ _ _  .a25 (\  .l50 (asf _ _ _  .a15 (\  .l30 (clausify_false (contra _ (or_elim_1 _ _  .l30 (or_elim_1 _ _  .l10  .PA383))  .l50)))))))) (\  .pb17
+(satlem _ _ (asf _ _ _  .a16 (\  .l32 (asf _ _ _  .a4 (\  .l8 (asf _ _ _  .a28 (\  .l56 (clausify_false (contra _ (or_elim_1 _ _  .l32 (or_elim_1 _ _  .l8  .PA379))  .l56)))))))) (\  .pb15
+(satlem _ _ (asf _ _ _  .a22 (\  .l44 (asf _ _ _  .a12 (\  .l24 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l24 (or_elim_1 _ _  .l4  .PA381))  .l44)))))))) (\  .pb16
+(satlem _ _ (ast _ _ _  .a42 (\  .l85 (clausify_false (contra _  .l85  .PA320)))) (\  .pb29
+(satlem _ _ (ast _ _ _  .a2 (\  .l5 (clausify_false (contra _  .l5  .PA386)))) (\  .pb19
+(satlem _ _ (asf _ _ _  .a24 (\  .l48 (asf _ _ _  .a23 (\  .l46 (asf _ _ _  .a25 (\  .l50 (clausify_false (contra _ (or_elim_1 _ _  .l48 (or_elim_1 _ _  .l46  .PA368))  .l50)))))))) (\  .pb11
+(satlem _ _ (ast _ _ _  .a41 (\  .l83 (clausify_false (contra _  .l83  .PA318)))) (\  .pb28
+(satlem _ _ (ast _ _ _  .a15 (\  .l31 (clausify_false (contra _  .l31  .PA387)))) (\  .pb20
+(satlem _ _ (asf _ _ _  .a22 (\  .l44 (asf _ _ _  .a20 (\  .l40 (asf _ _ _  .a21 (\  .l42 (clausify_false (contra _ (or_elim_1 _ _  .l42 (or_elim_1 _ _  .l40  .PA363))  .l44)))))))) (\  .pb10
+(satlem _ _ (ast _ _ _  .a40 (\  .l81 (clausify_false (contra _  .l81  .PA316)))) (\  .pb27
+(satlem _ _ (ast _ _ _  .a39 (\  .l79 (clausify_false (contra _  .l79  .PA314)))) (\  .pb26
+(satlem _ _ (asf _ _ _  .a27 (\  .l54 (asf _ _ _  .a3 (\  .l6 (asf _ _ _  .a15 (\  .l30 (clausify_false (contra _ (or_elim_1 _ _  .l30 (or_elim_1 _ _  .l6  .PA377))  .l54)))))))) (\  .pb14
+(satlem _ _ (asf _ _ _  .a4 (\  .l8 (asf _ _ _  .a3 (\  .l6 (asf _ _ _  .a2 (\  .l4 (clausify_false (contra _ (or_elim_1 _ _  .l6 (or_elim_1 _ _  .l4  .PA333))  .l8)))))))) (\  .pb4
+(satlem _ _ (ast _ _ _  .a38 (\  .l77 (clausify_false (contra _  .l77  .PA312)))) (\  .pb25
+(satlem _ _ (ast _ _ _  .a28 (\  .l57 (clausify_false (contra _  .l57  .PA388)))) (\  .pb21
+(satlem _ _ (ast _ _ _  .a43 (\  .l87 (clausify_false (contra _  .l87  .PA322)))) (\  .pb30
  ;; Theory Lemmas 
+
 ;; BB atom mapping
+
+
 ;; Bit-blasting definitional clauses 
-;; Bit-blasting learned clauses 
+
+
+ ;; Bit-blasting learned clauses 
+
 (satlem _ _ (asf _ _ _  .a37 (\  .l74 (ast _ _ _  .a26 (\  .l53 (ast _ _ _  .a22 (\  .l45  ;; UF Theory Lemma 
 ;;(= c (f c (f c c))) (not (= a (f c c))) (not (= c (f c a))) 
 (clausify_false (contra _ (trans _ _ _ _  .l45 (symm _ _ _ (cong _ _ _ _ _ _ (trans _ _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)) (symm _ _ _ (cong _ _ _ _ _ _ (refl _ f) (refl _ c)))) (symm _ _ _  .l53))))  .l74))

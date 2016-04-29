@@ -1,4 +1,3 @@
-#############################################################################
 ##  v      #                   The Coq Proof Assistant                     ##
 ## <O___,, #                INRIA - CNRS - LIX - LRI - PPS                 ##
 ##   \VV/  #                                                               ##
@@ -46,7 +45,8 @@ OCAMLLIBS?=-I zchaff\
   -I lia\
   -I lfsc\
   -I euf\
-  -I cnf
+  -I cnf\
+  -I bva
 COQLIBS?= -R . SMTCoq
 COQDOCLIBS?=-R . SMTCoq
 
@@ -137,7 +137,8 @@ VFILES:=Trace.v\
   spl/Syntactic.v\
   lia/Lia.v\
   euf/Euf.v\
-  cnf/Cnf.v
+  cnf/Cnf.v\
+  bva/BVList.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
@@ -191,9 +192,9 @@ MLFILES:=lia/lia.ml\
 -include $(addsuffix .d,$(MLFILES))
 .SECONDARY: $(addsuffix .d,$(MLFILES))
 
-MLIFILES:=lfsc/ast.mli\
+MLIFILES:=lfsc/tosmtcoq.mli\
   lfsc/translator_sig.mli\
-  lfsc/tosmtcoq.mli\
+  lfsc/ast.mli\
   verit/veritSyntax.mli\
   trace/smtForm.mli\
   trace/smtAtom.mli
@@ -312,7 +313,7 @@ install-natdynlink:
 	for i in $(CMXA); do \
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \
-	done
+	done	
 	for i in $(VCMXS); do \
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \

@@ -20,6 +20,7 @@
 
 -R . SMTCoq
 
+-I bva
 -I cnf
 -I euf
 -I lfsc
@@ -28,6 +29,7 @@
 -I trace
 -I verit
 -I zchaff
+
 
 -custom "cd ../unit-tests; make" "" "test"
 -custom "cd ../unit-tests; make zchaff" "" "ztest"
@@ -46,6 +48,8 @@ CMXS = trace/smt_tactic.cmxs
 VCMXS = "NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi"
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
+
+bva/BVList.v
 
 trace/structures.ml
 trace/coqTerms.ml
