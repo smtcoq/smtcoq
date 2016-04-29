@@ -55,11 +55,8 @@ let import_trace filename first =
       close_in chan;
       Ast.flatten_term p;
       let confl_num = C.convert p in
-      let confl = VeritSyntax.get_clause confl_num in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)
-      SmtTrace.select confl;
-      occur confl;
       let first =
         let aux = VeritSyntax.get_clause 1 in
         match first, aux.value with
@@ -76,6 +73,9 @@ let import_trace filename first =
             root
           )
         | _,_ -> aux in
+      let confl = VeritSyntax.get_clause confl_num in
+      SmtTrace.select confl;
+      occur confl;
       (alloc first, confl)
 
     | _ -> raise No_proof
