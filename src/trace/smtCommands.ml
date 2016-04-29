@@ -225,9 +225,8 @@ let get_arguments concl =
 
 
 let make_proof call_solver rt ro rf l =
-  let fl = Form.flatten rf l in
   let root = SmtTrace.mkRootV [l] in
-  call_solver rt ro fl (root,l)
+  call_solver rt ro rf (root,l)
 
 
 let tactic call_solver rt ro ra rf gl =

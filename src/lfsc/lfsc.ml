@@ -64,9 +64,13 @@ let import_trace filename first =
         let aux = VeritSyntax.get_clause 1 in
         match first, aux.value with
         | Some (root,l), Some (fl::nil) ->
+          Format.eprintf "Root: %a ,,,,,,\n\
+                          input: %a@."
+            (Form.to_smt Atom.to_smt) l (Form.to_smt Atom.to_smt) fl;
           if Form.equal l fl then
             aux
           else (
+            eprintf "ADDING Flatten rule@.";
             aux.kind <- Other (ImmFlatten(root,fl));
             SmtTrace.link root aux;
             root
@@ -120,7 +124,7 @@ let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 (** Given a Coq formula build the proof                                       *)
 (******************************************************************************)
 
-(*
+
 module Form2 = struct
   (* Just for printing *)
 
@@ -164,7 +168,7 @@ module Form2 = struct
         fprintf fmt "(ite%a)"
           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
       | Fnot2 _, _ ->
-        fprintf fmt "(%a)"
+        fprintf fmt "(not (not %a))"
           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
       | _ -> assert false
 
@@ -270,10 +274,7 @@ module Atom2 = struct
     pp fmt pairs
 
 end
-*)
 
-(* module Form = Form2 *)
-(* module Atom = Atom2 *)
 
 
 let export out_channel rt ro l =
@@ -304,10 +305,9 @@ let export out_channel rt ro l =
 
 
 (* val call_cvc4 : Btype.reify_tbl -> Op.reify_tbl -> Form.t -> (Form.t clause * Form.t) -> (int * Form.t clause) *)
-let call_cvc4 rt ro fl root =
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
-  let fl = Form.right_assoc rf fl in
+let call_cvc4 rt ro rf root =
+  (* let fl = Form.right_assoc rf fl in *)
+  let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
   export outchan rt ro fl;
   close_out outchan;
@@ -316,7 +316,7 @@ let call_cvc4 rt ro fl root =
   let prooffilename = bf ^ ".lfsc" in
 
   let command = "cvc4 --dump-proof --no-simplification "
-                ^filename^" | sed -e '1d; s/\\./\\ ./g; s/\\empty/\\ empty/g' > "
+                ^filename^" | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
                 ^logfilename in
   eprintf "%s@." command;
   let t0 = Sys.time () in
