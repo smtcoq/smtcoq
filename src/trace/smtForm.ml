@@ -171,7 +171,7 @@ module Make (Atom:ATOM) =
         | Fiff -> "="
         | Fite -> "ite"
         | Fnot2 _ -> "" in
-      let (s1,s2) = if Array.length args = 0 then ("","") else ("(",")") in
+      let (s1,s2) = if Array.length args = 0 || s = "" then ("","") else ("(",")") in
       Format.fprintf fmt "%s%s" s1 s;
       Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
       Format.fprintf fmt "%s" s2

@@ -95,7 +95,9 @@
         "tmp_qnt_tidy", TPQT;
         "tmp_qnt_simplify", TPQS;
         "tmp_skolemize", TPSK;
-        "subproof", SUBP ]
+        "subproof", SUBP;
+        "flatten", FLAT;
+      ]
 }
 
 
