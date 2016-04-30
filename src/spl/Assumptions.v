@@ -85,22 +85,28 @@ Section Checker_correct.
 
   Local Notation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form).
 
-  (* H1 : Form.check_form t_form *)
-  (* H2 : Atom.check_atom t_atom *)
-  (* H10 : Atom.wt t_i t_func t_atom *)
-
   Variable s : S.t.
   Hypothesis Hs : S.valid rho s.
+  Hypothesis Ht3 : Valuation.wf
+          (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom)
+             t_form).
 
-  (* Ht1 : default t_form = Form.Ftrue *)
-  (* Ht2 : Form.wf t_form *)
-  (* Ht3 : Valuation.wf *)
-  (*         (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) *)
-  (*            t_form) *)
-  (* Ha1 : Atom.wf t_atom *)
-  (* Ha2 : default t_atom = Atom.Acop Atom.CO_xH *)
+  Lemma interp_check_clause c1 : forall c2,
+    forallb2 (fun i j => i == j) c1 c2 -> C.interp rho c1 = C.interp rho c2.
+  Proof.
+    induction c1 as [ |l1 c1 IHc1]; simpl; intros [ |l2 c2]; simpl; auto; try discriminate.
+    unfold is_true. rewrite andb_true_iff. intros [H1 H2].
+    rewrite Int63Properties.eqb_spec in H1. now rewrite (IHc1 _ H2), H1.
+  Qed.
 
-  Variable pos : int.
+  Lemma valid_check_clause cid c :
+    forallb2 (fun i j => i == j) (S.get s cid) (S.sort_uniq c) ->
+    interp_uf rho c.
+  Proof.
+    intro H. rewrite <- interp_equiv, <- S.sort_uniq_correct; auto.
+    rewrite <- (interp_check_clause _ _ H). now apply Hs.
+  Qed.
+
   Variable prem_id : list int.
   Variable prem : list C.t.
   Variable concl : C.t.
@@ -109,8 +115,19 @@ Section Checker_correct.
            t_form) prem concl.
 
   Lemma valid_check_hole: C.valid rho (check_hole s prem_id prem concl).
-                              (* TODO *)
-  Admitted.
+  Proof.
+    unfold check_hole. revert prem p. induction prem_id as [ |pid pids IHpids]; simpl;
+      intros [ |p ps]; simpl; intro H.
+    - unfold C.valid. now rewrite interp_equiv.
+    - now apply C.interp_true.
+    - now apply C.interp_true.
+    - case_eq (forallb2 (fun i j => i == j) (S.get s pid) (S.sort_uniq p));
+      simpl; intro Heq; [ |now apply C.interp_true].
+      case_eq (forallb2 (fun id c => forallb2 (fun i j => i == j) (S.get s id) (S.sort_uniq c)) pids ps);
+      simpl; intro Heq2; [ |now apply C.interp_true].
+      assert (IH:=IHpids _ (H (valid_check_clause _ _ Heq))).
+      now rewrite Heq2 in IH.
+  Qed.
 
 End Checker_correct.
 
