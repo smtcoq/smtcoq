@@ -160,8 +160,10 @@ Definition bv_or (a b : bitvector) : bitvector :=
 
 (*arithmetic operations*)
 
+ (*addition*)
+   
 Definition add_list (b1 b2 : list bool) : list bool :=
-  List.rev (fst (@fold_left2 (list bool * bool)%type _ (fun a x y => 
+  (fst (@fold_left2 (list bool * bool)%type _ (fun a x y => 
                          let (r, c) := a in
                          match x, y, c with
                          | false, false, false => (false::r, false)
@@ -173,11 +175,55 @@ Definition add_list (b1 b2 : list bool) : list bool :=
                          | false, true, true => (false::r, true)
                          | true, true, true => (true::r, true)
                          end
-                      ) b1 b2 (nil, false))).
+                      ) (rev b1) (rev b2) ([], false))).
+
+Eval compute in (add_list [true; true ; false; true] [true; true ; true; true]). 
+
+Eval compute in (add_list [true ; false ; true ; false ;true; true] [false ; true ; true ; false ; false; false]). 
 
 Definition bv_add (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with
     | true => mk_bitvector (size a) (add_list (@bits a) (@bits b))
+    | _    => mk_bitvector 0 nil
+  end.
+
+  (*multiplication*)
+
+Fixpoint and_list_0 n: list bool :=
+  match n with
+    | O    => nil
+    | S n' => false :: and_list_0 n' 
+  end.
+
+Fixpoint add_false_right (n: nat) (a1: list bool) : (list bool) :=
+  match n with
+    | O    => a1
+    | S n' => add_false_right n' (a1 ++ [false])
+  end.
+
+Fixpoint mult_ingr (n m: nat) (a1 a2 acc: list bool) : (list bool) :=
+  match m with
+    | O    => acc
+    | S m' =>  
+    match n with
+      | O    => acc
+      | S n' => 
+      match rev a2 with
+        | []        => acc
+        | a2' :: t2 => 
+        match a2' with
+          | false => mult_ingr n' m' a1 (rev t2) acc
+          | true  => mult_ingr n' m' a1 (rev t2) (add_list (add_false_right (length a1 - m') (rev (firstn m' (rev a1)))) acc)
+        end
+      end
+    end
+  end.
+
+Definition mult_list (a1 a2: list bool): (list bool) := (mult_ingr (length a2) (length a1 + 1) a1 a2 (and_list_0 (length a1))).
+
+Definition bv_mult (a b : bitvector) : bitvector :=
+  match (@size a) =? (@size b) with
+    | true => mk_bitvector (size a) (mult_list (@bits a) (@bits b))
     | _    => mk_bitvector 0 nil
   end.
 
