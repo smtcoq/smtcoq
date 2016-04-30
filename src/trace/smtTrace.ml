@@ -334,11 +334,12 @@ let to_coq to_lit interp (cstep,
           let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Coq_micromega.M.coq_proofTerm; Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Coq_micromega.M.coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
-        | Hole res ->
+        | Hole (prem_id, concl) ->
+           let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
            let ass_name = Names.id_of_string ("ass"^(string_of_int (
-             if isCut then List.length !cuts else Hashtbl.hash res
+             if isCut then List.length !cuts else Hashtbl.hash concl
            ))) in
-           let ass_ty = interp res in
+           let ass_ty = interp (prem, concl) in
            let ass_var =
              if isCut then (
                let ass_var = Term.mkVar ass_name in
@@ -347,7 +348,11 @@ let to_coq to_lit interp (cstep,
              ) else (
                declare_new_variable ass_name ass_ty
              ) in
-           mklApp cHole [|out_c c; out_f res; ass_var|]
+           let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
+           let prem_id' = List.fold_right (fun c l -> mklApp ccons [|Lazy.force cint; out_c c; l|]) prem_id (mklApp cnil [|Lazy.force cint|]) in
+           let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
+           let concl' = out_cl concl in
+           mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
 	end
     | _ -> assert false in
   let step = Lazy.force cstep in

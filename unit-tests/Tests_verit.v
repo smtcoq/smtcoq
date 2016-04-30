@@ -132,6 +132,17 @@ Section Checker_Let2.
 End Checker_Let2.
 *)
 
+(* Proofs with holes *)
+(*
+Section Checker_Sat7_holes.
+  Verit_Checker "sat7.smt2" "sat7-with-holes.vtlog".
+End Checker_Sat7_holes.
+
+Section Checker_Lia5_holes.
+  Verit_Checker "lia5.smt2" "lia5-with-holes.vtlog".
+End Checker_Lia5_holes.
+*)
+
 
 Section Sat0.
   Parse_certif_verit t_i0 t_func0 t_atom0 t_form0 root0 used_roots0 trace0 "sat0.smt2" "sat0.vtlog".
@@ -285,6 +296,19 @@ Section Let2.
 End Let2.
 *)
 
+(* Proofs with holes *)
+(*
+Section Sat7_holes.
+  Parse_certif_verit t_i_sat7_holes t_func_sat7_holes t_atom_sat7_holes t_form_sat7_holes root_sat7_holes used_roots_sat7_holes trace_sat7_holes "sat7.smt2" "sat7-with-holes.vtlog".
+  Compute @Euf_Checker.checker t_i_sat7_holes t_func_sat7_holes t_atom_sat7_holes t_form_sat7_holes root_sat7_holes used_roots_sat7_holes trace_sat7_holes.
+End Sat7_holes.
+
+Section Lia5_holes.
+  Parse_certif_verit t_i_lia5_holes t_func_lia5_holes t_atom_lia5_holes t_form_lia5_holes root_lia5_holes used_roots_lia5_holes trace_lia5_holes "lia5.smt2" "lia5-with-holes.vtlog".
+  Compute @Euf_Checker.checker t_i_lia5_holes t_func_lia5_holes t_atom_lia5_holes t_form_lia5_holes root_lia5_holes used_roots_lia5_holes trace_lia5_holes.
+End Lia5_holes.
+*)
+
 
 Section Theorem_Sat0.
   Time Verit_Theorem theorem_sat0 "sat0.smt2" "sat0.vtlog".
@@ -406,6 +430,19 @@ End Theorem_Let1.
 Section Theorem_Let2.
   Time Verit_Theorem theorem_let2 "let2.smt2" "let2.vtlog".
 End Theorem_Let2.
+*)
+
+(* Proofs with holes *)
+(*
+Section Theorem_Sat7_holes.
+  Time Verit_Theorem theorem_sat7_holes "sat7.smt2" "sat7-with-holes.vtlog".
+End Theorem_Sat7_holes.
+Check theorem_sat7_holes.
+
+Section Theorem_Lia5_holes.
+  Time Verit_Theorem theorem_lia5_holes "lia5.smt2" "lia5-with-holes.vtlog".
+End Theorem_Lia5_holes.
+Check theorem_lia5_holes.
 *)
 
 

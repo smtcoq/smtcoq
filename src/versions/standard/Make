@@ -99,6 +99,7 @@ euf/Euf.v
 lia/lia.ml
 lia/Lia.v
 
+spl/Assumptions.v
 spl/Syntactic.v
 spl/Arithmetic.v
 spl/Operators.v

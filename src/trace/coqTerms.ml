@@ -104,6 +104,8 @@ let smt_modules = [ ["SMTCoq";"Misc"];
 		    ["SMTCoq";"SMT_terms";"Atom"]
 		  ]
 
+let cState_C_t = gen_constant [["SMTCoq";"State";"C"]] "t"
+
 let cdistinct = gen_constant smt_modules "distinct"
 
 let ctype = gen_constant smt_modules "type"

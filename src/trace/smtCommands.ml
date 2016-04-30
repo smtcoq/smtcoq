@@ -65,6 +65,22 @@ let compute_roots roots last_root =
   used_roots [] 0 roots !r
 
 
+let interp_uf ta tf c =
+  let rec interp = function
+    | [] -> Lazy.force cfalse
+    | [l] -> Form.interp_to_coq (Atom.interp_to_coq ta) tf l
+    | l::c -> mklApp corb [|Form.interp_to_coq (Atom.interp_to_coq ta) tf l; interp c|] in
+  interp c
+
+let interp_conseq_uf (prem, concl) =
+  let ta = Hashtbl.create 17 in
+  let tf = Hashtbl.create 17 in
+  let rec interp = function
+    | [] -> mklApp cis_true [|interp_uf ta tf concl|]
+    | c::prem -> Term.mkArrow (mklApp cis_true [|interp_uf ta tf c|]) (interp prem) in
+  interp prem
+
+
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
 
   let t_i' = make_t_i rt in
@@ -72,7 +88,7 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
   let t_atom' = Atom.interp_tbl ra in
   let t_form' = snd (Form.interp_tbl rf) in
 
-  let (tres, last_root, _) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) (Form.interp_to_coq (Atom.interp_to_coq (Hashtbl.create 17)) (Hashtbl.create 17)) (certif_ops (Some [|t_i'; t_func'; t_atom'; t_form'|])) confl false in
+  let (tres, last_root, _) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|t_i'; t_func'; t_atom'; t_form'|])) confl false in
   let used_roots = compute_roots roots last_root in
   let roots =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
@@ -118,7 +134,7 @@ let build_certif (rt, ro, ra, rf, roots, max_id, confl) =
   let t_i = make_t_i rt in
   let t_func = make_t_func ro t_i in
 
-  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) (Form.interp_to_coq (Atom.interp_to_coq (Hashtbl.create 17)) (Hashtbl.create 17)) (certif_ops (Some [|t_i; t_func; t_atom; t_form|])) confl false in
+  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|t_i; t_func; t_atom; t_form|])) confl false in
   let used_roots = compute_roots roots last_root in
   let used_rootsCstr =
     let l = List.length used_roots in
@@ -183,10 +199,10 @@ let build_body rt ro ra rf l b (max_id, confl) =
   let v = Term.mkRel in
 
   let t_i = make_t_i rt in
-  let t_func = Term.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
+  let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq (Form.interp_to_coq (Atom.interp_to_coq (Hashtbl.create 17)) (Hashtbl.create 17)) (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl true in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl true in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -214,10 +230,10 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let v = Term.mkRel in
 
   let t_i = make_t_i rt in
-  let t_func = Term.lift 1 (make_t_func ro (v 0 (*t_i*))) in
+  let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq (Form.interp_to_coq (Atom.interp_to_coq (Hashtbl.create 17)) (Hashtbl.create 17)) (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl true in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl true in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
