@@ -45,9 +45,16 @@ type names_id_t = Names.identifier
 
 let dummy_loc = Pp.dummy_loc
 
-let mkConst c =
+let mkUConst c =
   { const_entry_body = c;
     const_entry_type = None;
+    const_entry_secctx = None;
+    const_entry_opaque = false;
+    const_entry_inline_code = false}
+
+let mkTConst c ty =
+  { const_entry_body = c;
+    const_entry_type = Some ty;
     const_entry_secctx = None;
     const_entry_opaque = false;
     const_entry_inline_code = false}

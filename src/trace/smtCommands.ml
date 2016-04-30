@@ -84,19 +84,19 @@ let interp_conseq_uf (prem, concl) =
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
 
   let t_i' = make_t_i rt in
-  let ce5 = Structures.mkConst t_i' in
+  let ce5 = Structures.mkUConst t_i' in
   let ct_i = Term.mkConst (declare_constant t_i (DefinitionEntry ce5, IsDefinition Definition)) in
 
   let t_func' = make_t_func ro ct_i in
-  let ce6 = Structures.mkConst t_func' in
+  let ce6 = Structures.mkUConst t_func' in
   let ct_func = Term.mkConst (declare_constant t_func (DefinitionEntry ce6, IsDefinition Definition)) in
 
   let t_atom' = Atom.interp_tbl ra in
-  let ce1 = Structures.mkConst t_atom' in
+  let ce1 = Structures.mkUConst t_atom' in
   let ct_atom = Term.mkConst (declare_constant t_atom (DefinitionEntry ce1, IsDefinition Definition)) in
 
   let t_form' = snd (Form.interp_tbl rf) in
-  let ce2 = Structures.mkConst t_form' in
+  let ce2 = Structures.mkUConst t_form' in
   let ct_form = Term.mkConst (declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition)) in
 
   let (tres, last_root, _) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl false in
@@ -112,14 +112,14 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
     mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
-  let ce3 = Structures.mkConst roots in
+  let ce3 = Structures.mkUConst roots in
   let _ = declare_constant root (DefinitionEntry ce3, IsDefinition Definition) in
-  let ce3' = Structures.mkConst used_roots in
+  let ce3' = Structures.mkUConst used_roots in
   let _ = declare_constant used_root (DefinitionEntry ce3', IsDefinition Definition) in
 
   let certif =
     mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
-  let ce4 = Structures.mkConst certif in
+  let ce4 = Structures.mkUConst certif in
   let _ = declare_constant trace (DefinitionEntry ce4, IsDefinition Definition) in
 
   ()
@@ -180,7 +180,7 @@ let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
 	vm_cast_true
 	  (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))) in
 
-  let ce = Structures.mkConst theorem_proof in
+  let ce = Structures.mkTConst theorem_proof theorem_concl in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 

@@ -87,7 +87,6 @@ Qed.
 Goal forall a , (xorb a a) || negb (xorb a a).
   zchaff.
 Qed.
-Print Unnamed_thm5.
 
 Goal forall a, (a||negb a) || negb (a||negb a).
   zchaff.

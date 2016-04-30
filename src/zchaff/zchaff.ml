@@ -200,14 +200,14 @@ let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
-  let ce1 = Structures.mkConst d in
+  let ce1 = Structures.mkUConst d in
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
   let certif = 
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in 
-  let ce2 = Structures.mkConst certif in
+  let ce2 = Structures.mkUConst certif in
   let _ = declare_constant trace (DefinitionEntry ce2, IsDefinition Definition) in
   ()
 
@@ -240,7 +240,7 @@ let theorem name fdimacs ftrace =
 		  vm_cast_true 
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
                   Term.mkRel 1(*v*)|]))) in
-  let ce = Structures.mkConst theorem_proof in
+  let ce = Structures.mkTConst theorem_proof theorem_type in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 
