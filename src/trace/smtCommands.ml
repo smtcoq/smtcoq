@@ -81,6 +81,13 @@ let interp_conseq_uf (prem, concl) =
   interp prem
 
 
+let print_assm ty =
+  let rec fix rf x = rf (fix rf) x in
+  let pr = fix Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
+  Printf.printf "WARNING: assuming the following hypothesis:\n%s\n\n" (Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr ty)));
+  flush stdout
+
+
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
 
   let t_i' = make_t_i rt in
@@ -99,7 +106,12 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
   let ce2 = Structures.mkUConst t_form' in
   let ct_form = Term.mkConst (declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition)) in
 
-  let (tres, last_root, _) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl false in
+  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl in
+  List.iter (fun (v,ty) ->
+    let _ = Structures.declare_new_variable v ty in
+    print_assm ty
+  ) cuts;
+
   let used_roots = compute_roots roots last_root in
   let roots =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
@@ -149,7 +161,12 @@ let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
 
-  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl false in
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  List.iter (fun (v,ty) ->
+    let _ = Structures.declare_new_variable v ty in
+    print_assm ty
+  ) cuts;
+
   let certif =
     mklApp cCertif [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -203,7 +220,12 @@ let checker ((rt, ro, ra, rf, roots, max_id, confl) as p) =
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
 
-  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl false in
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  List.iter (fun (v,ty) ->
+    let _ = Structures.declare_new_variable v ty in
+    print_assm ty
+  ) cuts;
+
   let certif =
     mklApp cCertif [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -251,7 +273,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl true in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -282,7 +304,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl true in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 

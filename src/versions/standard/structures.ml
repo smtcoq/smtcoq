@@ -128,3 +128,8 @@ let mk_smt_tactic tac =
     let t = Proofview.Goal.concl gl in
     tac env sigma t
   )
+
+let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
+let constrextern_extern_constr =
+  let env = Global.env () in
+  Constrextern.extern_constr false env (Evd.from_env env)

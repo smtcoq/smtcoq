@@ -89,3 +89,8 @@ let mk_smt_tactic tac gl =
   let sigma = Tacmach.project gl in
   let t = Tacmach.pf_concl gl in
   tac env sigma t gl
+
+let ppconstr_lsimpleconstr = Ppconstr.lsimple
+let constrextern_extern_constr =
+  let env = Global.env () in
+  Constrextern.extern_constr false env

@@ -204,7 +204,7 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
+  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
   let certif = 
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in 
   let ce2 = Structures.mkUConst certif in
@@ -223,7 +223,7 @@ let theorem name fdimacs ftrace =
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) =
-    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
 
@@ -252,7 +252,7 @@ let checker fdimacs ftrace =
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) =
-    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl false in
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
@@ -351,7 +351,7 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
-    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl false in
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in
@@ -372,7 +372,7 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
-    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl false in
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
   let vtvar = Term.mkRel 3 in
