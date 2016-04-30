@@ -16,7 +16,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith Psatz.
+Require Import List Bool NArith.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -227,6 +227,8 @@ Definition bv_mult (a b : bitvector) : bitvector :=
     | _    => mk_bitvector 0 nil
   end.
 
+Eval compute in bv_mult (mk_bitvector 8 [true; true; true; true; false; false; true]) (mk_bitvector 8 [true; true; false; true; false; true; true]).
+
 End BITVECTOR_LIST.
 
 Module BITVECTOR_LIST_THEOREMS : BITVECTOR_THEOREMS (BITVECTOR_LIST).
@@ -414,6 +416,8 @@ Qed.
 
 Lemma len_mk_list_true_empty: length (mk_list_true_acc 0 []) = 0%nat.
 Proof. simpl. reflexivity. Qed.
+
+Require Import Psatz.
 
 Lemma add_mk_list_true: forall n acc, length (mk_list_true_acc n acc) = (n + length acc)%nat.
 Proof. intros n.
