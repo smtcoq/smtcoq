@@ -84,11 +84,22 @@ let interp_conseq_uf (prem, concl) =
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
 
   let t_i' = make_t_i rt in
-  let t_func' = make_t_func ro t_i' in
-  let t_atom' = Atom.interp_tbl ra in
-  let t_form' = snd (Form.interp_tbl rf) in
+  let ce5 = Structures.mkConst t_i' in
+  let ct_i = Term.mkConst (declare_constant t_i (DefinitionEntry ce5, IsDefinition Definition)) in
 
-  let (tres, last_root, _) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|t_i'; t_func'; t_atom'; t_form'|])) confl false in
+  let t_func' = make_t_func ro ct_i in
+  let ce6 = Structures.mkConst t_func' in
+  let ct_func = Term.mkConst (declare_constant t_func (DefinitionEntry ce6, IsDefinition Definition)) in
+
+  let t_atom' = Atom.interp_tbl ra in
+  let ce1 = Structures.mkConst t_atom' in
+  let ct_atom = Term.mkConst (declare_constant t_atom (DefinitionEntry ce1, IsDefinition Definition)) in
+
+  let t_form' = snd (Form.interp_tbl rf) in
+  let ce2 = Structures.mkConst t_form' in
+  let ct_form = Term.mkConst (declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition)) in
+
+  let (tres, last_root, _) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl false in
   let used_roots = compute_roots roots last_root in
   let roots =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
@@ -105,18 +116,12 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
   let _ = declare_constant root (DefinitionEntry ce3, IsDefinition Definition) in
   let ce3' = Structures.mkConst used_roots in
   let _ = declare_constant used_root (DefinitionEntry ce3', IsDefinition Definition) in
-  let ce5 = Structures.mkConst t_i' in
-  let _ = declare_constant t_i (DefinitionEntry ce5, IsDefinition Definition) in
-  let ce6 = Structures.mkConst t_func' in
-  let _ = declare_constant t_func (DefinitionEntry ce6, IsDefinition Definition) in
-  let ce1 = Structures.mkConst t_atom' in
-  let _ = declare_constant t_atom (DefinitionEntry ce1, IsDefinition Definition) in
-  let ce2 = Structures.mkConst t_form' in
-  let _ = declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition) in
+
   let certif =
-    mklApp cCertif [|t_i'; t_func'; t_atom'; t_form'; mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+    mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
   let ce4 = Structures.mkConst certif in
   let _ = declare_constant trace (DefinitionEntry ce4, IsDefinition Definition) in
+
   ()
 
 
@@ -128,13 +133,26 @@ let interp_roots roots =
     | [] -> Lazy.force ctrue
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
-let build_certif (rt, ro, ra, rf, roots, max_id, confl) =
+let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
+  let nti = mkName "t_i" in
+  let ntfunc = mkName "t_func" in
+  let ntatom = mkName "t_atom" in
+  let ntform = mkName "t_form" in
+  let nc = mkName "c" in
+  let nused_roots = mkName "used_roots" in
+  let nd = mkName "d" in
+
+  let v = Term.mkRel in
+
+  let t_i = make_t_i rt in
+  let t_func = make_t_func ro (v 1 (*t_i*)) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let t_i = make_t_i rt in
-  let t_func = make_t_func ro t_i in
 
-  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|t_i; t_func; t_atom; t_form|])) confl false in
+  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl false in
+  let certif =
+    mklApp cCertif [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+
   let used_roots = compute_roots roots last_root in
   let used_rootsCstr =
     let l = List.length used_roots in
@@ -148,27 +166,20 @@ let build_certif (rt, ro, ra, rf, roots, max_id, confl) =
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
     Structures.mkArray (Lazy.force cint, res) in
 
-  let certif =
-    mklApp cCertif [|t_i; t_func; t_atom; t_form; mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
-
-  (rootsCstr, used_rootsCstr, certif, t_atom, t_form, t_i, t_func)
-
-let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
-  let (rootsCstr, used_rootsCstr, certif, t_atom, t_form, t_i, t_func) = build_certif p in
-
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots roots|]|] in
   let theorem_proof =
-   Term.mkLetIn (mkName "used_roots", used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|], (*7*)
-   Term.mkLetIn (mkName "t_atom", t_atom, mklApp carray [|Lazy.force catom|], (*6*)
-   Term.mkLetIn (mkName "t_form", t_form, mklApp carray [|Lazy.force cform|], (*5*)
-   Term.mkLetIn (mkName "d", rootsCstr, mklApp carray [|Lazy.force cint|], (*4*)
-   Term.mkLetIn (mkName "c", certif, mklApp ccertif [|t_i; t_func; t_atom; t_form|], (*3*)
-   Term.mkLetIn (mkName "t_i", t_i, mklApp carray [|Lazy.force ctyp_eqb|], (*2*)
-   Term.mkLetIn (mkName "t_func", t_func, mklApp carray [|mklApp ctval [|t_i|]|], (*1*)
+   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+   Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+   Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+   Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
    mklApp cchecker_correct
-     [|Term.mkRel 2; Term.mkRel 1; Term.mkRel 6; Term.mkRel 5; Term.mkRel 4; Term.mkRel 7; Term.mkRel 3;
+     [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
 	vm_cast_true
-	  (mklApp cchecker [|Term.mkRel 2; Term.mkRel 1; Term.mkRel 6; Term.mkRel 5; Term.mkRel 4; Term.mkRel 7; Term.mkRel 3|])|]))))))) in
+	  (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))) in
+
   let ce = Structures.mkConst theorem_proof in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
@@ -177,9 +188,47 @@ let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
 let checker ((rt, ro, ra, rf, roots, max_id, confl) as p) =
-  let (rootsCstr, used_rootsCstr, certif, t_atom, t_form, t_i, t_func) = build_certif p in
+  let nti = mkName "t_i" in
+  let ntfunc = mkName "t_func" in
+  let ntatom = mkName "t_atom" in
+  let ntform = mkName "t_form" in
+  let nc = mkName "c" in
+  let nused_roots = mkName "used_roots" in
+  let nd = mkName "d" in
 
-  let tm = mklApp cchecker [|t_i; t_func; t_atom; t_form; rootsCstr; used_rootsCstr; certif|] in
+  let v = Term.mkRel in
+
+  let t_i = make_t_i rt in
+  let t_func = make_t_func ro (v 1 (*t_i*)) in
+  let t_atom = Atom.interp_tbl ra in
+  let t_form = snd (Form.interp_tbl rf) in
+
+  let (tres,last_root,_) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl false in
+  let certif =
+    mklApp cCertif [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+
+  let used_roots = compute_roots roots last_root in
+  let used_rootsCstr =
+    let l = List.length used_roots in
+    let res = Array.make (l + 1) (mkInt 0) in
+    let i = ref (l-1) in
+    List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
+  let rootsCstr =
+    let res = Array.make (List.length roots + 1) (mkInt 0) in
+    let i = ref 0 in
+    List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
+    Structures.mkArray (Lazy.force cint, res) in
+
+  let tm =
+   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+   Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+   Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+   Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+   mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
 
   let res = Vnorm.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   Format.eprintf "     = %s\n     : bool@."
