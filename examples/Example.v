@@ -1,6 +1,9 @@
-(* "Require Import SMTCoq." is needed to use the SMTCoq program *)
+(* [Require Import SMTCoq.] loads the SMTCoq library.
+   If you are using native-coq instead of Coq 8.5, replace it with:
+     Require Import SMTCoq.
+   *)
 
-Require Import SMTCoq.
+Require Import SMTCoq.SMTCoq.
 Require Import Bool.
 Local Open Scope int63_scope.
 
