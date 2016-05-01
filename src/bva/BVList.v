@@ -219,7 +219,15 @@ Fixpoint mult_ingr (n m: nat) (a1 a2 acc: list bool) : (list bool) :=
     end
   end.
 
-Definition mult_list (a1 a2: list bool): (list bool) := (mult_ingr (length a2) (length a1 + 1) a1 a2 (and_list_0 (length a1))).
+Definition mult_list (a1 a2: list bool): (list bool) :=
+ match ((N.of_nat(length a2) ?= N.of_nat(length a1))) with
+   | Eq
+   | Lt => (mult_ingr (length a2) (length a1 + 1) a1 a2 (and_list_0 (length a1)))
+   | Gt => (mult_ingr (length a1) (length a2 + 1) a2 a1 (and_list_0 (length a2)))
+ end.
+
+Eval compute in mult_list [true; true; true; true; false; false; true; false] [true; true; false; true; false; true; true].
+Eval compute in mult_list [true; true; false; true; false; true; true] [true; true; true; true; false; false; true; false].
 
 Definition bv_mult (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with
@@ -227,6 +235,9 @@ Definition bv_mult (a b : bitvector) : bitvector :=
     | _    => mk_bitvector 0 nil
   end.
 
+Eval compute in bv_mult (mk_bitvector 7 [true; true; true; true; false; false; true]) (mk_bitvector 7 [true; false; true; false; true; true]).
+Eval compute in bv_mult (mk_bitvector 7 [true; true; true; true; false; false; true; false]) (mk_bitvector 7 [true; true; false; true; false; true; true]).
+Eval compute in bv_mult (mk_bitvector 7 [true; true; false; true; false; true; true]) (mk_bitvector 7 [true; true; true; true; false; false; true; false]) .
 Eval compute in bv_mult (mk_bitvector 8 [true; true; true; true; false; false; true]) (mk_bitvector 8 [true; true; false; true; false; true; true]).
 
 End BITVECTOR_LIST.
