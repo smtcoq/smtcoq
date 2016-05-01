@@ -152,18 +152,3 @@ forall l, b1 = b2
 where `l` is a list of Booleans. Those Booleans can be any concrete
 terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL` and their combinations.
-
-
-#### Extraction
-
-The `src/extraction` directory contains the OCaml extracted checker, as
-well as additional files to make use of it. You can compile it using the
-given `Makefile` (after compiling SMTCoq): it will produce an executable
-`smtcoq` that can be run independently of SMTCoq in this way:
-- `smtcoq -zchaff foo.cnf foo.zlog` runs the ZChaff checker on a DIMACS
-  file and the corresponding ZChaff certificate
-- `smtcoq -verit foo.smt2 foo.vtlog` runs the veriT checker on a SMTLIB2
-  file and the corresponding veriT certificate.
-
-Note that even the extracted version of SMTCoq requires both native-coq
-and SMTCoq to be compiled (mainly since it relies on other Coq plugins).

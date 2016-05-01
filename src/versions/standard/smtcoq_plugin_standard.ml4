@@ -14,8 +14,7 @@
 (**************************************************************************)
 
 
-(* Uncomment for 8.5 *)
-(* DECLARE PLUGIN "trace/smt_tactic" *)
+DECLARE PLUGIN "smtcoq_plugin"
 
 VERNAC COMMAND EXTEND Vernac_zchaff
 | [ "Parse_certif_zchaff" 
