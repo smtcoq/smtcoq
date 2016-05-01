@@ -49,8 +49,10 @@ vo_to_obj = $(addsuffix .o,\
 #                        #
 ##########################
 
-OCAMLLIBS?=-I "cnf"\
+OCAMLLIBS?=-I "bva"\
+  -I "cnf"\
   -I "euf"\
+  -I "lfsc"\
   -I "lia"\
   -I "smtlib2"\
   -I "trace"\
@@ -61,8 +63,10 @@ OCAMLLIBS?=-I "cnf"\
   -I "versions/standard/Array"
 COQLIBS?=\
   -R "." SMTCoq\
+  -I "bva"\
   -I "cnf"\
   -I "euf"\
+  -I "lfsc"\
   -I "lia"\
   -I "smtlib2"\
   -I "trace"\
@@ -175,6 +179,7 @@ VFILES:=versions/standard/Int63/Int63.v\
   versions/standard/Int63/Int63Axioms.v\
   versions/standard/Int63/Int63Properties.v\
   versions/standard/Array/PArray.v\
+  bva/BVList.v\
   cnf/Cnf.v\
   euf/Euf.v\
   lia/Lia.v\
@@ -238,6 +243,14 @@ MLFILES:=versions/standard/structures.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
   verit/veritSyntax.ml\
+  lfsc/lfscParser.ml\
+  lfsc/lfscLexer.ml\
+  lfsc/type.ml\
+  lfsc/ast.ml\
+  lfsc/builtin.ml\
+  lfsc/tosmtcoq.ml\
+  lfsc/converter.ml\
+  lfsc/lfsc.ml\
   zchaff/cnfParser.ml\
   zchaff/satParser.ml\
   zchaff/zchaff.ml\
@@ -258,7 +271,11 @@ MLIFILES:=trace/smtAtom.mli\
   trace/smtForm.mli\
   smtlib2/smtlib2_parse.mli\
   verit/veritParser.mli\
-  verit/veritSyntax.mli
+  verit/veritSyntax.mli\
+  lfsc/lfscParser.mli\
+  lfsc/ast.mli\
+  lfsc/translator_sig.mli\
+  lfsc/tosmtcoq.mli
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(MLIFILES))
@@ -350,15 +367,18 @@ ztest:
 vtest: 
 	cd ../unit-tests; make verit
 
+lfsctest: 
+	cd ../unit-tests; make lfsc
+
 %.ml: %.mll
 	$(CAMLLEX) $<
 
 %.ml %.mli: %.mly
 	$(CAMLYACC) $<
 
-ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
+ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
 
-$(CMXA): versions/standard/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx smtcoq_plugin.cmx
+$(CMXA): versions/standard/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 $(CMXS): $(CMXA)
@@ -441,10 +461,14 @@ uninstall: uninstall_me.sh
 	@echo "B $(COQLIB) stm" >> .merlin
 	@echo "B $(COQLIB) grammar" >> .merlin
 	@echo "B $(COQLIB) config" >> .merlin
+	@echo "B bva" >> .merlin
+	@echo "S bva" >> .merlin
 	@echo "B cnf" >> .merlin
 	@echo "S cnf" >> .merlin
 	@echo "B euf" >> .merlin
 	@echo "S euf" >> .merlin
+	@echo "B lfsc" >> .merlin
+	@echo "S lfsc" >> .merlin
 	@echo "B lia" >> .merlin
 	@echo "S lia" >> .merlin
 	@echo "B smtlib2" >> .merlin
@@ -474,10 +498,11 @@ clean::
 	- rm -rf test
 	- rm -rf ztest
 	- rm -rf vtest
+	- rm -rf lfsctest
 	- rm -rf ml
 	- rm -rf $(CMXA)
 	- rm -rf $(CMXS)
-	- rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtcoq.a
+	- rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtcoq.a
 
 cleanall:: clean
 	rm -f $(patsubst %.v,.%.aux,$(VFILES))

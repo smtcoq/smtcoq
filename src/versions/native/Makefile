@@ -39,7 +39,8 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 #                        #
 ##########################
 
-OCAMLLIBS?=-I zchaff\
+OCAMLLIBS?=-I versions/native\
+  -I zchaff\
   -I verit\
   -I trace\
   -I smtlib2\
@@ -48,7 +49,8 @@ OCAMLLIBS?=-I zchaff\
   -I euf\
   -I cnf\
   -I bva
-COQLIBS?=-I zchaff\
+COQLIBS?=-I versions/native\
+  -I zchaff\
   -I verit\
   -I trace\
   -I smtlib2\
@@ -197,7 +199,7 @@ MLFILES:=lia/lia.ml\
   trace/smtAtom.ml\
   trace/satAtom.ml\
   trace/coqTerms.ml\
-  trace/structures.ml
+  versions/native/structures.ml
 
 -include $(addsuffix .d,$(MLFILES))
 .SECONDARY: $(addsuffix .d,$(MLFILES))
@@ -276,7 +278,7 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
+$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml

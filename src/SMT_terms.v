@@ -14,11 +14,9 @@
 (**************************************************************************)
 
 
-Add LoadPath "." as SMTCoq.
-Add LoadPath "bva" as SMTCoq.bva.
 Require Import Bool List Int63 PArray.
 Require Import Misc State.
-Require Import SMTCoq.bva.BVList.
+Require Import BVList.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.

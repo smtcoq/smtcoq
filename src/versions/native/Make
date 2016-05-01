@@ -29,6 +29,7 @@
 -I trace
 -I verit
 -I zchaff
+-I versions/native
 
 
 -custom "cd ../unit-tests; make" "" "test"
@@ -40,7 +41,7 @@
 -custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"
 -custom "" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml" "ml"
 
--custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx" "$(CMXA)"
+-custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx" "$(CMXA)"
 -custom "$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^" "$(CMXA)" "$(CMXS)"
 
 CMXA = smtcoq.cmxa
@@ -51,7 +52,8 @@ CAMLYACC = $(CAMLBIN)ocamlyacc
 
 bva/BVList.v
 
-trace/structures.ml
+versions/native/structures.ml
+
 trace/coqTerms.ml
 trace/satAtom.ml
 trace/smtAtom.ml
