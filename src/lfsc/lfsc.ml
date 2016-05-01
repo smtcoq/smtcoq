@@ -347,10 +347,10 @@ let call_cvc4 rt ro rf root =
 
 
 
-let tactic gl =
+let tactic env sigma t =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 rt ro ra rf gl
+  SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t

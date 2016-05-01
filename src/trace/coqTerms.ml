@@ -1,17 +1,18 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
+
 
 open Coqlib
 
@@ -85,6 +86,9 @@ let cNone = gen_constant init_modules "None"
 (* Pairs *)
 let cpair = gen_constant init_modules "pair"
 
+(* Dependent pairs *)
+let csigT = gen_constant init_modules "sigT"
+
 (* Logical Operators *)
 let cnot = gen_constant init_modules "not"
 let ceq = gen_constant init_modules "eq"
@@ -100,6 +104,8 @@ let smt_modules = [ ["SMTCoq";"Misc"];
 		    ["SMTCoq";"SMT_terms";"Atom"]
 		  ]
 
+let cState_C_t = gen_constant [["SMTCoq";"State";"C"]] "t"
+
 let cdistinct = gen_constant smt_modules "distinct"
 
 let ctype = gen_constant smt_modules "type"
@@ -112,6 +118,7 @@ let ctyp_eqb = gen_constant smt_modules "typ_eqb"
 let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
 let cte_carrier = gen_constant smt_modules "te_carrier"
 let cte_eqb = gen_constant smt_modules "te_eqb"
+let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
 
 let ctval =  gen_constant smt_modules "tval"
@@ -158,16 +165,21 @@ let cFite = gen_constant smt_modules "Fite"
 
 let cis_true = gen_constant smt_modules "is_true"
 
-let make_certif_ops modules = 
- (gen_constant modules "step", 
-  gen_constant modules "Res", gen_constant modules "Weaken", gen_constant modules "ImmFlatten", 
-  gen_constant modules "CTrue", gen_constant modules "CFalse", 
-  gen_constant modules "BuildDef", gen_constant modules "BuildDef2", 
-  gen_constant modules "BuildProj", 
-  gen_constant modules "ImmBuildProj", gen_constant modules"ImmBuildDef", 
-  gen_constant modules"ImmBuildDef2",
-  gen_constant modules "EqTr", gen_constant modules "EqCgr", gen_constant modules "EqCgrP", 
-  gen_constant modules "LiaMicromega", gen_constant modules "LiaDiseq", gen_constant modules "SplArith", gen_constant modules "SplDistinctElim")
+let make_certif_ops modules args =
+  let gen_constant c =
+    match args with
+      | Some args -> lazy (SmtMisc.mklApp (gen_constant modules c) args)
+      | None -> gen_constant modules c in
+ (gen_constant "step", 
+  gen_constant "Res", gen_constant "Weaken", gen_constant "ImmFlatten", 
+  gen_constant "CTrue", gen_constant "CFalse", 
+  gen_constant "BuildDef", gen_constant "BuildDef2", 
+  gen_constant "BuildProj", 
+  gen_constant "ImmBuildProj", gen_constant"ImmBuildDef", 
+  gen_constant"ImmBuildDef2",
+  gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
+  gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
+  gen_constant "Hole")
   
 
 (** Useful construction *)

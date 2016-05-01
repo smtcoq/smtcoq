@@ -1,17 +1,19 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
+
+
 open Util
 open SmtMisc
 open CoqTerms
@@ -276,9 +278,16 @@ module Make (Atom:ATOM) =
       | CCifb
       | CCunknown
 
+    module ConstrHash = struct
+      type t = Term.constr
+      let equal = Term.eq_constr
+      let hash = Term.hash_constr
+    end
+    module ConstrHashtbl = Hashtbl.Make(ConstrHash)
+
     let op_tbl () =
-      let tbl = Hashtbl.create 29 in
-      let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
+      let tbl = ConstrHashtbl.create 29 in
+      let add (c1,c2) = ConstrHashtbl.add tbl (Lazy.force c1) c2 in
       List.iter add 
 	[
 	 ctrue,CCtrue; cfalse,CCfalse;
@@ -293,7 +302,7 @@ module Make (Atom:ATOM) =
     let of_coq atom_of_coq reify c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c = 
-	try Hashtbl.find op_tbl c with Not_found -> CCunknown in
+	try ConstrHashtbl.find op_tbl c with Not_found -> CCunknown in
       let rec mk_hform h =
 	let c, args = Term.decompose_app h in
 	match get_cst c with
@@ -312,7 +321,7 @@ module Make (Atom:ATOM) =
               get reify (Fapp (Fimp, [|l1;l2|]))
             | _ -> error "SmtForm.Form.of_coq: wrong number of arguments for implb")
 	| CCifb ->
-	    (* We should also be able to syntaxify if then else *)
+	    (* We should also be able to reify if then else *)
 	    begin match args with
 	    | [b1;b2;b3] ->
 		let l1 = mk_hform b1 in
@@ -337,7 +346,7 @@ module Make (Atom:ATOM) =
 	match args with
 	| [t] -> 
 	    let c,args = Term.decompose_app t in
-	    if c = Lazy.force cnegb then
+	    if Term.eq_constr c (Lazy.force cnegb) then
               mk_fnot (i+1) args
 	    else 
               let q,r = i lsr 1 , i land 1 in
@@ -352,7 +361,7 @@ module Make (Atom:ATOM) =
 	| [t1;t2] -> 
 	    let l2 = mk_hform t2 in
 	    let c, args = Term.decompose_app t1 in
-	    if c = Lazy.force candb then
+	    if Term.eq_constr c (Lazy.force candb) then
               mk_fand (l2::acc) args
 	    else 
 	      let l1 = mk_hform t1 in
@@ -364,7 +373,7 @@ module Make (Atom:ATOM) =
 	| [t1;t2] -> 
 	    let l2 = mk_hform t2 in
 	    let c, args = Term.decompose_app t1 in
-	    if c = Lazy.force corb then
+	    if Term.eq_constr c (Lazy.force corb) then
               mk_for (l2::acc) args
 	    else 
 	      let l1 = mk_hform t1 in

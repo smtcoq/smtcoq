@@ -1,0 +1,112 @@
+########################################################################
+##   This file is intended to developers, please do not use it to     ##
+## generate a Makefile, rather use the provided Makefile.             ##
+########################################################################
+
+
+
+
+########################################################################
+## To generate the Makefile:                                          ##
+##   coq_makefile -f Make -o Makefile                                 ##
+## Change the "all" target into:                                      ##
+##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   ##
+## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA. ##
+## Change the "install" target: change CMO into CMX.                  ##
+## Remove the automatically generated line with %.cmxs: %.cmx         ##
+## Finally, suppress the "Makefile" target and add to the "clean" target: ##
+##   - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtcoq.a ##
+########################################################################
+
+
+-R . SMTCoq
+
+-I cnf
+-I euf
+-I lia
+-I smtlib2
+-I trace
+-I verit
+-I zchaff
+-I versions/standard
+-I versions/standard/Int63
+-I versions/standard/Array
+
+-custom "cd ../unit-tests; make" "" "test"
+-custom "cd ../unit-tests; make zchaff" "" "ztest"
+-custom "cd ../unit-tests; make verit" "" "vtest"
+
+-custom "$(CAMLLEX) $<" "%.mll" "%.ml"
+-custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"
+-custom "" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml" "ml"
+
+-custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "versions/standard/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx smtcoq_plugin.cmx" "$(CMXA)"
+-custom "$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^" "$(CMXA)" "$(CMXS)"
+
+CMXA = smtcoq.cmxa
+CMXS = smtcoq_plugin.cmxs
+CAMLLEX = $(CAMLBIN)ocamllex
+CAMLYACC = $(CAMLBIN)ocamlyacc
+
+versions/standard/Int63/Int63.v
+versions/standard/Int63/Int63Lib.v
+versions/standard/Int63/Cyclic63.v
+versions/standard/Int63/Ring63.v
+versions/standard/Int63/Int63Native.v
+versions/standard/Int63/Int63Op.v
+versions/standard/Int63/Int63Axioms.v
+versions/standard/Int63/Int63Properties.v
+versions/standard/Array/PArray.v
+
+versions/standard/structures.ml
+
+trace/coqTerms.ml
+trace/satAtom.ml
+trace/smtAtom.ml
+trace/smtAtom.mli
+trace/smtCertif.ml
+trace/smtCnf.ml
+trace/smtCommands.ml
+trace/smtForm.ml
+trace/smtForm.mli
+trace/smtMisc.ml
+trace/smtTrace.ml
+
+smtlib2/smtlib2_parse.ml
+smtlib2/smtlib2_parse.mli
+smtlib2/smtlib2_ast.ml
+smtlib2/smtlib2_genConstr.ml
+smtlib2/smtlib2_lex.ml
+smtlib2/smtlib2_util.ml
+
+verit/veritParser.ml
+verit/veritParser.mli
+verit/verit.ml
+verit/veritLexer.ml
+verit/veritSyntax.ml
+verit/veritSyntax.mli
+
+zchaff/cnfParser.ml
+zchaff/satParser.ml
+zchaff/zchaff.ml
+zchaff/zchaffParser.ml
+
+cnf/Cnf.v
+
+euf/Euf.v
+
+lia/lia.ml
+lia/Lia.v
+
+spl/Assumptions.v
+spl/Syntactic.v
+spl/Arithmetic.v
+spl/Operators.v
+
+Misc.v
+SMTCoq.v
+SMT_terms.v
+State.v
+Trace.v
+
+smtcoq_plugin.ml4

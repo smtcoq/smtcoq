@@ -1,17 +1,19 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
+
+
 open SmtMisc
 open CoqTerms
 open SmtCertif
@@ -272,12 +274,16 @@ let build_certif first_root confl =
   alloc first_root
 
 
-let to_coq to_lit (cstep,
+let to_coq to_lit interp (cstep,
     cRes, cWeaken, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,  
     cEqTr, cEqCgr, cEqCgrP, 
-    cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim) confl =
+    cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
+    cHole) confl =
+
+  let cuts = ref [] in
+
   let out_f f = to_lit f in
   let out_c c = mkInt (get_pos c) in
   let step_to_coq c =
@@ -338,6 +344,17 @@ let to_coq to_lit (cstep,
           let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Coq_micromega.M.coq_proofTerm; Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Coq_micromega.M.coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
+        | Hole (prem_id, concl) ->
+           let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
+           let ass_name = Names.id_of_string ("ass"^(string_of_int (Hashtbl.hash concl))) in
+           let ass_ty = interp (prem, concl) in
+           cuts := (ass_name, ass_ty)::!cuts;
+           let ass_var = Term.mkVar ass_name in
+           let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
+           let prem_id' = List.fold_right (fun c l -> mklApp ccons [|Lazy.force cint; out_c c; l|]) prem_id (mklApp cnil [|Lazy.force cint|]) in
+           let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
+           let concl' = out_cl concl in
+           mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
 	end
     | _ -> assert false in
   let step = Lazy.force cstep in
@@ -371,7 +388,7 @@ let to_coq to_lit (cstep,
     trace.(q) <- Structures.mkArray (step, traceq)
   end;
 
-  (Structures.mkArray (mklApp carray [|step|], trace), last_root)
+  (Structures.mkArray (mklApp carray [|step|], trace), last_root, !cuts)
 
 
 

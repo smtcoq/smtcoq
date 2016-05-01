@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -150,10 +150,10 @@ let call_verit rt ro rf root =
     | VeritSyntax.Sat -> Structures.error "veriT can't prove this"
 
 
-let tactic gl =
+let tactic env sigma t =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_verit rt ro ra rf gl
+  SmtCommands.tactic call_verit rt ro ra rf env sigma t

@@ -1,22 +1,21 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
 
+
 (*** Spl -- a small checker for simplifications ***)
 
-Add LoadPath "." as SMTCoq.
-Add LoadPath "lia" as SMTCoq.lia.
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
@@ -183,7 +182,7 @@ Section CheckAtom.
   Proof.
     intros x y;assert (W:=Zge_cases x y);destruct (Zge_bool x y).
     split;auto.
-    split;[intros;elimtype false;auto with zarith | discriminate].
+    split;[intros;auto with zarith | discriminate].
   Qed.
 
 

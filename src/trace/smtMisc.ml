@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -32,15 +32,8 @@ type 'a gen_hashed = { index : int; hval : 'a }
 let mklApp f args = Term.mkApp (Lazy.force f, args)
 
 (* TODO : Set -> Type *)
-let coqtype = lazy Term.mkSet
-
-let declare_new_type t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (Structures.dummy_loc,t);
-  Term.mkVar t
-
-let declare_new_variable v constr_t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (Structures.dummy_loc,v);
-  Term.mkVar v
+let declare_new_type = Structures.declare_new_type
+let declare_new_variable = Structures.declare_new_variable
 
 let mkName s =
   let id = Names.id_of_string s in

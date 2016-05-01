@@ -30,4 +30,4 @@ logs: $(OBJ)
 
 
 clean:
-	rm -rf *~ *.zlog *.vtlog
+	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG)

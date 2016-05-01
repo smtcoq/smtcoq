@@ -1,20 +1,20 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
 
 
-VERNAC COMMAND EXTEND Parse_certif_zchaff
+VERNAC COMMAND EXTEND Vernac_zchaff
 | [ "Parse_certif_zchaff" 
     ident(dimacs) ident(trace) string(fdimacs) string(fproof) ] ->
   [
@@ -27,10 +27,10 @@ VERNAC COMMAND EXTEND Parse_certif_zchaff
 | [ "Zchaff_Theorem" ident(name) string(fdimacs) string(fproof) ] ->
   [
     Zchaff.theorem name fdimacs fproof
-  ] 
+  ]
 END
 
-VERNAC COMMAND EXTEND Parse_certif_verit
+VERNAC COMMAND EXTEND Vernac_verit
 | [ "Parse_certif_verit"
     ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
   [
@@ -46,7 +46,7 @@ VERNAC COMMAND EXTEND Parse_certif_verit
   ]
 END
 
-VERNAC COMMAND EXTEND Parse_certif_lfsc
+VERNAC COMMAND EXTEND Vernac_lfsc
 | [ "Parse_certif_lfsc"
     ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
   [
@@ -58,14 +58,14 @@ VERNAC COMMAND EXTEND Parse_certif_lfsc
   ]
 END
 
-TACTIC EXTEND zchaff
-| [ "zchaff" ] -> [ Zchaff.tactic ]
+TACTIC EXTEND Tactic_zchaff
+| [ "zchaff" ] -> [ Structures.mk_sat_tactic Zchaff.tactic ]
 END
 
-TACTIC EXTEND verit
-| [ "verit" ] -> [ Verit.tactic ]
+TACTIC EXTEND Tactic_verit
+| [ "verit" ] -> [ Structures.mk_smt_tactic Verit.tactic ]
 END
 
-TACTIC EXTEND cvc4
-| [ "cvc4" ] -> [ Lfsc.tactic ]
+TACTIC EXTEND Tactic_cvc4
+| [ "cvc4" ] -> [ Structures.mk_smt_tactic Lfsc.tactic ]
 END

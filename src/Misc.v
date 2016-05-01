@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -403,7 +403,7 @@ Lemma afold_right_Ind :
       P 0 (afold_right A B default OP F t).
 Proof.
   intros A B P default OP F t;
-    apply (afoldi_right_Ind P default (fun _ => OP)); trivial.
+    apply (afoldi_right_Ind P default (fun _ => OP) F).
 Qed.
 
 

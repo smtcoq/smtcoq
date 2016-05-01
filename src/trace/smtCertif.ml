@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -113,6 +113,9 @@ type 'hform rule =
   (* Elimination of operators *)
   | SplDistinctElim of 'hform clause * 'hform
 
+  (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
+  | Hole of ('hform clause) list * 'hform list
+
 and 'hform clause = {
             id    : clause_id;
     mutable kind  : 'hform clause_kind;
@@ -140,6 +143,7 @@ let used_clauses r =
   match r with
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
   | Weaken (c,_) | ImmFlatten (c,_)  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
+  | Hole (cs, _) -> cs
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _ -> []

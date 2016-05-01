@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -291,6 +291,16 @@ Record typ_eqb : Type := Typ_eqb {
   te_reflect : forall x y, reflect (x = y) (te_eqb x y)
 }.
 
+Section Typ_eqb_param.
+
+  Variable A : Type.
+  Variable r : { eq : A -> A -> bool & forall x y, reflect (x = y) (eq x y) }.
+
+  Definition typ_eqb_of_typ_eqb_param : typ_eqb :=
+    Typ_eqb A (projT1 r) (projT2 r).
+
+End Typ_eqb_param.
+
 (* Common used types into which we interpret *)
 
 (* Unit *)
@@ -480,6 +490,9 @@ Module Typ.
   End Cast.
 
 End Typ.
+
+Arguments Typ.Cast {_} {_} _.
+Arguments Typ.NoCast {_} {_}.
 
 (* TODO move this *)
 Inductive dlist (A:Type) (P:A->Type) : list A -> Type :=
@@ -1504,3 +1517,5 @@ Search (nat -> (nat -> bool)).
   Qed.
 
 End Atom.
+
+Arguments Atom.Val {_} {_} _ _.

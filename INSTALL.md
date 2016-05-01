@@ -9,8 +9,41 @@ amd64).
 
 ## Installation from the sources
 
-Currently, SMTCoq can be built only from the sources, using the
-[version of Coq with native data-structures](https://github.com/smtcoq/native-coq). The design of an opam package is under progress.
+Currently, SMTCoq can be built only from the sources, using either Coq 8.5 or the
+[version of Coq with native data-structures](https://github.com/smtcoq/native-coq). The design of an opam package is under progress. We recommend Coq 8.5 for standard use, and native-coq for uses that require very efficient computation. In both cases, you will need to install the provers (see below).
+
+
+### Installation with Coq 8.5
+
+1. Download the last stable version of Coq 8.5:
+```
+wget https://coq.inria.fr/distrib/V8.5pl1/files/coq-8.5pl1.tar.gz
+```
+   and compile it by following the instructions available in the
+   repository. We recommand that you do not install it, but only compile
+   it in local:
+```
+./configure -local
+make
+```
+
+2. Set an environment variable COQBIN to the directory where Coq's
+   binaries are; for instance:
+```
+export COQBIN=/home/jdoe/woe-8.5pl1/bin/
+```
+   (the final slash is mandatory).
+
+3. Compile and install SMTCoq by using the commands:
+```
+./configure.sh
+make
+make install
+```
+   in the src directory.
+
+
+### Installation with native-coq
 
 1. Download the git version of Coq with native compilation:
 ```
@@ -33,7 +66,7 @@ export COQBIN=/home/jdoe/native-coq/bin/
 
 3. Compile and install SMTCoq by using the commands:
 ```
-./configure.sh
+./configure.sh -native
 make
 make install
 ```

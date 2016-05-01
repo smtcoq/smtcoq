@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -193,21 +193,21 @@ let interp_roots first last =
 
 let sat_checker_modules = [ ["SMTCoq";"Trace";"Sat_Checker"] ]
 
-let certif_ops = CoqTerms.make_certif_ops sat_checker_modules 
+let certif_ops = CoqTerms.make_certif_ops sat_checker_modules None
 let cCertif = gen_constant sat_checker_modules "Certif" 
 
 let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
-  let ce1 = Structures.mkConst d in
+  let ce1 = Structures.mkUConst d in
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_) = SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
   let certif = 
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in 
-  let ce2 = Structures.mkConst certif in
+  let ce2 = Structures.mkUConst certif in
   let _ = declare_constant trace (DefinitionEntry ce2, IsDefinition Definition) in
   ()
 
@@ -222,8 +222,8 @@ let theorem name fdimacs ftrace =
   let d = make_roots first last in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_) =
-    SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
 
@@ -240,7 +240,7 @@ let theorem name fdimacs ftrace =
 		  vm_cast_true 
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
                   Term.mkRel 1(*v*)|]))) in
-  let ce = Structures.mkConst theorem_proof in
+  let ce = Structures.mkTConst theorem_proof theorem_type in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 
@@ -251,14 +251,14 @@ let checker fdimacs ftrace =
   let d = make_roots first last in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_) =
-    SmtTrace.to_coq (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let tm = mklApp cchecker [|d; certif|] in
-  let expr = Constrextern.extern_constr true Environ.empty_env tm in
-  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some Structures.glob_term_CbvVm, None, expr))
+  let expr = Structures.extern_constr tm in
+  Structures.vernacentries_interp expr
 
 
 
@@ -334,7 +334,7 @@ let call_zchaff nvars root =
 
 let cnf_checker_modules = [ ["SMTCoq";"Trace";"Cnf_Checker"] ]
 
-let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules 
+let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules None
 let ccertif = gen_constant cnf_checker_modules "certif" 
 let cCertif = gen_constant cnf_checker_modules "Certif" 
 let cchecker_b_correct = 
@@ -350,8 +350,8 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let nc = mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
-  let (tres,_) =
-    SmtTrace.to_coq Form.to_coq certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in
@@ -371,8 +371,8 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let nc = mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
-  let (tres,_) =
-    SmtTrace.to_coq Form.to_coq certif_ops confl in
+  let (tres,_,_) =
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
   let vtvar = Term.mkRel 3 in
@@ -388,9 +388,9 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
 let get_arguments concl = 
   let f, args = Term.decompose_app concl in
   match args with
-  | [ty;a;b] when f = Lazy.force ceq && ty = Lazy.force cbool -> a, b
-  | [a] when f = Lazy.force cis_true -> a, Lazy.force ctrue
-  | _ -> failwith ("Zchaff.tactic :can only deal with equality over bool")
+  | [ty;a;b] when (Term.eq_constr f (Lazy.force ceq)) && (Term.eq_constr ty (Lazy.force cbool)) -> a, b
+  | [a] when (Term.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
+  | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
 
 
 (* Check that the result is Unsat, otherwise raise a model *)
@@ -473,7 +473,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
           | Fatom a ->
             let t = atom_tbl.(a) in
             let value = if ispos then " = true" else " = false" in
-            acc^"  "^(Pp.string_of_ppcmds (Printer.pr_constr_env env t))^value
+            acc^"  "^(Pp.string_of_ppcmds (Structures.pr_constr_env env t))^value
           | Fapp _ -> acc
       ) with | Invalid_argument _ -> acc (* Because cnf computation does not put the new formulas in the table... Perhaps it should? *)
     ) "zchaff found a counterexample:\n" model)
@@ -495,9 +495,9 @@ let tactic gl =
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
   let body = 
-    if (b = Lazy.force ctrue || b = Lazy.force cfalse) then
+    if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.get reify_atom) reify_form a in
-      let l' = if b = Lazy.force ctrue then Form.neg l else l in
+      let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
@@ -510,7 +510,8 @@ let tactic gl =
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l in
       build_body_eq reify_atom reify_form 
-	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl in
+	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
+  in
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
   let res = compose_lam_assum forall_let body in

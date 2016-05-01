@@ -1,13 +1,13 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2015                                          *)
+(*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Michaël Armand                                                     *)
 (*     Benjamin Grégoire                                                  *)
 (*     Chantal Keller                                                     *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - MSR-Inria Joint Lab                  *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -41,15 +41,56 @@ let mkArray : Term.types * Term.constr array -> Term.constr =
 
 
 (* Differences between the two versions of Coq *)
+type names_id_t = Names.identifier
+
 let dummy_loc = Pp.dummy_loc
 
-let mkConst c =
+let mkUConst c =
   { const_entry_body = c;
     const_entry_type = None;
     const_entry_secctx = None;
     const_entry_opaque = false;
     const_entry_inline_code = false}
 
-let glob_term_CbvVm = Glob_term.CbvVm None
+let mkTConst c ty =
+  { const_entry_body = c;
+    const_entry_type = Some ty;
+    const_entry_secctx = None;
+    const_entry_opaque = false;
+    const_entry_inline_code = false}
 
 let error = Errors.error
+
+let coqtype = lazy Term.mkSet
+
+let declare_new_type t =
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (dummy_loc, t);
+  Term.mkVar t
+
+let declare_new_variable v constr_t =
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (dummy_loc, v);
+  Term.mkVar v
+
+let extern_constr = Constrextern.extern_constr true Environ.empty_env
+
+let vernacentries_interp expr =
+  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some (Glob_term.CbvVm None), None, expr))
+
+let pr_constr_env = Printer.pr_constr_env
+
+let lift = Term.lift
+
+let mk_sat_tactic tac = tac
+let tclTHENLAST = Tacticals.tclTHENLAST
+let assert_before = Tactics.assert_tac
+let vm_cast_no_check = Tactics.vm_cast_no_check
+let mk_smt_tactic tac gl =
+  let env = Tacmach.pf_env gl in
+  let sigma = Tacmach.project gl in
+  let t = Tacmach.pf_concl gl in
+  tac env sigma t gl
+
+let ppconstr_lsimpleconstr = Ppconstr.lsimple
+let constrextern_extern_constr =
+  let env = Global.env () in
+  Constrextern.extern_constr false env

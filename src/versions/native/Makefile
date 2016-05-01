@@ -1,3 +1,4 @@
+#############################################################################
 ##  v      #                   The Coq Proof Assistant                     ##
 ## <O___,, #                INRIA - CNRS - LIX - LRI - PPS                 ##
 ##   \VV/  #                                                               ##
@@ -47,7 +48,15 @@ OCAMLLIBS?=-I zchaff\
   -I euf\
   -I cnf\
   -I bva
-COQLIBS?= -R . SMTCoq
+COQLIBS?=-I zchaff\
+  -I verit\
+  -I trace\
+  -I smtlib2\
+  -I lia\
+  -I lfsc\
+  -I euf\
+  -I cnf\
+  -I bva -R . SMTCoq
 COQDOCLIBS?=-R . SMTCoq
 
 ##########################
@@ -58,9 +67,9 @@ COQDOCLIBS?=-R . SMTCoq
 
 CAMLYACC=$(CAMLBIN)ocamlyacc
 CAMLLEX=$(CAMLBIN)ocamllex
-VCMXS=NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
-CMXS=trace/smt_tactic.cmxs
-CMXA=trace/smtcoq.cmxa
+VCMXS=NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
+CMXS=smtcoq_plugin.cmxs
+CMXA=smtcoq.cmxa
 
 OPT?=
 COQDEP?=$(COQBIN)coqdep -c
@@ -135,6 +144,7 @@ VFILES:=Trace.v\
   spl/Operators.v\
   spl/Arithmetic.v\
   spl/Syntactic.v\
+  spl/Assumptions.v\
   lia/Lia.v\
   euf/Euf.v\
   cnf/Cnf.v\
@@ -151,7 +161,7 @@ GFILES:=$(VFILES:.v=.g)
 HTMLFILES:=$(VFILES:.v=.html)
 GHTMLFILES:=$(VFILES:.v=.g.html)
 OBJFILES:=$(call vo_to_obj,$(VOFILES))
-ML4FILES:=trace/smt_tactic.ml4
+ML4FILES:=smtcoq_plugin.ml4
 
 -include $(addsuffix .d,$(ML4FILES))
 .SECONDARY: $(addsuffix .d,$(ML4FILES))
@@ -266,7 +276,7 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx trace/smt_tactic.cmx
+$(CMXA): trace/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
@@ -313,7 +323,7 @@ install-natdynlink:
 	for i in $(CMXA); do \
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \
-	done	
+	done
 	for i in $(VCMXS); do \
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \

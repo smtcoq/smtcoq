@@ -1,17 +1,18 @@
 /**************************************************************************/
 /*                                                                        */
 /*     SMTCoq                                                             */
-/*     Copyright (C) 2011 - 2015                                          */
+/*     Copyright (C) 2011 - 2016                                          */
 /*                                                                        */
 /*     Michaël Armand                                                     */
 /*     Benjamin Grégoire                                                  */
 /*     Chantal Keller                                                     */
 /*                                                                        */
-/*     Inria - École Polytechnique - MSR-Inria Joint Lab                  */
+/*     Inria - École Polytechnique - Université Paris-Sud                 */
 /*                                                                        */
 /*   This file is distributed under the terms of the CeCILL-C licence     */
 /*                                                                        */
 /**************************************************************************/
+
 
 %{
   open SmtAtom
@@ -28,7 +29,7 @@
 %token COLON SHARP
 %token LPAR RPAR
 %token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE
 %token <int> INT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR
@@ -123,6 +124,7 @@ typ:
   | TPSK                                                   { Tpsk  }
   | SUBP                                                   { Subp  }
   | FLAT                                                   { Flat  }
+  | HOLE                                                   { Hole  }
 ;
 
 clause:
