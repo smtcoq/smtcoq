@@ -8,5 +8,5 @@ prof:
 	ocamlbuild -r -tags annot,bin_annot,profile,rectypes -tag profile -libs nums,unix -no-hygiene lfsctosmtcoq.native
 
 clean:
-	rm *.cm*
 	ocamlbuild -clean
+	rm *.cm*
