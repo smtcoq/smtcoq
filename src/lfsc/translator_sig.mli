@@ -55,6 +55,9 @@ type rule =
   | Eqco
   | Eqre
   | Lage
+  | Flat
+  | Hole
+  | True
     
 
 
@@ -95,6 +98,8 @@ module type S = sig
   (** Create an input unit clause. It is given an identifier that is not
       returned. *)
   val mk_input : string -> term -> unit
+
+  val mk_admit_preproc : string -> term -> unit
     
   (** [register_prop_abstr v p] register the term [v] as being a propositional
       abstraction of the term [p]. *)

@@ -154,8 +154,11 @@ Section certif.
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
 
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
+
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Let wf_t_atom : Atom.wf t_atom.
     Proof. destruct (Atom.check_atom_correct _ ch_atom); auto. Qed.
@@ -165,32 +168,32 @@ Section certif.
 
     Let def_t_form : default t_form = Form.Ftrue.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [H _]; destruct H; auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [H _]; destruct H; auto.
     Qed.
 
     Let wf_t_form : Form.wf t_form.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [H _]; destruct H; auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [H _]; destruct H; auto.
     Qed.
 
     Let wf_rho : Valuation.wf rho.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form); auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto.
     Qed.
 
     Lemma valid_C_true : C.interp rho C._true.
     Proof.
       apply C.interp_true.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form);trivial.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form);trivial.
     Qed.
     Hint Resolve valid_C_true.
 
     Local Notation interp := (Atom.interp t_i t_func t_atom).
 
     Lemma wf_interp_form : forall x,
-       rho x = Form.interp interp_form_hatom t_form (t_form.[x]).
+       rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[x]).
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form).
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form).
       destruct H; intros x;rewrite Form.wf_interp_form;trivial.
     Qed.
 

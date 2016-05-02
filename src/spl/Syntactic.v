@@ -17,7 +17,7 @@
 (*** Spl -- a small checker for simplifications ***)
 
 Require Import List PArray Bool Int63 ZMicromega.
-Require Import Misc State SMT_terms.
+Require Import Misc State SMT_terms BVList.
 Require Lia.
 
 Local Open Scope array_scope.
@@ -363,6 +363,7 @@ Section FLATTEN.
 
   (** Correctness proofs *)
   Variable interp_atom : atom -> bool.
+  Variable interp_bvatom : atom -> BITVECTOR_LIST.bitvector.
   Hypothesis default_thf : default t_form = Ftrue.
   Hypothesis wf_thf : wf t_form.
   Hypothesis check_atom_correct :
@@ -370,10 +371,10 @@ Section FLATTEN.
   Hypothesis check_neg_atom_correct :
     forall a1 a2, check_neg_atom a1 a2 -> interp_atom a1 = negb (interp_atom a2).
 
-  Local Notation interp_var := (interp_state_var interp_atom t_form).
+  Local Notation interp_var := (interp_state_var interp_atom interp_bvatom t_form).
   Local Notation interp_lit := (Lit.interp interp_var).
 
-  Lemma interp_Fnot2 : forall i l, interp interp_atom t_form (Fnot2 i l) = interp_lit l.
+  Lemma interp_Fnot2 : forall i l, interp interp_atom interp_bvatom t_form (Fnot2 i l) = interp_lit l.
   Proof.
     intros i l;simpl;apply fold_ind;trivial.
     intros a;rewrite negb_involutive;trivial.
@@ -385,14 +386,14 @@ Section FLATTEN.
     unfold remove_not;intros l.
     case_eq (get_form (Lit.blit l));intros;trivial.
     unfold Lit.interp, Var.interp.
-    rewrite (wf_interp_form interp_atom t_form default_thf wf_thf (Lit.blit l)), H, interp_Fnot2.
+    rewrite (wf_interp_form interp_atom interp_bvatom t_form default_thf wf_thf (Lit.blit l)), H, interp_Fnot2.
     destruct(Lit.is_pos l);trivial.
     rewrite Lit.is_pos_neg, Lit.blit_neg;unfold Lit.interp;destruct (Lit.is_pos i0);trivial.
     rewrite negb_involutive;trivial.
   Qed.
 
   Lemma get_and_correct : forall l args, get_and l = Some args ->
-    interp_lit l = interp interp_atom t_form (Fand args).
+    interp_lit l = interp interp_atom interp_bvatom t_form (Fand args).
   Proof.
     unfold get_and;intros l args.
     rewrite <- remove_not_correct;unfold Lit.interp;generalize (remove_not l).
@@ -403,7 +404,7 @@ Section FLATTEN.
   Qed.
 
   Lemma get_or_correct : forall l args, get_or l = Some args ->
-    interp_lit l = interp interp_atom t_form (For args).
+    interp_lit l = interp interp_atom interp_bvatom t_form (For args).
   Proof.
     unfold get_or;intros l args.
     rewrite <- remove_not_correct;unfold Lit.interp;generalize (remove_not l).

@@ -14,10 +14,11 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray.
-Require Import Misc State.
-Require Import BVList.
+Require Import Bool Int63 PArray.
+Require Import Misc State BVList.
+Require List.
 
+Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
 
@@ -41,7 +42,15 @@ Module Form.
   | Fimp (_:fargs)
   | Fxor (_:_lit) (_:_lit)
   | Fiff (_:_lit) (_:_lit)
-  | Fite (_:_lit) (_:_lit) (_:_lit).
+  | Fite (_:_lit) (_:_lit) (_:_lit)
+   (* Bit-blasting predicate (theory of bit vectors):
+        bbT a [l1;...;ln] means [l1;...;ln] is the bitwise representation of a
+      (in little endian)
+      WARNING: this breaks stratification
+      *)
+  | FbbT (_:atom) (_:list _lit)
+  (* TODO: replace [list _lit] with [fargs] *)
+  .
 
 
   Definition is_Ftrue h :=
@@ -59,6 +68,7 @@ Module Form.
 
   Section Interp.
     Variable interp_atom : atom -> bool.
+    Variable interp_bvatom : atom -> BITVECTOR_LIST.bitvector.
 
     Section Interp_form.
 
@@ -82,64 +92,14 @@ Module Form.
         | Fite a b c =>
           if Lit.interp interp_var a then Lit.interp interp_var b
           else Lit.interp interp_var c
+        | FbbT a ls =>
+          BITVECTOR_LIST.bv_eq (interp_bvatom a) (BITVECTOR_LIST.bv_mk (List.map (Lit.interp interp_var) ls))
         end.
 
     End Interp_form.
 
     Section Interp_get.
 
-(*
-  Eval compute in
-       (let t := (make 2 _) in 
-         (let t := (set t 0 50) in 
-           (let t := (set t 1 49) in 
-            (forallb is_even t)
-            ))).
-
-    Eval compute in
-       (let t := (make 2 (make 3 _)) in
-         (let t1 := (make 3 _) in
-         (let t2 := (make 3 _) in
-           (let t1 := (set t1 0 10) in 
-           (let t1 := (set t1 1 11) in
-           (let t1 := (set t1 2 12) in
-           (let t2 := (set t2 0 20) in 
-           (let t2 := (set t2 1 21) in
-           (let t2 := (set t2 2 22) in
-             (let t := (set t 0 t1) in 
-             (let t := (set t 1 t2) in
-               t          
-            ))))))))))).
-
- Parameters (A: Type) (f: int -> A -> A).
- Parameters a a1 a2 a3: A.
-
-  Definition t : array A :=
-     (let t := (make 3 a) in 
-         (let t := (set t 0 a1) in 
-            (let t := (set t 1 a2) in 
-              (let t := (set t 2 a3) in t
-            )))).
-
- Eval compute in foldi f 0 (length t) (t.[2]).
-
-Definition foldi {A} (f:int -> A -> A) from to :=
-  foldi_cont (fun i cont a => cont (f i a)) from to (fun a => a).
-
-  Parameters B: Type.
-  Parameters b b1 b2 b3: B.
-  Parameter g: int -> A -> B -> A.
-
-  Definition t2 : array B :=
-     (let t := (make 3 b) in 
-         (let t := (set t 0 b1) in 
-            (let t := (set t 1 b2) in 
-              (let t := (set t 2 b3) in t
-            )))).
-
-  Eval compute in foldi_left g a t2.
-  
- *)
       Variable t_form : PArray.array form.
 
       Definition t_interp : PArray.array bool :=
@@ -155,6 +115,7 @@ Definition foldi {A} (f:int -> A -> A) from to :=
           PArray.forallb (fun l => Lit.blit l < i) args
         | Fxor a b | Fiff a b => (Lit.blit a < i) && (Lit.blit b < i) 
         | Fite a b c => (Lit.blit a < i) && (Lit.blit b < i) && (Lit.blit c < i)
+        | FbbT _ ls => List.forallb (fun l => Lit.blit l < i) ls
         end.
 
       Lemma lt_form_interp_form_aux :
@@ -167,16 +128,19 @@ Definition foldi {A} (f:int -> A -> A) from to :=
           try (apply afold_left_eq;unfold is_true in H0;
             rewrite PArray.forallb_spec in H0;intros;
               auto using Lit.interp_eq_compat).
-        f_equal;auto using Lit.interp_eq_compat.
-        apply afold_right_eq;unfold is_true in H0;
-          rewrite PArray.forallb_spec in H0;intros;
-            auto using Lit.interp_eq_compat.
-        unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
-          rewrite !(Lit.interp_eq_compat f1 f2);auto.
-        unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
-          rewrite !(Lit.interp_eq_compat f1 f2);auto.
-        unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
-          rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - f_equal;auto using Lit.interp_eq_compat.
+        - apply afold_right_eq;unfold is_true in H0;
+            rewrite PArray.forallb_spec in H0;intros;
+              auto using Lit.interp_eq_compat.
+        - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
+            rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
+            rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
+            rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - replace (List.map (Lit.interp f2) l) with (List.map (Lit.interp f1) l); auto.
+          unfold is_true in H0. rewrite List.forallb_forall in H0.
+          apply List_map_ext_in. intros x Hx. apply Lit.interp_eq_compat; auto.
       Qed.
 
       Definition wf := PArray.forallbi lt_form t_form.
@@ -561,7 +525,8 @@ Module Atom.
    | BO_BVor.
 
   Inductive nop : Type :=
-   | NO_distinct (_ : Typ.type).
+   | NO_distinct (_ : Typ.type)
+  .
 
   Notation hatom := int (only parsing).
 
@@ -570,7 +535,8 @@ Module Atom.
    | Auop (_ : unop) (_:hatom)
    | Abop (_ : binop) (_:hatom) (_:hatom)
    | Anop (_ : nop) (_: list hatom)
-   | Aapp (_:func) (_: list hatom).
+   | Aapp (_:func) (_: list hatom)
+  .
 
 
   (* Generic predicates and operations *)
@@ -583,16 +549,6 @@ Module Atom.
    | _,_ => false
    end.
 
-(* to remove *)
-Search (nat -> (nat -> bool)).
-Fixpoint eq_nat_bool n m : bool :=
-  match n, m with
-    | O, O => true
-    | O, S _ => false
-    | S _, O => false
-    | S n1, S m1 => eq_nat_bool n1 m1
-  end.
-
   Definition uop_eqb o o' :=
    match o, o' with
    | UO_xO, UO_xO 
@@ -600,11 +556,9 @@ Fixpoint eq_nat_bool n m : bool :=
    | UO_Zpos, UO_Zpos 
    | UO_Zneg, UO_Zneg
    | UO_Zopp, UO_Zopp => true
-   | UO_BVbitOf n, UO_BVbitOf m => beq_nat n m   
+   | UO_BVbitOf n, UO_BVbitOf m => Nat_eqb n m   
    | _,_ => false
    end.
-
-SearchAbout beq_nat.
 
   Definition bop_eqb o o' :=
    match o, o' with
@@ -647,13 +601,11 @@ SearchAbout beq_nat.
    destruct o1;destruct o2;simpl;constructor;trivial;discriminate.
   Qed.
 
-Search (nat -> (nat -> bool)).
-
   Lemma reflect_uop_eqb : forall o1 o2, reflect (o1 = o2) (uop_eqb o1 o2).
   Proof.
    destruct o1;destruct o2;simpl; try constructor;trivial; try discriminate.
    - apply iff_reflect. 
-     case_eq (beq_nat n n0).
+     case_eq (Nat_eqb n n0).
        + split; auto. rewrite beq_nat_true_iff in H. intros _. rewrite H; reflexivity.
        + split; auto.
          * rewrite beq_nat_false_iff in H. intros. contradict H0.
@@ -734,7 +686,7 @@ Search (nat -> (nat -> bool)).
       simpl in H1; rewrite Typ.cast_refl in H1; auto.
     Qed.
 
-    (* Interprétation d'une fonction*)
+    (* Interpretation of a function*)
     Variable t_func : PArray.array tval.
 
     (** Type checking of atom assuming an type for hatom *)
@@ -1056,8 +1008,8 @@ Search (nat -> (nat -> bool)).
 
       Lemma compute_interp_spec : forall ty l acc,
         match compute_interp ty acc l with
-          | Some l' => forall i j, In2 i j l' <-> (In2 i j acc \/ (In j acc /\ exists a, In a l /\ interp_hatom a = Bval ty i) \/ (exists a b, In2 b a l /\ interp_hatom a = Bval ty i /\ interp_hatom b = Bval ty j))
-          | None => exists a, In a l /\ let (ta,_) := interp_hatom a in ta <> ty
+          | Some l' => forall i j, In2 i j l' <-> (In2 i j acc \/ (List.In j acc /\ exists a, List.In a l /\ interp_hatom a = Bval ty i) \/ (exists a b, In2 b a l /\ interp_hatom a = Bval ty i /\ interp_hatom b = Bval ty j))
+          | None => exists a, List.In a l /\ let (ta,_) := interp_hatom a in ta <> ty
         end.
       Proof.
         intro ty; induction l as [ |a q IHq]; simpl.
@@ -1104,7 +1056,7 @@ Search (nat -> (nat -> bool)).
       Lemma compute_interp_spec_rev : forall ty l,
         match compute_interp ty nil l with
           | Some l' => forall i j, In2 j i (rev l') <-> (exists a b, In2 b a l /\ interp_hatom a = Bval ty i /\ interp_hatom b = Bval ty j)
-          | None => exists a, In a l /\ let (ta,_) := interp_hatom a in ta <> ty
+          | None => exists a, List.In a l /\ let (ta,_) := interp_hatom a in ta <> ty
         end.
       Proof.
         intros ty l; generalize (compute_interp_spec ty l nil); case (compute_interp ty nil l); auto; intros l' H i j; rewrite In2_rev, (H i j); split; auto; intros [H1|[[H1 _]|H1]]; auto; inversion H1.
@@ -1131,6 +1083,13 @@ Search (nat -> (nat -> bool)).
         match Typ.cast t Typ.Tbool with
         | Typ.Cast k => k _ v
         | _ => true
+        end.
+
+      Definition interp_bv (v:bval) : BITVECTOR_LIST.bitvector :=
+        let (t,v) := v in
+        match Typ.cast t Typ.TBV with
+        | Typ.Cast k => k _ v
+        | _ => BITVECTOR_LIST.bv_mk (true::nil)
         end.
 
 
@@ -1499,6 +1458,10 @@ Search (nat -> (nat -> bool)).
     Definition interp_form_hatom t_atom : hatom -> bool :=
       let interp := interp_hatom t_atom in
       fun a => interp_bool (interp a).
+
+    Definition interp_form_hatom_bv t_atom : hatom -> BITVECTOR_LIST.bitvector :=
+      let interp := interp_hatom t_atom in
+      fun a => interp_bv (interp a).
 
   End Typing_Interp.
 

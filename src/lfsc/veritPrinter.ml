@@ -76,6 +76,9 @@ let get_rule = function
   | Eqco -> "eq_congruent"
   | Eqre -> "eq_reflexive"
   | Lage -> "la_generic"
+  | Flat -> "flatten"
+  | Hole -> "hole"
+  | True -> "true"
 
 
 let print_sharps () =
@@ -244,6 +247,16 @@ let mk_input name formula =
      register_clause_id cl id;
      HS.add inputs name id;
      fprintf fmt "%d:(input (%a))@." id print_term formula
+   | OldCl _ -> ()
+
+
+let mk_admit_preproc name formula =
+  let cl = [formula] in
+  match new_clause_id cl with
+   | NewCl id ->
+     register_clause_id cl id;
+     HS.add inputs name id;
+     fprintf fmt "%d:(hole (%a))@." id print_term formula
    | OldCl _ -> ()
 
 

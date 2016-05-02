@@ -180,6 +180,7 @@ VFILES:=versions/standard/Int63/Int63.v\
   versions/standard/Int63/Int63Properties.v\
   versions/standard/Array/PArray.v\
   bva/BVList.v\
+  bva/Bva_checker.v\
   cnf/Cnf.v\
   euf/Euf.v\
   lia/Lia.v\
@@ -244,13 +245,13 @@ MLFILES:=versions/standard/structures.ml\
   verit/veritLexer.ml\
   verit/veritSyntax.ml\
   lfsc/lfscParser.ml\
-  lfsc/lfscLexer.ml\
   lfsc/type.ml\
   lfsc/ast.ml\
   lfsc/builtin.ml\
   lfsc/tosmtcoq.ml\
   lfsc/converter.ml\
   lfsc/lfsc.ml\
+  lfsc/lfscLexer.ml\
   zchaff/cnfParser.ml\
   zchaff/satParser.ml\
   zchaff/zchaff.ml\

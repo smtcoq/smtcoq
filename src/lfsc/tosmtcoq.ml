@@ -72,6 +72,9 @@ let get_rule = function
   | Eqco -> VeritSyntax.Eqco
   | Eqre -> VeritSyntax.Eqre
   | Lage -> VeritSyntax.Lage
+  | Flat -> VeritSyntax.Flat
+  | Hole -> VeritSyntax.Hole
+  | True -> VeritSyntax.True
 
 
 
@@ -226,6 +229,16 @@ let mk_input name formula =
      HS.add inputs name id;
      (* Format.eprintf "mk_input %d@." id; *)
      VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
+   | OldCl _ -> ()
+
+
+let mk_admit_preproc name formula =
+  let cl = [term_smtcoq formula] in
+  match new_clause_id cl with
+   | NewCl id ->
+     register_clause_id cl id;
+     HS.add inputs name id;
+     VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 
 

@@ -108,6 +108,22 @@ module Make (T : Translator_sig.S) = struct
       end
     | _ -> p
 
+
+  let rec admit_preproc p = match app_name p with
+    | Some ("th_let_pf", [_; tr; p]) ->
+      begin match app_name tr with
+        | Some ("trust_f", [formula]) ->
+          begin match value p with
+            | Lambda ({sname = Name h}, p) ->
+              mk_admit_preproc h formula;
+              admit_preproc p
+            | _ -> assert false
+          end
+        | _ -> assert false
+      end
+    | _ -> p
+
+
   
   (** Registers a propositional variable as an abstraction for a
       formula. Proofs in SMTCoq have to be given in terms of formulas. *)
@@ -215,6 +231,20 @@ module Make (T : Translator_sig.S) = struct
   (** Convert the local proof of a [satlem]. We use decductive style rules when
       possible but revert to axiomatic ones when the context forces us to. *)
   and lem env p = match app_name p with
+    | Some ("or_elim_1", [el; rem; x; r])
+    | Some ("or_elim_2", [rem; el; x; r])
+      when (match app_name r with
+            Some (("iff_elim_1" |"iff_elim_2"), _) -> true | _ -> false)
+      ->
+      
+      let env = lem env r in
+      let env = lem env x in
+      (match env.clauses with
+       | ci1 :: ci2 :: cls ->
+         { env with clauses = mk_clause_cl Reso [rem] [ci1; ci2] :: cls }
+       | _ -> env
+      )
+
     | Some (("or_elim_1"|"or_elim_2"), [_; _; x; r])
       when (match app_name r with
             Some (("impl_elim"
@@ -470,6 +500,10 @@ module Make (T : Translator_sig.S) = struct
     | None ->
 
       match name p with
+
+      | Some ("A0"|"truth") ->
+        { env with clauses = mk_clause_cl True [ttrue] [] :: env.clauses }
+      
       | Some h ->
         (* should be an input clause *)
         (try { env with clauses = get_input_id h :: env.clauses }
@@ -603,11 +637,14 @@ module Make (T : Translator_sig.S) = struct
   (** Convert an LFSC proof (this is the entry point) *)
   let convert p =
     p
-    |> ignore_all_decls
-    |> produce_inputs_preproc
-    (* |> ignore_decls *)
-    (* |> produce_inputs *)
-    (* |> ignore_preproc *)
+      
+    (* |> ignore_all_decls *)
+    (* |> produce_inputs_preproc *)
+
+    |> ignore_decls
+    |> produce_inputs
+    |> admit_preproc
+    
     |> register_prop_vars
     |> satlem
     |> reso_of_satlem_simplify 0

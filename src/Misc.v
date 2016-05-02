@@ -1002,3 +1002,35 @@ End Forall2.
 
 Implicit Arguments forallb2 [A B].
 
+
+(* Compatibility between native-coq and Coq 8.5 *)
+
+Definition Nat_eqb :=
+  fix eqb (n m : nat) {struct n} : bool :=
+    match n with
+    | O => match m with
+           | O => true
+           | S _ => false
+           end
+    | S n' => match m with
+              | O => false
+              | S m' => eqb n' m'
+              end
+    end.
+
+Definition List_map_ext_in
+  : forall (A B : Type) (f g : A -> B) (l : list A),
+    (forall a : A, In a l -> f a = g a) -> List.map f l = List.map g l :=
+  fun (A B : Type) (f g : A -> B) (l : list A) =>
+    list_ind
+      (fun l0 : list A =>
+         (forall a : A, In a l0 -> f a = g a) -> List.map f l0 = List.map g l0)
+      (fun _ : forall a : A, False -> f a = g a => eq_refl)
+      (fun (a : A) (l0 : list A)
+           (IHl : (forall a0 : A, In a0 l0 -> f a0 = g a0) -> List.map f l0 = List.map g l0)
+           (H : forall a0 : A, a = a0 \/ In a0 l0 -> f a0 = g a0) =>
+         eq_ind_r (fun b : B => b :: List.map f l0 = g a :: List.map g l0)
+                  (eq_ind_r (fun l1 : list B => g a :: l1 = g a :: List.map g l0) eq_refl
+                            (IHl (fun (a0 : A) (H0 : In a0 l0) => H a0 (or_intror H0))))
+                  (H a (or_introl eq_refl))) l.
+

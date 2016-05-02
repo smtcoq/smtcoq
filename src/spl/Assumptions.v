@@ -83,12 +83,13 @@ Section Checker_correct.
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.
 
-  Local Notation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form).
+  Local Notation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form).
 
   Variable s : S.t.
   Hypothesis Hs : S.valid rho s.
   Hypothesis Ht3 : Valuation.wf
           (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom)
+                                 (Atom.interp_form_hatom_bv t_i t_func t_atom)
              t_form).
 
   Lemma interp_check_clause c1 : forall c2,
@@ -112,6 +113,7 @@ Section Checker_correct.
   Variable concl : C.t.
   Hypothesis p : interp_conseq_uf
         (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom)
+                               (Atom.interp_form_hatom_bv t_i t_func t_atom)
            t_form) prem concl.
 
   Lemma valid_check_hole: C.valid rho (check_hole s prem_id prem concl).

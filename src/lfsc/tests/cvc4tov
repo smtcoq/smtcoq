@@ -5,7 +5,7 @@ name=${1%.*}
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "Running CVC4..."
-cvc4 --dump-proof --no-simplification $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $name.tmp.lfsc
+cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $name.tmp.lfsc
 
 echo "Writing LFSC proof..."
 cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast}.plf $name.tmp.lfsc > $name.lfsc
@@ -22,6 +22,6 @@ End File.
 EOF
 
 echo "Checking with Coq..."
-${COQBIN}coqc $name.v
+$COQBIN/coqc -q -R $DIR/../.. SMTCoq $name.v
 
 exit 0

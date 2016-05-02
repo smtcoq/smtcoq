@@ -64,6 +64,7 @@ versions/standard/Array/PArray.v
 versions/standard/structures.ml
 
 bva/BVList.v
+bva/Bva_checker.v
 
 trace/coqTerms.ml
 trace/satAtom.ml
@@ -93,7 +94,6 @@ verit/veritSyntax.mli
 
 lfsc/lfscParser.ml
 lfsc/lfscParser.mli
-lfsc/lfscLexer.ml
 lfsc/type.ml
 lfsc/ast.ml
 lfsc/ast.mli
@@ -103,6 +103,7 @@ lfsc/tosmtcoq.ml
 lfsc/tosmtcoq.mli
 lfsc/converter.ml
 lfsc/lfsc.ml
+lfsc/lfscLexer.ml
 
 zchaff/cnfParser.ml
 zchaff/satParser.ml
