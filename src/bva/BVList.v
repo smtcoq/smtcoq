@@ -140,7 +140,7 @@ Section Fold_left2.
   Fixpoint fold_left2 (xs ys: list B) (acc:A) {struct xs} : A :=
     match xs, ys with
     | nil, _ | _, nil => acc
-    | x::xs, y::ys => fold_left2 xs ys (f acc x y)
+    | x::xs, y::ys    => fold_left2 xs ys (f acc x y)
     end.
 
   Lemma foo : forall (I: A -> Prop) acc, I acc -> 
@@ -173,23 +173,36 @@ Definition bv_or (a b : bitvector) : bitvector :=
 (*arithmetic operations*)
 
  (*addition*)
-   
-Definition add_list (b1 b2 : list bool) : list bool :=
-  (fst (@fold_left2 (list bool * bool)%type _ (fun a x y => 
-                         let (r, c) := a in
-                         match x, y, c with
-                         | false, false, false => (false::r, false)
-                         | false, false, true
-                         | false, true, false
-                         | true, false, false => (true::r, false)
-                         | true, true, false
-                         | true, false, true
-                         | false, true, true => (false::r, true)
-                         | true, true, true => (true::r, true)
-                         end
-                      ) (rev b1) (rev b2) ([], false))).
 
-Eval compute in (add_list [true; true ; false; true] [true; true ; true; true]). 
+Definition add_carry b1 b2 c :=
+  match b1, b2, c with
+    | true,  true,  true  => (true, true)
+    | true,  true,  false
+    | true,  false, true
+    | false, true,  true  => (false, true)
+    | false, false, true
+    | false, true,  false
+    | true,  false, false => (true, false)
+    | false, false, false => (false, false)
+  end.
+
+(* Truncating addition in little-endian, direct style *)
+
+Fixpoint add_list_ingr bs1 bs2 c {struct bs1} :=
+  match bs1, bs2 with
+    | nil, _               => nil
+    | _ , nil              => nil
+    | b1 :: bs1, b2 :: bs2 =>
+      let (r, c) := add_carry b1 b2 c in r :: (add_list_ingr bs1 bs2 c)
+  end.
+
+Definition add_list (a b: list bool) := add_list_ingr a b false.
+
+Eval compute in add_list [true; false ; false] [true; true; true].
+
+Eval compute in add_list [true; false; true; false; true; true] [true; true; false; false].
+ 
+Eval compute in (add_list (add_list [true; true ; false; true] [true; true ; true; true]) [true; true; true; true]).
 
 Eval compute in (add_list [true ; false ; true ; false ;true; true] [false ; true ; true ; false ; false; false]). 
 
@@ -213,26 +226,31 @@ Fixpoint add_false_right (n: nat) (a1: list bool) : (list bool) :=
     | S n' => add_false_right n' (a1 ++ [false])
   end.
 
-Fixpoint mult_ingr (m: nat) (a1 a2 acc: list bool) : (list bool) :=
-  match m with
-    | O    => acc
-    | S m' =>  
-    match rev a2 with
-      | []        => acc
-      | a2' :: t2 => 
-      match a2' with
-        | false => mult_ingr  m' a1 (rev t2) acc
-        | true  => mult_ingr  m' a1 (rev t2) (add_list (add_false_right (length a1 - m') (rev (firstn m' (rev a1)))) acc)
-      end
-    end
+Fixpoint add_false_left (n: nat) : (list bool) :=
+  match n with
+    | O    => []
+    | S n' => (false :: add_false_left n')
   end.
 
-Definition mult_list (a1 a2: list bool): (list bool) :=
- match ((N.of_nat(length a2) ?= N.of_nat(length a1))) with
-   | Eq
-   | Lt => (mult_ingr (length a1 + 1) a1 a2 (and_list_0 (length a1)))
-   | Gt => (mult_ingr (length a2 + 1) a2 a1 (and_list_0 (length a2)))
- end.
+Eval compute in add_false_left 1.
+Eval compute in add_false_right 5 [true].
+Eval compute in add_false_left 10.
+
+Fixpoint mult_list_ingr (bs1:list bool) bs2 n {struct bs1}: list bool :=
+  match bs1 with
+  | nil => add_false_left n
+  | b1::bs1 =>
+    if b1 then
+      add_list bs2 (mult_list_ingr bs1 (false::bs2) n)
+    else
+      mult_list_ingr bs1 (false::bs2) n
+  end.
+
+Definition mult_list bs1 bs2 := mult_list_ingr bs1 bs2 (min (length bs1) (length bs2)).
+
+Eval compute in add_list [true; false; true; false; true; true] [true; true; false; false].
+
+Eval compute in mult_list [true; false; true; false; true; true] [true; true; false; false].
 
 Eval compute in mult_list [true; true; true; true; false; false; true; false] [true; true; false; true; false; true; true].
 Eval compute in mult_list [true; true; false; true; false; true; true] [true; true; true; true; false; false; true; false].
@@ -680,9 +698,109 @@ Proof. intros a b i H0 H1 H2 H3. destruct a. destruct b. unfold bv_wf in *. simp
        rewrite H1 in H3. rewrite Nat2N.id in H3; exact H3.
 Qed.
 
-(*TODO: bitvector ADD properties*)
+(* list bitwise add properties*)
+
+Eval compute in add_list [] [true; true; false].
+Eval compute in add_list [true; true] [true; true; false].
+
+Lemma add_list_empty_l: forall (a: list bool), (add_list [] a) = [].
+Proof. intro a. induction a as [| a xs IHxs].
+         - unfold add_list. simpl. reflexivity.
+         - apply IHxs.
+Qed.
+
+Lemma add_list_empty_r: forall (a: list bool), (add_list a []) = [].
+Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
+
+Lemma add_list_ingr_r: forall (a: list bool) (c: bool), (add_list_ingr a [] c) = [].
+Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
+
+Lemma add_list_carry_comm: forall (a b:  list bool) (c: bool), add_list_ingr a b c = add_list_ingr b a c.
+Proof. intros a. induction a as [| a' xs IHxs]; intros b c.
+       - simpl. rewrite add_list_ingr_r. reflexivity.
+       - case b as [| b' ys].
+         + simpl. auto.
+         + simpl in *. cut (add_carry a' b' c = add_carry b' a' c).
+           * intro H. rewrite H. destruct (add_carry b' a' c) as (r, c0).
+             rewrite IHxs. reflexivity.
+           * case a', b', c;  auto.
+Qed.
+
+Lemma add_list_comm: forall (a b: list bool), (add_list a b) = (add_list b a).
+Proof. intros a b. unfold add_list. apply (add_list_carry_comm a b false). Qed.
+
+(*Lemma add_carry_assoc a b c d1 d2 : add_carry (add_carry a b d1) c d2 = add_carry a (add_carry b c d1) d2.*)
+
+Lemma add_list_carry_assoc: forall (a b c:  list bool) (d1 d2 d3 d4: bool),
+                            add_carry d1 d2 false = add_carry d3 d4 false ->
+                            (add_list_ingr (add_list_ingr a b d1) c d2) = (add_list_ingr a (add_list_ingr b c d3) d4).
+Proof. intros a. induction a as [| a' xs IHxs]; intros b c d1 d2 d3 d4.
+       - simpl. reflexivity.
+       - case b as [| b' ys].
+         + simpl. auto.
+         + case c as [| c' zs].
+           * simpl. rewrite add_list_ingr_r. auto.
+           * simpl.
+             case_eq (add_carry a' b' d1); intros r0 c0 Heq0. simpl.
+             case_eq (add_carry r0 c' d2); intros r1 c1 Heq1.
+             case_eq (add_carry b' c' d3); intros r3 c3 Heq3.
+             case_eq (add_carry a' r3 d4); intros r2 c2 Heq2.
+             intro H. rewrite (IHxs _ _ c0 c1 c3 c2);
+               revert Heq0 Heq1 Heq3 Heq2;
+               case a', b', c', d1, d2, d3, d4; simpl; do 4 (intros H'; inversion_clear H'); 
+               (*; intros H'; inversion_clear H'; intros H'; inversion_clear H'; intros H'; inversion_clear H'; *)
+                 try reflexivity; simpl in H; discriminate.
+Qed.
+
+Lemma add_list_assoc: forall (a b c: list bool), (add_list (add_list a b) c) = (add_list a (add_list b c)).
+Proof. intros a b c. unfold add_list.
+       apply (@add_list_carry_assoc a b c false false false false).
+       simpl; reflexivity.
+Qed.
+
+Lemma add_list_carry_empty_neutral_r: forall (a: list bool), (add_list_ingr a (add_false_left (length a)) false) = a.
+Proof. intro a. induction a as [| a' xs IHxs].
+       - simpl. reflexivity.
+       - simpl.
+         cut(add_carry a' false false = (a', false)).
+         + intro H. rewrite H. rewrite IHxs. reflexivity.
+         + unfold add_carry. case a'; auto.
+Qed.
+
+Lemma add_list_empty_neutral_r: forall (a: list bool), (add_list a (add_false_left (length a))) = a.
+Proof. intros a. unfold add_list.
+       apply (@add_list_carry_empty_neutral_r a).
+Qed.
+
+Lemma add_list_carry_empty_neutral_l: forall (a: list bool), (add_list_ingr (add_false_left (length a)) a false) = a.
+Proof. intro a. induction a as [| a' xs IHxs].
+       - simpl. reflexivity.
+       - simpl. case a'; rewrite IHxs; reflexivity.
+Qed.
+
+Lemma add_list_empty_neutral_l: forall (a: list bool), (add_list (add_false_left (length a)) a) = a.
+Proof. intros a. unfold add_list.
+       apply (@add_list_carry_empty_neutral_l a).
+Qed.
+
+(*bitvector bitwise-ADD properties*)
 
 (* Lemma a_bv_add: forall a b, (@size a) = (@size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_add a b). *)
+
+Lemma bv_add_comm: forall a b, (size a) = (size b) -> bv_add a b = bv_add b a.
+Proof. intros a b H0. destruct a. destruct b. simpl in *. 
+       unfold bv_add. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite add_list_comm. reflexivity.
+Qed.
+
+Lemma bv_add_assoc: forall a b c, (size a) = (size b) -> (size a) = (size c) ->  
+                                  (bv_add a (bv_add b c)) = (bv_add (bv_add a b) c).
+Proof. intros a b c H0 H1. destruct a. destruct b. destruct c. simpl in *. 
+       inversion H0. rewrite H1 in H. symmetry in H. rewrite H. unfold bv_add. simpl.
+       rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite N.compare_refl. simpl.
+       rewrite N.compare_refl. rewrite N.eqb_compare. rewrite N.compare_refl. 
+       rewrite add_list_assoc; reflexivity. 
+Qed.
 
 End BITVECTOR_LIST_THEOREMS.
 
