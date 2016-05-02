@@ -17,6 +17,7 @@
 
 
 Require Import List Bool NArith Psatz.
+Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -102,10 +103,10 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
 
-Lemma bv_mk_eq l1 l2 : (* forall l2, *) bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2.
+Lemma bv_mk_eq l1 l2 : bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2.
 Proof.
   unfold bv_mk, bv_eq. simpl.
-  case_eq (Nat.eqb (length l1) (length l2)); intro Heq.
+  case_eq (Nat_eqb (length l1) (length l2)); intro Heq.
   - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl.
   - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false.
     * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto.
