@@ -42,7 +42,11 @@ Section Checker.
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
 
 
-  (* Bit-blasting a variable *)
+  (* Bit-blasting a variable:
+
+       ----------------------- bbVar
+        bbT(x, [x0; ...; xn])
+   *)
 
   Fixpoint check_bb a bs i :=
     match bs with
@@ -73,7 +77,11 @@ Section Checker.
     else C._true.
 
 
-  (* Bit-blasting bitwise operations: bbAnd, bbOr, ... *)
+  (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a&b, [a0 /\ b0; ...; an /\ bn])
+   *)
 
   Fixpoint check_op (bs1 bs2 bsres : list _lit) get_op :=
     match bs1, bs2, bsres with
@@ -124,7 +132,11 @@ Section Checker.
     end.
 
 
-  (* Bit-blasting equality *)
+  (* Bit-blasting equality
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbEq
+         (a = b) <-> [(a0 <-> b0) /\ ... /\ (an <-> bn)]
+   *)
 
   Definition get_iff f :=
     match f with
