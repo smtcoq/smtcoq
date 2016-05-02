@@ -15,7 +15,7 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 Require Import Int63 PArray.
-Require Import Misc State SMT_terms.
+Require Import Misc State SMT_terms BVList.
 Require Import Bool List BoolEq NZParity.
 
 
@@ -34,6 +34,8 @@ Section Checker.
 
   Variable t_form : PArray.array form.
   Variable t_atom : PArray.array atom.
+  Variable (t_i : array typ_eqb).
+  Variable (t_func : array (Atom.tval t_i)).
   Variable s : S.t.
 
   Local Notation get_form := (PArray.get t_form) (only parsing).
@@ -42,8 +44,33 @@ Section Checker.
 
   (* Bit-blasting a variable *)
 
-  (* Definition check_bbVar a := *)
-  (*   ??                          (* need to known the length *) *)
+  Fixpoint check_bb a bs i :=
+    match bs with
+    | nil => true
+    | b::bs =>
+      match get_form b with
+      | Fatom a' =>
+        match get_atom a' with
+        | Auop (UO_BVbitOf n) a' =>
+          if (a == a') && (Nat_eqb i n)
+          then check_bb a bs (S i)
+          else false
+        | _ => false
+        end
+      | _ => false
+      end
+    end.
+
+  Definition check_bbVar lres :=
+    if Lit.is_pos lres then
+      match get_form lres with
+      | FbbT a bs =>
+        if (Nat_eqb (N.to_nat (BITVECTOR_LIST.size (Atom.interp_form_hatom_bv t_i t_func t_atom a))) (List.length bs)) && (check_bb a bs O)
+        then lres::nil
+        else C._true
+      | _ => C._true
+      end
+    else C._true.
 
 
   (* Bit-blasting bitwise operations: bbAnd, bbOr, ... *)
@@ -131,9 +158,7 @@ Section Checker.
 
   Section Proof.
 
-    Variables (t_i : array typ_eqb)
-              (t_func : array (Atom.tval t_i))
-              (ch_atom : Atom.check_atom t_atom)
+    Variables (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
@@ -148,6 +173,8 @@ Section Checker.
 
     Local Notation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
+
+    Hypothesis Hs : S.valid rho s.
 
     Local Notation t_interp := (t_interp t_i t_func t_atom).
 
@@ -188,17 +215,9 @@ Section Checker.
       intros x;apply wf_interp_form;trivial.
     Qed.
 
-    Lemma bool_impl : forall a b, (b = true -> a = true) -> a = true \/ b = false.
-    Proof.
-      intros;destruct a;
-      [(left;trivial) | (right;destruct b;[(symmetry;apply H;trivial) | trivial])].
-    Qed.
 
-    Lemma lit_interp_impl : forall a b rho,(Lit.interp rho b = true -> Lit.interp rho a = true) -> (Lit.interp rho a =true \/Lit.interp rho (Lit.neg b) = true).
-    Proof.
-      intros;rewrite (Lit.interp_neg rho b);rewrite negb_true_iff;apply bool_impl;apply H.
-    Qed.
-
+    Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
+    Admitted.
 
     Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
     Admitted.
