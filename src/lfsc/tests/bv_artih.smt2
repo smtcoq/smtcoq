@@ -1,0 +1,15 @@
+(set-logic QF_BV)
+(declare-fun a () (_ BitVec 4))
+(declare-fun b () (_ BitVec 4))
+(declare-fun c () (_ BitVec 4))
+(declare-fun d () (_ BitVec 4))
+(assert (= a #b0010))
+(assert (= b #b0110))
+(assert (= c #b1000))
+(assert (= d #b0010))
+(assert
+ (not (= (bvand (bvand a b) d) d)))
+;; (assert
+;;  (not (= (bvadd a b) (bvadd b (bvadd a #b0000)))))
+(check-sat)
+(exit)
