@@ -201,20 +201,16 @@ Fixpoint add_false_right (n: nat) (a1: list bool) : (list bool) :=
     | S n' => add_false_right n' (a1 ++ [false])
   end.
 
-Fixpoint mult_ingr (n m: nat) (a1 a2 acc: list bool) : (list bool) :=
+Fixpoint mult_ingr (m: nat) (a1 a2 acc: list bool) : (list bool) :=
   match m with
     | O    => acc
     | S m' =>  
-    match n with
-      | O    => acc
-      | S n' => 
-      match rev a2 with
-        | []        => acc
-        | a2' :: t2 => 
-        match a2' with
-          | false => mult_ingr n' m' a1 (rev t2) acc
-          | true  => mult_ingr n' m' a1 (rev t2) (add_list (add_false_right (length a1 - m') (rev (firstn m' (rev a1)))) acc)
-        end
+    match rev a2 with
+      | []        => acc
+      | a2' :: t2 => 
+      match a2' with
+        | false => mult_ingr  m' a1 (rev t2) acc
+        | true  => mult_ingr  m' a1 (rev t2) (add_list (add_false_right (length a1 - m') (rev (firstn m' (rev a1)))) acc)
       end
     end
   end.
@@ -222,12 +218,15 @@ Fixpoint mult_ingr (n m: nat) (a1 a2 acc: list bool) : (list bool) :=
 Definition mult_list (a1 a2: list bool): (list bool) :=
  match ((N.of_nat(length a2) ?= N.of_nat(length a1))) with
    | Eq
-   | Lt => (mult_ingr (length a2) (length a1 + 1) a1 a2 (and_list_0 (length a1)))
-   | Gt => (mult_ingr (length a1) (length a2 + 1) a2 a1 (and_list_0 (length a2)))
+   | Lt => (mult_ingr (length a1 + 1) a1 a2 (and_list_0 (length a1)))
+   | Gt => (mult_ingr (length a2 + 1) a2 a1 (and_list_0 (length a2)))
  end.
 
 Eval compute in mult_list [true; true; true; true; false; false; true; false] [true; true; false; true; false; true; true].
 Eval compute in mult_list [true; true; false; true; false; true; true] [true; true; true; true; false; false; true; false].
+
+Eval compute in mult_list [true; true; false; true; false; true; true; false] [false].
+Eval compute in mult_list [false; false] [true; true; false; true; false; true; true; false].
 
 Definition bv_mult (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with
