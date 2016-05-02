@@ -172,7 +172,7 @@ Section Operators.
   Proof.
     intros A dist diseq; unfold check_diseqs; rewrite andb_true_iff, PArray.forallb_spec, check_diseqs_complete_spec, length_mapi; split; intros [H1 H2]; split.
     clear H2; intros i Hi; generalize (H1 _ Hi); rewrite get_mapi; auto; case_eq (Lit.is_pos (diseq .[ i])); try discriminate; intro Heq1; case_eq (get_form (Lit.blit (diseq .[ i]))); try discriminate; intros a Heq2; case_eq (get_atom a); try discriminate; intros [ | | | | | | | B | | ]; try discriminate; intros h1 h2 Heq3; case_eq (Typ.eqb A B); try discriminate; change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec; intro; subst B; case_eq (h1 == h2); try discriminate; rewrite eqb_false_spec; intro H2; case_eq (check_in h1 dist); try discriminate; case_eq (check_in h2 dist); try discriminate; rewrite !check_in_spec; intros H3 H4 _; split; try discriminate; exists a; split; auto; exists h1, h2; repeat split; auto; rewrite <- In2_In; auto.
-    clear H1; intros x y Hxy; destruct (H2 _ _ Hxy) as [i [H1 H4]]; clear H2; rewrite get_mapi in H4; auto; exists i; split; auto; generalize H4; case_eq (Lit.is_pos (diseq .[ i])); intro Heq; try (intros [H|H]; discriminate); case_eq (get_form (Lit.blit (diseq .[ i]))); [intros a| | |intros a1 a2|intros a1|intros a1|intros a1|intros a1 a2|intros a1 a2|intros a1 a2 a3]; intro Heq2; try (intros [H|H]; discriminate); case_eq (get_atom a); [intros a1|intros a1 a2|intros [ | | | | | | |B | | ] h1 h2|intros a1 a2|intros a1 a2]; intro Heq3; try (intros [H|H]; discriminate); case_eq (Typ.eqb A B); try (intros _ [H|H]; discriminate); change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec; intro; subst B; case_eq (h1 == h2); try (intros _ [H|H]; discriminate); rewrite eqb_false_spec; intro H10; case (check_in h1 dist); try (intros [H|H]; discriminate); case (check_in h2 dist); try (intros [H|H]; discriminate); simpl; intro H3; split; try discriminate; exists a; split; auto; destruct H3 as [H3|H3]; inversion H3; subst; auto.
+    clear H1; intros x y Hxy; destruct (H2 _ _ Hxy) as [i [H1 H4]]; clear H2; rewrite get_mapi in H4; auto; exists i; split; auto; generalize H4; case_eq (Lit.is_pos (diseq .[ i])); intro Heq; try (intros [H|H]; discriminate); case_eq (get_form (Lit.blit (diseq .[ i]))); [intros a| | |intros a1 a2|intros a1|intros a1|intros a1|intros a1 a2|intros a1 a2|intros a1 a2 a3|intros a ls]; intro Heq2; try (intros [H|H]; discriminate); case_eq (get_atom a); [intros a1|intros a1 a2|intros [ | | | | | | |B | | ] h1 h2|intros a1 a2|intros a1 a2]; intro Heq3; try (intros [H|H]; discriminate); case_eq (Typ.eqb A B); try (intros _ [H|H]; discriminate); change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec; intro; subst B; case_eq (h1 == h2); try (intros _ [H|H]; discriminate); rewrite eqb_false_spec; intro H10; case (check_in h1 dist); try (intros [H|H]; discriminate); case (check_in h2 dist); try (intros [H|H]; discriminate); simpl; intro H3; split; try discriminate; exists a; split; auto; destruct H3 as [H3|H3]; inversion H3; subst; auto.
     clear H2; intros i Hi; rewrite get_mapi; auto; destruct (H1 _ Hi) as [H2 [a [H3 [h1 [h2 [H4 [H5 H6]]]]]]]; clear H1; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto); rewrite H3, H4, Typ.eqb_refl; simpl; replace (h1 == h2) with false by (case_eq (h1 == h2); auto; rewrite eqb_spec; intro H; elim H5; auto); simpl; rewrite <- In2_In, <- !check_in_spec in H6; auto; destruct H6 as [H6 H7]; rewrite H6, H7; auto.
     clear H1; intros x y Hxy; destruct (H2 _ _ Hxy) as [i [H1 [H3 [a [H4 [H6 H5]]]]]]; clear H2; exists i; split; auto; rewrite get_mapi; auto; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto); rewrite H4; assert (H7 := or_introl (In2 y x dist) Hxy); rewrite <- In2_In, <- !check_in_spec in H7; auto; destruct H7 as [H7 H8]; destruct H5 as [H5|H5]; rewrite H5, Typ.eqb_refl; [replace (x == y) with false by (case_eq (x == y); auto; rewrite eqb_spec; auto)|replace (y == x) with false by (case_eq (y == x); auto; rewrite eqb_spec; auto)]; simpl; rewrite H7, H8; auto.
   Qed.
@@ -260,8 +260,10 @@ Section Operators.
 
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Let wf_t_atom : Atom.wf t_atom.
     Proof. destruct (Atom.check_atom_correct _ ch_atom); auto. Qed.
@@ -270,10 +272,10 @@ Section Operators.
     Proof. destruct (Atom.check_atom_correct _ ch_atom); auto. Qed.
 
     Lemma default_t_form : default t_form = Ftrue.
-    Proof. destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [[H _] _]; auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[H _] _]; auto. Qed.
 
     Lemma wf_t_form : wf t_form.
-    Proof. destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [[_ H] _]; auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[_ H] _]; auto. Qed.
 
     Local Hint Immediate wf_t_atom default_t_atom default_t_form wf_t_form.
 
@@ -361,8 +363,10 @@ Section Operators.
 
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Hypothesis interp_check_var : forall x y,
       check_var x y -> Var.interp rho x = Var.interp rho y.
@@ -394,9 +398,9 @@ Section Operators.
 
     Lemma interp_check_form_aux : forall a b,
       check_form_aux a b ->
-      Form.interp interp_form_hatom t_form a = Form.interp interp_form_hatom t_form b.
+      Form.interp interp_form_hatom interp_form_hatom_bv t_form a = Form.interp interp_form_hatom interp_form_hatom_bv t_form b.
     Proof.
-      intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3]; simpl; try discriminate;auto.
+      intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3|a l1] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3|b m1]; simpl; try discriminate;auto.
       (* Atom *)
       unfold is_true; rewrite Int63Properties.eqb_spec; intro; subst a; auto.
       (* Interesting case *)
@@ -492,18 +496,20 @@ Section Operators.
 
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
 
     Let wf_rho : Valuation.wf rho.
-    Proof. destruct (Form.check_form_correct interp_form_hatom _ ch_form); auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto. Qed.
 
     Let default_t_form : default t_form = Ftrue.
-    Proof. destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [[H _] _]; auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[H _] _]; auto. Qed.
 
     Let wf_t_form : wf t_form.
-    Proof. destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [[_ H] _]; auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[_ H] _]; auto. Qed.
 
     Local Hint Immediate wf_rho default_t_form wf_t_form.
 
@@ -521,7 +527,7 @@ Section Operators.
 
     Lemma interp_check_form : forall a b,
       check_form a b ->
-      Form.interp interp_form_hatom t_form a = Form.interp interp_form_hatom t_form b.
+      Form.interp interp_form_hatom interp_form_hatom_bv t_form a = Form.interp interp_form_hatom interp_form_hatom_bv t_form b.
     Proof. apply interp_check_form_aux, interp_check_hform; auto. Qed.
 
 

@@ -17,6 +17,7 @@
 
 
 Require Import List Bool NArith Psatz.
+Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -100,14 +101,20 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
   end.
 
 Definition bv_eq (a b: bitvector): bool:=
-  match ((size a) =? (size b)) with
-    | true  =>
-    match beq_list (bits a) (bits b) with
-      | true => true
-      | _    => false
-    end
-    | _ => false
-  end.
+  if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
+
+Lemma bv_mk_eq l1 l2 : bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2.
+Proof.
+  unfold bv_mk, bv_eq. simpl.
+  case_eq (Nat_eqb (length l1) (length l2)); intro Heq.
+  - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl.
+  - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false.
+    * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto.
+      intro Heq. now rewrite <- (IHl1 _ Heq), andb_false_r.
+    * symmetry. rewrite N.eqb_neq. intro H. apply Nat2N.inj in H. rewrite H in Heq.
+      rewrite <- EqNat.beq_nat_refl in Heq. discriminate.
+Qed.
+
 
 Definition bv_concat (a b: bitvector) : bitvector.
 Proof. destruct a, b. refine (@mk_bitvector (size0 + size1) (bits0 ++ bits1)). Defined.
