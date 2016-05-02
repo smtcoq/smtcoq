@@ -527,6 +527,12 @@ Proof.
 Qed.
 
 
+Goal forall x y, Bool.eqb (negb (xorb x y)) ((x && y) || ((negb x) && (negb y))).
+Proof.
+  verit.
+Qed.
+
+
 Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
 Proof.
   verit.
