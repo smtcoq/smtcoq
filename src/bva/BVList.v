@@ -87,6 +87,11 @@ Definition bitvector := bitvector_rec.
 
 Definition bv_wf (a: bitvector):= (@size a) = N.of_nat (length (@bits a)). 
 
+Definition bv_mk (l : list bool) := mk_bitvector (N.of_nat (length l)) l.
+
+Lemma bv_mk_wf l : bv_wf (bv_mk l).
+Proof. unfold bv_mk, bv_wf. reflexivity. Qed.
+
 Fixpoint beq_list (l m : list bool) {struct l} :=
   match l, m with
     | nil, nil => true
