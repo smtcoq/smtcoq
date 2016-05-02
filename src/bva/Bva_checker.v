@@ -32,11 +32,10 @@ Section Checker.
 
   Import Atom.
 
-  Variable t_form : PArray.array form.
-  Variable t_atom : PArray.array atom.
   Variable (t_i : array typ_eqb).
   Variable (t_func : array (Atom.tval t_i)).
-  Variable s : S.t.
+  Variable t_atom : PArray.array atom.
+  Variable t_form : PArray.array form.
 
   Local Notation get_form := (PArray.get t_form) (only parsing).
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
@@ -75,6 +74,9 @@ Section Checker.
       | _ => C._true
       end
     else C._true.
+
+
+  Variable s : S.t.
 
 
   (* Bit-blasting bitwise operations: bbAnd, bbOr, ...

@@ -150,6 +150,7 @@ VFILES:=Trace.v\
   lia/Lia.v\
   euf/Euf.v\
   cnf/Cnf.v\
+  bva/Bva_checker.v\
   bva/BVList.v
 
 -include $(addsuffix .d,$(VFILES))

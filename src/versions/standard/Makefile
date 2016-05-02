@@ -180,6 +180,7 @@ VFILES:=versions/standard/Int63/Int63.v\
   versions/standard/Int63/Int63Properties.v\
   versions/standard/Array/PArray.v\
   bva/BVList.v\
+  bva/Bva_checker.v\
   cnf/Cnf.v\
   euf/Euf.v\
   lia/Lia.v\
