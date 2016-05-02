@@ -179,6 +179,7 @@ let make_certif_ops modules args =
   gen_constant"ImmBuildDef2",
   gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
   gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
+  gen_constant "BBVar", gen_constant "BBOp", gen_constant "BBEq",
   gen_constant "Hole")
   
 

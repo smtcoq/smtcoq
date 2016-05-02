@@ -280,6 +280,7 @@ let to_coq to_lit interp (cstep,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,  
     cEqTr, cEqCgr, cEqCgrP, 
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
+    cBBVar, cBBOp, cBBEq,
     cHole) confl =
 
   let cuts = ref [] in
@@ -344,6 +345,9 @@ let to_coq to_lit interp (cstep,
           let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Coq_micromega.M.coq_proofTerm; Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Coq_micromega.M.coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
+        | BBVar res -> mklApp cBBVar [|out_c c; out_f res|]
+        | BBOp (c1,c2,res) -> mklApp cBBOp [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBEq (c1,c2,res) -> mklApp cBBEq [|out_c c; out_c c1; out_c c2; out_f res|]
         | Hole (prem_id, concl) ->
            let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
            let ass_name = Names.id_of_string ("ass"^(string_of_int (Hashtbl.hash concl))) in
