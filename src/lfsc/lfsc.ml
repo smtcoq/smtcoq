@@ -316,7 +316,8 @@ let call_cvc4 rt ro rf root =
   let prooffilename = bf ^ ".lfsc" in
 
   let command =
-    "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes "
+    "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
+     --no-bv-eq --no-bv-ineq --no-bv-algebraic"
     ^ filename ^ " | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
     ^ logfilename in
   eprintf "%s@." command;
