@@ -46,6 +46,7 @@ module Btype =
     let equal t1 t2 =
       match t1,t2 with
         | Tindex i, Tindex j -> i.index == j.index
+        | TBV i, TBV j -> i == j
         | _ -> t1 == t2
 
     let to_coq = function 
@@ -211,7 +212,7 @@ module Op =
     let u_type_arg = function 
       | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
       | UO_Zopp -> TZ
-      | UO_BVbitOf _ -> TBV (-1)
+      | UO_BVbitOf _ -> TBV 2
 
     let interp_uop = function
       | UO_xO -> Lazy.force cxO
@@ -245,13 +246,13 @@ module Op =
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _ -> Tbool
-      | BO_BVand | BO_BVor -> TBV (-1)
+      | BO_BVand | BO_BVor -> TBV 2
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult 
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
-      | BO_BVand | BO_BVor -> (TBV (-1),TBV (-1))
+      | BO_BVand | BO_BVor -> (TBV 2,TBV 2)
 
     let interp_eq = function
       | TZ -> Lazy.force ceqbZ
@@ -457,7 +458,7 @@ module Atom =
       | Aapp (op,_) -> Op.i_type_of op
 
     let is_bool_type h = Btype.equal (type_of h) Tbool
-    let is_bv_type h = Btype.equal (type_of h) (TBV (-1))
+    let is_bv_type h = Btype.equal (type_of h) (TBV 2)
 
 
     let rec compute_int = function
@@ -654,7 +655,7 @@ module Atom =
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
-          | CCeqbBV -> mk_bop (BO_eq (TBV (-1))) args
+          | CCeqbBV -> mk_bop (BO_eq (TBV 2)) args
 	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
 
       and mk_uop op = function
@@ -801,6 +802,7 @@ module Atom =
     let mk_mult = mk_binop BO_Zmult
     let mk_opp = mk_unop UO_Zopp
     let mk_distinct reify ty = mk_nop (NO_distinct ty) reify
+    let mk_bitof reify i = mk_unop (UO_BVbitOf i) reify
 
   end
 

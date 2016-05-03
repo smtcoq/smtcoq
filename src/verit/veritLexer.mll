@@ -99,6 +99,8 @@
         "subproof", SUBP;
         "flatten", FLAT;
         "hole", HOLE;
+        "bbvar", BBVA;
+        "bbeq", BBEQ;
       ]
 }
 
@@ -122,6 +124,9 @@ rule token = parse
   | "("                        { LPAR }
   | ")"                        { RPAR }
 
+  | "["                        { LBRACKET }
+  | "]"                        { RBRACKET }
+
   | "not"                      { NOT }
   | "xor"                      { XOR }
   | "ite"                      { ITE }
@@ -137,6 +142,9 @@ rule token = parse
   | "=>"                       { IMP }
   | "let"                      { LET }
   | "distinct"                 { DIST }
+
+  | "bbT"                      { BBT }
+  | "bitof"                    { BITOF }
 
   | "Formula is Satisfiable"   { SAT }
 

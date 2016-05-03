@@ -143,6 +143,10 @@ Section Checker_Lia5_holes.
 End Checker_Lia5_holes.
 *)
 
+Section Checker_Bv1.
+  Verit_Checker "bv1.smt2" "bv1.log".
+End Checker_Bv1.
+
 
 Section Sat0.
   Parse_certif_verit t_i0 t_func0 t_atom0 t_form0 root0 used_roots0 trace0 "sat0.smt2" "sat0.vtlog".
@@ -309,6 +313,11 @@ Section Lia5_holes.
 End Lia5_holes.
 *)
 
+Section Bv1.
+  Parse_certif_verit t_i_bv1 t_func_bv1 t_atom_bv1 t_form_bv1 root_bv1 used_roots_bv1 trace_bv1 "bv1.smt2" "bv1.log".
+  Compute @Euf_Checker.checker t_i_bv1 t_func_bv1 t_atom_bv1 t_form_bv1 root_bv1 used_roots_bv1 trace_bv1.
+End Bv1.
+
 
 Section Theorem_Sat0.
   Time Verit_Theorem theorem_sat0 "sat0.smt2" "sat0.vtlog".
@@ -444,6 +453,10 @@ Section Theorem_Lia5_holes.
 End Theorem_Lia5_holes.
 Check theorem_lia5_holes.
 *)
+
+Section Theorem_Bv1.
+  Time Verit_Theorem theorem_bv1 "bv1.smt2" "bv1.log".
+End Theorem_Bv1.
 
 
 (* verit tactic *)

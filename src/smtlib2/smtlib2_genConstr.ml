@@ -45,6 +45,8 @@ let identifier_of_qualidentifier = function
 let string_type s = match s with
   | "Bool" -> Tbool
   | "Int" -> TZ
+  (* Means (_BitVec 2) : FIXME *)
+  | "BitVec" -> TBV 2
   | _ -> VeritSyntax.get_btype s
 
 

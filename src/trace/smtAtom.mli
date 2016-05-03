@@ -171,6 +171,7 @@ module Atom :
       val mk_mult : reify_tbl -> hatom -> hatom -> hatom
       val mk_opp : reify_tbl -> hatom -> hatom
       val mk_distinct : reify_tbl -> btype -> hatom array -> hatom
+      val mk_bitof : reify_tbl -> int -> hatom -> hatom
 
     end
 

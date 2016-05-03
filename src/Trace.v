@@ -381,7 +381,7 @@ Module Euf_Checker.
       | LiaDiseq pos l => S.set_clause s pos (check_diseq t_form t_atom l)
       | SplArith pos orig res l => S.set_clause s pos (check_spl_arith t_form t_atom (S.get s orig) res l)
       | SplDistinctElim pos orig res => S.set_clause s pos (check_distinct_elim t_form t_atom (S.get s orig) res)
-      | BBVar pos res => S.set_clause s pos (check_bbVar t_func t_atom t_form res)
+      | BBVar pos res => S.set_clause s pos (check_bbVar (* t_func *) t_atom t_form res)
       | BBOp pos orig1 orig2 res => S.set_clause s pos (check_bbOp t_atom t_form s orig1 orig2 res)
       | BBEq pos orig1 orig2 res => S.set_clause s pos (check_bbEq t_atom t_form s orig1 orig2 res)
       | @Hole pos prem_id prem concl _ => S.set_clause s pos (check_hole s prem_id prem concl)

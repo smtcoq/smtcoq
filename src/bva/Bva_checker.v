@@ -51,24 +51,26 @@ Section Checker.
     match bs with
     | nil => true
     | b::bs =>
-      match get_form b with
-      | Fatom a' =>
-        match get_atom a' with
-        | Auop (UO_BVbitOf n) a' =>
-          if (a == a') && (Nat_eqb i n)
-          then check_bb a bs (S i)
-          else false
+      if Lit.is_pos b then
+        match get_form (Lit.blit b) with
+        | Fatom a' =>
+          match get_atom a' with
+          | Auop (UO_BVbitOf n) a' =>
+            if (a == a') && (Nat_eqb i n)
+            then check_bb a bs (S i)
+            else false
+          | _ => false
+          end
         | _ => false
         end
-      | _ => false
-      end
+      else false
     end.
 
   Definition check_bbVar lres :=
     if Lit.is_pos lres then
-      match get_form lres with
+      match get_form (Lit.blit lres) with
       | FbbT a bs =>
-        if (Nat_eqb (N.to_nat (BITVECTOR_LIST.size (Atom.interp_form_hatom_bv t_i t_func t_atom a))) (List.length bs)) && (check_bb a bs O)
+        if (* (Nat_eqb (N.to_nat (BITVECTOR_LIST.size (Atom.interp_form_hatom_bv t_i t_func t_atom a))) (List.length bs)) && *) (check_bb a bs O)
         then lres::nil
         else C._true
       | _ => C._true
@@ -90,7 +92,7 @@ Section Checker.
     | nil, nil, nil => true
     | b1::bs1, b2::bs2, bres::bsres =>
       if Lit.is_pos bres then
-        match get_op (get_form bres) with
+        match get_op (get_form (Lit.blit bres)) with
         | Some (a1, a2) => (a1 == b1) && (a2 == b2)
         | _ => false
         end
@@ -114,7 +116,7 @@ Section Checker.
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
       if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
-        match get_form l1, get_form l2, get_form lres with
+        match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
         | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
           match get_atom a with
           | Abop BO_BVand a1' a2' =>
@@ -150,9 +152,9 @@ Section Checker.
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
       if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
-        match get_form l1, get_form l2, get_form lres with
+        match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
         | FbbT a1 bs1, FbbT a2 bs2, Fiff leq lbb =>
-          match get_form leq, get_form lbb with
+          match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
           | Fatom a, Fand bsres =>
             match get_atom a with
             | Abop (BO_eq TBV) a1' a2' =>

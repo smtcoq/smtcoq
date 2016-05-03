@@ -27,9 +27,9 @@
 
 %token EOL SAT
 %token COLON SHARP
-%token LPAR RPAR
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE
+%token LPAR RPAR LBRACKET RBRACKET
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBEQ
 %token <int> INT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR
@@ -125,6 +125,8 @@ typ:
   | SUBP                                                   { Subp  }
   | FLAT                                                   { Flat  }
   | HOLE                                                   { Hole  }
+  | BBVA                                                   { Bbva  }
+  | BBEQ                                                   { Bbeq  }
 ;
 
 clause:
@@ -164,6 +166,7 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
   | IMP lit_list                                           { Form (Fapp (Fimp, Array.of_list $2)) }
   | XOR lit_list                                           { Form (Fapp (Fxor, Array.of_list $2)) }
   | ITE lit_list                                           { Form (Fapp (Fite, Array.of_list $2)) }
+  | BBT name_term LBRACKET lit_list RBRACKET               { match $2 with | Atom a -> Form (FbbT (a, $4)) | _ -> assert false }
 
   /* Atoms */
   | INT                                                    { Atom (Atom.hatom_Z_of_int ra $1) }
@@ -178,6 +181,7 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
   | MINUS name_term                                        { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
   | OPP name_term                                          { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
   | DIST args                                              { let a = Array.of_list $2 in Atom (Atom.mk_distinct ra (Atom.type_of a.(0)) a) }
+  | BITOF INT name_term                                    { match $3 with |Atom h -> Atom (Atom.mk_bitof ra $2 h) | _ -> assert false }
   | VAR                                                    { Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
   | VAR args                                               { Atom (Atom.get ra (Aapp (get_fun $1, Array.of_list $2))) }
 
