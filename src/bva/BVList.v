@@ -17,7 +17,7 @@
 
 
 Require Import List Bool NArith Psatz.
-Require Import Misc. 
+Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -252,26 +252,39 @@ Definition bv_0 (t : nat) : bitvector :=
     | S t' => mk_bitvector (N.of_nat (t' + 1)) (mk_list_false_acc t' [false])
   end.
 
-Fixpoint mult_list_ingr (a b :list bool) n {struct a}: list bool :=
+Fixpoint mult_list_carry (a b :list bool) n {struct a}: list bool :=
   match a with
     | nil      => mk_list_false n
     | a' :: xs =>
       if a' then
-        add_list b (mult_list_ingr xs (false :: b) n)
+        add_list b (mult_list_carry xs (false :: b) n)
       else
-        mult_list_ingr xs (false :: b) n
+        mult_list_carry xs (false :: b) n
   end.
 
-Definition mult_list a b := mult_list_ingr a b (min (length a) (length b)).
+Definition mult_list a b := mult_list_carry a b (length a).
+
+Eval compute in mult_list_carry [true; false; true; true ; false ;true] [true; true; false; false] 4.
+Eval compute in add_list [true; true; false; false] [false; true; true; false; false].
+Eval compute in mult_list_carry [true; true; false] [true; false; true] 3.
+
+(*Fixpoint mult_list_carry (a b :list bool) (acc : list bool) {struct a}: list bool :=
+  match a with
+    | nil      => acc
+    | a' :: xs =>
+      if a' then
+        mult_list_carry xs (false :: b) (add_list b acc)
+      else
+        mult_list_carry xs (false :: b) acc
+  end.
+
+Definition mult_list a b := mult_list_carry a b (mk_list_false (min (length a) (length b))).*)
 
 Definition bv_mult (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with
     | true => mk_bitvector (size a) (mult_list (@bits a) (@bits b))
     | _    => mk_bitvector 0 nil
   end.
-
-
-
 
 (* Theorems *)
 
@@ -813,324 +826,54 @@ Proof. intro a. destruct a. simpl. unfold bv_add. simpl.
        rewrite add_list_empty_neutral_r. reflexivity.
 Qed.
 
-End BITVECTOR_LIST.
+(* bitwise MULT properties *)
 
-
-(** Some useful functions *)
-Section Map2.
-
-Fixpoint map2 {A B C: Type} (f: A -> B -> C) (l1 : list A) (l2 : list B) : list C :=
-  match l1, l2 with
-    | b1::tl1, b2::tl2 => (f b1 b2)::(map2 f tl1 tl2)
-    | _, _ => nil
-  end.
-
-Lemma l_rl: forall {A: Type} {a: A} (l: list A), length l =  length (List.removelast (a :: l)).
-Proof. intros.
-         induction l.
-           - simpl; reflexivity.
-           - unfold length in *. rewrite IHl. simpl in *. apply f_equal. induction l; reflexivity.
+Lemma mult_list_empty_l: forall (a: list bool), (mult_list [] a) = [].
+Proof. intro a. induction a as [| a xs IHxs].
+         - unfold mult_list. simpl. reflexivity.
+         - apply IHxs.
 Qed.
 
-End Map2.
+Lemma mult_list_carry_0: forall a b, mult_list_carry a b 0 = [].
+Proof. intro a. induction a as [| a' xs IHxs].
+       - intro b. simpl. reflexivity.
+       - intros [| b' ys].
+         + simpl. case_eq a'.
+           * simpl. intro H. rewrite add_list_empty_l; reflexivity.
+           * simpl. intro H. apply IHxs.
+         + simpl. case_eq a'.
+           * simpl. intro H. rewrite IHxs. rewrite add_list_empty_r; reflexivity.
+           * simpl. intro H. apply IHxs.
+Qed.
 
-(* Representation of bit vectors as a pair of boolean list and size; followed by implementation of standard operations *)
+Lemma mult_list_carry_empty_l: forall (a: list bool) (c: nat), mult_list_carry [] a c = mk_list_false c.
+Proof. intro a. induction a as [| a' xs IHxs]; auto. Qed.
 
-Module BV.
+Lemma length_mk_list_false: forall n, length (mk_list_false n) = n.
+Proof. intro n.
+       induction n as [| n' IHn].
+       - simpl. auto.
+       - simpl. apply f_equal. exact IHn.
+Qed.
 
-Import N.
-Local Open Scope N_scope.
+Lemma strictly_positive_0_unique: forall n: nat, (0 >= n)%nat <-> (n = 0)%nat.
+Proof. intro n. induction n as [| n IHn].
+       split; try auto.
+       split; intro H; contradict H; easy.
+Qed. 
 
-  (** The type of bit vectors *)
-  Definition t := (list bool * N)%type.
-
-  (** The empty bit vector *)
-  Definition empty : t := (nil, 0).
-
-
-  (** Test weither a bit vector is empty *)
-  Definition is_empty (bv : t) : bool :=
-    let (_, n) := bv in
-    match n with
-    | N0 => true
-    | _ => false
-    end.
-
-  (** Test weither a bit vector is zero (this defines the semantics of
-      the 0 bit vector) *)
-  Definition is_zero (bv : t) : bool :=
-    let (b, _) := bv in
-    List.forallb (fun x => negb x) b.
-
-  (** Concatenation of two bit vectors *)
-  Definition concat (bv1 bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    (b1 ++ b2, n1 + n2).
-
-  (** Bitwise not *)
-  Definition not (bv : t) : t :=
-    let (b, n) := bv in
-    (List.map negb b, n).
-
-  (** Bitwise and *)
-  Definition and (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    (map2 andb b1 b2, n1).
-
-  (** Bitwise or *)
-  Definition or (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    (map2 orb b1 b2, n1).
-
-  (** Bitwise xor *)
-  Definition xor (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    (map2 xorb b1 b2, n1).
-
-  (** Lower weight bit *)
-  Definition lower (bv : t) : bool :=
-    let (b, _) := bv in
-    List.hd false b.
-
-  (** Higher weight bit *)
-  Definition high (bv : t) : bool :=
-    let (b, _) := bv in
-    List.last b false.
-
-  (** Left shift *)
-  Definition shiftleft (bv : t) : t :=
-    let (b, n) := bv in
-    (false::(List.removelast b), n).
-
-  (** Right shift *)
-  Definition shiftright (bv : t) : t :=
-    let (b, n) := bv in
-    ((List.tl b) ++ (false::nil), n).
-
-  (** Left shift of [n] bits *)
-  Fixpoint shiftleft_n (bv : t) (n : nat) : t :=
-    match n with
-      | O => bv
-      | S n2 => shiftleft_n (shiftleft bv) n2
-    end.
-
-  (** Right shift of [n] bits *)
-  Fixpoint shiftright_n (bv : t) (n : nat) : t :=
-    match n with
-      | O => bv
-      | S n2 => shiftright_n (shiftright bv) n2
-    end.
-
-  (** Computes the [i]th bit *)
-  Definition bb_nth (i : nat) (bv : t) : bool :=
-    let (b, _) := bv in
-    nth i b false.
-
-  (** Computation of the unsigned integer represented by a bit vector *)
-  Fixpoint b2p (b : list bool) : option positive :=
-    match b with
-    | nil => None
-    | false::b =>
-      match b2p b with
-      | Some p => Some (xO p)
-      | None => None
-      end
-    | true::b =>
-      match b2p b with
-      | Some p => Some (xI p)
-      | None => Some xH
-      end
-    end.
-
-  Definition bv2n (bv : t) : N :=
-    let (b, _) := bv in
-    match b2p b with
-    | None => N0
-    | Some p => Npos p
-    end.
-
-  (** Computation of the bit vector representing an integer *)
-  Fixpoint p2bv (p : positive) : t :=
-    match p with
-    | xO p =>
-      let (b,n) := p2bv p in
-      (false::b, n+1)
-    | xI p =>
-      let (b,n) := p2bv p in
-      (true::b, n+1)
-    | xH => (true::nil, 1)
-    end.
-
-  Definition n2bv (n : N) : t :=
-    match n with
-    | N0 => (false::nil, 1)
-    | Npos p => p2bv p
-    end.
-
-  Definition n2b (n : N) : list bool :=
-    let (b, _) := n2bv n in b.
-
-  (* We may want to change the definition of arithmetic operations *)
-  (** Addition *)
-  Definition add (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    let n3 := (bv2n bv1) in
-    let n4 := (bv2n bv2) in
-    let n5 := (n3 + n4) in
-    let b3 := (n2b n5) in
-    (b3, n1).
-
-  (** Subtraction *)
-  Definition sub (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    let n3 := (bv2n bv1) in
-    let n4 := (bv2n bv2) in
-    let n5 := (n3 - n4) in
-    let b3 := (n2b n5) in
-    (b3, n1).
-
-  (** Multiplication *)
-  Definition mul (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    let n3 := (bv2n bv1) in
-    let n4 := (bv2n bv2) in
-    let n5 := (n3 * n4) in
-    let b3 := (n2b n5) in
-    (b3, n1).
-
-(* Eval compute in mul ((false :: true :: false :: true :: nil), 4) ((false :: true :: false :: false :: nil), 4). *)
-
-  (** Negation *)
-  Definition neg (bv1 : t) (n : N) : t :=
-    let (b1, n1) := bv1 in
-    let n2 := 2 ^ n in
-    let n3 := (bv2n bv1) in
-    let n4 := n2 - n3 in
-    ((n2b n4), n).
-
-
-  (** Division *)
-  Definition udiv (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    let n4 := (bv2n bv2) in
-    match n4 with
-      | 0 => (nil, 0)
-      | _ =>
-      let n3 := (bv2n bv1) in
-      ((n2b (n3 / n4)), n1)
-    end.
-
-  (** Reminder *)
-  Definition urem (bv1 : t) (bv2 : t) : t :=
-    let (b1, n1) := bv1 in
-    let (b2, n2) := bv2 in
-    let n4 := (bv2n bv2) in
-    match n4 with
-      | 0 => (nil, 0)
-      | _ =>
-      let n3 := (bv2n bv1) in
-      ((n2b (n3 mod n4)), n1)
-    end.
-
-  (** Unsigned less than *)
-  Definition ult (bv1 : t) (bv2 : t) :=
-    let n1 := (bv2n bv1) in
-    let n2 := (bv2n bv2) in
-    (n1 < n2).
-
-  (** Drops the [n] bits of lowest weight *)
-  Fixpoint drop_n (l : list bool) (n : nat) : list bool :=
-    match n with
-      | O => l
-      | S n2 => drop_n (@List.tl bool l) n2
-    end.
-
-  (** Keep the [n] bits of lowest weight *)
-  Fixpoint first_n (l : list bool) (n : nat) : list bool :=
-    match n with
-      | O => nil
-      | S n2 =>
-      match l with
-        | nil => nil
-        | x :: l2 => x :: (first_n l2 n2)
-      end
-    end.
-
-  (** Extracts the bits between i (included) and j (excluded) *)
-  Definition extract (l : list bool) (i : nat) (j : nat) : list bool :=
-    let l2 := drop_n l i in
-    (first_n l2 j).
-
-End BV.
-
-
-
-Module BVProof.
-
-  Import BV.
-  Local Open Scope N_scope.
-
-  (** Bit vectors are well-formed when their length match the length of their list *)
-  Definition wf (bv:t) : Prop :=
-     let (b,n) := bv in N.of_nat (length b) = n.
-(*  Eval compute in wf ((true::nil), 2). *)
-
-  (** All the operations preserve well-foundness *)
-
-  Lemma empty_wf : wf empty.
-  Proof. reflexivity. Qed.
-
-  Lemma concat_wf : forall (bv1 bv2:t), wf bv1 -> wf bv2 -> wf (concat bv1 bv2).
-  Proof.
-    intros [b1 n1] [b2 n2] H1 H2.
-    simpl.
-    rewrite app_length.
-    rewrite Nat2N.inj_add.
-    simpl in H1. simpl in H2.
-    rewrite H1. rewrite H2.
-    reflexivity.
-  Qed.  
-
-  (** Auxiliary lemmas *)
-
-  Lemma nth_appendl A : forall (l1 l2:list A) (i:nat) (d:A),
-    (i < length l1)%nat -> nth i (l1 ++ l2) d = nth i l1 d.
-  Proof.
-    induction l1 as [ |a l1 IHl1].
-    - simpl.
-      intros l2 i d H. elim (Lt.lt_n_0 _ H).
-    - simpl. intros l2 [ |i] d Hi.
-      * reflexivity.
-      * apply IHl1. apply Lt.lt_S_n. assumption.
-  Qed.  
-
-  Lemma Nat2N_inj_lt i j :
-    (N.of_nat i < N.of_nat j) -> (i < j)%nat.
-  Proof.
-    now rewrite Compare_dec.nat_compare_lt, Nat2N.inj_compare.
-  Qed.
-
-
-  (** Properties of the operations on well-founded bit vectors *)
-
-  Lemma nth_concat_l : forall(bv1 bv2:t) (i : nat),
-    let (b1, n1) := bv1 in
-    wf bv1 -> wf bv2 -> (N.of_nat i < n1) -> bb_nth i (concat bv1 bv2) = bb_nth i bv1.
-  Proof.
-    intros [b1 n1] [b2 n2]. simpl. intros i H1 H2 Hi.
-    rewrite nth_appendl.
-    - reflexivity.
-    - rewrite <- H1 in Hi.
-      apply Nat2N_inj_lt.
-      assumption.
-  Qed.
-
-End BVProof.
+Lemma mult_list_length: forall (a b: list bool) n, 
+                        (*length a <= n ->*) ((length b) >= n)%nat -> n = length (mult_list_carry a b n).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - intros b n H. rewrite mult_list_carry_empty_l, length_mk_list_false; reflexivity. 
+       - intros [| b ys n]. intros n H. simpl in H. rewrite strictly_positive_0_unique in H.
+         rewrite H. rewrite mult_list_carry_0. easy.
+         intro H. simpl. case a.
+         + specialize (@add_list_length (b :: ys) (mult_list_carry xs (false :: b :: ys) n)).
+           intro H1. rewrite <- H1. (**) admit. (**)
+           specialize (@IHxs (false :: b :: ys)). rewrite <- IHxs. (**) admit. (**) inversion H. simpl. omega. simpl in *. omega.
+         + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. omega. simpl in *. omega.
+Qed.
+           
+End BITVECTOR_LIST.
