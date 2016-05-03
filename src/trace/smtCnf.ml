@@ -79,7 +79,7 @@ module MakeCnf (Form:FORM) =
       | Immediate _ | Done -> ()
       | Todo -> 
 	  match Form.pform l with
-	  | Fatom _ -> ()
+	  | Fatom _ | FbbT _ -> ()
 
 	  | Fapp (op,args) ->
 	      match op with
@@ -178,7 +178,7 @@ module MakeCnf (Form:FORM) =
 	  set_immediate l;
 
 	  match Form.pform l with
-	  | Fatom _ -> ()
+	  | Fatom _ | FbbT _ -> ()
 
 	  | Fapp (op,args) ->
 	      match op with

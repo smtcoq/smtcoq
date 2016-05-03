@@ -61,6 +61,8 @@ and pp_pform fmt p =
   | Fapp(op,args) ->
       Format.fprintf fmt "%s" (string_of_op op);
       Array.iter (fun a -> Format.fprintf fmt "%a " pp_form a) args
+  (* Nothing to do with ZChaff *)
+  | FbbT _ -> assert false
 
 let pp_value fmt c = 
   match c.value with
@@ -475,6 +477,8 @@ let make_proof pform_tbl atom_tbl env reify_form l =
             let value = if ispos then " = true" else " = false" in
             acc^"  "^(Pp.string_of_ppcmds (Structures.pr_constr_env env t))^value
           | Fapp _ -> acc
+          (* Nothing to do with ZChaff *)
+          | FbbT _ -> assert false
       ) with | Invalid_argument _ -> acc (* Because cnf computation does not put the new formulas in the table... Perhaps it should? *)
     ) "zchaff found a counterexample:\n" model)
   );

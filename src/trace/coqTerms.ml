@@ -25,6 +25,11 @@ let ceq63 = gen_constant Structures.int63_modules "eqb"
 (* PArray *)
 let carray = gen_constant Structures.parray_modules "array"
 
+(* nat *)
+let cnat = gen_constant init_modules "nat"
+let cO = gen_constant init_modules "O"
+let cS = gen_constant init_modules "S"
+
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];
                         ["Coq";"PArith";"BinPosDef";"Pos"]]
@@ -94,6 +99,15 @@ let cnot = gen_constant init_modules "not"
 let ceq = gen_constant init_modules "eq"
 let crefl_equal = gen_constant init_modules "eq_refl"
 
+(* Bit vectors *)
+let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
+let cbitvector = gen_constant bv_modules "bitvector"
+let cbv_eq = gen_constant bv_modules "bv_eq"
+let cbv_mk = gen_constant bv_modules "bv_mk"
+let cbv_nth = gen_constant bv_modules "bv_nth"
+let cbv_and = gen_constant bv_modules "bv_or"
+let cbv_or = gen_constant bv_modules "bv_and"
+
 (* SMT_terms *)
 
 let smt_modules = [ ["SMTCoq";"Misc"];
@@ -112,6 +126,7 @@ let ctype = gen_constant smt_modules "type"
 let cTZ = gen_constant smt_modules "TZ"
 let cTbool = gen_constant smt_modules "Tbool"
 let cTpositive = gen_constant smt_modules "Tpositive"
+let cTBV = gen_constant smt_modules "TBV"
 let cTindex = gen_constant smt_modules "Tindex"
 
 let ctyp_eqb = gen_constant smt_modules "typ_eqb"
@@ -132,6 +147,7 @@ let cUO_xI = gen_constant smt_modules "UO_xI"
 let cUO_Zpos = gen_constant smt_modules "UO_Zpos"
 let cUO_Zneg = gen_constant smt_modules "UO_Zneg"
 let cUO_Zopp = gen_constant smt_modules "UO_Zopp"
+let cUO_BVbitOf = gen_constant smt_modules "UO_BVbitOf"
 
 let cBO_Zplus = gen_constant smt_modules "BO_Zplus"
 let cBO_Zminus = gen_constant smt_modules "BO_Zminus"
@@ -141,6 +157,8 @@ let cBO_Zle = gen_constant smt_modules "BO_Zle"
 let cBO_Zge = gen_constant smt_modules "BO_Zge"
 let cBO_Zgt = gen_constant smt_modules "BO_Zgt"
 let cBO_eq = gen_constant smt_modules "BO_eq"
+let cBO_BVand = gen_constant smt_modules "BO_BVand"
+let cBO_BVor = gen_constant smt_modules "BO_BVor"
 
 let cNO_distinct = gen_constant smt_modules "NO_distinct"
 
@@ -162,6 +180,7 @@ let cFxor = gen_constant smt_modules "Fxor"
 let cFimp = gen_constant smt_modules "Fimp"
 let cFiff = gen_constant smt_modules "Fiff"
 let cFite = gen_constant smt_modules "Fite"
+let cFbbT = gen_constant smt_modules "FbbT"
 
 let cis_true = gen_constant smt_modules "is_true"
 
@@ -194,3 +213,8 @@ let vm_cast_true t =
   Term.mkCast(eq_refl_true (),
 	      Term.VMcast, 
 	      SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+
+(* Compute nat *)
+let rec mkNat = function
+  | 0 -> Lazy.force cO
+  | i -> SmtMisc.mklApp cS [|mkNat (i-1)|]

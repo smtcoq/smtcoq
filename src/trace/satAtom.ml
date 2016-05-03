@@ -27,6 +27,7 @@ module Atom =
     let equal a1 a2 = a1 == a2
 
     let is_bool_type a = true
+    let is_bv_type a = false
 
     type reify_tbl =
         { mutable count : int;

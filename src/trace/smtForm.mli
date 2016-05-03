@@ -23,6 +23,7 @@ module type ATOM =
     val equal : t -> t -> bool
 
     val is_bool_type : t -> bool
+    val is_bv_type : t -> bool
 
   end 
 
@@ -42,6 +43,7 @@ type fop =
 type ('a,'f) gen_pform = 
   | Fatom of 'a
   | Fapp of fop * 'f array
+  | FbbT of 'a * 'f list
 
 module type FORM =
   sig 

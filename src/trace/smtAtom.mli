@@ -23,6 +23,7 @@ type btype =
   | TZ
   | Tbool
   | Tpositive
+  | TBV of int
   | Tindex of indexed_type
 
 module Btype : 
@@ -64,6 +65,7 @@ type uop =
    | UO_Zpos 
    | UO_Zneg
    | UO_Zopp
+   | UO_BVbitOf of int
 
 type bop = 
    | BO_Zplus
@@ -74,6 +76,8 @@ type bop =
    | BO_Zge
    | BO_Zgt
    | BO_eq of btype
+   | BO_BVand
+   | BO_BVor
 
 type nop =
   | NO_distinct of btype
