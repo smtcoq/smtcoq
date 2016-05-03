@@ -334,6 +334,8 @@ let call_cvc4 rt ro rf root =
     "smt.plf";
     "th_base.plf";
     "th_int.plf";
+    "th_bv.plf";
+    "th_bv_bitblast.plf";
   ] in
   let signatures_arg =
     signatures
