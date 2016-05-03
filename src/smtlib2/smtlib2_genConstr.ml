@@ -45,9 +45,13 @@ let identifier_of_qualidentifier = function
 let string_type s = match s with
   | "Bool" -> Tbool
   | "Int" -> TZ
-  (* Means (_BitVec 2) : FIXME *)
-  | "BitVec" -> TBV 2
-  | _ -> VeritSyntax.get_btype s
+  | _ ->
+     let l = String.length s in
+     if l >= 7 && String.sub s 0 7 = "BitVec_" then
+       let size = int_of_string (String.sub s 7 (l-7)) in
+       TBV size
+     else
+       VeritSyntax.get_btype s
 
 
 let sort_of_string s = (string_type s, [])
