@@ -75,7 +75,8 @@ let get_rule = function
   | Flat -> VeritSyntax.Flat
   | Hole -> VeritSyntax.Hole
   | True -> VeritSyntax.True
-
+  | Bbva -> VeritSyntax.Bbva
+  | Bbeq -> VeritSyntax.Bbeq
 
 
 let rec term_smtcoq t = match value t with

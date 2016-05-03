@@ -79,6 +79,8 @@ let get_rule = function
   | Flat -> "flatten"
   | Hole -> "hole"
   | True -> "true"
+  | Bbva -> "bbvar"
+  | Bbeq -> "bbeq"
 
 
 let print_sharps () =
@@ -103,11 +105,25 @@ let smt2_of_lfsc = function
   | t -> t
 
 
+let new_sharp t =
+  incr cpt;
+  HT.add sharp_tbl t !cpt;
+  !cpt
+
 let rec print_apply fmt t = match app_name t with
   | Some ("apply", [_; _; f; a]) ->
     fprintf fmt "%a %a" print_apply f print_term a
   | _ -> print_term fmt t
   
+
+(* Endianness dependant: LFSC big endian -> SMTCoq little endian *)
+and print_bblt fmt t = match name t with
+  | Some "bbltn" -> ()
+  | _ -> match app_name t with
+    | Some ("bbltc", [f; r]) ->
+      fprintf fmt "%a %a" print_bblt r print_term f
+    | _ -> assert false
+
 
 and print_term fmt t =
   try HT.find sharp_tbl t |> fprintf fmt "#%d"
@@ -125,24 +141,34 @@ and print_term fmt t =
         (* let a, b = if compare_term a b <= 0 then a, b else b, a in *)
         fprintf fmt "#%d:(= %a %a)" !cpt print_term a print_term b
 
-
       | Some ("not", [a]) -> fprintf fmt "(not %a)" print_term a
                                
       | Some ("apply", _) ->
-        incr cpt;
-        HT.add sharp_tbl t !cpt;
-        fprintf fmt "#%d:(%a)" !cpt print_apply t
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%a)" nb print_apply t
 
       | Some ("p_app", [a]) -> print_term fmt a
 
       | Some ("a_int", [{value = Int n}]) ->
         fprintf fmt "%s" (Big_int.string_of_big_int n)
 
+      | Some ("a_var_bv", [_; a]) -> print_term fmt a
+
+      | Some ("bitof", [a; {value = Int n}]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(bitof %s %a)" nb
+          (Big_int.string_of_big_int n) print_term a
+
+      | Some ("bbltc", _) -> fprintf fmt "[%a]" print_bblt t
+
+      | Some ("bblast_term", [_; a; bb]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(bbT %a [%a])" nb print_term a print_bblt bb
+
       | Some (n, l) ->
         let n = smt2_of_lfsc n in
-        incr cpt;
-        HT.add sharp_tbl t !cpt;
-        fprintf fmt "#%d:(%s%a)" !cpt n
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%s%a)" nb n
           (fun fmt -> List.iter (fprintf fmt " %a" print_term)) l
 
       | None -> assert false

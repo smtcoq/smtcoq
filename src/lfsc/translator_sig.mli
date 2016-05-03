@@ -58,7 +58,9 @@ type rule =
   | Flat
   | Hole
   | True
-    
+  | Bbva
+  | Bbeq
+
 
 
 (** Signature for translators *)
