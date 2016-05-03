@@ -26,7 +26,7 @@ Local Open Scope bool_scope.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Module Type BITVECTOR.
+Module Type RAWBITVECTOR.
 
 Parameter bitvector: Type.
 Parameter size     : bitvector -> N.
@@ -50,10 +50,6 @@ Parameter bv_or    : bitvector -> bitvector -> bitvector.
 Parameter bv_not   : bitvector -> bitvector.
 *)
 
-End BITVECTOR.
-
-Module Type BITVECTOR_THEOREMS (BV:BITVECTOR).
-  Import BV.
 
 (*axioms*)
 Axiom a_bv_eq    : forall a b, bv_eq a b = true <-> a = b.
@@ -68,9 +64,9 @@ Axiom a_bv_or    : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
 Axiom a_bv_not   : forall a,   bv_wf a -> bv_wf (bv_not a).
 *)
 
-End BITVECTOR_THEOREMS.
+End RAWBITVECTOR.
 
-Module BITVECTOR_LIST <: BITVECTOR.
+Module BITVECTOR_LIST <: RAWBITVECTOR.
 
 Record bitvector_rec : Type := 
   mk_bitvector
@@ -274,10 +270,10 @@ Definition bv_mult (a b : bitvector) : bitvector :=
     | _    => mk_bitvector 0 nil
   end.
 
-End BITVECTOR_LIST.
 
-Module BITVECTOR_LIST_THEOREMS : BITVECTOR_THEOREMS (BITVECTOR_LIST).
-Import BITVECTOR_LIST.
+
+
+(* Theorems *)
 
 Lemma List_eq : forall (l m: list bool), beq_list l m = true <-> l = m.
 Proof.
@@ -320,29 +316,6 @@ Proof. intros a b H0 H1. destruct a. destruct b. simpl. unfold bv_wf in *. simpl
        rewrite app_length. rewrite Nat2N.inj_add. rewrite H0, H1; reflexivity. 
 Qed.
 
-Section Fold_left2.
-
-  Variables A B: Type.
-  Variable f : A -> B -> B -> A.
-
-  Fixpoint fold_left2 (xs ys: list B) (acc:A) {struct xs} : A :=
-    match xs, ys with
-    | nil, _ | _, nil => acc
-    | x::xs, y::ys => fold_left2 xs ys (f acc x y)
-    end.
-
-  Lemma foo : forall (I: A -> Prop) acc, I acc -> 
-              (forall a b1 b2, I a -> I (f a b1 b2)) -> 
-              forall xs ys, I (fold_left2 xs ys acc).
-  Proof. intros I acc H0 H1 xs. revert acc H0.
-         induction xs as [| a xs IHxs]; intros acc H.
-         simpl. auto.
-         intros [| b ys].
-            + simpl. exact H.
-            + simpl. apply IHxs, H1. exact H.
-  Qed.
-
-End Fold_left2.
 
 (*list bitwise AND properties*)
 
@@ -840,7 +813,7 @@ Proof. intro a. destruct a. simpl. unfold bv_add. simpl.
        rewrite add_list_empty_neutral_r. reflexivity.
 Qed.
 
-End BITVECTOR_LIST_THEOREMS.
+End BITVECTOR_LIST.
 
 
 (** Some useful functions *)

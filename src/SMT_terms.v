@@ -336,7 +336,7 @@ Module Typ.
        symmetry;apply Zeq_is_eq_bool.
        apply Bool.eqb_true_iff.
        apply Peqb_eq.
-       apply BITVECTOR_LIST_THEOREMS.a_bv_eq.
+       apply BITVECTOR_LIST.a_bv_eq.
       Qed.
 
       Lemma reflect_i_eqb : forall t x y, reflect (x = y) (i_eqb t x y).
