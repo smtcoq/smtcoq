@@ -530,10 +530,16 @@ module Make (T : Translator_sig.S) = struct
 
 
   (** Returns the clause used in a resolution step *)
-  let clause_qr p = match app_name (deref p).ttype with
-    | Some ("holds", [cl]) -> get_clause_id (to_clause cl)
-    | _ -> raise Not_found
-
+  let clause_qr p =
+    try match name p with
+      | Some n -> get_input_id n
+      | _ -> raise Not_found
+    with Not_found -> match app_name (deref p).ttype with
+      | Some ("holds", [cl]) ->
+        (* eprintf "get_clause id : %a@." print_term cl; *)
+        get_clause_id (to_clause cl)
+      | _ -> raise Not_found
+             
 
   let rec reso_of_QR acc qr = match app_name qr with
     | Some (("Q"|"R"), [_; _; u1; u2; _]) -> reso_of_QR (reso_of_QR acc u1) u2
@@ -548,10 +554,11 @@ module Make (T : Translator_sig.S) = struct
   let satlem_simplify p = match app_name p with
     | Some ("satlem_simplify", [_; _; _; qr; p]) ->
       let clauses = reso_of_QR qr in
-      let _, res, p = result_satlem p in
+      let lem_name, res, p = result_satlem p in
       let cl_res = to_clause res in
       let id = mk_clause ~reuse:false Reso cl_res clauses in
       register_clause_id cl_res id;
+      register_decl_id lem_name id;
       Some id, p
     | _ -> raise Exit
 
@@ -629,7 +636,7 @@ module Make (T : Translator_sig.S) = struct
   
   (** Returns the continuation of a [satlem]. *)
   let continuation_satlem p = match value p with
-    | Lambda (_, r) -> r
+    | Lambda ({sname=Name n}, r) -> n, r
     | _ -> assert false
 
 
@@ -639,6 +646,10 @@ module Make (T : Translator_sig.S) = struct
        with Invalid_argument _ -> false)
     | _ -> false 
   
+  let has_intro_bv p = match app_name p with
+    | Some (("intro_assump_f"|"intro_assump_t"), _) -> true
+    | _ -> false
+
   
   (** Convert [satlem]. Clauses are chained together with an intermediate
       resolution step when needed, and when CVC4 uses superfluous local
@@ -648,11 +659,14 @@ module Make (T : Translator_sig.S) = struct
     | Some ("satlem", [c; _; l; p]) ->
       (* eprintf "SATLEM ---@."; *)
       let cl = to_clause c in
+      let lem_name, lem_cont = continuation_satlem p in
       (try
         let assumptions, l = get_assumptions [] l in
         let l = trim_junk_satlem l in
         let env = { empty with assum = assumptions } in
-        let lem = if is_bbr_satlem_lam p then bb_lem else lem in
+        let lem =
+          if is_bbr_satlem_lam p || List.exists has_intro_bv l then bb_lem
+          else lem in
         let env =
           List.fold_left (fun env p ->
               let local_env =
@@ -676,7 +690,8 @@ module Make (T : Translator_sig.S) = struct
         let satlem_id =
           if env.assum = [] then id else mk_clause Weak cl [id]
         in
-        register_clause_id cl satlem_id
+        register_clause_id cl satlem_id;
+        register_decl_id lem_name satlem_id;
         (* eprintf "--- SATLEM@."; *)
         
        with ArithLemma ->
@@ -685,7 +700,7 @@ module Make (T : Translator_sig.S) = struct
 
       );
       
-      satlem (continuation_satlem p)
+      satlem lem_cont
 
     | _ -> p
 
@@ -704,7 +719,7 @@ module Make (T : Translator_sig.S) = struct
     | None ->
       begin match name p with
       | Some h -> (* should be an declared clause *)
-        Some (get_input_id h)
+        Some (try get_input_id h with Not_found -> assert false)
       | None -> assert false
       end
       
@@ -715,10 +730,10 @@ module Make (T : Translator_sig.S) = struct
   let rec bblast_decls p = match app_name p with
     | Some ("decl_bblast", [n; b; t; bb; l]) ->
       let res = bblast_term n t b in
-      bbt bb |> ignore;
+      let id = match bbt bb with Some id -> id | None -> assert false in
       begin match value l with
         | Lambda ({sname = Name h}, p) ->
-          register_decl h res;
+          register_decl_id h id;
           bblast_decls p
         | _ -> assert false
       end
@@ -731,11 +746,13 @@ module Make (T : Translator_sig.S) = struct
         | Some ("bv_bbl_=", [_; _; _; _; _; _; a; b]) ->
           begin match name a, name b with
           | Some na, Some nb ->
-            let id1, id2 = get_input_id na, get_input_id nb in
-            mk_clause_cl Bbeq [f] [id1; id2] |> ignore;
+            let id1, id2 =
+              try get_input_id na, get_input_id nb
+              with Not_found -> assert false in
+            let clid = mk_clause_cl Bbeq [f] [id1; id2] in
             begin match value l with
               | Lambda ({sname = Name h}, p) ->
-                register_decl h f;
+                register_decl_id h clid;
                 bblast_eqs p
               | _ -> assert false
             end

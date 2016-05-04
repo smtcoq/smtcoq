@@ -179,7 +179,7 @@ let to_verit () =
 
 
 
-let _ = pretty_to_verit ()
+let _ = to_verit ()
 
 
 

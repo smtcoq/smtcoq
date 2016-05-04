@@ -129,6 +129,9 @@ and print_bblt fmt t = match name t with
 and print_term fmt t =
   try HT.find sharp_tbl t |> fprintf fmt "#%d"
   with Not_found ->
+    match value t with
+    | Int n -> fprintf fmt "%s" (Big_int.string_of_big_int n)
+    | _ ->
     match name t with
     | Some n -> pp_print_string fmt (smt2_of_lfsc n)
     | None -> match app_name t with
@@ -172,7 +175,9 @@ and print_term fmt t =
         fprintf fmt "#%d:(%s%a)" nb n
           (fun fmt -> List.iter (fprintf fmt " %a" print_term)) l
 
-      | None -> assert false
+      | None ->
+        eprintf "Could not translate term %a@." Ast.print_term t;
+        assert false
 
 
 let print_term fmt t = print_term fmt t (* (get_real t) *)
@@ -301,6 +306,9 @@ let register_decl name formula =
   let cl = [formula] in
   match new_clause_id cl with
   | NewCl id | OldCl id -> HS.add inputs name id
+
+
+let register_decl_id name id = HS.add inputs name id
 
 
 let clear () =

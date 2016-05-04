@@ -79,6 +79,42 @@ let get_rule = function
   | Bbeq -> VeritSyntax.Bbeq
   | Bband -> failwith "BBand not implemented"
 
+let string_of_rule = function
+  | Reso -> "resolution"
+  | Weak -> "weaken"
+  | Or -> "or"
+  | Orp -> "or_pos"
+  | Imp -> "implies"
+  | Impp -> "implies_pos"
+  | Nand -> "not_and"
+  | Andn -> "and_neg"
+  | Nimp1 -> "not_implies1"
+  | Nimp2 -> "not_implies2"
+  | Impn1 -> "implies_neg1"
+  | Impn2 -> "implies_neg2"
+  | Nor -> "not_or"
+  | Orn -> "or_neg"
+  | And -> "and"
+  | Andp -> "and_pos"
+  | Equ1 -> "equiv1"
+  | Equ2 -> "equiv2"
+  | Nequ1 -> "not_equiv1"
+  | Nequ2 -> "not_equiv2"
+  | Equp1 -> "equiv_pos1"
+  | Equp2 -> "equiv_pos2"
+  | Equn1 -> "equiv_neg1"
+  | Equn2 -> "equiv_neg2"
+  | Eqtr -> "eq_transitive"
+  | Eqcp -> "eq_congruent_pred"
+  | Eqco -> "eq_congruent"
+  | Eqre -> "eq_reflexive"
+  | Lage -> "la_generic"
+  | Flat -> "flatten"
+  | Hole -> "hole"
+  | True -> "true"
+  | Bbva -> "bbvar"
+  | Bbeq -> "bbeq"
+  | Bband -> failwith "BBand not implemented"
 
 
 let rec term_smtcoq t = match value t with
@@ -218,9 +254,10 @@ let new_clause_id ?(reuse=true) cl =
     if not reuse then raise Not_found;
     OldCl (HCl.find clauses_ids cl)
   with Not_found ->
-    (* eprintf "new clause : [%a]@." (fun fmt -> List.iter (fprintf fmt "%a, " Ast.print_term)) cl; *)
+    (* eprintf "new clause : [%a]@." (fun fmt -> List.iter (fprintf fmt "%a, " (Form.to_smt Atom.to_smt))) cl; *)
     incr cl_cpt;
     let id = !cl_cpt in
+    (* eprintf "new clause %d@." id; *)
     register_clause_id cl id;
     NewCl id
 
@@ -229,8 +266,12 @@ let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
     (* Format.eprintf "mk_clause %d : %a@." id print_clause cl; *)
+    (* Format.eprintf "mk_clause %d@." id; *)
+    eprintf "%d:%s@." id (string_of_rule rule);
     VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
-  | OldCl id -> id
+  | OldCl id ->
+    (* Format.eprintf "old_clause %d@." id; *)
+    id
 
 
 let mk_clause_cl ?(reuse=true) rule cl args =
@@ -243,6 +284,7 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
+     eprintf "%d:input@." id;
      (* Format.eprintf "mk_input %d@." id; *)
      VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
    | OldCl _ -> ()
@@ -254,6 +296,7 @@ let mk_admit_preproc name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
+     eprintf "%d:hole@." id;
      VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -261,7 +304,8 @@ let mk_admit_preproc name formula =
 let register_prop_abstr vt formula = HT.add propvars vt formula
 
 
-let get_clause_id cl = HCl.find clauses_ids cl
+let get_clause_id cl =
+  try HCl.find clauses_ids cl with Not_found -> assert false
 
 
 let get_input_id h = HS.find inputs h
@@ -270,7 +314,13 @@ let get_input_id h = HS.find inputs h
 let register_decl name formula =
   let cl = [term_smtcoq formula] in
   match new_clause_id cl with
-  | NewCl id | OldCl id -> HS.add inputs name id
+  | NewCl id | OldCl id ->
+    (* eprintf "register decl %d@." id; *)
+    HS.add inputs name id
+
+let register_decl_id name id =
+  (* eprintf "register_decl %s : %d@." name id; *)
+  HS.add inputs name id
 
 
 

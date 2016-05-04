@@ -117,6 +117,8 @@ module type S = sig
 
   val register_decl : string -> term -> unit
 
+  val register_decl_id : string -> int -> unit
+
   (** Clear and reset global tables and values. *)
   val clear : unit -> unit
   

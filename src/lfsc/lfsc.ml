@@ -107,8 +107,6 @@ let import_all fsmt fproof =
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let roots =
-    List.map (fun f -> f |> Form.flatten rf |> Form.right_assoc rf) roots in
   let (max_id, confl) = import_trace fproof None in
   (rt, ro, ra, rf, roots, max_id, confl)
 
