@@ -515,6 +515,7 @@ module Make (T : Translator_sig.S) = struct
 
       | None -> { env with ax = true }
 
+
   
   (** Returns the name given to this lemma, its type and the continuation. *)
   let result_satlem p = match value p with
@@ -526,6 +527,86 @@ module Make (T : Translator_sig.S) = struct
       end
 
     | _ -> assert false
+
+
+  (** Returns the clause used in a resolution step *)
+  let clause_qr p = match app_name (deref p).ttype with
+    | Some ("holds", [cl]) -> get_clause_id (to_clause cl)
+    | _ -> raise Not_found
+
+
+  let rec reso_of_QR acc qr = match app_name qr with
+    | Some (("Q"|"R"), [_; _; u1; u2; _]) -> reso_of_QR (reso_of_QR acc u1) u2
+    | _ -> clause_qr qr :: acc
+
+  (** Returns clauses used in a linear resolution chain *)
+  let reso_of_QR qr = reso_of_QR [] qr |> List.rev
+
+
+  
+  (** convert resolution proofs of [satlem_simplify] *)
+  let satlem_simplify p = match app_name p with
+    | Some ("satlem_simplify", [_; _; _; qr; p]) ->
+      let clauses = reso_of_QR qr in
+      let _, res, p = result_satlem p in
+      let cl_res = to_clause res in
+      let id = mk_clause ~reuse:false Reso cl_res clauses in
+      register_clause_id cl_res id;
+      Some id, p
+    | _ -> raise Exit
+
+  
+  let rec many_satlem_simplify lastid p =
+    try
+      let lastid, p = satlem_simplify p in
+      many_satlem_simplify lastid p
+    with Exit -> lastid, p
+
+
+  (* can be empty, returns continuation *)
+  let satlem_simplifies_c p = many_satlem_simplify None p |> snd
+
+
+  (* There must be at least one, returns id of last deduced clause *)
+  let reso_of_satlem_simplify p =
+    match many_satlem_simplify None p with
+    | Some id, _ -> id
+    | _ -> assert false
+
+
+  let rec bb_trim_intro_unit env p = match app_name p with
+    | Some (("intro_assump_f"|"intro_assump_t"), [_; _; _; ullit; _; l]) ->
+      let env = rm_used env ullit in
+      (match value l with
+       | Lambda (_, p) -> bb_trim_intro_unit env p
+       | _ -> assert false)
+    | _ -> env, p
+
+  
+  let is_last_bbres p = match app_name p with
+    | Some ("satlem_simplify", [_; _; _; _; l]) ->
+      (match value l with
+       | Lambda ({sname=Name e}, pe) ->
+         (match name pe with Some ne -> ne = e | None -> false)
+       | _ -> false)
+    | _ -> false
+
+
+  let rec bb_lem_res lastid p =
+    try
+      if is_last_bbres p then raise Exit;
+      let lastid, p = satlem_simplify p in
+      bb_lem_res lastid p
+    with Exit -> match lastid with
+      | Some id -> id
+      | None -> assert false
+
+
+  let rec bb_lem env p =
+    let env, p = bb_trim_intro_unit env p in
+    let id = bb_lem_res None p in
+    { env with clauses = id :: env.clauses }
+  
 
 
   exception ArithLemma
@@ -551,6 +632,13 @@ module Make (T : Translator_sig.S) = struct
     | Lambda (_, r) -> r
     | _ -> assert false
 
+
+  let is_bbr_satlem_lam p = match value p with
+    | Lambda ({sname = Name h}, _) ->
+      (try String.sub h 0 5 = "bb.cl"
+       with Invalid_argument _ -> false)
+    | _ -> false 
+  
   
   (** Convert [satlem]. Clauses are chained together with an intermediate
       resolution step when needed, and when CVC4 uses superfluous local
@@ -564,6 +652,7 @@ module Make (T : Translator_sig.S) = struct
         let assumptions, l = get_assumptions [] l in
         let l = trim_junk_satlem l in
         let env = { empty with assum = assumptions } in
+        let lem = if is_bbr_satlem_lam p then bb_lem else lem in
         let env =
           List.fold_left (fun env p ->
               let local_env =
@@ -601,38 +690,76 @@ module Make (T : Translator_sig.S) = struct
     | _ -> p
 
 
+  let rec bbt p = match app_name p with
+    | Some ("bv_bbl_var", [n; v; bb]) ->
+      let res = bblast_term n (a_var_bv n v) bb in
+      Some (mk_clause_cl Bbva [res] [])
+    | Some ("bv_bbl_bvand", [n; x; y; _; _; rb; xbb; ybb]) ->
+      let res = bblast_term n (bvand x y) rb in
+      (match bbt xbb, bbt ybb with
+       | Some idx, Some idy ->
+         Some (mk_clause_cl Bband [res] [idx; idy])
+       | _ -> assert false
+      )
+    | None ->
+      begin match name p with
+      | Some h -> (* should be an declared clause *)
+        Some (get_input_id h)
+      | None -> assert false
+      end
+      
+    | Some (r, _) -> failwith ("BV: Not implemented rule " ^ r)
 
-  (** Returns the clause used in a resolution step *)
-  let clause_qr p = match app_name (deref p).ttype with
-    | Some ("holds", [cl]) -> get_clause_id (to_clause cl)
-    | _ -> raise Not_found
+  
+
+  let rec bblast_decls p = match app_name p with
+    | Some ("decl_bblast", [n; b; t; bb; l]) ->
+      let res = bblast_term n t b in
+      bbt bb |> ignore;
+      begin match value l with
+        | Lambda ({sname = Name h}, p) ->
+          register_decl h res;
+          bblast_decls p
+        | _ -> assert false
+      end
+    | _ -> p
 
 
-  let rec reso_of_QR acc qr = match app_name qr with
-    | Some (("Q"|"R"), [_; _; u1; u2; _]) -> reso_of_QR (reso_of_QR acc u1) u2
-    | _ -> clause_qr qr :: acc
+  let rec bblast_eqs p = match app_name p with
+    | Some ("th_let_pf", [f; pf; l]) ->
+      begin match app_name pf with
+        | Some ("bv_bbl_=", [_; _; _; _; _; _; a; b]) ->
+          begin match name a, name b with
+          | Some na, Some nb ->
+            let id1, id2 = get_input_id na, get_input_id nb in
+            mk_clause_cl Bbeq [f] [id1; id2] |> ignore;
+            begin match value l with
+              | Lambda ({sname = Name h}, p) ->
+                register_decl h f;
+                bblast_eqs p
+              | _ -> assert false
+            end
+          | _ -> assert false
+          end
+        | _ -> assert false
+      end
+    | _ -> p
 
-  (** Returns clauses used in a linear resolution chain *)
-  let reso_of_QR qr = reso_of_QR [] qr |> List.rev
-
-
-  (** convert resolution proofs of [satlem_simplify] *)
-  let rec reso_of_satlem_simplify pid p = match app_name p with
-
-    | Some ("satlem_simplify", [_; _; _; qr; p]) ->
-
-      let clauses = reso_of_QR qr in
-      let _, res, p = result_satlem p in
-      let cl_res = to_clause res in
-      let id = mk_clause ~reuse:false Reso cl_res clauses in
-      register_clause_id cl_res id; 
-
-      reso_of_satlem_simplify id p
-
-    | None when name p <> None -> pid
-
-    | _ -> assert false
-
+  
+  (** Bit-blasting and bitvector proof conversion (returns rest of the sat
+      proof) *)
+  let bb_proof p = match app_name p with
+    | Some ("decl_bblast", _) ->
+      p
+      |> bblast_decls
+      |> bblast_eqs
+      |> register_prop_vars
+      |> satlem
+      |> satlem_simplifies_c
+      |> satlem
+      
+    | _ -> p
+  
 
   (** Convert an LFSC proof (this is the entry point) *)
   let convert p =
@@ -647,7 +774,10 @@ module Make (T : Translator_sig.S) = struct
     
     |> register_prop_vars
     |> satlem
-    |> reso_of_satlem_simplify 0
+
+    |> bb_proof
+    
+    |> reso_of_satlem_simplify
 
 
   (** Clean global environments *)

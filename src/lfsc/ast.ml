@@ -352,15 +352,56 @@ let mk_hole_hole () =
 let callbacks_table = Hashtbl.create 7
 
 
+let mp_add x y =
+  eprintf "mp_add %a %a@." print_term x print_term y; 
+  match value x, value y with
+  | Int xi, Int yi -> mk_mpz (Big_int.add_big_int xi yi)
+  | _ -> assert false
+
+let mp_mul x y = match value x, value y with
+  | Int xi, Int yi -> mk_mpz (Big_int.mult_big_int xi yi)
+  | _ -> assert false
+
+let uminus x = match value x with
+  | Int xi -> mk_mpz (Big_int.minus_big_int xi)
+  | _ -> assert false
+
+
+let rec eval_arg x = match app_name x with
+  | Some ("~", [x]) -> uminus (eval_arg x)
+  | Some ("mp_add", [x; y]) -> mp_add (eval_arg x) (eval_arg y)
+  | Some ("mp_mul", [x; y]) -> mp_mul (eval_arg x) (eval_arg y)
+  | _ -> x
+
+
 let callback name l =
   try
     let f = Hashtbl.find callbacks_table name in
+    eprintf "apply %s ... @." name;
+    let l = List.map eval_arg l in
     f l
   with Not_found ->
     failwith ("No side condition for " ^ name)
 
 
+
+(* type sc_check = String * term list * term *)
+
+
+(* type sc_tree = *)
+(*   | SCEmpty *)
+(*   (\* | SCLeaf of sc_check *\) *)
+(*   | SCBranches of sc_check * sc_tree list *)
+
+
+(* let sct = ref (SCEmpty) *)
+
+
 let sc_to_check = ref []
+
+
+let all_scs = ref []
+  
 
 
 (**********************************)
@@ -650,7 +691,7 @@ and term_equal t1 t2 =
 
 
 and check_side_condition name l expected =
-  if debug then
+  if true || debug then
     eprintf "Adding side condition : (%s%a) =?= %a@."
       name
       (fun fmt -> List.iter (fprintf fmt "@ %a" print_term)) l
@@ -690,7 +731,6 @@ let mk_const x =
 let symbol_to_const s = { value = Const s; ttype = s.stype }
   
 
-
 let rec mk_app ?(lookup=true) sigma f args =
   if debug then
     eprintf "mk_App : %a@." (print_tval false)
@@ -700,6 +740,10 @@ let rec mk_app ?(lookup=true) sigma f args =
   | Lambda (x, r), a :: rargs ->
     let sigma = List.remove_assoc x sigma in
     mk_app (add_subst x a sigma) r rargs
+      
+  (* | Const {sname = Name "mp_add"}, [x; y] -> mp_add x y *)
+
+  (* | Const {sname = Name "mp_mul"}, [x; y] -> mp_mul x y *)
       
   | Const s, _ when lookup ->
     (* find the definition if it has one *)
@@ -719,11 +763,29 @@ let mk_app = mk_app empty_subst
 
 
 
+let run_side_conditions () =
+  all_scs := (List.rev !sc_to_check) :: !all_scs;
+  sc_to_check := [];
+  List.iter (fun (name, l, expected) ->
+      let res = callback name l in
+      if not (term_equal res expected) then
+        failwith (asprintf "Side condition %s failed: Got %a, expected %a"
+                    name print_term res print_term expected);
+    ) (List.flatten !all_scs);
+  all_scs := [];
+  ()
+
+
 let mk_pi s t =
   (* let s = if is_hole_symbol s then fresh_alpha s.stype else s in *)
   { value = Pi (s, t); ttype = lfsc_type }
 
 let mk_lambda s t =
+  eprintf "ICI@.";
+  all_scs := (List.rev !sc_to_check) :: !all_scs;
+  sc_to_check := [];
+  (* sc_to_check := List.rev !sc_to_check; *)
+  (* run_side_conditions (); *)
   (* let s = if is_hole_symbol s then fresh_alpha s.stype else s in *)
   { value = Lambda (s, t);
     ttype = mk_pi s t.ttype }
@@ -751,16 +813,9 @@ let mk_define n t =
   register_symbol s;
   add_definition s t
 
-let mk_check t =
-  List.iter (fun (name, l, expected) ->
-      let res = callback name l in
-      if not (term_equal res expected) then
-        failwith (asprintf "Side condition %s failed: Got %a, expected %a"
-                    name print_term res print_term expected);
-    ) (!sc_to_check);
-  sc_to_check := [];
-  ()
 
+
+let mk_check t = run_side_conditions ()
 
 
 

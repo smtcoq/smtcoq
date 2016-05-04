@@ -77,6 +77,8 @@ let get_rule = function
   | True -> VeritSyntax.True
   | Bbva -> VeritSyntax.Bbva
   | Bbeq -> VeritSyntax.Bbeq
+  | Bband -> failwith "BBand not implemented"
+
 
 
 let rec term_smtcoq t = match value t with
@@ -263,6 +265,13 @@ let get_clause_id cl = HCl.find clauses_ids cl
 
 
 let get_input_id h = HS.find inputs h
+
+
+let register_decl name formula =
+  let cl = [term_smtcoq formula] in
+  match new_clause_id cl with
+  | NewCl id | OldCl id -> HS.add inputs name id
+
 
 
 let clear () =

@@ -66,7 +66,16 @@ let mp_mul x y = match value x, value y with
   | _ -> mk_app mp_add_s [x; y]
 
 
-let mp_isneg x = match value x with
+
+let rec eval_arg x = match app_name x with
+  | Some ("mp_add", [x; y]) -> mp_add (eval_arg x) (eval_arg y)
+  | Some ("mp_mul", [x; y]) -> mp_mul (eval_arg x) (eval_arg y)
+  | _ -> x
+
+
+let mp_isneg x =
+  eprintf "mp_isneg %a .@." print_term x;
+  match value x with
   | Int n -> Big_int.sign_big_int n < 0
   | _ -> failwith ("mp_isneg")
 
@@ -93,7 +102,7 @@ let pos_s = declare_get "pos" (pi "x" var lit)
 let neg_s = declare_get "neg" (pi "x" var lit)
 let clc_s = declare_get "clc" (pi "x" lit (pi "c" clause clause))
 
-let concat_s = declare_get "concat_cl"
+let concat_cl_s = declare_get "concat_cl"
     (pi "c1" clause (pi "c2" clause clause))
 
 let clr_s = declare_get "clr" (pi "l" lit (pi "c" clause clause))
@@ -142,7 +151,7 @@ let pos v = mk_app pos_s [v]
 let neg v = mk_app neg_s [v] 
 let clc x c = mk_app clc_s [x; c]
 let clr l c = mk_app clr_s [l; c]
-let concat c1 c2 = mk_app concat_s [c1; c2]
+let concat_cl c1 c2 = mk_app concat_cl_s [c1; c2]
 
 
 let not_ a = mk_app not_s [a]
@@ -154,6 +163,9 @@ let xor_ a b = mk_app xor_s [a; b]
 let ifte_ a b c = mk_app ifte_s [a; b; c]
 
 (* Bit vector syntax / symbols *)
+
+let bitVec_s = declare_get "BitVec" (pi "n" mpz sort)
+let bitVec n = mk_app bitVec_s [n]
 
 let bit = declare_get "bit" lfsc_type
 let b0 = declare_get "b0" bit
@@ -172,8 +184,65 @@ let bbltc f v = mk_app bbltc_s [f; v]
 
 let var_bv = declare_get "var_bv" lfsc_type
 
+let a_var_bv_s = declare_get "a_var_bv"
+    (pi_d "n" mpz (fun n ->
+         (pi "v" var_bv (term (bitVec n)))))
+let a_var_bv n v = mk_app a_var_bv_s [n; v]
+
 let bitof_s = declare_get "bitof" (pi "x" var_bv (pi "n" mpz formula))
 let bitof x n =  mk_app bitof_s [x; n]
+
+let bblast_term_s = declare_get "bblast_term"
+    (pi_d "n" mpz (fun n ->
+    (pi "x" (term (bitVec n))
+    (pi "y" bblt lfsc_type))))        
+let bblast_term n x y = mk_app bblast_term_s [n; x; y]
+
+let _ = 
+  define "bvop2"
+	(pi_d "n" mpz (fun n ->
+	(pi "x" (term (bitVec n))
+        (pi "y" (term (bitVec n))
+           (term (bitVec n))))))
+
+let bvand_s = declare_get "bvand" (mk_const "bvop2")
+let bvor_s = declare_get "bvor" (mk_const "bvop2")
+let bvxor_s = declare_get "bvxor" (mk_const "bvop2")
+let bvnand_s = declare_get "bvnand" (mk_const "bvop2")
+let bvnor_s = declare_get "bvnor" (mk_const "bvop2")
+let bvxnor_s = declare_get "bvxnor" (mk_const "bvop2")
+let bvmul_s = declare_get "bvmul" (mk_const "bvop2")
+let bvadd_s = declare_get "bvadd" (mk_const "bvop2")
+let bvsub_s = declare_get "bvsub" (mk_const "bvop2")
+let bvudiv_s = declare_get "bvudiv" (mk_const "bvop2")
+let bvurem_s = declare_get "bvurem" (mk_const "bvop2")
+let bvsdiv_s = declare_get "bvsdiv" (mk_const "bvop2")
+let bvsrem_s = declare_get "bvsrem" (mk_const "bvop2")
+let bvsmod_s = declare_get "bvsmod" (mk_const "bvop2")
+let bvshl_s = declare_get "bvshl" (mk_const "bvop2")
+let bvlshr_s = declare_get "bvlshr" (mk_const "bvop2")
+let bvashr_s = declare_get "bvashr" (mk_const "bvop2")
+let concat_s = declare_get "concat" (mk_const "bvop2")
+
+let bvand a b = mk_app bvand_s [a; b]
+let bvor a b = mk_app bvor_s [a; b]
+let bvxor a b = mk_app bvxor_s [a; b]
+let bvnand a b = mk_app bvnand_s [a; b]
+let bvnor a b = mk_app bvnor_s [a; b]
+let bvxnor a b = mk_app bvxnor_s [a; b]
+let bvmul a b = mk_app bvmul_s [a; b]
+let bvadd a b = mk_app bvadd_s [a; b]
+let bvsub a b = mk_app bvsub_s [a; b]
+let bvudiv a b = mk_app bvudiv_s [a; b]
+let bvurem a b = mk_app bvurem_s [a; b]
+let bvsdiv a b = mk_app bvsdiv_s [a; b]
+let bvsrem a b = mk_app bvsrem_s [a; b]
+let bvsmod a b = mk_app bvsmod_s [a; b]
+let bvshl a b = mk_app bvshl_s [a; b]
+let bvlshr a b = mk_app bvlshr_s [a; b]
+let bvashr a b = mk_app bvashr_s [a; b]
+let concat a b = mk_app concat_s [a; b]
+
 
 
 module MInt = Map.Make (struct
@@ -302,7 +371,7 @@ let rec simplify_clause mark_map c =
 
     end
 
-  | App(f, [c1; c2]) when term_equal f concat_s ->
+  | App(f, [c1; c2]) when term_equal f concat_cl_s ->
     let new_c1, mark_map = simplify_clause mark_map c1 in
     let new_c2, mark_map = simplify_clause mark_map c2 in
     append new_c1 new_c2, mark_map
@@ -583,10 +652,12 @@ let mpz_sub x y = mp_add x (mp_mul (mpz_of_int (-1)) y)
 
 (* calculate the length of a bit-blasted term *)
 let rec bblt_len v =
+  eprintf "bblt_len %a@." print_term v;
   match value v with
   | Const _ when term_equal v bbltn -> mpz_of_int 0
   | App (f, [b; v']) when term_equal f bbltc_s ->
     mp_add (bblt_len v') (mpz_of_int 1)
+  (* | Hole _ -> mpz_of_int 0 *)
   | _ -> failwith "bblt_len"
              
 
@@ -654,17 +725,18 @@ let bblast_sextend x i =
 
 
 let rec bblast_bvand x y =
+  eprintf "bblast_bvand %a %a@." print_term x print_term y;
   match value x with
   | Const _ when term_equal x bbltn ->
     (match value y with
      | Const _ when term_equal y bbltn -> bbltn
-     | _ -> failwith "bblast_bvand")
+     | _ -> failwith "bblast_bvand1")
   | App (f, [bx; x']) when term_equal f bbltc_s ->
     (match value y with
      | App (f, [by; y']) when term_equal f bbltc_s ->
        bbltc (and_ bx by) (bblast_bvand x' y') 
-     | _ -> failwith "bblast_bvand")
-  | _ -> failwith "bblast_bvand"
+     | _ -> failwith "bblast_bvand2")
+  | _ -> failwith "bblast_bvand3"
            
 
 let rec bblast_bvnot x =

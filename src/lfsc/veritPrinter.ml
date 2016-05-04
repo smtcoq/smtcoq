@@ -81,6 +81,7 @@ let get_rule = function
   | True -> "true"
   | Bbva -> "bbvar"
   | Bbeq -> "bbeq"
+  | Bband -> failwith "BBand not implemented"
 
 
 let print_sharps () =
@@ -294,6 +295,12 @@ let get_clause_id cl = HCl.find clauses_ids cl
 
 
 let get_input_id h = HS.find inputs h
+
+
+let register_decl name formula =
+  let cl = [formula] in
+  match new_clause_id cl with
+  | NewCl id | OldCl id -> HS.add inputs name id
 
 
 let clear () =
