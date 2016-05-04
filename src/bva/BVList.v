@@ -17,7 +17,7 @@
 
 
 Require Import List Bool NArith Psatz.
-(*Require Import Misc.*)
+Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -94,7 +94,7 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
 
-
+(*
 (************** remove when (Require Import Misc) ********************)
 
 Definition Nat_eqb :=
@@ -111,6 +111,7 @@ Definition Nat_eqb :=
     end.
 
 (********************************************************************)
+*)
 
 Lemma bv_mk_eq l1 l2 : bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2.
 Proof.
