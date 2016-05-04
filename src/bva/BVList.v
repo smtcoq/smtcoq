@@ -46,9 +46,9 @@ Parameter bv_mult  : bitvector -> bitvector -> bitvector.
 Parameter bv_subs  : bitvector -> bitvector -> bitvector.
 Parameter bv_div   : bitvector -> bitvector -> bitvector.
 Parameter bv_or    : bitvector -> bitvector -> bitvector.
+*)
 (*unary operations*)
 Parameter bv_not   : bitvector -> bitvector.
-*)
 
 
 (*axioms*)
@@ -61,8 +61,8 @@ Axiom a_bv_subs  : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_subs a b).
 Axiom a_bv_mult  : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_mult a b).
 Axiom a_bv_div   : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_div a b).
 Axiom a_bv_or    : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
-Axiom a_bv_not   : forall a,   bv_wf a -> bv_wf (bv_not a).
 *)
+Axiom a_bv_not   : forall a,   bv_wf a -> bv_wf (bv_not a).
 
 End RAWBITVECTOR.
 
@@ -180,6 +180,8 @@ Definition bv_or (a b : bitvector) : bitvector :=
     | _    => mk_bitvector 0 nil
   end.
 
+Definition bv_not (a: bitvector) : bitvector := mk_bitvector (size a) (map negb (@bits a)).
+
 (*arithmetic operations*)
 
  (*addition*)
@@ -263,10 +265,6 @@ Fixpoint mult_list_carry (a b :list bool) n {struct a}: list bool :=
   end.
 
 Definition mult_list a b := mult_list_carry a b (length a).
-
-Eval compute in mult_list_carry [true; false; true; true ; false ;true] [true; true; false; false] 4.
-Eval compute in add_list [true; true; false; false] [false; true; true; false; false].
-Eval compute in mult_list_carry [true; true; false] [true; false; true] 3.
 
 (*Fixpoint mult_list_carry (a b :list bool) (acc : list bool) {struct a}: list bool :=
   match a with
@@ -695,6 +693,89 @@ Proof. intro a. destruct a. simpl. unfold bv_or. simpl.
        rewrite map2_or_1_true. reflexivity.
 Qed.
 
+(*bitwise NOT properties*)
+
+Lemma not_list_length: forall a, length a = length (map negb a).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - auto. 
+       - simpl. apply f_equal. exact IHxs.
+Qed.
+
+Lemma not_list_involutative: forall a, map negb (map negb a) = a.
+Proof. intro a.
+       induction a as [| a xs IHxs]; auto.
+       simpl. rewrite negb_involutive. apply f_equal. exact IHxs.
+Qed.
+
+Lemma not_list_false_true: forall n, map negb (mk_list_false n) = mk_list_true n.
+Proof. intro n.
+       induction n as [| n IHn].
+       - auto.
+       - simpl. apply f_equal. exact IHn.
+Qed.
+
+Lemma not_list_true_false: forall n, map negb (mk_list_true n) = mk_list_false n.
+Proof. intro n.
+       induction n as [| n IHn].
+       - auto.
+       - simpl. apply f_equal. exact IHn.
+Qed.
+
+Lemma not_list_and_or: forall a b, map negb (map2 andb a b) = map2 orb (map negb a) (map negb b).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - auto.
+       - intros [| b ys].
+         + auto.
+         + simpl. rewrite negb_andb. apply f_equal. apply IHxs.
+Qed.
+
+Lemma not_list_or_and: forall a b, map negb (map2 orb a b) = map2 andb (map negb a) (map negb b).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - auto.
+       - intros [| b ys].
+         + auto.
+         + simpl. rewrite negb_orb. apply f_equal. apply IHxs.
+Qed.
+
+(*bitvector NOT properties*)
+
+Lemma a_bv_not   : forall a,   bv_wf a -> bv_wf (bv_not a).
+Proof. intros a H. destruct a. unfold bv_not. simpl. unfold bv_wf in *. 
+       simpl in *. rewrite <- not_list_length. exact H.
+Qed.
+
+Lemma bv_not_involutative: forall a, bv_not (bv_not a) = a.
+Proof. intro a. destruct a. unfold bv_not. simpl.
+       rewrite not_list_involutative. reflexivity.
+Qed.
+
+Lemma bv_not_false_true: forall n m, bv_not (mk_bitvector m (mk_list_false n)) = mk_bitvector m (mk_list_true n).
+Proof. intros n m. unfold bv_not. simpl.
+       rewrite not_list_false_true. reflexivity.
+Qed.
+
+Lemma bv_not_true_false: forall n m, bv_not (mk_bitvector m (mk_list_true n)) = mk_bitvector m (mk_list_false n).
+Proof. intros n m. unfold bv_not. simpl.
+       rewrite not_list_true_false. reflexivity.
+Qed.
+
+Lemma bv_not_and_or: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_not (bv_and a b) = bv_or (bv_not a) (bv_not b).
+Proof. intros a b H0 H1 H2. destruct a. destruct b. unfold bv_wf in *. simpl in *.
+       unfold bv_and in *. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       unfold bv_or in *. simpl. rewrite N.eqb_compare. rewrite N.compare_refl. 
+       unfold bv_not in *. simpl. rewrite not_list_and_or. reflexivity.
+Qed.
+
+Lemma bv_not_or_and: forall a b, (size a) = (size b) -> bv_wf a -> bv_wf b -> bv_not (bv_or a b) = bv_and (bv_not a) (bv_not b).
+Proof. intros a b H0 H1 H2. destruct a. destruct b. unfold bv_wf in *. simpl in *.
+       unfold bv_and in *. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       unfold bv_or in *. simpl. rewrite N.eqb_compare. rewrite N.compare_refl. 
+       unfold bv_not in *. simpl. rewrite not_list_or_and. reflexivity.
+Qed.
+
 (* list bitwise ADD properties*)
 
 Lemma add_list_empty_l: forall (a: list bool), (add_list [] a) = [].
@@ -872,8 +953,8 @@ Proof. intro a.
          intro H. simpl. case a.
          + specialize (@add_list_length (b :: ys) (mult_list_carry xs (false :: b :: ys) n)).
            intro H1. rewrite <- H1. (**) admit. (**)
-           specialize (@IHxs (false :: b :: ys)). rewrite <- IHxs. (**) admit. (**) inversion H. simpl. omega. simpl in *. omega.
-         + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. omega. simpl in *. omega.
+           specialize (@IHxs (false :: b :: ys)). rewrite <- IHxs. (**) admit. (**) inversion H. simpl. lia. simpl in *. lia.
+         + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. lia. simpl in *. lia.
 Qed.
            
 End BITVECTOR_LIST.
