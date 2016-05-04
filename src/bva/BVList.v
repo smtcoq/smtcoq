@@ -17,7 +17,7 @@
 
 
 Require Import List Bool NArith Psatz.
-Require Import Misc.
+(*Require Import Misc.*)
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -94,7 +94,7 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
 
-(*
+
 (************** remove when (Require Import Misc) ********************)
 
 Definition Nat_eqb :=
@@ -111,7 +111,6 @@ Definition Nat_eqb :=
     end.
 
 (********************************************************************)
-*)
 
 Lemma bv_mk_eq l1 l2 : bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2.
 Proof.
@@ -1025,6 +1024,36 @@ Proof. intros a. unfold subst_list'.
        rewrite add_list_empty_neutral_r. reflexivity.
 Qed.
 
+(* bitvector SUBST properties *)
+
+Lemma a_bv_subst: forall a b, (@size a) = (@size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_subst a b).
+Proof. intros a b H0 H1 H2. destruct a. destruct b. simpl in *. unfold bv_wf in *. simpl in *. 
+       unfold bv_subst. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       simpl. rewrite H1, H2 in H0. rewrite H2. rewrite  Nat2N.inj_iff in H0.
+       specialize (@subst_list_length bits0 bits1). intro H3. rewrite <- H3.
+       apply f_equal; auto. exact H0. 
+Qed.
+
+Lemma bv_subst_empty_neutral_r: forall a, (bv_subst a (mk_bitvector (size a) (mk_list_false (length (bits a))))) = a.
+Proof. intro a. destruct a. simpl. unfold bv_subst. simpl.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite subst_list_empty_neutral. reflexivity.
+Qed.
+
+Lemma a_bv_subst': forall a b, (@size a) = (@size b) -> bv_wf a -> bv_wf b -> bv_wf (bv_subst' a b).
+Proof. intros a b H0 H1 H2. destruct a. destruct b. simpl in *. unfold bv_wf in *. simpl in *. 
+       unfold bv_subst'. simpl. rewrite H0. rewrite N.eqb_compare. rewrite N.compare_refl.
+       simpl. rewrite H1, H2 in H0. rewrite H2. rewrite  Nat2N.inj_iff in H0.
+       specialize (@subst_list'_length bits0 bits1). intro H3. rewrite <- H3.
+       apply f_equal; auto. exact H0. 
+Qed.
+
+Lemma bv_subst'_empty_neutral_r: forall a, (bv_subst' a (mk_bitvector (size a) (mk_list_false (length (bits a))))) = a.
+Proof. intro a. destruct a. simpl. unfold bv_subst'. simpl.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite subst_list'_empty_neutral. reflexivity.
+Qed.
+
 (* bitwise MULT properties *)
 
 Lemma mult_list_empty_l: forall (a: list bool), (mult_list [] a) = [].
@@ -1067,10 +1096,5 @@ Proof. intro a.
            specialize (@IHxs (false :: b :: ys)). rewrite <- IHxs. (**) admit. (**) inversion H. simpl. lia. simpl in *. lia.
          + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. lia. simpl in *. lia.
 Admitted.
-<<<<<<< HEAD
 
-
-=======
-           
->>>>>>> 96785efae6fc664102ae794b00980d56f4de4306
 End BITVECTOR_LIST.
