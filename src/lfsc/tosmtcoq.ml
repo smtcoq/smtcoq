@@ -75,6 +75,9 @@ let get_rule = function
   | Flat -> VeritSyntax.Flat
   | Hole -> VeritSyntax.Hole
   | True -> VeritSyntax.True
+  | Bbva -> VeritSyntax.Bbva
+  | Bbeq -> VeritSyntax.Bbeq
+  | Bband -> failwith "BBand not implemented"
 
 
 
@@ -98,7 +101,13 @@ let rec term_smtcoq t = match value t with
         Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
       | Some ("apply", _) -> uncurry [] t
       | Some ("p_app", [p]) -> term_smtcoq p
-      | Some ("a_int", [{value = Int bi}]) -> Atom (Atom.hatom_Z_of_bigint ra bi)
+      | Some ("a_int", [{value = Int bi}]) ->
+        Atom (Atom.hatom_Z_of_bigint ra bi)
+      | Some ("a_var_bv", [_; v]) -> term_smtcoq v
+      | Some ("bitof", [a; {value = Int n}]) ->
+        Atom (Atom.mk_bitof ra (Big_int.int_of_big_int n) (term_smtcoq_atom a))
+      | Some ("bblast_term", [_; a; bb]) ->
+        Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
       | Some ("<_Int", [a; b]) ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("<=_Int", [a; b]) ->
@@ -152,6 +161,13 @@ and uncurry acc t = match app_name t with
     eprintf "uncurry fail: %a@." Ast.print_term t;
     assert false
 
+(* Endianness dependant: LFSC big endian -> SMTCoq little endian *)
+and bblt_lits acc t = match name t with
+  | Some "bbltn" -> acc
+  | _ -> match app_name t with
+    | Some ("bbltc", [f; r]) ->
+      bblt_lits (lit_of_atom_form_lit rf (term_smtcoq f) :: acc) r
+    | _ -> assert false
 
 
 let term_smtcoq t =
@@ -249,6 +265,13 @@ let get_clause_id cl = HCl.find clauses_ids cl
 
 
 let get_input_id h = HS.find inputs h
+
+
+let register_decl name formula =
+  let cl = [term_smtcoq formula] in
+  match new_clause_id cl with
+  | NewCl id | OldCl id -> HS.add inputs name id
+
 
 
 let clear () =

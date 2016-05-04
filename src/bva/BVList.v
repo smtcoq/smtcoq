@@ -1067,6 +1067,10 @@ Proof. intro a.
            specialize (@IHxs (false :: b :: ys)). rewrite <- IHxs. (**) admit. (**) inversion H. simpl. lia. simpl in *. lia.
          + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. lia. simpl in *. lia.
 Admitted.
+<<<<<<< HEAD
 
 
+=======
+           
+>>>>>>> 96785efae6fc664102ae794b00980d56f4de4306
 End BITVECTOR_LIST.

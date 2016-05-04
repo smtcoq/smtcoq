@@ -58,7 +58,10 @@ type rule =
   | Flat
   | Hole
   | True
-    
+  | Bbva
+  | Bbeq
+  | Bband
+
 
 
 (** Signature for translators *)
@@ -111,6 +114,8 @@ module type S = sig
   (** Returns the identifier of a unit input clause given its name, as
       intoduced by the proprocessor of CVC4 in the LFSC proof. *)
   val get_input_id : string -> int
+
+  val register_decl : string -> term -> unit
 
   (** Clear and reset global tables and values. *)
   val clear : unit -> unit

@@ -315,9 +315,11 @@ let call_cvc4 rt ro rf root =
   let logfilename = bf ^ "_tmp.lfsc" in
   let prooffilename = bf ^ ".lfsc" in
 
-  let command = "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes "
-                ^filename^" | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
-                ^logfilename in
+  let command =
+    "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
+     --no-bv-eq --no-bv-ineq --no-bv-algebraic"
+    ^ filename ^ " | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
+    ^ logfilename in
   eprintf "%s@." command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
@@ -333,6 +335,8 @@ let call_cvc4 rt ro rf root =
     "smt.plf";
     "th_base.plf";
     "th_int.plf";
+    "th_bv.plf";
+    "th_bv_bitblast.plf";
   ] in
   let signatures_arg =
     signatures
