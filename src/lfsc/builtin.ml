@@ -74,7 +74,7 @@ let rec eval_arg x = match app_name x with
 
 
 let mp_isneg x =
-  eprintf "mp_isneg %a .@." print_term x;
+  (* eprintf "mp_isneg %a .@." print_term x; *)
   match value x with
   | Int n -> Big_int.sign_big_int n < 0
   | _ -> failwith ("mp_isneg")
@@ -652,12 +652,11 @@ let mpz_sub x y = mp_add x (mp_mul (mpz_of_int (-1)) y)
 
 (* calculate the length of a bit-blasted term *)
 let rec bblt_len v =
-  eprintf "bblt_len %a@." print_term v;
+  (* eprintf "bblt_len %a@." print_term v; *)
   match value v with
   | Const _ when term_equal v bbltn -> mpz_of_int 0
   | App (f, [b; v']) when term_equal f bbltc_s ->
     mp_add (bblt_len v') (mpz_of_int 1)
-  (* | Hole _ -> mpz_of_int 0 *)
   | _ -> failwith "bblt_len"
              
 
@@ -725,7 +724,7 @@ let bblast_sextend x i =
 
 
 let rec bblast_bvand x y =
-  eprintf "bblast_bvand %a %a@." print_term x print_term y;
+  (* eprintf "bblast_bvand %a %a@." print_term x print_term y; *)
   match value x with
   | Const _ when term_equal x bbltn ->
     (match value y with

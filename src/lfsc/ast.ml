@@ -353,7 +353,7 @@ let callbacks_table = Hashtbl.create 7
 
 
 let mp_add x y =
-  eprintf "mp_add %a %a@." print_term x print_term y; 
+  (* eprintf "mp_add %a %a@." print_term x print_term y;  *)
   match value x, value y with
   | Int xi, Int yi -> mk_mpz (Big_int.add_big_int xi yi)
   | _ -> assert false
@@ -377,7 +377,7 @@ let rec eval_arg x = match app_name x with
 let callback name l =
   try
     let f = Hashtbl.find callbacks_table name in
-    eprintf "apply %s ... @." name;
+    (* eprintf "apply %s ... @." name; *)
     let l = List.map eval_arg l in
     f l
   with Not_found ->
@@ -398,9 +398,6 @@ let callback name l =
 
 
 let sc_to_check = ref []
-
-
-let all_scs = ref []
   
 
 
@@ -691,7 +688,7 @@ and term_equal t1 t2 =
 
 
 and check_side_condition name l expected =
-  if true || debug then
+  if debug then
     eprintf "Adding side condition : (%s%a) =?= %a@."
       name
       (fun fmt -> List.iter (fprintf fmt "@ %a" print_term)) l
@@ -762,17 +759,62 @@ let rec mk_app ?(lookup=true) sigma f args =
 let mk_app = mk_app empty_subst
 
 
+let rec hole_nbs acc t = match value t with
+  | Hole nb -> nb :: acc
+  | App (f, args) -> List.fold_left hole_nbs (hole_nbs acc f) args 
+  | Pi (s, x) | Lambda (s, x) -> hole_nbs acc x
+  | Ptr t -> hole_nbs acc t
+  | _ -> acc
+
+
+let rec min_hole acc t = match value t with
+  | Hole nb ->
+    (match acc with Some n when nb < n -> Some nb  | None -> Some nb | _ -> acc)
+  | App (f, args) -> List.fold_left min_hole (min_hole acc f) args 
+  | Pi (s, x) | Lambda (s, x) -> min_hole acc x
+  | Ptr t -> min_hole acc t
+  | _ -> acc
+
+
+let compare_int_opt m1 m2 = match m1, m2 with
+  | None, None -> 0
+  | Some _, None -> -1
+  | None, Some _ -> 1
+  | Some n1, Some n2 -> compare n1 n2
+
+
+let compare_sc_checks (_, args1, exp1) (_, args2, exp2) =
+  let el1 = hole_nbs [] exp1 in
+  let el2 = hole_nbs [] exp2 in
+
+  let al1 = List.fold_left hole_nbs [] args1 in
+  let al2 = List.fold_left hole_nbs [] args2 in
+
+  if List.exists (fun n -> List.mem n al1) el2 then 1
+  else if List.exists (fun n -> List.mem n al2) el1 then -1
+  else if el1 = [] then 1
+  else if el2 = [] then -1
+  else compare el1 el2
+
+
+let sort_sc_checks l = List.fast_sort compare_sc_checks l
+
 
 let run_side_conditions () =
-  all_scs := (List.rev !sc_to_check) :: !all_scs;
-  sc_to_check := [];
+  (* List.iter (fun (name, l, expected)  -> *)
+  (*     eprintf "\nSorted side condition : (%s%a) =?= %a@." *)
+  (*       name *)
+  (*       (fun fmt -> List.iter (fprintf fmt "@ %a" print_term)) l *)
+  (*       print_term expected; *)
+  (*   ) (List.flatten !all_scs |> sort_sc_checks); *)
+
   List.iter (fun (name, l, expected) ->
       let res = callback name l in
       if not (term_equal res expected) then
         failwith (asprintf "Side condition %s failed: Got %a, expected %a"
                     name print_term res print_term expected);
-    ) (List.flatten !all_scs);
-  all_scs := [];
+    ) (sort_sc_checks !sc_to_check);
+  sc_to_check := [];
   ()
 
 
@@ -781,9 +823,6 @@ let mk_pi s t =
   { value = Pi (s, t); ttype = lfsc_type }
 
 let mk_lambda s t =
-  eprintf "ICI@.";
-  all_scs := (List.rev !sc_to_check) :: !all_scs;
-  sc_to_check := [];
   (* sc_to_check := List.rev !sc_to_check; *)
   (* run_side_conditions (); *)
   (* let s = if is_hole_symbol s then fresh_alpha s.stype else s in *)
