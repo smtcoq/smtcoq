@@ -955,6 +955,6 @@ Proof. intro a.
            intro H1. rewrite <- H1. (**) admit. (**)
            specialize (@IHxs (false :: b :: ys)). rewrite <- IHxs. (**) admit. (**) inversion H. simpl. lia. simpl in *. lia.
          + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. lia. simpl in *. lia.
-Qed.
+Admitted.
            
 End BITVECTOR_LIST.
