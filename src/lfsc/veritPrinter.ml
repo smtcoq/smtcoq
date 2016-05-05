@@ -46,6 +46,8 @@ let cpt = ref 0
 let cl_cpt = ref 0
 
 
+
+
 let get_rule = function
   | Reso -> "resolution"
   | Weak -> "weaken"
@@ -81,7 +83,7 @@ let get_rule = function
   | True -> "true"
   | Bbva -> "bbvar"
   | Bbeq -> "bbeq"
-  | Bband -> failwith "BBand not implemented"
+  | Bbop -> "bbop"
 
 
 let print_sharps () =
@@ -157,6 +159,10 @@ and print_term fmt t =
         fprintf fmt "%s" (Big_int.string_of_big_int n)
 
       | Some ("a_var_bv", [_; a]) -> print_term fmt a
+
+      | Some (("bvand"|"bvor"|"bvxor") as op, [_; a; b]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
 
       | Some ("bitof", [a; {value = Int n}]) ->
         let nb = new_sharp t in

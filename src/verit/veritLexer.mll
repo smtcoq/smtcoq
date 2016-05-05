@@ -101,6 +101,16 @@
         "hole", HOLE;
         "bbvar", BBVA;
         "bbeq", BBEQ;
+        "bbop", BBOP;
+        "bvand", BVAND;
+        "bvor", BVOR;
+        "not", NOT;
+        "xor", XOR;
+        "ite", ITE;
+        "let", LET;
+        "distinct", DIST;
+        "bbT", BBT;
+        "bitof", BITOF;
       ]
 }
 
@@ -127,9 +137,6 @@ rule token = parse
   | "["                        { LBRACKET }
   | "]"                        { RBRACKET }
 
-  | "not"                      { NOT }
-  | "xor"                      { XOR }
-  | "ite"                      { ITE }
   | "="                        { EQ }
   | "<"                        { LT }
   | "<="                       { LEQ }
@@ -140,11 +147,6 @@ rule token = parse
   | "~"                        { OPP }
   | "*"                        { MULT }
   | "=>"                       { IMP }
-  | "let"                      { LET }
-  | "distinct"                 { DIST }
-
-  | "bbT"                      { BBT }
-  | "bitof"                    { BITOF }
 
   | "Formula is Satisfiable"   { SAT }
 

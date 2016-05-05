@@ -28,8 +28,8 @@
 %token EOL SAT
 %token COLON SHARP
 %token LPAR RPAR LBRACKET RBRACKET
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBEQ
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBEQ BBOP
 %token <int> INT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR
@@ -127,6 +127,7 @@ typ:
   | HOLE                                                   { Hole  }
   | BBVA                                                   { Bbva  }
   | BBEQ                                                   { Bbeq  }
+  | BBOP                                                   { Bbop  }
 ;
 
 clause:
@@ -153,6 +154,7 @@ name_term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
   | BINDVAR                                                { Hashtbl.find hlets $1 }
   | INT                                                    { Atom (Atom.hatom_Z_of_int ra $1) }
   | BIGINT                                                 { Atom (Atom.hatom_Z_of_bigint ra $1) }
+
 ;
 
 term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
@@ -182,6 +184,8 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
   | OPP name_term                                          { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
   | DIST args                                              { let a = Array.of_list $2 in Atom (Atom.mk_distinct ra (Atom.type_of a.(0)) a) }
   | BITOF INT name_term                                    { match $3 with |Atom h -> Atom (Atom.mk_bitof ra $2 h) | _ -> assert false }
+  | BVAND name_term name_term                              { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_bvand ra h1 h2) | _,_ -> assert false }
+  | BVOR name_term name_term                               { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_bvor ra h1 h2) | _,_ -> assert false }
   | VAR                                                    { Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
   | VAR args                                               { Atom (Atom.get ra (Aapp (get_fun $1, Array.of_list $2))) }
 

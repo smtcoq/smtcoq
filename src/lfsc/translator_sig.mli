@@ -60,8 +60,7 @@ type rule =
   | True
   | Bbva
   | Bbeq
-  | Bband
-
+  | Bbop
 
 
 (** Signature for translators *)

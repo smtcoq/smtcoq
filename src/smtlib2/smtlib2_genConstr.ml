@@ -187,6 +187,14 @@ let make_root ra rf t =
         (match make_root_term a with
           | Atom a' -> Atom (Atom.mk_opp ra a')
           | _ -> assert false)
+      | "bvand", [a;b] ->
+        (match make_root_term a, make_root_term b with
+          | Atom a', Atom b' -> Atom (Atom.mk_bvand ra a' b')
+          | _, _ -> assert false)
+      | "bvor", [a;b] ->
+        (match make_root_term a, make_root_term b with
+          | Atom a', Atom b' -> Atom (Atom.mk_bvor ra a' b')
+          | _, _ -> assert false)
       | "distinct", _ ->
         let make_h h =
           match make_root_term h with

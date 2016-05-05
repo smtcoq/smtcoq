@@ -709,11 +709,18 @@ module Make (T : Translator_sig.S) = struct
     | Some ("bv_bbl_var", [n; v; bb]) ->
       let res = bblast_term n (a_var_bv n v) bb in
       Some (mk_clause_cl Bbva [res] [])
-    | Some ("bv_bbl_bvand", [n; x; y; _; _; rb; xbb; ybb]) ->
-      let res = bblast_term n (bvand x y) rb in
+    | Some (("bv_bbl_bvand" |"bv_bbl_bvor" |"bv_bbl_bvxor" as rop),
+            [n; x; y; _; _; rb; xbb; ybb]) ->
+      let bvop = match rop with
+        | "bv_bbl_bvand" -> bvand
+        | "bv_bbl_bvor" -> bvor
+        | "bv_bbl_bvxor" -> bvxor
+        | _ -> assert false
+      in
+      let res = bblast_term n (bvop n x y) rb in
       (match bbt xbb, bbt ybb with
        | Some idx, Some idy ->
-         Some (mk_clause_cl Bband [res] [idx; idy])
+         Some (mk_clause_cl Bbop [res] [idx; idy])
        | _ -> assert false
       )
     | None ->
@@ -729,7 +736,7 @@ module Make (T : Translator_sig.S) = struct
 
   let rec bblast_decls p = match app_name p with
     | Some ("decl_bblast", [n; b; t; bb; l]) ->
-      let res = bblast_term n t b in
+      (* let res = bblast_term n t b in *)
       let id = match bbt bb with Some id -> id | None -> assert false in
       begin match value l with
         | Lambda ({sname = Name h}, p) ->

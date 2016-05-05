@@ -19,6 +19,8 @@ open Format
 open Builtin
 open VeritPrinter
 
+let _ = Printexc.record_backtrace true
+
 
 (* Captures the output and exit status of a unix command : aux func *)
 let syscall cmd =
@@ -82,7 +84,7 @@ let test2 () =
 
 
      let res3 = simplify_clause 
-         (concat 
+         (concat_cl
             (clr (neg v1) (clc (neg v1) cln)) 
             (clr (pos v1) (clc (pos v1) cln))) in 
      printf "simplified clause : %a@." print_term res3; 
@@ -172,7 +174,11 @@ let to_verit () =
       C.convert p |> ignore
     | _ -> eprintf "No proof@."; exit 1
 
-  with Ast.TypingError (t1, t2) ->
+  with Ast.TypingError (t1, t2) as e ->
+    let backtrace = Printexc.get_backtrace () in
+    eprintf "Fatal error: %s@." (Printexc.to_string e);
+    eprintf "Backtrace:@\n%s@." backtrace;
+
     eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1
       Ast.print_term t2

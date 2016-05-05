@@ -77,7 +77,7 @@ let get_rule = function
   | True -> VeritSyntax.True
   | Bbva -> VeritSyntax.Bbva
   | Bbeq -> VeritSyntax.Bbeq
-  | Bband -> failwith "BBand not implemented"
+  | Bbop -> VeritSyntax.Bbop
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -114,7 +114,7 @@ let string_of_rule = function
   | True -> "true"
   | Bbva -> "bbvar"
   | Bbeq -> "bbeq"
-  | Bband -> failwith "BBand not implemented"
+  | Bbop -> "bbop"
 
 
 let rec term_smtcoq t = match value t with
@@ -144,6 +144,10 @@ let rec term_smtcoq t = match value t with
         Atom (Atom.mk_bitof ra (Big_int.int_of_big_int n) (term_smtcoq_atom a))
       | Some ("bblast_term", [_; a; bb]) ->
         Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
+      | Some ("bvand", [_; a; b]) ->
+        Atom (Atom.mk_bvand ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+      | Some ("bvor", [_; a; b]) ->
+        Atom (Atom.mk_bvor ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("<_Int", [a; b]) ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("<=_Int", [a; b]) ->
