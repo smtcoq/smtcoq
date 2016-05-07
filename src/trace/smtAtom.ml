@@ -53,7 +53,7 @@ module Btype =
       | TZ -> Lazy.force cTZ
       | Tbool -> Lazy.force cTbool
       | Tpositive -> Lazy.force cTpositive
-      | TBV _ -> Lazy.force cTBV
+      | TBV n -> mklApp cTBV [|mkN n|]
       | Tindex i -> index_to_coq i
 
     let to_smt fmt = function
@@ -131,7 +131,7 @@ module Btype =
       | TZ -> Lazy.force cZ
       | Tbool -> Lazy.force cbool
       | Tpositive -> Lazy.force cpositive
-      | TBV _ -> Lazy.force cbitvector
+      | TBV n -> mklApp cbitvector [|mkN n|]
       | Tindex c -> mklApp cte_carrier [|c.hval|]
 
   end
@@ -148,7 +148,7 @@ type uop =
    | UO_Zpos 
    | UO_Zneg
    | UO_Zopp
-   | UO_BVbitOf of int
+   | UO_BVbitOf of int * int
 
 type bop = 
    | BO_Zplus
@@ -159,8 +159,8 @@ type bop =
    | BO_Zge
    | BO_Zgt
    | BO_eq of btype
-   | BO_BVand
-   | BO_BVor
+   | BO_BVand of int
+   | BO_BVor of int
 
 type nop =
   | NO_distinct of btype
@@ -202,7 +202,7 @@ module Op =
       | UO_Zpos -> Lazy.force cUO_Zpos 
       | UO_Zneg -> Lazy.force cUO_Zneg
       | UO_Zopp -> Lazy.force cUO_Zopp
-      | UO_BVbitOf i -> mklApp cUO_BVbitOf [|mkNat i|]
+      | UO_BVbitOf (s, i) -> mklApp cUO_BVbitOf [|mkN s; mkNat i|]
 
     let u_type_of = function 
       | UO_xO | UO_xI -> Tpositive
@@ -212,7 +212,7 @@ module Op =
     let u_type_arg = function 
       | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
       | UO_Zopp -> TZ
-      | UO_BVbitOf _ -> TBV 2
+      | UO_BVbitOf (s,_) -> TBV s
 
     let interp_uop = function
       | UO_xO -> Lazy.force cxO
@@ -220,7 +220,7 @@ module Op =
       | UO_Zpos -> Lazy.force cZpos
       | UO_Zneg -> Lazy.force cZneg
       | UO_Zopp -> Lazy.force copp
-      | UO_BVbitOf i -> mklApp cbv_nth [|mkNat i|]
+      | UO_BVbitOf (s,i) -> mklApp cbitOf [|mkN s; mkNat i|]
 
     let eq_tbl = Hashtbl.create 17 
 
@@ -240,25 +240,25 @@ module Op =
       | BO_Zge -> Lazy.force cBO_Zge
       | BO_Zgt -> Lazy.force cBO_Zgt
       | BO_eq t -> eq_to_coq t
-      | BO_BVand -> Lazy.force cBO_BVand
-      | BO_BVor -> Lazy.force cBO_BVor
+      | BO_BVand s -> mklApp cBO_BVand [|mkN s|]
+      | BO_BVor s -> mklApp cBO_BVor [|mkN s|]
 
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _ -> Tbool
-      | BO_BVand | BO_BVor -> TBV 2
+      | BO_BVand s | BO_BVor s -> TBV s
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult 
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
-      | BO_BVand | BO_BVor -> (TBV 2,TBV 2)
+      | BO_BVand s | BO_BVor s -> (TBV s,TBV s)
 
     let interp_eq = function
       | TZ -> Lazy.force ceqbZ
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
-      | TBV _ -> Lazy.force cbv_eq
+      | TBV s -> mklApp cbv_eq [|mkN s|]
       | Tindex i -> mklApp cte_eqb [|i.hval|]
 
     let interp_bop = function
@@ -270,8 +270,8 @@ module Op =
       | BO_Zge -> Lazy.force cgeb
       | BO_Zgt -> Lazy.force cgtb
       | BO_eq t -> interp_eq t
-      | BO_BVand -> Lazy.force cbv_and
-      | BO_BVor -> Lazy.force cbv_or
+      | BO_BVand s -> mklApp cbv_and [|mkN s|]
+      | BO_BVor s -> mklApp cbv_or [|mkN s|]
 
     let n_to_coq = function
       | NO_distinct t -> mklApp cNO_distinct [|Btype.to_coq t|]
@@ -286,7 +286,7 @@ module Op =
       | TZ -> Lazy.force cZ
       | Tbool -> Lazy.force cbool
       | Tpositive -> Lazy.force cpositive
-      | TBV _ -> Lazy.force cbitvector
+      | TBV n -> mklApp cbitvector [|mkN n|]
       | Tindex i -> mklApp cte_carrier [|i.hval|]
 
     let interp_nop = function
@@ -458,7 +458,7 @@ module Atom =
       | Aapp (op,_) -> Op.i_type_of op
 
     let is_bool_type h = Btype.equal (type_of h) Tbool
-    let is_bv_type h = Btype.equal (type_of h) (TBV 2)
+    let is_bv_type h = match type_of h with | TBV _ -> true | _ -> false
 
 
     let rec compute_int = function
@@ -513,8 +513,8 @@ module Atom =
         | BO_Zge -> ">="
         | BO_Zgt -> ">"
         | BO_eq _ -> "="
-        | BO_BVand -> "bvand"
-        | BO_BVor -> "bvor" in
+        | BO_BVand _ -> "bvand"
+        | BO_BVor _ -> "bvor" in
       Format.fprintf fmt "(%s " s;
       to_smt fmt h1;
       Format.fprintf fmt " ";
@@ -607,7 +607,7 @@ module Atom =
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
-          cbv_nth, CCBVbitOf;
+          cbitOf, CCBVbitOf;
           cadd,CCZplus; csub,CCZminus; cmul,CCZmult; cltb,CCZlt;
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
           cbv_and, CCBVand; cbv_or, CCBVor;
@@ -625,6 +625,28 @@ module Atom =
         match args with
           | [n] -> (mk_nat n) + 1
           | _ -> assert false
+      else assert false
+
+    let rec mk_positive n =
+      let c, args = Term.decompose_app n in
+      if Term.eq_constr c (Lazy.force cxH) then
+        1
+      else if Term.eq_constr c (Lazy.force cxO) then
+        match args with
+          | [n] -> 2 * (mk_positive n)
+          | _ -> assert false
+      else if Term.eq_constr c (Lazy.force cxI) then
+        match args with
+          | [n] -> 2 * (mk_positive n) + 1
+          | _ -> assert false
+      else assert false
+
+    let mk_N n =
+      let c, args = Term.decompose_app n in
+      if Term.eq_constr c (Lazy.force cN0) then
+        0
+      else if Term.eq_constr c (Lazy.force cNpos) then
+        mk_positive n
       else assert false
 
     let of_coq rt ro reify env sigma c =
@@ -650,12 +672,12 @@ module Atom =
           | CCZle -> mk_bop BO_Zle args
           | CCZge -> mk_bop BO_Zge args
           | CCZgt -> mk_bop BO_Zgt args
-          | CCBVand -> mk_bop BO_BVand args
-          | CCBVor -> mk_bop BO_BVor args
+          | CCBVand -> mk_bop_bvand args
+          | CCBVor -> mk_bop_bvor args
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
-          | CCeqbBV -> mk_bop (BO_eq (TBV 2)) args
+          | CCeqbBV -> mk_bop_bveq args
 	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
 
       and mk_uop op = function
@@ -663,7 +685,7 @@ module Atom =
         | _ -> assert false
 
       and mk_bvbitof = function
-        | [n;a] -> let h = mk_hatom a in get reify (Auop (UO_BVbitOf (mk_nat n),h))
+        | [s;n;a] -> let h = mk_hatom a in get reify (Auop (UO_BVbitOf (mk_N s, mk_nat n),h))
         | _ -> assert false
 
       and mk_bop op = function
@@ -671,6 +693,24 @@ module Atom =
           let h1 = mk_hatom a1 in
           let h2 = mk_hatom a2 in
           get reify (Abop (op,h1,h2))
+        | _ -> assert false
+
+      and mk_bop_bvand = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVand s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvor = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVor s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bveq = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_eq (TBV s')) [a1;a2]
         | _ -> assert false
 
       and mk_unknown c args ty =
@@ -800,11 +840,11 @@ module Atom =
     let mk_plus = mk_binop BO_Zplus
     let mk_minus = mk_binop BO_Zminus
     let mk_mult = mk_binop BO_Zmult
-    let mk_bvand = mk_binop BO_BVand
-    let mk_bvor = mk_binop BO_BVor
+    let mk_bvand reify s = mk_binop (BO_BVand s) reify
+    let mk_bvor reify s = mk_binop (BO_BVor s) reify
     let mk_opp = mk_unop UO_Zopp
     let mk_distinct reify ty = mk_nop (NO_distinct ty) reify
-    let mk_bitof reify i = mk_unop (UO_BVbitOf i) reify
+    let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
 
   end
 

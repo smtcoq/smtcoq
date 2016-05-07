@@ -40,6 +40,13 @@ let cxO = gen_constant positive_modules "xO"
 let cxH = gen_constant positive_modules "xH"
 let ceqbP = gen_constant positive_modules "eqb"
 
+(* N *)
+let n_modules = [["Coq";"Numbers";"BinNums"]]
+
+let cN = gen_constant positive_modules "N"
+let cN0 = gen_constant positive_modules "N0"
+let cNpos = gen_constant positive_modules "Npos"
+
 (* Z *)
 let z_modules = [["Coq";"Numbers";"BinNums"];
                  ["Coq";"ZArith";"BinInt"];
@@ -102,9 +109,9 @@ let crefl_equal = gen_constant init_modules "eq_refl"
 (* Bit vectors *)
 let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
 let cbitvector = gen_constant bv_modules "bitvector"
+let cof_bits = gen_constant bv_modules "of_bits"
+let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
-let cbv_mk = gen_constant bv_modules "bv_mk"
-let cbv_nth = gen_constant bv_modules "bv_nth"
 let cbv_and = gen_constant bv_modules "bv_or"
 let cbv_or = gen_constant bv_modules "bv_and"
 
@@ -214,7 +221,19 @@ let vm_cast_true t =
 	      Term.VMcast, 
 	      SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
 
-(* Compute nat *)
+(* Compute a nat *)
 let rec mkNat = function
   | 0 -> Lazy.force cO
   | i -> SmtMisc.mklApp cS [|mkNat (i-1)|]
+
+(* Compute a positive *)
+let rec mkPositive = function
+  | 1 -> Lazy.force cxH
+  | i ->
+     let c = if (i mod 2) = 0 then cxO else cxI in
+     SmtMisc.mklApp c [|mkPositive (i / 2)|]
+
+(* Compute a N *)
+let mkN = function
+  | 0 -> Lazy.force cN0
+  | i -> SmtMisc.mklApp cNpos [|mkPositive i|]

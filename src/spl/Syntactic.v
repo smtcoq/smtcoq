@@ -74,8 +74,8 @@ Section CheckAtom.
               Typ.eqb t1 t2 &&
               ((check_hatom a1 b1 && check_hatom a2 b2) ||
                 (check_hatom a1 b2 && check_hatom a2 b1))
-            | BO_BVand, BO_BVand
-            | BO_BVor, BO_BVor => check_hatom a1 b1 && check_hatom a2 b2
+            | BO_BVand s1, BO_BVand s2
+            | BO_BVor s1, BO_BVor s2 => N.eqb s1 s2 && check_hatom a1 b1 && check_hatom a2 b2
             | _, _ => false
           end
         | Anop o1 l1, Anop o2 l2 =>
@@ -135,7 +135,7 @@ Section CheckAtom.
       unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; 
       destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
 
-      intros n m. simpl. unfold is_true. rewrite andb_true_iff, beq_nat_true_iff. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
+      intros n m n1 m2. simpl. unfold is_true. rewrite !andb_true_iff, beq_nat_true_iff, N.eqb_eq. intros [[-> ->] H]. rewrite (check_hatom_correct _ _ H); auto.
             (* Binary operators *)
       - intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); auto).
       unfold is_true, interp_bop, apply_binop. rewrite orb_true_iff, !andb_true_iff. intros [[H1 H2]|[H1 H2]]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.add_comm; reflexivity.
@@ -145,6 +145,12 @@ Section CheckAtom.
       unfold interp_bop, apply_binop; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.geb_leb; auto.
       unfold interp_bop, apply_binop; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.gtb_ltb; auto.
       intros A B; unfold is_true; rewrite andb_true_iff, orb_true_iff; change (Typ.eqb B A = true) with (is_true (Typ.eqb B A)); rewrite Typ.eqb_spec; intros [H2 [H1|H1]]; subst B; rewrite andb_true_iff in H1; destruct H1 as [H1 H2]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); auto; simpl; unfold apply_binop; destruct (interp_hatom t_i t_func t_atom j2) as [B v1]; destruct (interp_hatom t_i t_func t_atom i2) as [C v2]; destruct (Typ.cast B A) as [k1| ]; destruct (Typ.cast C A) as [k2| ]; auto; rewrite Typ.i_eqb_sym; auto.
+      intros s1 s2; unfold is_true; rewrite !andb_true_iff, N.eqb_eq;
+        intros [[-> H1] H2];
+        now rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2).
+      intros s1 s2; unfold is_true; rewrite !andb_true_iff, N.eqb_eq;
+        intros [[-> H1] H2];
+        now rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2).
       (* N-ary operators *)
       - intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; destruct op1 as [t1]; destruct op2 as [t2]; unfold is_true; rewrite andb_true_iff; change (Typ.eqb t1 t2 = true) with (is_true (Typ.eqb t1 t2)); rewrite Typ.eqb_spec; intros [H1 H2]; subst t2; rewrite (list_beq_compute_interp _ _ _ H2); auto.
       (* Application *)
@@ -232,7 +238,7 @@ Section CheckAtom.
         | Val _ _, Val _ _ => False
       end.
   Proof.
-    unfold wt; unfold is_true at 1; rewrite forallbi_spec; intros Hwt Hwf Hdef h1 h2; unfold check_neg_hatom; case_eq (get_atom h1); try discriminate; intros b1 t11 t12 H1; case_eq (get_atom h2); try discriminate; intros b2 t21 t22 H2; assert (H7: h1 < length t_atom) by (apply PArray.get_not_default_lt; rewrite H1, Hdef; discriminate); generalize (Hwt _ H7); rewrite H1; simpl; generalize H1; case b1; try discriminate; clear H1 b1; simpl; intro H1; case (get_type' t_i (t_interp t_i t_func t_atom) h1); try discriminate; simpl; rewrite andb_true_iff; intros [H30 H31]; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t11) Typ.TZ)) in H30; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t12) Typ.TZ)) in H31; rewrite Typ.eqb_spec in H30, H31; generalize (check_aux_interp_hatom _ t_func _ Hwf t11), (check_aux_interp_hatom _ t_func _ Hwf t12); rewrite H30, H31; intros [v1 Hv1] [v2 Hv2]; generalize H2; case b2; try discriminate; clear H2 b2; intro H2; unfold is_true; rewrite andb_true_iff; intros [H3 H4]; generalize (check_hatom_correct Hwf Hdef _ _ H3), (check_hatom_correct Hwf Hdef _ _ H4); unfold interp_hatom; intros H5 H6; rewrite t_interp_wf; auto; rewrite H1; simpl; rewrite Hv1, Hv2; simpl; rewrite t_interp_wf; auto; rewrite H2; simpl; rewrite <- H5; rewrite <- H6, Hv1, Hv2; simpl.
+    unfold wt; unfold is_true at 1; rewrite forallbi_spec; intros Hwt Hwf Hdef h1 h2; unfold check_neg_hatom; case_eq (get_atom h1); try discriminate; intros b1 t11 t12 H1; case_eq (get_atom h2); try discriminate; intros b2 t21 t22 H2; assert (H7: h1 < length t_atom) by (apply PArray.get_not_default_lt; rewrite H1, Hdef; discriminate); generalize (Hwt _ H7); rewrite H1; simpl; generalize H1; case b1; try discriminate; clear H1 b1; simpl; intro H1; case (get_type' t_i (t_interp t_i t_func t_atom) h1); try discriminate; simpl; rewrite andb_true_iff; intros [H30 H31]; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t11) Typ.TZ)) in H30; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t12) Typ.TZ)) in H31; rewrite Typ.eqb_spec in H30, H31; generalize (check_aux_interp_hatom _ t_func _ Hwf Hdef t11), (check_aux_interp_hatom _ t_func _ Hwf Hdef t12); rewrite H30, H31; intros [v1 Hv1] [v2 Hv2]; generalize H2; case b2; try discriminate; clear H2 b2; intro H2; unfold is_true; rewrite andb_true_iff; intros [H3 H4]; generalize (check_hatom_correct Hwf Hdef _ _ H3), (check_hatom_correct Hwf Hdef _ _ H4); unfold interp_hatom; intros H5 H6; rewrite t_interp_wf; auto; rewrite H1; simpl; rewrite Hv1, Hv2; simpl; rewrite t_interp_wf; auto; rewrite H2; simpl; rewrite <- H5; rewrite <- H6, Hv1, Hv2; simpl.
     rewrite Z.ltb_antisym; auto.
     rewrite Z.geb_leb, Z.ltb_antisym; auto.
     rewrite Z.leb_antisym; auto.
@@ -363,7 +369,7 @@ Section FLATTEN.
 
   (** Correctness proofs *)
   Variable interp_atom : atom -> bool.
-  Variable interp_bvatom : atom -> BITVECTOR_LIST.bitvector.
+  Variable interp_bvatom : atom -> forall s, BITVECTOR_LIST.bitvector s.
   Hypothesis default_thf : default t_form = Ftrue.
   Hypothesis wf_thf : wf t_form.
   Hypothesis check_atom_correct :

@@ -47,6 +47,7 @@ Section Checker.
         bbT(x, [x0; ...; xn])
    *)
 
+  (* TODO: check the first argument of BVbitOf *)
   Fixpoint check_bb a bs i :=
     match bs with
     | nil => true
@@ -55,7 +56,7 @@ Section Checker.
         match get_form (Lit.blit b) with
         | Fatom a' =>
           match get_atom a' with
-          | Auop (UO_BVbitOf n) a' =>
+          | Auop (UO_BVbitOf _ n) a' =>
             if (a == a') && (Nat_eqb i n)
             then check_bb a bs (S i)
             else false
@@ -112,6 +113,7 @@ Section Checker.
     | _ => None
     end.
 
+  (* TODO: check the first argument of BVand and BVor *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -119,11 +121,11 @@ Section Checker.
         match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
         | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
           match get_atom a with
-          | Abop BO_BVand a1' a2' =>
+          | Abop (BO_BVand _) a1' a2' =>
             if (a1 == a1') && (a2 == a2') && (check_op bs1 bs2 bsres get_and)
             then lres::nil
             else C._true
-          | Abop BO_BVor a1' a2' =>
+          | Abop (BO_BVor _) a1' a2' =>
             if (a1 == a1') && (a2 == a2') && (check_op bs1 bs2 bsres get_or)
             then lres::nil
             else C._true

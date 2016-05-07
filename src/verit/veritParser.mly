@@ -183,9 +183,9 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
   | MINUS name_term                                        { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
   | OPP name_term                                          { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
   | DIST args                                              { let a = Array.of_list $2 in Atom (Atom.mk_distinct ra (Atom.type_of a.(0)) a) }
-  | BITOF INT name_term                                    { match $3 with |Atom h -> Atom (Atom.mk_bitof ra $2 h) | _ -> assert false }
-  | BVAND name_term name_term                              { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_bvand ra h1 h2) | _,_ -> assert false }
-  | BVOR name_term name_term                               { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_bvor ra h1 h2) | _,_ -> assert false }
+  | BITOF INT name_term                                    { match $3 with |Atom h -> (match Atom.type_of h with | TBV s -> Atom (Atom.mk_bitof ra s $2 h) | _ -> assert false) | _ -> assert false }
+  | BVAND name_term name_term                              { match $2,$3 with |Atom h1, Atom h2 -> (match Atom.type_of h1 with | TBV s -> Atom (Atom.mk_bvand ra s h1 h2) | _ -> assert false) | _,_ -> assert false }
+  | BVOR name_term name_term                               { match $2,$3 with |Atom h1, Atom h2 -> (match Atom.type_of h1 with | TBV s -> Atom (Atom.mk_bvor ra s h1 h2) | _ -> assert false) | _,_ -> assert false }
   | VAR                                                    { Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
   | VAR args                                               { Atom (Atom.get ra (Aapp (get_fun $1, Array.of_list $2))) }
 

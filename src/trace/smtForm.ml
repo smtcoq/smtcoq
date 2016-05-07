@@ -542,8 +542,9 @@ module Make (Atom:ATOM) =
 		      !r)
               | FbbT(a, l) ->
                  mklApp cbv_eq
-                   [|interp_atom a;
-                     mklApp cbv_mk [|List.fold_right (fun f l -> mklApp ccons [|Lazy.force cbool; interp_form f; l|]) l (mklApp cnil [|Lazy.force cbool|])|]|]
+                   [|mkN (List.length l);
+                     interp_atom a;
+                     mklApp cof_bits [|List.fold_right (fun f l -> mklApp ccons [|Lazy.force cbool; interp_form f; l|]) l (mklApp cnil [|Lazy.force cbool|])|]|]
             in
 	    Hashtbl.add form_tbl l pc;
 	    pc

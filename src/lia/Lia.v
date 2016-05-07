@@ -571,7 +571,7 @@ Section certif.
       rewrite Pminus_minus;try omega.
       apply Plt_lt;omega.
      rewrite H4;simpl.
-     destruct (check_aux_interp_aux _ _ _ wf_t_atom _ _ H1) as (z,Hz).
+     destruct (check_aux_interp_aux _ _ _ wf_t_atom def_t_atom _ _ H1) as (z,Hz).
      rewrite Hz;trivial.
      unfold is_true;rewrite andb_true_iff;intros Heq1 (H1,H2).
      assert (W:= find_var_aux_lt _ _ _ _ Heq1 H0).
@@ -597,7 +597,7 @@ Section certif.
      rewrite H;trivial.
      unfold is_true;rewrite <- Zlt_is_lt_bool.
      rewrite Zpos_succ_morphism;omega.
-     destruct (check_aux_interp_aux _ _ _ wf_t_atom _ _ Hh) as (z,Hz).
+     destruct (check_aux_interp_aux _ _ _ wf_t_atom def_t_atom _ _ Hh) as (z,Hz).
      rewrite Hz;unfold interp_vmap;simpl.
      assert (nat_of_P (Psucc pvm - pvm) = 1%nat).
        rewrite Pplus_one_succ_l, Pminus_minus, Pplus_plus.

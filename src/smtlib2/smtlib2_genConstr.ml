@@ -189,11 +189,17 @@ let make_root ra rf t =
           | _ -> assert false)
       | "bvand", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_bvand ra a' b')
+          | Atom a', Atom b' ->
+             (match Atom.type_of a' with
+               | TBV s -> Atom (Atom.mk_bvand ra s a' b')
+               | _ -> assert false)
           | _, _ -> assert false)
       | "bvor", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_bvor ra a' b')
+          | Atom a', Atom b' ->
+             (match Atom.type_of a' with
+               | TBV s -> Atom (Atom.mk_bvor ra s a' b')
+               | _ -> assert false)
           | _, _ -> assert false)
       | "distinct", _ ->
         let make_h h =

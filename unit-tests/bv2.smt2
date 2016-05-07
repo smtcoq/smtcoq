@@ -1,0 +1,5 @@
+(set-logic QF_BV)
+(declare-fun a () (_ BitVec 3))
+(assert (not (= a a)))
+(check-sat)
+(exit)

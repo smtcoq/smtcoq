@@ -141,13 +141,24 @@ let rec term_smtcoq t = match value t with
         Atom (Atom.hatom_Z_of_bigint ra bi)
       | Some ("a_var_bv", [_; v]) -> term_smtcoq v
       | Some ("bitof", [a; {value = Int n}]) ->
-        Atom (Atom.mk_bitof ra (Big_int.int_of_big_int n) (term_smtcoq_atom a))
+         (let ha = term_smtcoq_atom a in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bitof ra s (Big_int.int_of_big_int n) ha)
+            | _ -> assert false)
       | Some ("bblast_term", [_; a; bb]) ->
         Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
       | Some ("bvand", [_; a; b]) ->
-        Atom (Atom.mk_bvand ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvand ra s ha hb)
+            | _ -> assert false)
       | Some ("bvor", [_; a; b]) ->
-        Atom (Atom.mk_bvor ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvor ra s ha hb)
+            | _ -> assert false)
       | Some ("<_Int", [a; b]) ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("<=_Int", [a; b]) ->
