@@ -174,6 +174,7 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
 
+(*
 (************** remove when (Require Import Misc) ********************)
 
 Definition Nat_eqb :=
@@ -190,19 +191,19 @@ Definition Nat_eqb :=
     end.
 
 (********************************************************************)
+*)
 
-(* Lemma bv_mk_eq l1 l2 : bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2. *)
-(* Proof. *)
-(*   unfold bv_mk, bv_eq. simpl. *)
-(*   case_eq (Nat_eqb (length l1) (length l2)); intro Heq. *)
-(*   - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl. *)
-(*   - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false. *)
-(*     * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto. *)
-(*       intro Heq. now rewrite <- (IHl1 _ Heq), andb_false_r. *)
-(*     * symmetry. rewrite N.eqb_neq. intro H. apply Nat2N.inj in H. rewrite H in Heq. *)
-(*       rewrite <- EqNat.beq_nat_refl in Heq. discriminate. *)
-(* Qed. *)
-
+Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
+Proof.
+  unfold bv_eq, size, bits.
+  case_eq (Nat_eqb (length l1) (length l2)); intro Heq.
+  - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl.
+  - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false.
+    * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto.
+      intro Heq. now rewrite <- (IHl1 _ Heq), andb_false_r.
+    * symmetry. rewrite N.eqb_neq. intro H. apply Nat2N.inj in H. rewrite H in Heq.
+      rewrite <- EqNat.beq_nat_refl in Heq. discriminate.
+Qed.
 
 Definition bv_concat (a b: bitvector) : bitvector := a ++ b.
 
@@ -580,14 +581,6 @@ Qed.
 
 (*bitvector AND properties*)
 
-Lemma bv_and_comm n a b : size a = n -> size b = n -> bv_and a b = bv_and b a.
-(* Lemma bv_and_comm: forall a b, (size a) = (size b) -> bv_and a b = bv_and b a. *)
-Proof.
-  intros H1 H2. unfold bv_and. rewrite H1, H2.
-  rewrite N.eqb_compare, N.compare_refl.
-  rewrite map2_and_comm. reflexivity.
-Qed.
-
 Lemma bv_and_size n a b : size a = n -> size b = n -> size (bv_and a b) = n.
 Proof.
   unfold bv_and. intros H1 H2. rewrite H1, H2.
@@ -595,6 +588,14 @@ Proof.
   unfold size in *. rewrite <- map2_and_length.
   - exact H1.
   - unfold bits. now rewrite <- Nat2N.inj_iff, H1.
+Qed.
+
+Lemma bv_and_comm n a b : size a = n -> size b = n -> bv_and a b = bv_and b a.
+(* Lemma bv_and_comm: forall a b, (size a) = (size b) -> bv_and a b = bv_and b a. *)
+Proof.
+  intros H1 H2. unfold bv_and. rewrite H1, H2.
+  rewrite N.eqb_compare, N.compare_refl.
+  rewrite map2_and_comm. reflexivity.
 Qed.
 
 Lemma bv_and_assoc: forall a b c n, size a = n -> size b = n -> size c = n -> 
@@ -1048,6 +1049,23 @@ Qed.
 
 (* bitwise SUBST properties *)
 
+Lemma subst_list_empty_empty_l: forall a, (subst_list [] a) = [].
+Proof. intro a. unfold subst_list; auto. Qed.
+
+Lemma subst_list_empty_empty_r: forall a, (subst_list a []) = [].
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - auto.
+       - unfold subst_list; auto. 
+Qed.
+
+Lemma subst_list'_empty_empty_r: forall a, (subst_list' a []) = [].
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - auto.
+       - unfold subst_list' in *. unfold twos_complement. simpl. reflexivity.
+Qed.
+
 Lemma subst_list_borrow_length: forall (a b: list bool) c, length a = length b -> length a = length (subst_list_borrow a b c). 
 Proof. induction a as [| a' xs IHxs]. 
        simpl. auto. 
@@ -1139,6 +1157,83 @@ Proof. intro a. unfold bv_subst', size, bits.
        rewrite N.compare_refl.
        rewrite subst_list'_empty_neutral. reflexivity.
 Qed.
+
+(* bitwise ADD-NEG properties *)
+
+Lemma add_neg_list_carry_false: forall a b c, add_list_ingr a (add_list_ingr b c true) false = add_list_ingr a (add_list_ingr b c false) true.
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - simpl. auto.
+       - case b as [| b ys].
+         + simpl. auto.
+         + case c as [| c zs].
+           * simpl. auto.
+           * simpl.
+             case_eq (add_carry b c false); intros r0 c0 Heq0.
+             case_eq (add_carry b c true); intros r1 c1 Heq1.
+             case_eq (add_carry a r1 false); intros r2 c2 Heq2.
+             case_eq (add_carry a r0 true); intros r3 c3 Heq3.
+             case a, b, c; inversion Heq0; inversion Heq1; 
+             inversion Heq2; inversion Heq3; rewrite <- H2 in H4; 
+             rewrite <- H0 in H5; inversion H4; inversion H5; apply f_equal;
+             try reflexivity; rewrite IHxs; reflexivity.
+Qed.
+
+Lemma add_carry_ff: forall a, add_carry a false false = (a, false).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_carry_neg_f: forall a, add_carry a (negb a) false = (true, false).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_carry_neg_t: forall a, add_carry a (negb a) true = (false, true).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_neg_list_carry_neg_f: forall a, (add_list_ingr a (map negb a) false) = mk_list_true (length a).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - simpl. reflexivity.
+       - simpl. 
+         case_eq (add_carry a (negb a) false); intros r0 c0 Heq0.
+         rewrite add_carry_neg_f in Heq0.
+         inversion Heq0. rewrite IHxs. reflexivity.
+Qed.
+
+Lemma add_neg_list_carry_neg_t: forall a, (add_list_ingr a (map negb a) true) = mk_list_false (length a).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - simpl. reflexivity.
+       - simpl. 
+         case_eq (add_carry a (negb a) true); intros r0 c0 Heq0.
+         rewrite add_carry_neg_t in Heq0.
+         inversion Heq0. rewrite IHxs. reflexivity.
+Qed.
+
+Lemma add_neg_list_carry: forall a, add_list_ingr a (twos_complement a) false = mk_list_false (length a).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - simpl. reflexivity.
+       - unfold twos_complement. rewrite add_neg_list_carry_false. rewrite not_list_length at 1.
+         rewrite add_list_carry_empty_neutral_r.
+         rewrite add_neg_list_carry_neg_t. reflexivity.
+Qed.
+
+Lemma add_neg_list_absorb: forall a, add_list a (twos_complement a) = mk_list_false (length a).
+Proof. intro a. unfold add_list. rewrite add_neg_list_carry. reflexivity. Qed.
+
+(* bitvector ADD-NEG properties *)
+
+Lemma bv_add_neg_absorb: forall a, bv_add a (bv_not a) = mk_list_true (nat_of_N (size a)).
+Proof. intro a. unfold bv_add, bv_not, size, bits. rewrite not_list_length.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       unfold add_list. rewrite add_neg_list_carry_neg_f.
+       rewrite Nat2N.id, not_list_length. reflexivity.
+Qed. 
 
 (* bitwise MULT properties *)
 
