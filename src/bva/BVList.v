@@ -15,9 +15,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
-
 Require Import List Bool NArith Psatz.
-(*Require Import Misc.*)
+Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -25,7 +24,6 @@ Local Open Scope bool_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
 
 Module Type BITVECTOR.
 
@@ -159,7 +157,6 @@ Proof. unfold bits, size. now rewrite Nat2N.id. Qed.
 Lemma of_bits_size l : N.to_nat (size (of_bits l)) = List.length l.
 Proof. unfold of_bits, size. now rewrite Nat2N.id. Qed.
 
-
 (* Definition bv_wf (a: bitvector):= (@size a) = N.of_nat (length (@bits a)).  *)
 
 (* Definition bv_mk (l : list bool) := mk_bitvector (N.of_nat (length l)) l. *)
@@ -177,7 +174,6 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
 
-(*
 (************** remove when (Require Import Misc) ********************)
 
 Definition Nat_eqb :=
@@ -194,7 +190,6 @@ Definition Nat_eqb :=
     end.
 
 (********************************************************************)
-*)
 
 (* Lemma bv_mk_eq l1 l2 : bv_eq (bv_mk l1) (bv_mk l2) = beq_list l1 l2. *)
 (* Proof. *)
@@ -271,18 +266,6 @@ Fixpoint mk_list_false (t: nat) : list bool :=
   end.
 
 Definition zeros (n : N) : bitvector := mk_list_false (N.to_nat n).
-
-(* Definition bv_1 (t : nat) : bitvector := *)
-(*   match t with *)
-(*     | O    => mk_bitvector 0 nil *)
-(*     | S t' => mk_bitvector (N.of_nat (t' + 1)) (mk_list_true_acc t' [true]) *)
-(*   end. *)
-
-(* Definition bv_0 (t : nat) : bitvector := *)
-(*   match t with *)
-(*     | O    => mk_bitvector 0 nil *)
-(*     | S t' => mk_bitvector (N.of_nat (t' + 1)) (mk_list_false_acc t' [false]) *)
-(*   end. *)
 
 End Fold_left2.
 
@@ -394,18 +377,6 @@ Fixpoint mult_list_carry (a b :list bool) n {struct a}: list bool :=
 
 Definition mult_list a b := mult_list_carry a b (length a).
 
-(*Fixpoint mult_list_carry (a b :list bool) (acc : list bool) {struct a}: list bool :=
-  match a with
-    | nil      => acc
-    | a' :: xs =>
-      if a' then
-        mult_list_carry xs (false :: b) (add_list b acc)
-      else
-        mult_list_carry xs (false :: b) acc
-  end.
-
-Definition mult_list a b := mult_list_carry a b (mk_list_false (min (length a) (length b))).*)
-
 Definition bv_mult (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with
     | true => mult_list (@bits a) (@bits b)
@@ -457,7 +428,6 @@ Proof.
   unfold bv_concat, size. intros H0 H1.
   rewrite app_length, Nat2N.inj_add, H0, H1; reflexivity.
 Qed.
-
 
 (*list bitwise AND properties*)
 
@@ -627,23 +597,17 @@ Proof.
   - unfold bits. now rewrite <- Nat2N.inj_iff, H1.
 Qed.
 
-
 Lemma bv_and_assoc: forall a b c n, size a = n -> size b = n -> size c = n -> 
                                   (bv_and a (bv_and b c)) = (bv_and (bv_and a b) c).
-Proof. intros a b c n H0 H1 H2. 
-       inversion H0. rewrite <- H1 in H.
-       inversion H1. rewrite <- H2 in H3.
-       inversion H0.  rewrite <- H2 in H4. 
-       unfold bv_and. rewrite H3.  
+Proof. intros a b c n H0 H1 H2.
+       unfold bv_and, size, bits in *. rewrite H1, H2.  
        rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite N.compare_refl.
-       rewrite N.eqb_compare. rewrite N.eqb_compare.
-       rewrite H4. rewrite N.compare_refl.
-       unfold bits. unfold size in *. simpl. rewrite <- (@map2_and_length b c).
-       rewrite H3. rewrite N.compare_refl.
-       rewrite <- (@map2_and_length a b). rewrite H4. rewrite N.compare_refl.
+       rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite H0. rewrite N.compare_refl.
+       rewrite <- (@map2_and_length a b). rewrite <- map2_and_length. rewrite H0, H1.
+       rewrite N.compare_refl.
        rewrite map2_and_assoc; reflexivity.
        now rewrite <- Nat2N.inj_iff, H1.
-       now rewrite <- Nat2N.inj_iff, H1.
+       now rewrite <- Nat2N.inj_iff, H0.
 Qed.
 
 Lemma bv_and_idem1:  forall a b n, size a = n -> size b = n -> (bv_and (bv_and a b) a) = (bv_and a b).
@@ -1222,7 +1186,6 @@ Admitted.
 End RAWBITVECTOR_LIST.
 
 Module BITVECTOR_LIST <: BITVECTOR := RAW2BITVECTOR(RAWBITVECTOR_LIST).
-
 
 (** Some useful functions *)
 Section Map2.
