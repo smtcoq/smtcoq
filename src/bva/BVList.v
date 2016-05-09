@@ -913,6 +913,29 @@ Qed.
 
 (* list bitwise ADD properties*)
 
+Lemma add_carry_ff: forall a, add_carry a false false = (a, false).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_carry_neg_f: forall a, add_carry a (negb a) false = (true, false).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_carry_neg_f_r: forall a, add_carry (negb a) a false = (true, false).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_carry_neg_t: forall a, add_carry a (negb a) true = (false, true).
+Proof. intros a.
+       case a; simpl; auto.
+Qed.
+
+Lemma add_carry_tt: forall a, add_carry a true true = (a, true).
+Proof. intro a. case a; auto. Qed.
+
 Lemma add_list_empty_l: forall (a: list bool), (add_list [] a) = [].
 Proof. intro a. induction a as [| a xs IHxs].
          - unfold add_list. simpl. reflexivity.
@@ -1002,6 +1025,15 @@ Qed.
 Lemma add_list_empty_neutral_l: forall (a: list bool), (add_list (mk_list_false (length a)) a) = a.
 Proof. intros a. unfold add_list.
        apply (@add_list_carry_empty_neutral_l a).
+Qed.
+
+Lemma add_list_carry_unit_t : forall a, add_list_ingr a (mk_list_true (length a)) true = a.
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - simpl. reflexivity.
+       - simpl. case_eq (add_carry a true true). intros r0 c0 Heq0.
+         rewrite add_carry_tt in Heq0. inversion Heq0.
+         apply f_equal. exact IHxs.
 Qed.
 
 (*bitvector ADD properties*)
@@ -1179,20 +1211,6 @@ Proof. intro a.
              try reflexivity; rewrite IHxs; reflexivity.
 Qed.
 
-Lemma add_carry_ff: forall a, add_carry a false false = (a, false).
-Proof. intros a.
-       case a; simpl; auto.
-Qed.
-
-Lemma add_carry_neg_f: forall a, add_carry a (negb a) false = (true, false).
-Proof. intros a.
-       case a; simpl; auto.
-Qed.
-
-Lemma add_carry_neg_t: forall a, add_carry a (negb a) true = (false, true).
-Proof. intros a.
-       case a; simpl; auto.
-Qed.
 
 Lemma add_neg_list_carry_neg_f: forall a, (add_list_ingr a (map negb a) false) = mk_list_true (length a).
 Proof. intro a.
@@ -1201,6 +1219,16 @@ Proof. intro a.
        - simpl. 
          case_eq (add_carry a (negb a) false); intros r0 c0 Heq0.
          rewrite add_carry_neg_f in Heq0.
+         inversion Heq0. rewrite IHxs. reflexivity.
+Qed.
+
+Lemma add_neg_list_carry_neg_f_r: forall a, (add_list_ingr (map negb a) a false) = mk_list_true (length a).
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - simpl. reflexivity.
+       - simpl. 
+         case_eq (add_carry (negb a) a false); intros r0 c0 Heq0.
+         rewrite add_carry_neg_f_r in Heq0.
          inversion Heq0. rewrite IHxs. reflexivity.
 Qed.
 
@@ -1228,12 +1256,43 @@ Proof. intro a. unfold add_list. rewrite add_neg_list_carry. reflexivity. Qed.
 
 (* bitvector ADD-NEG properties *)
 
-Lemma bv_add_neg_absorb: forall a, bv_add a (bv_not a) = mk_list_true (nat_of_N (size a)).
+Lemma bv_add_neg_unit: forall a, bv_add a (bv_not a) = mk_list_true (nat_of_N (size a)).
 Proof. intro a. unfold bv_add, bv_not, size, bits. rewrite not_list_length.
        rewrite N.eqb_compare. rewrite N.compare_refl.
        unfold add_list. rewrite add_neg_list_carry_neg_f.
        rewrite Nat2N.id, not_list_length. reflexivity.
 Qed. 
+
+
+(* bitwise ADD-SUBST properties *)
+
+Lemma add_subst_list_carry_opp: forall n a b, (length a) = n -> (length b) = n -> (add_list_ingr (subst_list' a b) b false) = a.
+Proof. intros n a b H0 H1.
+       unfold subst_list', twos_complement, add_list.
+       rewrite add_neg_list_carry_false. rewrite not_list_length at 1.
+       rewrite add_list_carry_empty_neutral_r.
+       specialize (@add_list_carry_assoc a (map negb b) b true false false true).
+       intro H2. rewrite H2; try auto. rewrite add_neg_list_carry_neg_f_r.
+       rewrite H1. rewrite <- H0. rewrite add_list_carry_unit_t; reflexivity.
+Qed.
+
+Lemma add_subst_opp:  forall n a b, (length a) = n -> (length b) = n -> (add_list (subst_list' a b) b) = a.
+Proof. intros n a b H0 H1. unfold add_list, size, bits.
+       apply (@add_subst_list_carry_opp n a b); easy.
+Qed.
+
+(* bitvector ADD-SUBST properties *)
+
+Lemma bv_add_subst_opp:  forall n a b, (size a) = n -> (size b) = n -> (bv_add (bv_subst' a b) b) = a.
+Proof. intros n a b H0 H1. unfold bv_add, bv_subst', add_list, size, bits in *.
+       rewrite H0, H1.
+       rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite <- (@subst_list'_length a b). rewrite H0.
+       rewrite N.compare_refl. rewrite (@add_subst_list_carry_opp (nat_of_N n) a b); auto;
+       inversion H0; rewrite Nat2N.id; auto.
+       symmetry. now rewrite <- Nat2N.inj_iff, H0.
+        now rewrite <- Nat2N.inj_iff, H0.
+Qed.
 
 (* bitwise MULT properties *)
 
