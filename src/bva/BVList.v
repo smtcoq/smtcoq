@@ -386,13 +386,6 @@ Fixpoint mult_list_carry2 (a b :list bool) n {struct a}: list bool :=
         mult_list_carry2 xs (false :: (removelast b)) n
   end.
 
-Definition z' := [true; false; false; true; true; false; false; false; true].
-Definition t' := [true; false; false; true; true; false; false; true; true].
-Eval compute in mult_list_carry z' t' 9.
-Eval compute in mult_list_carry t' z' 9.
-Eval compute in mult_list_carry2 z' t' 9.
-Eval compute in mult_list_carry2 t' z' 9.
-
 Definition mult_list a b := mult_list_carry a b (length a).
 
 Definition bv_mult (a b : bitvector) : bitvector :=
@@ -961,6 +954,9 @@ Qed.
 Lemma add_list_empty_r: forall (a: list bool), (add_list a []) = [].
 Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
 
+Lemma add_list_ingr_l: forall (a: list bool) (c: bool), (add_list_ingr [] a c) = [].
+Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
+
 Lemma add_list_ingr_r: forall (a: list bool) (c: bool), (add_list_ingr a [] c) = [].
 Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
 
@@ -1044,24 +1040,47 @@ Proof. intros a b c. unfold add_list.
        simpl; reflexivity.
 Qed.
 
-Lemma add_list_carry_empty_neutral_r: forall (a: list bool), (add_list_ingr a (mk_list_false (length a)) false) = a.
+Lemma add_list_carry_empty_neutral_n_l: forall (a: list bool) n, (n >= (length a))%nat -> (add_list_ingr (mk_list_false n) a false) = a.
 Proof. intro a. induction a as [| a' xs IHxs].
-       - simpl. reflexivity.
-       - simpl.
-         cut(add_carry a' false false = (a', false)).
-         + intro H. rewrite H. rewrite IHxs. reflexivity.
-         + unfold add_carry. case a'; auto.
+       - intro n. rewrite add_list_ingr_r. reflexivity.
+       - intros [| n]. 
+         + simpl. intro H. contradict H. easy.
+         + simpl. intro H.
+           case a'; apply f_equal; apply IHxs; lia.
+Qed.
+
+Lemma add_list_carry_empty_neutral_n_r: forall (a: list bool) n, (n >= (length a))%nat -> (add_list_ingr a (mk_list_false n) false) = a.
+Proof. intro a. induction a as [| a' xs IHxs].
+       - intro n. rewrite add_list_ingr_l. reflexivity.
+       - intros [| n]. 
+         + simpl. intro H. contradict H. easy.
+         + simpl. intro H.
+           case a'; apply f_equal; apply IHxs; lia.
+Qed.
+
+Lemma add_list_carry_empty_neutral_l: forall (a: list bool), (add_list_ingr (mk_list_false (length a)) a false) = a.
+Proof. intro a.
+       rewrite add_list_carry_empty_neutral_n_l; auto.
+Qed.
+
+Lemma add_list_carry_empty_neutral_r: forall (a: list bool), (add_list_ingr a (mk_list_false (length a)) false) = a.
+Proof. intro a.
+       rewrite add_list_carry_empty_neutral_n_r; auto.
+Qed.
+
+Lemma add_list_empty_neutral_n_l: forall (a: list bool) n, (n >= (length a))%nat -> (add_list (mk_list_false n) a) = a.
+Proof. intros a. unfold add_list.
+       apply (@add_list_carry_empty_neutral_n_l a).
+Qed.
+
+Lemma add_list_empty_neutral_n_r: forall (a: list bool) n, (n >= (length a))%nat -> (add_list a (mk_list_false n)) = a.
+Proof. intros a. unfold add_list.
+       apply (@add_list_carry_empty_neutral_n_r a).
 Qed.
 
 Lemma add_list_empty_neutral_r: forall (a: list bool), (add_list a (mk_list_false (length a))) = a.
 Proof. intros a. unfold add_list.
        apply (@add_list_carry_empty_neutral_r a).
-Qed.
-
-Lemma add_list_carry_empty_neutral_l: forall (a: list bool), (add_list_ingr (mk_list_false (length a)) a false) = a.
-Proof. intro a. induction a as [| a' xs IHxs].
-       - simpl. reflexivity.
-       - simpl. case a'; rewrite IHxs; reflexivity.
 Qed.
 
 Lemma add_list_empty_neutral_l: forall (a: list bool), (add_list (mk_list_false (length a)) a) = a.
@@ -1365,13 +1384,13 @@ Proof. intro n. induction n as [| n IHn].
        split; intro H; contradict H; easy.
 Qed.
 
-Lemma mult_list_length: forall (a b: list bool) n, ((length b) >= n)%nat -> n = length (mult_list_carry a b n).
+Lemma mult_list_carry_length: forall (a b: list bool) n, ((length b) >= n)%nat -> n = length (mult_list_carry a b n).
 Proof. intro a.
        induction a as [| a xs IHxs].
        - intros b n H. rewrite mult_list_carry_empty_l, length_mk_list_false; reflexivity.
-       - intros [| b ys n]. intros n H. simpl in H. rewrite strictly_positive_0_unique in H.
+       - intros [| b ys] n H. simpl in H. rewrite strictly_positive_0_unique in H.
          rewrite H. rewrite mult_list_carry_0. easy.
-         intro H. simpl. case a.
+         simpl. case a.
          + specialize (@length_add_list_ge (b :: ys) (mult_list_carry xs (false :: b :: ys) n)).
            intro H1. rewrite <- H1. 
            rewrite <- (IHxs (false :: b :: ys)). reflexivity. simpl in *. lia.
@@ -1379,6 +1398,26 @@ Proof. intro a.
          + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. lia. simpl in *. lia.
 Qed.
 
+Lemma mult_list_length: forall (a b: list bool), ((length b) >= (length a))%nat -> (length a) = length (mult_list a b).
+Proof. intros a b H. unfold mult_list.
+       rewrite <- (@mult_list_carry_length a b (length a)); auto.
+Qed.
+
+Lemma mult_list_length_eq: forall (a b: list bool), ((length a) = (length b))%nat -> (length a) = length (mult_list a b).
+Proof. intros a b H. unfold mult_list.
+       rewrite <- (@mult_list_carry_length a b (length a)); lia.
+Qed.
+
+(* bitvector MULT properties *)
+
+Lemma bv_mult_size: forall n a b, (size a) = n -> (@size b) = n -> size (bv_mult a b) = n.
+Proof. intros n a b H0 H1.
+       unfold bv_mult, size, bits in *.
+       rewrite H0, H1.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       specialize (@mult_list_length_eq a b). intro H2.
+       rewrite <- H2; lia.
+Qed. 
 
 End RAWBITVECTOR_LIST.
 
