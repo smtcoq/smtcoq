@@ -1007,7 +1007,7 @@ Qed.
 
 Lemma add_list_carry_length_ge: forall (a b: list bool) c, (length a >= length b)%nat -> length b = length (add_list_ingr a b c).
 Proof. induction a as [| a' xs IHxs].
-       simpl. intros b H0 H1. admit.
+       simpl. intros b H0 H1. lia.
        intros [| b ys].
        - simpl. intros. auto.
        - intros. simpl in *.
@@ -1017,7 +1017,7 @@ Qed.
 
 Lemma add_list_carry_length_le: forall (a b: list bool) c, (length b >= length a)%nat -> length a = length (add_list_ingr a b c).
 Proof. induction a as [| a' xs IHxs].
-       simpl. intros b H0 H1. admit.
+       simpl. intros b H0 H1. reflexivity.
        intros [| b ys].
        - simpl. intros. contradict H. lia.
        - intros. simpl in *.
@@ -1377,6 +1377,7 @@ Qed.
 
 Lemma mult_list_carry_empty_l: forall (a: list bool) (c: nat), mult_list_carry [] a c = mk_list_false c.
 Proof. intro a. induction a as [| a' xs IHxs]; auto. Qed.
+
 
 Lemma strictly_positive_0_unique: forall n: nat, (0 >= n)%nat <-> (n = 0)%nat.
 Proof. intro n. induction n as [| n IHn].
