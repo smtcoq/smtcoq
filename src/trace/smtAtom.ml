@@ -341,6 +341,8 @@ module Op =
     let b_equal op1 op2 =
       match op1,op2 with
         | BO_eq t1, BO_eq t2 -> Btype.equal t1 t2
+        | BO_BVand n1, BO_BVand n2 -> n1 == n2
+        | BO_BVor n1, BO_BVor n2 -> n1 == n2
         | _ -> op1 == op2
 
     let n_equal op1 op2 =
