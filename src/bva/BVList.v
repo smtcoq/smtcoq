@@ -1409,17 +1409,6 @@ Proof. intros a b H. unfold mult_list.
        rewrite <- (@mult_list_carry_length a b (length a)); lia.
 Qed.
 
-Definition z := [false; true; false; false; true; true; false; false; false].
-Definition t := [false; true; false; false; true; true; false; false; true].
-
-Eval compute in mult_list_carry z t 8.
-Eval compute in (mult_list_carry z (false :: t) 8 = mult_list_carry (false :: z) t 8).
-Eval compute in (mult_list_carry (false :: z) t 8 = mult_list_carry z t 8).
-Eval compute in (mult_list_carry [true] z 10) = z.
-Eval compute in mult_list_carry [false] [true; true; false; false; true; false; true] 17.
-Eval compute in mult_list_carry [true; true; false; false; true; false; true] [false] 17.
-Eval compute in (mult_list_carry t [true] 1) = (mult_list_carry t [true] 1).
-
 Lemma mult_list_cons_false: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
                        mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n.
 Proof. intro a.
