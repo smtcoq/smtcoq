@@ -1647,6 +1647,20 @@ Proof. intro a.
          + rewrite strictly_positive_0_unique in H1. rewrite H1.
            do 2 rewrite mult_list_carry_0. reflexivity.
          + simpl. case a, b. simpl. rewrite <- add_list_assoc.
+          
+Admitted.
+
+Lemma mult_list_cons_true2: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
+                       mult_list_carry a (true :: b) n = mult_list_carry (true :: a) b n.
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0.
+         do 2 rewrite mult_list_carry_0. reflexivity.
+       - intros [| b ys] n H0 H1.
+         + rewrite strictly_positive_0_unique in H1. rewrite H1.
+           do 2 rewrite mult_list_carry_0. reflexivity.
+         + simpl. case a, b. simpl. rewrite <- add_list_assoc.
+          
 Admitted.
 
 Lemma mult_list_carry_comm: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
@@ -1658,14 +1672,39 @@ Proof. intro a.
        - intros [| b ys] n H0 H1.
          + rewrite strictly_positive_0_unique in H1. rewrite H1.
            do 2 rewrite mult_list_carry_0. reflexivity.
-         + case a, b. 
-           (* case a, b.
-           unfold add_list. simpl.
-           case_eq (mult_list_carry xs (false :: true :: ys) n).
-           case_eq (mult_list_carry ys (false :: true :: xs) n).
-           intros H2 H3. reflexivity.
-           intros b l H2 H3. case b.
-           rewrite <- H3. simpl. *)
+         + case a, b.
+           * rewrite mult_list_cons_true1. symmetry. rewrite mult_list_cons_true2.
+             rewrite IHxs. reflexivity.
+             admit (**).
+             simpl in *. lia.
+             exact H1.
+             admit (**).
+             admit (**).
+             exact H1.
+           * rewrite mult_list_cons_true1. symmetry. rewrite mult_list_cons_true2.
+             rewrite IHxs. reflexivity.
+             admit (**).
+             simpl in *. lia.
+             exact H1.
+             admit (**).
+             admit (**).
+             exact H1.
+           * rewrite mult_list_cons_false1. symmetry. rewrite mult_list_cons_false2.
+             rewrite IHxs. reflexivity.
+             admit (**).
+             simpl in *. lia.
+             exact H1.
+             admit (**).
+             admit (**).
+             exact H1.
+           * rewrite mult_list_cons_false1. symmetry. rewrite mult_list_cons_false2.
+             rewrite IHxs. reflexivity.
+             admit (**).
+             simpl in *. lia.
+             exact H1.
+             admit (**).
+             admit (**).
+             exact H1.
 Admitted.  
            
 (* bitvector MULT properties *)
