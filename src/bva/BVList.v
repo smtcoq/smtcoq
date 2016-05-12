@@ -27,22 +27,22 @@ Unset Strict Implicit.
 
 Module Type BITVECTOR.
 
-  Parameter bitvector: N -> Type.
-  Parameter bits     : forall n, bitvector n -> list bool.
-  Parameter of_bits : forall (l:list bool), bitvector (N.of_nat (List.length l)).
-  Parameter bitOf : forall n, nat -> bitvector n -> bool.
+  Parameter bitvector : N -> Type.
+  Parameter bits      : forall n, bitvector n -> list bool.
+  Parameter of_bits   : forall (l:list bool), bitvector (N.of_nat (List.length l)).
+  Parameter bitOf     : forall n, nat -> bitvector n -> bool.
 
   (* Constants *)
-  Parameter zeros : forall n, bitvector n.
+  Parameter zeros     : forall n, bitvector n.
 
   (*equality*)
-  Parameter bv_eq    : forall n, bitvector n -> bitvector n -> bool.
+  Parameter bv_eq     : forall n, bitvector n -> bitvector n -> bool.
 
   (*binary operations*)
   (* Parameter bv_concat: forall n m, bitvector n -> bitvector m -> bitvector (n+m). *)
-  Parameter bv_and   : forall n, bitvector n -> bitvector n -> bitvector n.
-  Parameter bv_or    : forall n, bitvector n -> bitvector n -> bitvector n.
-  Parameter bv_add   : forall n, bitvector n -> bitvector n -> bitvector n.
+  Parameter bv_and    : forall n, bitvector n -> bitvector n -> bitvector n.
+  Parameter bv_or     : forall n, bitvector n -> bitvector n -> bitvector n.
+  Parameter bv_add    : forall n, bitvector n -> bitvector n -> bitvector n.
   (* Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n. *)
 
   (* Specification *)
@@ -55,32 +55,32 @@ End BITVECTOR.
 Module Type RAWBITVECTOR.
 
 Parameter bitvector: Type.
-Parameter size     : bitvector -> N.
-Parameter bits     : bitvector -> list bool.
-Parameter of_bits : list bool -> bitvector.
-Parameter bitOf : nat -> bitvector -> bool.
+Parameter size       : bitvector -> N.
+Parameter bits       : bitvector -> list bool.
+Parameter of_bits    : list bool -> bitvector.
+Parameter bitOf      : nat -> bitvector -> bool.
 (* (*property*) *)
-(* Parameter bv_wf    : bitvector -> Prop. *)
+(* Parameter bv_wf   : bitvector -> Prop. *)
 
 (* Constants *)
 Parameter zeros : N -> bitvector.
 
 (*equality*)
-Parameter bv_eq    : bitvector -> bitvector -> bool.
+Parameter bv_eq      : bitvector -> bitvector -> bool.
 
 (*binary operations*)
-Parameter bv_concat: bitvector -> bitvector -> bitvector.
-Parameter bv_and   : bitvector -> bitvector -> bitvector.
-Parameter bv_or    : bitvector -> bitvector -> bitvector.
-Parameter bv_add   : bitvector -> bitvector -> bitvector.
-Parameter bv_mult  : bitvector -> bitvector -> bitvector.
+Parameter bv_concat  : bitvector -> bitvector -> bitvector.
+Parameter bv_and     : bitvector -> bitvector -> bitvector.
+Parameter bv_or      : bitvector -> bitvector -> bitvector.
+Parameter bv_add     : bitvector -> bitvector -> bitvector.
+Parameter bv_mult    : bitvector -> bitvector -> bitvector.
 (*
-Parameter bv_subs  : bitvector -> bitvector -> bitvector.
-Parameter bv_div   : bitvector -> bitvector -> bitvector.
-Parameter bv_or    : bitvector -> bitvector -> bitvector.
+Parameter bv_subs    : bitvector -> bitvector -> bitvector.
+Parameter bv_div     : bitvector -> bitvector -> bitvector.
+Parameter bv_or      : bitvector -> bitvector -> bitvector.
 *)
 (*unary operations*)
-Parameter bv_not   : bitvector -> bitvector.
+Parameter bv_not     : bitvector -> bitvector.
 
 (* All the operations are size-preserving *)
 
@@ -93,15 +93,15 @@ Axiom bv_or_size     : forall n a b, size a = n -> size b = n -> size (bv_or a b
 Axiom bv_add_size    : forall n a b, size a = n -> size b = n -> size (bv_add a b) = n.
 
 (* Specification *)
-Axiom bv_eq_reflect : forall a b, bv_eq a b = true <-> a = b.
-Axiom bv_and_comm   : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
+Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
+Axiom bv_and_comm    : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
 (*
-Axiom a_bv_subs  : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_subs a b).
-Axiom a_bv_mult  : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_mult a b).
-Axiom a_bv_div   : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_div a b).
-Axiom a_bv_or    : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
+Axiom a_bv_subs      : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_subs a b).
+Axiom a_bv_mult      : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_mult a b).
+Axiom a_bv_div       : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_div a b).
+Axiom a_bv_or        : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
 *)
-(* Axiom a_bv_not   : forall a,   bv_wf a -> bv_wf (bv_not a). *)
+(* Axiom a_bv_not    : forall a,   bv_wf a -> bv_wf (bv_not a). *)
 
 End RAWBITVECTOR.
 
@@ -1409,6 +1409,65 @@ Proof. intros a b H. unfold mult_list.
        rewrite <- (@mult_list_carry_length a b (length a)); lia.
 Qed.
 
+Definition z := [false; true; false; false; true; true; false; false; false].
+Definition t := [false; true; false; false; true; true; false; false; true].
+
+Eval compute in mult_list_carry z t 8.
+Eval compute in (mult_list_carry z (false :: t) 8 = mult_list_carry (false :: z) t 8).
+Eval compute in (mult_list_carry (false :: z) t 8 = mult_list_carry z t 8).
+Eval compute in (mult_list_carry [true] z 10) = z.
+Eval compute in mult_list_carry [false] [true; true; false; false; true; false; true] 17.
+Eval compute in mult_list_carry [true; true; false; false; true; false; true] [false] 17.
+Eval compute in (mult_list_carry t [true] 1) = (mult_list_carry t [true] 1).
+
+Lemma mult_list_cons_false: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
+                       mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n.
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0.
+         do 2 rewrite mult_list_carry_0. reflexivity.
+       - intros [| b ys] n H0 H1.
+         + rewrite strictly_positive_0_unique in H1. rewrite H1.
+           do 2 rewrite mult_list_carry_0. reflexivity.
+         + simpl. reflexivity.
+Qed.
+
+Lemma mult_list_true: forall a n, ((length a) = n)%nat -> mult_list_carry [true] a n = a.
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - intros n H. simpl in H. rewrite <- H.
+         rewrite mult_list_carry_0. reflexivity.
+       - intros [| n] H.
+         + contradict H. easy.
+         + rewrite <- (IHxs n) at 2; try auto. simpl.
+           case a. unfold add_list. simpl. reflexivity.
+           unfold add_list. simpl. reflexivity.
+Qed.
+
+Lemma mult_list_false: forall a n, mult_list_carry [false] a n = mk_list_false n.
+Proof. intro a.
+       induction a as [| a xs IHxs]; simpl; reflexivity.
+Qed.
+
+Lemma mult_list_carry_comm: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
+                            mult_list_carry a b n = mult_list_carry b a n.
+Proof. intro a.
+       induction a as [| a xs IHxs].
+       - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0.
+         do 2 rewrite mult_list_carry_0. reflexivity.
+       - intros [| b ys] n H0 H1.
+         + rewrite strictly_positive_0_unique in H1. rewrite H1.
+           do 2 rewrite mult_list_carry_0. reflexivity.
+         + admit.
+           (* case a, b.
+           unfold add_list. simpl.
+           case_eq (mult_list_carry xs (false :: true :: ys) n).
+           case_eq (mult_list_carry ys (false :: true :: xs) n).
+           intros H2 H3. reflexivity.
+           intros b l H2 H3. case b.
+           rewrite <- H3. simpl. *)
+Admitted.  
+           
 (* bitvector MULT properties *)
 
 Lemma bv_mult_size: forall n a b, (size a) = n -> (@size b) = n -> size (bv_mult a b) = n.
@@ -1418,7 +1477,7 @@ Proof. intros n a b H0 H1.
        rewrite N.eqb_compare. rewrite N.compare_refl.
        specialize (@mult_list_length_eq a b). intro H2.
        rewrite <- H2; lia.
-Qed. 
+Qed.
 
 End RAWBITVECTOR_LIST.
 
