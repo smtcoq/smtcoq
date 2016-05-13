@@ -1724,4 +1724,3 @@ Section Map2.
 End Map2.
 
 (* End BITVECTOR_LIST. *)
-(
