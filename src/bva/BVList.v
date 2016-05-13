@@ -39,12 +39,16 @@ Module Type BITVECTOR.
   Parameter bv_eq     : forall n, bitvector n -> bitvector n -> bool.
 
   (*binary operations*)
-  (* Parameter bv_concat: forall n m, bitvector n -> bitvector m -> bitvector (n+m). *)
+  Parameter bv_concat : forall n m, bitvector n -> bitvector m -> bitvector (n + m).
   Parameter bv_and    : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_or     : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_xor    : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_add    : forall n, bitvector n -> bitvector n -> bitvector n.
-  (* Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n. *)
+  Parameter bv_subst  : forall n, bitvector n -> bitvector n -> bitvector n.
+  Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n.
+
+  (*binary operations*)
+  Parameter bv_not    : forall n, bitvector n -> bitvector n.
 
   (* Specification *)
   Axiom bits_size     : forall n (bv:bitvector n), List.length (bits bv) = N.to_nat n.
@@ -55,13 +59,11 @@ End BITVECTOR.
 
 Module Type RAWBITVECTOR.
 
-Parameter bitvector: Type.
+Parameter bitvector  : Type.
 Parameter size       : bitvector -> N.
 Parameter bits       : bitvector -> list bool.
 Parameter of_bits    : list bool -> bitvector.
 Parameter bitOf      : nat -> bitvector -> bool.
-(* (*property*) *)
-(* Parameter bv_wf   : bitvector -> Prop. *)
 
 (* Constants *)
 Parameter zeros      : N -> bitvector.
@@ -76,11 +78,8 @@ Parameter bv_or      : bitvector -> bitvector -> bitvector.
 Parameter bv_xor     : bitvector -> bitvector -> bitvector.
 Parameter bv_add     : bitvector -> bitvector -> bitvector.
 Parameter bv_mult    : bitvector -> bitvector -> bitvector.
-(*
-Parameter bv_subs    : bitvector -> bitvector -> bitvector.
-Parameter bv_div     : bitvector -> bitvector -> bitvector.
-Parameter bv_or      : bitvector -> bitvector -> bitvector.
-*)
+Parameter bv_subst   : bitvector -> bitvector -> bitvector.
+
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
 
@@ -94,18 +93,13 @@ Axiom bv_and_size    : forall n a b, size a = n -> size b = n -> size (bv_and a 
 Axiom bv_or_size     : forall n a b, size a = n -> size b = n -> size (bv_or a b) = n.
 Axiom bv_xor_size    : forall n a b, size a = n -> size b = n -> size (bv_xor a b) = n.
 Axiom bv_add_size    : forall n a b, size a = n -> size b = n -> size (bv_add a b) = n.
+Axiom bv_subst_size  : forall n a b, size a = n -> size b = n -> size (bv_subst a b) = n.
+Axiom bv_mult_size   : forall n a b, size a = n -> size b = n -> size (bv_mult a b) = n.
+Axiom bv_not_size    : forall n a, size a = n -> size (bv_not a) = n.
 
 (* Specification *)
-
 Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
 Axiom bv_and_comm    : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
-(*
-Axiom a_bv_subs      : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_subs a b).
-Axiom a_bv_mult      : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_mult a b).
-Axiom a_bv_div       : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_div a b).
-Axiom a_bv_or        : forall a b, bv_wf a -> bv_wf b -> bv_wf (bv_or a b).
-*)
-(* Axiom a_bv_not    : forall a,   bv_wf a -> bv_wf (bv_not a). *)
 
 End RAWBITVECTOR.
 
@@ -142,8 +136,20 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Definition bv_add n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_add bv1 bv2) (M.bv_add_size (wf bv1) (wf bv2)).
 
+  Definition bv_subst n (bv1 bv2:bitvector n) : bitvector n :=
+    @MkBitvector n (M.bv_subst bv1 bv2) (M.bv_subst_size (wf bv1) (wf bv2)).
+
+  Definition bv_mult n (bv1 bv2:bitvector n) : bitvector n :=
+    @MkBitvector n (M.bv_mult bv1 bv2) (M.bv_mult_size (wf bv1) (wf bv2)).
+
   Definition bv_xor n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_xor bv1 bv2) (M.bv_xor_size (wf bv1) (wf bv2)).
+
+  Definition bv_not n (bv1: bitvector n) : bitvector n :=
+    @MkBitvector n (M.bv_not bv1) (M.bv_not_size (wf bv1)).
+
+  Definition bv_concat n m (bv1:bitvector n) (bv2: bitvector m) : bitvector (n + m) :=
+    @MkBitvector (n + m) (M.bv_concat bv1 bv2) (M.bv_concat_size (wf bv1) (wf bv2)).
 
   Lemma bits_size n (bv:bitvector n) : List.length (bits bv) = N.to_nat n.
   Proof. unfold bits. rewrite M.bits_size, wf. reflexivity. Qed.
