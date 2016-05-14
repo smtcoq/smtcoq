@@ -156,6 +156,7 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
 
   (* This is not provable, we need to rephrase it *)
   Lemma bv_eq_reflect n (a b: bitvector n) : bv_eq a b = true <-> a = b.
+  Proof. unfold bv_eq. rewrite M.bv_eq_reflect. 
   Admitted.
 
   Lemma bv_and_comm n (a b:bitvector n) : bv_and a b = bv_and b a.
@@ -1722,11 +1723,3 @@ End RAWBITVECTOR_LIST.
 
 Module BITVECTOR_LIST <: BITVECTOR := RAW2BITVECTOR(RAWBITVECTOR_LIST).
 
-(** Some useful functions *)
-Section Map2.
-
-(* remove ?? *)
-
-End Map2.
-
-(* End BITVECTOR_LIST. *)
