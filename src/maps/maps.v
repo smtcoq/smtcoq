@@ -60,7 +60,10 @@ Qed.
 Lemma beq_idP : forall x y, reflect (x = y) (beq_id x y).
 Proof. intros x y. apply iff_reflect. now rewrite beq_id_true_iff. Qed.
 
-Lemma map_ext: forall A (m1 m2: total_map A), (forall x, m1 x = m2 x -> m1 = m2).
+Lemma map_extL: forall A (m1 m2: total_map A), (forall x, m1 = m2 -> m1 x = m2 x).
+Proof. intros A m1 m2 x H. now rewrite H. Qed.
+
+Lemma map_extR: forall A (m1 m2: total_map A), (forall x, m1 x = m2 x -> m1 = m2).
 Proof. intros A m1 m2.
        About functional_extensionality_dep.
        About functional_extensionality.
