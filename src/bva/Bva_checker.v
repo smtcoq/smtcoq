@@ -15,6 +15,7 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 Require Import Int63 PArray.
+(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State SMT_terms BVList.
 Require Import Bool List BoolEq NZParity.
 
@@ -238,11 +239,22 @@ Section Checker.
       intros x;apply wf_interp_form;trivial.
     Qed.
 
-
     Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
-    Admitted.
+    Proof. unfold C.valid, check_bbVar.
+           case_eq (Lit.is_pos lres); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). 
+           case_eq (t_form .[ Lit.blit lres]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+           intros i l Heq0 Heq1.
+           case_eq (check_bb i l 0); 
+           [ |  intros Heq2; unfold C.interp; simpl; now rewrite lit_interp_true].
+           intros Heq2. unfold C.interp; simpl. rewrite orb_false_r.
+           unfold Lit.interp. rewrite Heq1.
+           unfold Var.interp.
+           rewrite rho_interp. rewrite Heq0. simpl.
+           unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv.
+           simpl. unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits.
+           Admitted.
 
-    Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
+    Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).    
     Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
