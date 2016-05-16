@@ -152,14 +152,16 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
     @MkBitvector (n + m) (M.bv_concat bv1 bv2) (M.bv_concat_size (wf bv1) (wf bv2)).
 
   Lemma bits_size n (bv:bitvector n) : List.length (bits bv) = N.to_nat n.
-  Proof. unfold bits. rewrite M.bits_size, wf. reflexivity. Qed.
+  Proof. unfold bits. now rewrite M.bits_size, wf. Qed.
 
   (* This is not provable, we need to rephrase it *)
   Lemma bv_eq_reflect n (a b: bitvector n) : bv_eq a b = true <-> a = b.
-  Proof. unfold bv_eq. rewrite M.bv_eq_reflect. 
+  Proof. unfold bv_eq. rewrite M.bv_eq_reflect. split. intro H.
+         destruct a, b. simpl.
   Admitted.
 
   Lemma bv_and_comm n (a b:bitvector n) : bv_and a b = bv_and b a.
+  Proof. unfold bv_and. destruct a, b. simpl. remember (@M.bv_and_comm n bv0 bv1).
   Admitted.
 
 End RAW2BITVECTOR.
@@ -186,25 +188,6 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
-
-(*
-(************** remove when (Require Import Misc) ********************)
-
-Definition Nat_eqb :=
-  fix eqb (n m : nat) {struct n} : bool :=
-    match n with
-    | O => match m with
-           | O => true
-           | S _ => false
-           end
-    | S n' => match m with
-              | O => false
-              | S m' => eqb n' m'
-              end
-    end.
-
-(********************************************************************)
-*)
 
 Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
 Proof.
