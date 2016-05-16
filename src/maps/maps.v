@@ -3,6 +3,7 @@ Require Import FunctionalExtensionality.
 
 (* total maps in software foundations *)
 
+(* type for the keys that will be used to index into the maps. *)
 Inductive id : Type :=
   | Id : nat -> id.
 
@@ -11,10 +12,20 @@ Definition beq_id id1 id2 :=
     | Id n1, Id n2 => beq_nat n1 n2
   end.
 
+(* a total map is a function that look-ups ids and return As. *)
 Definition total_map (A:Type) := id -> A.
 
 Definition empty_map {A:Type} (v : A) : total_map A := (fun _ => v).
 
+(* update on maps:
+takes 
+    a map m, 
+    a key x, 
+    a value v 
+returns 
+    a new map that maps
+    x to v 
+    every other key to whatever m does. *)
 Definition update_map {A:Type} (m : total_map A) (x : id) (v : A) :=
                       fun x' => if beq_id x x' then v else m x'.
 
@@ -48,9 +59,6 @@ Qed.
 
 Lemma beq_idP : forall x y, reflect (x = y) (beq_id x y).
 Proof. intros x y. apply iff_reflect. now rewrite beq_id_true_iff. Qed.
-
-Lemma eta_expansion {A B} (f : A -> B) : f = fun x => f x.
-Admitted.
 
 Lemma map_ext: forall A (m1 m2: total_map A), (forall x, m1 x = m2 x -> m1 = m2).
 Proof. intros A m1 m2.
