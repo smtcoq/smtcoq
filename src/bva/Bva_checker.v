@@ -82,24 +82,26 @@ Section Checker.
   Variable s : S.t.
 
 
-  (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
-        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
-       -------------------------------------------------- bbAnd
-             bbT(a&b, [a0 /\ b0; ...; an /\ bn])
-   *)
-
-  Fixpoint check_op (bs1 bs2 bsres : list _lit) get_op :=
+  (* Check the validity of a *symmetric* operator *)
+  Fixpoint check_symop (bs1 bs2 bsres : list _lit) get_op :=
     match bs1, bs2, bsres with
     | nil, nil, nil => true
     | b1::bs1, b2::bs2, bres::bsres =>
       if Lit.is_pos bres then
         match get_op (get_form (Lit.blit bres)) with
-        | Some (a1, a2) => (a1 == b1) && (a2 == b2)
+        | Some (a1, a2) => ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
         | _ => false
         end
       else false
     | _, _, _ => false
     end.
+
+
+  (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a&b, [a0 /\ b0; ...; an /\ bn])
+   *)
 
   Definition get_and f :=
     match f with
@@ -122,11 +124,13 @@ Section Checker.
         | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
           match get_atom a with
           | Abop (BO_BVand _) a1' a2' =>
-            if (a1 == a1') && (a2 == a2') && (check_op bs1 bs2 bsres get_and)
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop bs1 bs2 bsres get_and)
             then lres::nil
             else C._true
           | Abop (BO_BVor _) a1' a2' =>
-            if (a1 == a1') && (a2 == a2') && (check_op bs1 bs2 bsres get_or)
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop bs1 bs2 bsres get_or)
             then lres::nil
             else C._true
           | _ => C._true
@@ -157,10 +161,11 @@ Section Checker.
         match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
         | FbbT a1 bs1, FbbT a2 bs2, Fiff leq lbb =>
           match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
-          | Fatom a, Fand bsres =>
+          | Fatom a, Fand bsres | Fand bsres, Fatom a =>
             match get_atom a with
-            | Abop (BO_eq TBV) a1' a2' =>
-              if (a1 == a1') && (a2 == a2') && (check_op bs1 bs2 (PArray.to_list bsres) get_iff)
+            | Abop (BO_eq (Typ.TBV _)) a1' a2' =>
+              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                   && (check_symop bs1 bs2 (PArray.to_list bsres) get_iff)
               then lres::nil
               else C._true
             | _ => C._true
