@@ -251,7 +251,10 @@ Section Checker.
            unfold Var.interp.
            rewrite rho_interp. rewrite Heq0. simpl.
            unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv.
-           simpl. unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits.
+           simpl. destruct interp_form_hatom_bv.
+           unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
+           rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
+           unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
            Admitted.
 
     Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).    
