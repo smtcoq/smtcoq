@@ -112,8 +112,8 @@ let cbitvector = gen_constant bv_modules "bitvector"
 let cof_bits = gen_constant bv_modules "of_bits"
 let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
-let cbv_and = gen_constant bv_modules "bv_or"
-let cbv_or = gen_constant bv_modules "bv_and"
+let cbv_and = gen_constant bv_modules "bv_and"
+let cbv_or = gen_constant bv_modules "bv_or"
 
 (* SMT_terms *)
 
