@@ -257,8 +257,81 @@ Section Checker.
            unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
            Admitted.
 
-    Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).    
-    Admitted.
+    Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
+    Proof. unfold C.valid, check_bbOp.
+           case_eq (S.get s pos1). intros; unfold C.interp; simpl;  now rewrite lit_interp_true.
+           intros i l H.
+           case l; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true].
+           case_eq (S.get s pos2). intros; unfold C.interp; simpl;  now rewrite lit_interp_true.
+           intros i0 l0 H0.
+           case l0; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true].
+           case_eq (Lit.is_pos i && Lit.is_pos i0 && Lit.is_pos lres); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+           intro Heq.
+           case_eq (t_form .[ Lit.blit lres]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i1 Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 Heq2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros Heq1.
+             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i2 l2 H2.
+             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i3 l3 Heq3 l4 Heq4.
+             case_eq (t_form .[ Heq1]).
+               intros i5 Heq5.
+               case_eq ( t_atom .[ Heq1]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+               intros.
+               case_eq b; try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+               intros n b'.
+               case_eq (((i2 == i1) && (i3 == i4) || (i2 == i4) && (i3 == i1)) &&
+               check_symop l2 l3 l4 get_and).
+               intros;unfold C.interp; simpl. unfold Lit.interp in *.
+               rewrite ?andb_true_iff in Heq. destruct Heq.
+               rewrite H5. unfold Var.interp. rewrite rho_interp. rewrite Heq4.
+               simpl. unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. simpl.
+               destruct interp_form_hatom_bv. 
+               unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
+               rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
+               unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
+               rewrite orb_false_r.
+               rewrite ?andb_true_iff in H3. destruct H3.   
+               Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
     Admitted.
