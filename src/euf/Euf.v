@@ -16,8 +16,8 @@
 
 (* Add LoadPath ".." as SMTCoq. *)
 Require Import Bool List Int63 PArray.
+(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import State SMT_terms.
-
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
 

@@ -16,6 +16,7 @@
 
 (* Add LoadPath ".." as SMTCoq. *)
 Require Import PArray List Bool.
+(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State SMT_terms BVList.
 
 Import Form.

@@ -116,7 +116,13 @@ Section Checker.
     | _ => None
     end.
 
-  (* TODO: check the first argument of BVand and BVor *)
+  Definition get_xor f :=
+    match f with
+    | For args => if PArray.length args == 2 then Some (args.[0], args.[1]) else None
+    | _ => None
+    end.
+
+  (* TODO: check the first argument of BVand, BVor and BVxor *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -132,6 +138,11 @@ Section Checker.
           | Abop (BO_BVor _) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (check_symop bs1 bs2 bsres get_or)
+            then lres::nil
+            else C._true
+          | Abop (BO_BVxor _) a1' a2' =>
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop bs1 bs2 bsres get_xor)
             then lres::nil
             else C._true
           | _ => C._true

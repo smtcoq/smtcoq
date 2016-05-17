@@ -15,9 +15,9 @@
 
 
 Require Import Bool Int63 PArray.
+(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State BVList.
 Require List.
-
 Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -585,7 +585,8 @@ Module Atom.
    | BO_Zgt
    | BO_eq (_ : Typ.type)
    | BO_BVand (_: N)
-   | BO_BVor (_: N).
+   | BO_BVor (_: N)
+   | BO_BVxor (_: N).
 
   Inductive nop : Type :=
    | NO_distinct (_ : Typ.type)
@@ -598,8 +599,7 @@ Module Atom.
    | Auop (_ : unop) (_:hatom)
    | Abop (_ : binop) (_:hatom) (_:hatom)
    | Anop (_ : nop) (_: list hatom)
-   | Aapp (_:func) (_: list hatom)
-  .
+   | Aapp (_:func) (_: list hatom).
 
 
   (* Generic predicates and operations *)
@@ -634,7 +634,8 @@ Module Atom.
    | BO_Zgt, BO_Zgt => true
    | BO_eq t, BO_eq t' => Typ.eqb t t'
    | BO_BVand s1, BO_BVand s2
-   | BO_BVor s1, BO_BVor s2 => N.eqb s1 s2
+   | BO_BVor s1, BO_BVor s2 
+   | BO_BVxor s1, BO_BVxor s2=> N.eqb s1 s2
    | _,_ => false
    end.
 
@@ -682,8 +683,10 @@ Module Atom.
 
   Lemma reflect_bop_eqb : forall o1 o2, reflect (o1 = o2) (bop_eqb o1 o2).
   Proof.
-   intros [ | | | | | | |A1|s1|s1] [ | | | | | | |A2|s2|s2];simpl;try (constructor;trivial;discriminate).
+   intros [ | | | | | | | A1|s1|s1 |s1 ] [ | | | | | | | A2|s2|s2| s2 ];simpl;try (constructor;trivial;discriminate).
    - preflect (Typ.reflect_eqb A1 A2).
+     constructor;subst;trivial.
+   - preflect (N.eqb_spec s1 s2).
      constructor;subst;trivial.
    - preflect (N.eqb_spec s1 s2).
      constructor;subst;trivial.
@@ -792,6 +795,7 @@ Module Atom.
         | BO_eq t   => ((t,t),Typ.Tbool)
         | BO_BVand s  => ((Typ.TBV s,Typ.TBV s), Typ.TBV s)
         | BO_BVor s   => ((Typ.TBV s,Typ.TBV s), Typ.TBV s)
+        | BO_BVxor s   => ((Typ.TBV s,Typ.TBV s), Typ.TBV s)
         end.
 
       Definition typ_nop o :=
@@ -958,7 +962,12 @@ Module Atom.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
-
+        (*additional case for BO_BVxor*)
+        (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
+          left. exists (Typ.TBV n). rewrite N.eqb_refl. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
         (* N-ary operators *)
         destruct op as [ty]; simpl; case (List.forallb (fun t1 : int => Typ.eqb (get_type t1) ty) ha).
         left; exists Typ.Tbool; auto.
@@ -1040,6 +1049,7 @@ Module Atom.
          | BO_eq t => apply_binop t t Typ.Tbool (Typ.i_eqb t_i t)
          | BO_BVand s => apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_and s)
          | BO_BVor s  => apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_or s)
+         | BO_BVxor s  => apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_xor s)
          end.
 
       Fixpoint compute_interp ty acc l :=
@@ -1204,7 +1214,7 @@ Module Atom.
         exists (- y)%Z; auto.
         exists (BITVECTOR_LIST.bitOf n0 y); auto.
         (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2]; intros [i | | | |s]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff;
+        destruct op as [ | | | | | | | A |s1|s2| s3]; intros [i | | | |s]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff;
         try (change (Typ.eqb (get_type h1) Typ.TZ = true /\ Typ.eqb (get_type h2) Typ.TZ = true) with 
         (is_true (Typ.eqb (get_type h1) Typ.TZ) /\ is_true (Typ.eqb (get_type h2) Typ.TZ)); rewrite !Typ.eqb_spec; intros [H1 H2]; 
         destruct (check_aux_interp_hatom h1) as [x1 Hx1]; rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; 
@@ -1230,7 +1240,11 @@ Module Atom.
         (*BO_BVor*)   
         rewrite andb_true_iff, N.eqb_eq.
         change ((s2 = s /\ Typ.eqb (get_type h1) (Typ.TBV s2) = true) /\ Typ.eqb (get_type h2) (Typ.TBV s2) = true) with ((s2 = s /\ is_true (Typ.eqb (get_type h1) (Typ.TBV s2))) /\ is_true (Typ.eqb (get_type h2) (Typ.TBV s2))); rewrite !Typ.eqb_spec; intros [[-> H1] H2]; destruct (check_aux_interp_hatom h1) as [x1 Hx1]; rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl; generalize x1 Hx1 x2 Hx2; rewrite H1, H2; intros y1 Hy1 y2 Hy2; rewrite !Typ.cast_refl.
-        exists (BITVECTOR_LIST.bv_or y1 y2); auto.   
+        exists (BITVECTOR_LIST.bv_or y1 y2); auto.
+        (*BO_BVxor*)   
+        rewrite andb_true_iff, N.eqb_eq.
+        change ((s3 = s /\ Typ.eqb (get_type h1) (Typ.TBV s3) = true) /\ Typ.eqb (get_type h2) (Typ.TBV s3) = true) with ((s3 = s /\ is_true (Typ.eqb (get_type h1) (Typ.TBV s3))) /\ is_true (Typ.eqb (get_type h2) (Typ.TBV s3))); rewrite !Typ.eqb_spec; intros [[-> H1] H2]; destruct (check_aux_interp_hatom h1) as [x1 Hx1]; rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl; generalize x1 Hx1 x2 Hx2; rewrite H1, H2; intros y1 Hy1 y2 Hy2; rewrite !Typ.cast_refl.
+        exists (BITVECTOR_LIST.bv_xor y1 y2); auto.   
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
         intro l; exists (distinct (Typ.i_eqb t_i A) (rev l)); auto.
@@ -1238,7 +1252,6 @@ Module Atom.
         (* Application *)
         intro t; apply check_args_interp_aux.
       Qed.
-
 
       (* If an atom is not well-typed, its interpretation is bvtrue *)
 
@@ -1443,7 +1456,7 @@ Module Atom.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.TZ); simpl; try (exists true; auto); intro k; exists (- k interp_t x)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bitOf n0 (k interp_t x)) ; auto.
         (* Binary operators *)
-        intros [ | | | | | | |A | | ] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
+        intros [ | | | | | | |A | | | ] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x - k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x * k2 interp_t y)%Z; auto.
@@ -1456,6 +1469,8 @@ Module Atom.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ]; simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_and (k1 interp_t x) (k2 interp_t y)); auto.
         (*BO_BVor*)
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ]; simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_or (k1 interp_t x) (k2 interp_t y)); auto.        
+        (*BO_BVxor*)
+        case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ]; simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_xor (k1 interp_t x) (k2 interp_t y)); auto.        
         (* N-ary operators *)
         intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
         intros acc _; exists (distinct (Typ.i_eqb t_i A) (rev acc)); auto.
