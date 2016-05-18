@@ -1662,7 +1662,6 @@ Proof.  intro a.
             * simpl. case a, b, c. simpl.
           
 *)     
-          
 
 Lemma mult_list_carry_comm: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
                             mult_list_carry a b n = mult_list_carry b a n.
@@ -1689,7 +1688,6 @@ Proof. intro a.
              exact H0.
              simpl in *. lia.
 Admitted.
- 
            
 (* bitvector MULT properties *)
 

@@ -15,7 +15,7 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 Require Import Int63 PArray.
-(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
+Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
 Require Import Misc State SMT_terms BVList.
 Require Import Bool List BoolEq NZParity.
 
@@ -118,11 +118,18 @@ Section Checker.
 
   Definition get_xor f :=
     match f with
-    | For args => if PArray.length args == 2 then Some (args.[0], args.[1]) else None
+    | Fxor arg0 arg1 => Some (arg0, arg1)
     | _ => None
     end.
 
-  (* TODO: check the first argument of BVand, BVor and BVxor *)
+(*
+  Definition get_not f :=
+    match f with
+    | Fnot arg => Some arg
+    | _ => None
+    end.
+*)
+  (* TODO: check the first argument of BVand, BVor *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -145,7 +152,13 @@ Section Checker.
                  && (check_symop bs1 bs2 bsres get_xor)
             then lres::nil
             else C._true
-          | _ => C._true
+    (*      | Abop (UO_BVneg _) a1' a2' =>
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop bs1 bs2 bsres get_xor)
+            then lres::nil
+            else C._true
+    *)
+       | _ => C._true
           end
         | _, _, _ => C._true
         end
@@ -319,29 +332,28 @@ Section Checker.
              case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
              intros i2 l2 H2.
              case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
+             intros i1 l1 Heq1.
              case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
+             intros i2 l2 Heq2.
+             
              case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i3 l3 Heq3 l4 Heq4.
-             case_eq (t_form .[ Heq1]).
-               intros i5 Heq5.
-               case_eq ( t_atom .[ Heq1]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
+             intros i3 l3 Heq3.
+               case_eq ( t_atom .[ i1]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
                intros.
                case_eq b; try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
                intros n b'.
-               case_eq (((i2 == i1) && (i3 == i4) || (i2 == i4) && (i3 == i1)) &&
-               check_symop l2 l3 l4 get_and).
+               case_eq (((i2 == i4) && (i3 == i5) || (i2 == i5) && (i3 == i4)) &&
+               check_symop l2 l3 l1 get_and).
                intros;unfold C.interp; simpl. unfold Lit.interp in *.
                rewrite ?andb_true_iff in Heq. destruct Heq.
-               rewrite H5. unfold Var.interp. rewrite rho_interp. rewrite Heq4.
+               rewrite H4. unfold Var.interp. rewrite rho_interp. simpl. rewrite Heq1.
                simpl. unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. simpl.
                destruct interp_form_hatom_bv. 
                unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
                rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
                unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
                rewrite orb_false_r.
-               rewrite ?andb_true_iff in H3. destruct H3.   
+               rewrite ?andb_true_iff in H3.   
                Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).

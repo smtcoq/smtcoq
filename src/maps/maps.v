@@ -1,3 +1,38 @@
+Require Import FMaps.
+Require Import FMapInterface.
+Require Import FMapList.
+
+Module Make (X: OrderedType) <: S with Module E := X.
+
+SearchAbout Raw.is_empty.
+
+Check Elt.mapi.
+
+
+Module Raw (X:OrderedType).
+
+Module Import MX := OrderedTypeFacts X.
+Module Import PX := KeyOrderedType X.
+
+Definition key := X.t.
+Definition t (elt:Type) := list (X.t * elt).
+
+Section Elt.
+Variable elt : Type.
+
+Notation eqk := (eqk (elt:=elt)).
+Notation eqke := (eqke (elt:=elt)).
+Notation ltk := (ltk (elt:=elt)).
+Notation MapsTo := (MapsTo (elt:=elt)).
+Notation In := (In (elt:=elt)).
+Notation Sort := (sort ltk).
+Notation Inf := (lelistA (ltk)).
+
+
+
+
+
+
 Require Import Arith Bool.
 Require Import FunctionalExtensionality.
 
