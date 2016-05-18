@@ -25,6 +25,10 @@ Local Open Scope bool_scope.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(* We temporarily assume proof irrelevance to handle dependently typed
+   bit vectors *)
+Axiom proof_irrelevance : forall (P : Prop) (p1 p2 : P), p1 = p2.
+
 Module Type BITVECTOR.
 
   Parameter bitvector : N -> Type.
@@ -53,7 +57,7 @@ Module Type BITVECTOR.
   (* Specification *)
   Axiom bits_size     : forall n (bv:bitvector n), List.length (bits bv) = N.to_nat n.
   Axiom bv_eq_reflect : forall n (a b:bitvector n), bv_eq a b = true <-> a = b.
-  Axiom bv_and_comm   : forall n (a b:bitvector n), bv_and a b = bv_and b a.
+  Axiom bv_and_comm   : forall n (a b:bitvector n), bv_eq (bv_and a b) (bv_and b a) = true.
 
 End BITVECTOR.
 
@@ -154,15 +158,19 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Lemma bits_size n (bv:bitvector n) : List.length (bits bv) = N.to_nat n.
   Proof. unfold bits. now rewrite M.bits_size, wf. Qed.
 
-  (* This is not provable, we need to rephrase it *)
+  (* The next lemma is provable only if we assume proof irrelevance *)
   Lemma bv_eq_reflect n (a b: bitvector n) : bv_eq a b = true <-> a = b.
-  Proof. unfold bv_eq. rewrite M.bv_eq_reflect. split. intro H.
-         destruct a, b. simpl.
-  Admitted.
+  Proof.
+    unfold bv_eq. rewrite M.bv_eq_reflect. split.
+    - revert a b. intros [a Ha] [b Hb]. simpl. intros ->.
+      rewrite (proof_irrelevance Ha Hb). reflexivity.
+    - now intros ->.
+  Qed.
 
-  Lemma bv_and_comm n (a b:bitvector n) : bv_and a b = bv_and b a.
-  Proof. unfold bv_and. destruct a, b. simpl. remember (@M.bv_and_comm n bv0 bv1).
-  Admitted.
+  Lemma bv_and_comm n (a b:bitvector n) : bv_eq (bv_and a b) (bv_and b a) = true.
+  Proof.
+    unfold bv_eq. rewrite M.bv_eq_reflect. apply (@M.bv_and_comm n); now rewrite wf.
+  Qed.
 
 End RAW2BITVECTOR.
 
