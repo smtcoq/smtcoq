@@ -15,7 +15,7 @@
 
 
 Require Import Bool Int63 PArray.
-Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
+(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State BVList.
 Require List.
 Local Open Scope list_scope.

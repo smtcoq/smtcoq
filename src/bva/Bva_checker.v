@@ -15,7 +15,7 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 Require Import Int63 PArray.
-Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
+(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State SMT_terms BVList.
 Require Import Bool List BoolEq NZParity.
 
