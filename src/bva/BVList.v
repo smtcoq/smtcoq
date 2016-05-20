@@ -60,7 +60,7 @@ Module Type BITVECTOR.
   Axiom bv_and_comm   : forall n (a b:bitvector n), bv_eq (bv_and a b) (bv_and b a) = true.
   Axiom bv_or_comm    : forall n (a b:bitvector n), bv_eq (bv_or a b) (bv_or b a) = true.
   Axiom bv_add_comm   : forall n (a b:bitvector n), bv_eq (bv_add a b) (bv_add b a) = true. 
-(*  Axiom bv_mult_comm  : forall n (a b:bitvector n), bv_eq (bv_mult a b) (bv_mult b a) = true. *)
+  Axiom bv_mult_comm  : forall n (a b:bitvector n), bv_eq (bv_mult a b) (bv_mult b a) = true. 
 
   Axiom bv_and_assoc  : forall n (a b c: bitvector n), bv_eq (bv_and a (bv_and b c)) (bv_and (bv_and a b) c) = true.
   Axiom bv_or_assoc   : forall n (a b c: bitvector n), bv_eq (bv_or a (bv_or b c)) (bv_or (bv_or a b) c) = true.
@@ -115,7 +115,7 @@ Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
 Axiom bv_and_comm    : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
 Axiom bv_or_comm     : forall n a b, size a = n -> size b = n -> bv_or a b = bv_or b a.
 Axiom bv_add_comm    : forall n a b, size a = n -> size b = n -> bv_add a b = bv_add b a.
-(* Axiom bv_mult_comm   : forall n a b, size a = n -> size b = n -> bv_mult a b = bv_mult b a. *)
+Axiom bv_mult_comm   : forall n a b, size a = n -> size b = n -> bv_mult a b = bv_mult b a.
 
 Axiom bv_and_assoc  : forall n a b c, size a = n -> size b = n -> size c = n -> 
                                    (bv_and a (bv_and b c)) = (bv_and (bv_and a b) c).
@@ -202,6 +202,11 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Lemma bv_add_comm n (a b:bitvector n) : bv_eq (bv_add a b) (bv_add b a) = true.
   Proof.
     unfold bv_eq. rewrite M.bv_eq_reflect. apply (@M.bv_add_comm n); now rewrite wf.
+  Qed.
+
+  Lemma bv_mult_comm n (a b:bitvector n) : bv_eq (bv_mult a b) (bv_mult b a) = true.
+  Proof.
+    unfold bv_eq. rewrite M.bv_eq_reflect. apply (@M.bv_mult_comm n); now rewrite wf.
   Qed.
 
   Lemma bv_and_assoc : forall n (a b c :bitvector n), bv_eq (bv_and a (bv_and b c)) (bv_and (bv_and a b) c) = true.
@@ -2235,35 +2240,78 @@ Proof. intro a.
          + rewrite strictly_positive_0_unique in H1. rewrite H1.
            do 2 rewrite mult_list_carry_0. reflexivity.
          + case a, b.
-           * simpl. rewrite IHxs. simpl. 
-             rewrite mult_list_carry_ft_add_list_f_ff.
-             do 2 rewrite <- add_list_assoc.
-             now rewrite add_list_carry_tf_tf_comm.
-             admit (**).
-             admit (**).
+           * simpl.
+             induction n.
+             do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
+             rewrite mult_list_carry_f_f_2.
+             rewrite mult_list_carry_f_f_2.
+             rewrite add_list_carry_tf_t.
+             rewrite add_list_carry_tf_t. apply f_equal.
+             induction n.
+               do 2 rewrite mult_list_carry_0. 
+               now do 2 rewrite add_list_empty_r.
+             rewrite mult_list_carry_add_list_t_f.
+             rewrite mult_list_carry_add_list_t_f.
+             rewrite IHxs.
+             rewrite <- add_list_assoc.
+             rewrite <- add_list_assoc.
+             cut (add_list xs ys = add_list ys xs). now (intro H2 ;rewrite H2).
+             now rewrite add_list_comm.
              simpl in *; lia.
-           * simpl. rewrite IHxs. 
-             rewrite mult_list_carry_ft_add_list_f_ff.
-             rewrite mult_list_cons_false2'.
-             now rewrite mult_list_cons_false2'.
              simpl in *; lia.
-             admit (**).
-             admit (**).
              simpl in *; lia.
-           * rewrite mult_list_cons_false1'. symmetry. rewrite mult_list_cons_false2'.
+             simpl in *; lia.
+           * simpl.
+             induction n.
+               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
+               rewrite mult_list_carry_f_f_2.
+               rewrite mult_list_carry_f_f_2.
+               rewrite add_list_carry_ff_f. apply f_equal.
+             induction n.
+               do 2 rewrite mult_list_carry_0. 
+               now rewrite add_list_empty_r.
+             rewrite mult_list_carry_add_list_t_f.
+             rewrite mult_list_carry_f_f_2.
              rewrite IHxs. reflexivity.
-             admit (**).
-             simpl in *. lia.
-             exact H0.
-             simpl in *. lia.
-           * rewrite mult_list_cons_false1'. symmetry. rewrite mult_list_cons_false2'.
+             simpl in *; lia.
+             simpl in *; lia.
+             simpl in *; lia.
+           * simpl.
+             induction n.
+               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
+               rewrite mult_list_carry_f_f_2.
+               rewrite mult_list_carry_f_f_2.
+               rewrite add_list_carry_ff_f. apply f_equal.
+             induction n.
+               do 2 rewrite mult_list_carry_0. 
+               now rewrite add_list_empty_r.
+             rewrite mult_list_carry_add_list_t_f.
+             rewrite mult_list_carry_f_f_2.
              rewrite IHxs. reflexivity.
-             admit (**).
-             simpl in *. lia.
-             exact H0.
-             simpl in *. lia.
-Admitted.
-           
+             simpl in *; lia.
+             simpl in *; lia.
+             simpl in *; lia.
+           * simpl.
+             induction n.
+               now do 2 rewrite mult_list_carry_0.
+               rewrite mult_list_carry_f_f_2.
+               rewrite mult_list_carry_f_f_2. apply f_equal.
+             induction n.
+               now do 2 rewrite mult_list_carry_0. 
+             rewrite mult_list_carry_f_f_2.
+             rewrite mult_list_carry_f_f_2. apply f_equal.
+             rewrite IHxs. reflexivity.
+             simpl in *; lia.
+             simpl in *; lia.
+Qed.
+
+Lemma mult_list_comm: forall (a b: list bool) n, n = (length a) -> (n = length b) -> (mult_list a b) = (mult_list b a).
+Proof. intros a b n H0 H1.
+       unfold mult_list. 
+       rewrite <- H0, H1.
+       apply mult_list_carry_comm; lia.
+Qed.
+
 (* bitvector MULT properties *)
 
 Lemma bv_mult_size: forall n a b, (size a) = n -> (@size b) = n -> size (bv_mult a b) = n.
@@ -2273,6 +2321,15 @@ Proof. intros n a b H0 H1.
        rewrite N.eqb_compare. rewrite N.compare_refl.
        specialize (@mult_list_length_eq a b). intro H2.
        rewrite <- H2; lia.
+Qed.
+
+Lemma bv_mult_comm: forall n a b, (size a) = n -> (size b) = n -> bv_mult a b = bv_mult b a.
+Proof. intros n a b H0 H1.
+       unfold bv_mult, size, bits in *. rewrite H0, H1.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       rewrite (@mult_list_comm a b (nat_of_N n)). reflexivity.
+       rewrite <- H0. now rewrite Nat2N.id.
+       rewrite <- H1. now rewrite Nat2N.id.
 Qed.
 
 End RAWBITVECTOR_LIST.
