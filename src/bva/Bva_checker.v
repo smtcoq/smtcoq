@@ -117,11 +117,6 @@ Section Checker.
     end.
 *)
 
-Parameter a: int.
-Check a == a.
-SearchAbout (int -> (int  -> bool)).
-
-
   (* Check the validity of a *symmetric* operator *)
   Fixpoint check_symop (bs1 bs2 bsres : list _lit) get_op :=
     match bs1, bs2, bsres with
