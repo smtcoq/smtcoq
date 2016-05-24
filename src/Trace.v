@@ -416,8 +416,8 @@ Module Euf_Checker.
     - apply valid_check_spl_arith; auto.
     - apply valid_check_distinct_elim; auto.
     - eapply valid_check_bbVar; eauto.
-    - apply (@valid_check_bbOp _ _ _ _ s); auto.
-    - apply (@valid_check_bbEq _ _ _ _ s); auto.
+    - apply valid_check_bbOp; auto.
+    - apply valid_check_bbEq; auto.
     - apply valid_check_hole; auto.
   Qed.
 

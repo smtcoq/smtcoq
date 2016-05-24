@@ -33,8 +33,6 @@ Section Checker.
 
   Import Atom.
 
-  Variable (t_i : array typ_eqb).
-  Variable (t_func : array (Atom.tval t_i)).
   Variable t_atom : PArray.array atom.
   Variable t_form : PArray.array form.
 
@@ -44,22 +42,26 @@ Section Checker.
 
   (* Bit-blasting a variable:
 
+              x ∈ BV n
        ----------------------- bbVar
-        bbT(x, [x0; ...; xn])
+        bbT(x, [x₀; ...; xₙ₋₁])
    *)
 
-  (* TODO: check the first argument of BVbitOf *)
-  Fixpoint check_bb a bs i :=
+  Fixpoint check_bb a bs i n :=
     match bs with
-    | nil => true
+    | nil => Nat_eqb i n                     (* We go up to n *)
     | b::bs =>
       if Lit.is_pos b then
         match get_form (Lit.blit b) with
         | Fatom a' =>
           match get_atom a' with
-          | Auop (UO_BVbitOf _ n) a' =>
-            if (a == a') && (Nat_eqb i n)
-            then check_bb a bs (S i)
+          | Auop (UO_BVbitOf N p) a' =>
+            (* TODO:
+               Do not need to check [Nat_eqb l (N.to_nat N)] at every iteration *)
+            if (a == a')                     (* We bit blast the right bv *)
+                 && (Nat_eqb i p)            (* We consider bits after bits *)
+                 && (Nat_eqb n (N.to_nat N)) (* The bv has indeed type BV n *)
+            then check_bb a bs (S i) n
             else false
           | _ => false
           end
@@ -72,7 +74,7 @@ Section Checker.
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
       | FbbT a bs =>
-        if (* (Nat_eqb (N.to_nat (BITVECTOR_LIST.size (Atom.interp_form_hatom_bv t_i t_func t_atom a))) (List.length bs)) && *) (check_bb a bs O)
+        if check_bb a bs O (List.length bs)
         then lres::nil
         else C._true
       | _ => C._true
@@ -206,7 +208,9 @@ Section Checker.
 
   Section Proof.
 
-    Variables (ch_atom : Atom.check_atom t_atom)
+    Variables (t_i : array typ_eqb)
+              (t_func : array (Atom.tval t_i))
+              (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
@@ -264,22 +268,22 @@ Section Checker.
     Qed.
 
     Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
-    Proof. unfold C.valid, check_bbVar.
-           case_eq (Lit.is_pos lres); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). 
-           case_eq (t_form .[ Lit.blit lres]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-           intros i l Heq0 Heq1.
-           case_eq (check_bb i l 0); 
-           [ |  intros Heq2; unfold C.interp; simpl; now rewrite lit_interp_true].
-           intros Heq2. unfold C.interp; simpl. rewrite orb_false_r.
-           unfold Lit.interp. rewrite Heq1.
-           unfold Var.interp.
-           rewrite rho_interp. rewrite Heq0. simpl.
-           unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv.
-           simpl. destruct interp_form_hatom_bv.
-           unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
-           rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
-           unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
-           Admitted.
+    Proof.
+      unfold check_bbVar.
+      case_eq (Lit.is_pos lres); intro Heq1; [ |now apply C.interp_true].
+      case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
+      intros a bs Heq0.
+      case_eq (check_bb a bs 0 (Datatypes.length bs)); intro Heq2; [ |now apply C.interp_true].
+      unfold C.valid. simpl. rewrite orb_false_r.
+      unfold Lit.interp. rewrite Heq1.
+      unfold Var.interp.
+      rewrite rho_interp. rewrite Heq0. simpl.
+      (* unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. *)
+      (* simpl. destruct interp_form_hatom_bv. *)
+      (* unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *. *)
+      (* rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl. *)
+      (* unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *. *)
+    Admitted.
 
     Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
     Proof. unfold C.valid, check_bbOp.
@@ -348,12 +352,12 @@ Section Checker.
                rewrite ?andb_true_iff in Heq. destruct Heq.
                rewrite H4. unfold Var.interp. rewrite rho_interp. simpl. rewrite Heq1.
                simpl. unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. simpl.
-               destruct interp_form_hatom_bv. 
+               destruct interp_form_hatom_bv.
                unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
                rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
                unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
                rewrite orb_false_r.
-               rewrite ?andb_true_iff in H3.   
+               rewrite ?andb_true_iff in H3.
                Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
