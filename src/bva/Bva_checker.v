@@ -19,7 +19,7 @@ Require Import Int63 PArray.
 Require Import Misc State SMT_terms BVList.
 Require Import Bool List BoolEq NZParity.
 
-
+Import ListNotations.
 Import Form.
 
 Local Open Scope array_scope.
@@ -85,21 +85,6 @@ Section Checker.
   Variable s : S.t.
 
 
-  (* Check the validity of a *symmetric* operator *)
-  Fixpoint check_symop (bs1 bs2 bsres : list _lit) get_op :=
-    match bs1, bs2, bsres with
-    | nil, nil, nil => true
-    | b1::bs1, b2::bs2, bres::bsres =>
-      if Lit.is_pos bres then
-        match get_op (get_form (Lit.blit bres)) with
-        | Some (a1, a2) => ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-        | _ => false
-        end
-      else false
-    | _, _, _ => false
-    end.
-
-
   (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
        -------------------------------------------------- bbAnd
@@ -131,6 +116,139 @@ Section Checker.
     | _ => None
     end.
 *)
+
+Parameter a: int.
+Check a == a.
+SearchAbout (int -> (int  -> bool)).
+
+
+  (* Check the validity of a *symmetric* operator *)
+  Fixpoint check_symop (bs1 bs2 bsres : list _lit) get_op :=
+    match bs1, bs2, bsres with
+    | nil, nil, nil => true
+    | b1::bs1, b2::bs2, bres::bsres =>
+      if Lit.is_pos bres then
+        match get_op (get_form (Lit.blit bres)) with
+        | Some (a1, a2) => ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+        | _ => false
+        end
+      else false
+    | _, _, _ => false
+    end.
+
+Lemma get_and_none: forall (n: int), (forall a, t_form .[ Lit.blit n] <> Fand a) ->
+(get_and (get_form (Lit.blit n))) = None.
+Proof. intros n H.
+       unfold get_and.
+       case_eq (t_form .[ Lit.blit n]); try reflexivity.
+       intros. contradict H0. apply H.
+Qed.
+
+Lemma get_and_some: forall (n: int), 
+(forall a, PArray.length a == 2 -> t_form .[ Lit.blit n] = Fand a ->
+ (get_and (get_form (Lit.blit n))) = Some (a .[ 0], a .[ 1])).
+Proof. intros. rewrite H0. unfold get_and. now rewrite H. Qed.
+
+Lemma check_symop_and_some: 
+forall (a b c: list int) a0 b0 c0 la lb lc,
+let a := a0 :: la in
+let b := b0 :: lb in
+let c := c0 :: lc in
+Lit.is_pos c0 -> get_and (get_form (Lit.blit c0)) = Some (a0, b0) -> 
+check_symop a b c get_and = true.
+Proof. intro a.
+       induction a as [ | a xs IHxs].
+       - intros [ | ys IHys].
+         + intros [ | zs IHzs].
+           * intros. simpl. rewrite H.
+             rewrite H0.
+             cut (a0 == a0 = true).
+             intros H1; rewrite H1.
+             cut (b0 == b0 = true).
+             intros H2; rewrite H2.
+             simpl. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity. 
+           * intros. simpl. rewrite H.
+             rewrite H0.
+             cut (a0 == a0 = true).
+             intros H1; rewrite H1.
+             cut (b0 == b0 = true).
+             intros H2; rewrite H2.
+             simpl. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity. 
+         + intros [ | zs IHzs].
+           * intros. simpl. rewrite H.
+             rewrite H0.
+             cut (a0 == a0 = true).
+             intros H1; rewrite H1.
+             cut (b0 == b0 = true).
+             intros H2; rewrite H2.
+             simpl. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity. 
+           * intros. simpl. rewrite H.
+             rewrite H0.
+             cut (a0 == a0 = true).
+             intros H1; rewrite H1.
+             cut (b0 == b0 = true).
+             intros H2; rewrite H2.
+             simpl. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity.
+             rewrite Lit.eqb_spec. reflexivity.            
+       - intros. specialize (@IHxs b1 c1). apply IHxs.
+         exact H.
+         exact H0.
+Qed.
+
+Lemma empty_false1: forall a b c, a = [] -> c <> [] -> check_symop a b c get_and = false.
+Proof. intro a.
+       induction a as [ | a xs IHxs].
+       - intros [ | ys IHys].
+         + intros [ | zs IHzs].
+           * intros. now contradict H0.
+           * intros. simpl. reflexivity.
+         + intros. simpl. reflexivity.
+       - intros. contradict H. easy.
+Qed.
+
+Lemma empty_false2: forall a b c, b = [] -> c <> [] -> check_symop a b c get_and = false.
+Proof. intro a.
+       induction a as [ | a xs IHxs].
+       - intros [ | ys IHys].
+         + intros [ | zs IHzs].
+           * intros. now contradict H0.
+           * intros. simpl. reflexivity.
+         + intros. simpl. reflexivity.
+       - intros. rewrite H. simpl. reflexivity.
+Qed.
+
+Lemma empty_false3: forall a b c, c = [] -> a <> [] -> check_symop a b c get_and = false.
+Proof. intro a.
+       induction a as [ | a xs IHxs].
+       - intros [ | ys IHys].
+         + intros [ | zs IHzs].
+           * intros. now contradict H0.
+           * intros. simpl. reflexivity.
+         + intros. simpl. reflexivity.
+       - intros. rewrite H. simpl.
+         case b; reflexivity.
+Qed.
+
+Lemma empty_false4: forall a b c, c = [] -> b <> [] -> check_symop a b c get_and = false.
+Proof. intro a.
+       induction a as [ | a xs IHxs].
+       - intros [ | ys IHys].
+         + intros [ | zs IHzs].
+           * intros. now contradict H0.
+           * intros. simpl. reflexivity.
+         + intros. simpl. reflexivity.
+       - intros. rewrite H. simpl.
+         case b; reflexivity.
+Qed.
+
+
   (* TODO: check the first argument of BVand, BVor *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -278,12 +396,17 @@ Section Checker.
       unfold Lit.interp. rewrite Heq1.
       unfold Var.interp.
       rewrite rho_interp. rewrite Heq0. simpl.
+      unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv.
+      simpl. destruct interp_form_hatom_bv.
+      unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
+      rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
+      unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
       (* unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. *)
       (* simpl. destruct interp_form_hatom_bv. *)
       (* unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *. *)
       (* rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl. *)
       (* unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *. *)
-    Admitted.
+    Admitted.    
 
     Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
     Proof. unfold C.valid, check_bbOp.
