@@ -145,56 +145,22 @@ Lemma get_and_some: forall (n: int),
 Proof. intros. rewrite H0. unfold get_and. now rewrite H. Qed.
 
 Lemma check_symop_and_some: 
-forall (a b c: list int) a0 b0 c0 la lb lc,
+forall a0 b0 c0 la lb lc,
 let a := a0 :: la in
 let b := b0 :: lb in
 let c := c0 :: lc in
 Lit.is_pos c0 -> get_and (get_form (Lit.blit c0)) = Some (a0, b0) -> 
 check_symop a b c get_and = true.
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - intros [ | ys IHys].
-         + intros [ | zs IHzs].
-           * intros. simpl. rewrite H.
-             rewrite H0.
-             cut (a0 == a0 = true).
-             intros H1; rewrite H1.
-             cut (b0 == b0 = true).
-             intros H2; rewrite H2.
-             simpl. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity. 
-           * intros. simpl. rewrite H.
-             rewrite H0.
-             cut (a0 == a0 = true).
-             intros H1; rewrite H1.
-             cut (b0 == b0 = true).
-             intros H2; rewrite H2.
-             simpl. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity. 
-         + intros [ | zs IHzs].
-           * intros. simpl. rewrite H.
-             rewrite H0.
-             cut (a0 == a0 = true).
-             intros H1; rewrite H1.
-             cut (b0 == b0 = true).
-             intros H2; rewrite H2.
-             simpl. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity. 
-           * intros. simpl. rewrite H.
-             rewrite H0.
-             cut (a0 == a0 = true).
-             intros H1; rewrite H1.
-             cut (b0 == b0 = true).
-             intros H2; rewrite H2.
-             simpl. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity.
-             rewrite Lit.eqb_spec. reflexivity.            
-       - intros. specialize (@IHxs b1 c1). apply IHxs.
-         exact H.
-         exact H0.
+Proof. intros. simpl.
+       rewrite H.
+       rewrite H0.
+       cut (a0 == a0 = true).
+       intros H1; rewrite H1.
+       cut (b0 == b0 = true).
+       intros H2; rewrite H2.
+       simpl. reflexivity.
+       now rewrite Lit.eqb_spec.
+       now rewrite Lit.eqb_spec. 
 Qed.
 
 Lemma empty_false1: forall a b c, a = [] -> c <> [] -> check_symop a b c get_and = false.
