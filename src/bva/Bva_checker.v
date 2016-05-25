@@ -392,7 +392,7 @@ Qed.
         case_eq (t_interp .[ a2']). intros V2 v2 Heq22.
         admit.
         (* rewrite Typ.neq_cast. case_eq (Typ.eqb V1 (Typ.TBV N)); simpl. *)
-        (* We need to define [interp_bv] otherwise. *)
+        (* We need to use well-typedness information *)
       (* BVor *)
       - admit.
       (* BVxor *)
