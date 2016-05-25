@@ -333,18 +333,15 @@ Qed.
       destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto.
     Qed.
 
-    Lemma lit_interp_true : Lit.interp rho Lit._true = true.
-    Proof.
-      apply Lit.interp_true.
-      apply wf_rho.
-    Qed.
+    (* Lemma lit_interp_true : Lit.interp rho Lit._true = true. *)
+    (* Proof. *)
+    (*   apply Lit.interp_true. *)
+    (*   apply wf_rho. *)
+    (* Qed. *)
 
+    (* Let rho_interp : forall x : int, rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[ x]). *)
+    (* Proof. intros x;apply wf_interp_form;trivial. Qed. *)
 
-    Let rho_interp : forall x : int, rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[ x]).
-    Proof.
-      destruct (check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as ((H,H0), _).
-      intros x;apply wf_interp_form;trivial.
-    Qed.
 
     Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
     Proof.
@@ -356,7 +353,7 @@ Qed.
       unfold C.valid. simpl. rewrite orb_false_r.
       unfold Lit.interp. rewrite Heq1.
       unfold Var.interp.
-      rewrite rho_interp. rewrite Heq0. simpl.
+      rewrite wf_interp_form. rewrite Heq0. simpl.
       unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv.
       simpl. destruct interp_form_hatom_bv.
       unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
@@ -370,79 +367,111 @@ Qed.
     Admitted.    
 
     Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
-    Proof. unfold C.valid, check_bbOp.
-           case_eq (S.get s pos1). intros; unfold C.interp; simpl;  now rewrite lit_interp_true.
-           intros i l H.
-           case l; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true].
-           case_eq (S.get s pos2). intros; unfold C.interp; simpl;  now rewrite lit_interp_true.
-           intros i0 l0 H0.
-           case l0; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true].
-           case_eq (Lit.is_pos i && Lit.is_pos i0 && Lit.is_pos lres); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-           intro Heq.
-           case_eq (t_form .[ Lit.blit lres]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i1 Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 Heq2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 H2.
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i1 l1 Heq1.
-             case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i2 l2 Heq2.
+    Proof.
+      unfold check_bbOp.
+      case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true.
+      case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true.
+      case_eq (Lit.is_pos l1); intro Heq3; simpl; try now apply C.interp_true.
+      case_eq (Lit.is_pos l2); intro Heq4; simpl; try now apply C.interp_true.
+      case_eq (Lit.is_pos lres); intro Heq5; simpl; try now apply C.interp_true.
+      case_eq (t_form .[ Lit.blit l1]); try (intros; now apply C.interp_true). intros a1 bs1 Heq6.
+      case_eq (t_form .[ Lit.blit l2]); try (intros; now apply C.interp_true). intros a2 bs2 Heq7.
+      case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true). intros a bsres Heq8.
+      case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
+      intros [ | | | | | | |A|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      (* BVand *)
+      - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
+        case_eq (check_symop bs1 bs2 bsres get_and); simpl; intros Heq11; try (now apply C.interp_true).
+        unfold C.valid. simpl. rewrite orb_false_r.
+        unfold Lit.interp. rewrite Heq5.
+        unfold Var.interp.
+        rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
+        unfold Atom.interp_form_hatom_bv at 2, Atom.interp_hatom.
+        rewrite Atom.t_interp_wf; trivial. rewrite Heq9. simpl. unfold apply_binop.
+        case_eq (t_interp .[ a1']). intros V1 v1 Heq21.
+        case_eq (t_interp .[ a2']). intros V2 v2 Heq22.
+        admit.
+        (* rewrite Typ.neq_cast. case_eq (Typ.eqb V1 (Typ.TBV N)); simpl. *)
+        (* We need to define [interp_bv] otherwise. *)
+      (* BVor *)
+      - admit.
+      (* BVxor *)
+      - admit.
+
+
+           (* unfold C.valid, check_bbOp. *)
+           (* case_eq (S.get s pos1). intros; unfold C.interp; simpl;  now rewrite lit_interp_true. *)
+           (* intros i l H. *)
+           (* case l; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true]. *)
+           (* case_eq (S.get s pos2). intros; unfold C.interp; simpl;  now rewrite lit_interp_true. *)
+           (* intros i0 l0 H0. *)
+           (* case l0; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true]. *)
+           (* case_eq (Lit.is_pos i && Lit.is_pos i0 && Lit.is_pos lres); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (* intro Heq. *)
+           (* case_eq (t_form .[ Lit.blit lres]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i1 Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 Heq2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 H2. *)
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i1 l1 Heq1. *)
+           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i2 l2 Heq2. *)
              
-             case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-             intros i3 l3 Heq3.
-               case_eq ( t_atom .[ i1]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-               intros.
-               case_eq b; try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true).
-               intros n b'.
-               case_eq (((i2 == i4) && (i3 == i5) || (i2 == i5) && (i3 == i4)) &&
-               check_symop l2 l3 l1 get_and).
-               intros;unfold C.interp; simpl. unfold Lit.interp in *.
-               rewrite ?andb_true_iff in Heq. destruct Heq.
-               rewrite H4. unfold Var.interp. rewrite rho_interp. simpl. rewrite Heq1.
-               simpl. unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. simpl.
-               destruct interp_form_hatom_bv.
-               unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
-               rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
-               unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
-               rewrite orb_false_r.
-               rewrite ?andb_true_iff in H3.
-               Admitted.
+           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*   intros i3 l3 Heq3. *)
+           (*     case_eq ( t_atom .[ i1]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*     intros. *)
+           (*     case_eq b; try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
+           (*     intros n b'. *)
+           (*     case_eq (((i2 == i4) && (i3 == i5) || (i2 == i5) && (i3 == i4)) && *)
+           (*     check_symop l2 l3 l1 get_and). *)
+           (*     intros;unfold C.interp; simpl. unfold Lit.interp in *. *)
+           (*     rewrite ?andb_true_iff in Heq. destruct Heq. *)
+           (*     rewrite H4. unfold Var.interp. rewrite rho_interp. simpl. rewrite Heq1. *)
+           (*     simpl. unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. simpl. *)
+           (*     destruct interp_form_hatom_bv. *)
+           (*     unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *. *)
+           (*     rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl. *)
+           (*     unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *. *)
+           (*     rewrite orb_false_r. *)
+           (*     rewrite ?andb_true_iff in H3. *)
+    Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
     Admitted.
