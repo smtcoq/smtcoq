@@ -32,13 +32,17 @@ Unset Strict Implicit.
 Section Checker.
 
   Import Atom.
+  Print atom.
+  Print form.
 
   Variable t_atom : PArray.array atom.
   Variable t_form : PArray.array form.
 
   Local Notation get_form := (PArray.get t_form) (only parsing).
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
-
+ 
+  Check get t_form 10.
+  Check get_form 10. 
 
   (* Bit-blasting a variable:
 
@@ -47,7 +51,7 @@ Section Checker.
         bbT(x, [x₀; ...; xₙ₋₁])
    *)
 
-  Fixpoint check_bb a bs i n :=
+  Fixpoint check_bb (a: _lit) (bs: list _lit) (i n: nat) :=
     match bs with
     | nil => Nat_eqb i n                     (* We go up to n *)
     | b::bs =>
@@ -70,6 +74,7 @@ Section Checker.
       else false
     end.
 
+
   Definition check_bbVar lres :=
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
@@ -81,7 +86,6 @@ Section Checker.
       end
     else C._true.
 
-
   Variable s : S.t.
 
 
@@ -91,26 +95,26 @@ Section Checker.
              bbT(a&b, [a0 /\ b0; ...; an /\ bn])
    *)
 
-  Definition get_and f :=
+  Definition get_and (f: form) :=
     match f with
     | Fand args => if PArray.length args == 2 then Some (args.[0], args.[1]) else None
     | _ => None
     end.
 
-  Definition get_or f :=
+  Definition get_or (f: form) :=
     match f with
     | For args => if PArray.length args == 2 then Some (args.[0], args.[1]) else None
     | _ => None
     end.
 
-  Definition get_xor f :=
+  Definition get_xor (f: form) :=
     match f with
     | Fxor arg0 arg1 => Some (arg0, arg1)
     | _ => None
     end.
 
 (*
-  Definition get_not f :=
+  Definition get_not (f: form) :=
     match f with
     | Fnot arg => Some arg
     | _ => None
@@ -118,7 +122,7 @@ Section Checker.
 *)
 
   (* Check the validity of a *symmetric* operator *)
-  Fixpoint check_symop (bs1 bs2 bsres : list _lit) get_op :=
+  Fixpoint check_symop (bs1 bs2 bsres : list _lit) (get_op: form -> option (_lit * _lit)) :=
     match bs1, bs2, bsres with
     | nil, nil, nil => true
     | b1::bs1, b2::bs2, bres::bsres =>
@@ -130,6 +134,7 @@ Section Checker.
       else false
     | _, _, _ => false
     end.
+
 
 Lemma get_and_none: forall (n: int), (forall a, t_form .[ Lit.blit n] <> Fand a) ->
 (get_and (get_form (Lit.blit n))) = None.
@@ -144,13 +149,13 @@ Lemma get_and_some: forall (n: int),
  (get_and (get_form (Lit.blit n))) = Some (a .[ 0], a .[ 1])).
 Proof. intros. rewrite H0. unfold get_and. now rewrite H. Qed.
 
-Lemma check_symop_and_some: 
-forall a0 b0 c0 la lb lc,
+Lemma check_symop_op_some: 
+forall a0 b0 c0 la lb lc get_op,
 let a := a0 :: la in
 let b := b0 :: lb in
 let c := c0 :: lc in
-Lit.is_pos c0 -> get_and (get_form (Lit.blit c0)) = Some (a0, b0) -> 
-check_symop a b c get_and = true.
+Lit.is_pos c0 -> get_op (get_form (Lit.blit c0)) = Some (a0, b0) -> 
+check_symop a b c get_op = true.
 Proof. intros. simpl.
        rewrite H.
        rewrite H0.
@@ -210,6 +215,45 @@ Proof. intro a.
 Qed.
 
 
+  (* Bit-blasting arithmetic operations: bbAdd, bbMult, ...
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAdd
+             bbT(a+b, [a0 + b0; ...; an + bn])
+   *)
+
+  Definition get_add (a: atom) :=
+    match a with
+    | Abop (BO_BVadd _) arg0 arg1 => Some (arg0, arg1)
+    | _ => None
+    end.
+
+  Definition get_subst (a: atom) :=
+    match a with
+    | Abop (BO_BVsubst _) arg0 arg1 => Some (arg0, arg1)
+    | _ => None
+    end.
+
+  Definition get_mult (a: atom) :=
+    match a with
+    | Abop (BO_BVmult _) arg0 arg1 => Some (arg0, arg1)
+    | _ => None
+    end.
+
+  (* Check the validity of a *symmetric* operator *)
+  Fixpoint check_symop' (bs1 bs2 bsres : list _lit) (get_op: atom -> option (_lit * _lit)) :=
+    match bs1, bs2, bsres with
+    | nil, nil, nil => true
+    | b1::bs1, b2::bs2, bres::bsres =>
+      if Lit.is_pos bres then
+        match get_op (get_atom (Lit.blit bres)) with
+        | Some (a1, a2) => ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+        | _ => false
+        end
+      else false
+    | _, _, _ => false
+    end.
+
+
   (* TODO: check the first argument of BVand, BVor *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -233,6 +277,21 @@ Qed.
                  && (check_symop bs1 bs2 bsres get_xor)
             then lres::nil
             else C._true
+          | Abop (BO_BVadd _) a1' a2' =>
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop' bs1 bs2 bsres get_add)
+            then lres::nil
+            else C._true
+          | Abop (BO_BVsubst _) a1' a2' =>
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop' bs1 bs2 bsres get_subst)
+            then lres::nil
+            else C._true
+          | Abop (BO_BVmult _) a1' a2' =>
+            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                 && (check_symop' bs1 bs2 bsres get_mult)
+            then lres::nil
+            else C._true
     (*      | Abop (UO_BVneg _) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (check_symop bs1 bs2 bsres get_xor)
@@ -247,8 +306,23 @@ Qed.
     | _, _ => C._true
     end.
 
+Lemma bbOp0: forall pos1 pos2 lres, S.get s pos1 = [] ->  check_bbOp pos1 pos2 lres = [Lit._true].
+Proof. intros pos1 pos2 lres H0.
+       unfold check_bbOp. rewrite H0.
+       reflexivity.
+Qed.
 
-  (* Bit-blasting equality
+Lemma bbOp1: forall pos1 pos2 lres, S.get s pos2 = [] ->  check_bbOp pos1 pos2 lres = [Lit._true].
+Proof. intros pos1 pos2 lres H0.
+       unfold check_bbOp.
+       case_eq (S.get s pos1). reflexivity.
+       intros i l H1.
+       induction l. 
+       - now rewrite H0.
+       - reflexivity.
+Qed.
+
+   (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
        -------------------------------------------------- bbEq
          (a = b) <-> [(a0 <-> b0) /\ ... /\ (an <-> bn)]
@@ -342,7 +416,6 @@ Qed.
     (* Let rho_interp : forall x : int, rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[ x]). *)
     (* Proof. intros x;apply wf_interp_form;trivial. Qed. *)
 
-
     Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
     Proof.
       unfold check_bbVar.
@@ -353,12 +426,14 @@ Qed.
       unfold C.valid. simpl. rewrite orb_false_r.
       unfold Lit.interp. rewrite Heq1.
       unfold Var.interp.
-      rewrite wf_interp_form. rewrite Heq0. simpl.
+      rewrite wf_interp_form; trivial. rewrite Heq0. simpl.
       unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv.
       simpl. destruct interp_form_hatom_bv.
       unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *.
       rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl.
       unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
+      unfold Valuation.wf in wf_rho.
+      unfold Lit.interp, Var.interp.
       (* unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. *)
       (* simpl. destruct interp_form_hatom_bv. *)
       (* unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *. *)
@@ -387,7 +462,8 @@ Qed.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
         unfold Atom.interp_form_hatom_bv at 2, Atom.interp_hatom.
-        rewrite Atom.t_interp_wf; trivial. rewrite Heq9. simpl. unfold apply_binop.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Heq9. simpl. unfold apply_binop.
         case_eq (t_interp .[ a1']). intros V1 v1 Heq21.
         case_eq (t_interp .[ a2']). intros V2 v2 Heq22.
         admit.
@@ -397,81 +473,13 @@ Qed.
       - admit.
       (* BVxor *)
       - admit.
-
-
-           (* unfold C.valid, check_bbOp. *)
-           (* case_eq (S.get s pos1). intros; unfold C.interp; simpl;  now rewrite lit_interp_true. *)
-           (* intros i l H. *)
-           (* case l; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true]. *)
-           (* case_eq (S.get s pos2). intros; unfold C.interp; simpl;  now rewrite lit_interp_true. *)
-           (* intros i0 l0 H0. *)
-           (* case l0; [ | intros; unfold C.interp; simpl;  now rewrite lit_interp_true]. *)
-           (* case_eq (Lit.is_pos i && Lit.is_pos i0 && Lit.is_pos lres); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (* intro Heq. *)
-           (* case_eq (t_form .[ Lit.blit lres]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i1 Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 Heq2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 H2. *)
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i1 l1 Heq1. *)
-           (*   case_eq (t_form .[ Lit.blit i]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i2 l2 Heq2. *)
-             
-           (*   case_eq (t_form .[ Lit.blit i0]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*   intros i3 l3 Heq3. *)
-           (*     case_eq ( t_atom .[ i1]); try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*     intros. *)
-           (*     case_eq b; try (intros; unfold C.interp; simpl;  now rewrite lit_interp_true). *)
-           (*     intros n b'. *)
-           (*     case_eq (((i2 == i4) && (i3 == i5) || (i2 == i5) && (i3 == i4)) && *)
-           (*     check_symop l2 l3 l1 get_and). *)
-           (*     intros;unfold C.interp; simpl. unfold Lit.interp in *. *)
-           (*     rewrite ?andb_true_iff in Heq. destruct Heq. *)
-           (*     rewrite H4. unfold Var.interp. rewrite rho_interp. simpl. rewrite Heq1. *)
-           (*     simpl. unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv. simpl. *)
-           (*     destruct interp_form_hatom_bv. *)
-           (*     unfold RAWBITVECTOR_LIST.bv_eq,  RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.of_bits in *. *)
-           (*     rewrite wf0. rewrite N.eqb_compare. rewrite N.compare_refl. *)
-           (*     unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *. *)
-           (*     rewrite orb_false_r. *)
-           (*     rewrite ?andb_true_iff in H3. *)
-    Admitted.
+      (* BVadd *)
+      - admit.
+      (* BVsubs *)
+      - admit.
+      (* BVmult *)
+      - admit.
+Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
     Admitted.
