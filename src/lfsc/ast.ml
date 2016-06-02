@@ -191,9 +191,9 @@ let compare_symbol s1 s2 = match s1.sname, s2.sname with
   | S_Hole i1, S_Hole i2 -> Pervasives.compare i1 i2
 
 
-let rec compare_term t1 t2 = match t1.value, t2.value with
-  | Ptr t1, _ -> compare_term t1 t2
-  | _, Ptr t2 -> compare_term t1 t2
+let rec compare_term ?(mod_eq=false) t1 t2 = match t1.value, t2.value with
+  | Ptr t1, _ -> compare_term ~mod_eq t1 t2
+  | _, Ptr t2 -> compare_term ~mod_eq t1 t2
   | Type, Type | Kind, Kind | Mpz, Mpz | Mpq, Mpz -> 0
   | Type, _ -> -1 | _, Type -> 1
   | Kind, _ -> -1 | _, Kind -> 1
@@ -205,37 +205,49 @@ let rec compare_term t1 t2 = match t1.value, t2.value with
   | Rat _, _ -> -1 | _, Rat _ -> 1
   | Const s1, Const s2 -> compare_symbol s1 s2
   | Const _, _ -> -1 | _, Const _ -> 1
+  | App ({value=Const{sname=Name "="}}, [ty1; a1; b1]),
+    App ({value=Const{sname=Name "="}}, [ty2; a2; b2]) when mod_eq ->
+    let c = compare_term ~mod_eq ty1 ty2 in
+    if c <> 0 then c
+    else
+      let ca1a2 = compare_term ~mod_eq a1 a2 in
+      let ca1b2 = compare_term ~mod_eq a1 a2 in
+      let cb1b2 = compare_term ~mod_eq a1 a2 in
+      let cb1a2 = compare_term ~mod_eq a1 a2 in
+      if ca1a2 = 0 && cb1b2 = 0 then 0
+      else if ca1b2 = 0 && cb1a2 = 0 then 0
+      else if ca1a2 <> 0 then ca1a2 else cb1b2
   | App (f1, l1), App (f2, l2) ->
-    compare_term_list (f1 :: l1) (f2 :: l2)
+    compare_term_list ~mod_eq (f1 :: l1) (f2 :: l2)
   | App _, _ -> -1 | _, App _ -> 1
     
   | Pi (s1, t1), Pi (s2, t2) ->
     let c = compare_symbol s1 s2 in
     if c <> 0 then c
-    else compare_term t1 t2
+    else compare_term ~mod_eq t1 t2
   | Pi _, _ -> -1 | _, Pi _ -> 1
 
   | Lambda (s1, t1), Lambda (s2, t2) ->
     let c = compare_symbol s1 s2 in
     if c <> 0 then c
-    else compare_term t1 t2
+    else compare_term ~mod_eq t1 t2
   | Lambda _, _ -> -1 | _, Lambda _ -> 1
 
   (* ignore side conditions *)
-  | SideCond (_, _, _, t), _ -> compare_term t t2
-  | _, SideCond (_, _, _, t) -> compare_term t1 t
+  | SideCond (_, _, _, t), _ -> compare_term ~mod_eq t t2
+  | _, SideCond (_, _, _, t) -> compare_term ~mod_eq t1 t
 
   | Hole i1, Hole i2 -> Pervasives.compare i1 i2
 
 
-and compare_term_list l1 l2 = match l1, l2 with
+and compare_term_list ?(mod_eq=false) l1 l2 = match l1, l2 with
   | [], [] -> 0
   | [], _ -> -1
   | _, [] -> 1
   | t1 :: r1, t2 :: r2 ->
-    let c = compare_term t1 t2 in
+    let c = compare_term ~mod_eq t1 t2 in
     if c <> 0 then c
-    else compare_term_list r1 r2
+    else compare_term_list ~mod_eq r1 r2
 
 
 let rec hash_term t = match t.value with
@@ -245,7 +257,7 @@ let rec hash_term t = match t.value with
 
 module Term = struct
   type t = term
-  let compare = compare_term
+  let compare = compare_term ~mod_eq:false
   let equal x y = compare_term x y = 0
   let hash t = Hashtbl.hash_param 100 500 t.value (* hash_term *)
 end
@@ -858,6 +870,30 @@ let mk_check t = run_side_conditions ()
 
 
 
+
+
+let rec hash_term_mod_eq p = match p.value with
+  | App ({value=Const{sname=Name "="}} as f, [ty; a; b])
+    when compare_term ~mod_eq:true a b > 0 ->
+    Term.hash (mk_app f [ty; b; a])
+  | App (f, args) ->
+    List.fold_left
+      (fun acc t -> 7*(acc + hash_term_mod_eq f)) 1 (f:: args)
+  | Pi (s, x) ->
+    (Hashtbl.hash_param 100 500 s + hash_term_mod_eq x) * 11
+  | Lambda (s, x) ->
+    (Hashtbl.hash_param 100 500 s + hash_term_mod_eq x) * 13
+  | _ -> Hashtbl.hash_param 100 500 p
+
+
+module Term_modeq = struct
+  type t = term
+  let compare = compare_term ~mod_eq:true
+  let equal x y = compare_term ~mod_eq:true x y = 0
+  let hash t =
+    (* eprintf "HASH: %a@." print_term t; *)
+    hash_term_mod_eq t 
+end
 
 
 (* 

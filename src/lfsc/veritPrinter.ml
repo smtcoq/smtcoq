@@ -249,12 +249,50 @@ let th_res p = match app_name (deref p).ttype with
 type clause_res_id = NewCl of int | OldCl of int
 
 
+let clause_mod_eqsymm cl =
+  List.fold_left (fun acc t -> match app_name t with
+      | Some ("=", [ty; a; b]) ->
+        let eqt = match value t with App (eqt, _ ) -> eqt | _ -> assert false in
+        let eq_b_a = mk_app eqt [ty; b; a] in
+        let acc2 = List.map (fun cl -> eq_b_a :: cl) acc in
+        let acc1 = List.map (fun cl -> t :: cl) acc in
+        List.rev_append acc2 acc1
+      | _ -> List.map (fun cl -> t :: cl) acc
+    ) [[]] cl
+
+
+      
+let rec normalize_eq_symm p = match app_name p with
+  | Some ("=", [ty; a; b]) when compare_term a b > 0 ->
+    let eqt = match value p with App (eqt, _ ) -> eqt | _ -> assert false in
+    mk_app eqt [ty; b; a]
+  | _ -> match p.value with
+    | App (f, args) ->
+      let nargs = List.map normalize_eq_symm args in
+      if List.for_all2 (==) args nargs then p
+      else mk_app f nargs
+    | Pi (s, x) ->
+      let x' = normalize_eq_symm x in
+      if x == x' then p else mk_pi s x'
+    | Lambda (s, x) ->
+      let x' = normalize_eq_symm x in
+      if x == x' then p else mk_lambda s x'
+    | _ -> p
+
+
+let normalize_clause = List.map normalize_eq_symm
+
 let register_clause_id cl id =
   HCl.add clauses_ids cl id;
   Hashtbl.add ids_clauses id cl
 
+(* let register_clause_id cl id = *)
+(*   List.iter (fun cl -> register_clause_id cl id) *)
+(*     (clause_mod_eqsymm cl) *)
+
 
 let new_clause_id ?(reuse=true) cl =
+ let cl = normalize_clause cl in
   try
     if not reuse then raise Not_found;
     OldCl (HCl.find clauses_ids cl)

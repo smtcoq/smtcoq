@@ -65,8 +65,8 @@ and term = { mutable value: dterm; ttype: term }
 val term_equal : term -> term -> bool
 
 (** Comparision between terms *)
-val compare_term : term -> term -> int
-val compare_term_list : term list -> term list -> int
+val compare_term : ?mod_eq:bool -> term -> term -> int
+val compare_term_list : ?mod_eq:bool -> term list -> term list -> int
 
 val hash_term : term -> int
 
@@ -82,6 +82,13 @@ type proof = command list
 
 (** Term module to build structures over terms. *)
 module Term : sig
+  type t = term
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+  val hash : t -> int
+end
+
+module Term_modeq : sig
   type t = term
   val compare : t -> t -> int
   val equal : t -> t -> bool
