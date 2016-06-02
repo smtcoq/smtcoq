@@ -32,17 +32,13 @@ Unset Strict Implicit.
 Section Checker.
 
   Import Atom.
-  Print atom.
-  Print form.
 
   Variable t_atom : PArray.array atom.
   Variable t_form : PArray.array form.
 
   Local Notation get_form := (PArray.get t_form) (only parsing).
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
- 
-  Check get t_form 10.
-  Check get_form 10. 
+
 
   (* Bit-blasting a variable:
 
@@ -227,12 +223,6 @@ Qed.
     | _ => None
     end.
 
-  Definition get_subst (a: atom) :=
-    match a with
-    | Abop (BO_BVsubst _) arg0 arg1 => Some (arg0, arg1)
-    | _ => None
-    end.
-
   Definition get_mult (a: atom) :=
     match a with
     | Abop (BO_BVmult _) arg0 arg1 => Some (arg0, arg1)
@@ -280,11 +270,6 @@ Qed.
           | Abop (BO_BVadd _) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (check_symop' bs1 bs2 bsres get_add)
-            then lres::nil
-            else C._true
-          | Abop (BO_BVsubst _) a1' a2' =>
-            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                 && (check_symop' bs1 bs2 bsres get_subst)
             then lres::nil
             else C._true
           | Abop (BO_BVmult _) a1' a2' =>
@@ -357,7 +342,6 @@ Qed.
       else C._true
     | _, _ => C._true
     end.
-
 
   Section Proof.
 
