@@ -33,6 +33,8 @@ Section Checker.
 
   Import Atom.
 
+  Print atom.
+
   Variable t_atom : PArray.array atom.
   Variable t_form : PArray.array form.
 
@@ -70,7 +72,6 @@ Section Checker.
       else false
     end.
 
-
   Definition check_bbVar lres :=
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
@@ -81,6 +82,8 @@ Section Checker.
       | _ => C._true
       end
     else C._true.
+
+ Check check_bbVar.
 
   Variable s : S.t.
 
@@ -108,6 +111,7 @@ Section Checker.
     | Fxor arg0 arg1 => Some (arg0, arg1)
     | _ => None
     end.
+
 
 (*
   Definition get_not (f: form) :=
@@ -164,7 +168,7 @@ Proof. intros. simpl.
        now rewrite Lit.eqb_spec. 
 Qed.
 
-Lemma empty_false1: forall a b c, a = [] -> c <> [] -> check_symop a b c get_and = false.
+Lemma empty_false1: forall a b c get_op, a = [] -> c <> [] -> check_symop a b c get_op = false.
 Proof. intro a.
        induction a as [ | a xs IHxs].
        - intros [ | ys IHys].
@@ -211,39 +215,6 @@ Proof. intro a.
 Qed.
 
 
-  (* Bit-blasting arithmetic operations: bbAdd, bbMult, ...
-        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
-       -------------------------------------------------- bbAdd
-             bbT(a+b, [a0 + b0; ...; an + bn])
-   *)
-
-  Definition get_add (a: atom) :=
-    match a with
-    | Abop (BO_BVadd _) arg0 arg1 => Some (arg0, arg1)
-    | _ => None
-    end.
-
-  Definition get_mult (a: atom) :=
-    match a with
-    | Abop (BO_BVmult _) arg0 arg1 => Some (arg0, arg1)
-    | _ => None
-    end.
-
-  (* Check the validity of a *symmetric* operator *)
-  Fixpoint check_symop' (bs1 bs2 bsres : list _lit) (get_op: atom -> option (_lit * _lit)) :=
-    match bs1, bs2, bsres with
-    | nil, nil, nil => true
-    | b1::bs1, b2::bs2, bres::bsres =>
-      if Lit.is_pos bres then
-        match get_op (get_atom (Lit.blit bres)) with
-        | Some (a1, a2) => ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-        | _ => false
-        end
-      else false
-    | _, _, _ => false
-    end.
-
-
   (* TODO: check the first argument of BVand, BVor *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -265,16 +236,6 @@ Qed.
           | Abop (BO_BVxor _) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (check_symop bs1 bs2 bsres get_xor)
-            then lres::nil
-            else C._true
-          | Abop (BO_BVadd _) a1' a2' =>
-            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                 && (check_symop' bs1 bs2 bsres get_add)
-            then lres::nil
-            else C._true
-          | Abop (BO_BVmult _) a1' a2' =>
-            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                 && (check_symop' bs1 bs2 bsres get_mult)
             then lres::nil
             else C._true
     (*      | Abop (UO_BVneg _) a1' a2' =>
@@ -457,13 +418,7 @@ Qed.
       - admit.
       (* BVxor *)
       - admit.
-      (* BVadd *)
-      - admit.
-      (* BVsubs *)
-      - admit.
-      (* BVmult *)
-      - admit.
-Admitted.
+    Admitted.
 
     Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
     Admitted.
