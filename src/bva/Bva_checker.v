@@ -14,11 +14,12 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
+
 Require Import Int63 PArray.
 (*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity.
-Require Import BinPos BinNat Pnat.
+Require Import BinPos BinNat Pnat Init.Peano.
 Import ListNotations.
 Import Form.
 
@@ -377,6 +378,31 @@ Qed.
     | _, _ => C._true
     end.
 
+  Definition check_bbEqq pos1 pos2 lres n :=
+    match S.get s pos1, S.get s pos2 with
+    | l1::nil, l2::nil =>
+      if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
+        match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
+        | FbbT a1 bs1, FbbT a2 bs2, Fiff leq lbb =>
+          match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
+          | Fatom a, Fand bsres | Fand bsres, Fatom a =>
+            match get_atom a with
+            | Abop (BO_eq (Typ.TBV _)) a1' a2' =>
+              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                   && (check_symopp bs1 bs2 (PArray.to_list bsres) (BO_eq  (Typ.TBV n)))
+              then lres::nil
+              else C._true
+            | _ => C._true
+            end
+          | _, _ => C._true
+          end
+        | _, _, _ => C._true
+        end
+      else C._true
+    | _, _ => C._true
+    end.
+
+
   Section Proof.
 
     Variables (t_i : array typ_eqb)
@@ -445,14 +471,115 @@ Proof.
 Admitted.
 *)
 
+Lemma nth_eq1: forall i a xs,
+nth (S i) (a :: xs) 0 = nth i xs 0.
+Proof. intros.
+       now simpl.
+Qed.   
+
+Theorem nat_case: forall (n:nat) (P:nat -> Prop), P 0%nat -> (forall m:nat, P (S m)) -> P n.
+Proof. induction n; auto. Qed.
+
+Theorem le_lt_or_eq : forall (n m: nat), (n <= m)%nat -> (n < m)%nat \/ n = m.
+Proof.
+induction 1; auto with arith.
+Qed.
+
+Lemma le_le_S_eq : forall (n m: nat), (n <= m)%nat -> (S n <= m)%nat \/ n = m.
+Proof le_lt_or_eq.
+
+
+Lemma prop_checkbb: forall (a: int) (bs: list _lit) (i n: nat),
+                    (length bs = (n - i))%nat ->
+                    (check_bb a bs i n = true) ->
+                    (forall i0, (i <= i0 < n )%nat ->
+                    Lit.interp rho (nth (i0 - i) bs 0) = 
+                    (@BITVECTOR_LIST.bitOf (N.of_nat n) i0 (interp_form_hatom_bv a (N.of_nat n)))).
+Proof. intros a bs.
+       revert a.
+       induction bs as [ | b ys IHys].
+       - intros. simpl in H. 
+         cut (i = n). intro Hn. rewrite Hn in H1.
+         contradict H1. omega. omega.
+       - intros. simpl in H0.
+         case_eq (Lit.is_pos b). intros Heq0. rewrite Heq0 in H0.
+         case_eq (t_form .[ Lit.blit b] ). intros i1 Heq1. rewrite Heq1 in H0.
+         case_eq (t_atom .[ i1]). intros c Heq2. 
+         rewrite Heq2 in H0; now contradict H0.
+         intros u i2 Heq2. 
+         rewrite Heq2 in H0.
+         case_eq u; try (intro Heq'; rewrite Heq' in H0; now contradict H0).
+         
+         intros. rewrite H2 in H0.
+         case_eq ((a == i2) && Nat_eqb i n1 && Nat_eqb n (N.to_nat n0)). intros Hif.
+         rewrite Hif in H0.
+         do 2 rewrite andb_true_iff in Hif. destruct Hif as ((Hif0 & Hif1) & Hif2).
+         specialize (@IHys a (S i) n).
+         inversion H.
+         cut (Datatypes.length ys = (n - S i)%nat). intro HSi.
+         specialize (@IHys HSi H0).
+
+         cut (((S i) <= i0 < n)%nat \/ i = i0).
+         intro Hd. destruct Hd as [Hd | Hd].
+         inversion Hd.
+         induction i0 as [ | k IHk].
+         now contradict H3.
+         specialize (@IHys (S k)).
+         cut ((S k - i)%nat = S (k - i)%nat). intro ISk.
+         rewrite ISk.
+         rewrite (@nth_eq1 (k - i) b ys).
+         cut ((S k - S i)%nat = (k - i)%nat). intro ISki.
+         specialize (@IHys Hd).
+         now rewrite ISki in IHys.
+         now simpl. omega.
+         rewrite Hd.
+         cut ((i0 - i0 = 0)%nat). intro Hi0. rewrite Hi0.
+         simpl.       
+        admit. (*****)
+        omega. destruct H1.
+        specialize (@le_le_S_eq i i0). intros H11.
+        specialize (@H11 H1).
+        destruct H11. left. split. exact H5. exact H3.
+        right. exact H5.
+        omega.
+        intro H3. rewrite H3 in H0. now contradict H0.
+        intros b0 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
+        intros n0 l Heq. rewrite Heq in H0. now contradict H0.
+        intros i2 l Heq. rewrite Heq in H0. now contradict H0.
+        intros Heq. rewrite Heq in H0. now contradict H0.
+        intros Heq. rewrite Heq in H0. now contradict H0.
+        intros i1 i2 Heq. rewrite Heq in H0. now contradict H0.
+        intros a0 Heq. rewrite Heq in H0. now contradict H0.
+        intros a0 Heq. rewrite Heq in H0. now contradict H0.
+        intros a0 Heq. rewrite Heq in H0. now contradict H0.
+        intros i1 i2 Heq. rewrite Heq in H0. now contradict H0.
+        intros i1 i2 Heq. rewrite Heq in H0. now contradict H0.
+        intros i1 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
+        intros i1 l Heq. rewrite Heq in H0. now contradict H0.
+        intros Heq. rewrite Heq in H0. now contradict H0.       
+
+Admitted.
+
+
+
 Lemma prop_checkbb': forall (a: int) (bs: list _lit),
                      (check_bb a bs 0 (length bs) = true) ->
                      (forall i0, (i0 < (length bs) )%nat ->
-                     Lit.interp rho (nth i0 bs false) = 
+                     (Lit.interp rho  (nth i0 bs 0)) = 
                      (@BITVECTOR_LIST.bitOf (N.of_nat(length bs)) i0 
                      (interp_form_hatom_bv a (N.of_nat (length bs))))).
-Proof. 
-Admitted.
+Proof. intros.
+       specialize (@prop_checkbb a bs 0 (length bs)).
+       intros Hp.
+       cut ((i0 - 0)%nat = i0%nat).
+       intro Hc.
+       cut (Datatypes.length bs = (Datatypes.length bs - 0)%nat).
+       intro Hc2.
+       specialize (@Hp Hc2 H i0).
+       cut ( (0 <= i0 < Datatypes.length bs)%nat). intro Hc3.
+       specialize (@Hp Hc3).
+       now rewrite Hc in Hp. omega. omega. omega.
+Qed.
 
 (*
   Lemma of_bits_bitOf: forall i l, (@BITVECTOR_LIST.bitOf (N.of_nat (length l)) i 
@@ -462,6 +589,62 @@ Admitted.
   Admitted.
 *)
 
+
+Lemma nth_eq0: forall i a b xs ys,
+nth (S i) (a :: xs) false = nth (S i) (b :: ys) false -> nth i xs false = nth i ys false.
+Proof. intros.
+       now simpl in H.
+Qed.   
+
+Lemma nth_eq: forall (a b: list bool), (length a) = (length b) -> 
+ (forall (i: nat), 
+ (i < length a)%nat ->
+ nth i a false = nth i b false) -> a = b.
+Proof. intros a.
+       induction a as [ | a xs IHxs].
+       - intros. simpl in *. symmetry in H.
+         now rewrite empty_list_length in H.
+       - intros [ | b ys] H0.
+         + simpl in *. now contradict H0.
+         + specialize (@IHxs ys).
+           inversion H0. specialize (@IHxs H1).
+           intros.         
+           pose proof (@H 0%nat). simpl in H2.
+           cut ((0 < S (Datatypes.length xs))%nat). intro HS.
+           specialize (@H2 HS). rewrite H2; apply f_equal.
+           apply IHxs. intros. apply (@nth_eq0 i a b xs ys).
+           apply H. simpl. omega. omega.
+Qed.
+
+Lemma id'' a : N.of_nat (N.to_nat a) = a.
+Proof.
+ destruct a as [ | p]; simpl; trivial.
+ destruct (Pos2Nat.is_succ p) as (n,H). rewrite H. simpl. f_equal.
+ apply Pos2Nat.inj. rewrite H. apply SuccNat2Pos.id_succ.
+Qed.
+
+Lemma inj a a' : N.to_nat a = N.to_nat a' -> a = a'.
+Proof.
+ intro H. rewrite <- (id'' a), <- (id'' a'). now f_equal.
+Qed.
+
+Lemma inj_iff a a' : N.to_nat a = N.to_nat a' <-> a = a'.
+Proof.
+ split. apply inj. intros; now subst.
+Qed.
+
+Lemma inj_iff' a a' : N.of_nat a = N.of_nat a' <-> a = a'.
+Proof. Admitted.
+
+Lemma id' n : N.to_nat (N.of_nat n) = n.
+Proof.
+ induction n; simpl; trivial. apply SuccNat2Pos.id_succ.
+Qed.
+
+
+Lemma rho_false: Lit.interp rho false = false.
+Admitted.
+
 Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST.bitvector (N.of_nat (length l))), 
                                (forall i, 
                                (i < (length l))%nat ->
@@ -469,8 +652,30 @@ Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST.bitvector (N.of_nat (length l))
                                (@BITVECTOR_LIST.bitOf (N.of_nat (length l)) i a))
                                ->
                                (BITVECTOR_LIST.bv_eq a (BITVECTOR_LIST.of_bits l)).
-Proof. 
-Admitted.
+Proof. intros l a H.
+       unfold BITVECTOR_LIST.of_bits in *.
+       unfold BITVECTOR_LIST.bitOf in *.
+       unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv in *.
+       unfold RAWBITVECTOR_LIST.bitOf in *.
+       destruct a.
+       cut (Lit.interp rho false = false). intro HiR.
+         rewrite HiR in H. 
+       unfold RAWBITVECTOR_LIST.of_bits.
+       unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
+       rewrite wf0.       
+       rewrite N.eqb_compare.
+       rewrite N.compare_refl.
+       cut (Datatypes.length l = Datatypes.length bv). intro wf1.
+       
+       apply (@nth_eq l bv wf1) in H.
+       
+       rewrite H.
+       unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
+       rewrite RAWBITVECTOR_LIST.List_eq_refl; auto.
+       apply inj_iff in wf0. now do 2 rewrite id' in wf0.
+       
+       apply rho_false.
+Qed.
 
     Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
     Proof.
@@ -580,7 +785,7 @@ Proof. intros.
        now contradict H.
 Admitted.
 
-Lemma asd: forall bs1 bs2 bsres, 
+Lemma check_symopp_bvand: forall bs1 bs2 bsres, 
   let n := length bsres in
   (length bs1 = n)%nat -> 
   (length bs2 = n)%nat -> 
@@ -852,8 +1057,8 @@ Proof. intro bs1.
               unfold n. simpl. omega.
 Qed.  
  
-   Lemma valid_check_bbOpp pos1 pos2 lres n: C.valid rho (check_bbOpp pos1 pos2 lres n).
-    Proof.
+Lemma valid_check_bbOpp pos1 pos2 lres n: C.valid rho (check_bbOpp pos1 pos2 lres n).
+Proof.
       unfold check_bbOpp.
       case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true.
       case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true.
@@ -885,10 +1090,138 @@ Qed.
       - admit.
       (* BVxor *)
       - admit.
-    Admitted.
+Admitted.
 
-    Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
-    Admitted.
+Lemma valid_check_bbEq pos1 pos2 lres m : C.valid rho (check_bbEqq pos1 pos2 lres m).
+Proof. 
+       unfold check_bbEqq.
+       case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true.
+       case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true.
+       case_eq (Lit.is_pos l1); intro Heq3; simpl; try now apply C.interp_true.
+       case_eq (Lit.is_pos l2); intro Heq4; simpl; try now apply C.interp_true.
+       case_eq (Lit.is_pos lres); intro Heq5; simpl; try now apply C.interp_true.
+       case_eq (t_form .[ Lit.blit l1]); try (intros; now apply C.interp_true). intros a1 bs1 Heq6.
+       case_eq (t_form .[ Lit.blit l2]); try (intros; now apply C.interp_true). intros a2 bs2 Heq7.
+       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true). intros a bsres Heq8.
+       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true). intros c Heq9.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true). intros b i i0 Heq12.
+       case_eq b; try (intros; now apply C.interp_true). intros t Heq13.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq14.
+       admit. (*****)
+       intros a3 Heq10.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b i i0 Heq12.
+       case_eq b; try (intros; now apply C.interp_true). intros t Heq13.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq14.
+       admit. (*****)
+       intros u i Heq9.
+       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true). intros a3 Heq10.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b i0 i1 Heq13.
+       case_eq b; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq15.
+       admit. (*****)
+       intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b i0 i1 Heq13.
+       case_eq b; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq15.
+       admit. (*****)
+       intros u0 i0 Heq10.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b i1 i2 Heq13.
+       case_eq b; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq15.
+       admit. (*****)
+       intros a3 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b i1 i2 Heq13.
+       case_eq b; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq15.
+       admit. (*****)
+       intros b i0 i1 Heq10.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq15.
+       admit. (*****)
+       intros a3 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n Heq15.
+       admit. (*****)
+       intros n l Heq10.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros a3 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros i0 l Heq10.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros a3 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros b i i0 Heq9.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros a3 Heq10.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros n l Heq9.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros a3 Heq10.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros i l Heq9.
+       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a4 Heq11.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+       intros a3 Heq10.
+       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a5 Heq12.
+       case_eq (t_atom .[ a5]); try (intros; now apply C.interp_true). intros b0 i2 i3 Heq13.
+       case_eq b0; try (intros; now apply C.interp_true). intros t Heq14.
+       case_eq t; try (intros; now apply C.interp_true). intros n0 Heq15.
+       admit. (*****)
+Admitted.
 
   End Proof.
 
