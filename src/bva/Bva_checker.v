@@ -471,11 +471,37 @@ Proof.
 Admitted.
 *)
 
+
+Lemma id'' a : N.of_nat (N.to_nat a) = a.
+Proof.
+ destruct a as [ | p]; simpl; trivial.
+ destruct (Pos2Nat.is_succ p) as (n,H). rewrite H. simpl. f_equal.
+ apply Pos2Nat.inj. rewrite H. apply SuccNat2Pos.id_succ.
+Qed.
+
+Lemma inj a a' : N.to_nat a = N.to_nat a' -> a = a'.
+Proof.
+ intro H. rewrite <- (id'' a), <- (id'' a'). now f_equal.
+Qed.
+
+Lemma inj_iff a a' : N.to_nat a = N.to_nat a' <-> a = a'.
+Proof.
+ split. apply inj. intros; now subst.
+Qed.
+
+Lemma inj_iff' a a' : N.of_nat a = N.of_nat a' <-> a = a'.
+Proof. Admitted.
+
+Lemma id' n : N.to_nat (N.of_nat n) = n.
+Proof.
+ induction n; simpl; trivial. apply SuccNat2Pos.id_succ.
+Qed.
+
 Lemma nth_eq1: forall i a xs,
 nth (S i) (a :: xs) 0 = nth i xs 0.
 Proof. intros.
        now simpl.
-Qed.   
+Qed.
 
 Theorem nat_case: forall (n:nat) (P:nat -> Prop), P 0%nat -> (forall m:nat, P (S m)) -> P n.
 Proof. induction n; auto. Qed.
@@ -488,6 +514,16 @@ Qed.
 Lemma le_le_S_eq : forall (n m: nat), (n <= m)%nat -> (S n <= m)%nat \/ n = m.
 Proof le_lt_or_eq.
 
+Lemma Nat_eqb_eq: forall n m, Nat_eqb n m = true -> n = m.
+Proof. induction n.
+       intros n Hm. simpl in Hm. case_eq n. reflexivity.
+         intros. rewrite H in Hm. now contradict H.
+       intros m Hm.
+       case_eq m. intros. rewrite H in Hm. simpl in Hm.
+        now contradict Hm.
+       intros. rewrite H in Hm. simpl in Hm.
+       specialize (@IHn n0 Hm). now rewrite IHn.
+Qed.
 
 Lemma prop_checkbb: forall (a: int) (bs: list _lit) (i n: nat),
                     (length bs = (n - i))%nat ->
@@ -534,8 +570,81 @@ Proof. intros a bs.
          now simpl. omega.
          rewrite Hd.
          cut ((i0 - i0 = 0)%nat). intro Hi0. rewrite Hi0.
-         simpl.       
-        admit. (*****)
+         simpl.
+
+         unfold Lit.interp.
+         rewrite Heq0.
+         unfold Var.interp.
+         rewrite rho_interp.
+         rewrite Heq1.
+
+         rewrite Lit.eqb_spec in Hif0.
+         rewrite Hif0. rewrite <- Hd.
+
+         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
+         rewrite PArray.forallbi_spec;intros.
+         assert (i1 < PArray.length t_atom).
+         apply PArray.get_not_default_lt.
+         rewrite Heq2. now rewrite def_t_atom.
+         specialize (@H3 i1 H5).
+         rewrite Heq2 in H3. simpl in H3.
+         rewrite H2 in H3. simpl in H3.
+         rewrite !andb_true_iff in H3.
+         decompose [and] H3. clear H3.
+     (*    cut (n0 = (N.of_nat n)). intro Hn0n. rewrite Hn0n in H7. *)
+         unfold Typ.eqb in H7.
+         simpl in H7.         
+
+         unfold get_type' in H6, H7.
+         unfold v_type in H6, H7.
+         case_eq (t_interp .[ i1]).
+         intros. rewrite H3 in H6. simpl in H6.
+         case_eq (v_type0).
+         intros. rewrite H8 in H6. now contradict H6.
+         intros. rewrite H8 in H6. now contradict H6.
+         intros. simpl.
+
+         unfold Atom.interp_form_hatom_bv.
+         unfold Atom.interp_form_hatom.
+         unfold Atom.interp_hatom.
+         rewrite Atom.t_interp_wf; trivial.
+         rewrite Heq2.
+         simpl.
+
+         rewrite H2. simpl.
+         cut (i = n1). intro Hin1. rewrite Hin1.
+         cut (n = (N.to_nat n0)). intro Hnn0. rewrite Hnn0. rewrite id''.
+         case_eq (t_interp .[ i2]).
+         
+         intros. rewrite H9 in H7. rewrite <- H9.
+         case_eq v_type1.
+         intros. rewrite H10 in H7. now contradict H7.
+         intros. rewrite H10 in H7. now contradict H7.
+         intros. rewrite H10 in H7. now contradict H7.
+         intros. rewrite H10 in H7. now contradict H7.
+         intros. rewrite H10 in H7.
+         cut (n2 = n0)%N. intros Hn2n0. rewrite Hn2n0 in H10.
+         
+         rewrite H9. simpl.
+         unfold interp_bool.
+         case_eq (Typ.cast v_type1 (Typ.TBV n0)).
+         intros. split. rewrite H10.
+         simpl.
+         rewrite Typ.N_cast_refl. intros.
+         contradict H11. easy.
+         
+         rewrite N.eqb_compare in H7.
+         case_eq (n2 ?= n0)%N.
+         intros. now rewrite N.compare_eq_iff in H11.
+         intros. rewrite H11 in H7. now contradict H7.
+         intros. rewrite H11 in H7. now contradict H7.         
+
+         now apply Nat_eqb_eq in Hif2.
+         now apply Nat_eqb_eq in Hif1.
+
+         intros. rewrite H8 in H6. now contradict H6.
+         intros. rewrite H8 in H6. now contradict H6.
+
         omega. destruct H1.
         specialize (@le_le_S_eq i i0). intros H11.
         specialize (@H11 H1).
@@ -557,10 +666,7 @@ Proof. intros a bs.
         intros i1 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
         intros i1 l Heq. rewrite Heq in H0. now contradict H0.
         intros Heq. rewrite Heq in H0. now contradict H0.       
-
-Admitted.
-
-
+Qed.
 
 Lemma prop_checkbb': forall (a: int) (bs: list _lit),
                      (check_bb a bs 0 (length bs) = true) ->
@@ -591,7 +697,7 @@ Qed.
 
 
 Lemma nth_eq0: forall i a b xs ys,
-nth (S i) (a :: xs) false = nth (S i) (b :: ys) false -> nth i xs false = nth i ys false.
+nth (S i) (a :: xs) true = nth (S i) (b :: ys) false -> nth i xs true = nth i ys false.
 Proof. intros.
        now simpl in H.
 Qed.   
@@ -599,7 +705,7 @@ Qed.
 Lemma nth_eq: forall (a b: list bool), (length a) = (length b) -> 
  (forall (i: nat), 
  (i < length a)%nat ->
- nth i a false = nth i b false) -> a = b.
+ nth i a true = nth i b false) -> a = b.
 Proof. intros a.
        induction a as [ | a xs IHxs].
        - intros. simpl in *. symmetry in H.
@@ -616,34 +722,27 @@ Proof. intros a.
            apply H. simpl. omega. omega.
 Qed.
 
-Lemma id'' a : N.of_nat (N.to_nat a) = a.
+Lemma lsr_0_l i: 0 >> i = 0%int63.
 Proof.
- destruct a as [ | p]; simpl; trivial.
- destruct (Pos2Nat.is_succ p) as (n,H). rewrite H. simpl. f_equal.
- apply Pos2Nat.inj. rewrite H. apply SuccNat2Pos.id_succ.
+ apply to_Z_inj.
+ generalize (lsr_spec 0 i).
+ rewrite to_Z_0, Zdiv_0_l; auto.
 Qed.
 
-Lemma inj a a' : N.to_nat a = N.to_nat a' -> a = a'.
-Proof.
- intro H. rewrite <- (id'' a), <- (id'' a'). now f_equal.
+Lemma is_even_0: is_even 0 = true.
+Proof. apply refl_equal. Qed.
+
+Lemma rho_false: Lit.interp rho false = true.
+Proof. unfold Lit.interp.
+       unfold Lit.is_pos.
+       simpl.
+       cut (is_even 0 = true). intro Hev. rewrite Hev.
+       unfold Var.interp.
+       destruct wf_rho. simpl. unfold Lit.blit.
+       cut (0 >> 1 = 0). intros Heq0. rewrite Heq0. exact H.
+       now rewrite lsr_0_l.
+       apply is_even_0.
 Qed.
-
-Lemma inj_iff a a' : N.to_nat a = N.to_nat a' <-> a = a'.
-Proof.
- split. apply inj. intros; now subst.
-Qed.
-
-Lemma inj_iff' a a' : N.of_nat a = N.of_nat a' <-> a = a'.
-Proof. Admitted.
-
-Lemma id' n : N.to_nat (N.of_nat n) = n.
-Proof.
- induction n; simpl; trivial. apply SuccNat2Pos.id_succ.
-Qed.
-
-
-Lemma rho_false: Lit.interp rho false = false.
-Admitted.
 
 Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST.bitvector (N.of_nat (length l))), 
                                (forall i, 
@@ -658,7 +757,7 @@ Proof. intros l a H.
        unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv in *.
        unfold RAWBITVECTOR_LIST.bitOf in *.
        destruct a.
-       cut (Lit.interp rho false = false). intro HiR.
+       cut (Lit.interp rho false = true). intro HiR.
          rewrite HiR in H. 
        unfold RAWBITVECTOR_LIST.of_bits.
        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
@@ -677,8 +776,8 @@ Proof. intros l a H.
        apply rho_false.
 Qed.
 
-    Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
-    Proof.
+Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
+Proof.
       unfold check_bbVar.
       case_eq (Lit.is_pos lres); intro Heq1; [ |now apply C.interp_true].
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
@@ -694,7 +793,7 @@ Qed.
       rewrite map_length.
       clear Heqe.
       now apply e in H.
-    Qed.
+Qed.
 
     Lemma valid_check_bbOp pos1 pos2 lres : C.valid rho (check_bbOp pos1 pos2 lres).
     
