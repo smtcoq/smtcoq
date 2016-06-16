@@ -15,10 +15,11 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 
+(* Add Rec LoadPath ".." as SMTCoq. *)
 Require Import Int63 PArray.
 (*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State SMT_terms BVList Psatz.
-Require Import Bool List BoolEq NZParity.
+Require Import Bool List BoolEq NZParity Nnat.
 Require Import BinPos BinNat Pnat Init.Peano.
 Import ListNotations.
 Import Form.
@@ -214,31 +215,32 @@ Proof. intro a.
          case b; reflexivity.
 Qed.
 
-  Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop) :=
+Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     match bs1, bs2, bsres with
     | nil, nil, nil => true
     | b1::bs1, b2::bs2, bres::bsres =>
       if Lit.is_pos bres then
-        let ires := 
+        let (ires, bvop) := 
         match get_form (Lit.blit bres), bvop with
           | Fand args, BO_BVand n  =>
-            if PArray.length args == 2 then
-              let a1 := args.[0] in
-              let a2 := args.[1] in
-              ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-            else false
+            ((if PArray.length args == 2 then
+                let a1 := args.[0] in
+                let a2 := args.[1] in
+                ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+              else false), BO_BVand (n-1))
 
           | For args, BO_BVor n  =>
-            if PArray.length args == 2 then
-              let a1 := args.[0] in
-              let a2 := args.[1] in
-              ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-            else false
+            ((if PArray.length args == 2 then
+                let a1 := args.[0] in
+                let a2 := args.[1] in
+                ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+              else false), BO_BVor (n-1))
 
           | Fxor a1 a2, BO_BVxor n =>
-              ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-                   
-          | _, _ => false
+            (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)),
+             BO_BVxor (n-1))
+
+          | _, _ => (false, bvop)
         end in
         if ires then check_symopp bs1 bs2 bsres bvop
         else false
@@ -722,13 +724,6 @@ Proof. intros a.
            apply H. simpl. omega. omega.
 Qed.
 
-Lemma lsr_0_l i: 0 >> i = 0%int63.
-Proof.
- apply to_Z_inj.
- generalize (lsr_spec 0 i).
- rewrite to_Z_0, Zdiv_0_l; auto.
-Qed.
-
 Lemma is_even_0: is_even 0 = true.
 Proof. apply refl_equal. Qed.
 
@@ -899,6 +894,18 @@ Proof. intros.
        now contradict H.
        now contradict H.
 Admitted.
+
+
+Lemma check_symopp_bvand2: forall bs1 bs2 bsres,
+  let n := length bsres in
+  (length bs1 = n)%nat -> 
+  (length bs2 = n)%nat -> 
+  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat n)) = true ->
+  (forall i0, (i0 < n)%nat ->
+         Lit.interp rho (nth i0 bsres 1) =
+         andb (Lit.interp rho (nth i0 bs1 1)) (Lit.interp rho (nth i0 bs2 1))
+  ).
+Admitted. 
 
 Lemma check_symopp_bvand: forall bs1 bs2 bsres, 
   let n := length bsres in
@@ -1177,6 +1184,125 @@ Lemma check_symopp_length: forall bs1 bs2 bsres n,
   length bs1 = length bs2 /\ length bs1 = length bsres.
 Proof. Admitted.
 
+Lemma check_symopp_step: forall bs1 bs2 bsres bvop,
+  check_symopp bs1 bs2 bsres bvop =
+      match bs1, bs2, bsres with
+    | nil, nil, nil => true
+    | b1::bs1, b2::bs2, bres::bsres =>
+      if Lit.is_pos bres then
+        let (ires, bvop) := 
+        match get_form (Lit.blit bres), bvop with
+          | Fand args, BO_BVand n  =>
+            ((if PArray.length args == 2 then
+                let a1 := args.[0] in
+                let a2 := args.[1] in
+                ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+              else false), BO_BVand (n-1))
+
+          | For args, BO_BVor n  =>
+            ((if PArray.length args == 2 then
+                let a1 := args.[0] in
+                let a2 := args.[1] in
+                ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+              else false), BO_BVor (n-1))
+
+          | Fxor a1 a2, BO_BVxor n =>
+            (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)),
+             BO_BVxor (n-1))
+
+          | _, _ => (false, bvop)
+        end in
+        if ires then check_symopp bs1 bs2 bsres bvop
+        else false
+          
+      else false
+    | _, _, _ => false
+    end.
+Proof.
+  intros.
+  unfold check_symopp.
+  case bs1.
+  easy.
+  case bs2. trivial.
+  case bsres. trivial.
+  intros b1 rbs1 b2 rbs2 r rbsres.
+  case (Lit.is_pos b1).
+  case (t_form.[Lit.blit b1]); try trivial.
+  trivial.
+Qed.
+
+Lemma check_symopp_bvand_length: forall bs1 bs2 bsres,
+  let n := length bsres in
+  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat n)) = true ->
+  (length bs1 = n)%nat /\ (length bs2 = n)%nat .
+Proof.
+  intros.
+  revert bs1 bs2 H.
+  induction bsres as [ | r rbsres ].
+  intros.
+  simpl in H.
+  case bs1 in *. simpl in H.
+  case bs2 in *. simpl in *. easy. easy.
+  case bs2 in *. simpl in *. easy.
+  simpl in *. easy.
+  intros.
+  case bs1 in *.
+  case bs2 in *.
+  simpl in *. easy.
+  simpl in *. easy.
+  case bs2 in *. simpl in *. easy.
+  set (n' := length rbsres).
+  fold n' in n, IHrbsres, H.
+  simpl in IHrbsres.
+  assert (n = n' + 1)%nat.
+  simpl in n.
+  fold n' in n.
+  unfold n.
+  clear H. clear IHrbsres.
+  induction n'.
+  auto.
+  simpl in IHn'.
+  (* rewrite IHn'. *)
+  assert ((S n' + 1 = 1 + S n')%nat).
+  omega.
+  omega.
+  assert (n' = n - 1)%nat.
+  omega.
+  rewrite H0 in H.
+  simpl in H.
+  case (Lit.is_pos r) in H.
+  case (t_form .[ Lit.blit r]) in H; try easy.
+  case (PArray.length a == 2) in H; try easy.
+  case ((a .[ 0] == i) && (a .[ 1] == i0) || (a .[ 0] == i0) && (a .[ 1] == i)) in H; try easy.
+  assert ((n' + 1) - 1 = n')%nat.
+  omega.
+  assert (N.of_nat (n' + 1) - 1 = N.of_nat n')%N.
+  Nat2N.nat2N.
+  rewrite H3 in H.
+  specialize (IHrbsres bs1 bs2 H).
+  simpl.
+  simpl in n.
+  fold n' in n.
+  unfold n.
+  split; apply f_equal. easy. easy.
+  easy.
+Qed.
+
+
+Lemma check_symopp_bvand_nl: forall bs1 bs2 bsres, 
+  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat (length bsres))) = true ->
+  (List.map (Lit.interp rho) bsres) = 
+  (RAWBITVECTOR_LIST.map2 andb (List.map (Lit.interp rho) bs1)
+                          (List.map (Lit.interp rho) bs2)).
+Proof.
+  intros.
+  pose proof H.
+  apply check_symopp_bvand_length in H.
+  destruct H.
+  apply check_symopp_bvand in H0. easy. easy. easy.
+Qed.  
+  
+  
 Lemma valid_check_bbOpp pos1 pos2 lres: C.valid rho (check_bbOpp pos1 pos2 lres).
 Proof.
       unfold check_bbOpp.
@@ -1458,7 +1584,8 @@ Proof.
      specialize (@BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 andb bv0 bv)).
      intros.
      unfold RAWBITVECTOR_LIST.size in *.
-     unfold RAWBITVECTOR_LIST.of_bits.
+
+admit (***********).
 Admitted.
 
 
