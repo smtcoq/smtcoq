@@ -841,7 +841,8 @@ Qed.
       - admit.
     Admitted.
 
- Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b. intros A a b l; split; [intros H; inversion H|intros ->]; auto. Qed.
+ Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
+ Proof. intros A a b l; split; [intros H; inversion H|intros ->]; auto. Qed.
 
 Axiom afold_left_and : forall a, 
       afold_left bool int true andb (Lit.interp rho) a = List.forallb (Lit.interp rho) (to_list a).
@@ -1171,7 +1172,7 @@ Proof. intro bs1.
 Qed.
 
 Lemma check_symopp_length: forall bs1 bs2 bsres n, 
-  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat n)) = true ->
+  check_symopp bs1 bs2 bsres (BO_BVand n) = true ->
   length bs1 = length bs2 /\ length bs1 = length bsres.
 Proof. Admitted.
 
@@ -1353,52 +1354,6 @@ Proof.
         unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
         rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
 
-(*
-        unfold BITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bv_eq in HSp1.
-        unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in HSp1.
-        case_eq ((N.of_nat
-             (Datatypes.length
-                (BITVECTOR_LIST.bv
-                   (interp_form_hatom_bv a1
-                      (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1)))))) =?
-           N.of_nat
-             (Datatypes.length
-                (BITVECTOR_LIST.bv
-                   (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs1)))))%N).
-        intros Hif1. rewrite Hif1 in HSp1.
-        apply RAWBITVECTOR_LIST.List_eq in HSp1.
-
-(*
-        specialize (@f_equal _ _ (@BITVECTOR_LIST.bv ( (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))))) 
-          (interp_form_hatom_bv a1 (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1)))) 
-          (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs1))). intro Hfeq.
-       
-        unfold BITVECTOR_LIST.bv in HSp1.        
-        unfold BITVECTOR_LIST.of_bits in HSp1.
-        unfold RAWBITVECTOR_LIST.of_bits in HSp1.
-*)
-
-        unfold BITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bv_eq in HSp2.
-        unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in HSp2.
-        case_eq ((N.of_nat
-             (Datatypes.length
-                (BITVECTOR_LIST.bv
-                   (interp_form_hatom_bv a2
-                      (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2)))))) =?
-           N.of_nat
-             (Datatypes.length
-                (BITVECTOR_LIST.bv
-                   (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs2)))))%N).
-        intros Hif2. rewrite Hif2 in HSp2.
-        apply RAWBITVECTOR_LIST.List_eq in HSp2.
-(*
-        unfold BITVECTOR_LIST.bv in HSp2.
-        unfold BITVECTOR_LIST.of_bits in HSp2.
-        unfold RAWBITVECTOR_LIST.of_bits in HSp2.
-*)
-
-*)
-        (** **)
         destruct 
           (Atom.check_aux_interp_aux t_i t_func t_atom wf_t_atom
           (Abop (BO_BVand N) a1' a2')(Typ.TBV N)) as (z, Hz).
@@ -1425,26 +1380,91 @@ Proof.
         intros v_vala2 Htia2 v_vala1 Htia1.
         rewrite Typ.cast_refl.
         
+        (** case a1 = a1' and a2 = a2' **)
         rewrite orb_true_iff in Heq10.
         do 2 rewrite andb_true_iff in Heq10.
         destruct Heq10 as [Heq10 | Heq10];
           destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2.
         rewrite Heq10a1, Heq10a2 in *.
 
-        (*****)
-        rewrite !Atom.t_interp_wf in Hz; trivial.
-        rewrite Htia1, Htia2 in Hz.
-        unfold Bval in Hz.
-        unfold apply_binop in Hz.
-        rewrite Typ.cast_refl in Hz.
-        unfold Bval in Hz.
-        specialize 
-        (@Atom.Bval_inj2 t_i (Typ.TBV N) 
-        (BITVECTOR_LIST.bv_and (n:=N) v_vala1 v_vala2) z).
-        intros Hvval. unfold Bval in Hvval.
-        specialize (@Hvval Hz). 
+        (*new*)
+        (* interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1'])) *)
+        assert (interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1']))).
+        rewrite Htia1.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia1. easy.
+        (*end*)
+        (* interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2'])) *)
+        assert (interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2']))).
+        rewrite Htia2.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia2. easy.
+        (*end*)
+
+        rewrite H4 in HSp1.
+        rewrite Htia1 in HSp1.
+        rewrite H5 in HSp2.
+        rewrite Htia2 in HSp2.
         unfold Bval.
-        (*rewrite Hvval.*)
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+        rewrite (@check_symopp_bvand_nl bs1 bs2 bsres).
+        (*new end*)
+        
+        admit (*****).
+        admit (*****).
+        
+        (** symmeric case **)
+        rewrite Heq10a1, Heq10a2 in *.
+         (*new*)
+        (* interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1'])) *)
+        assert (interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1']))).
+        rewrite Htia1.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia1. easy.
+        (*end*)
+        (* interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2'])) *)
+        assert (interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2']))).
+        rewrite Htia2.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia2. easy.
+        (*end*)
+
+        rewrite H4 in HSp2.
+        rewrite Htia1 in HSp2.
+        rewrite H5 in HSp1.
+        rewrite Htia2 in HSp1.
+
+        unfold Bval.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+        rewrite (@check_symopp_bvand_nl bs2 bs1 bsres).
+        (*new end*)
+        
+        admit (*****).
+        admit (*****).
+    
+(** other cases, BVor and BVxor, would be the pretty similar with BVand **)
 Admitted.
 
 
