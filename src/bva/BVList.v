@@ -47,7 +47,13 @@ Module Type BITVECTOR.
   (*binary operations*)
   (* Parameter bv_concat : forall n m, bitvector n -> bitvector m -> bitvector (n + m). *)
   Parameter bv_and    : bitvector -> bitvector -> bitvector.
-  Parameter bv_or     : forall (bv1 bv2 : bitvector), (size bv1 = size bv2) -> bitvector.
+  Parameter bv_or     : bitvector -> bitvector -> bitvector.
+  Parameter bv_xor    : bitvector -> bitvector -> bitvector.
+  Parameter bv_add    : bitvector -> bitvector -> bitvector.
+  Parameter bv_subst  : bitvector -> bitvector -> bitvector.
+  Parameter bv_mult   : bitvector -> bitvector -> bitvector.
+
+  (* forall (bv1 bv2 : bitvector), (size bv1 = size bv2) -> bitvector. *)
   (* Parameter bv_xor    : forall n, bitvector n -> bitvector n -> bitvector n. *)
   (* Parameter bv_add    : forall n, bitvector n -> bitvector n -> bitvector n. *)
   (* Parameter bv_subst  : forall n, bitvector n -> bitvector n -> bitvector n. *)
@@ -98,7 +104,12 @@ Parameter bv_subst   : bitvector -> bitvector -> bitvector.
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
 
-Parameter size_bv_and : bitvector -> bitvector -> N.
+Parameter size_bv_and   : bitvector -> bitvector -> N.
+Parameter size_bv_or    : bitvector -> bitvector -> N.
+Parameter size_bv_xor   : bitvector -> bitvector -> N.
+Parameter size_bv_add   : bitvector -> bitvector -> N.
+Parameter size_bv_subst : bitvector -> bitvector -> N.
+Parameter size_bv_mult  : bitvector -> bitvector -> N.
 
 (* All the operations are size-preserving *)
 
@@ -107,8 +118,13 @@ Axiom of_bits_size   : forall l, N.to_nat (size (of_bits l)) = List.length l.
 Axiom zeros_size     : forall n, size (zeros n) = n.
 Axiom bv_concat_size : forall n m a b, size a = n -> size b = m -> size (bv_concat a b) = n + m.
 Axiom bv_and_size    : forall a b, size (bv_and a b) = size_bv_and a b.
+Axiom bv_or_size     : forall a b, size (bv_or a b) = size_bv_or a b.
+Axiom bv_xor_size    : forall a b, size (bv_xor a b) = size_bv_xor a b.
+Axiom bv_add_size    : forall a b, size (bv_add a b) = size_bv_add a b.
+Axiom bv_subst_size  : forall a b, size (bv_subst a b) = size_bv_subst a b.
+Axiom bv_mult_size   : forall a b, size (bv_mult a b) = size_bv_mult a b.
 
-Axiom bv_or_size     : forall a b, size a = size b -> size (bv_or a b) = size a.
+(* Axiom bv_or_size     : forall a b, size a = size b -> size (bv_or a b) = size a. *)
 (* Axiom bv_xor_size    : forall a b, size a = n -> size b = n -> size (bv_xor a b) = n. *)
 (* Axiom bv_add_size    : forall a b, size a = n -> size b = n -> size (bv_add a b) = n. *)
 (* Axiom bv_subst_size  : forall a b, size a = n -> size b = n -> size (bv_subst a b) = n. *)
@@ -164,8 +180,23 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Definition bv_and (bv1 bv2:bitvector) : bitvector :=
     @MkBitvector (M.bv_and bv1 bv2) (M.size_bv_and bv1 bv2) (M.bv_and_size bv1 bv2).
 
-  Definition bv_or (bv1 bv2:bitvector) (p: M.size bv1 = M.size bv2) : bitvector :=
-    @MkBitvector (M.bv_or bv1 bv2) (M.size bv1) (M.bv_or_size p).
+  Definition bv_or (bv1 bv2:bitvector) : bitvector :=
+    @MkBitvector (M.bv_or bv1 bv2) (M.size_bv_or bv1 bv2) (M.bv_or_size bv1 bv2).
+
+  Definition bv_xor (bv1 bv2:bitvector) : bitvector :=
+    @MkBitvector (M.bv_xor bv1 bv2) (M.size_bv_xor bv1 bv2) (M.bv_xor_size bv1 bv2).
+
+  Definition bv_add (bv1 bv2:bitvector) : bitvector :=
+    @MkBitvector (M.bv_add bv1 bv2) (M.size_bv_add bv1 bv2) (M.bv_add_size bv1 bv2).
+
+  Definition bv_subst (bv1 bv2:bitvector) : bitvector :=
+    @MkBitvector (M.bv_subst bv1 bv2) (M.size_bv_subst bv1 bv2) (M.bv_subst_size bv1 bv2).
+
+  Definition bv_mult (bv1 bv2:bitvector) : bitvector :=
+    @MkBitvector (M.bv_mult bv1 bv2) (M.size_bv_mult bv1 bv2) (M.bv_mult_size bv1 bv2).
+
+  (*  Definition bv_or (bv1 bv2:bitvector) (p: M.size bv1 = M.size bv2) : bitvector :=
+    @MkBitvector (M.bv_or bv1 bv2) (M.size bv1) (M.bv_or_size p). *)
 
   (* Definition bv_add n (bv1 bv2:bitvector n) : bitvector n := *)
   (*   @MkBitvector n (M.bv_add bv1 bv2) (M.bv_add_size (wf bv1) (wf bv2)). *)
@@ -815,6 +846,13 @@ Qed.
 
 (* lists bitwise OR properties *)
 
+
+Definition size_bv_or a b :=
+    match (@size a) =? (@size b) with 
+    | true => (@size a)
+    | _    => 0%N
+  end.
+
 Lemma map2_or_comm: forall (a b: list bool), (map2 orb a b) = (map2 orb b a).
 Proof. intros a. induction a as [| a' xs IHxs].
        intros [| b' ys].
@@ -892,15 +930,15 @@ Qed.
 
 (*bitvector OR properties*)
 
-Lemma bv_or_size a b : size a  = size b -> size (bv_or a b) = size a.
+Lemma bv_or_size a b: size (bv_or a b) = size_bv_or a b.
 Proof.
-  unfold bv_or.
-  intros.
-  rewrite H. simpl.
-  rewrite N.eqb_compare. rewrite N.compare_refl.
-  unfold size in *. rewrite <- map2_or_length.
-  - unfold bits. exact H.
-  - unfold bits. now rewrite <- Nat2N.inj_iff, H.
+  unfold size_bv_or, bv_or.
+  case_eq (size a =? size b); intros.
+  - rewrite N.eqb_eq in H. unfold size in *.
+    apply f_equal. unfold bits.
+    symmetry; apply map2_or_length.
+    now apply Nat2N.inj in H.
+  - now unfold size in *.
 Qed.
 
 Lemma bv_or_comm: forall n a b, (size a) = n -> (size b) = n -> bv_or a b = bv_or b a.
@@ -960,6 +998,12 @@ Proof. intro a. unfold bv_or.
 Qed.
 
 (* lists bitwise XOR properties *)
+
+Definition size_bv_xor a b :=
+    match (@size a) =? (@size b) with 
+    | true => (@size a)
+    | _    => 0%N
+  end.
 
 Lemma map2_xor_comm: forall (a b: list bool), (map2 xorb a b) = (map2 xorb b a).
 Proof. intros a. induction a as [| a' xs IHxs].
@@ -1036,15 +1080,17 @@ Proof. intro a. induction a as [| a' xs IHxs].
          rewrite xorb_true_r; reflexivity.
 Qed.
 
-(*bitvector OR properties*)
+(*bitvector XOR properties*)
 
-Lemma bv_xor_size n a b : size a = n -> size b = n -> size (bv_xor a b) = n.
+Lemma bv_xor_size a b: size (bv_xor a b) = size_bv_xor a b.
 Proof.
-  unfold bv_xor. intros H1 H2. rewrite H1, H2.
-  rewrite N.eqb_compare. rewrite N.compare_refl.
-  unfold size in *. rewrite <- map2_xor_length.
-  - exact H1.
-  - unfold bits. now rewrite <- Nat2N.inj_iff, H1.
+  unfold size_bv_xor, bv_xor.
+  case_eq (size a =? size b); intros.
+  - rewrite N.eqb_eq in H. unfold size in *.
+    apply f_equal. unfold bits.
+    symmetry; apply map2_xor_length.
+    now apply Nat2N.inj in H.
+  - now unfold size in *.
 Qed.
 
 Lemma bv_xor_comm: forall n a b, (size a) = n -> (size b) = n -> bv_xor a b = bv_xor b a.
@@ -1193,6 +1239,12 @@ Proof. intros n a b H0 H1. unfold bv_and, size, bits in *.
 Qed.
 
 (* list bitwise ADD properties*)
+
+Definition size_bv_add a b :=
+    match (@size a) =? (@size b) with 
+    | true => (@size a)
+    | _    => 0%N
+  end.
 
 Lemma add_carry_ff: forall a, add_carry a false false = (a, false).
 Proof. intros a.
@@ -1397,11 +1449,15 @@ Qed.
 
 (*bitvector ADD properties*)
 
-Lemma bv_add_size: forall n a b, (size a) = n -> (@size b) = n -> size (bv_add a b) = n.
-Proof. intros n a b H0 H1.
-       unfold bv_add. rewrite H0, H1. rewrite N.eqb_compare. rewrite N.compare_refl.
-       unfold size, bits in *. rewrite <- (@length_add_list_eq a b). auto.
-       now rewrite <- Nat2N.inj_iff, H0.
+Lemma bv_add_size a b: size (bv_add a b) = size_bv_add a b.
+Proof.
+  unfold size_bv_add, bv_add.
+  case_eq (size a =? size b); intros.
+  - rewrite N.eqb_eq in H. unfold size in *.
+    apply f_equal. unfold bits.
+    symmetry; apply length_add_list_eq.
+    now apply Nat2N.inj in H.
+  - now unfold size in *.
 Qed.
 
 Lemma bv_add_comm: forall n a b, (size a) = n -> (size b) = n -> bv_add a b = bv_add b a.
@@ -1445,6 +1501,12 @@ Proof. intro a. unfold bv_add, size, bits.
 Qed.
 
 (* bitwise SUBST properties *)
+
+Definition size_bv_subst a b :=
+    match (@size a) =? (@size b) with 
+    | true => (@size a)
+    | _    => 0%N
+  end.
 
 Lemma subst_list_empty_empty_l: forall a, (subst_list [] a) = [].
 Proof. intro a. unfold subst_list; auto. Qed.
@@ -1527,11 +1589,15 @@ Qed.
 
 (* bitvector SUBST properties *)
 
-Lemma bv_subst_size: forall n a b, (size a) = n -> (size b) = n -> size (bv_subst a b) = n.
-Proof. intros n a b H0 H1.
-       unfold bv_subst, size, bits in *. rewrite H0, H1. rewrite N.eqb_compare.
-       rewrite N.compare_refl. rewrite <- subst_list_length. exact H0.
-       now rewrite <- Nat2N.inj_iff, H0.
+Lemma bv_subst_size a b: size (bv_subst a b) = size_bv_subst a b.
+Proof.
+  unfold size_bv_subst, bv_subst.
+  case_eq (size a =? size b); intros.
+  - rewrite N.eqb_eq in H. unfold size in *.
+    apply f_equal. unfold bits.
+    symmetry; apply subst_list_length.
+    now apply Nat2N.inj in H.
+  - now unfold size in *.
 Qed.
 
 Lemma bv_subst_empty_neutral_r: forall a, (bv_subst a  (mk_list_false (length (bits a)))) = a.
@@ -1660,6 +1726,13 @@ Proof. intros n a b H0 H1. unfold bv_add, bv_subst', add_list, size, bits in *.
 Qed.
 
 (* bitwise MULT properties *)
+
+Definition size_bv_mult a b :=
+    match (@size a) =? (@size b) with 
+    | true => (@size a)
+    | _    => 0%N
+  end.
+
 
 Lemma mult_list_empty_l: forall (a: list bool), (mult_list [] a) = [].
 Proof. intro a. induction a as [| a xs IHxs].
@@ -2363,13 +2436,15 @@ Qed.
 
 (* bitvector MULT properties *)
 
-Lemma bv_mult_size: forall n a b, (size a) = n -> (@size b) = n -> size (bv_mult a b) = n.
-Proof. intros n a b H0 H1.
-       unfold bv_mult, size, bits in *.
-       rewrite H0, H1.
-       rewrite N.eqb_compare. rewrite N.compare_refl.
-       specialize (@mult_list_length_eq a b). intro H2.
-       rewrite <- H2; lia.
+Lemma bv_mult_size a b: size (bv_mult a b) = size_bv_mult a b.
+Proof.
+  unfold size_bv_mult, bv_mult.
+  case_eq (size a =? size b); intros.
+  - rewrite N.eqb_eq in H. unfold size in *.
+    apply f_equal. unfold bits.
+    symmetry; apply mult_list_length_eq.
+    now apply Nat2N.inj in H.
+  - now unfold size in *.
 Qed.
 
 Lemma bv_mult_comm: forall n a b, (size a) = n -> (size b) = n -> bv_mult a b = bv_mult b a.
