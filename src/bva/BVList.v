@@ -64,7 +64,7 @@ Module Type BITVECTOR.
 
   (* Specification *)
   Axiom bits_size     : forall (bv:bitvector), List.length (bits bv) = N.to_nat (size bv).
-  Axiom bv_eq_reflect : forall (a b:bitvector), bv_eq a b = true <-> (size a = size b /\ a = b).
+  Axiom bv_eq_reflect : forall (a b:bitvector), bv_eq a b = true <-> a = b.
   (* Axiom bv_and_comm   : forall n (a b:bitvector n), bv_eq (bv_and a b) (bv_and b a) = true. *)
   (* Axiom bv_or_comm    : forall n (a b:bitvector n), bv_eq (bv_or a b) (bv_or b a) = true. *)
   (* Axiom bv_add_comm   : forall n (a b:bitvector n), bv_eq (bv_add a b) (bv_add b a) = true.  *)
@@ -132,7 +132,8 @@ Axiom bv_mult_size   : forall a b, size (bv_mult a b) = size_bv_mult a b.
 (* Axiom bv_not_size    : forall n a, size a = n -> size (bv_not a) = n. *)
 
 (* Specification *)
-Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> (size a = size b /\ a = b).
+ Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
+(*Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> (size a = size b /\ a = b).*)
 Axiom bv_and_comm    : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
 Axiom bv_or_comm     : forall n a b, size a = n -> size b = n -> bv_or a b = bv_or b a.
 Axiom bv_add_comm    : forall n a b, size a = n -> size b = n -> bv_add a b = bv_add b a.
@@ -219,28 +220,16 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Lemma bits_size (bv:bitvector) : List.length (bits bv) = N.to_nat (M.size bv).
   Proof. unfold bits. now rewrite M.bits_size, wf. Qed.
 
-  (* The next lemma is provable only if we assume proof irrelevance *)
-  Lemma bv_eq_reflect (a b: bitvector) :
-    (bv_eq a b = true <-> ((size a = size b) /\ a = b)).
+  Lemma bv_eq_reflect (a b: bitvector): bv_eq a b = true <-> a = b.
   Proof.
     unfold bv_eq. rewrite M.bv_eq_reflect. split.
 
     - revert a b.
       intros [a na Ha] [b nb Hb]. simpl.
-      intro.
-      destruct H.
-      rewrite Ha, Hb in H.
-      revert Ha Hb.
-      rewrite H.
-      intros.
-      revert Ha Hb.
-      rewrite H0.
-      intros.
-      rewrite (proof_irrelevance Ha Hb).
-      split; reflexivity.
-    - split. destruct H. easy.
-      destruct H. rewrite H0. reflexivity. 
-  Qed.
+      intro. revert na nb Hb Ha. rewrite H.
+      intros. rewrite <- Ha. now rewrite <- Hb.
+    - intros. now destruct H.
+Qed.
 
   (* Lemma bv_and_comm n (a b:bitvector n) : bv_eq (bv_and a b) (bv_and b a) = true. *)
   (* Proof. *)
@@ -561,18 +550,17 @@ Proof.
     - rewrite andb_true_iff. split. apply eqb_reflx. apply IHl. exact m.
 Qed.
 
-Lemma bv_eq_reflect a b : bv_eq a b = true <-> (size a = size b /\ a = b).
+Lemma bv_eq_reflect a b : bv_eq a b = true <-> a = b.
 Proof.
   unfold bv_eq. case_eq (size a =? size b); intro Heq; simpl.
   unfold bits.
   split.
-  - intro. split. rewrite N.eqb_eq in Heq. exact Heq. now apply List_eq in H.
+  - intro. rewrite N.eqb_eq in Heq. now apply List_eq in H.
   - intro.
     destruct H.
-    rewrite H0. now apply List_eq_refl.
+    now apply List_eq_refl.
   - split. intro. now contradict H.
     intro. destruct H.
-    rewrite H in Heq.
     contradict Heq.
     rewrite N.eqb_neq. auto.
 Qed.
