@@ -309,18 +309,11 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
   end.
 
 Definition bv_eq (a b: bitvector): bool:=
-  if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
+  beq_list (bits a) (bits b).
 
 Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
 Proof.
-  unfold bv_eq, size, bits.
-  case_eq (Nat_eqb (length l1) (length l2)); intro Heq.
-  - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl.
-  - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false.
-    * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto.
-      intro Heq. now rewrite <- (IHl1 _ Heq), andb_false_r.
-    * symmetry. rewrite N.eqb_neq. intro H. apply Nat2N.inj in H. rewrite H in Heq.
-      rewrite <- EqNat.beq_nat_refl in Heq. discriminate.
+  unfold bv_eq, size, bits. reflexivity.
 Qed.
 
 Definition bv_concat (a b: bitvector) : bitvector := a ++ b.
@@ -552,18 +545,9 @@ Qed.
 
 Lemma bv_eq_reflect a b : bv_eq a b = true <-> a = b.
 Proof.
-  unfold bv_eq. case_eq (size a =? size b); intro Heq; simpl.
-  unfold bits.
-  split.
-  - intro. rewrite N.eqb_eq in Heq. now apply List_eq in H.
-  - intro.
-    destruct H.
-    now apply List_eq_refl.
-  - split. intro. now contradict H.
-    intro. destruct H.
-    contradict Heq.
-    rewrite N.eqb_neq. auto.
+  unfold bv_eq. unfold bits. apply List_eq.
 Qed.
+
 
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = n + m.
 Proof.

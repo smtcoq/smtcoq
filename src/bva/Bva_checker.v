@@ -764,34 +764,19 @@ Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST.bitvector),
                                ->
                                (BITVECTOR_LIST.bv_eq a (BITVECTOR_LIST.of_bits l)).
 Proof. intros l a samelen H.
+       destruct a.
        unfold BITVECTOR_LIST.of_bits in *.
        unfold BITVECTOR_LIST.bitOf in *.
        unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv in *.
        unfold RAWBITVECTOR_LIST.bitOf in *.
-       destruct a.
-(*
-       cut (Lit.interp rho false = true). intro HiR.
-         rewrite HiR in H. 
-*)
        unfold RAWBITVECTOR_LIST.of_bits.
        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
-       rewrite wf0.       
-       rewrite N.eqb_compare.
-       (* rewrite N.compare_refl. *)
        unfold BITVECTOR_LIST.size, RAWBITVECTOR_LIST.size in samelen.
        simpl in samelen.
        apply Nat2N.inj in samelen.
-       
        apply (@nth_eq l bv samelen) in H.
-       
        rewrite H.
-       unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
-       rewrite RAWBITVECTOR_LIST.List_eq_refl; auto.
-       apply inj_iff in wf0.
-       apply N2Nat.inj in wf0.
-       rewrite wf0.
-       now rewrite N.compare_refl.
-
+       now rewrite RAWBITVECTOR_LIST.List_eq_refl.
 Qed.
 
 
@@ -819,7 +804,7 @@ Proof.
       clear Heqe.
       now apply e in H.
       now apply rho_1.
-Qed.
+Admitted.
 
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
 Proof. intros A a b l; split; [intros H; inversion H|intros ->]; auto. Qed.
@@ -1152,13 +1137,13 @@ Proof. intro bs1.
 Qed.
 
 
-Lemma check_symopp_bvand_length: forall bs1 bs2 bsres,
+Lemma check_symopp_bvand_length: forall bs1 bs2 bsres N,
   let n := length bsres in
-  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat n)) = true ->
+  check_symopp bs1 bs2 bsres (BO_BVand N) = true ->
   (length bs1 = n)%nat /\ (length bs2 = n)%nat .
 Proof.
   intros.
-  revert bs1 bs2 H.
+  revert bs1 bs2 N H.
   induction bsres as [ | r rbsres ].
   intros.
   simpl in H.
@@ -1175,39 +1160,19 @@ Proof.
   set (n' := length rbsres).
   fold n' in n, IHrbsres, H.
   simpl in IHrbsres.
-  assert (n = n' + 1)%nat.
-  simpl in n.
-  fold n' in n.
-  unfold n.
-  clear H. clear IHrbsres.
-  induction n'.
-  auto.
-  simpl in IHn'.
-  (* rewrite IHn'. *)
-  assert ((S n' + 1 = 1 + S n')%nat).
-  omega.
-  omega.
-  assert (n' = n - 1)%nat.
-  omega.
-  rewrite H0 in H.
   simpl in H.
   case (Lit.is_pos r) in H.
   case (t_form .[ Lit.blit r]) in H; try easy.
   case (PArray.length a == 2) in H; try easy.
   case ((a .[ 0] == i) && (a .[ 1] == i0) || (a .[ 0] == i0) && (a .[ 1] == i)) in H; try easy.
-  assert ((n' + 1) - 1 = n')%nat.
-  omega.
-  assert (N.of_nat (n' + 1) - 1 = N.of_nat n')%N.
-  Nat2N.nat2N.
-  rewrite H3 in H.
-  specialize (IHrbsres bs1 bs2 H).
+  specialize (IHrbsres bs1 bs2 (N - 1)%N H).
   simpl.
   simpl in n.
   fold n' in n.
   unfold n.
   split; apply f_equal. easy. easy.
   easy.
-Qed.
+Qed.  
 
 
 Lemma check_symopp_bvand_length': forall bs1 bs2 bsres n,
@@ -1424,16 +1389,15 @@ Proof.
         (** remaining split **)
 
         (** dissapeared admits: 1 **)
-        specialize(@check_symopp_bvand_length' bs1 bs2 bsres (nat_of_N N)).
-        intros Hspec1. rewrite N2Nat.id in Hspec1. 
-        specialize (@Hspec1 Heq11).
-        destruct Hspec1 as (Hspec1a & Hspec1b & Hspec1c).
-
+        
         apply eq_rec.
         unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.n.
         
         do 2 rewrite map_length.
-        rewrite Hspec1a, Hspec1b.
+
+        specialize(@check_symopp_bvand_length bs1 bs2 bsres N Heq11); intro Hlen.
+        destruct Hlen as (Hlenbs1, Hlenbs2).
+        rewrite Hlenbs1, Hlenbs2.
         
         rewrite N.eqb_compare. rewrite N.compare_refl.
         split. reflexivity.
@@ -1442,16 +1406,24 @@ Proof.
         unfold RAWBITVECTOR_LIST.size.
         
         do 2 rewrite map_length.
-        rewrite Hspec1a at 1. rewrite Hspec1b.
+        rewrite Hlenbs1 at 1. rewrite Hlenbs2.
         rewrite N.eqb_compare. rewrite N.compare_refl.
         apply f_equal.
         
-        cut ( Datatypes.length bs1 = Datatypes.length (map (Lit.interp rho) bs1)).
+        cut (length bs1 = Datatypes.length (map (Lit.interp rho) bs1)).
         intros HC1. rewrite HC1.  
         apply RAWBITVECTOR_LIST.map2_and_length.
-        do 2 rewrite map_length. now rewrite Hspec1b.
+        do 2 rewrite map_length. now rewrite Hlenbs1.
         now rewrite map_length.
 
+        (**
+            TODO
+             |
+             |
+             |
+             v
+        **)
+        
         (**** symmetric case: BVand *****)
 
         specialize(@check_symopp_bvand_length' bs1 bs2 bsres (nat_of_N N)).
