@@ -828,11 +828,11 @@ Proof. intros A a H.
        auto.
 Qed.
 
-Lemma check_symopp_and: forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres n,
-      check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_BVand (N.of_nat n)) = true ->
-      check_symopp xbs1 ybs2 zbsres (BO_BVand (N.of_nat (n - 1))) = true.
+Lemma check_symopp_and: forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres N,
+      check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_BVand N) = true ->
+      check_symopp xbs1 ybs2 zbsres (BO_BVand (N-1)) = true.
 Proof. intros.
-       induction n. simpl.
+       induction N. simpl.
        simpl in H. 
        case (Lit.is_pos ibsres) in H.
        case (t_form .[ Lit.blit ibsres]) in H; try (contradict H; easy).
@@ -864,11 +864,11 @@ Lemma check_symopp_bvand2: forall bs1 bs2 bsres,
   ).
 Admitted. 
 
-Lemma check_symopp_bvand: forall bs1 bs2 bsres, 
+Lemma check_symopp_bvand: forall bs1 bs2 bsres N, 
   let n := length bsres in
   (length bs1 = n)%nat -> 
   (length bs2 = n)%nat -> 
-  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat n)) = true ->
+  check_symopp bs1 bs2 bsres (BO_BVand N) = true ->
   (List.map (Lit.interp rho) bsres) = 
   (RAWBITVECTOR_LIST.map2 andb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
 Proof. intro bs1.
@@ -884,7 +884,7 @@ Proof. intro bs1.
            + intros [ | ibsres zbsres ].
              * intros. simpl in *. now contradict H.
              * intros. simpl.
-               specialize (IHbs1 ybs2 zbsres). 
+               specialize (IHbs1 ybs2 zbsres (N-1)%N). 
                rewrite IHbs1. rewrite eq_head.
                unfold Lit.interp, Var.interp.
                case_eq (Lit.is_pos ibsres); intro Heq0.
@@ -1129,11 +1129,8 @@ Proof. intro bs1.
               rewrite Heq0 in H1. now contradict H1.
               now inversion H.
               now inversion H0.
-              remember (@check_symopp_and ibs1 ibs2 xbs1 ybs2 ibsres zbsres).
-              cut ((length zbsres = (n - 1))%nat). intros. rewrite H2.
-              apply (@check_symopp_and ibs1 ibs2 xbs1 ybs2 ibsres zbsres).
+              apply (@check_symopp_and ibs1 ibs2 xbs1 ybs2 ibsres zbsres N).
               exact H1.
-              unfold n. simpl. omega.
 Qed.
 
 
@@ -1191,8 +1188,8 @@ Lemma check_symopp_bvxor_length': forall bs1 bs2 bsres n,
 Proof. Admitted.
 
 
-Lemma check_symopp_bvand_nl: forall bs1 bs2 bsres, 
-  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat (length bsres))) = true ->
+Lemma check_symopp_bvand_nl: forall bs1 bs2 bsres N, 
+  check_symopp bs1 bs2 bsres (BO_BVand N) = true ->
   (List.map (Lit.interp rho) bsres) = 
   (RAWBITVECTOR_LIST.map2 andb (List.map (Lit.interp rho) bs1)
                           (List.map (Lit.interp rho) bs2)).
@@ -1381,7 +1378,7 @@ Proof.
         unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
         rewrite HSp2.
 
-        rewrite (@check_symopp_bvand_nl bs1 bs2 bsres).
+        rewrite (@check_symopp_bvand_nl bs1 bs2 bsres N).
         unfold BITVECTOR_LIST.bv_and, RAWBITVECTOR_LIST.bv_and.
         unfold RAWBITVECTOR_LIST.size, BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, 
         RAWBITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.bits.
@@ -1416,6 +1413,9 @@ Proof.
         do 2 rewrite map_length. now rewrite Hlenbs1.
         now rewrite map_length.
 
+        exact Heq11.
+          
+        
         (**
             TODO
              |
@@ -1424,14 +1424,6 @@ Proof.
              v
         **)
         
-        (**** symmetric case: BVand *****)
-
-        specialize(@check_symopp_bvand_length' bs1 bs2 bsres (nat_of_N N)).
-        intros Hspec1. rewrite N2Nat.id in Hspec1. 
-        specialize (@Hspec1 Heq11).
-        destruct Hspec1 as (Hspec1a & Hspec1b & Hspec1c).
-        rewrite Hspec1c. now rewrite N2Nat.id.
-
 
   (* interp_form_hatom_bv a = 
                 interp_bv t_i (interp_atom (t_atom .[a])) *)
@@ -1486,12 +1478,13 @@ Proof.
         rewrite HSp1.
 
 
-        rewrite (@check_symopp_bvand_nl bs1 bs2 bsres).
+        rewrite (@check_symopp_bvand_nl bs1 bs2 bsres N).
         unfold BITVECTOR_LIST.bv_and, RAWBITVECTOR_LIST.bv_and.
         unfold RAWBITVECTOR_LIST.size, BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, 
         RAWBITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.bits.
     
         (** dissapeared admits: 1 **)
+
         specialize(@check_symopp_bvand_length' bs1 bs2 bsres (nat_of_N N)).
         intros Hspec1. rewrite N2Nat.id in Hspec1. 
         specialize (@Hspec1 Heq11).
@@ -1523,11 +1516,7 @@ Proof.
         do 2 rewrite map_length. now rewrite Hspec1a.
         now rewrite map_length.
 
-        specialize(@check_symopp_bvand_length' bs1 bs2 bsres (nat_of_N N)).
-        intros Hspec1. rewrite N2Nat.id in Hspec1. 
-        specialize (@Hspec1 Heq11).
-        destruct Hspec1 as (Hspec1a & Hspec1b & Hspec1c).
-        rewrite Hspec1c. now rewrite N2Nat.id.
+        exact Heq11.
 
 
       (* BVor *)
