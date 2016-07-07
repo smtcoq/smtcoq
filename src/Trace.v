@@ -13,7 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-
 Require Import Bool Int63 PArray.
 Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators Assumptions BVList Bva_checker.
 
@@ -287,9 +286,9 @@ Module Cnf_Checker.
 
  Lemma checker_b_correct : forall t_var t_form l b c,
     checker_b t_form l b c = true ->
-    Lit.interp (Form.interp_state_var (PArray.get t_var) (fun _ s => BITVECTOR_LIST.zeros s) t_form) l = b.
+    Lit.interp (Form.interp_state_var (PArray.get t_var) (fun _ => BITVECTOR_LIST.zeros 0) t_form) l = b.
  Proof.
-   unfold checker_b; intros t_var t_form l b c; case b; case_eq (Lit.interp (Form.interp_state_var (get t_var) (fun _ s => BITVECTOR_LIST.zeros s) t_form) l); auto; intros H1 H2; elim (checker_correct H2 (rho:=get t_var) (rhobv:=fun _ s => BITVECTOR_LIST.zeros s)); auto; rewrite Lit.interp_neg, H1; auto.
+   unfold checker_b; intros t_var t_form l b c; case b; case_eq (Lit.interp (Form.interp_state_var (get t_var) (fun _ => BITVECTOR_LIST.zeros 0) t_form) l); auto; intros H1 H2; elim (checker_correct H2 (rho:=get t_var) (rhobv:=fun _ => BITVECTOR_LIST.zeros 0)); auto; rewrite Lit.interp_neg, H1; auto.
  Qed.
 
  Definition checker_eq t_form l1 l2 l (c:certif) :=
@@ -302,12 +301,12 @@ Module Cnf_Checker.
 
  Lemma checker_eq_correct : forall t_var t_form l1 l2 l c,
    checker_eq t_form l1 l2 l c = true ->
-    Lit.interp (Form.interp_state_var (PArray.get t_var) (fun _ s => BITVECTOR_LIST.zeros s) t_form) l1 =
-    Lit.interp (Form.interp_state_var (PArray.get t_var) (fun _ s => BITVECTOR_LIST.zeros s) t_form) l2.
+    Lit.interp (Form.interp_state_var (PArray.get t_var) (fun _ => BITVECTOR_LIST.zeros 0) t_form) l1 =
+    Lit.interp (Form.interp_state_var (PArray.get t_var) (fun _ => BITVECTOR_LIST.zeros 0) t_form) l2.
  Proof.
    unfold checker_eq; intros t_var t_form l1 l2 l c; rewrite !andb_true_iff; case_eq (t_form .[ Lit.blit l]); [intros _ _|intros _|intros _|intros _ _ _|intros _ _|intros _ _|intros _ _|intros _ _ _|intros l1' l2' Heq|intros _ _ _ _|intros a ls Heq]; intros [[H1 H2] H3]; try discriminate; rewrite andb_true_iff in H2; rewrite !Int63Properties.eqb_spec in H2; destruct H2 as [H2 H4]; subst l1' l2'; case_eq (Lit.is_pos l); intro Heq'; rewrite Heq' in H1; try discriminate; clear H1; assert (H:PArray.default t_form = Form.Ftrue /\ Form.wf t_form).
-   unfold checker in H3; destruct c as (nclauses, t, confl); rewrite andb_true_iff in H3; destruct H3 as [H3 _]; destruct (Form.check_form_correct (get t_var) (fun _ s => BITVECTOR_LIST.zeros s) _ H3) as [[Ht1 Ht2] Ht3]; split; auto.
-   destruct H as [H1 H2]; case_eq (Lit.interp (Form.interp_state_var (get t_var) (fun _ s => BITVECTOR_LIST.zeros s) t_form) l1); intro Heq1; case_eq (Lit.interp (Form.interp_state_var (get t_var) (fun _ s => BITVECTOR_LIST.zeros s) t_form) l2); intro Heq2; auto; elim (checker_correct H3 (rho:=get t_var) (rhobv:=fun _ s => BITVECTOR_LIST.zeros s)); unfold Lit.interp; rewrite Heq'; unfold Var.interp; rewrite Form.wf_interp_form; auto; rewrite Heq; simpl; rewrite Heq1, Heq2; auto.
+   unfold checker in H3; destruct c as (nclauses, t, confl); rewrite andb_true_iff in H3; destruct H3 as [H3 _]; destruct (Form.check_form_correct (get t_var) (fun _ => BITVECTOR_LIST.zeros 0) _ H3) as [[Ht1 Ht2] Ht3]; split; auto.
+   destruct H as [H1 H2]; case_eq (Lit.interp (Form.interp_state_var (get t_var) (fun _ => BITVECTOR_LIST.zeros 0) t_form) l1); intro Heq1; case_eq (Lit.interp (Form.interp_state_var (get t_var) (fun _ => BITVECTOR_LIST.zeros 0) t_form) l2); intro Heq2; auto; elim (checker_correct H3 (rho:=get t_var) (rhobv:=fun _ => BITVECTOR_LIST.zeros 0)); unfold Lit.interp; rewrite Heq'; unfold Var.interp; rewrite Form.wf_interp_form; auto; rewrite Heq; simpl; rewrite Heq1, Heq2; auto.
  Qed.
 
 End Cnf_Checker.
@@ -416,8 +415,10 @@ Module Euf_Checker.
     - apply valid_check_spl_arith; auto.
     - apply valid_check_distinct_elim; auto.
     - eapply valid_check_bbVar; eauto.
+      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_bbOp; auto.
     - apply valid_check_bbEq; auto.
+      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_hole; auto.
   Qed.
 

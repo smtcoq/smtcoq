@@ -255,45 +255,9 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   Proof. intros A a.
          induction a; split; intros; auto; contradict H; easy.
   Qed.
-  (* TODO: check the first argument of BVand, BVor *)
-  Definition check_bbOp pos1 pos2 lres :=
-    match S.get s pos1, S.get s pos2 with
-    | l1::nil, l2::nil =>
-      if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
-        match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
-        | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
-          match get_atom a with
-          | Abop (BO_BVand _) a1' a2' =>
-            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                 && (check_symop bs1 bs2 bsres get_and)
-            then lres::nil
-            else C._true
-          (* | Abop (BO_BVor _) a1' a2' => *)
-          (*   if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1'))) *)
-          (*        && (check_symop bs1 bs2 bsres get_or) *)
-          (*   then lres::nil *)
-          (*   else C._true *)
-          (* | Abop (BO_BVxor _) a1' a2' => *)
-          (*   if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1'))) *)
-          (*        && (check_symop bs1 bs2 bsres get_xor) *)
-          (*   then lres::nil *)
-          (*   else C._true *)
-    (*      | Abop (UO_BVneg _) a1' a2' =>
-            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                 && (check_symop bs1 bs2 bsres get_xor)
-            then lres::nil
-            else C._true
-    *)
-       | _ => C._true
-          end
-        | _, _, _ => C._true
-        end
-      else C._true
-    | _, _ => C._true
-    end.
 
   (* TODO: check the first argument of BVand, BVor *)
-  Definition check_bbOpp pos1 pos2 lres :=
+  Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
       if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
@@ -330,22 +294,6 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
-Lemma bbOp0: forall pos1 pos2 lres, S.get s pos1 = [] ->  check_bbOp pos1 pos2 lres = [Lit._true].
-Proof. intros pos1 pos2 lres H0.
-       unfold check_bbOp. rewrite H0.
-       reflexivity.
-Qed.
-
-Lemma bbOp1: forall pos1 pos2 lres, S.get s pos2 = [] ->  check_bbOp pos1 pos2 lres = [Lit._true].
-Proof. intros pos1 pos2 lres H0.
-       unfold check_bbOp.
-       case_eq (S.get s pos1). reflexivity.
-       intros i l H1.
-       induction l. 
-       - now rewrite H0.
-       - reflexivity.
-Qed.
-
    (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
        -------------------------------------------------- bbEq
@@ -359,30 +307,6 @@ Qed.
     end.
 
   Definition check_bbEq pos1 pos2 lres :=
-    match S.get s pos1, S.get s pos2 with
-    | l1::nil, l2::nil =>
-      if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
-        match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
-        | FbbT a1 bs1, FbbT a2 bs2, Fiff leq lbb =>
-          match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
-          | Fatom a, Fand bsres | Fand bsres, Fatom a =>
-            match get_atom a with
-            | Abop (BO_eq (Typ.TBV)) a1' a2' =>
-              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                   && (check_symop bs1 bs2 (PArray.to_list bsres) get_iff)
-              then lres::nil
-              else C._true
-            | _ => C._true
-            end
-          | _, _ => C._true
-          end
-        | _, _, _ => C._true
-        end
-      else C._true
-    | _, _ => C._true
-    end.
-
-  Definition check_bbEqq pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
       if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
@@ -1858,9 +1782,9 @@ Proof. intros. destruct a, b.
        now rewrite (proof_irrelevance wf0 wf1).
 Qed.
 
-Lemma valid_check_bbOpp pos1 pos2 lres: C.valid rho (check_bbOpp pos1 pos2 lres).
+Lemma valid_check_bbOp pos1 pos2 lres: C.valid rho (check_bbOp pos1 pos2 lres).
 Proof.
-      unfold check_bbOpp.
+      unfold check_bbOp.
       case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true.
       case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true.
       case_eq (Lit.is_pos l1); intro Heq3; simpl; try now apply C.interp_true.
@@ -2580,9 +2504,9 @@ Proof.
 Qed.
  
 
-Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEqq pos1 pos2 lres).
+Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
 Proof. 
-       unfold check_bbEqq.
+       unfold check_bbEq.
        case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true.
        case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true.
        case_eq (Lit.is_pos l1); intro Heq3; simpl; try now apply C.interp_true.

@@ -256,7 +256,7 @@ Section CHECKER.
   (** The correctness proofs *)
 
   Variable interp_atom : atom -> bool.
-  Variable interp_bvatom : atom -> forall s, BITVECTOR_LIST.bitvector s.
+  Variable interp_bvatom : atom -> BITVECTOR_LIST.bitvector.
 
   Hypothesis Hch_f : check_form t_form.
 
