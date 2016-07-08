@@ -240,7 +240,11 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
           | Fxor a1 a2, BO_BVxor n =>
              (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)),
-             BO_BVxor (n-1)) 
+             BO_BVxor (n-1))
+
+          | Fiff a1 a2, (BO_eq (Typ.TBV))  =>
+             (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)),
+             BO_eq (Typ.TBV))
 
           | _, _ => (false, bvop)
         end in
@@ -264,27 +268,25 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
         match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
         | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
           match get_atom a with
+
           | Abop (BO_BVand n) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (@check_symopp bs1 bs2 bsres (BO_BVand n))
             then lres::nil
             else C._true
+
           | Abop (BO_BVor n) a1' a2' =>
              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                   && (check_symopp bs1 bs2 bsres  (BO_BVor n))
              then lres::nil
              else C._true
+
           | Abop (BO_BVxor n) a1' a2' =>
              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                   && (check_symopp bs1 bs2 bsres  (BO_BVxor n))
              then lres::nil
-             else C._true 
-    (*      | Abop (UO_BVneg _) a1' a2' =>
-            if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                 && (check_symop bs1 bs2 bsres get_xor)
-            then lres::nil
-            else C._true
-    *)
+             else C._true
+
        | _ => C._true
           end
         | _, _, _ => C._true
@@ -312,6 +314,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
         match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
         | FbbT a1 bs1, FbbT a2 bs2, Fiff leq lbb =>
+          if (Bool.eqb (Lit.is_pos leq) (Lit.is_pos lbb)) then
           match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
           | Fatom a, Fand bsres | Fand bsres, Fatom a =>
             match get_atom a with
@@ -324,6 +327,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
             end
           | _, _ => C._true
           end
+          else C._true
         | _, _, _ => C._true
         end
       else C._true
@@ -1795,7 +1799,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |A|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | |[ A| | | | ]|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
       (* BVand *)
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (check_symopp bs1 bs2 bsres (BO_BVand N)); simpl; intros Heq11; try (now apply C.interp_true).
@@ -2502,7 +2506,16 @@ Proof.
 
         exact Heq11.
 Qed.
- 
+
+
+Lemma check_symopp_bveq: forall bs1 bs2 bsres, 
+  let n := length bsres in
+  (length bs1 = n)%nat -> 
+  (length bs2 = n)%nat -> 
+  check_symopp bs1 bs2 bsres (BO_eq (Typ.TBV)) = true ->
+  (List.map (Lit.interp rho) bsres) = 
+  (RAWBITVECTOR_LIST.map2 Bool.eqb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
+Proof. Admitted.
 
 Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
 Proof. 
@@ -2515,13 +2528,16 @@ Proof.
        case_eq (t_form .[ Lit.blit l1]); try (intros; now apply C.interp_true). intros a1 bs1 Heq6.
        case_eq (t_form .[ Lit.blit l2]); try (intros; now apply C.interp_true). intros a2 bs2 Heq7.
        case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true). intros a bsres Heq8.
+       case_eq (Bool.eqb (Lit.is_pos a) (Lit.is_pos bsres)). intros Heq12.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11.
-       case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true). intros b i i0 Heq12.
-       case_eq b; try (intros; now apply C.interp_true). intros t Heq13.
-       case_eq t; try (intros; now apply C.interp_true). intros Heq14.
 
-       case_eq ((a1 == i) && (a2 == i0) || (a1 == i0) && (a2 == i)); simpl; intros Heq15; try (now apply C.interp_true).
+
+       case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
+
+      intros [ | | | | | | | [ A | | | | ]|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+
+       case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true).
        case_eq (check_symopp bs1 bs2 (to_list a4) (BO_eq (Typ.TBV))); simpl; intros Heq16; try (now apply C.interp_true).
        unfold C.valid. simpl. rewrite orb_false_r.
        unfold Lit.interp. rewrite Heq5.
@@ -2531,10 +2547,10 @@ Proof.
        generalize wt_t_atom. unfold Atom.wt. unfold is_true.
        rewrite PArray.forallbi_spec;intros.
 
-       pose proof (H a3). rewrite Heq13 in Heq12.
+       pose proof (H a3).
        assert (a3 < PArray.length t_atom).
-       apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq12. easy.
-       specialize (@H0 H1). rewrite Heq12 in H0. simpl in H0.
+       apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
+       specialize (@H0 H1). rewrite Heq9 in H0. simpl in H0.
        rewrite !andb_true_iff in H0. destruct H0. destruct H0.
 
        unfold get_type' in H0. unfold v_type in H0.
@@ -2554,27 +2570,238 @@ Proof.
        unfold C.interp in HSp2. unfold existsb in HSp2. rewrite orb_false_r in HSp2.
        unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
        rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
-       rewrite Heq14 in H3, H2.
 
        unfold get_type' in H2, H3. unfold v_type in H2, H3.
-       case_eq (t_interp .[ i]).
-         intros v_typei v_vali Htii. rewrite Htii in H3.
-       case_eq (t_interp .[ i0]).
-         intros v_typei0 v_vali0 Htii0. rewrite Htii0 in H2.
-       simpl in v_vali, v_vali0.
+       case_eq (t_interp .[ a1']).
+         intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
+       case_eq (t_interp .[ a2']).
+         intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
+       simpl in v_vala2, v_vala2.
+
+       apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
+
+       (** case a1 = a1' and a2 = a2' **)
+       rewrite orb_true_iff in Heq15.
+       do 2 rewrite andb_true_iff in Heq15.
+       destruct Heq15 as [Heq15 | Heq15];
+       destruct Heq15 as (Heq15a1 & Heq15a2); rewrite eqb_spec in Heq15a1, Heq15a2
+       ;rewrite Heq15a1, Heq15a2 in *.
+
+
+        (* interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1'])) *)
+        assert (interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1']))).
+        rewrite !Atom.t_interp_wf in Htia1; trivial.
+        rewrite Htia1.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia1. easy.
+        rewrite H4 in HSp1.
+        unfold interp_bv in HSp1.
+        rewrite !Atom.t_interp_wf in Htia1; trivial.
+        rewrite Htia1 in HSp1.
+        unfold interp_bv in HSp1. 
+
+        (* interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2'])) *)
+        assert (interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2']))).
+        rewrite !Atom.t_interp_wf in Htia2; trivial.
+        rewrite Htia2.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia2. easy.
+        rewrite H5 in HSp2.
+        unfold interp_bv in HSp2.
+        rewrite !Atom.t_interp_wf in Htia2; trivial.
+        rewrite Htia2 in HSp2.
+        unfold interp_bv in HSp2. 
         
-       admit. (*****)
+        generalize dependent v_vala1. generalize dependent v_vala2.
+        rewrite H2, H3. rewrite Typ.cast_refl. intros.
 
-       intros Hv. rewrite Hv in H0. now contradict H0.
-       intros Hv. rewrite Hv in H0. now contradict H0.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+        apply (@Bool.eqb_true_iff (Lit.interp rho a) (Lit.interp rho bsres)).
 
-       intros a3 Heq10.
-       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11.
-       case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true). intros b i i0 Heq12.
-       case_eq b; try (intros; now apply C.interp_true). intros t Heq13.
-       case_eq t; try (intros; now apply C.interp_true). intros Heq14.
-       admit. (*****)
+        unfold Lit.interp, Var.interp.
+        rewrite rho_interp.
+        rewrite Heq10. simpl.
+
+        unfold Atom.interp_form_hatom.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Heq9. simpl.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia1, Htia2. simpl.
+        
+        rewrite Form.wf_interp_form; trivial.
+        rewrite Heq11. simpl.
+        rewrite afold_left_and.
+
+        apply Bool.eqb_prop in Heq12.
+        rewrite Heq12.
+        case_eq (Lit.is_pos bsres). intros.
+        rewrite HSp1, HSp2.
+        
+        unfold BITVECTOR_LIST.bv_eq.
+        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bits.
+        unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+
+        admit.
+
+        intros.
+        apply f_equal.
+        
+        admit.
+
+    (** case symmetry **)
+    admit.
+
+    (** contradictions **)
+    intros Hv. rewrite Hv in H0. now contradict H0.
+    intros Hv. rewrite Hv in H0. now contradict H0.
+
+
+
+    (** right to left implication **)
+    
+    intros a3 Heq10.
+    case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11.
+    case_eq (t_atom .[ a4]); try (intros; now apply C.interp_true).
+    intros [ | | | | | | | [ A | | | | ]|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+
+  case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true).
+       case_eq (check_symopp bs1 bs2 (to_list a3) (BO_eq (Typ.TBV))); simpl; intros Heq16; try (now apply C.interp_true).
+       unfold C.valid. simpl. rewrite orb_false_r.
+       unfold Lit.interp. rewrite Heq5.
+       unfold Var.interp.
+       rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
+
+       generalize wt_t_atom. unfold Atom.wt. unfold is_true.
+       rewrite PArray.forallbi_spec;intros.
+
+       pose proof (H a4).
+       assert (a4 < PArray.length t_atom).
+       apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
+       specialize (@H0 H1). rewrite Heq9 in H0. simpl in H0.
+       rewrite !andb_true_iff in H0. destruct H0. destruct H0.
+
+       unfold get_type' in H0. unfold v_type in H0.
+       case_eq (t_interp .[ a4]).
+       intros v_typea3 v_vala4 Htia4. rewrite Htia4 in H0.
+       case_eq (v_typea3).
+         intros i1 Hv. rewrite Hv in H0. now contradict H0.
+         intros Hv. rewrite Hv in H0. now contradict H0.
+         intros Hv.
+
+       generalize (Hs pos1). intros HSp1. unfold C.valid in HSp1. rewrite Heq1 in HSp1.
+       unfold C.interp in HSp1. unfold existsb in HSp1. rewrite orb_false_r in HSp1.
+       unfold Lit.interp in HSp1. rewrite Heq3 in HSp1. unfold Var.interp in HSp1.
+       rewrite rho_interp in HSp1. rewrite Heq6 in HSp1. simpl in HSp1.
+
+       generalize (Hs pos2). intro HSp2. unfold C.valid in HSp2. rewrite Heq2 in HSp2.
+       unfold C.interp in HSp2. unfold existsb in HSp2. rewrite orb_false_r in HSp2.
+       unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
+       rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
+
+       unfold get_type' in H2, H3. unfold v_type in H2, H3.
+       case_eq (t_interp .[ a1']).
+         intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
+       case_eq (t_interp .[ a2']).
+         intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
+       simpl in v_vala2, v_vala2.
+
+       apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
+
+       (** case a1 = a1' and a2 = a2' **)
+       rewrite orb_true_iff in Heq15.
+       do 2 rewrite andb_true_iff in Heq15.
+       destruct Heq15 as [Heq15 | Heq15];
+       destruct Heq15 as (Heq15a1 & Heq15a2); rewrite eqb_spec in Heq15a1, Heq15a2
+       ;rewrite Heq15a1, Heq15a2 in *.
+
+     (* interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1'])) *)
+        assert (interp_form_hatom_bv a1' = 
+                interp_bv t_i (interp_atom (t_atom .[a1']))).
+        rewrite !Atom.t_interp_wf in Htia1; trivial.
+        rewrite Htia1.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia1. easy.
+        rewrite H4 in HSp1.
+        unfold interp_bv in HSp1.
+        rewrite !Atom.t_interp_wf in Htia1; trivial.
+        rewrite Htia1 in HSp1.
+        unfold interp_bv in HSp1. 
+
+        (* interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2'])) *)
+        assert (interp_form_hatom_bv a2' = 
+                interp_bv t_i (interp_atom (t_atom .[a2']))).
+        rewrite !Atom.t_interp_wf in Htia2; trivial.
+        rewrite Htia2.
+        unfold Atom.interp_form_hatom_bv.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia2. easy.
+        rewrite H5 in HSp2.
+        unfold interp_bv in HSp2.
+        rewrite !Atom.t_interp_wf in Htia2; trivial.
+        rewrite Htia2 in HSp2.
+        unfold interp_bv in HSp2. 
+        
+        generalize dependent v_vala1. generalize dependent v_vala2.
+        rewrite H2, H3. rewrite Typ.cast_refl. intros.
+
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+        apply (@Bool.eqb_true_iff (Lit.interp rho a) (Lit.interp rho bsres)).
+
+        unfold Lit.interp, Var.interp.
+        rewrite rho_interp.
+        rewrite Heq10. simpl.
+
+        unfold Atom.interp_form_hatom.
+        rewrite Form.wf_interp_form; trivial.
+        rewrite Heq11. simpl.
+
+
+        rewrite afold_left_and.
+        unfold Atom.interp_hatom.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Heq9. simpl.
+        rewrite !Atom.t_interp_wf; trivial.
+        rewrite Htia1, Htia2. simpl.
+
+        apply Bool.eqb_prop in Heq12.
+        rewrite Heq12.
+        case_eq (Lit.is_pos bsres). intros.
+        rewrite HSp1, HSp2.
+
+        unfold BITVECTOR_LIST.bv_eq.
+        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bits.
+        unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        admit.
+        
+        intros.
+        apply f_equal. admit.
+
+    (** case symmetry **)
+    admit.
+
+    (** contradictions **)
+    intros Hv. rewrite Hv in H0. now contradict H0.
+    intros Hv. rewrite Hv in H0. now contradict H0.
+    intros. now apply C.interp_true.
 Admitted.
+
 
   End Proof.
 
