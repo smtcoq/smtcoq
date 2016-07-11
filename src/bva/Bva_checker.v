@@ -75,6 +75,7 @@ Section Checker.
       else false
     end.               
 
+  (** * Checker for bitblasting of bitvector variables *)
   Definition check_bbVar lres :=
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
@@ -260,7 +261,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
          induction a; split; intros; auto; contradict H; easy.
   Qed.
 
-  (* TODO: check the first argument of BVand, BVor *)
+  (** * Checker for bitblasting of bitwise operators on bitvectors *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -308,6 +309,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     | _ => None
     end.
 
+  (** * Checker for bitblasting of equality between bitvector terms  *)
   Definition check_bbEq pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -335,6 +337,114 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
+(*
+ AJR: use this version?
+(program bblast_bvadd_2h ((a bblt) (b bblt) (carry formula)) bblt
+(match a
+  ( bbltn (match b (bbltn bbltn) (default (fail bblt))))
+  ((bbltc ai a') (match b
+       (bbltn (fail bblt))
+	 	   ((bbltc bi b')
+	 	     (let carry' (or (and ai bi) (and (xor ai bi) carry))
+	 	     (bbltc (xor (xor ai bi) carry)
+				  	    (bblast_bvadd_2h a' b' carry'))))))))
+*)  
+
+  (** Representaion for symbolic carry computations *)
+  Inductive carry : Type :=
+  | Clit (_:_lit)
+  | Cand (_:carry) (_:carry)
+  | Cor (_:carry) (_:carry)
+  | Cxor (_:carry) (_:carry)
+  .
+
+  (** Check if a symbolic carry computation is equal to a literal
+     representation. This function does not account for potential symmetries *)
+  (* c should always be a positive literal in carry computations *)
+  Fixpoint eq_carry_lit (carry : carry) (c : _lit) :=
+    if Lit.is_pos c then
+      match carry with
+        | Clit l => l == c
+        | Cxor c1 c2  =>
+          match get_form (Lit.blit c) with
+            | Fxor a1 a2 => eq_carry_lit c1 a1 && eq_carry_lit c2 a2
+            | _ => false
+          end
+        | Cand c1 c2  =>
+          match get_form (Lit.blit c) with
+          | Fand args =>
+            if PArray.length args == 2 then
+              eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1])
+            else false
+          | _ => false
+          end
+        | Cor c1 c2  =>
+          match get_form (Lit.blit c) with
+          | For args =>
+            if PArray.length args == 2 then
+              eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1])
+            else false
+          | _ => false
+          end
+      end
+    else
+      (* c can be negative only when it is literal false *)
+      match carry with
+        | Clit l => l == c
+        | _ => false
+      end.
+
+  
+  (** Checks if [bsres] is the result of bvand of bs1 and bs2. This inital
+      value for the carry is [false]. *)
+  Fixpoint check_add (bs1 bs2 bsres : list _lit) (carry : carry) :=
+    match bs1, bs2, bsres with
+      | nil, nil, nil => true
+      | b1::bs1, b2::bs2, bres::bsres =>
+        if Lit.is_pos bres then
+          match get_form (Lit.blit bres) with
+            | Fxor xab c  =>
+              match get_form (Lit.blit xab) with
+                | Fxor a1 a2  =>
+                  (* This is the way LFSC computes carries *)
+                  let carry' := Cor (Cand (Clit b1) (Clit b2))
+                                   (Cand (Cxor (Clit b1) (Clit b2)) carry) in
+                  (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)))
+                    && eq_carry_lit carry c
+                    && check_add bs1 bs2 bsres carry'
+                | _ => false
+              end
+            | _ => false
+          end
+        else false
+      | _, _, _ => false
+    end.
+  
+
+  (** * Checker for bitblasting of bitvector addition *)
+  Definition check_bbAdd pos1 pos2 lres :=
+    match S.get s pos1, S.get s pos2 with
+      | l1::nil, l2::nil =>
+        if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
+          match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
+            | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
+              match get_atom a with
+
+                | Abop (BO_BVadd _) a1' a2' =>
+                  if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                       && (check_add bs1 bs2 bsres (Clit Lit._false))
+                  then lres::nil
+                  else C._true
+
+                | _ => C._true
+              end
+            | _, _, _ => C._true
+          end
+        else C._true
+      | _, _ => C._true
+    end.
+
+  
   Section Proof.
 
     Variables (t_i : array typ_eqb)
@@ -1918,8 +2028,6 @@ Proof.
     
         (** remaining split **)
 
-        (** dissapeared admits: 1 **)
-        
         apply eq_rec.
         unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.n.
         
@@ -2153,8 +2261,6 @@ Proof.
     
         (** remaining split **)
 
-        (** dissapeared admits: 1 **)
-        
         apply eq_rec.
         unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.n.
         
@@ -2389,8 +2495,6 @@ Proof.
     
         (** remaining split **)
 
-        (** dissapeared admits: 1 **)
-        
         apply eq_rec.
         unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.n.
         
