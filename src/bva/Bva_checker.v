@@ -337,19 +337,6 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
-(*
- AJR: use this version?
-(program bblast_bvadd_2h ((a bblt) (b bblt) (carry formula)) bblt
-(match a
-  ( bbltn (match b (bbltn bbltn) (default (fail bblt))))
-  ((bbltc ai a') (match b
-       (bbltn (fail bblt))
-	 	   ((bbltc bi b')
-	 	     (let carry' (or (and ai bi) (and (xor ai bi) carry))
-	 	     (bbltc (xor (xor ai bi) carry)
-				  	    (bblast_bvadd_2h a' b' carry'))))))))
-*)  
-
   (** Representaion for symbolic carry computations *)
   Inductive carry : Type :=
   | Clit (_:_lit)
@@ -396,7 +383,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       end.
 
   
-  (** Checks if [bsres] is the result of bvand of bs1 and bs2. This inital
+  (** Checks if [bsres] is the result of bvand of bs1 and bs2. The inital
       value for the carry is [false]. *)
   Fixpoint check_add (bs1 bs2 bsres : list _lit) (carry : carry) :=
     match bs1, bs2, bsres with
@@ -436,6 +423,82 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
                 | Abop (BO_BVadd _) a1' a2' =>
                   if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                        && (check_add bs1 bs2 bsres (Clit Lit._false))
+                  then lres::nil
+                  else C._true
+
+                | _ => C._true
+              end
+            | _, _, _ => C._true
+          end
+        else C._true
+      | _, _ => C._true
+    end.
+
+
+
+  Fixpoint and_with_bit (a: list _lit) (bt: _lit) : list carry :=
+    match a with
+      | nil => nil
+      | ai :: a' => (Cand (Clit bt) (Clit ai)) :: and_with_bit a' bt 
+    end.
+  
+
+  Fixpoint mult_step_k_h (a b res: list carry) (c: carry) (k: int) : list carry :=
+    match a, b with
+      | nil, nil => res
+      | ai :: a', bi :: b' =>
+        if k - 1 < 0 then
+          let carry_out := Cor (Cand ai bi) (Cand (Cxor ai bi) c) in
+          let curr := Cxor (Cxor ai bi) c in
+          mult_step_k_h a' b' (curr :: res) carry_out (k - 1)
+        else
+          mult_step_k_h a' b (ai :: res) c (k - 1)
+      | _, _ => nil
+    end.
+
+
+  Fixpoint top_k_bits (a: list _lit) (k: int) : list _lit :=
+    if k == 0 then nil
+    else match a with
+           | nil => nil
+           | ai :: a' => ai :: top_k_bits a' (k - 1)
+         end.
+
+
+  Fixpoint mult_step (a b: list _lit) (res: list carry) (k k': nat) : list carry :=
+    let ak := List.firstn k' a in
+    let b' := and_with_bit ak (nth k b Lit._false) in
+    let res' := mult_step_k_h res b' nil (Clit Lit._false) (of_Z (Z.of_nat k)) in
+    match k' with
+      | O => res'
+      | S pk' => mult_step a b res' (k + 1) pk'
+    end.
+
+  
+  Definition bblast_bvmult (a b: list _lit) (n: nat) : list carry :=
+    let res := and_with_bit a (nth 0 b Lit._false) in
+    match n with
+      | O => res
+      | S k => mult_step a b res 1 k
+    end.
+
+
+  Definition check_mult (bs1 bs2 bsres: list _lit) : bool :=
+    let bvm12 := bblast_bvmult bs1 bs2 (length bsres) in
+    forallb2 eq_carry_lit bvm12 bsres.
+    
+  (** * Checker for bitblasting of bitvector multiplication *)
+  Definition check_bbMult pos1 pos2 lres :=
+    match S.get s pos1, S.get s pos2 with
+      | l1::nil, l2::nil =>
+        if (Lit.is_pos l1) && (Lit.is_pos l2) && (Lit.is_pos lres) then
+          match get_form (Lit.blit l1), get_form (Lit.blit l2), get_form (Lit.blit lres) with
+            | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
+              match get_atom a with
+
+                | Abop (BO_BVmult _) a1' a2' =>
+                  if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                       && (check_mult bs1 bs2 bsres)
                   then lres::nil
                   else C._true
 
