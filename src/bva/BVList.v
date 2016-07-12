@@ -67,7 +67,7 @@ Module Type BITVECTOR.
   Axiom bv_eq_reflect : forall (a b:bitvector), bv_eq a b = true <-> a = b.
   (* Axiom bv_and_comm   : forall n (a b:bitvector n), bv_eq (bv_and a b) (bv_and b a) = true. *)
   (* Axiom bv_or_comm    : forall n (a b:bitvector n), bv_eq (bv_or a b) (bv_or b a) = true. *)
-  (* Axiom bv_add_comm   : forall n (a b:bitvector n), bv_eq (bv_add a b) (bv_add b a) = true.  *)
+  Axiom bv_add_comm   : forall n (a b:bitvector), size a = n -> size b = n -> bv_eq (bv_add a b) (bv_add b a) = true.
   (* Axiom bv_mult_comm  : forall n (a b:bitvector n), bv_eq (bv_mult a b) (bv_mult b a) = true.  *)
 
   (* Axiom bv_and_assoc  : forall n (a b c: bitvector n), bv_eq (bv_and a (bv_and b c)) (bv_and (bv_and a b) c) = true. *)
@@ -231,10 +231,11 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
     - intros. now destruct H.
 Qed.
 
-  (* Lemma bv_and_comm n (a b:bitvector n) : bv_eq (bv_and a b) (bv_and b a) = true. *)
-  (* Proof. *)
-  (*   unfold bv_eq. rewrite M.bv_eq_reflect. apply (@M.bv_and_comm n); now rewrite wf. *)
-  (* Qed. *)
+  Lemma bv_add_comm n (a b:bitvector) : size a = n -> size b = n -> bv_eq (bv_add a b) (bv_add b a) = true. 
+  Proof.
+    intros.
+    unfold bv_eq. rewrite M.bv_eq_reflect. apply (@M.bv_add_comm n). easy. easy.
+  Qed. 
 
   (* Lemma bv_or_comm n (a b:bitvector n) : bv_eq (bv_or a b) (bv_or b a) = true. *)
   (* Proof. *)
