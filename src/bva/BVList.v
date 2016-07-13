@@ -16,7 +16,7 @@
 (**************************************************************************)
 
 (* Add Rec LoadPath ".." as SMTCoq. *)
-Require Import List Bool NArith Psatz.
+Require Import List Bool NArith Psatz Int63.
 Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.
@@ -137,7 +137,7 @@ Axiom bv_mult_size   : forall a b, size (bv_mult a b) = size_bv_mult a b.
 Axiom bv_and_comm    : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
 Axiom bv_or_comm     : forall n a b, size a = n -> size b = n -> bv_or a b = bv_or b a.
 Axiom bv_add_comm    : forall n a b, size a = n -> size b = n -> bv_add a b = bv_add b a.
-Axiom bv_mult_comm   : forall n a b, size a = n -> size b = n -> bv_mult a b = bv_mult b a.
+(* Axiom bv_mult_comm   : forall n a b, size a = n -> size b = n -> bv_mult a b = bv_mult b a. *)
 
 Axiom bv_and_assoc  : forall n a b c, size a = n -> size b = n -> size c = n -> 
                                    (bv_and a (bv_and b c)) = (bv_and (bv_and a b) c).
@@ -347,9 +347,9 @@ Section Fold_left2.
               (forall a b1 b2, I a -> I (f a b1 b2)) -> 
               forall xs ys, I (fold_left2 xs ys acc).
   Proof. intros I acc H0 H1 xs. revert acc H0.
-         induction xs as [| a xs IHxs]; intros acc H.
+         induction xs as [ | a xs IHxs]; intros acc H.
          simpl. auto.
-         intros [| b ys].
+         intros [ | b ys].
             + simpl. exact H.
             + simpl. apply IHxs, H1. exact H.
   Qed.
@@ -501,7 +501,55 @@ Fixpoint mult_list_carry2 (a b :list bool) n {struct a}: list bool :=
         mult_list_carry2 xs (false :: (removelast b)) n
   end.
 
-Definition mult_list a b := mult_list_carry a b (length a).
+
+Fixpoint and_with_bool (a: list bool) (bt: bool) : list bool :=
+  match a with
+    | nil => nil
+    | ai :: a' => (ai && bt) :: and_with_bool a' bt 
+  end.
+
+
+Fixpoint mult_bool_step_k_h (a b res: list bool) (c: bool) (k: int) : list bool :=
+  match a, b with
+    | nil, nil => res
+    | ai :: a', bi :: b' =>
+      if (k - 1 < 0)%int then
+        let carry_out := (ai && bi) || ((xorb ai bi) && c) in
+        let curr := xorb (xorb ai bi) c in
+        mult_bool_step_k_h a' b' (curr :: res) carry_out (k - 1)
+      else
+        mult_bool_step_k_h a' b (ai :: res) c (k - 1)
+    | _, _ => nil
+  end.
+
+
+Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
+  if (k == 0)%int then nil
+  else match a with
+         | nil => nil
+         | ai :: a' => ai :: top_k_bools a' (k - 1)
+       end.
+
+
+Fixpoint mult_bool_step (a b: list bool) (res: list bool) (k k': nat) : list bool :=
+  let ak := List.firstn k' a in
+  let b' := and_with_bool ak (nth k b false) in
+  let res' := mult_bool_step_k_h res b' nil false (of_Z (Z.of_nat k)) in
+  match k' with
+    | O => res'
+    | S pk' => mult_bool_step a b res' (k + 1) pk'
+  end.
+
+
+Definition bvmult_bool (a b: list bool) (n: nat) : list bool :=
+  let res := and_with_bool a (nth 0 b false) in
+  match n with
+    | O => res
+    | S k => mult_bool_step a b res 1 k
+  end.
+
+
+Definition mult_list a b := bvmult_bool a b (length a).
 
 Definition bv_mult (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with
@@ -513,14 +561,14 @@ Definition bv_mult (a b : bitvector) : bitvector :=
 
 Lemma length_mk_list_false: forall n, length (mk_list_false n) = n.
 Proof. intro n.
-       induction n as [| n' IHn].
+       induction n as [ | n' IHn].
        - simpl. auto.
        - simpl. apply f_equal. exact IHn.
 Qed.
 
 Lemma length_mk_list_true: forall n, length (mk_list_true n) = n.
 Proof. intro n.
-       induction n as [| n' IHn].
+       induction n as [ | n' IHn].
        - simpl. auto.
        - simpl. apply f_equal. exact IHn.
 Qed.
@@ -559,11 +607,11 @@ Qed.
 (*list bitwise AND properties*)
 
 Lemma map2_and_comm: forall (a b: list bool), (map2 andb a b) = (map2 andb b a).
-Proof. intros a. induction a as [| a' xs IHxs].
-       intros [| b' ys].
+Proof. intros a. induction a as [ | a' xs IHxs].
+       intros [ | b' ys].
        - simpl. auto.
        - simpl. auto.
-       - intros [| b' ys].
+       - intros [ | b' ys].
          + simpl. auto.
          + intros. simpl. 
            cut (a' && b' = b' && a'). intro H. rewrite <- H. apply f_equal.
@@ -571,22 +619,22 @@ Proof. intros a. induction a as [| a' xs IHxs].
 Qed.
 
 Lemma map2_and_assoc: forall (a b c: list bool), (map2 andb a (map2 andb b c)) = (map2 andb (map2 andb a b) c).
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b' ys].
+       intros [ | b' ys].
         -  simpl. auto.
-        - intros [| c' zs].
+        - intros [ | c' zs].
           + simpl. auto.
           + simpl. cut (a' && (b' && c') = a' && b' && c'). intro H. rewrite <- H. apply f_equal.
             apply IHxs. apply andb_assoc.
 Qed.
 
 Lemma map2_and_idem1:  forall (a b: list bool), (map2 andb (map2 andb a b) a) = (map2 andb a b).
-Proof. intros a. induction a as [| a' xs IHxs].
-       intros [| b' ys].
+Proof. intros a. induction a as [ | a' xs IHxs].
+       intros [ | b' ys].
        - simpl. auto.
        - simpl. auto.
-       - intros [| b' ys].
+       - intros [ | b' ys].
          + simpl. auto.
          + intros. simpl. 
            cut (a' && b' && a' = a' && b'). intro H. rewrite H. apply f_equal.
@@ -597,11 +645,11 @@ Lemma map2_and_idem_comm:  forall (a b: list bool), (map2 andb (map2 andb a b) a
 Proof. intros a b. symmetry. rewrite <- map2_and_comm. symmetry; apply map2_and_idem1. Qed.
 
 Lemma map2_and_idem2:  forall (a b: list bool), (map2 andb (map2 andb a b) b) = (map2 andb a b).
-Proof. intros a. induction a as [| a' xs IHxs].
-       intros [| b' ys].
+Proof. intros a. induction a as [ | a' xs IHxs].
+       intros [ | b' ys].
        - simpl. auto.
        - simpl. auto.
-       - intros [| b' ys].
+       - intros [ | b' ys].
          + simpl. auto.
          + intros. simpl. 
            cut (a' && b' && b' = a' && b'). intro H. rewrite H. apply f_equal.
@@ -612,13 +660,13 @@ Lemma map2_and_idem_comm2:  forall (a b: list bool), (map2 andb (map2 andb a b) 
 Proof. intros a b. symmetry. rewrite <- map2_and_comm. symmetry; apply map2_and_idem2. Qed.
 
 Lemma map2_and_empty_empty1:  forall (a: list bool), (map2 andb a []) = [].
-Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
+Proof. intros a. induction a as [ | a' xs IHxs]; simpl; auto. Qed.
 
 Lemma map2_and_empty_empty2:  forall (a: list bool), (map2 andb [] a) = [].
 Proof. intros a. rewrite map2_and_comm. apply map2_and_empty_empty1. Qed.
 
 Lemma map2_nth_empty_false:  forall (i: nat), nth i [] false = false.
-Proof. intros i. induction i as [| IHi]; simpl; reflexivity. Qed.
+Proof. intros i. induction i as [ | IHi]; simpl; reflexivity. Qed.
 
 (* Lemma mk_list_true_rev: forall n, (rev (mk_list_true n)) = mk_list_true n. *)
 
@@ -639,7 +687,7 @@ Proof. simpl. reflexivity. Qed.
 
 Lemma add_mk_list_true: forall n acc, length (mk_list_true_acc n acc) = (n + length acc)%nat.
 Proof. intros n.
-       induction n as [| n' IHn].
+       induction n as [ | n' IHn].
          + auto.
          + intro acc. simpl. rewrite IHn. simpl. lia.
 Qed.
@@ -649,16 +697,16 @@ Lemma map2_and_nth_bitOf: forall (a b: list bool) (i: nat),
                           (i <= (length a))%nat ->
                           nth i (map2 andb a b) false = (nth i a false) && (nth i b false).
 Proof. intro a.
-       induction a as [| a xs IHxs].
-         - intros [| b ys].
+       induction a as [ | a xs IHxs].
+         - intros [ | b ys].
            + intros i H0 H1. do 2 rewrite map2_nth_empty_false. reflexivity.
            + intros i H0 H1. rewrite map2_and_empty_empty2.
              rewrite map2_nth_empty_false. reflexivity.
-         - intros [| b ys].
+         - intros [ | b ys].
            + intros i H0 H1. rewrite map2_and_empty_empty1.
              rewrite map2_nth_empty_false. rewrite andb_false_r. reflexivity.
            + intros i H0 H1. simpl.
-             revert i H1. intros [| i IHi].
+             revert i H1. intros [ | i IHi].
              * simpl. auto.
              * apply IHxs.
                  inversion H0; reflexivity.
@@ -670,7 +718,7 @@ Proof. intro n. rewrite (@add_mk_list_true n []). auto. Qed.
 
 Lemma mk_list_app: forall n acc, mk_list_true_acc n acc = mk_list_true_acc n [] ++ acc.
 Proof. intro n.
-       induction n as [| n IHn].
+       induction n as [ | n IHn].
          + auto.
          + intro acc. simpl in *. rewrite IHn. 
            cut (mk_list_true_acc n [] ++ [true] = mk_list_true_acc n [true]). intro H.
@@ -679,27 +727,27 @@ Proof. intro n.
 Qed.
 
 Lemma mk_list_ltrue: forall n, mk_list_true_acc n [true] = mk_list_true_acc (S n) [].
-Proof. intro n. induction n as [| n IHn]; auto. Qed.
+Proof. intro n. induction n as [ | n IHn]; auto. Qed.
 
 Lemma map2_and_1_neutral: forall (a: list bool), (map2 andb a (mk_list_true (length a))) = a.
 Proof. intro a.
-       induction a as [| a xs IHxs]. 
+       induction a as [ | a xs IHxs]. 
          + auto.
          + simpl. rewrite IHxs.
            rewrite andb_true_r. reflexivity.
 Qed.
 
 Lemma map2_and_0_absorb: forall (a: list bool), (map2 andb a (mk_list_false (length a))) = (mk_list_false (length a)).
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - simpl. reflexivity.
        - simpl. rewrite IHxs.
          rewrite andb_false_r; reflexivity.
 Qed.
 
 Lemma map2_and_length: forall (a b: list bool), length a = length b -> length a = length (map2 andb a b).
-Proof. induction a as [| a' xs IHxs].
+Proof. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. exact H.
        - intros. simpl in *. apply f_equal. apply IHxs.
          inversion H; auto.
@@ -827,11 +875,11 @@ Definition size_bv_or a b :=
   end.
 
 Lemma map2_or_comm: forall (a b: list bool), (map2 orb a b) = (map2 orb b a).
-Proof. intros a. induction a as [| a' xs IHxs].
-       intros [| b' ys].
+Proof. intros a. induction a as [ | a' xs IHxs].
+       intros [ | b' ys].
        - simpl. auto.
        - simpl. auto.
-       - intros [| b' ys].
+       - intros [ | b' ys].
          + simpl. auto.
          + intros. simpl. 
            cut (a' || b' = b' || a'). intro H. rewrite <- H. apply f_equal.
@@ -839,27 +887,27 @@ Proof. intros a. induction a as [| a' xs IHxs].
 Qed.
 
 Lemma map2_or_assoc: forall (a b c: list bool), (map2 orb a (map2 orb b c)) = (map2 orb (map2 orb a b) c).
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b' ys].
+       intros [ | b' ys].
         -  simpl. auto.
-        - intros [| c' zs].
+        - intros [ | c' zs].
           + simpl. auto.
           + simpl. cut (a' || (b' || c') = a' || b' || c'). intro H. rewrite <- H. apply f_equal.
             apply IHxs. apply orb_assoc.
 Qed.
 
 Lemma map2_or_length: forall (a b: list bool), length a = length b -> length a = length (map2 orb a b).
-Proof. induction a as [| a' xs IHxs].
+Proof. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. exact H.
        - intros. simpl in *. apply f_equal. apply IHxs.
          inversion H; auto.
 Qed.
 
 Lemma map2_or_empty_empty1:  forall (a: list bool), (map2 orb a []) = [].
-Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
+Proof. intros a. induction a as [ | a' xs IHxs]; simpl; auto. Qed.
 
 Lemma map2_or_empty_empty2:  forall (a: list bool), (map2 orb [] a) = [].
 Proof. intros a. rewrite map2_or_comm. apply map2_or_empty_empty1. Qed.
@@ -869,17 +917,17 @@ Lemma map2_or_nth_bitOf: forall (a b: list bool) (i: nat),
                           (i <= (length a))%nat ->
                           nth i (map2 orb a b) false = (nth i a false) || (nth i b false).
 Proof. intro a.
-       induction a as [| a xs IHxs].
-         - intros [| b ys].
+       induction a as [ | a xs IHxs].
+         - intros [ | b ys].
            + intros i H0 H1. do 2 rewrite map2_nth_empty_false. reflexivity.
            + intros i H0 H1. rewrite map2_or_empty_empty2.
              rewrite map2_nth_empty_false. contradict H1. simpl. unfold not. intros. easy.
-         - intros [| b ys].
+         - intros [ | b ys].
            + intros i H0 H1. rewrite map2_or_empty_empty1.
              rewrite map2_nth_empty_false. rewrite orb_false_r. rewrite H0 in H1.
              contradict H1. simpl. unfold not. intros. easy.
            + intros i H0 H1. simpl.
-             revert i H1. intros [| i IHi].
+             revert i H1. intros [ | i IHi].
              * simpl. auto.
              * apply IHxs.
                  inversion H0; reflexivity.
@@ -888,14 +936,14 @@ Qed.
 
 Lemma map2_or_0_neutral: forall (a: list bool), (map2 orb a (mk_list_false (length a))) = a.
 Proof. intro a.
-       induction a as [| a xs IHxs]. 
+       induction a as [ | a xs IHxs]. 
          + auto.
          + simpl. rewrite IHxs.
            rewrite orb_false_r. reflexivity.
 Qed.
 
 Lemma map2_or_1_true: forall (a: list bool), (map2 orb a (mk_list_true (length a))) = (mk_list_true (length a)).
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - simpl. reflexivity.
        - simpl. rewrite IHxs.
          rewrite orb_true_r; reflexivity.
@@ -979,11 +1027,11 @@ Definition size_bv_xor a b :=
   end.
 
 Lemma map2_xor_comm: forall (a b: list bool), (map2 xorb a b) = (map2 xorb b a).
-Proof. intros a. induction a as [| a' xs IHxs].
-       intros [| b' ys].
+Proof. intros a. induction a as [ | a' xs IHxs].
+       intros [ | b' ys].
        - simpl. auto.
        - simpl. auto.
-       - intros [| b' ys].
+       - intros [ | b' ys].
          + simpl. auto.
          + intros. simpl. 
            cut (xorb a' b' = xorb b' a'). intro H. rewrite <- H. apply f_equal.
@@ -991,27 +1039,27 @@ Proof. intros a. induction a as [| a' xs IHxs].
 Qed.
 
 Lemma map2_xor_assoc: forall (a b c: list bool), (map2 xorb a (map2 xorb b c)) = (map2 xorb (map2 xorb a b) c).
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b' ys].
+       intros [ | b' ys].
         -  simpl. auto.
-        - intros [| c' zs].
+        - intros [ | c' zs].
           + simpl. auto.
           + simpl. cut (xorb a' (xorb b' c') = (xorb (xorb a'  b')  c')). intro H. rewrite <- H. apply f_equal.
             apply IHxs. rewrite xorb_assoc_reverse. reflexivity.
 Qed.
 
 Lemma map2_xor_length: forall (a b: list bool), length a = length b -> length a = length (map2 xorb a b).
-Proof. induction a as [| a' xs IHxs].
+Proof. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. exact H.
        - intros. simpl in *. apply f_equal. apply IHxs.
          inversion H; auto.
 Qed.
 
 Lemma map2_xor_empty_empty1:  forall (a: list bool), (map2 xorb a []) = [].
-Proof. intros a. induction a as [| a' xs IHxs]; simpl; auto. Qed.
+Proof. intros a. induction a as [ | a' xs IHxs]; simpl; auto. Qed.
 
 Lemma map2_xor_empty_empty2:  forall (a: list bool), (map2 xorb [] a) = [].
 Proof. intros a. rewrite map2_xor_comm. apply map2_xor_empty_empty1. Qed.
@@ -1021,17 +1069,17 @@ Lemma map2_xor_nth_bitOf: forall (a b: list bool) (i: nat),
                           (i <= (length a))%nat ->
                           nth i (map2 xorb a b) false = xorb (nth i a false) (nth i b false).
 Proof. intro a.
-       induction a as [| a xs IHxs].
-         - intros [| b ys].
+       induction a as [ | a xs IHxs].
+         - intros [ | b ys].
            + intros i H0 H1. do 2 rewrite map2_nth_empty_false. reflexivity.
            + intros i H0 H1. rewrite map2_xor_empty_empty2.
              rewrite map2_nth_empty_false. contradict H1. simpl. unfold not. intros. easy.
-         - intros [| b ys].
+         - intros [ | b ys].
            + intros i H0 H1. rewrite map2_xor_empty_empty1.
              rewrite map2_nth_empty_false. rewrite xorb_false_r. rewrite H0 in H1.
              contradict H1. simpl. unfold not. intros. easy.
            + intros i H0 H1. simpl.
-             revert i H1. intros [| i IHi].
+             revert i H1. intros [ | i IHi].
              * simpl. auto.
              * apply IHxs.
                  inversion H0; reflexivity.
@@ -1040,14 +1088,14 @@ Qed.
 
 Lemma map2_xor_0_neutral: forall (a: list bool), (map2 xorb a (mk_list_false (length a))) = a.
 Proof. intro a.
-       induction a as [| a xs IHxs]. 
+       induction a as [ | a xs IHxs]. 
          + auto.
          + simpl. rewrite IHxs.
            rewrite xorb_false_r. reflexivity.
 Qed.
 
 Lemma map2_xor_1_true: forall (a: list bool), (map2 xorb a (mk_list_true (length a))) = map negb a.
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - simpl. reflexivity.
        - simpl. rewrite IHxs. rewrite <- IHxs.
          rewrite xorb_true_r; reflexivity.
@@ -1126,45 +1174,45 @@ Qed.
 
 Lemma not_list_length: forall a, length a = length (map negb a).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - auto. 
        - simpl. apply f_equal. exact IHxs.
 Qed.
 
 Lemma not_list_involutative: forall a, map negb (map negb a) = a.
 Proof. intro a.
-       induction a as [| a xs IHxs]; auto.
+       induction a as [ | a xs IHxs]; auto.
        simpl. rewrite negb_involutive. apply f_equal. exact IHxs.
 Qed.
 
 Lemma not_list_false_true: forall n, map negb (mk_list_false n) = mk_list_true n.
 Proof. intro n.
-       induction n as [| n IHn].
+       induction n as [ | n IHn].
        - auto.
        - simpl. apply f_equal. exact IHn.
 Qed.
 
 Lemma not_list_true_false: forall n, map negb (mk_list_true n) = mk_list_false n.
 Proof. intro n.
-       induction n as [| n IHn].
+       induction n as [ | n IHn].
        - auto.
        - simpl. apply f_equal. exact IHn.
 Qed.
 
 Lemma not_list_and_or: forall a b, map negb (map2 andb a b) = map2 orb (map negb a) (map negb b).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - auto.
-       - intros [| b ys].
+       - intros [ | b ys].
          + auto.
          + simpl. rewrite negb_andb. apply f_equal. apply IHxs.
 Qed.
 
 Lemma not_list_or_and: forall a b, map negb (map2 orb a b) = map2 andb (map negb a) (map negb b).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - auto.
-       - intros [| b ys].
+       - intros [ | b ys].
          + auto.
          + simpl. rewrite negb_orb. apply f_equal. apply IHxs.
 Qed.
@@ -1243,24 +1291,24 @@ Lemma add_carry_tt: forall a, add_carry a true true = (a, true).
 Proof. intro a. case a; auto. Qed.
 
 Lemma add_list_empty_l: forall (a: list bool), (add_list [] a) = [].
-Proof. intro a. induction a as [| a xs IHxs].
+Proof. intro a. induction a as [ | a xs IHxs].
          - unfold add_list. simpl. reflexivity.
          - apply IHxs.
 Qed.
 
 Lemma add_list_empty_r: forall (a: list bool), (add_list a []) = [].
-Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
+Proof. intro a. induction a as [ | a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
 
 Lemma add_list_ingr_l: forall (a: list bool) (c: bool), (add_list_ingr [] a c) = [].
-Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
+Proof. intro a. induction a as [ | a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
 
 Lemma add_list_ingr_r: forall (a: list bool) (c: bool), (add_list_ingr a [] c) = [].
-Proof. intro a. induction a as [| a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
+Proof. intro a. induction a as [ | a xs IHxs]; unfold add_list; simpl; reflexivity. Qed.
 
 Lemma add_list_carry_comm: forall (a b:  list bool) (c: bool), add_list_ingr a b c = add_list_ingr b a c.
-Proof. intros a. induction a as [| a' xs IHxs]; intros b c.
+Proof. intros a. induction a as [ | a' xs IHxs]; intros b c.
        - simpl. rewrite add_list_ingr_r. reflexivity.
-       - case b as [| b' ys].
+       - case b as [ | b' ys].
          + simpl. auto.
          + simpl in *. cut (add_carry a' b' c = add_carry b' a' c).
            * intro H. rewrite H. destruct (add_carry b' a' c) as (r, c0).
@@ -1274,11 +1322,11 @@ Proof. intros a b. unfold add_list. apply (add_list_carry_comm a b false). Qed.
 Lemma add_list_carry_assoc: forall (a b c:  list bool) (d1 d2 d3 d4: bool),
                             add_carry d1 d2 false = add_carry d3 d4 false ->
                             (add_list_ingr (add_list_ingr a b d1) c d2) = (add_list_ingr a (add_list_ingr b c d3) d4).
-Proof. intros a. induction a as [| a' xs IHxs]; intros b c d1 d2 d3 d4.
+Proof. intros a. induction a as [ | a' xs IHxs]; intros b c d1 d2 d3 d4.
        - simpl. reflexivity.
-       - case b as [| b' ys].
+       - case b as [ | b' ys].
          + simpl. auto.
-         + case c as [| c' zs].
+         + case c as [ | c' zs].
            * simpl. rewrite add_list_ingr_r. auto.
            * simpl.
              case_eq (add_carry a' b' d1); intros r0 c0 Heq0. simpl.
@@ -1293,9 +1341,9 @@ Proof. intros a. induction a as [| a' xs IHxs]; intros b c d1 d2 d3 d4.
 Qed.
 
 Lemma add_list_carry_length_eq: forall (a b: list bool) c, length a = length b -> length a = length (add_list_ingr a b c).
-Proof. induction a as [| a' xs IHxs].
+Proof. induction a as [ | a' xs IHxs].
        simpl. auto.
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. exact H.
        - intros. simpl in *.
          case_eq (add_carry a' b c); intros r c0 Heq. simpl. apply f_equal.
@@ -1303,9 +1351,9 @@ Proof. induction a as [| a' xs IHxs].
 Qed.
 
 Lemma add_list_carry_length_ge: forall (a b: list bool) c, (length a >= length b)%nat -> length b = length (add_list_ingr a b c).
-Proof. induction a as [| a' xs IHxs].
+Proof. induction a as [ | a' xs IHxs].
        simpl. intros b H0 H1. lia.
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. auto.
        - intros. simpl in *.
          case_eq (add_carry a' b c); intros r c0 Heq. simpl. apply f_equal.
@@ -1313,9 +1361,9 @@ Proof. induction a as [| a' xs IHxs].
 Qed.
 
 Lemma add_list_carry_length_le: forall (a b: list bool) c, (length b >= length a)%nat -> length a = length (add_list_ingr a b c).
-Proof. induction a as [| a' xs IHxs].
+Proof. induction a as [ | a' xs IHxs].
        simpl. intros b H0 H1. reflexivity.
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. contradict H. lia.
        - intros. simpl in *.
          case_eq (add_carry a' b c); intros r c0 Heq. simpl. apply f_equal.
@@ -1338,18 +1386,18 @@ Proof. intros a b c. unfold add_list.
 Qed.
 
 Lemma add_list_carry_empty_neutral_n_l: forall (a: list bool) n, (n >= (length a))%nat -> (add_list_ingr (mk_list_false n) a false) = a.
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - intro n. rewrite add_list_ingr_r. reflexivity.
-       - intros [| n]. 
+       - intros [ | n]. 
          + simpl. intro H. contradict H. easy.
          + simpl. intro H.
            case a'; apply f_equal; apply IHxs; lia.
 Qed.
 
 Lemma add_list_carry_empty_neutral_n_r: forall (a: list bool) n, (n >= (length a))%nat -> (add_list_ingr a (mk_list_false n) false) = a.
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - intro n. rewrite add_list_ingr_l. reflexivity.
-       - intros [| n]. 
+       - intros [ | n]. 
          + simpl. intro H. contradict H. easy.
          + simpl. intro H.
            case a'; apply f_equal; apply IHxs; lia.
@@ -1387,7 +1435,7 @@ Qed.
 
 Lemma add_list_carry_unit_t : forall a, add_list_ingr a (mk_list_true (length a)) true = a.
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - simpl. reflexivity.
        - simpl. case_eq (add_carry a true true). intros r0 c0 Heq0.
          rewrite add_carry_tt in Heq0. inversion Heq0.
@@ -1396,9 +1444,9 @@ Qed.
 
 Lemma add_list_carry_twice: forall a c, add_list_ingr a a c = removelast (c :: a).
 Proof. intro a. 
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - intros c. simpl. reflexivity.
-       - intros [|].
+       - intros [ | ].
          + simpl. case a.
            * simpl. rewrite IHxs.
              case_eq xs. intro Heq0. simpl. reflexivity.
@@ -1486,22 +1534,22 @@ Proof. intro a. unfold subst_list; auto. Qed.
 
 Lemma subst_list_empty_empty_r: forall a, (subst_list a []) = [].
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - auto.
        - unfold subst_list; auto. 
 Qed.
 
 Lemma subst_list'_empty_empty_r: forall a, (subst_list' a []) = [].
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - auto.
        - unfold subst_list' in *. unfold twos_complement. simpl. reflexivity.
 Qed.
 
 Lemma subst_list_borrow_length: forall (a b: list bool) c, length a = length b -> length a = length (subst_list_borrow a b c). 
-Proof. induction a as [| a' xs IHxs]. 
+Proof. induction a as [ | a' xs IHxs]. 
        simpl. auto. 
-       intros [| b ys].
+       intros [ | b ys].
        - simpl. intros. exact H. 
        - intros. simpl in *. 
          case_eq (subst_borrow a' b c); intros r c0 Heq. simpl. apply f_equal. 
@@ -1510,7 +1558,7 @@ Qed.
 
 Lemma length_twos_complement: forall (a: list bool), length a = length (twos_complement a).
 Proof. intro a.
-      induction a as [| a' xs IHxs].
+      induction a as [ | a' xs IHxs].
       - auto.
       - unfold twos_complement. specialize (@add_list_carry_length_eq (map negb (a' :: xs)) (mk_list_false (length (a' :: xs))) true).        
         intro H. rewrite <- H. simpl. apply f_equal. rewrite <- not_list_length. reflexivity.
@@ -1528,7 +1576,7 @@ Proof. intros a b H. unfold subst_list'.
 Qed.
 
 Lemma subst_list_borrow_empty_neutral: forall (a: list bool), (subst_list_borrow a (mk_list_false (length a)) false) = a.
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - simpl. reflexivity.
        - simpl.
          cut(subst_borrow a' false false = (a', false)).
@@ -1543,12 +1591,12 @@ Qed.
 
 Lemma twos_complement_cons_false: forall a, false :: twos_complement a = twos_complement (false :: a).
 Proof. intro a.
-       induction a as [| a xs IHxs]; unfold twos_complement; simpl; reflexivity.
+       induction a as [ | a xs IHxs]; unfold twos_complement; simpl; reflexivity.
 Qed.
 
 Lemma twos_complement_false_false: forall n, twos_complement (mk_list_false n) = mk_list_false n.
 Proof. intro n.
-       induction n as [| n IHn].
+       induction n as [ | n IHn].
        - auto.
        - simpl. rewrite <- twos_complement_cons_false.
          apply f_equal. exact IHn.
@@ -1598,11 +1646,11 @@ Qed.
 
 Lemma add_neg_list_carry_false: forall a b c, add_list_ingr a (add_list_ingr b c true) false = add_list_ingr a (add_list_ingr b c false) true.
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - simpl. auto.
-       - case b as [| b ys].
+       - case b as [ | b ys].
          + simpl. auto.
-         + case c as [| c zs].
+         + case c as [ | c zs].
            * simpl. auto.
            * simpl.
              case_eq (add_carry b c false); intros r0 c0 Heq0.
@@ -1618,7 +1666,7 @@ Qed.
 
 Lemma add_neg_list_carry_neg_f: forall a, (add_list_ingr a (map negb a) false) = mk_list_true (length a).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - simpl. reflexivity.
        - simpl. 
          case_eq (add_carry a (negb a) false); intros r0 c0 Heq0.
@@ -1628,7 +1676,7 @@ Qed.
 
 Lemma add_neg_list_carry_neg_f_r: forall a, (add_list_ingr (map negb a) a false) = mk_list_true (length a).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - simpl. reflexivity.
        - simpl. 
          case_eq (add_carry (negb a) a false); intros r0 c0 Heq0.
@@ -1638,7 +1686,7 @@ Qed.
 
 Lemma add_neg_list_carry_neg_t: forall a, (add_list_ingr a (map negb a) true) = mk_list_false (length a).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - simpl. reflexivity.
        - simpl. 
          case_eq (add_carry a (negb a) true); intros r0 c0 Heq0.
@@ -1648,7 +1696,7 @@ Qed.
 
 Lemma add_neg_list_carry: forall a, add_list_ingr a (twos_complement a) false = mk_list_false (length a).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - simpl. reflexivity.
        - unfold twos_complement. rewrite add_neg_list_carry_false. rewrite not_list_length at 1.
          rewrite add_list_carry_empty_neutral_r.
@@ -1708,15 +1756,15 @@ Definition size_bv_mult a b :=
 
 
 Lemma mult_list_empty_l: forall (a: list bool), (mult_list [] a) = [].
-Proof. intro a. induction a as [| a xs IHxs].
+Proof. intro a. induction a as [ | a xs IHxs].
          - unfold mult_list. simpl. reflexivity.
          - apply IHxs.
 Qed.
 
 Lemma mult_list_carry_0: forall a b, mult_list_carry a b 0 = [].
-Proof. intro a. induction a as [| a' xs IHxs].
+Proof. intro a. induction a as [ | a' xs IHxs].
        - intro b. simpl. reflexivity.
-       - intros [| b' ys].
+       - intros [ | b' ys].
          + simpl. case_eq a'.
            * simpl. intro H. rewrite add_list_empty_l; reflexivity.
            * simpl. intro H. apply IHxs.
@@ -1727,10 +1775,10 @@ Qed.
 
 Lemma mult_list_true: forall a n, ((length a) = n)%nat -> mult_list_carry [true] a n = a.
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - intros n H. simpl in H. rewrite <- H.
          rewrite mult_list_carry_0. reflexivity.
-       - intros [| n] H.
+       - intros [ | n] H.
          + contradict H. easy.
          + rewrite <- (IHxs n) at 2; try auto. simpl.
            case a. unfold add_list. simpl. reflexivity.
@@ -1739,23 +1787,23 @@ Qed.
 
 Lemma mult_list_false_l: forall a n, mult_list_carry [false] a n = mk_list_false n.
 Proof. intro a.
-       induction a as [| a xs IHxs]; simpl; reflexivity.
+       induction a as [ | a xs IHxs]; simpl; reflexivity.
 Qed.
 
 Lemma mult_list_carry_empty_l: forall (a: list bool) (c: nat), mult_list_carry [] a c = mk_list_false c.
-Proof. intro a. induction a as [| a' xs IHxs]; auto. Qed.
+Proof. intro a. induction a as [ | a' xs IHxs]; auto. Qed.
 
 Lemma strictly_positive_0_unique: forall n: nat, (0 >= n)%nat <-> (n = 0)%nat.
-Proof. intro n. induction n as [| n IHn].
+Proof. intro n. induction n as [ | n IHn].
        split; try auto.
        split; intro H; contradict H; easy.
 Qed.
 
 Lemma mult_list_carry_length: forall (a b: list bool) n, ((length b) >= n)%nat -> n = length (mult_list_carry a b n).
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - intros b n H. rewrite mult_list_carry_empty_l, length_mk_list_false; reflexivity.
-       - intros [| b ys] n H. simpl in H. rewrite strictly_positive_0_unique in H.
+       - intros [ | b ys] n H. simpl in H. rewrite strictly_positive_0_unique in H.
          rewrite H. rewrite mult_list_carry_0. easy.
          simpl. case a.
          + specialize (@length_add_list_ge (b :: ys) (mult_list_carry xs (false :: b :: ys) n)).
@@ -1765,79 +1813,79 @@ Proof. intro a.
          + specialize (@IHxs (false :: b :: ys)). apply IHxs. inversion H. simpl. lia. simpl in *. lia.
 Qed.
 
-Lemma mult_list_length: forall (a b: list bool), ((length b) >= (length a))%nat -> (length a) = length (mult_list a b).
-Proof. intros a b H. unfold mult_list.
-       rewrite <- (@mult_list_carry_length a b (length a)); auto.
-Qed.
+(* Lemma mult_list_length: forall (a b: list bool), ((length b) >= (length a))%nat -> (length a) = length (mult_list a b). *)
+(* Proof. intros a b H. unfold mult_list. *)
+(*        rewrite <- (@mult_list_carry_length a b (length a)); auto. *)
+(* Qed. *)
 
-Lemma mult_list_length_eq: forall (a b: list bool), ((length a) = (length b))%nat -> (length a) = length (mult_list a b).
-Proof. intros a b H. unfold mult_list.
-       rewrite <- (@mult_list_carry_length a b (length a)); lia.
-Qed.
+(* Lemma mult_list_length_eq: forall (a b: list bool), ((length a) = (length b))%nat -> (length a) = length (mult_list a b). *)
+(* Proof. intros a b H. unfold mult_list. *)
+(*        rewrite <- (@mult_list_carry_length a b (length a)); lia. *)
+(* Qed. *)
 
-Lemma mult_list_cons_false1: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
-                       mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0.
-         do 2 rewrite mult_list_carry_0. reflexivity.
-       - intros [| b ys] n H0 H1.
-         + rewrite strictly_positive_0_unique in H1. rewrite H1.
-           do 2 rewrite mult_list_carry_0. reflexivity.
-         + simpl. reflexivity.
-Qed.
+(* Lemma mult_list_cons_false1: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat -> *)
+(*                        mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0. *)
+(*          do 2 rewrite mult_list_carry_0. reflexivity. *)
+(*        - intros [ | b ys] n H0 H1. *)
+(*          + rewrite strictly_positive_0_unique in H1. rewrite H1. *)
+(*            do 2 rewrite mult_list_carry_0. reflexivity. *)
+(*          + simpl. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_cons_false1': forall (a b: list bool) n, ((length (false :: b)) >= n)%nat ->
-                       mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0. rewrite mult_list_carry_empty_l. simpl. reflexivity.
-       - intros [| b ys] n H0.
-         + simpl. case a; reflexivity.
-         + simpl. reflexivity.
-Qed.
+(* Lemma mult_list_cons_false1': forall (a b: list bool) n, ((length (false :: b)) >= n)%nat -> *)
+(*                        mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0. rewrite mult_list_carry_empty_l. simpl. reflexivity. *)
+(*        - intros [ | b ys] n H0. *)
+(*          + simpl. case a; reflexivity. *)
+(*          + simpl. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_cons_false1'': forall (a b: list bool) n,
-                       mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity.
-       - intros [| b ys] n.
-         + simpl. case a; reflexivity.
-         + simpl. reflexivity.
-Qed.
+(* Lemma mult_list_cons_false1'': forall (a b: list bool) n, *)
+(*                        mult_list_carry (false :: a) b n = mult_list_carry a (false :: b) n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity. *)
+(*        - intros [ | b ys] n. *)
+(*          + simpl. case a; reflexivity. *)
+(*          + simpl. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_cons_false2: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
-                       mult_list_carry a (false :: b) n = mult_list_carry (false :: a) b n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0.
-         do 2 rewrite mult_list_carry_0. reflexivity.
-       - intros [| b ys] n H0 H1.
-         + rewrite strictly_positive_0_unique in H1. rewrite H1.
-           do 2 rewrite mult_list_carry_0. reflexivity.
-         + simpl. reflexivity.
-Qed.
+(* Lemma mult_list_cons_false2: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat -> *)
+(*                        mult_list_carry a (false :: b) n = mult_list_carry (false :: a) b n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0. *)
+(*          do 2 rewrite mult_list_carry_0. reflexivity. *)
+(*        - intros [ | b ys] n H0 H1. *)
+(*          + rewrite strictly_positive_0_unique in H1. rewrite H1. *)
+(*            do 2 rewrite mult_list_carry_0. reflexivity. *)
+(*          + simpl. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_cons_false2': forall (a b: list bool) n, ((length (false :: b)) >= n)%nat ->
-                       mult_list_carry a (false :: b) n = mult_list_carry (false :: a) b n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0. rewrite mult_list_carry_empty_l. simpl. reflexivity.
-       - intros [| b ys] n H0.
-         + simpl. case a; reflexivity.
-         + simpl. reflexivity.
-Qed.
+(* Lemma mult_list_cons_false2': forall (a b: list bool) n, ((length (false :: b)) >= n)%nat -> *)
+(*                        mult_list_carry a (false :: b) n = mult_list_carry (false :: a) b n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0. rewrite mult_list_carry_empty_l. simpl. reflexivity. *)
+(*        - intros [ | b ys] n H0. *)
+(*          + simpl. case a; reflexivity. *)
+(*          + simpl. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_cons_false2'': forall (a b: list bool) n,
-                       mult_list_carry a (false :: b) n = mult_list_carry (false :: a) b n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity.
-       - intros [| b ys] n.
-         + simpl. case a; reflexivity.
-         + simpl. reflexivity.
-Qed.
+(* Lemma mult_list_cons_false2'': forall (a b: list bool) n, *)
+(*                        mult_list_carry a (false :: b) n = mult_list_carry (false :: a) b n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity. *)
+(*        - intros [ | b ys] n. *)
+(*          + simpl. case a; reflexivity. *)
+(*          + simpl. reflexivity. *)
+(* Qed. *)
 
 Lemma add_list_carry_rl0: forall (a b: list bool), 
 add_list_ingr (add_list_ingr a a false) b false = add_list_ingr (removelast (false :: a)) b false.
@@ -1856,9 +1904,9 @@ Lemma add_list_carry_rl_t: forall  (a b: list bool), a <> [] ->
 add_list_ingr (removelast (true :: a)) b false =
 add_list_ingr a (add_list_ingr a b false) true.
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - intros b H0. now contradict H0.
-       - intros [| b ys] H0.
+       - intros [ | b ys] H0.
          + reflexivity.
          + case a, b; 
            do 4 (rewrite <- (@add_list_carry_assoc _ _ _ false true); 
@@ -1876,11 +1924,11 @@ Proof. now simpl. Qed.
 Lemma add_list_carry_tf_tf_comm: forall (a b: list bool),
 (add_list (true :: a) (false :: b)) = (add_list (true :: b) (false :: a)).
 Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros [| b ys].
+       induction a as [ | a xs IHxs].
+       - intros [ | b ys].
          + reflexivity.
          + simpl. now do 2 rewrite add_list_carry_tf_t.
-       - intros [| b ys].
+       - intros [ | b ys].
          + simpl. now do 2 rewrite add_list_carry_tf_t.
          + do 2 rewrite add_list_carry_tf_t. apply f_equal.
            case a, b; now rewrite add_list_comm.
@@ -1889,7 +1937,7 @@ Qed.
 Lemma add_list_carry_ft_ft_comm: forall (a b: list bool),
 (add_list (false :: a) (true :: b)) = (add_list (false :: b) (true :: a)).
 Proof. intro a.
-       induction a as [| a xs IHxs]; intros [| b ys]; try (now unfold add_list).
+       induction a as [ | a xs IHxs]; intros [ | b ys]; try (now unfold add_list).
        unfold add_list. simpl. apply f_equal.
        case a, b; simpl; now rewrite add_list_carry_comm.
 Qed.
@@ -1897,88 +1945,88 @@ Qed.
 Lemma add_list_carry_ff_f: forall (a b: list bool),
 (add_list (false :: a) (false :: b)) = (false :: add_list a b).
 Proof. intro a.
-       induction a as [| a xs IHxs]; intros [| b ys]; now unfold add_list.
+       induction a as [ | a xs IHxs]; intros [ | b ys]; now unfold add_list.
 Qed.
 
-Lemma mult_list_carry_f_f_1: forall (a b: list bool) n,
-                       mult_list_carry (false :: a) b (S n) = false :: mult_list_carry a b n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity.
-       - intros [| b ys] n.
-         + case a.
-          * rewrite mult_list_cons_false1''. 
-            simpl. rewrite mult_list_cons_false2''.
-            rewrite IHxs.
-            rewrite mult_list_cons_false2''.
-            now rewrite <- add_list_carry_ff_f.
-          * rewrite mult_list_cons_false1''. 
-            simpl. rewrite mult_list_cons_false2''.
-            rewrite IHxs.
-            now rewrite mult_list_cons_false2''.
-         + case a, b.
-           * simpl. rewrite mult_list_cons_false2''. rewrite IHxs.
-             now rewrite add_list_carry_ff_f.
-           * simpl. rewrite mult_list_cons_false2''. rewrite IHxs.
-             now rewrite add_list_carry_ff_f.
-           * simpl. rewrite mult_list_cons_false2''.
-             rewrite IHxs. reflexivity.
-           * simpl. rewrite mult_list_cons_false2''.
-             rewrite IHxs. reflexivity.
-Qed.
+(* Lemma mult_list_carry_f_f_1: forall (a b: list bool) n, *)
+(*                        mult_list_carry (false :: a) b (S n) = false :: mult_list_carry a b n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity. *)
+(*        - intros [ | b ys] n. *)
+(*          + case a. *)
+(*           * rewrite mult_list_cons_false1''.  *)
+(*             simpl. rewrite mult_list_cons_false2''. *)
+(*             rewrite IHxs. *)
+(*             rewrite mult_list_cons_false2''. *)
+(*             now rewrite <- add_list_carry_ff_f. *)
+(*           * rewrite mult_list_cons_false1''.  *)
+(*             simpl. rewrite mult_list_cons_false2''. *)
+(*             rewrite IHxs. *)
+(*             now rewrite mult_list_cons_false2''. *)
+(*          + case a, b. *)
+(*            * simpl. rewrite mult_list_cons_false2''. rewrite IHxs. *)
+(*              now rewrite add_list_carry_ff_f. *)
+(*            * simpl. rewrite mult_list_cons_false2''. rewrite IHxs. *)
+(*              now rewrite add_list_carry_ff_f. *)
+(*            * simpl. rewrite mult_list_cons_false2''. *)
+(*              rewrite IHxs. reflexivity. *)
+(*            * simpl. rewrite mult_list_cons_false2''. *)
+(*              rewrite IHxs. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_carry_f_f_2: forall (a b: list bool) n,
-                       mult_list_carry a (false :: b) (S n) = false :: mult_list_carry a b n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity.
-       - intros [| b ys] n.
-         + case a.
-          * rewrite mult_list_cons_false2''. 
-            simpl. rewrite IHxs.
-            rewrite mult_list_cons_false2''.
-            now rewrite <- add_list_carry_ff_f.
-          * rewrite mult_list_cons_false1''.
-            rewrite IHxs.
-            now rewrite mult_list_cons_false2''.
-         + case a, b.
-           * simpl. rewrite IHxs.
-             now rewrite add_list_carry_ff_f.
-           * simpl. rewrite IHxs.
-             now rewrite add_list_carry_ff_f.
-           * simpl. rewrite IHxs. reflexivity.
-           * simpl. rewrite IHxs. reflexivity.
-Qed.
+(* Lemma mult_list_carry_f_f_2: forall (a b: list bool) n, *)
+(*                        mult_list_carry a (false :: b) (S n) = false :: mult_list_carry a b n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n. rewrite mult_list_carry_empty_l. simpl. reflexivity. *)
+(*        - intros [ | b ys] n. *)
+(*          + case a. *)
+(*           * rewrite mult_list_cons_false2''.  *)
+(*             simpl. rewrite IHxs. *)
+(*             rewrite mult_list_cons_false2''. *)
+(*             now rewrite <- add_list_carry_ff_f. *)
+(*           * rewrite mult_list_cons_false1''. *)
+(*             rewrite IHxs. *)
+(*             now rewrite mult_list_cons_false2''. *)
+(*          + case a, b. *)
+(*            * simpl. rewrite IHxs. *)
+(*              now rewrite add_list_carry_ff_f. *)
+(*            * simpl. rewrite IHxs. *)
+(*              now rewrite add_list_carry_ff_f. *)
+(*            * simpl. rewrite IHxs. reflexivity. *)
+(*            * simpl. rewrite IHxs. reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_carry_ff_ff: forall (a b: list bool) n,
-                       mult_list_carry (false :: a) (false :: b) (S (S n)) = false :: false :: mult_list_carry a b n.
-Proof. intros a b n.
-       rewrite mult_list_carry_f_f_1, mult_list_carry_f_f_2.
-       reflexivity.
-Qed.
+(* Lemma mult_list_carry_ff_ff: forall (a b: list bool) n, *)
+(*                        mult_list_carry (false :: a) (false :: b) (S (S n)) = false :: false :: mult_list_carry a b n. *)
+(* Proof. intros a b n. *)
+(*        rewrite mult_list_carry_f_f_1, mult_list_carry_f_f_2. *)
+(*        reflexivity. *)
+(* Qed. *)
 
-Lemma mult_list_carry_1: forall (a: list bool), (mult_list_carry a [false; true] 1) = [false].
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - simpl. reflexivity.
-       - simpl. case a.
-         + rewrite mult_list_cons_false2'.
-           rewrite mult_list_carry_f_f_1. rewrite mult_list_carry_0. 
-           now unfold add_list.
-           simpl; lia.
-         + rewrite mult_list_cons_false2'.
-           rewrite mult_list_carry_f_f_1. now rewrite mult_list_carry_0.
-           simpl; lia.
-Qed.
+(* Lemma mult_list_carry_1: forall (a: list bool), (mult_list_carry a [false; true] 1) = [false]. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - simpl. reflexivity. *)
+(*        - simpl. case a. *)
+(*          + rewrite mult_list_cons_false2'. *)
+(*            rewrite mult_list_carry_f_f_1. rewrite mult_list_carry_0.  *)
+(*            now unfold add_list. *)
+(*            simpl; lia. *)
+(*          + rewrite mult_list_cons_false2'. *)
+(*            rewrite mult_list_carry_f_f_1. now rewrite mult_list_carry_0. *)
+(*            simpl; lia. *)
+(* Qed. *)
 
 Lemma nsubst_0: forall n, (n - 0)%nat = n.
 Proof. intro n. 
-       induction n as [| n IHn]; now simpl.
+       induction n as [ | n IHn]; now simpl.
 Qed.
 
 Lemma nsubst_S: forall n, (n <> 0)%nat -> n = S (n - 1)%nat.
 Proof. intro n.
-       induction n as [| n IHn]; intro H.
+       induction n as [ | n IHn]; intro H.
        - now contradict H.
        - simpl. now rewrite nsubst_0.
 Qed.
@@ -1986,448 +2034,449 @@ Qed.
 
 Lemma not_empty: forall (a: list bool) n, ((length a) > n)%nat -> a <> [].
 Proof. intro a.
-       induction a as [| a xs IHxs].
+       induction a as [ | a xs IHxs].
        - intros n H. now contradict H.
-       - intros [| n] H; easy.
+       - intros [ | n] H; easy.
 Qed.
 
-Lemma mult_list_carry_add_list_t_f: forall (a b: list bool) n, ((length a) > n)%nat ->
-(mult_list_carry a (true :: b) (S n)) = (add_list a (false :: mult_list_carry a b n)).
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0. simpl in H0.
-         now contradict H0.
-      - intros [| b ys] n H0.
-         + case a.
-           * simpl.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_tf_t.
-             rewrite add_list_carry_tf_t.
-             apply f_equal.
-             now rewrite add_list_empty_r, add_list_empty_l.
-           * rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f.
-             apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_1.
-               rewrite <- IHxs.
-               reflexivity.
-               simpl in *; lia.
-         + case a, b.
-           * simpl.
-             rewrite mult_list_cons_false2''.
-             rewrite mult_list_cons_false2''.
-             rewrite add_list_carry_tf_tf_comm.
-             symmetry; rewrite add_list_comm; symmetry.
-             rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_tf_t.
-             rewrite add_list_carry_ft_t. apply f_equal.
-             specialize (@IHxs (true :: ys)).
-             rewrite <- add_list_assoc.
-             cut ((add_list xs (true :: ys)) = (add_list (true :: ys) xs)).
-             intro H3. rewrite H3.
-             rewrite add_list_assoc.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now do 3 rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_1.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-             now rewrite add_list_comm.
-           * simpl.
-             rewrite mult_list_cons_false2''.
-             rewrite mult_list_cons_false2''.
-             rewrite add_list_carry_tf_tf_comm.
-             symmetry; rewrite add_list_comm; symmetry.
-             rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_tf_t.
-             rewrite add_list_carry_ft_t. apply f_equal.
-             specialize (@IHxs (false :: ys)).
-             rewrite <- add_list_assoc.
-             cut ((add_list xs (false :: ys)) = (add_list (false :: ys) xs)).
-             intro H3. rewrite H3.
-             rewrite add_list_assoc.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now do 3 rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_1.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-             now rewrite add_list_comm.
-           * rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f.
-             apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_1.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-           * rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f.
-             apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_1.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_add_list_t_f: forall (a b: list bool) n, ((length a) > n)%nat -> *)
+(* (mult_list_carry a (true :: b) (S n)) = (add_list a (false :: mult_list_carry a b n)). *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0. simpl in H0. *)
+(*          now contradict H0. *)
+(*       - intros [ | b ys] n H0. *)
+(*          + case a. *)
+(*            * simpl. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_tf_t. *)
+(*              rewrite add_list_carry_tf_t. *)
+(*              apply f_equal. *)
+(*              now rewrite add_list_empty_r, add_list_empty_l. *)
+(*            * rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. *)
+(*              apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_1. *)
+(*                rewrite <- IHxs. *)
+(*                reflexivity. *)
+(*                simpl in *; lia. *)
+(*          + case a, b. *)
+(*            * simpl. *)
+(*              rewrite mult_list_cons_false2''. *)
+(*              rewrite mult_list_cons_false2''. *)
+(*              rewrite add_list_carry_tf_tf_comm. *)
+(*              symmetry; rewrite add_list_comm; symmetry. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_tf_t. *)
+(*              rewrite add_list_carry_ft_t. apply f_equal. *)
+(*              specialize (@IHxs (true :: ys)). *)
+(*              rewrite <- add_list_assoc. *)
+(*              cut ((add_list xs (true :: ys)) = (add_list (true :: ys) xs)). *)
+(*              intro H3. rewrite H3. *)
+(*              rewrite add_list_assoc. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now do 3 rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(*              now rewrite add_list_comm. *)
+(*            * simpl. *)
+(*              rewrite mult_list_cons_false2''. *)
+(*              rewrite mult_list_cons_false2''. *)
+(*              rewrite add_list_carry_tf_tf_comm. *)
+(*              symmetry; rewrite add_list_comm; symmetry. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_tf_t. *)
+(*              rewrite add_list_carry_ft_t. apply f_equal. *)
+(*              specialize (@IHxs (false :: ys)). *)
+(*              rewrite <- add_list_assoc. *)
+(*              cut ((add_list xs (false :: ys)) = (add_list (false :: ys) xs)). *)
+(*              intro H3. rewrite H3. *)
+(*              rewrite add_list_assoc. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now do 3 rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(*              now rewrite add_list_comm. *)
+(*            * rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. *)
+(*              apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(*            * rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. *)
+(*              apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_carry_t_tt_add_list_f_t_tt: forall (a b: list bool) n, ((length a) >= n)%nat ->
-mult_list_carry (true :: a) (true :: true :: b) (S n) =
-add_list (false :: a)
-  (true :: mult_list_carry (true :: a) (true :: b) n).
-Proof. intros. simpl.
-        rewrite mult_list_cons_false2''.
-        rewrite mult_list_cons_false2''.
-        rewrite add_list_carry_ft_ft_comm.
-        symmetry; rewrite add_list_comm; symmetry.
-        rewrite mult_list_carry_f_f_1.
-        induction n.
-         do 2 rewrite mult_list_carry_0. rewrite add_list_empty_r.
-          unfold add_list. simpl. now rewrite add_list_ingr_r.
-        rewrite mult_list_carry_f_f_1.
-        rewrite add_list_carry_tf_t.
-        rewrite add_list_carry_tf_t. apply f_equal.
-        rewrite add_list_carry_tf_tf_comm. simpl.
-        rewrite mult_list_carry_add_list_t_f.
-        rewrite add_list_carry_tf_tf_comm.
-        rewrite <- add_list_assoc. rewrite <- add_list_assoc.
-        cut (add_list (true :: b) a = add_list a (true :: b)).
-        intro H3; now rewrite H3.
-        now rewrite add_list_comm.
-        simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_t_tt_add_list_f_t_tt: forall (a b: list bool) n, ((length a) >= n)%nat -> *)
+(* mult_list_carry (true :: a) (true :: true :: b) (S n) = *)
+(* add_list (false :: a) *)
+(*   (true :: mult_list_carry (true :: a) (true :: b) n). *)
+(* Proof. intros. simpl. *)
+(*         rewrite mult_list_cons_false2''. *)
+(*         rewrite mult_list_cons_false2''. *)
+(*         rewrite add_list_carry_ft_ft_comm. *)
+(*         symmetry; rewrite add_list_comm; symmetry. *)
+(*         rewrite mult_list_carry_f_f_1. *)
+(*         induction n. *)
+(*          do 2 rewrite mult_list_carry_0. rewrite add_list_empty_r. *)
+(*           unfold add_list. simpl. now rewrite add_list_ingr_r. *)
+(*         rewrite mult_list_carry_f_f_1. *)
+(*         rewrite add_list_carry_tf_t. *)
+(*         rewrite add_list_carry_tf_t. apply f_equal. *)
+(*         rewrite add_list_carry_tf_tf_comm. simpl. *)
+(*         rewrite mult_list_carry_add_list_t_f. *)
+(*         rewrite add_list_carry_tf_tf_comm. *)
+(*         rewrite <- add_list_assoc. rewrite <- add_list_assoc. *)
+(*         cut (add_list (true :: b) a = add_list a (true :: b)). *)
+(*         intro H3; now rewrite H3. *)
+(*         now rewrite add_list_comm. *)
+(*         simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_carry_t_tf_add_list_f_t_tf: forall (a b: list bool) n, ((length a) >= n)%nat ->
-mult_list_carry (true :: a) (true :: false :: b) (S n) =
-add_list (false :: a) (true :: mult_list_carry (true :: a) (false :: b) n).
-Proof. intros. simpl.
-        rewrite mult_list_cons_false2''.
-        rewrite mult_list_cons_false2''.
-        rewrite add_list_carry_ft_ft_comm.
-        symmetry; rewrite add_list_comm; symmetry.
-        rewrite mult_list_carry_f_f_1.
-        induction n.
-         do 2 rewrite mult_list_carry_0. rewrite add_list_empty_r.
-          unfold add_list. simpl. now rewrite add_list_ingr_r.
-        rewrite mult_list_carry_f_f_1.
-        rewrite add_list_carry_tf_t.
-        rewrite add_list_carry_tf_t. apply f_equal.
-        rewrite mult_list_carry_add_list_t_f.
-        rewrite <- add_list_assoc.
-        rewrite <- add_list_assoc.
-        cut (add_list (false :: b) a = add_list a (false :: b)).
-        intro H3; now rewrite H3.
-        now rewrite add_list_comm.
-        simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_t_tf_add_list_f_t_tf: forall (a b: list bool) n, ((length a) >= n)%nat -> *)
+(* mult_list_carry (true :: a) (true :: false :: b) (S n) = *)
+(* add_list (false :: a) (true :: mult_list_carry (true :: a) (false :: b) n). *)
+(* Proof. intros. simpl. *)
+(*         rewrite mult_list_cons_false2''. *)
+(*         rewrite mult_list_cons_false2''. *)
+(*         rewrite add_list_carry_ft_ft_comm. *)
+(*         symmetry; rewrite add_list_comm; symmetry. *)
+(*         rewrite mult_list_carry_f_f_1. *)
+(*         induction n. *)
+(*          do 2 rewrite mult_list_carry_0. rewrite add_list_empty_r. *)
+(*           unfold add_list. simpl. now rewrite add_list_ingr_r. *)
+(*         rewrite mult_list_carry_f_f_1. *)
+(*         rewrite add_list_carry_tf_t. *)
+(*         rewrite add_list_carry_tf_t. apply f_equal. *)
+(*         rewrite mult_list_carry_add_list_t_f. *)
+(*         rewrite <- add_list_assoc. *)
+(*         rewrite <- add_list_assoc. *)
+(*         cut (add_list (false :: b) a = add_list a (false :: b)). *)
+(*         intro H3; now rewrite H3. *)
+(*         now rewrite add_list_comm. *)
+(*         simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_carry_tt_add_list_ft: forall (a b: list bool) n, ((length a) >= n)%nat ->
-mult_list_carry a (true :: true :: b) n =
-add_list a (mult_list_carry a (false :: true :: b) n).
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0. rewrite strictly_positive_0_unique in H0. 
-           rewrite H0. now do 2 rewrite mult_list_carry_0.
-       - intros [| b ys] n H0.
-         + case a.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_tf_t.
-               rewrite add_list_carry_ff_f.
-               rewrite add_list_carry_tf_t. apply f_equal.
-               rewrite IHxs.
-               rewrite <- add_list_assoc.
-               rewrite <- add_list_assoc.
-               cut ((add_list [true] xs) = (add_list xs [true])). now (intro H1; rewrite H1).
-               now rewrite add_list_comm.
-               simpl in *; lia.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_ff_f. apply f_equal.
-               rewrite IHxs. reflexivity.
-               simpl in *; lia.
-         + case a, b.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_t_tt_add_list_f_t_tt.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ft_ft_comm.
-             now rewrite add_list_comm.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_t_tt_add_list_f_t_tt.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ft_ft_comm.
-             now rewrite add_list_comm.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             rewrite IHxs.
-             rewrite mult_list_cons_false1''. reflexivity.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             rewrite IHxs.
-             rewrite mult_list_cons_false1''. reflexivity.
-             simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_tt_add_list_ft: forall (a b: list bool) n, ((length a) >= n)%nat -> *)
+(* mult_list_carry a (true :: true :: b) n = *)
+(* add_list a (mult_list_carry a (false :: true :: b) n). *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0. rewrite strictly_positive_0_unique in H0.  *)
+(*            rewrite H0. now do 2 rewrite mult_list_carry_0. *)
+(*        - intros [ | b ys] n H0. *)
+(*          + case a. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_tf_t. *)
+(*                rewrite add_list_carry_ff_f. *)
+(*                rewrite add_list_carry_tf_t. apply f_equal. *)
+(*                rewrite IHxs. *)
+(*                rewrite <- add_list_assoc. *)
+(*                rewrite <- add_list_assoc. *)
+(*                cut ((add_list [true] xs) = (add_list xs [true])). now (intro H1; rewrite H1). *)
+(*                now rewrite add_list_comm. *)
+(*                simpl in *; lia. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_ff_f. apply f_equal. *)
+(*                rewrite IHxs. reflexivity. *)
+(*                simpl in *; lia. *)
+(*          + case a, b. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_t_tt_add_list_f_t_tt. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ft_ft_comm. *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_t_tt_add_list_f_t_tt. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ft_ft_comm. *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              rewrite IHxs. *)
+(*              rewrite mult_list_cons_false1''. reflexivity. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              rewrite IHxs. *)
+(*              rewrite mult_list_cons_false1''. reflexivity. *)
+(*              simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_carry_tf_add_list_ff: forall (a b: list bool) n, ((length a) >= n)%nat  ->
-mult_list_carry a (true :: false :: b) n =
-add_list a (mult_list_carry (false :: a) (false :: b) n).
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0. rewrite strictly_positive_0_unique in H0. 
-           rewrite H0. now do 2 rewrite mult_list_carry_0.
-       - intros [| b ys] n H0.
-         + case a.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_tf_t.
-               rewrite add_list_carry_ff_f.
-               rewrite add_list_carry_tf_t. apply f_equal.
-               rewrite IHxs.
-               rewrite <- add_list_assoc.
-               rewrite <- add_list_assoc.
-               cut ((add_list [false] xs) = (add_list xs [false])). now (intro H1; rewrite H1).
-               now rewrite add_list_comm.
-               simpl in *; lia.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_ff_f. apply f_equal.
-               rewrite IHxs. reflexivity.
-               simpl in *; lia.
-         + case a, b.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_t_tf_add_list_f_t_tf.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ft_ft_comm.
-             now rewrite add_list_comm.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_t_tf_add_list_f_t_tf.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ft_ft_comm.
-             now rewrite add_list_comm.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             rewrite IHxs.
-             rewrite mult_list_cons_false1''. reflexivity.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_1.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             rewrite IHxs.
-             rewrite mult_list_cons_false1''. reflexivity.
-             simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_tf_add_list_ff: forall (a b: list bool) n, ((length a) >= n)%nat  -> *)
+(* mult_list_carry a (true :: false :: b) n = *)
+(* add_list a (mult_list_carry (false :: a) (false :: b) n). *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0. rewrite strictly_positive_0_unique in H0.  *)
+(*            rewrite H0. now do 2 rewrite mult_list_carry_0. *)
+(*        - intros [ | b ys] n H0. *)
+(*          + case a. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_tf_t. *)
+(*                rewrite add_list_carry_ff_f. *)
+(*                rewrite add_list_carry_tf_t. apply f_equal. *)
+(*                rewrite IHxs. *)
+(*                rewrite <- add_list_assoc. *)
+(*                rewrite <- add_list_assoc. *)
+(*                cut ((add_list [false] xs) = (add_list xs [false])). now (intro H1; rewrite H1). *)
+(*                now rewrite add_list_comm. *)
+(*                simpl in *; lia. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_ff_f. apply f_equal. *)
+(*                rewrite IHxs. reflexivity. *)
+(*                simpl in *; lia. *)
+(*          + case a, b. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_t_tf_add_list_f_t_tf. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ft_ft_comm. *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_t_tf_add_list_f_t_tf. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ft_ft_comm. *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              rewrite IHxs. *)
+(*              rewrite mult_list_cons_false1''. reflexivity. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_1. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              rewrite IHxs. *)
+(*              rewrite mult_list_cons_false1''. reflexivity. *)
+(*              simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_carry_ft_add_list_f_ff: forall (a b: list bool) n, ((length a) >= n)%nat ->
-(mult_list_carry a (false :: true :: b) n) =
-(add_list (false :: a) ((mult_list_carry a (false :: false :: b) n))).
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0. rewrite strictly_positive_0_unique in H0. 
-           rewrite H0. now do 2 rewrite mult_list_carry_0.
-       - intros [| b ys] n H0.
-         + case a.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_ff_f.
-               rewrite add_list_carry_ff_f.
-               rewrite add_list_carry_ff_f. apply f_equal.
-               rewrite IHxs.
-               rewrite <- add_list_assoc.
-               rewrite <- add_list_assoc.
-               cut ((add_list [true] (false :: xs)) = (add_list (true :: xs) [false])). now (intro H1; rewrite H1).
-               now rewrite add_list_comm.
-               simpl in *; lia.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_ff_f. apply f_equal.
-               rewrite IHxs. reflexivity.
-               simpl in *; lia.
-         + case a, b.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_t_tt_add_list_f_t_tt.
-               rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ft_ft_comm.
-             now rewrite add_list_comm.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_t_tf_add_list_f_t_tf.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ft_ft_comm.
-             now rewrite add_list_comm.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_tt_add_list_ft. reflexivity.
-             simpl in *; lia.
-           * induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_ff_f. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_tf_add_list_ff. reflexivity.
-             simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_ft_add_list_f_ff: forall (a b: list bool) n, ((length a) >= n)%nat -> *)
+(* (mult_list_carry a (false :: true :: b) n) = *)
+(* (add_list (false :: a) ((mult_list_carry a (false :: false :: b) n))). *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0. rewrite strictly_positive_0_unique in H0.  *)
+(*            rewrite H0. now do 2 rewrite mult_list_carry_0. *)
+(*        - intros [ | b ys] n H0. *)
+(*          + case a. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_ff_f. *)
+(*                rewrite add_list_carry_ff_f. *)
+(*                rewrite add_list_carry_ff_f. apply f_equal. *)
+(*                rewrite IHxs. *)
+(*                rewrite <- add_list_assoc. *)
+(*                rewrite <- add_list_assoc. *)
+(*                cut ((add_list [true] (false :: xs)) = (add_list (true :: xs) [false])). now (intro H1; rewrite H1). *)
+(*                now rewrite add_list_comm. *)
+(*                simpl in *; lia. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_ff_f. apply f_equal. *)
+(*                rewrite IHxs. reflexivity. *)
+(*                simpl in *; lia. *)
+(*          + case a, b. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_t_tt_add_list_f_t_tt. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ft_ft_comm. *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_t_tf_add_list_f_t_tf. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ft_ft_comm. *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_tt_add_list_ft. reflexivity. *)
+(*              simpl in *; lia. *)
+(*            * induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_tf_add_list_ff. reflexivity. *)
+(*              simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_carry_comm: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat ->
-                            mult_list_carry a b n = mult_list_carry b a n.
-Proof. intro a.
-       induction a as [| a xs IHxs].
-       - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0.
-         do 2 rewrite mult_list_carry_0. reflexivity.
-       - intros [| b ys] n H0 H1.
-         + rewrite strictly_positive_0_unique in H1. rewrite H1.
-           do 2 rewrite mult_list_carry_0. reflexivity.
-         + case a, b.
-           * simpl.
-             induction n.
-             do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_2.
-             rewrite add_list_carry_tf_t.
-             rewrite add_list_carry_tf_t. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. 
-               now do 2 rewrite add_list_empty_r.
-             rewrite mult_list_carry_add_list_t_f.
-             rewrite mult_list_carry_add_list_t_f.
-             rewrite IHxs.
-             rewrite <- add_list_assoc.
-             rewrite <- add_list_assoc.
-             cut (add_list xs ys = add_list ys xs). now (intro H2 ;rewrite H2).
-             now rewrite add_list_comm.
-             simpl in *; lia.
-             simpl in *; lia.
-             simpl in *; lia.
-             simpl in *; lia.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_ff_f. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. 
-               now rewrite add_list_empty_r.
-             rewrite mult_list_carry_add_list_t_f.
-             rewrite mult_list_carry_f_f_2.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-             simpl in *; lia.
-             simpl in *; lia.
-           * simpl.
-             induction n.
-               do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2.
-               rewrite add_list_carry_ff_f. apply f_equal.
-             induction n.
-               do 2 rewrite mult_list_carry_0. 
-               now rewrite add_list_empty_r.
-             rewrite mult_list_carry_add_list_t_f.
-             rewrite mult_list_carry_f_f_2.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-             simpl in *; lia.
-             simpl in *; lia.
-           * simpl.
-             induction n.
-               now do 2 rewrite mult_list_carry_0.
-               rewrite mult_list_carry_f_f_2.
-               rewrite mult_list_carry_f_f_2. apply f_equal.
-             induction n.
-               now do 2 rewrite mult_list_carry_0. 
-             rewrite mult_list_carry_f_f_2.
-             rewrite mult_list_carry_f_f_2. apply f_equal.
-             rewrite IHxs. reflexivity.
-             simpl in *; lia.
-             simpl in *; lia.
-Qed.
+(* Lemma mult_list_carry_comm: forall (a b: list bool) n, ((length a) >= n)%nat -> ((length b) >= n)%nat -> *)
+(*                             mult_list_carry a b n = mult_list_carry b a n. *)
+(* Proof. intro a. *)
+(*        induction a as [ | a xs IHxs]. *)
+(*        - intros b n H0 H1. rewrite strictly_positive_0_unique in H0. rewrite H0. *)
+(*          do 2 rewrite mult_list_carry_0. reflexivity. *)
+(*        - intros [ | b ys] n H0 H1. *)
+(*          + rewrite strictly_positive_0_unique in H1. rewrite H1. *)
+(*            do 2 rewrite mult_list_carry_0. reflexivity. *)
+(*          + case a, b. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*              do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite add_list_carry_tf_t. *)
+(*              rewrite add_list_carry_tf_t. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0.  *)
+(*                now do 2 rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_add_list_t_f. *)
+(*              rewrite mult_list_carry_add_list_t_f. *)
+(*              rewrite IHxs. *)
+(*              rewrite <- add_list_assoc. *)
+(*              rewrite <- add_list_assoc. *)
+(*              cut (add_list xs ys = add_list ys xs). now (intro H2 ;rewrite H2). *)
+(*              now rewrite add_list_comm. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0.  *)
+(*                now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_add_list_t_f. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0. now rewrite add_list_empty_r. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite add_list_carry_ff_f. apply f_equal. *)
+(*              induction n. *)
+(*                do 2 rewrite mult_list_carry_0.  *)
+(*                now rewrite add_list_empty_r. *)
+(*              rewrite mult_list_carry_add_list_t_f. *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(*            * simpl. *)
+(*              induction n. *)
+(*                now do 2 rewrite mult_list_carry_0. *)
+(*                rewrite mult_list_carry_f_f_2. *)
+(*                rewrite mult_list_carry_f_f_2. apply f_equal. *)
+(*              induction n. *)
+(*                now do 2 rewrite mult_list_carry_0.  *)
+(*              rewrite mult_list_carry_f_f_2. *)
+(*              rewrite mult_list_carry_f_f_2. apply f_equal. *)
+(*              rewrite IHxs. reflexivity. *)
+(*              simpl in *; lia. *)
+(*              simpl in *; lia. *)
+(* Qed. *)
 
-Lemma mult_list_comm: forall (a b: list bool) n, n = (length a) -> (n = length b) -> (mult_list a b) = (mult_list b a).
-Proof. intros a b n H0 H1.
-       unfold mult_list. 
-       rewrite <- H0, H1.
-       apply mult_list_carry_comm; lia.
-Qed.
+(* Lemma mult_list_comm: forall (a b: list bool) n, n = (length a) -> (n = length b) -> (mult_list a b) = (mult_list b a). *)
+(* Proof. intros a b n H0 H1. *)
+(*        unfold mult_list.  *)
+(*        rewrite <- H0, H1. *)
+(*        apply mult_list_carry_comm; lia. *)
+(* Qed. *)
 
-(* bitvector MULT properties *)
+(* (* bitvector MULT properties *) *)
 
 Lemma bv_mult_size a b: size (bv_mult a b) = size_bv_mult a b.
-Proof.
-  unfold size_bv_mult, bv_mult.
-  case_eq (size a =? size b); intros.
-  - rewrite N.eqb_eq in H. unfold size in *.
-    apply f_equal. unfold bits.
-    symmetry; apply mult_list_length_eq.
-    now apply Nat2N.inj in H.
-  - now unfold size in *.
-Qed.
+Admitted.					     
+(* Proof. *)
+(*   unfold size_bv_mult, bv_mult. *)
+(*   case_eq (size a =? size b); intros. *)
+(*   - rewrite N.eqb_eq in H. unfold size in *. *)
+(*     apply f_equal. unfold bits. *)
+(*     symmetry; apply mult_list_length_eq. *)
+(*     now apply Nat2N.inj in H. *)
+(*   - now unfold size in *. *)
+(* Qed. *)
 
-Lemma bv_mult_comm: forall n a b, (size a) = n -> (size b) = n -> bv_mult a b = bv_mult b a.
-Proof. intros n a b H0 H1.
-       unfold bv_mult, size, bits in *. rewrite H0, H1.
-       rewrite N.eqb_compare. rewrite N.compare_refl.
-       rewrite (@mult_list_comm a b (nat_of_N n)). reflexivity.
-       rewrite <- H0. now rewrite Nat2N.id.
-       rewrite <- H1. now rewrite Nat2N.id.
-Qed.
+(* Lemma bv_mult_comm: forall n a b, (size a) = n -> (size b) = n -> bv_mult a b = bv_mult b a. *)
+(* Proof. intros n a b H0 H1. *)
+(*        unfold bv_mult, size, bits in *. rewrite H0, H1. *)
+(*        rewrite N.eqb_compare. rewrite N.compare_refl. *)
+(*        rewrite (@mult_list_comm a b (nat_of_N n)). reflexivity. *)
+(*        rewrite <- H0. now rewrite Nat2N.id. *)
+(*        rewrite <- H1. now rewrite Nat2N.id. *)
+(* Qed. *)
 
 End RAWBITVECTOR_LIST.
 
