@@ -409,7 +409,8 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
         else false
       | _, _, _ => false
     end.
-  
+
+
 
   (** * Checker for bitblasting of bitvector addition *)
   Definition check_bbAdd pos1 pos2 lres :=
@@ -480,6 +481,30 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     match n with
       | O => res
       | S k => mult_step a b res 1 k
+    end.
+
+
+  Fixpoint mkzeros (k: nat) : list carry :=
+    match k with
+      | O => nil
+      | S k => (Clit Lit._false) :: mkzeros k
+    end .
+
+
+  Fixpoint bblast_bvadd (a b: list carry) (c: carry) : list carry :=
+    match a, b  with
+      | nil, _ | _, nil => nil
+      | ai :: a', bi :: b' =>
+        let c' := (Cor (Cand ai bi) (Cand (Cxor ai bi) c)) in
+        (Cxor (Cxor ai bi) c') :: (bblast_bvadd a' b' c')
+    end.
+    
+  Fixpoint mult_shift (a b: list _lit) (n: nat) : list carry :=
+    match a with
+      | nil => mkzeros n
+      | ai :: a' =>
+        (bblast_bvadd (and_with_bit b ai)
+                      (mult_shift a' (Lit._false :: b) n) (Clit Lit._false))
     end.
 
 
