@@ -3776,7 +3776,7 @@ Lemma check_add_bvmult_length: forall bs1 bs2 bsres,
   (length bs1 = n)%nat /\ (length bs2 = n)%nat .
 Proof. Admitted.
 
-Lemma check_mult_list:forall bs1 bs2 bsres, 
+Lemma check_mult_list: forall bs1 bs2 bsres, 
   let n := length bsres in
   (length bs1 = n)%nat -> 
   (length bs2 = n)%nat -> 
@@ -3799,7 +3799,36 @@ Lemma check_add_bvmult: forall bs1 bs2 bsres,
   BITVECTOR_LIST.bv_mult (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs1))
   (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs2)) =
   BITVECTOR_LIST.of_bits (map (Lit.interp rho) bsres).
-Admitted.
+Proof. intros.
+       specialize (@check_mult_list bs1 bs2 bsres H H0 H1). intros.
+       unfold BITVECTOR_LIST.bv_mult.
+       unfold RAWBITVECTOR_LIST.bv_mult.
+       unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits.
+       unfold BITVECTOR_LIST.of_bits.
+       apply eq_rec.
+       unfold BITVECTOR_LIST.n, BITVECTOR_LIST.bv.
+       assert (
+       (Datatypes.length
+          (RAWBITVECTOR_LIST.of_bits (map (Lit.interp rho) bs1))) = n).
+       unfold RAWBITVECTOR_LIST.of_bits. now rewrite map_length.
+       assert (
+       (Datatypes.length
+          (RAWBITVECTOR_LIST.of_bits (map (Lit.interp rho) bs2))) = n).
+       unfold RAWBITVECTOR_LIST.of_bits. now rewrite map_length.
+       rewrite H3, H4.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       split.
+       unfold RAWBITVECTOR_LIST.mult_list.
+       unfold interp_carry in H2.
+
+       exact H2.
+       
+       unfold RAWBITVECTOR_LIST.size_bv_mult.
+       unfold RAWBITVECTOR_LIST.size.
+       rewrite H3, H4.
+       rewrite N.eqb_compare. rewrite N.compare_refl.
+       unfold n. now rewrite map_length.
+Qed.
 
 Lemma valid_check_bbMult pos1 pos2 lres : C.valid rho (check_bbMult pos1 pos2 lres).
 Proof.  
