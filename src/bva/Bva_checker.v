@@ -440,7 +440,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   Fixpoint and_with_bit (a: list _lit) (bt: _lit) : list carry :=
     match a with
       | nil => nil
-      | ai :: a' => (Cand (Clit bt) (Clit ai)) :: and_with_bit a' bt 
+      | ai :: a' => (Cand (Clit ai) (Clit bt)) :: and_with_bit a' bt 
     end.
   
 
@@ -3795,11 +3795,137 @@ Proof.
         easy. easy. easy.
 Qed.
 
+
+Lemma prop_forallb2: forall {A B} {f: A -> B -> bool} l1 l2, forallb2 f l1 l2 = true -> length l1 = length l2.
+Proof. intros A B f l1.
+       induction l1 as [ | xl1 xsl1 IHl1].
+       - intros. simpl in H.
+         case l2 in *. easy.
+         now contradict H.
+       - intros. simpl in H.
+         case l2 in *.
+         now contradict H.
+         simpl.
+         rewrite andb_true_iff in H. destruct H.
+         apply IHl1 in H0. now rewrite H0.
+Qed.
+
+Check interp_carry.
+
+Lemma prop_and_with_bit: forall a b, map interp_carry (and_with_bit a b) = 
+                          RAWBITVECTOR_LIST.and_with_bool (map (Lit.interp rho) a) (Lit.interp rho b).
+Proof. intro a.
+       induction a as [ | xa xsa IHa ].
+       - intros. now simpl in *.
+       - intros. simpl in *. now rewrite IHa.
+Qed. 
+
+   Lemma map_cons {A B : Type} {f: A -> B} (x:A) (l:list A) : map f (x :: l) = (f x) :: (map f l).
+Admitted.
+
+Lemma prop_mult_step_k_h: forall a b res c k, 
+                          map interp_carry (mult_step_k_h a b res c k) = 
+                          RAWBITVECTOR_LIST.mult_bool_step_k_h (map interp_carry a) (map interp_carry b)
+                          (map interp_carry res) (interp_carry c) k.
+Proof. intro a.
+       induction a as [ | xa xsa IHa ].
+       - intros. simpl. case b.
+         now simpl.
+         intros. now simpl.
+       - intros. case b.
+         now simpl.
+         intros. simpl.
+         case (k - 1 < 0).
+         apply IHa.
+         rewrite <- map_cons.
+         apply IHa.
+Qed.
+
+Lemma prop_top_k_bits: forall a k,
+      (map (Lit.interp rho) (top_k_bits a k)) = RAWBITVECTOR_LIST.top_k_bools (map (Lit.interp rho) a) k.
+Proof. intro a.
+       induction a as [ | xa xsa IHa ].
+       - intros. simpl. case ( k == 0). easy. easy.
+       - intros. simpl. case ( k == 0). easy.
+         simpl. apply f_equal. apply IHa.
+Qed.
+
+Lemma prop_interp_firstn: forall xk' a, map (Lit.interp rho) (List.firstn xk' a) = (List.firstn xk' (map (Lit.interp rho) a)).
+Proof.   intro xk'0.
+          induction xk'0.
+           + intros. now simpl. 
+           + intros. simpl.
+             case a. now simpl.
+             intros. simpl. apply f_equal. apply IHxk'0.
+Qed.
+
+Lemma prop_mult_step: forall a b res k k',
+      (map interp_carry (mult_step a b res k k')) = 
+      RAWBITVECTOR_LIST.mult_bool_step (map (Lit.interp rho) a) (map (Lit.interp rho) b)
+      (map interp_carry res) k k'.
+Proof. intros. revert a b res k.
+       assert (false = (Lit.interp rho (Lit._false))) as Ha.
+         specialize (Lit.interp_false rho wf_rho). intros.
+         unfold is_true in H. rewrite not_true_iff_false in H.
+         now rewrite H.
+       assert (false = interp_carry (Clit Lit._false)).
+         unfold interp_carry.
+         specialize (Lit.interp_false rho wf_rho). intros.
+         unfold is_true in H. rewrite not_true_iff_false in H.
+         now rewrite H.
+
+       assert ([] = map (interp_carry) []).
+        now simpl.
+
+       induction k' as [ | xk' xsk' IHk' ].
+       - intros. unfold mult_step. simpl.
+         intros. rewrite H.
+         apply prop_mult_step_k_h. 
+       - intros. simpl. 
+         case a in *.
+         simpl. rewrite H, H0. 
+         rewrite <- prop_mult_step_k_h.
+         apply xsk'.
+         simpl.
+         rewrite xsk'. simpl.
+         cut (interp_carry ((Cand (Clit i) (Clit (nth k b Lit._false)))) =  
+             ((Lit.interp rho i) && (nth k (map (Lit.interp rho) b) false))).
+         intros. rewrite <- H1.
+         rewrite <- prop_interp_firstn.
+         assert ((nth k (map (Lit.interp rho) b) false) = (Lit.interp rho (nth k b (Lit._false)) )).
+           rewrite Ha. apply map_nth.
+           rewrite H2.
+         rewrite <- prop_and_with_bit.
+         rewrite <- map_cons.
+         rewrite <- map_cons.
+         rewrite H0.
+         rewrite H.
+         now rewrite <- prop_mult_step_k_h.
+         
+         unfold interp_carry. apply f_equal. rewrite Ha.
+         now rewrite map_nth.
+Qed.
+
+
 Lemma check_add_bvmult_length: forall bs1 bs2 bsres,
   let n := length bsres in
   check_mult bs1 bs2 bsres = true ->
   (length bs1 = n)%nat /\ (length bs2 = n)%nat .
-Proof. Admitted.
+Proof. intros.
+       revert bs1 bs2 H.
+       induction bsres as [ | xbsres xsbsres IHbsres].
+       - intros. unfold n. simpl in *.
+         unfold check_mult in H.
+         simpl in *.
+         apply prop_forallb2 in H.
+         simpl in H.
+         rewrite empty_list_length in H.
+         case_eq bs1. intros. rewrite H0 in H.
+         
+         admit.
+         
+         intros. rewrite H0 in H. now contradict H.
+Admitted.
 
 Lemma check_mult_list: forall bs1 bs2 bsres, 
   let n := length bsres in
@@ -3816,7 +3942,8 @@ Lemma check_mult_list: forall bs1 bs2 bsres,
                         (map (Lit.interp rho) bsres).
 Admitted.
 
-Lemma check_add_bvmult: forall bs1 bs2 bsres, 
+
+Lemma check_bvmult: forall bs1 bs2 bsres, 
   let n := length bsres in
   (length bs1 = n)%nat -> 
   (length bs2 = n)%nat -> 
@@ -3824,6 +3951,8 @@ Lemma check_add_bvmult: forall bs1 bs2 bsres,
   BITVECTOR_LIST.bv_mult (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs1))
   (BITVECTOR_LIST.of_bits (map (Lit.interp rho) bs2)) =
   BITVECTOR_LIST.of_bits (map (Lit.interp rho) bsres).
+Admitted.
+(*
 Proof. intros.
        specialize (@check_mult_list bs1 bs2 bsres H H0 H1). intros.
        unfold BITVECTOR_LIST.bv_mult.
@@ -3845,6 +3974,7 @@ Proof. intros.
        split.
        unfold RAWBITVECTOR_LIST.mult_list.
        unfold interp_carry in H2.
+       unfold RAWBITVECTOR_LIST.of_bits in *.
 
        exact H2.
        
@@ -3854,6 +3984,8 @@ Proof. intros.
        rewrite N.eqb_compare. rewrite N.compare_refl.
        unfold n. now rewrite map_length.
 Qed.
+*)
+
 
 Lemma valid_check_bbMult pos1 pos2 lres : C.valid rho (check_bbMult pos1 pos2 lres).
 Proof.  
@@ -3983,7 +4115,7 @@ Proof.
         
         pose proof Heq11.
         apply check_add_bvmult_length in Heq11.
-        apply check_add_bvmult.
+        apply check_bvmult.
 
         easy. easy. easy.
 
