@@ -436,17 +436,24 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
-
   Fixpoint and_with_bit (a: list _lit) (bt: _lit) : list carry :=
     match a with
       | nil => nil
       | ai :: a' => (Cand (Clit ai) (Clit bt)) :: and_with_bit a' bt 
     end.
+
+  
+
+ Fixpoint make_list_false (t: nat) : list carry :=
+  match t with
+    | O    => []
+    | S t' => Clit (Lit._false)::(make_list_false t')
+  end.
   
 
   Fixpoint mult_step_k_h (a b res: list carry) (c: carry) (k: int) : list carry :=
     match a, b with
-      | nil, nil => res
+      | nil, _ => res
       | ai :: a', bi :: b' =>
         if k - 1 < 0 then
           let carry_out := Cor (Cand ai bi) (Cand (Cxor ai bi) c) in
@@ -454,9 +461,21 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           mult_step_k_h a' b' (curr :: res) carry_out (k - 1)
         else
           mult_step_k_h a' b (ai :: res) c (k - 1)
-      | _, _ => nil
+      | ai :: a', nil =>  mult_step_k_h a' b (ai :: res) c k
+   (* | ai :: a', nil => make_list_false (length (ai :: a'))
+      | nil, bi :: b' => make_list_false (length (bi :: b')) *)
     end.
 
+(*
+Parameter cr: carry.
+
+Definition lc1 := [Clit 0; Clit 50; Clit 50; Clit 50; Clit 50; Clit 50].
+Definition lc2 := [Clit 0; Clit 50; Clit 50; Clit 50; Clit 50; (Cand (Clit 10) (Clit 150))].
+Definition lc3 := [Clit 0; Clit 50; Clit 50; Clit 50; Clit 50; Clit 50; Clit 100].
+
+Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
+
+*)
 
   Fixpoint top_k_bits (a: list _lit) (k: int) : list _lit :=
     if k == 0 then nil
@@ -3829,11 +3848,11 @@ Lemma prop_mult_step_k_h: forall a b res c k,
                           (map interp_carry res) (interp_carry c) k.
 Proof. intro a.
        induction a as [ | xa xsa IHa ].
-       - intros. simpl. case b.
-         now simpl.
-         intros. now simpl.
        - intros. case b.
          now simpl.
+         intros. now simpl.
+       - intros. case b in *. simpl.
+         rewrite IHa. now simpl.
          intros. simpl.
          case (k - 1 < 0).
          apply IHa.
@@ -3927,11 +3946,26 @@ Proof. intros.
          now rewrite H.
 Qed.
 
+Lemma prop_mult_step_k_h_len: forall a b res c k,
+length (mult_step_k_h a b res c k) = (length a + length res)%nat.
+Proof. intro a.
+       induction a as [ | xa xsa IHa ].
+       - intros. simpl. easy.
+       - intros.
+         case b in *. simpl. rewrite IHa. simpl. omega.
+         simpl. case (k - 1 < 0).
+         specialize (@IHa b (Cxor (Cxor xa c0) c :: res)
+           (Cor (Cand xa c0) (Cand (Cxor xa c0) c)) (k - 1)).
+           rewrite IHa. simpl. omega. simpl. rewrite IHa. simpl; omega.
+Qed. 
 
-Lemma prop_mult_step2: forall a b res k k', 
-                       length (mult_step a b res k k') = (k + k')%nat.
-Proof. Admitted.
-
+Lemma prop_mult_step3: forall k' a b res k, 
+                       length (mult_step a b res k k') = (length res)%nat.
+Proof. intro k'.
+       induction k'.
+       - intros. simpl. rewrite prop_mult_step_k_h_len. simpl. omega.
+       - intros. simpl. rewrite IHk'. rewrite prop_mult_step_k_h_len. simpl; omega.
+Qed.
 
 Lemma prop_and_with_bit2: forall bs1 b, length (and_with_bit bs1 b) = length bs1.
 Proof. intros bs1.
@@ -3940,7 +3974,7 @@ Proof. intros bs1.
        - intros. simpl. now rewrite IHbs1.
 Qed.
 
-Lemma check_add_bvmult_length: forall bs1 bs2,
+Lemma check_bvmult_length: forall bs1 bs2,
   let bsres0 := bblast_bvmult bs1 bs2 (length bs1) in
   length bs1 = length bs2 -> length bs1 = length bsres0.
 Proof. intros. unfold bblast_bvmult in bsres0.
@@ -3950,10 +3984,11 @@ Proof. intros. unfold bblast_bvmult in bsres0.
        specialize (@prop_and_with_bit2 bs1 (nth 0 bs2 Lit._false)). intros.
        now rewrite H1.
        intros. unfold bsres0. rewrite H0.
-       rewrite prop_mult_step2. omega.
+       rewrite prop_mult_step3. 
+       rewrite prop_and_with_bit2. easy.
 Qed.
 
-Lemma check_add_bvmult_length2: forall bs1 bs2 bsres,
+Lemma check_bvmult_length2: forall bs1 bs2 bsres,
   check_mult bs1 bs2 bsres = true -> length bs1 = length bs2 .
 Proof. intros bs1.
        induction bs1.
@@ -4136,7 +4171,7 @@ Proof.
         unfold RAWBITVECTOR_LIST.size. 
         split.
         
-        apply check_add_bvmult_length2 in H7.
+        apply check_bvmult_length2 in H7.
         do 2 rewrite map_length. rewrite H7.
         rewrite N.eqb_compare. rewrite N.compare_refl.
         
@@ -4146,7 +4181,7 @@ Proof.
         apply prop_main.
         exact Heq11.
        
-        apply check_add_bvmult_length2 in H7.
+        apply check_bvmult_length2 in H7.
         do 2 rewrite map_length. rewrite H7.
         rewrite N.eqb_compare. rewrite N.compare_refl.
         
@@ -4156,7 +4191,7 @@ Proof.
         rewrite <- beq_nat_refl in H8.
         apply prop_forallb2 in H8.
         rewrite <- H7 in H8.
-        specialize (@check_add_bvmult_length bs1 bs2).
+        specialize (@check_bvmult_length bs1 bs2).
         
         intros. simpl in H9.
         rewrite H8 in H9.

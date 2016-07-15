@@ -511,20 +511,20 @@ Fixpoint and_with_bool (a: list bool) (bt: bool) : list bool :=
 
 Fixpoint mult_bool_step_k_h (a b res: list bool) (c: bool) (k: int) : list bool :=
   match a, b with
-    | nil, nil => res
+    | nil , _ => res
     | ai :: a', bi :: b' =>
-      if (k - 1 < 0)%int then
+      if (k - 1 < 0)%int63 then
         let carry_out := (ai && bi) || ((xorb ai bi) && c) in
         let curr := xorb (xorb ai bi) c in
         mult_bool_step_k_h a' b' (curr :: res) carry_out (k - 1)
       else
         mult_bool_step_k_h a' b (ai :: res) c (k - 1)
-    | _, _ => nil
+    | ai :: a' , nil => mult_bool_step_k_h a' b (ai :: res) c k
   end.
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int then nil
+  if (k == 0)%int63 then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
@@ -548,6 +548,16 @@ Definition bvmult_bool (a b: list bool) (n: nat) : list bool :=
     | S k => mult_bool_step a b res 1 k
   end.
 
+(*
+Definition check_mult_bool (bs1 bs2 bsres: list bool) : bool :=
+    let bvm12 := bvmult_bool bs1 bs2 (length bsres) in
+    forallb2 eq_carry_lit bvm12 bsres.
+
+
+Lemma prop_main: forall bs1 bs2 bsres,
+                 check_mult bs1 bs2 bsres = true ->
+                 (bvmult_bool bs1 bs2 (length bs1)) = bsres.
+*)
 
 Definition mult_list a b := bvmult_bool a b (length a).
 
@@ -2458,6 +2468,7 @@ Qed.
 (* (* bitvector MULT properties *) *)
 
 Lemma bv_mult_size a b: size (bv_mult a b) = size_bv_mult a b.
+(** similar to prop_mult_step3 **)
 Admitted.					     
 (* Proof. *)
 (*   unfold size_bv_mult, bv_mult. *)
