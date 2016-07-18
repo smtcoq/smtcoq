@@ -349,6 +349,8 @@ Module Euf_Checker.
   (* Bit-blasting *)
   | BBVar (pos:int) (res:_lit)
   | BBOp (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBAdd (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBMul (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBEq (pos:int) (orig1 orig2:clause_id) (res:_lit)
   (* Offer the possibility to discharge parts of the proof to (manual) Coq proofs.
      WARNING: this breaks extraction. *)
@@ -382,6 +384,8 @@ Module Euf_Checker.
       | SplDistinctElim pos orig res => S.set_clause s pos (check_distinct_elim t_form t_atom (S.get s orig) res)
       | BBVar pos res => S.set_clause s pos (check_bbVar (* t_func *) t_atom t_form res)
       | BBOp pos orig1 orig2 res => S.set_clause s pos (check_bbOp t_atom t_form s orig1 orig2 res)
+      | BBAdd pos orig1 orig2 res => S.set_clause s pos (check_bbAdd t_atom t_form s orig1 orig2 res)
+      | BBMul pos orig1 orig2 res => S.set_clause s pos (check_bbMult t_atom t_form s orig1 orig2 res)
       | BBEq pos orig1 orig2 res => S.set_clause s pos (check_bbEq t_atom t_form s orig1 orig2 res)
       | @Hole pos prem_id prem concl _ => S.set_clause s pos (check_hole s prem_id prem concl)
     end.
@@ -393,7 +397,7 @@ Module Euf_Checker.
       forall s, S.valid rho s ->
         forall st : step, S.valid rho (step_checker s st).
   Proof.
-    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos orig1 orig2 res|pos orig1 orig2 res|pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
+    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
     - apply valid_check_flatten; auto; intros h1 h2 H.
@@ -417,6 +421,9 @@ Module Euf_Checker.
     - eapply valid_check_bbVar; eauto.
       apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_bbOp; auto.
+    - apply valid_check_bbAdd; auto.
+    - apply valid_check_bbMult; auto.
+      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_bbEq; auto.
     - apply valid_check_hole; auto.
   Qed.

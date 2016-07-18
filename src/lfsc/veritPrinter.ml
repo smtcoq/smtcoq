@@ -84,6 +84,8 @@ let get_rule = function
   | Bbva -> "bbvar"
   | Bbeq -> "bbeq"
   | Bbop -> "bbop"
+  | Bbadd -> "bbadd"
+  | Bbmul -> "bbmul"
 
 
 let print_sharps () =

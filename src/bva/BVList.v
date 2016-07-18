@@ -513,7 +513,7 @@ Fixpoint mult_bool_step_k_h (a b res: list bool) (c: bool) (k: int) : list bool 
   match a, b with
     | nil , _ => res
     | ai :: a', bi :: b' =>
-      if (k - 1 < 0)%int63 then
+      if (k - 1 < 0)%int then
         let carry_out := (ai && bi) || ((xorb ai bi) && c) in
         let curr := xorb (xorb ai bi) c in
         mult_bool_step_k_h a' b' (curr :: res) carry_out (k - 1)
@@ -524,7 +524,7 @@ Fixpoint mult_bool_step_k_h (a b res: list bool) (c: bool) (k: int) : list bool 
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int63 then nil
+  if (k == 0)%int then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
