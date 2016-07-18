@@ -543,7 +543,7 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
               match get_atom a with
 
                 | Abop (BO_BVmult _) a1' a2' =>
-                  if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
+                  if (((a1 == a1') && (a2 == a2')) (* || ((a1 == a2') && (a2 == a1')) *) )
                        && (check_mult bs1 bs2 bsres)
                   then lres::nil
                   else C._true
@@ -4045,10 +4045,10 @@ Proof.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
       intros [ | | | | | | |[ A| | | | ]|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
       (* BVmult *)
-      - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
+      - case_eq ((a1 == a1') && (a2 == a2') (* || (a1 == a2') && (a2 == a1')*) ); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq ( check_mult bs1 bs2 bsres ); simpl; intros Heq11; try (now apply C.interp_true).
 
-        unfold C.valid. simpl. rewrite orb_false_r.
+        unfold C.valid. simpl.  rewrite orb_false_r.
         unfold Lit.interp. rewrite Heq5.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
@@ -4097,10 +4097,11 @@ Proof.
         unfold apply_binop.
         apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
 
+
         (** case a1 = a1' and a2 = a2' **)
-        rewrite orb_true_iff in Heq10.
-        do 2 rewrite andb_true_iff in Heq10.
-        destruct Heq10 as [Heq10 | Heq10];
+       (* rewrite orb_true_iff in Heq10. *)
+       (* do 2 *) rewrite andb_true_iff in Heq10.
+     (*   destruct Heq10 as [Heq10 | Heq10]; *)
           destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2
         ;rewrite Heq10a1, Heq10a2 in *.
 
@@ -4198,10 +4199,11 @@ Proof.
         apply f_equal. rewrite map_length.
         rewrite <- H7.
         now apply H9.
+(*
         (** case symmetic **)
+*)
 
-        admit (*****).
- Admitted.
+Qed.
 
   End Proof.
 
