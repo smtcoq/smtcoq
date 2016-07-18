@@ -24,7 +24,7 @@ open SmtTrace
 
 exception Sat
 
-type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2 | Xorn1 | Xorn2 | Impp | Impn1 | Impn2 | Equp1 | Equp2 | Equn1 | Equn2 | Itep1 | Itep2 | Iten1 | Iten2 | Eqre | Eqtr | Eqco | Eqcp | Dlge | Lage | Lata | Dlde | Lade | Fins | Eins | Skea | Skaa | Qnts | Qntm | Reso | Weak | And | Nor | Or | Nand | Xor1 | Xor2 | Nxor1 | Nxor2 | Imp | Nimp1 | Nimp2 | Equ1 | Equ2 | Nequ1 | Nequ2 | Ite1 | Ite2 | Nite1 | Nite2 | Tpal | Tlap | Tple | Tpne | Tpde | Tpsa | Tpie | Tpma | Tpbr | Tpbe | Tpsc | Tppp | Tpqt | Tpqs | Tpsk | Subp | Flat | Hole | Bbva | Bbeq | Bbop
+type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2 | Xorn1 | Xorn2 | Impp | Impn1 | Impn2 | Equp1 | Equp2 | Equn1 | Equn2 | Itep1 | Itep2 | Iten1 | Iten2 | Eqre | Eqtr | Eqco | Eqcp | Dlge | Lage | Lata | Dlde | Lade | Fins | Eins | Skea | Skaa | Qnts | Qntm | Reso | Weak | And | Nor | Or | Nand | Xor1 | Xor2 | Nxor1 | Nxor2 | Imp | Nimp1 | Nimp2 | Equ1 | Equ2 | Nequ1 | Nequ2 | Ite1 | Ite2 | Nite1 | Nite2 | Tpal | Tlap | Tple | Tpne | Tpde | Tpsa | Tpie | Tpma | Tpbr | Tpbe | Tpsc | Tppp | Tpqt | Tpqs | Tpsk | Subp | Flat | Hole | Bbva | Bbeq | Bbop | Bbadd | Bbmul
  
 
 
@@ -313,6 +313,14 @@ let mk_clause (id,typ,value,ids_params) =
       | Bbop ->
          (match ids_params, value with
            | [id1;id2], [f] -> Other (BBOp (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbadd ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBAdd (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbmul ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBMul (get_clause id1, get_clause id2, f))
            | _, _ -> assert false)
       (* Holes in proofs *)
       | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))

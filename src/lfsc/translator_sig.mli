@@ -61,6 +61,8 @@ type rule =
   | Bbva
   | Bbeq
   | Bbop
+  | Bbadd
+  | Bbmul
 
 
 (** Signature for translators *)

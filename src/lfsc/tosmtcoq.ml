@@ -78,6 +78,8 @@ let get_rule = function
   | Bbva -> VeritSyntax.Bbva
   | Bbeq -> VeritSyntax.Bbeq
   | Bbop -> VeritSyntax.Bbop
+  | Bbadd -> VeritSyntax.Bbadd
+  | Bbmul -> VeritSyntax.Bbmul
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -115,6 +117,8 @@ let string_of_rule = function
   | Bbva -> "bbvar"
   | Bbeq -> "bbeq"
   | Bbop -> "bbop"
+  | Bbadd -> "bbadd"
+  | Bbmul -> "bbmul"
 
 
 let rec term_smtcoq t = match value t with

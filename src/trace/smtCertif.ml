@@ -126,6 +126,18 @@ type 'hform rule =
        -------------------------------------------------- bbAnd
              bbT(a&b, [a0 /\ b0; ...; an /\ bn])
    *)
+  | BBAdd of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector addition
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a+b, [...])
+   *)
+  | BBMul of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector multiplication
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a*b, [...])
+   *)
   | BBEq of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
@@ -162,8 +174,10 @@ and 'hform resolution = {
 let used_clauses r =
   match r with
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
-  | Weaken (c,_) | ImmFlatten (c,_)  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
-  | BBOp (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
+  | Weaken (c,_) | ImmFlatten (c,_)
+  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
+  | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
+  | BBMul (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
   | Hole (cs, _) -> cs
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
