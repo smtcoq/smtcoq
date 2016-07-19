@@ -428,6 +428,7 @@ Module Euf_Checker.
     - apply valid_check_bbMult; auto.
       apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_bbEq; auto.
+      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_hole; auto.
   Qed.
 
