@@ -104,6 +104,18 @@ let declare_fun rt ro sym arg cod =
   op
 
 
+
+let parse_smt2bv s =
+  let l = ref [] in
+  for i = 2 to String.length s - 1 do
+    match s.[i] with
+    | '0' -> l := true :: !l
+    | '1' -> l := false :: !l
+    | _ -> assert false
+  done;
+  !l
+
+
 let make_root_specconstant ra = function
   | SpecConstsDec _ -> failwith "Smtlib2_genConstr.make_root_specconstant: decimals not implemented yet"
   | SpecConstNum (_,s) ->
@@ -116,7 +128,9 @@ let make_root_specconstant ra = function
         Atom.hatom_Z_of_bigint ra i)
   | SpecConstString _ -> failwith "Smtlib2_genConstr.make_root_specconstant: strings not implemented yet"
   | SpecConstsHex _ -> failwith "Smtlib2_genConstr.make_root_specconstant: hexadecimals not implemented yet"
-  | SpecConstsBinary _ -> failwith "Smtlib2_genConstr.make_root_specconstant: binaries not implemented yet"
+  | SpecConstsBinary (_, s) -> Atom.mk_bvconst ra (parse_smt2bv s)
+    
+    
 
 
 type atom_form = | Atom of SmtAtom.Atom.t | Form of SmtAtom.Form.t

@@ -53,7 +53,7 @@ module Btype =
       | TZ -> Lazy.force cTZ
       | Tbool -> Lazy.force cTbool
       | Tpositive -> Lazy.force cTpositive
-      | TBV n -> mklApp cTBV [|mkN n|]
+      | TBV n -> Lazy.force cTBV
       | Tindex i -> index_to_coq i
 
     let to_smt fmt = function
@@ -131,7 +131,7 @@ module Btype =
       | TZ -> Lazy.force cZ
       | Tbool -> Lazy.force cbool
       | Tpositive -> Lazy.force cpositive
-      | TBV n -> mklApp cbitvector [|mkN n|]
+      | TBV _ -> Lazy.force cbitvector
       | Tindex c -> mklApp cte_carrier [|c.hval|]
 
   end
@@ -141,6 +141,7 @@ module Btype =
 type cop = 
    | CO_xH
    | CO_Z0
+   | CO_BV of bool list
 
 type uop =
    | UO_xO
@@ -161,6 +162,9 @@ type bop =
    | BO_eq of btype
    | BO_BVand of int
    | BO_BVor of int
+   | BO_BVxor of int
+   | BO_BVadd of int
+   | BO_BVmult of int
 
 type nop =
   | NO_distinct of btype
@@ -187,14 +191,17 @@ module Op =
     let c_to_coq = function
       | CO_xH -> Lazy.force cCO_xH
       | CO_Z0 -> Lazy.force cCO_Z0
+      | CO_BV bv -> mklApp cCO_BV [|mk_bv_list bv|]
 
     let c_type_of = function
       | CO_xH -> Tpositive
       | CO_Z0 -> TZ
+      | CO_BV bv -> TBV (List.length bv)
 
     let interp_cop = function
       | CO_xH -> Lazy.force cxH
       | CO_Z0 -> Lazy.force cZ0
+      | CO_BV bv -> mklApp cof_bits [|mk_bv_list bv|]
 
     let u_to_coq = function 
       | UO_xO -> Lazy.force cUO_xO
@@ -242,23 +249,27 @@ module Op =
       | BO_eq t -> eq_to_coq t
       | BO_BVand s -> mklApp cBO_BVand [|mkN s|]
       | BO_BVor s -> mklApp cBO_BVor [|mkN s|]
+      | BO_BVxor s -> mklApp cBO_BVxor [|mkN s|]
+      | BO_BVadd s -> mklApp cBO_BVadd [|mkN s|]
+      | BO_BVmult s -> mklApp cBO_BVmult [|mkN s|]
 
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _ -> Tbool
-      | BO_BVand s | BO_BVor s -> TBV s
+      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult 
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
-      | BO_BVand s | BO_BVor s -> (TBV s,TBV s)
+      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s ->
+        (TBV s,TBV s)
 
     let interp_eq = function
       | TZ -> Lazy.force ceqbZ
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
-      | TBV s -> mklApp cbv_eq [|mkN s|]
+      | TBV _ -> Lazy.force cbv_eq
       | Tindex i -> mklApp cte_eqb [|i.hval|]
 
     let interp_bop = function
@@ -272,6 +283,9 @@ module Op =
       | BO_eq t -> interp_eq t
       | BO_BVand s -> mklApp cbv_and [|mkN s|]
       | BO_BVor s -> mklApp cbv_or [|mkN s|]
+      | BO_BVxor s -> mklApp cbv_xor [|mkN s|]
+      | BO_BVadd s -> mklApp cbv_add [|mkN s|]
+      | BO_BVmult s -> mklApp cbv_mult [|mkN s|]
 
     let n_to_coq = function
       | NO_distinct t -> mklApp cNO_distinct [|Btype.to_coq t|]
@@ -286,7 +300,7 @@ module Op =
       | TZ -> Lazy.force cZ
       | Tbool -> Lazy.force cbool
       | Tpositive -> Lazy.force cpositive
-      | TBV n -> mklApp cbitvector [|mkN n|]
+      | TBV n -> Lazy.force cbitvector
       | Tindex i -> mklApp cte_carrier [|i.hval|]
 
     let interp_nop = function
@@ -334,7 +348,11 @@ module Op =
         (op.index,value.tparams,value.tres,op)::acc in
       Hashtbl.fold set reify.tbl []
 
-    let c_equal op1 op2 = op1 == op2
+    let c_equal op1 op2 = match op1, op2 with
+      | CO_BV bv1, CO_BV bv2 ->
+        (try List.for_all2 (=) bv1 bv2 with
+         | Invalid_argument _ -> false)
+      | _ -> op1 == op2
 
     let u_equal op1 op2 = op1 == op2
 
@@ -343,6 +361,9 @@ module Op =
         | BO_eq t1, BO_eq t2 -> Btype.equal t1 t2
         | BO_BVand n1, BO_BVand n2 -> n1 == n2
         | BO_BVor n1, BO_BVor n2 -> n1 == n2
+        | BO_BVxor n1, BO_BVxor n2 -> n1 == n2
+        | BO_BVadd n1, BO_BVadd n2 -> n1 == n2
+        | BO_BVmult n1, BO_BVmult n2 -> n1 == n2
         | _ -> op1 == op2
 
     let n_equal op1 op2 =
@@ -467,7 +488,8 @@ module Atom =
       | Acop c ->
         (match c with
           | CO_xH -> 1
-          | CO_Z0 -> 0)
+          | CO_Z0 -> 0
+          | CO_BV _ -> assert false)
       | Auop (op,h) ->
         (match op with
           | UO_xO -> 2*(compute_hint h)
@@ -516,7 +538,11 @@ module Atom =
         | BO_Zgt -> ">"
         | BO_eq _ -> "="
         | BO_BVand _ -> "bvand"
-        | BO_BVor _ -> "bvor" in
+        | BO_BVor _ -> "bvor"
+        | BO_BVxor _ -> "bvxor"
+        | BO_BVadd _ -> "bvadd"
+        | BO_BVmult _ -> "bvmul"
+      in
       Format.fprintf fmt "(%s " s;
       to_smt fmt h1;
       Format.fprintf fmt " ";
@@ -582,6 +608,7 @@ module Atom =
     type coq_cst =
       | CCxH
       | CCZ0
+      | CCBV
       | CCxO
       | CCxI
       | CCZpos
@@ -597,6 +624,9 @@ module Atom =
       | CCZgt
       | CCBVand
       | CCBVor
+      | CCBVxor
+      | CCBVadd
+      | CCBVmult
       | CCeqb
       | CCeqbP
       | CCeqbZ
@@ -607,17 +637,34 @@ module Atom =
       let tbl = Hashtbl.create 29 in
       let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
       List.iter add
-	[ cxH,CCxH; cZ0,CCZ0;
+	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
           cbitOf, CCBVbitOf;
           cadd,CCZplus; csub,CCZminus; cmul,CCZmult; cltb,CCZlt;
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
-          cbv_and, CCBVand; cbv_or, CCBVor;
+          cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
+          cbv_add, CCBVadd; cbv_mult, CCBVmult;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV
         ];
       tbl
 
     let op_tbl = lazy (op_tbl ())
+
+
+    let mk_bool b =
+      let c, args = Term.decompose_app b in
+      if Term.eq_constr c (Lazy.force ctrue) then true
+      else if Term.eq_constr c (Lazy.force cfalse) then false
+      else assert false
+    
+    let rec mk_bool_list bs =
+      let c, args = Term.decompose_app bs in
+      if Term.eq_constr c (Lazy.force cnil) then []
+      else if Term.eq_constr c (Lazy.force ccons) then
+        match args with
+          | [b; bs] -> mk_bool b :: mk_bool_list bs
+          | _ -> assert false
+      else assert false
 
     let rec mk_nat n =
       let c, args = Term.decompose_app n in
@@ -655,12 +702,12 @@ module Atom =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try Hashtbl.find op_tbl c with Not_found -> CCunknown in
-      let mk_cop op = get reify (Acop op) in
       let rec mk_hatom h =
 	let c, args = Term.decompose_app h in
 	match get_cst c with
-          | CCxH -> mk_cop CO_xH
-          | CCZ0 -> mk_cop CO_Z0
+          | CCxH -> mk_cop CCxH args
+          | CCZ0 -> mk_cop CCZ0 args
+          | CCBV -> mk_cop CCBV args
           | CCxO -> mk_uop UO_xO args
           | CCxI -> mk_uop UO_xI args
           | CCZpos -> mk_uop UO_Zpos args
@@ -676,12 +723,22 @@ module Atom =
           | CCZgt -> mk_bop BO_Zgt args
           | CCBVand -> mk_bop_bvand args
           | CCBVor -> mk_bop_bvor args
+          | CCBVxor -> mk_bop_bvxor args
+          | CCBVadd -> mk_bop_bvadd args
+          | CCBVmult -> mk_bop_bvmult args
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
           | CCeqbBV -> mk_bop_bveq args
 	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
 
+      and mk_cop op args = match op, args with
+        | CCxH, [] -> get reify (Acop CO_xH)
+        | CCZ0, [] -> get reify (Acop CO_Z0)
+        | CCBV, [bs] -> get reify (Acop (CO_BV (mk_bool_list bs)))
+        | _ -> assert false
+          
+    
       and mk_uop op = function
         | [a] -> let h = mk_hatom a in get reify (Auop (op,h))
         | _ -> assert false
@@ -709,8 +766,27 @@ module Atom =
            mk_bop (BO_BVor s') [a1;a2]
         | _ -> assert false
 
+      and mk_bop_bvxor = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVxor s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvadd = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVadd s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvmult = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVmult s') [a1;a2]
+        | _ -> assert false
+
       and mk_bop_bveq = function
         | [s;a1;a2] ->
+           Format.eprintf "mk_bop_bveq@.";
            let s' = mk_N s in
            mk_bop (BO_eq (TBV s')) [a1;a2]
         | _ -> assert false
@@ -844,10 +920,15 @@ module Atom =
     let mk_mult = mk_binop BO_Zmult
     let mk_bvand reify s = mk_binop (BO_BVand s) reify
     let mk_bvor reify s = mk_binop (BO_BVor s) reify
+    let mk_bvxor reify s = mk_binop (BO_BVxor s) reify
+    let mk_bvadd reify s = mk_binop (BO_BVadd s) reify
+    let mk_bvmult reify s = mk_binop (BO_BVmult s) reify
     let mk_opp = mk_unop UO_Zopp
     let mk_distinct reify ty = mk_nop (NO_distinct ty) reify
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
+    let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
 
+    
   end
 
 

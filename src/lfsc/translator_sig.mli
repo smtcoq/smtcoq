@@ -59,6 +59,7 @@ type rule =
   | Hole
   | True
   | Bbva
+  | Bbconst
   | Bbeq
   | Bbop
   | Bbadd

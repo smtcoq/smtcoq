@@ -553,6 +553,7 @@ module Make (T : Translator_sig.S) = struct
   (** convert resolution proofs of [satlem_simplify] *)
   let satlem_simplify p = match app_name p with
     | Some ("satlem_simplify", [_; _; _; qr; p]) ->
+      eprintf "OOOOOOOO@.";
       let clauses = reso_of_QR qr in
       let lem_name, res, p = result_satlem p in
       let cl_res = to_clause res in
@@ -571,11 +572,14 @@ module Make (T : Translator_sig.S) = struct
 
 
   (* can be empty, returns continuation *)
-  let satlem_simplifies_c p = many_satlem_simplify None p |> snd
+  let satlem_simplifies_c p =
+    eprintf "satlem_simplifies_c@.";
+    many_satlem_simplify None p |> snd
 
 
   (* There must be at least one, returns id of last deduced clause *)
   let reso_of_satlem_simplify p =
+    eprintf "reso_of_satlem_simplify@.";
     match many_satlem_simplify None p with
     | Some id, _ -> id
     | _ -> assert false
@@ -602,6 +606,7 @@ module Make (T : Translator_sig.S) = struct
   let rec bb_lem_res lastid p =
     try
       if is_last_bbres p then raise Exit;
+      eprintf "bb_lem_res not last@.";
       let lastid, p = satlem_simplify p in
       bb_lem_res lastid p
     with Exit -> match lastid with
@@ -650,58 +655,72 @@ module Make (T : Translator_sig.S) = struct
     | Some (("intro_assump_f"|"intro_assump_t"), _) -> true
     | _ -> false
 
+
+  let has_prefix p s =
+    try
+      for i = 0 to String.length p - 1 do
+        if p.[i] <> s.[i] then raise Exit
+      done;
+      true
+    with Exit | Invalid_argument _ -> false
+      
   
   (** Convert [satlem]. Clauses are chained together with an intermediate
       resolution step when needed, and when CVC4 uses superfluous local
       assumption, the clause is weakened. *)
-  let rec satlem p = match app_name p with
+  let rec satlem ?(prefix_cont) p =
+    let old_p = p in
+    match app_name p with
 
     | Some ("satlem", [c; _; l; p]) ->
       (* eprintf "SATLEM ---@."; *)
-      let cl = to_clause c in
       let lem_name, lem_cont = continuation_satlem p in
-      (try
-        let assumptions, l = get_assumptions [] l in
-        let l = trim_junk_satlem l in
-        let env = { empty with assum = assumptions } in
-        let lem =
-          if is_bbr_satlem_lam p || List.exists has_intro_bv l then bb_lem
-          else lem in
-        let env =
-          List.fold_left (fun env p ->
-              let local_env =
-                { env with
-                  clauses = [];
-                  ax = false;
-                  mpred = MTerm.empty;
-                } in
-              let local_env = lem local_env p in
-              { env with
-                clauses = List.rev_append local_env.clauses env.clauses;
-                assum = local_env.assum
-              }
-            ) env l
-        in
-        let clauses = List.rev env.clauses in
-        let id = mk_inter_resolution clauses in
-        (* eprintf "remaining assumptions:"; *)
-        (* List.iter (eprintf "%s, ") env.assu; *)
-        (* eprintf "@."; *)
-        let satlem_id =
-          if env.assum = [] then id else mk_clause Weak cl [id]
-        in
-        register_clause_id cl satlem_id;
-        register_decl_id lem_name satlem_id;
-        (* eprintf "--- SATLEM@."; *)
-        
-       with ArithLemma ->
-         let satlem_id = mk_clause Lage cl [] in
-         register_clause_id cl satlem_id
+      begin match prefix_cont with
+        | Some pref when not (has_prefix pref lem_name) -> old_p
+        | _ -> 
+          let cl = to_clause c in
+          (try
+             let assumptions, l = get_assumptions [] l in
+             let l = trim_junk_satlem l in
+             let env = { empty with assum = assumptions } in
+             let lem =
+               if is_bbr_satlem_lam p || List.exists has_intro_bv l then bb_lem
+               else lem in
+             let env =
+               List.fold_left (fun env p ->
+                   let local_env =
+                     { env with
+                       clauses = [];
+                       ax = false;
+                       mpred = MTerm.empty;
+                     } in
+                   let local_env = lem local_env p in
+                   { env with
+                     clauses = List.rev_append local_env.clauses env.clauses;
+                     assum = local_env.assum
+                   }
+                 ) env l
+             in
+             let clauses = List.rev env.clauses in
+             let id = mk_inter_resolution clauses in
+             (* eprintf "remaining assumptions:"; *)
+             (* List.iter (eprintf "%s, ") env.assu; *)
+             (* eprintf "@."; *)
+             let satlem_id =
+               if env.assum = [] then id else mk_clause Weak cl [id]
+             in
+             register_clause_id cl satlem_id;
+             register_decl_id lem_name satlem_id;
+             (* eprintf "--- SATLEM@."; *)
 
-      );
-      
-      satlem lem_cont
+           with ArithLemma ->
+             let satlem_id = mk_clause Lage cl [] in
+             register_clause_id cl satlem_id
 
+          );
+
+          satlem lem_cont
+      end
     | _ -> p
 
 
@@ -709,6 +728,9 @@ module Make (T : Translator_sig.S) = struct
     | Some ("bv_bbl_var", [n; v; bb]) ->
       let res = bblast_term n (a_var_bv n v) bb in
       Some (mk_clause_cl Bbva [res] [])
+    | Some ("bv_bbl_const", [n; bb; bv]) ->
+      let res = bblast_term n (a_bv n bv) bb in
+      Some (mk_clause_cl Bbconst [res] [])
     | Some (("bv_bbl_bvand" |"bv_bbl_bvor" |"bv_bbl_bvxor" as rop),
             [n; x; y; _; _; rb; xbb; ybb]) ->
       let bvop = match rop with
@@ -794,7 +816,7 @@ module Make (T : Translator_sig.S) = struct
       |> bblast_decls
       |> bblast_eqs
       |> register_prop_vars
-      |> satlem
+      |> satlem ~prefix_cont:".bb"
       |> satlem_simplifies_c
       |> satlem
       

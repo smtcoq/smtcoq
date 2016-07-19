@@ -18,6 +18,19 @@
   open SmtAtom
   open SmtForm
   open VeritSyntax
+
+
+
+  let parse_bv s =
+    let l = ref [] in
+    for i = String.length s - 1 downto 1 do
+      match s.[i] with
+      | '0' -> l := true :: !l
+      | '1' -> l := false :: !l
+      | _ -> assert false
+    done;
+    !l
+    
 %}
 
 
@@ -32,7 +45,7 @@
 %token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBEQ BBOP
 %token <int> INT
 %token <Big_int.big_int> BIGINT
-%token <string> VAR BINDVAR
+%token <string> VAR BINDVAR BITV
 
 /* type de "retour" du parseur : une clause */
 %type <int> line
@@ -148,6 +161,7 @@ lit:   /* returns a SmtAtom.Form.t */
 name_term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
   | SHARP INT                                              { get_solver $2 }
   | SHARP INT COLON LPAR term RPAR                         { let res = $5 in add_solver $2 res; res }
+  | BITV                                                   { Atom (Atom.mk_bvconst ra (parse_bv $1)) }
   | TRUE                                                   { Form Form.pform_true }
   | FALS                                                   { Form Form.pform_false }
   | VAR                                                    { Atom (Atom.get ra (Aapp (get_fun $1,[||]))) }

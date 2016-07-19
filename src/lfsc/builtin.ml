@@ -189,6 +189,13 @@ let a_var_bv_s = declare_get "a_var_bv"
          (pi "v" var_bv (term (bitVec n)))))
 let a_var_bv n v = mk_app a_var_bv_s [n; v]
 
+let a_bv_s = declare_get "a_bv"
+    (pi_d "n" mpz (fun n ->
+         (pi "v" bv (term (bitVec n)))))
+let a_bv n v = mk_app a_bv_s [n; v]
+
+
+
 let bitof_s = declare_get "bitof" (pi "x" var_bv (pi "n" mpz formula))
 let bitof x n =  mk_app bitof_s [x; n]
 

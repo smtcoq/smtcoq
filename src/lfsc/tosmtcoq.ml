@@ -76,6 +76,7 @@ let get_rule = function
   | Hole -> VeritSyntax.Hole
   | True -> VeritSyntax.True
   | Bbva -> VeritSyntax.Bbva
+  | Bbconst -> VeritSyntax.Bbconst
   | Bbeq -> VeritSyntax.Bbeq
   | Bbop -> VeritSyntax.Bbop
   | Bbadd -> VeritSyntax.Bbadd
@@ -115,15 +116,35 @@ let string_of_rule = function
   | Hole -> "hole"
   | True -> "true"
   | Bbva -> "bbvar"
+  | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
   | Bbop -> "bbop"
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"
 
 
+
+let bit_to_bool t = match name t with
+  | Some "b0" -> false
+  | Some "b1" -> true
+  | _ -> assert false
+
+let rec const_bv_aux acc t = match name t with
+  | Some "bvn" -> acc
+  | _ ->
+    match app_name t with
+    | Some ("bvc", [b; t]) -> const_bv_aux (bit_to_bool b :: acc) t
+    | _ -> assert false
+
+let const_bv t =
+  let bv_list = const_bv_aux [] t in
+  Atom (Atom.mk_bvconst ra bv_list)
+
+
 let rec term_smtcoq t = match value t with
   | Const {sname=Name "true"} -> Form Form.pform_true
   | Const {sname=Name "false"} -> Form Form.pform_false
+  | Const {sname=Name "bvn"} -> const_bv t
   | Const {sname=Name n} -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
   | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
   | App _ ->
@@ -144,6 +165,8 @@ let rec term_smtcoq t = match value t with
       | Some ("a_int", [{value = Int bi}]) ->
         Atom (Atom.hatom_Z_of_bigint ra bi)
       | Some ("a_var_bv", [_; v]) -> term_smtcoq v
+      | Some ("bvc", _) -> const_bv t
+      | Some ("a_bv", [_; v]) -> term_smtcoq v
       | Some ("bitof", [a; {value = Int n}]) ->
          (let ha = term_smtcoq_atom a in
           match Atom.type_of ha with

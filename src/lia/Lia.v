@@ -446,7 +446,7 @@ Section certif.
     Proof.
      intros a z.
      destruct a;simpl;try discriminate;auto.
-     destruct c;[discriminate | intros Heq;inversion Heq;trivial].
+     destruct c;[discriminate | intros Heq;inversion Heq;trivial | discriminate].
      destruct u;try discriminate;
        case_eq (build_positive i);try discriminate;
        intros p Hp Heq;inversion Heq;clear Heq;subst;

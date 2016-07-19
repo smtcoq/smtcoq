@@ -82,6 +82,7 @@ let get_rule = function
   | Hole -> "hole"
   | True -> "true"
   | Bbva -> "bbvar"
+  | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
   | Bbop -> "bbop"
   | Bbadd -> "bbadd"
@@ -114,6 +115,19 @@ let new_sharp t =
   incr cpt;
   HT.add sharp_tbl t !cpt;
   !cpt
+
+
+let print_bit fmt b = match name b with
+  | Some "b0" -> fprintf fmt "0"
+  | Some "b1" -> fprintf fmt "1"
+  | _ -> assert false
+
+let rec print_bv_const fmt t = match name t with
+  | Some "bvn" -> ()
+  | _ -> match app_name t with
+    | Some ("bvc", [b; t]) ->
+      fprintf fmt "%a%a" print_bv_const t print_bit b
+    | _ -> assert false
 
 let rec print_apply fmt t = match app_name t with
   | Some ("apply", [_; _; f; a]) ->
@@ -162,7 +176,11 @@ and print_term fmt t =
 
       | Some ("a_var_bv", [_; a]) -> print_term fmt a
 
-      | Some (("bvand"|"bvor"|"bvxor") as op, [_; a; b]) ->
+      | Some ("a_bv", [_; a]) -> print_term fmt a
+
+      | Some ("bvc", _) -> fprintf fmt "%%%a" print_bv_const t
+
+      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmult") as op, [_; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
 

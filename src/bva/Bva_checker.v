@@ -44,6 +44,41 @@ Section Checker.
   Local Notation get_form := (PArray.get t_form) (only parsing).
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
 
+  (* Bit-blasting a constant bitvector:
+
+       --------------------------- bbConst
+        bbT(#b0010, [0; 1; 0; 0])
+   *)
+
+  Fixpoint check_bbc (a_bv: list bool) (bs: list _lit) :=
+    match a_bv, bs with
+    | nil, nil => true
+    | v :: a_bv, b::bs =>
+      if Lit.is_pos b then
+        match get_form (Lit.blit b), v with
+          | Ftrue, true | Ffalse, false => check_bbc a_bv bs
+          | _, _ => false
+        end
+      else false
+    | _, _ => false
+    end.
+
+  (** * Checker for bitblasting of bitvector constants *)
+  Definition check_bbConst lres :=
+    if Lit.is_pos lres then
+      match get_form (Lit.blit lres) with
+        | FbbT a bs =>
+          match get_atom a with
+            | Acop (CO_BV bv) =>
+              if check_bbc bv bs
+              then lres::nil
+              else C._true
+            | _ => C._true
+          end
+        | _ => C._true
+      end
+    else C._true.
+
 
   (* Bit-blasting a variable:
 
@@ -970,6 +1005,124 @@ Proof.
       now apply e in H.
       now apply rho_1.
 Admitted.
+
+
+Lemma check_bbc_length : forall bv bs, check_bbc bv bs = true -> length bv = length bs.
+Proof.
+  intro bv. induction bv.
+  intro bs. case bs.
+  simpl; trivial.
+  simpl; easy.
+  (* intro bs. induction bs. *)
+  intro bs. case bs in *.
+  simpl; easy.
+  simpl.
+  case (Lit.is_pos i); try easy.
+  case (t_form .[ Lit.blit i]); try easy;
+  case a; try easy; intro Hc; apply IHbv in Hc; now rewrite Hc.
+Qed.
+
+   (* forall i : nat, *)
+   (* (i < Datatypes.length (map (Lit.interp rho) bs))%nat -> *)
+   (* nth i (map (Lit.interp rho) bs) false = nth i l false *)
+
+
+Lemma nth_nil : forall A i (d:A), nth i [] d = d.
+Proof.
+  intros. unfold nth. case i; trivial.
+Qed.
+  
+Lemma prop_check_bbc: forall bv bs,
+                     (check_bbc bv bs = true) ->
+                     (forall i, (i < (length bs) )%nat ->
+                     (Lit.interp rho (nth i bs 1)) = nth i bv false).
+Proof.
+  intro bv. induction bv.
+  intros bs. case bs. 
+  intros.
+  do 2 rewrite nth_nil. easy.
+  simpl. easy.
+  intros bs.
+  case bs. simpl. easy.
+  intros b l Hc i Hlen.
+  case i in *.
+  simpl.
+  simpl in Hc.
+  case_eq (Lit.is_pos b).
+  intro Hposb.
+  rewrite Hposb in Hc.
+  case_eq (t_form .[ Lit.blit b]); try (intros; rewrite H in Hc; now contradict Hc).
+  intros Hb.
+  rewrite Hb in Hc.
+  generalize (rho_interp (Lit.blit b)). rewrite Hb. simpl.
+  intro Hbb.
+  unfold Lit.interp, Var.interp.
+  rewrite Hbb, Hposb.
+  case a in *.
+  trivial. now contradict Hc.
+  intro Hb.
+  rewrite Hb in Hc.
+  generalize (rho_interp (Lit.blit b)). rewrite Hb. simpl.
+  intro Hbb.
+  unfold Lit.interp, Var.interp.
+  rewrite Hbb, Hposb.
+  case a in *.
+  now contradict Hc. trivial.
+  intro Hposb. rewrite Hposb in Hc. now contradict Hc.
+  simpl.
+  apply IHbv.
+  simpl in Hc.
+  case (Lit.is_pos b) in Hc; try now contradict Hc.
+  case (t_form .[ Lit.blit b]) in Hc; try now contradict Hc.
+  case a in Hc; try now contradict Hc. exact Hc.
+  case a in Hc; try now contradict Hc. exact Hc.
+  simpl in Hlen. omega.
+Qed.
+
+
+Lemma valid_check_bbConst lres : C.valid rho (check_bbConst lres).
+Proof.
+  unfold check_bbConst.
+  case_eq (Lit.is_pos lres); intro Heq1; [ |now apply C.interp_true].
+  case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
+  intros a bs Heq0.
+  case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
+  intros c Ha.
+  case_eq c; try (intros; now apply C.interp_true).
+  intros l Hc.
+  case_eq (check_bbc l bs); try (intros; now apply C.interp_true).
+  intro Hcheck.
+  unfold C.valid. simpl. rewrite orb_false_r.
+  unfold Lit.interp. rewrite Heq1.
+  unfold Var.interp.
+  rewrite wf_interp_form; trivial. rewrite Heq0. simpl.
+
+  assert (Hinterpa:
+            (interp_form_hatom_bv a = interp_bv t_i (interp_atom (t_atom .[a])))).
+  unfold Atom.interp_form_hatom_bv.
+  unfold Atom.interp_hatom.
+  rewrite !Atom.t_interp_wf; trivial.
+  rewrite Hinterpa.
+  rewrite Ha, Hc. simpl.
+
+  apply bitOf_of_bits.
+
+  unfold BITVECTOR_LIST.size, RAWBITVECTOR_LIST.size.
+  simpl.
+  unfold RAWBITVECTOR_LIST.of_bits.
+  rewrite map_length. apply f_equal.
+  symmetry; now apply check_bbc_length.
+
+  unfold BITVECTOR_LIST.bitOf, RAWBITVECTOR_LIST.bitOf.
+  simpl.
+  unfold RAWBITVECTOR_LIST.of_bits.
+  rewrite map_length.
+  intro i.
+  rewrite <- rho_1 at 1.
+  rewrite map_nth.
+  apply prop_check_bbc. exact Hcheck.
+Qed.
+
 
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
 Proof. intros A a b l; split; [intros H; inversion H|intros ->]; auto. Qed.

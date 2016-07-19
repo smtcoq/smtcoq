@@ -579,7 +579,8 @@ Module Atom.
  
   Inductive cop : Type := 
    | CO_xH
-   | CO_Z0.
+   | CO_Z0
+   | CO_BV (_: list bool).
 
   Inductive unop : Type :=
    | UO_xO
@@ -627,6 +628,7 @@ Module Atom.
    match o, o' with
    | CO_xH, CO_xH 
    | CO_Z0, CO_Z0 => true
+   | CO_BV bv, CO_BV bv' => RAWBITVECTOR_LIST.beq_list bv bv'
    | _,_ => false
    end.
 
@@ -684,7 +686,10 @@ Module Atom.
 
   Lemma reflect_cop_eqb : forall o1 o2, reflect (o1 = o2) (cop_eqb o1 o2).
   Proof.
-   destruct o1;destruct o2;simpl;constructor;trivial;discriminate.
+    destruct o1; destruct o2; simpl; try (constructor; trivial; discriminate).
+    apply iff_reflect. split. intro.
+    inversion H. apply RAWBITVECTOR_LIST.List_eq_refl. auto.
+    intros. rewrite RAWBITVECTOR_LIST.List_eq in H. now rewrite H.
   Qed.
 
   Lemma reflect_uop_eqb : forall o1 o2, reflect (o1 = o2) (uop_eqb o1 o2).
@@ -803,6 +808,7 @@ Qed.
         match o with
         | CO_xH => Typ.Tpositive 
         | CO_Z0 => Typ.TZ
+        | CO_BV _ => Typ.TBV
         end.
 
       Definition typ_uop o :=
@@ -922,6 +928,7 @@ Qed.
         left; destruct op; simpl.
         exists Typ.Tpositive; auto.
         exists Typ.TZ; auto.
+        exists Typ.TBV; auto.
         (* Unary operators *)
         destruct op; simpl;
         (case (Typ.eqb (get_type h) Typ.Tpositive)).
@@ -1098,6 +1105,7 @@ Qed.
         match o with
         | CO_xH => Bval Typ.Tpositive xH
         | CO_Z0 => Bval Typ.TZ Z0
+        | CO_BV bv => Bval Typ.TBV (BITVECTOR_LIST.of_bits bv)
         end.
 
 (*change -- DTBV.bb_nth_bv -- *)
@@ -1284,6 +1292,7 @@ Qed.
         destruct op; intros [i | | | | ]; simpl; try discriminate; intros _.
         exists 1%positive; auto.
         exists 0%Z; auto.
+        exists (BITVECTOR_LIST.of_bits l); auto.
         (* Unary operators *)
         destruct op; intros [i| | | | ]; simpl; try discriminate; try rewrite Typ.eqb_spec; intro H1; destruct (check_aux_interp_hatom h) 
         as [x Hx]; rewrite Hx; simpl; generalize x Hx; try rewrite H1; intros y Hy; try rewrite Typ.cast_refl.
@@ -1521,6 +1530,7 @@ Qed.
         destruct op; simpl; intro H.
         discriminate (H Typ.Tpositive).
         discriminate (H Typ.TZ).
+        discriminate (H Typ.TBV).
         (* Unary operators *)
         destruct op; simpl; intro H; destruct (check_aux_interp_hatom h) as [v Hv]; rewrite Hv; simpl; rewrite Typ.neq_cast; try (pose (H2 := H Typ.Tpositive); simpl in H2; rewrite H2; auto); try (pose (H2 := H Typ.TZ); simpl in H2; rewrite H2; auto); pose (H2 := H Typ.Tbool); simpl in H2; rewrite H2; auto.
         (* Binary operators *)
@@ -1751,9 +1761,10 @@ Qed.
         intros h Hh a IH; generalize (wf_t_i h Hh).
         case (t_atom.[h]); simpl.
         (* Constants *)
-        intros [ | ] _; simpl.
+        intros [ | | ] _; simpl.
         exists 1%positive; auto.
         exists 0%Z; auto.
+        exists (BITVECTOR_LIST.of_bits l); auto.
         (* Unary operators *)
         intros [ | | | | | ] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~0)%positive; auto.

@@ -58,6 +58,7 @@ module Btype :
 type cop = 
    | CO_xH
    | CO_Z0
+   | CO_BV of bool list
 
 type uop =
    | UO_xO
@@ -78,6 +79,9 @@ type bop =
    | BO_eq of btype
    | BO_BVand of int
    | BO_BVor of int
+   | BO_BVxor of int
+   | BO_BVadd of int
+   | BO_BVmult of int
 
 type nop =
   | NO_distinct of btype
@@ -171,9 +175,13 @@ module Atom :
       val mk_mult : reify_tbl -> hatom -> hatom -> hatom
       val mk_bvand : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_bvor : reify_tbl -> int -> hatom -> hatom -> hatom
+      val mk_bvxor : reify_tbl -> int -> hatom -> hatom -> hatom
+      val mk_bvadd : reify_tbl -> int -> hatom -> hatom -> hatom
+      val mk_bvmult : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_opp : reify_tbl -> hatom -> hatom
       val mk_distinct : reify_tbl -> btype -> hatom array -> hatom
       val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
+      val mk_bvconst : reify_tbl -> bool list -> hatom
 
     end
 

@@ -120,6 +120,12 @@ type 'hform rule =
        ----------------------- bbVar
         bbT(x, [x0; ...; xn])
    *)
+  | BBConst of 'hform
+  (* Bit-blasting a constant:
+
+       ----------------------- bbConst
+        bbT(#0100, [0; 0; 1; 0])
+   *)
   | BBOp of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
@@ -182,4 +188,4 @@ let used_clauses r =
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _
-  | BBVar _ -> []
+  | BBVar _ | BBConst _ -> []

@@ -116,6 +116,8 @@
 
 
 let digit = [ '0'-'9' ]
+let bit = [ '0'-'1' ]
+let bitvector = '%' bit+
 let alpha = [ 'a'-'z' 'A' - 'Z' ]
 let blank = [' ' '\t']
 let newline = ['\n' '\r']
@@ -155,6 +157,7 @@ rule token = parse
                                    BIGINT 
                                      (Big_int.big_int_of_string 
 					(Lexing.lexeme lexbuf)) }
+  | bitvector                  { BITV (Lexing.lexeme lexbuf) }
   | var                        { let v = Lexing.lexeme lexbuf in
                                  try Hashtbl.find typ_table v with
                                    | Not_found -> VAR v }

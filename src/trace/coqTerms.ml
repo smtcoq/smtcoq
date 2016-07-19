@@ -114,6 +114,9 @@ let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
 let cbv_and = gen_constant bv_modules "bv_and"
 let cbv_or = gen_constant bv_modules "bv_or"
+let cbv_xor = gen_constant bv_modules "bv_xor"
+let cbv_add = gen_constant bv_modules "bv_add"
+let cbv_mult = gen_constant bv_modules "bv_mult"
 
 (* SMT_terms *)
 
@@ -148,6 +151,7 @@ let cTval =  gen_constant smt_modules "Tval"
 
 let cCO_xH = gen_constant smt_modules "CO_xH"
 let cCO_Z0 = gen_constant smt_modules "CO_Z0"
+let cCO_BV = gen_constant smt_modules "CO_BV"
 
 let cUO_xO = gen_constant smt_modules "UO_xO"
 let cUO_xI = gen_constant smt_modules "UO_xI"
@@ -166,6 +170,9 @@ let cBO_Zgt = gen_constant smt_modules "BO_Zgt"
 let cBO_eq = gen_constant smt_modules "BO_eq"
 let cBO_BVand = gen_constant smt_modules "BO_BVand"
 let cBO_BVor = gen_constant smt_modules "BO_BVor"
+let cBO_BVxor = gen_constant smt_modules "BO_BVxor"
+let cBO_BVadd = gen_constant smt_modules "BO_BVadd"
+let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
 
 let cNO_distinct = gen_constant smt_modules "NO_distinct"
 
@@ -205,7 +212,8 @@ let make_certif_ops modules args =
   gen_constant"ImmBuildDef2",
   gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
   gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
-  gen_constant "BBVar", gen_constant "BBOp", gen_constant "BBEq",
+  gen_constant "BBVar", gen_constant "BBConst",
+  gen_constant "BBOp", gen_constant "BBEq",
   gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "Hole")
   
@@ -238,3 +246,13 @@ let rec mkPositive = function
 let mkN = function
   | 0 -> Lazy.force cN0
   | i -> SmtMisc.mklApp cNpos [|mkPositive i|]
+
+(* Compute a Boolean *)
+let rec mkBool = function
+  | true -> Lazy.force ctrue
+  | false -> Lazy.force cfalse
+
+(* Compute a Boolean list *)
+let rec mk_bv_list = function
+  | [] -> Lazy.force cnil
+  | b :: bv -> SmtMisc.mklApp ccons [|mkBool b; mk_bv_list bv|]
