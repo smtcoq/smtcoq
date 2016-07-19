@@ -2474,9 +2474,9 @@ Proof. intro a.
        - intros. simpl. easy.
        - intros.
          case b in *. simpl. rewrite IHa. simpl. omega.
-         simpl. case (k - 1 < 0)%int63.
+         simpl. case (k - 1 < 0)%int.
          specialize (@IHa b0 (xorb (xorb xa b) c :: res)
-         (xa && b || xorb xa b && c) (k - 1)%int63).
+         (xa && b || xorb xa b && c) (k - 1)%int).
            rewrite IHa. simpl. omega. simpl. rewrite IHa. simpl; omega.
 Qed. 
 

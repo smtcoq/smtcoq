@@ -75,6 +75,7 @@ let get_rule = function
   | Flat -> VeritSyntax.Flat
   | Hole -> VeritSyntax.Hole
   | True -> VeritSyntax.True
+  | Fals -> VeritSyntax.Fals
   | Bbva -> VeritSyntax.Bbva
   | Bbconst -> VeritSyntax.Bbconst
   | Bbeq -> VeritSyntax.Bbeq
@@ -115,6 +116,7 @@ let string_of_rule = function
   | Flat -> "flatten"
   | Hole -> "hole"
   | True -> "true"
+  | Fals -> "false"
   | Bbva -> "bbvar"
   | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
@@ -185,6 +187,24 @@ let rec term_smtcoq t = match value t with
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvor ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvxor", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvxor ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvaddd", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvadd ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvmul", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvmult ra s ha hb)
             | _ -> assert false)
       | Some ("<_Int", [a; b]) ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))

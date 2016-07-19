@@ -254,5 +254,6 @@ let rec mkBool = function
 
 (* Compute a Boolean list *)
 let rec mk_bv_list = function
-  | [] -> Lazy.force cnil
-  | b :: bv -> SmtMisc.mklApp ccons [|mkBool b; mk_bv_list bv|]
+  | [] -> SmtMisc.mklApp cnil [|Lazy.force cbool|]
+  | b :: bv ->
+    SmtMisc.mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]

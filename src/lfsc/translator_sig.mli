@@ -58,6 +58,7 @@ type rule =
   | Flat
   | Hole
   | True
+  | Fals
   | Bbva
   | Bbconst
   | Bbeq

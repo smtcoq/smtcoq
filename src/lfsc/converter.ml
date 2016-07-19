@@ -168,6 +168,9 @@ module Make (T : Translator_sig.S) = struct
       clauses. {!Reso} ignores the resulting clause so we can just give the
       empty clause here. *)
   let mk_inter_resolution clauses = match clauses with
+    | [] -> (* not false *)
+      mk_clause_cl Fals [not_ tfalse] []
+      (* assert false *)
     | [id] -> id
     | _ -> mk_clause ~reuse:false Reso [] clauses
 
@@ -553,7 +556,6 @@ module Make (T : Translator_sig.S) = struct
   (** convert resolution proofs of [satlem_simplify] *)
   let satlem_simplify p = match app_name p with
     | Some ("satlem_simplify", [_; _; _; qr; p]) ->
-      eprintf "OOOOOOOO@.";
       let clauses = reso_of_QR qr in
       let lem_name, res, p = result_satlem p in
       let cl_res = to_clause res in
@@ -573,13 +575,11 @@ module Make (T : Translator_sig.S) = struct
 
   (* can be empty, returns continuation *)
   let satlem_simplifies_c p =
-    eprintf "satlem_simplifies_c@.";
     many_satlem_simplify None p |> snd
 
 
   (* There must be at least one, returns id of last deduced clause *)
   let reso_of_satlem_simplify p =
-    eprintf "reso_of_satlem_simplify@.";
     match many_satlem_simplify None p with
     | Some id, _ -> id
     | _ -> assert false
@@ -606,7 +606,6 @@ module Make (T : Translator_sig.S) = struct
   let rec bb_lem_res lastid p =
     try
       if is_last_bbres p then raise Exit;
-      eprintf "bb_lem_res not last@.";
       let lastid, p = satlem_simplify p in
       bb_lem_res lastid p
     with Exit -> match lastid with
@@ -677,7 +676,7 @@ module Make (T : Translator_sig.S) = struct
       let lem_name, lem_cont = continuation_satlem p in
       begin match prefix_cont with
         | Some pref when not (has_prefix pref lem_name) -> old_p
-        | _ -> 
+        | _ ->
           let cl = to_clause c in
           (try
              let assumptions, l = get_assumptions [] l in
@@ -719,7 +718,7 @@ module Make (T : Translator_sig.S) = struct
 
           );
 
-          satlem lem_cont
+          satlem ?prefix_cont lem_cont
       end
     | _ -> p
 
@@ -816,7 +815,7 @@ module Make (T : Translator_sig.S) = struct
       |> bblast_decls
       |> bblast_eqs
       |> register_prop_vars
-      |> satlem ~prefix_cont:".bb"
+      |> satlem ~prefix_cont:"bb."
       |> satlem_simplifies_c
       |> satlem
       

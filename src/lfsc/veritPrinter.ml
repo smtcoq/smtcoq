@@ -81,6 +81,7 @@ let get_rule = function
   | Flat -> "flatten"
   | Hole -> "hole"
   | True -> "true"
+  | Fals -> "false"
   | Bbva -> "bbvar"
   | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
@@ -126,7 +127,7 @@ let rec print_bv_const fmt t = match name t with
   | Some "bvn" -> ()
   | _ -> match app_name t with
     | Some ("bvc", [b; t]) ->
-      fprintf fmt "%a%a" print_bv_const t print_bit b
+      fprintf fmt "%a%a" print_bit b print_bv_const t
     | _ -> assert false
 
 let rec print_apply fmt t = match app_name t with
@@ -178,7 +179,7 @@ and print_term fmt t =
 
       | Some ("a_bv", [_; a]) -> print_term fmt a
 
-      | Some ("bvc", _) -> fprintf fmt "%%%a" print_bv_const t
+      | Some ("bvc", _) -> fprintf fmt "#b%a" print_bv_const t
 
       | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmult") as op, [_; a; b]) ->
         let nb = new_sharp t in

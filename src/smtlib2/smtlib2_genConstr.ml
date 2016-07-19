@@ -109,8 +109,8 @@ let parse_smt2bv s =
   let l = ref [] in
   for i = 2 to String.length s - 1 do
     match s.[i] with
-    | '0' -> l := true :: !l
-    | '1' -> l := false :: !l
+    | '0' -> l := false :: !l
+    | '1' -> l := true :: !l
     | _ -> assert false
   done;
   !l

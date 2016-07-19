@@ -100,10 +100,13 @@
         "flatten", FLAT;
         "hole", HOLE;
         "bbvar", BBVA;
+        "bbconst", BBCONST;
         "bbeq", BBEQ;
         "bbop", BBOP;
         "bvand", BVAND;
         "bvor", BVOR;
+        "bvadd", BVADD;
+        "bvmul", BVMUL;
         "not", NOT;
         "xor", XOR;
         "ite", ITE;
@@ -117,7 +120,7 @@
 
 let digit = [ '0'-'9' ]
 let bit = [ '0'-'1' ]
-let bitvector = '%' bit+
+let bitvector = '#' 'b' bit+
 let alpha = [ 'a'-'z' 'A' - 'Z' ]
 let blank = [' ' '\t']
 let newline = ['\n' '\r']
@@ -131,7 +134,7 @@ rule token = parse
   | newline +                  { EOL }
 
   | ":"                        { COLON }
-  | "#"                        { SHARP }
+  | "#" (int as i)             { SHARPINT (int_of_string i) }
 
   | "("                        { LPAR }
   | ")"                        { RPAR }
@@ -152,15 +155,13 @@ rule token = parse
 
   | "Formula is Satisfiable"   { SAT }
 
-  | int                        { try INT (int_of_string (Lexing.lexeme lexbuf))
+  | (int as i)                 { try INT (int_of_string i)
 	                         with _ -> 
-                                   BIGINT 
-                                     (Big_int.big_int_of_string 
-					(Lexing.lexeme lexbuf)) }
-  | bitvector                  { BITV (Lexing.lexeme lexbuf) }
+                                   BIGINT (Big_int.big_int_of_string i) }
+  | bitvector as bv            { BITV bv }
   | var                        { let v = Lexing.lexeme lexbuf in
                                  try Hashtbl.find typ_table v with
                                    | Not_found -> VAR v }
-  | bindvar                    { BINDVAR (Lexing.lexeme lexbuf) }
+  | bindvar as v               { BINDVAR v }
 
   | eof                        { raise Eof }

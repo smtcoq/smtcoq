@@ -281,11 +281,11 @@ module Op =
       | BO_Zge -> Lazy.force cgeb
       | BO_Zgt -> Lazy.force cgtb
       | BO_eq t -> interp_eq t
-      | BO_BVand s -> mklApp cbv_and [|mkN s|]
-      | BO_BVor s -> mklApp cbv_or [|mkN s|]
-      | BO_BVxor s -> mklApp cbv_xor [|mkN s|]
-      | BO_BVadd s -> mklApp cbv_add [|mkN s|]
-      | BO_BVmult s -> mklApp cbv_mult [|mkN s|]
+      | BO_BVand s -> Lazy.force cbv_and
+      | BO_BVor s -> Lazy.force cbv_or
+      | BO_BVxor s -> Lazy.force cbv_xor
+      | BO_BVadd s -> Lazy.force cbv_add
+      | BO_BVmult s -> Lazy.force cbv_mult
 
     let n_to_coq = function
       | NO_distinct t -> mklApp cNO_distinct [|Btype.to_coq t|]
@@ -507,9 +507,17 @@ module Atom =
       let j = if i < 0 then -i else i in
       Format.fprintf fmt "%s%i%s" s1 j s2
 
+
+    let rec bv_to_smt fmt = function
+      | true :: bv -> Format.fprintf fmt "%a1" bv_to_smt bv
+      | false :: bv -> Format.fprintf fmt "%a0" bv_to_smt bv
+      | [] -> ()
+
+    
     let rec to_smt fmt h = to_smt_atom fmt (atom h)
 
     and to_smt_atom fmt = function
+      | Acop (CO_BV bv) -> Format.fprintf fmt "#b%a" bv_to_smt bv
       | Acop _ as a -> to_smt_int fmt (compute_int a)
       | Auop (UO_Zopp,h) ->
         Format.fprintf fmt "(- ";
@@ -662,7 +670,7 @@ module Atom =
       if Term.eq_constr c (Lazy.force cnil) then []
       else if Term.eq_constr c (Lazy.force ccons) then
         match args with
-          | [b; bs] -> mk_bool b :: mk_bool_list bs
+          | [_; b; bs] -> mk_bool b :: mk_bool_list bs
           | _ -> assert false
       else assert false
 
