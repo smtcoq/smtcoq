@@ -2467,9 +2467,53 @@ Qed.
 
 (* (* bitvector MULT properties *) *)
 
+Lemma prop_mult_bool_step_k_h_len: forall a b res c k,
+length (mult_bool_step_k_h a b res c k) = (length a + length res)%nat.
+Proof. intro a.
+       induction a as [ | xa xsa IHa ].
+       - intros. simpl. easy.
+       - intros.
+         case b in *. simpl. rewrite IHa. simpl. omega.
+         simpl. case (k - 1 < 0)%int63.
+         specialize (@IHa b0 (xorb (xorb xa b) c :: res)
+         (xa && b || xorb xa b && c) (k - 1)%int63).
+           rewrite IHa. simpl. omega. simpl. rewrite IHa. simpl; omega.
+Qed. 
+
+
+Lemma empty_list_length: forall {A: Type} (a: list A), (length a = 0)%nat <-> a = [].
+Proof. intros A a.
+       induction a; split; intros; auto; contradict H; easy.
+Qed.
+
+Lemma prop_mult_bool_step: forall k' a b res k, 
+                       length (mult_bool_step a b res k k') = (length res)%nat.
+Proof. intro k'.
+       induction k'.
+       - intros. simpl. rewrite prop_mult_bool_step_k_h_len. simpl. omega.
+       - intros. simpl. rewrite IHk'. rewrite prop_mult_bool_step_k_h_len. simpl; omega.
+Qed.
+
+Lemma and_with_bool_len: forall a b, length (and_with_bool a (nth 0 b false)) = length a.
+Proof. intro a.
+       - induction a.
+         intros. now simpl.
+         intros. simpl. now rewrite IHa.
+Qed.
+
+
 Lemma bv_mult_size a b: size (bv_mult a b) = size_bv_mult a b.
-(** similar to prop_mult_step3 **)
-Admitted.					     
+Proof. unfold size, bv_mult, bits, mult_list, size_bv_mult.
+       case_eq (size a =? size b).
+       - intros. unfold size in *. apply f_equal.         
+         unfold bvmult_bool.
+         case_eq (length a).
+         intros.
+         + rewrite empty_list_length in H0. rewrite H0. now simpl.
+         + intros. rewrite prop_mult_bool_step. simpl. now rewrite and_with_bool_len.
+       - intros. easy.
+Qed. 
+				     
 (* Proof. *)
 (*   unfold size_bv_mult, bv_mult. *)
 (*   case_eq (size a =? size b); intros. *)
