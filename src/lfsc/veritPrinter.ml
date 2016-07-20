@@ -73,6 +73,14 @@ let get_rule = function
   | Equp2 -> "equiv_pos2"
   | Equn1 -> "equiv_neg1"
   | Equn2 -> "equiv_neg2"
+  | Xor1 -> "xor1"
+  | Xor2 -> "xor2"
+  | Xorp1 -> "xor_pos1"
+  | Xorp2 -> "xor_pos2"
+  | Xorn1 -> "xor_neg1"
+  | Xorn2 -> "xor_neg2"
+  | Nxor1 -> "not_xor1"
+  | Nxor2 -> "not_xor2"
   | Eqtr -> "eq_transitive"
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
@@ -181,7 +189,7 @@ and print_term fmt t =
 
       | Some ("bvc", _) -> fprintf fmt "#b%a" print_bv_const t
 
-      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmult") as op, [_; a; b]) ->
+      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul") as op, [_; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
 

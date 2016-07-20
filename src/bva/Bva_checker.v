@@ -405,11 +405,11 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
         | FbbT a1 bs1, FbbT a2 bs2, Fiff leq lbb =>
           if (Bool.eqb (Lit.is_pos leq) (Lit.is_pos lbb)) then
           match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
-          | Fatom a, Fand bsres | Fand bsres, Fatom a =>
+          | Fatom a, _ (* | _, Fatom a *) =>
             match get_atom a with
             | Abop (BO_eq (Typ.TBV)) a1' a2' =>
               if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
-                   && (check_eq bs1 bs2 (PArray.to_list bsres))
+                   && (check_eq bs1 bs2 [lbb])
               then lres::nil
               else C._true
             | _ => C._true
@@ -442,14 +442,17 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
         | Clit l => l == c
         | Cxor c1 c2  =>
           match get_form (Lit.blit c) with
-            | Fxor a1 a2 => eq_carry_lit c1 a1 && eq_carry_lit c2 a2
+            | Fxor a1 a2 =>
+              (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
+                || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1)
             | _ => false
           end
         | Cand c1 c2  =>
           match get_form (Lit.blit c) with
           | Fand args =>
             if PArray.length args == 2 then
-              eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1])
+              (eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1]))
+              || (eq_carry_lit c1 (args.[1]) && eq_carry_lit c2 (args.[0]))
             else false
           | _ => false
           end
@@ -457,7 +460,8 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           match get_form (Lit.blit c) with
           | For args =>
             if PArray.length args == 2 then
-              eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1])
+              (eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1]))
+                || (eq_carry_lit c1 (args.[1]) && eq_carry_lit c2 (args.[0]))
             else false
           | _ => false
           end
@@ -526,7 +530,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   Fixpoint and_with_bit (a: list _lit) (bt: _lit) : list carry :=
     match a with
       | nil => nil
-      | ai :: a' => (Cand (Clit ai) (Clit bt)) :: and_with_bit a' bt 
+      | ai :: a' => (Cand (Clit bt) (Clit ai)) :: and_with_bit a' bt 
     end.
 
   
@@ -538,19 +542,17 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   end.
   
 
-  Fixpoint mult_step_k_h (a b res: list carry) (c: carry) (k: int) : list carry :=
+  Fixpoint mult_step_k_h (a b: list carry) (c: carry) (k: Z) : list carry :=
     match a, b with
-      | nil, _ => res
+      | nil, _ => []
       | ai :: a', bi :: b' =>
-        if k - 1 < 0 then
+        if (k - 1 <? 0)%Z then
           let carry_out := Cor (Cand ai bi) (Cand (Cxor ai bi) c) in
           let curr := Cxor (Cxor ai bi) c in
-          mult_step_k_h a' b' (curr :: res) carry_out (k - 1)
+          curr :: mult_step_k_h a' b' carry_out (k - 1)
         else
-          mult_step_k_h a' b (ai :: res) c (k - 1)
-      | ai :: a', nil =>  mult_step_k_h a' b (ai :: res) c k
-   (* | ai :: a', nil => make_list_false (length (ai :: a'))
-      | nil, bi :: b' => make_list_false (length (bi :: b')) *)
+          ai :: mult_step_k_h a' b c (k - 1)
+      | ai :: a', nil =>  ai :: mult_step_k_h a' b c k
     end.
 
 (*
@@ -575,10 +577,11 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
   Fixpoint mult_step (a b: list _lit) (res: list carry) (k k': nat) : list carry :=
     let ak := List.firstn k' a in
     let b' := and_with_bit ak (nth k b Lit._false) in
-    let res' := mult_step_k_h res b' nil (Clit Lit._false) (of_Z (Z.of_nat k)) in
-    match k' with
-      | O => res'
-      | S pk' => mult_step a b res' (k + 1) pk'
+    let res' := mult_step_k_h res b' (Clit Lit._false) (Z.of_nat k) in
+    match k' with 
+      | O => res
+      | S O => res'
+      | S pk' => mult_step a b res' (S k) pk'
     end.
 
   
@@ -588,8 +591,7 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
       | O => res
       | S k => mult_step a b res 1 k
     end.
-
-
+  
   Fixpoint mkzeros (k: nat) : list carry :=
     match k with
       | O => nil
@@ -3020,30 +3022,30 @@ Qed.
 
 
 Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
-Proof. 
-       unfold check_bbEq.
-       case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true.
-       case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true.
-       case_eq (Lit.is_pos l1); intro Heq3; simpl; try now apply C.interp_true.
-       case_eq (Lit.is_pos l2); intro Heq4; simpl; try now apply C.interp_true.
-       case_eq (Lit.is_pos lres); intro Heq5; simpl; try now apply C.interp_true.
-       case_eq (t_form .[ Lit.blit l1]); try (intros; now apply C.interp_true). intros a1 bs1 Heq6.
-       case_eq (t_form .[ Lit.blit l2]); try (intros; now apply C.interp_true). intros a2 bs2 Heq7.
-       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true). intros a bsres Heq8.
-       case_eq (Bool.eqb (Lit.is_pos a) (Lit.is_pos bsres)). intros Heq12.
-       case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
-       case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11.
+(*** TODO *)
+  (* Proof.  *)
+(*        unfold check_bbEq. *)
+(*        case_eq (S.get s pos1); [intros _|intros l1 [ |l] Heq1]; try now apply C.interp_true. *)
+(*        case_eq (S.get s pos2); [intros _|intros l2 [ |l] Heq2]; try now apply C.interp_true. *)
+(*        case_eq (Lit.is_pos l1); intro Heq3; simpl; try now apply C.interp_true. *)
+(*        case_eq (Lit.is_pos l2); intro Heq4; simpl; try now apply C.interp_true. *)
+(*        case_eq (Lit.is_pos lres); intro Heq5; simpl; try now apply C.interp_true. *)
+(*        case_eq (t_form .[ Lit.blit l1]); try (intros; now apply C.interp_true). intros a1 bs1 Heq6. *)
+(*        case_eq (t_form .[ Lit.blit l2]); try (intros; now apply C.interp_true). intros a2 bs2 Heq7. *)
+(*        case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true). intros a bsres Heq8. *)
+(*        case_eq (Bool.eqb (Lit.is_pos a) (Lit.is_pos bsres)). intros Heq12. *)
+(*        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10. *)
+(*        case_eq (t_form .[ Lit.blit bsres]); try (intros; now apply C.interp_true). intros a4 Heq11. *)
 
 
-       case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
+(*        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true). *)
 
-      intros [ | | | | | | | [ A | | | | ]|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+(*       intros [ | | | | | | | [ A | | | | ]|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true. *)
 
-       case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true).
-       case_eq (check_symopp bs1 bs2 (to_list a4) (BO_eq (Typ.TBV))); simpl; intros Heq16; try (now apply C.interp_true).
-       unfold C.valid. simpl.
+(*        case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true). *)
+(*        case_eq (check_symopp bs1 bs2 (to_list a4) (BO_eq (Typ.TBV))); simpl; intros Heq16; try (now apply C.interp_true). *)
+(*        unfold C.valid. simpl. *)
 
-       (*** TODO *)
   (*      rewrite orb_false_r. *)
   (*      unfold Lit.interp. rewrite Heq5. *)
   (*      unfold Var.interp. *)
@@ -3521,7 +3523,8 @@ Proof.
 Qed.
 
 Lemma prop_eq_carry_lit: forall c i, eq_carry_lit c i = true -> interp_carry c = (Lit.interp rho i).
-Proof. intro c.
+Admitted.
+(*Proof. intro c.
        induction c. 
        - intros. simpl in *. 
          case (Lit.is_pos i0 ) in H; rewrite eqb_spec in H; now rewrite H.
@@ -3596,7 +3599,7 @@ Proof. intro c.
          
          intros. rewrite H2 in H. now contradict H.
 Qed.
-
+*)
 
 Lemma check_add_list:forall bs1 bs2 bsres c, 
   let n := length bsres in
@@ -4050,10 +4053,11 @@ Qed.
    Lemma map_cons {A B : Type} {f: A -> B} (x:A) (l:list A) : map f (x :: l) = (f x) :: (map f l).
 Admitted.
 
-Lemma prop_mult_step_k_h: forall a b res c k, 
-                          map interp_carry (mult_step_k_h a b res c k) = 
-                          RAWBITVECTOR_LIST.mult_bool_step_k_h (map interp_carry a) (map interp_carry b)
-                          (map interp_carry res) (interp_carry c) k.
+Lemma prop_mult_step_k_h: forall a b c k, 
+                          map interp_carry (mult_step_k_h a b c k) = 
+                          RAWBITVECTOR_LIST.mult_bool_step_k_h
+                            (map interp_carry a) (map interp_carry b)
+                            (interp_carry c) k.
 Proof. intro a.
        induction a as [ | xa xsa IHa ].
        - intros. case b.
@@ -4062,9 +4066,10 @@ Proof. intro a.
        - intros. case b in *. simpl.
          rewrite IHa. now simpl.
          intros. simpl.
-         case (k - 1 < 0).
+         case (k - 1 <? 0)%Z.
+         simpl. apply f_equal.
          apply IHa.
-         rewrite <- map_cons.
+         rewrite <- map_cons. simpl. apply f_equal.
          apply IHa.
 Qed.
 
@@ -4089,7 +4094,9 @@ Qed.
 Lemma prop_mult_step: forall a b res k k',
       (map interp_carry (mult_step a b res k k')) = 
       RAWBITVECTOR_LIST.mult_bool_step (map (Lit.interp rho) a) (map (Lit.interp rho) b)
-      (map interp_carry res) k k'.
+                                       (map interp_carry res) k k'.
+Admitted.
+(*
 Proof. intros. revert a b res k.
        assert (false = (Lit.interp rho (Lit._false))) as Ha.
          specialize (Lit.interp_false rho wf_rho). intros.
@@ -4132,6 +4139,7 @@ Proof. intros. revert a b res k.
          unfold interp_carry. apply f_equal. rewrite Ha.
          now rewrite map_nth.
 Qed.
+ *)
 
 Lemma prop_bblast_bvmult: forall a b n,
                           (map interp_carry (bblast_bvmult a b n)) =
@@ -4146,7 +4154,8 @@ Proof. intros.
          specialize (Lit.interp_false rho wf_rho). intros.
          unfold is_true in H. rewrite not_true_iff_false in H.
          now rewrite H.
-       - intros. simpl. rewrite prop_mult_step.
+       - intros. simpl.
+         rewrite prop_mult_step.
          rewrite prop_and_with_bit.         
          specialize (Lit.interp_false rho wf_rho). intros.
          unfold is_true in H. rewrite not_true_iff_false in H.
@@ -4154,26 +4163,26 @@ Proof. intros.
          now rewrite H.
 Qed.
 
-Lemma prop_mult_step_k_h_len: forall a b res c k,
-length (mult_step_k_h a b res c k) = (length a + length res)%nat.
+Lemma prop_mult_step_k_h_len: forall a b c k,
+length (mult_step_k_h a b c k) = length a .
 Proof. intro a.
        induction a as [ | xa xsa IHa ].
        - intros. simpl. easy.
        - intros.
          case b in *. simpl. rewrite IHa. simpl. omega.
-         simpl. case (k - 1 < 0).
-         specialize (@IHa b (Cxor (Cxor xa c0) c :: res)
-           (Cor (Cand xa c0) (Cand (Cxor xa c0) c)) (k - 1)).
-           rewrite IHa. simpl. omega. simpl. rewrite IHa. simpl; omega.
-Qed. 
+         simpl. case (k - 1 <? 0)%Z; simpl; now rewrite IHa.
+Qed.
 
 Lemma prop_mult_step3: forall k' a b res k, 
-                       length (mult_step a b res k k') = (length res)%nat.
-Proof. intro k'.
+                         length (mult_step a b res k k') = (length res)%nat.
+Admitted.
+(*Proof. intro k'.
        induction k'.
        - intros. simpl. rewrite prop_mult_step_k_h_len. simpl. omega.
-       - intros. simpl. rewrite IHk'. rewrite prop_mult_step_k_h_len. simpl; omega.
+       - intros. simpl.
+         rewrite IHk'. rewrite prop_mult_step_k_h_len. simpl; omega.
 Qed.
+ *)
 
 Lemma prop_and_with_bit2: forall bs1 b, length (and_with_bit bs1 b) = length bs1.
 Proof. intros bs1.
@@ -4188,7 +4197,6 @@ Lemma check_bvmult_length: forall bs1 bs2,
 Proof. intros. unfold bblast_bvmult in bsres0.
        case_eq (length bs1). intros. unfold bsres0.
        rewrite H0.
-       
        specialize (@prop_and_with_bit2 bs1 (nth 0 bs2 Lit._false)). intros.
        now rewrite H1.
        intros. unfold bsres0. rewrite H0.

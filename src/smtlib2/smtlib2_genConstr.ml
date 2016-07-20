@@ -215,6 +215,27 @@ let make_root ra rf t =
                | TBV s -> Atom (Atom.mk_bvor ra s a' b')
                | _ -> assert false)
           | _, _ -> assert false)
+      | "bvxor", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvxor ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
+      | "bvadd", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvadd ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
+      | "bvmul", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvmult ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
       | "distinct", _ ->
         let make_h h =
           match make_root_term h with

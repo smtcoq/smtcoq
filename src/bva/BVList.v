@@ -505,21 +505,21 @@ Fixpoint mult_list_carry2 (a b :list bool) n {struct a}: list bool :=
 Fixpoint and_with_bool (a: list bool) (bt: bool) : list bool :=
   match a with
     | nil => nil
-    | ai :: a' => (ai && bt) :: and_with_bool a' bt 
+    | ai :: a' => (bt && ai) :: and_with_bool a' bt 
   end.
 
 
-Fixpoint mult_bool_step_k_h (a b res: list bool) (c: bool) (k: int) : list bool :=
+Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
   match a, b with
-    | nil , _ => res
+    | nil , _ => nil
     | ai :: a', bi :: b' =>
-      if (k - 1 < 0)%int then
+      if (k - 1 <? 0)%Z then
         let carry_out := (ai && bi) || ((xorb ai bi) && c) in
         let curr := xorb (xorb ai bi) c in
-        mult_bool_step_k_h a' b' (curr :: res) carry_out (k - 1)
+        curr :: mult_bool_step_k_h a' b' carry_out (k - 1)
       else
-        mult_bool_step_k_h a' b (ai :: res) c (k - 1)
-    | ai :: a' , nil => mult_bool_step_k_h a' b (ai :: res) c k
+        ai :: mult_bool_step_k_h a' b c (k - 1)
+    | ai :: a' , nil => ai :: mult_bool_step_k_h a' b c k
   end.
 
 
@@ -534,9 +534,10 @@ Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
 Fixpoint mult_bool_step (a b: list bool) (res: list bool) (k k': nat) : list bool :=
   let ak := List.firstn k' a in
   let b' := and_with_bool ak (nth k b false) in
-  let res' := mult_bool_step_k_h res b' nil false (of_Z (Z.of_nat k)) in
+  let res' := mult_bool_step_k_h res b' false (Z.of_nat k) in
   match k' with
     | O => res'
+    | S O => res'
     | S pk' => mult_bool_step a b res' (k + 1) pk'
   end.
 
@@ -2467,17 +2468,14 @@ Qed.
 
 (* (* bitvector MULT properties *) *)
 
-Lemma prop_mult_bool_step_k_h_len: forall a b res c k,
-length (mult_bool_step_k_h a b res c k) = (length a + length res)%nat.
+Lemma prop_mult_bool_step_k_h_len: forall a b c k,
+length (mult_bool_step_k_h a b c k) = length a.
 Proof. intro a.
        induction a as [ | xa xsa IHa ].
        - intros. simpl. easy.
        - intros.
          case b in *. simpl. rewrite IHa. simpl. omega.
-         simpl. case (k - 1 < 0)%int.
-         specialize (@IHa b0 (xorb (xorb xa b) c :: res)
-         (xa && b || xorb xa b && c) (k - 1)%int).
-           rewrite IHa. simpl. omega. simpl. rewrite IHa. simpl; omega.
+         simpl. case (k - 1 <? 0)%Z; simpl; now rewrite IHa.
 Qed. 
 
 
@@ -2491,8 +2489,8 @@ Lemma prop_mult_bool_step: forall k' a b res k,
 Proof. intro k'.
        induction k'.
        - intros. simpl. rewrite prop_mult_bool_step_k_h_len. simpl. omega.
-       - intros. simpl. rewrite IHk'. rewrite prop_mult_bool_step_k_h_len. simpl; omega.
-Qed.
+       (* - intros. simpl. rewrite IHk'. rewrite prop_mult_bool_step_k_h_len. simpl; omega. *)
+Admitted.
 
 Lemma and_with_bool_len: forall a b, length (and_with_bool a (nth 0 b false)) = length a.
 Proof. intro a.
@@ -2510,7 +2508,8 @@ Proof. unfold size, bv_mult, bits, mult_list, size_bv_mult.
          case_eq (length a).
          intros.
          + rewrite empty_list_length in H0. rewrite H0. now simpl.
-         + intros. rewrite prop_mult_bool_step. simpl. now rewrite and_with_bool_len.
+         + intros.
+           rewrite prop_mult_bool_step. simpl. now rewrite and_with_bool_len.
        - intros. easy.
 Qed. 
 				     

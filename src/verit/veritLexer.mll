@@ -103,8 +103,11 @@
         "bbconst", BBCONST;
         "bbeq", BBEQ;
         "bbop", BBOP;
+        "bbadd", BBADD;
+        "bbmul", BBMUL;
         "bvand", BVAND;
         "bvor", BVOR;
+        "bvxor", BVXOR;
         "bvadd", BVADD;
         "bvmul", BVMUL;
         "not", NOT;

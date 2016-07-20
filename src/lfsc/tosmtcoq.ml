@@ -67,6 +67,14 @@ let get_rule = function
   | Equp2 -> VeritSyntax.Equp2
   | Equn1 -> VeritSyntax.Equn1
   | Equn2 -> VeritSyntax.Equn2
+  | Xor1 -> VeritSyntax.Xor1
+  | Xor2 -> VeritSyntax.Xor2
+  | Xorp1 -> VeritSyntax.Xorp1
+  | Xorp2 -> VeritSyntax.Xorp2
+  | Xorn1 -> VeritSyntax.Xorn1
+  | Xorn2 -> VeritSyntax.Xorn2
+  | Nxor1 -> VeritSyntax.Nxor1
+  | Nxor2 -> VeritSyntax.Nxor2
   | Eqtr -> VeritSyntax.Eqtr
   | Eqcp -> VeritSyntax.Eqcp
   | Eqco -> VeritSyntax.Eqco
@@ -108,6 +116,14 @@ let string_of_rule = function
   | Equp2 -> "equiv_pos2"
   | Equn1 -> "equiv_neg1"
   | Equn2 -> "equiv_neg2"
+  | Xor1 -> "xor1"
+  | Xor2 -> "xor2"
+  | Xorp1 -> "xor_pos1"
+  | Xorp2 -> "xor_pos2"
+  | Xorn1 -> "xor_neg1"
+  | Xorn2 -> "xor_neg2"
+  | Nxor1 -> "not_xor1"
+  | Nxor2 -> "not_xor2"
   | Eqtr -> "eq_transitive"
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
@@ -194,7 +210,7 @@ let rec term_smtcoq t = match value t with
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvxor ra s ha hb)
             | _ -> assert false)
-      | Some ("bvaddd", [_; a; b]) ->
+      | Some ("bvadd", [_; a; b]) ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with

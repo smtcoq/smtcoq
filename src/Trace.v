@@ -399,6 +399,7 @@ Module Euf_Checker.
       forall s, S.valid rho s ->
         forall st : step, S.valid rho (step_checker s st).
   Proof.
+    set (empty_bv := (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0)).
     intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
@@ -421,14 +422,11 @@ Module Euf_Checker.
     - apply valid_check_spl_arith; auto.
     - apply valid_check_distinct_elim; auto.
     - eapply valid_check_bbVar; eauto.
-      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_bbConst; auto.
     - apply valid_check_bbOp; auto.
     - apply valid_check_bbAdd; auto.
     - apply valid_check_bbMult; auto.
-      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_bbEq; auto.
-      apply (fun (a:Atom.atom) => BITVECTOR_LIST.zeros 0).
     - apply valid_check_hole; auto.
   Qed.
 

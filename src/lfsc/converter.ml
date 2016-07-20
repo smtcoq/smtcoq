@@ -253,7 +253,9 @@ module Make (T : Translator_sig.S) = struct
             Some (("impl_elim"
                   |"not_and_elim"
                   |"iff_elim_1"
-                  |"iff_elim_2"), _) -> true | _ -> false)
+                  |"iff_elim_2"
+                  |"xor_elim_1"
+                  |"xor_elim_2"), _) -> true | _ -> false)
       ->
       let env = rm_used env x in
       let env = lem env r in
@@ -280,6 +282,28 @@ module Make (T : Translator_sig.S) = struct
       in
       { env with clauses }
 
+    | Some ("xor_elim_1", [a; b; r]) ->
+      let env = lem env r in
+      let clauses = match env.clauses with
+        | [_] when not env.ax ->
+          mk_clause_cl Xor2 [not_ a; not_ b] env.clauses :: []
+        | _ ->
+          let a_xor_b = xor_ a b in
+          mk_clause_cl Xorp2 [not_ a_xor_b; not_ a; not_ b] [] :: env.clauses
+      in
+      { env with clauses }
+
+    | Some ("xor_elim_2", [a; b; r]) ->
+      let env = lem env r in
+      let clauses = match env.clauses with
+        | [_] when not env.ax ->
+          mk_clause_cl Xor1 [a; b] env.clauses :: []
+        | _ ->
+          let a_xor_b = xor_ a b in
+          mk_clause_cl Xorp1 [not_ a_xor_b; a; b] [] :: env.clauses
+      in
+      { env with clauses }
+
     | Some ("iff_elim_1", [a; b; r]) ->
       begin match app_name r with
         | Some ("not_iff_elim", [a; b; r]) ->
@@ -290,6 +314,16 @@ module Make (T : Translator_sig.S) = struct
             | _ ->
               let a_iff_b = iff_ a b in
               mk_clause_cl Equn1 [a_iff_b; not_ a; not_ b] [] :: env.clauses
+          in
+          { env with clauses }
+        | Some ("not_xor_elim", [a; b; r]) ->
+          let env = lem env r in
+          let clauses = match env.clauses with
+            | [_] when not env.ax ->
+              mk_clause_cl Nxor2 [not_ a; b] env.clauses :: []
+            | _ ->
+              let a_xor_b = xor_ a b in
+              mk_clause_cl Xorn2 [a_xor_b; not_ a; b] [] :: env.clauses
           in
           { env with clauses }
         | _ ->
@@ -314,6 +348,16 @@ module Make (T : Translator_sig.S) = struct
             | _ ->
               let a_iff_b = iff_ a b in
               mk_clause_cl Equn2 [a_iff_b; a; b] [] :: env.clauses
+          in
+          { env with clauses }
+        | Some ("not_xor_elim", [a; b; r]) ->
+          let env = lem env r in
+          let clauses = match env.clauses with
+            | [_] when not env.ax ->
+              mk_clause_cl Nxor1 [a; not_ b] env.clauses :: []
+            | _ ->
+              let a_xor_b = xor_ a b in
+              mk_clause_cl Xorn1 [a_xor_b; a; not_ b] [] :: env.clauses
           in
           { env with clauses }
         | _ ->
