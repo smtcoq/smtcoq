@@ -575,12 +575,12 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
 
 
   Fixpoint mult_step (a b: list _lit) (res: list carry) (k k': nat) : list carry :=
-    let ak := List.firstn k' a in
+    let ak := List.firstn (S k') a in
     let b' := and_with_bit ak (nth k b Lit._false) in
     let res' := mult_step_k_h res b' (Clit Lit._false) (Z.of_nat k) in
     match k' with 
-      | O => res
-      | S O => res'
+      | O => res'
+      (* | S O => res' *)
       | S pk' => mult_step a b res' (S k) pk'
     end.
 
@@ -589,7 +589,8 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
     let res := and_with_bit a (nth 0 b Lit._false) in
     match n with
       | O => res
-      | S k => mult_step a b res 1 k
+      | S O => res
+      | S (S k) => mult_step a b res 1 k
     end.
   
   Fixpoint mkzeros (k: nat) : list carry :=
@@ -4091,12 +4092,17 @@ Proof.   intro xk'0.
              intros. simpl. apply f_equal. apply IHxk'0.
 Qed.
 
+Lemma map_firstn: forall A B n (l: list A) (f:A -> B), firstn n (map f l) = map f (firstn n l). 
+Proof.
+  intros A B n.
+  induction n; intro l; induction l; try now simpl.
+  intros. simpl. apply f_equal. apply IHn.
+Qed.
+
 Lemma prop_mult_step: forall a b res k k',
       (map interp_carry (mult_step a b res k k')) = 
       RAWBITVECTOR_LIST.mult_bool_step (map (Lit.interp rho) a) (map (Lit.interp rho) b)
                                        (map interp_carry res) k k'.
-Admitted.
-(*
 Proof. intros. revert a b res k.
        assert (false = (Lit.interp rho (Lit._false))) as Ha.
          specialize (Lit.interp_false rho wf_rho). intros.
@@ -4112,34 +4118,17 @@ Proof. intros. revert a b res k.
         now simpl.
 
        induction k' as [ | xk' xsk' IHk' ].
-       - intros. unfold mult_step. simpl.
-         intros. rewrite H.
-         apply prop_mult_step_k_h. 
-       - intros. simpl. 
-         case a in *.
-         simpl. rewrite H, H0. 
-         rewrite <- prop_mult_step_k_h.
-         apply xsk'.
-         simpl.
-         rewrite xsk'. simpl.
-         cut (interp_carry ((Cand (Clit i) (Clit (nth k b Lit._false)))) =  
-             ((Lit.interp rho i) && (nth k (map (Lit.interp rho) b) false))).
-         intros. rewrite <- H1.
-         rewrite <- prop_interp_firstn.
-         assert ((nth k (map (Lit.interp rho) b) false) = (Lit.interp rho (nth k b (Lit._false)) )).
-           rewrite Ha. apply map_nth.
-           rewrite H2.
-         rewrite <- prop_and_with_bit.
-         rewrite <- map_cons.
-         rewrite <- map_cons.
-         rewrite H0.
-         rewrite H.
-         now rewrite <- prop_mult_step_k_h.
-         
-         unfold interp_carry. apply f_equal. rewrite Ha.
-         now rewrite map_nth.
+       - intros.
+         case a. simpl. rewrite H; apply prop_mult_step_k_h.
+         intros. simpl. rewrite H. rewrite prop_mult_step_k_h. simpl. now rewrite map_nth.
+       - intros. simpl.
+         rewrite xsk', prop_mult_step_k_h, prop_and_with_bit.
+         rewrite <- map_nth, <- Ha, <- H.
+         case a. now simpl. simpl. intros.
+         case l. now simpl. simpl. intros.
+         case xk'. now simpl. intros. now rewrite map_firstn.
 Qed.
- *)
+
 
 Lemma prop_bblast_bvmult: forall a b n,
                           (map interp_carry (bblast_bvmult a b n)) =
@@ -4155,12 +4144,11 @@ Proof. intros.
          unfold is_true in H. rewrite not_true_iff_false in H.
          now rewrite H.
        - intros. simpl.
-         rewrite prop_mult_step.
-         rewrite prop_and_with_bit.         
          specialize (Lit.interp_false rho wf_rho). intros.
          unfold is_true in H. rewrite not_true_iff_false in H.
-         rewrite <- map_nth.
-         now rewrite H.
+         case n in *.
+         rewrite prop_and_with_bit; rewrite <- map_nth; now rewrite H.
+         rewrite prop_mult_step; rewrite prop_and_with_bit; rewrite <- map_nth; now rewrite H.
 Qed.
 
 Lemma prop_mult_step_k_h_len: forall a b c k,
@@ -4175,14 +4163,13 @@ Qed.
 
 Lemma prop_mult_step3: forall k' a b res k, 
                          length (mult_step a b res k k') = (length res)%nat.
-Admitted.
-(*Proof. intro k'.
+Proof. intro k'.
        induction k'.
        - intros. simpl. rewrite prop_mult_step_k_h_len. simpl. omega.
        - intros. simpl.
          rewrite IHk'. rewrite prop_mult_step_k_h_len. simpl; omega.
 Qed.
- *)
+
 
 Lemma prop_and_with_bit2: forall bs1 b, length (and_with_bit bs1 b) = length bs1.
 Proof. intros bs1.
@@ -4200,8 +4187,9 @@ Proof. intros. unfold bblast_bvmult in bsres0.
        specialize (@prop_and_with_bit2 bs1 (nth 0 bs2 Lit._false)). intros.
        now rewrite H1.
        intros. unfold bsres0. rewrite H0.
-       rewrite prop_mult_step3. 
-       rewrite prop_and_with_bit2. easy.
+       case n in *.
+       simpl. rewrite prop_and_with_bit2. auto.
+       rewrite prop_mult_step3. rewrite prop_and_with_bit2. auto.
 Qed.
 
 Lemma check_bvmult_length2: forall bs1 bs2 bsres,

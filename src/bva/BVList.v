@@ -532,13 +532,13 @@ Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
 
 
 Fixpoint mult_bool_step (a b: list bool) (res: list bool) (k k': nat) : list bool :=
-  let ak := List.firstn k' a in
+  let ak := List.firstn (S k') a in
   let b' := and_with_bool ak (nth k b false) in
   let res' := mult_bool_step_k_h res b' false (Z.of_nat k) in
   match k' with
     | O => res'
-    | S O => res'
-    | S pk' => mult_bool_step a b res' (k + 1) pk'
+    (* | S O => res' *)
+    | S pk' => mult_bool_step a b res' (S k) pk'
   end.
 
 
@@ -546,7 +546,8 @@ Definition bvmult_bool (a b: list bool) (n: nat) : list bool :=
   let res := and_with_bool a (nth 0 b false) in
   match n with
     | O => res
-    | S k => mult_bool_step a b res 1 k
+    | S O => res
+    | S (S k) => mult_bool_step a b res 1 k
   end.
 
 (*
@@ -2489,8 +2490,8 @@ Lemma prop_mult_bool_step: forall k' a b res k,
 Proof. intro k'.
        induction k'.
        - intros. simpl. rewrite prop_mult_bool_step_k_h_len. simpl. omega.
-       (* - intros. simpl. rewrite IHk'. rewrite prop_mult_bool_step_k_h_len. simpl; omega. *)
-Admitted.
+       - intros. simpl. rewrite IHk'. rewrite prop_mult_bool_step_k_h_len. simpl; omega.
+Qed.
 
 Lemma and_with_bool_len: forall a b, length (and_with_bool a (nth 0 b false)) = length a.
 Proof. intro a.
@@ -2509,7 +2510,8 @@ Proof. unfold size, bv_mult, bits, mult_list, size_bv_mult.
          intros.
          + rewrite empty_list_length in H0. rewrite H0. now simpl.
          + intros.
-           rewrite prop_mult_bool_step. simpl. now rewrite and_with_bool_len.
+           case n in *. now rewrite and_with_bool_len.
+           rewrite prop_mult_bool_step. now rewrite and_with_bool_len.
        - intros. easy.
 Qed. 
 				     
