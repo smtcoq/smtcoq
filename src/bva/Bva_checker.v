@@ -348,45 +348,45 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
   Fixpoint check_eq (bs1 bs2 bsres: list _lit) :=
     match bs1, bs2, bsres with
-      | nil, nil, nil => true
-      | b1::bs1, b2::bs2, bres :: bsres =>
-      match bsres with
-        | [] => 
- 
-          if Lit.is_pos bres then
+    | nil, nil, nil => true
+    | b1::bs1, b2::bs2, bres :: bsres =>
+      match bs1, bs2, bsres with
+      | _::_, _::_, [] => 
+        
+        if Lit.is_pos bres then
           match get_form (Lit.blit bres) with
-            | Fand args =>
-              match PArray.to_list args with
-                | bres :: bsres =>
-                  if Lit.is_pos bres then
-                    let ires := 
-                        match get_form (Lit.blit bres) with
-                          | Fiff a1 a2  =>
-                            ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-                          | _ => false
-                        end in
-                    if ires then check_eq bs1 bs2 bsres
-                    else false
-                  else false
-                | _ => false
-              end
+          | Fand args =>
+            match PArray.to_list args with
+            | bres :: bsres =>
+              if Lit.is_pos bres then
+                let ires := 
+                    match get_form (Lit.blit bres) with
+                    | Fiff a1 a2  =>
+                      ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+                    | _ => false
+                    end in
+                if ires then check_eq bs1 bs2 bsres
+                else false
+              else false
             | _ => false
+            end
+          | _ => false
           end
         else false
-     
-        | xbsres :: xsbsres =>
+               
+      | _, _, _ =>
         if Lit.is_pos bres then
           let ires := 
               match get_form (Lit.blit bres) with
-                | Fiff a1 a2  =>
-                  ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-                | _ => false
+              | Fiff a1 a2  =>
+                ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
+              | _ => false
               end in
           if ires then check_eq bs1 bs2 bsres
           else false
         else false
-     end
-      | _, _, _ => false
+      end
+    | _, _, _ => false
     end.
   
   
@@ -3030,6 +3030,7 @@ Proof. intro bs1.
       * contradict Hcheck; now simpl.
     + contradict Hcheck; now simpl.
   - intros bs2 bsres Hlen Hcheck.
+    symmetry.
     case bs2 in *.
     + case bsres in *; contradict Hcheck; now simpl.
     + case bsres in *.
@@ -3040,77 +3041,90 @@ Proof. intro bs1.
         rename H0 into Hlen'.
 
         case bsres in *.
-        ++ simpl in Hcheck.
-           case_eq (Lit.is_pos r1). intros Hposr1. rewrite Hposr1 in Hcheck.
-           case_eq (t_form .[ Lit.blit r1]); intros; rewrite H in Hcheck; try (now contradict Hcheck).
-           rename H into Hform_r1.
-           case_eq (to_list a).
-           intros Ha. rewrite Ha in Hcheck. now contradict Hcheck.
-      
-           intros a1 rargs Ha. rewrite Ha in Hcheck.
-           case_eq (Lit.is_pos a1); intros; rewrite H in Hcheck; try (now contradict Hcheck).
-           rename H into Hposa1.
-           case_eq (t_form .[ Lit.blit a1]); intros; rewrite H in Hcheck; try (now contradict Hcheck).
-           rename H into Hform_a1.
-           rename i into arg1; rename i0 into arg2.
-
-           generalize (rho_interp (Lit.blit a1)). rewrite Hform_a1. simpl.
-           intro Heqx1x2.
-           generalize (rho_interp (Lit.blit r1)). rewrite Hform_r1. simpl.
+        -- simpl in Hcheck.
+           case_eq (Lit.is_pos r1); intros; rewrite H in Hcheck;
+           try (case bs1 in *; try (now contradict Hcheck); case bs2 in *;
+                try (now contradict Hcheck));
+           rename H into Hposr1;
+           case_eq (t_form .[ Lit.blit r1]);intros; rewrite H in Hcheck; try (now contradict Hcheck); 
+           rename H into Hform_r1;
+           generalize (rho_interp (Lit.blit r1)); rewrite Hform_r1; simpl;
            intro Hi.
-           rewrite afold_left_and in Hi.
-           rewrite Ha in Hi. simpl in Hi.
-           symmetry. unfold Lit.interp at 1, Var.interp at 1.
-           rewrite Hposr1. rewrite Hi.
-
-           unfold Lit.interp at 1, Var.interp at 1.
-           rewrite Hposa1. rewrite Heqx1x2.
-           rewrite <- andb_assoc, andb_true_r.
-           
-           case_eq ((arg1 == x1) && (arg2 == x2) || (arg1 == x2) && (arg2 == x1)).
-           intros Hif.
-           rewrite Hif in Hcheck.
-           rewrite orb_true_iff in Hif.
-           destruct Hif as [ Hif1 | Hif2 ].
-           ** rewrite andb_true_iff in Hif1. destruct Hif1 as ( Hx1, Hx2 ).
-              rewrite eqb_spec in Hx1, Hx2. rewrite Hx1, Hx2 in *.
-              apply f_equal.
-              apply (@IHbs1 _ _ Hlen') in Hcheck. now rewrite Hcheck.
-           ** rewrite andb_true_iff in Hif2. destruct Hif2 as ( Hx2, Hx1 ).
-              rewrite eqb_spec in Hx1, Hx2. rewrite Hx1, Hx2 in *.
-              rewrite bool_eqb_comm.
-              apply f_equal.
-              apply (@IHbs1 _ _ Hlen') in Hcheck. now rewrite Hcheck.
-           ** intros Hif. rewrite Hif in Hcheck. now contradict Hcheck.
-           ** intro Hposr1. rewrite Hposr1 in Hcheck. now contradict Hcheck.
-        ++ simpl in Hcheck.
-           case_eq (Lit.is_pos r1). intros Hposr1. rewrite Hposr1 in Hcheck.
-           case_eq (t_form .[ Lit.blit r1]); intros; rewrite H in Hcheck; try (now contradict Hcheck).
-           rename H into Hform_r1.
-           rename i1 into a2; rename i0 into a1.
-
-           generalize (rho_interp (Lit.blit r1)). rewrite Hform_r1. simpl.
+           ++ rename i into arg1; rename i0 into arg2.
+              unfold Lit.interp at 1, Var.interp at 1.
+              rewrite Hposr1, Hi. repeat (rewrite andb_true_r).
+              case_eq ((arg1 == x1) && (arg2 == x2) || (arg1 == x2) && (arg2 == x1)).
+              ** intros Hif.
+                 rewrite orb_true_iff in Hif.
+                 repeat (rewrite andb_true_iff in Hif).
+                 repeat (rewrite eqb_spec in Hif).
+                 destruct Hif as [ Hif1 | Hif2 ].
+                 --- destruct Hif1 as (Hx1, Hx2). now rewrite Hx1, Hx2.
+                 --- destruct Hif2 as (Hx2, Hx1). rewrite Hx1, Hx2.
+                     now rewrite bool_eqb_comm.
+              ** intros Hif. rewrite Hif in Hcheck. now contradict Hcheck.
+                 
+           ++
+             case_eq (to_list a);
+                intros; rewrite H in Hcheck; try (now contradict Hcheck).
+              rename H into Ha, i1 into a1, l into rargs.
+              case_eq (Lit.is_pos a1);
+                intros; rewrite H in Hcheck; try (now contradict Hcheck).
+              rename H into Hposa1.
+              case_eq (t_form .[ Lit.blit a1]);
+                intros; rewrite H in Hcheck; try (now contradict Hcheck).
+              rename H into Hform_a1.
+              rename i into x1', i0 into x2', i1 into arg1, i2 into arg2.
+              generalize (rho_interp (Lit.blit a1)). rewrite Hform_a1. simpl.
+              intro Heqx1x2.
+              rewrite afold_left_and in Hi.
+              rewrite Ha in Hi. simpl in Hi.
+              unfold Lit.interp at 1, Var.interp at 1.
+              rewrite Hposr1, Hi. repeat (rewrite andb_true_r).
+              unfold Lit.interp at 1, Var.interp at 1.
+              rewrite Hposa1. rewrite Heqx1x2.
+              
+              case_eq ((arg1 == x1) && (arg2 == x2) || (arg1 == x2) && (arg2 == x1)).
+              ** intros Hif.
+                 rewrite Hif in Hcheck.
+                 apply (@IHbs1 _ _ Hlen') in Hcheck.
+                 simpl in Hcheck. rewrite Hcheck.
+                 repeat (rewrite orb_true_iff in Hif).
+                 repeat (rewrite andb_true_iff in Hif).
+                 repeat (rewrite eqb_spec in Hif).
+                 destruct Hif as [ Hif1 | Hif2 ].
+                 --- destruct Hif1 as (Hx1, Hx2). now rewrite Hx1, Hx2.
+                 --- destruct Hif2 as (Hx2, Hx1). rewrite Hx1, Hx2.
+                     now rewrite bool_eqb_comm.
+              ** intros Hif. rewrite Hif in Hcheck. now contradict Hcheck.
+                 
+        -- simpl in Hcheck.
+           case_eq (Lit.is_pos r1); intros; rewrite H in Hcheck;
+           try (case bs1 in *; try (now contradict Hcheck); case bs2 in *;
+                try (now contradict Hcheck));
+           rename H into Hposr1;
+           case_eq (t_form .[ Lit.blit r1]);intros; rewrite H in Hcheck; try (now contradict Hcheck); 
+           rename H into Hform_r1;
+           generalize (rho_interp (Lit.blit r1)); rewrite Hform_r1; simpl;
            intro Hi.
-           symmetry. unfold Lit.interp at 1, Var.interp at 1.
-           rewrite Hposr1. rewrite Hi.
-           
-           case_eq ((a1 == x1) && (a2 == x2) || (a1 == x2) && (a2 == x1)).
-           intros Hif.
-           rewrite Hif in Hcheck.
-           rewrite orb_true_iff in Hif.
-           destruct Hif as [ Hif1 | Hif2 ].
-           ** rewrite andb_true_iff in Hif1. destruct Hif1 as ( Hx1, Hx2 ).
-              rewrite eqb_spec in Hx1, Hx2. rewrite Hx1, Hx2 in *.
-              apply f_equal.
-              apply (@IHbs1 _ _ Hlen') in Hcheck. now rewrite Hcheck.
-           ** rewrite andb_true_iff in Hif2. destruct Hif2 as ( Hx2, Hx1 ).
-              rewrite eqb_spec in Hx1, Hx2. rewrite Hx1, Hx2 in *.
-              rewrite bool_eqb_comm.
-              apply f_equal.
-              apply (@IHbs1 _ _ Hlen') in Hcheck. now rewrite Hcheck.
-           ** intros Hif. rewrite Hif in Hcheck. now contradict Hcheck.
-           ** intro Hposr1. rewrite Hposr1 in Hcheck. now contradict Hcheck.
-Qed.
+           ++ contradict Hcheck. simpl.
+              case ((i0 == x1) && (i1 == x2) || (i0 == x2) && (i1 == x1)); easy.
+           ++ rename i0 into x1', i1 into x2', i2 into arg1, i3 into arg2.
+              unfold Lit.interp at 1, Var.interp at 1.
+              rewrite Hposr1, Hi.
+              case_eq ((arg1 == x1) && (arg2 == x2) || (arg1 == x2) && (arg2 == x1)).
+              ** intros Hif. rewrite Hif in Hcheck.
+                 apply (@IHbs1 _ _ Hlen') in Hcheck.
+                 simpl in Hcheck. rewrite Hcheck.
+                 repeat (rewrite orb_true_iff in Hif).
+                 repeat (rewrite andb_true_iff in Hif).
+                 repeat (rewrite eqb_spec in Hif).
+                 destruct Hif as [ Hif1 | Hif2 ].
+                 --- destruct Hif1 as (Hx1, Hx2). now rewrite Hx1, Hx2.
+                 --- destruct Hif2 as (Hx2, Hx1). rewrite Hx1, Hx2.
+                     now rewrite bool_eqb_comm.
+              ** intros Hif. rewrite Hif in Hcheck. now contradict Hcheck.
+Qed.                 
 
 
 
@@ -3133,23 +3147,75 @@ Proof.
       case (Lit.is_pos r).
       case (t_form .[ Lit.blit r]); try easy.
       intro a0.
-      case (to_list a0). easy.
-      intros i0 l.
-      case (Lit.is_pos i0).
-      case (t_form .[ Lit.blit i0]); try easy.
-      intros i1 i2.
-      case ((i1 == a) && (i2 == i) || (i1 == i) && (i2 == a)).
+      case bs1 in *; try easy; case bs2; try easy.
+      case bs1 in *; try easy; case bs2; try easy.
+      case bs1 in *; try easy; case bs2; try easy.
+      case bs1 in *; try easy; case bs2; try easy.
+      case bs1 in *; try easy; case bs2; try easy.
+      case bs1 in *; try easy; case bs2; try easy.
+      intros i1 l a0.
+      case (to_list a0); try easy.
+      intros i2 l0.
+      case (Lit.is_pos i2); try easy.
+      case (t_form .[ Lit.blit i2]); try easy.
+      intros i3 i4.
+      case ((i3 == a) && (i4 == i) || (i3 == i) && (i4 == a)).
       apply IHbs1.
-      easy. easy. easy.
-      intros i0 l.
-      case (Lit.is_pos r).
+      easy.
+      intros _ _ i2 l0 a0.
+      case (to_list a0); try easy.
+      intros i1 l.
+      case (Lit.is_pos i1); try easy.
+      case (t_form .[ Lit.blit i1]); try easy.
+      intros i3 i4.
+      case ((i3 == a) && (i4 == i) || (i3 == i) && (i4 == a)).
+      apply IHbs1.
+      easy.
+      intros i2 l0 a0.
+      case (to_list a0); try easy.
+      intros i9 l.
+      case (Lit.is_pos i9); try easy.
+      case (t_form .[ Lit.blit i9]); try easy.
+      intros i3 i4.
+      case ((i3 == a) && (i4 == i) || (i3 == i) && (i4 == a)).
+      apply IHbs1.
+      easy.
+      intros _ _ i2 l0 a0.
+      case (to_list a0); try easy.
+      intros i9 l.
+      case (Lit.is_pos i9); try easy.
+      case (t_form .[ Lit.blit i9]); try easy.
+      intros i3 i4.
+      case ((i3 == a) && (i4 == i) || (i3 == i) && (i4 == a)).
+      apply IHbs1.
+      easy.
+      case bs1; try easy; case bs2; easy.
+      case bs1; try easy; case bs2; easy.
+      case bs1; try easy; case bs2; easy.
+      case bs1; try easy; case bs2. easy.
+      simpl.
+      intros _ l i1 i2.
+      case ((i1 == a) && (i2 == i) || (i1 == i) && (i2 == a)); easy.
+      simpl.
+      intros _ l i1 i2.
+      case ((i1 == a) && (i2 == i) || (i1 == i) && (i2 == a)); easy.
+      easy.
+      case bs1 in *; try easy; case bs2; easy.
+      case bs1 in *; try easy; case bs2; easy.
+      case bs1 in *; try easy; case bs2; easy.
+      case bs1 in *; try easy; case bs2; try easy.
+      case (Lit.is_pos r); try easy.
       case (t_form .[ Lit.blit r]); try easy.
-      intros i1 i2.
-      case ((i1 == a) && (i2 == i) || (i1 == i) && (i2 == a)).
-      apply IHbs1.
-      easy. easy.
+      simpl. intros x y. case ((x == a) && (y == i) || (x == i) && (y == a)); easy.
+      case (Lit.is_pos r); try easy.
+      case (t_form .[ Lit.blit r]); try easy.
+      simpl. intros x y. case ((x == a) && (y == i) || (x == i) && (y == a)); easy.
+      case (Lit.is_pos r); try easy.
+      case (t_form .[ Lit.blit r]); try easy.
+      intros x y. case ((x == a) && (y == i) || (x == i) && (y == a)).
+      intros x2 rbs2 xr rbrs.
+      apply IHbs1. easy.
 Qed.
-
   
   
 Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
@@ -3291,10 +3357,14 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         intros Hpos.
 
         contradict Heq16.
-        case bs1 in *.
-        case bs2 in *; now simpl.
-        case bs2 in *. now simpl.
-        simpl. rewrite Hpos. auto.
+        case bs1 in *; try now simpl; case bs2 in *; now simpl.
+        case bs1 in *; try now simpl; case bs2 in *; now simpl.
+        simpl. rewrite Hpos. case bs2; auto.
+        case bs1 in *; try now simpl; case bs2 in *; now simpl.
+        simpl. rewrite Hpos. case bs2; auto.
+        intros _ l; case l; auto.
+        simpl. rewrite Hpos. case bs2; auto.
+        intros _ l; case l; auto.
         apply length_check_eq in Heq16; auto.
         exact Heq16.
 
@@ -3376,7 +3446,8 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         case bs1 in *.
         case bs2 in *; now simpl.
         case bs2 in *. now simpl.
-        simpl. rewrite Hpos. auto.
+        simpl. rewrite Hpos.
+        case bs1 in *; try now simpl; case bs2 in *; now simpl.
 
         apply length_check_eq in Heq16; auto.
         exact Heq16.
@@ -3387,6 +3458,8 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         case bs2 in *; now simpl.
         case bs2 in *. now simpl.
         simpl. rewrite Hpos. auto.
+        case bs1 in *; try now simpl; case bs2 in *; now simpl.
+
     (****)
 
     (** contradictions **)
