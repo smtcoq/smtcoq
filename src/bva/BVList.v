@@ -302,12 +302,7 @@ Proof. unfold bits, size. now rewrite Nat2N.id. Qed.
 Lemma of_bits_size l : N.to_nat (size (of_bits l)) = List.length l.
 Proof. unfold of_bits, size. now rewrite Nat2N.id. Qed.
 
-Fixpoint beq_list (l m : list bool) {struct l} :=
-  match l, m with
-    | nil, nil => true
-    | x :: l', y :: m' => (Bool.eqb x y) && (beq_list l' m')
-    | _, _ => false
-  end.
+Definition beq_list (l m : list bool) := forallb2 Bool.eqb l m.
 
 Definition bv_eq (a b: bitvector): bool:=
   beq_list (bits a) (bits b).
