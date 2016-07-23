@@ -345,7 +345,8 @@ let mk_clause ?(reuse=true) rule cl args =
   | NewCl id ->
     (* Format.eprintf "mk_clause %d : %a@." id print_clause cl; *)
     (* Format.eprintf "mk_clause %d@." id; *)
-    eprintf "%d:(%s _%a)@." id (string_of_rule rule)
+    eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
+      print_clause cl
     (fun fmt -> List.iter (fprintf fmt " %d")) args;
     VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
   | OldCl id ->

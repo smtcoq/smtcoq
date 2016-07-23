@@ -13,8 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(* Add Rec LoadPath "." as SMTCoq. *)
-
 Require Import Bool Int63 PArray.
 Add LoadPath "/home/burak/Desktop/non-dep/src/bva".
 Require Import Misc State BVList.
@@ -1913,3 +1911,9 @@ Qed.
 End Atom.
 
 Arguments Atom.Val {_} {_} _ _.
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "." "SMTCoq"))
+   End: 
+*)
