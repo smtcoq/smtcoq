@@ -30,6 +30,11 @@ Unset Strict Implicit.
    bit vectors *)
 Axiom proof_irrelevance : forall (P : Prop) (p1 p2 : P), p1 = p2.
 
+
+(* Variable _size : N. *)
+
+Definition _size := 32%N.
+
 Module Type BITVECTOR.
 
   Parameter bitvector : Type.
@@ -293,7 +298,7 @@ End RAW2BITVECTOR.
 
 Module Type BITVECTOR_FIXED.
 
-  Parameter _size     : N.
+  (* Parameter _size     : N. *)
   
   Parameter bitvector : Type.
   Parameter bits      : bitvector -> list bool.
@@ -347,7 +352,7 @@ End BITVECTOR_FIXED.
 
 Module Type RAWBITVECTOR_FIXED.
 
-Parameter _size      : N.
+(* Parameter _size      : N. *)
 
 Parameter bitvector  : Type.
 Parameter size       : bitvector -> N.
@@ -427,7 +432,7 @@ End RAWBITVECTOR_FIXED.
 
 Module RAW2BITVECTOR_FIXED (M:RAWBITVECTOR_FIXED) <: BITVECTOR_FIXED.
 
-  Definition _size := M._size.
+  (* Definition _size := _size. *)
  
   Record bitvector_  : Type :=
     MkBitvector
@@ -441,7 +446,7 @@ Module RAW2BITVECTOR_FIXED (M:RAWBITVECTOR_FIXED) <: BITVECTOR_FIXED.
   Definition size (bv:bitvector) := M.size bv.
 
   Lemma of_bits_size l : M.size (M.of_bits l) = _size.
-  Proof. rewrite M.of_bits_size. now unfold _size. Qed.
+  Proof. now rewrite M.of_bits_size. Qed.
 
   Definition of_bits (l:list bool) : bitvector  :=
     @MkBitvector (M.of_bits l) (of_bits_size l).
@@ -580,8 +585,6 @@ End RAW2BITVECTOR_FIXED.
 
 
 Module RAWBITVECTOR_LIST_FIXED <: RAWBITVECTOR_FIXED.
-
-Variable _size: N.
 
 Definition bitvector := list bool.
 Definition bits (a:bitvector) : list bool := a.
@@ -825,7 +828,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int63 then nil
+  if (k == 0)%int then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
@@ -2992,7 +2995,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int63 then nil
+  if (k == 0)%int then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
@@ -5006,3 +5009,9 @@ End RAWBITVECTOR_LIST.
 
 Module BITVECTOR_LIST <: BITVECTOR := RAW2BITVECTOR(RAWBITVECTOR_LIST).
 
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)

@@ -67,7 +67,7 @@ Section Checker.
         | FbbT a bs =>
           match get_atom a with
             | Acop (CO_BV bv) =>
-              if check_bbc bv bs && (N.of_nat (length bv) =? (BITVECTOR_LIST_FIXED._size))%N
+              if check_bbc bv bs && (N.of_nat (length bv) =? (BVList._size))%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -112,7 +112,7 @@ Section Checker.
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
       | FbbT a bs =>
-        if check_bb a bs O (List.length bs) && (N.of_nat (length bs) =? (BITVECTOR_LIST_FIXED._size))%N
+        if check_bb a bs O (List.length bs) && (N.of_nat (length bs) =? (BVList._size))%N
         then lres::nil
         else C._true
       | _ => C._true
@@ -303,21 +303,21 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           | Abop (BO_BVand n) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (@check_symopp bs1 bs2 bsres (BO_BVand n))
-                 && (N.of_nat (length bs1) =? (BITVECTOR_LIST_FIXED._size))%N
+                 && (N.of_nat (length bs1) =? (BVList._size))%N
             then lres::nil
             else C._true
 
           | Abop (BO_BVor n) a1' a2' =>
              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                   && (check_symopp bs1 bs2 bsres  (BO_BVor n))
-                  && (N.of_nat (length bs1) =? (BITVECTOR_LIST_FIXED._size))%N
+                  && (N.of_nat (length bs1) =? (BVList._size))%N
              then lres::nil
              else C._true
 
           | Abop (BO_BVxor n) a1' a2' =>
              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                   && (check_symopp bs1 bs2 bsres  (BO_BVxor n))
-                  && (N.of_nat (length bs1) =? (BITVECTOR_LIST_FIXED._size))%N
+                  && (N.of_nat (length bs1) =? (BVList._size))%N
              then lres::nil
              else C._true
 
@@ -402,7 +402,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
             | Abop (BO_eq (Typ.TBV)) a1' a2' =>
               if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                    && (check_eq bs1 bs2 [lbb])
-                   && (N.of_nat (length bs1) =? (BITVECTOR_LIST_FIXED._size))%N
+                   && (N.of_nat (length bs1) =? (BVList._size))%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -508,7 +508,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
                 | Abop (BO_BVadd _) a1' a2' =>
                   if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                        && (check_add bs1 bs2 bsres (Clit Lit._false))
-                       && (N.of_nat (length bs1) =? (BITVECTOR_LIST_FIXED._size))%N
+                       && (N.of_nat (length bs1) =? (BVList._size))%N
                   then lres::nil
                   else C._true
 
@@ -629,7 +629,7 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
                 | Abop (BO_BVmult _) a1' a2' =>
                   if (((a1 == a1') && (a2 == a2')) (* || ((a1 == a2') && (a2 == a1')) *) )
                        && (check_mult bs1 bs2 bsres)
-                       && (N.of_nat (length bs1) =? (BITVECTOR_LIST_FIXED._size))%N
+                       && (N.of_nat (length bs1) =? (BVList._size))%N
                   then lres::nil
                   else C._true
 
@@ -1021,7 +1021,7 @@ Proof. intros l a samelen H.
        unfold RAWBITVECTOR_LIST_FIXED.bitOf in *.
        unfold RAWBITVECTOR_LIST_FIXED.of_bits.
        unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.size, RAWBITVECTOR_LIST_FIXED.bits in *.
-       unfold BITVECTOR_LIST_FIXED.bits, size, BITVECTOR_LIST_FIXED._size in *.
+       unfold BITVECTOR_LIST_FIXED.bits, size in *.
        unfold RAWBITVECTOR_LIST_FIXED.bits in *.
        unfold BITVECTOR_LIST_FIXED.bv in *.
        apply Nat2N.inj in samelen.
@@ -1041,7 +1041,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bs Heq0.
       case_eq (check_bb a bs 0 (Datatypes.length bs) &&
-      (N.of_nat (Datatypes.length bs) =? BITVECTOR_LIST_FIXED._size)%N); 
+      (N.of_nat (Datatypes.length bs) =? BVList._size)%N); 
       intro Heq2; [ |now apply C.interp_true].
       unfold C.valid. simpl. rewrite orb_false_r.
       unfold Lit.interp. rewrite Heq1.
@@ -1158,7 +1158,7 @@ Proof.
   case_eq c; try (intros; now apply C.interp_true).
   intros l Hc.
   case_eq (check_bbc l bs &&
-      (N.of_nat (Datatypes.length l) =? BITVECTOR_LIST_FIXED._size)%N);
+      (N.of_nat (Datatypes.length l) =? BVList._size)%N);
   try (intros; now apply C.interp_true).
   intro Hcheck.
   unfold C.valid. simpl. rewrite orb_false_r.
@@ -2273,7 +2273,7 @@ Proof.
 
         case_eq (
                  check_symopp bs1 bs2 bsres (BO_BVand N) &&
-                 (N.of_nat (Datatypes.length bs1) =? BITVECTOR_LIST_FIXED._size)%N); 
+                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N); 
         simpl; intros Heq11; try (now apply C.interp_true).
         
         unfold C.valid. simpl. rewrite orb_false_r.
@@ -2398,7 +2398,6 @@ Proof.
         unfold BITVECTOR_LIST_FIXED.bv.
         apply eq_rec.
         unfold BITVECTOR_LIST_FIXED.bv.
-        unfold BITVECTOR_LIST_FIXED._size in Heq11.
         rewrite andb_true_iff in Heq11.
         destruct Heq11 as (Heq11 & Heq11r).
         rewrite N.eqb_eq in Heq11r.
@@ -2505,7 +2504,6 @@ Proof.
         unfold BITVECTOR_LIST_FIXED.bv.
         apply eq_rec.
         unfold BITVECTOR_LIST_FIXED.bv.
-        unfold BITVECTOR_LIST_FIXED._size in Heq11.
         rewrite andb_true_iff in Heq11.
         destruct Heq11 as (Heq11 & Heq11r).
 
@@ -2554,7 +2552,7 @@ Proof.
     
         case_eq (
                  check_symopp bs1 bs2 bsres (BO_BVor N) &&
-                 (N.of_nat (Datatypes.length bs1) =? BITVECTOR_LIST_FIXED._size)%N
+                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
         ); simpl; intros Heq11; try (now apply C.interp_true).
 
         unfold C.valid. simpl. rewrite orb_false_r.
@@ -2795,7 +2793,7 @@ Proof.
      - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (
                  check_symopp bs1 bs2 bsres (BO_BVxor N) &&
-                 (N.of_nat (Datatypes.length bs1) =? BITVECTOR_LIST_FIXED._size)%N
+                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
 
                  ); simpl; intros Heq11; try (now apply C.interp_true).
         unfold C.valid. simpl. rewrite orb_false_r.
@@ -3335,7 +3333,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true).
        
        case_eq (check_eq bs1 bs2 [bsres] &&
-       (N.of_nat (Datatypes.length bs1) =? BITVECTOR_LIST_FIXED._size)%N); 
+       (N.of_nat (Datatypes.length bs1) =? BVList._size)%N); 
        simpl; intros Heq16; try (now apply C.interp_true).
        
        unfold C.valid. simpl.
@@ -3503,9 +3501,6 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         case bs1 in *; try now simpl; case bs2 in *; now simpl.
         simpl. rewrite Hpos. case bs2; auto.
         case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        simpl. rewrite Hpos. case bs2; auto.
-        intros _ l; case l; auto.
-        simpl. rewrite Hpos. case bs2; auto.
         intros _ l; case l; auto.
         
         pose proof Heq16 as Heq16'.
@@ -3610,10 +3605,9 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         simpl. easy.
         simpl.
         case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        rewrite Hpos. now rewrite andb_false_l.
+        rewrite Hpos. (* now rewrite andb_false_l. *)
         case bs2 in *; try now simpl; case bs2 in *; now simpl.
-        rewrite Hpos. now rewrite andb_false_l.
-        rewrite Hpos. now rewrite andb_false_l.
+        now rewrite andb_false_l.
         
     (** contradictions **)
     intros Hv. rewrite Hv in H0. now contradict H0.
@@ -3741,10 +3735,6 @@ Qed.
 
 
 Lemma check_add_list:forall bs1 bs2 bsres c, 
- (*
-  ((length bs1) = N.to_nat (RAWBITVECTOR_LIST_FIXED._size))%nat -> 
-  ((length bs2) = N.to_nat (RAWBITVECTOR_LIST_FIXED._size))%nat -> 
-  ((length bsres) = N.to_nat (RAWBITVECTOR_LIST_FIXED._size))%nat -> *)
   let n := length bsres in
   (length bs1 = n)%nat -> 
   (length bs2 = n)%nat -> 
@@ -3908,9 +3898,9 @@ Qed.
 
 
 Lemma check_add_bvadd: forall bs1 bs2 bsres, 
-  (N.of_nat(length bs1) = RAWBITVECTOR_LIST_FIXED._size)%N -> 
-  (N.of_nat(length bs2) = RAWBITVECTOR_LIST_FIXED._size)%N -> 
-  (N.of_nat(length bsres) = RAWBITVECTOR_LIST_FIXED._size)%N ->  
+  (N.of_nat(length bs1) = BVList._size)%N -> 
+  (N.of_nat(length bs2) = BVList._size)%N -> 
+  (N.of_nat(length bsres) = BVList._size)%N ->  
   check_add bs1 bs2 bsres (Clit Lit._false) = true ->
   BITVECTOR_LIST_FIXED.bv_add (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1))
   (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)) =
@@ -3929,13 +3919,13 @@ Proof. intros.
        unfold BITVECTOR_LIST_FIXED.bv.
        assert (
        N.of_nat((Datatypes.length
-          (RAWBITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1)))) = RAWBITVECTOR_LIST_FIXED._size).
+          (RAWBITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1)))) = BVList._size).
        unfold RAWBITVECTOR_LIST_FIXED.of_bits. rewrite map_length.
        rewrite H'. rewrite N.eqb_compare, N.compare_refl.
        now rewrite map_length.
        assert (
         N.of_nat((Datatypes.length
-          (RAWBITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)))) = RAWBITVECTOR_LIST_FIXED._size).
+          (RAWBITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)))) = BVList._size).
        unfold RAWBITVECTOR_LIST_FIXED.of_bits. rewrite map_length.
        rewrite H0'. rewrite N.eqb_compare, N.compare_refl.
        now rewrite map_length.
@@ -3982,7 +3972,7 @@ Proof.
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (
                  check_add bs1 bs2 bsres (Clit Lit._false) &&
-                 (N.of_nat (Datatypes.length bs1) =? BITVECTOR_LIST_FIXED._size)%N
+                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
         ); simpl; intros Heq11; try (now apply C.interp_true).
 
         unfold C.valid. simpl. rewrite orb_false_r.
@@ -4207,8 +4197,8 @@ Proof.
         rewrite map_length, H7. now rewrite map_length.
         remember BITVECTOR_LIST_FIXED.bv_add_comm.
         
-        cut (BITVECTOR_LIST_FIXED.size (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)) = BITVECTOR_LIST_FIXED._size ).
-        cut (BITVECTOR_LIST_FIXED.size (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1)) = BITVECTOR_LIST_FIXED._size ).
+        cut (BITVECTOR_LIST_FIXED.size (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)) = BVList._size ).
+        cut (BITVECTOR_LIST_FIXED.size (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1)) = BVList._size ).
         intros.
         
 
@@ -4490,7 +4480,7 @@ Proof.
       
         case_eq ( 
                  check_mult bs1 bs2 bsres &&
-                 (N.of_nat (Datatypes.length bs1) =? BITVECTOR_LIST_FIXED._size)%N
+                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
                 ); simpl; intros Heq11; try (now apply C.interp_true).
 
         unfold C.valid. simpl.  rewrite orb_false_r.
