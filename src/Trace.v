@@ -547,3 +547,9 @@ End Euf_Checker.
 
 
 Unset Implicit Arguments.
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "." "SMTCoq"))
+   End: 
+*)

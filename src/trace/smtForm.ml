@@ -164,7 +164,13 @@ module Make (Atom:ATOM) =
       | Fatom a -> atom_to_smt fmt a
       | Fapp (op,args) -> to_smt_op atom_to_smt fmt op args
       (* This is an intermediate object of proofs, it correspond to nothing in SMT *)
-      | FbbT _ -> assert false
+      | FbbT (a, l) ->
+        Format.fprintf fmt "(bbT %a [" atom_to_smt a;
+        let fi = ref true in
+        List.iter (fun f -> Format.fprintf fmt "%s%a"
+                      (if !fi then "" else "; ")
+                      (to_smt atom_to_smt) f; fi := false) l;
+        Format.fprintf fmt "])"
 
     and to_smt_op atom_to_smt fmt op args =
       let s = match op with

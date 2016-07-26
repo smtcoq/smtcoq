@@ -15,7 +15,6 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 
-(* Add Rec LoadPath ".." as SMTCoq. *)
 Require Import Int63 PArray.
 
 Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
@@ -4654,3 +4653,10 @@ Qed.
   End Proof.
 
 End Checker.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)

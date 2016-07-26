@@ -354,7 +354,15 @@ module Op =
          | Invalid_argument _ -> false)
       | _ -> op1 == op2
 
-    let u_equal op1 op2 = op1 == op2
+    let u_equal op1 op2 =
+      match op1,op2 with
+      | UO_xO, UO_xO
+      | UO_xI, UO_xI
+      | UO_Zpos, UO_Zpos
+      | UO_Zneg, UO_Zneg
+      | UO_Zopp, UO_Zopp -> true
+      | UO_BVbitOf (s1,i1), UO_BVbitOf (s2,i2) -> s1 == s2 && i1 == i2
+      | _ -> false
 
     let b_equal op1 op2 =
       match op1,op2 with
@@ -523,6 +531,9 @@ module Atom =
         Format.fprintf fmt "(- ";
         to_smt fmt h;
         Format.fprintf fmt ")"
+      | Auop (UO_BVbitOf (s, i),h) ->
+        (* Format.fprintf fmt "%a[%d]" to_smt h i *)
+        Format.fprintf fmt "(bitof %d %a)" i to_smt h
       | Auop _ as a -> to_smt_int fmt (compute_int a)
       | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
       | Anop (op,a) -> to_smt_nop fmt op a
