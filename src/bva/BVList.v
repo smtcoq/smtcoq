@@ -330,6 +330,7 @@ Module Type BITVECTOR_FIXED.
 
   (*unary operations*)
   Parameter bv_not    : bitvector -> bitvector.
+  Parameter bv_neg    : bitvector -> bitvector.
 
   (* Specification *)
   Axiom bits_size     : forall bv, _size = (size bv).
@@ -377,6 +378,7 @@ Parameter bv_subst   : bitvector -> bitvector -> bitvector.
 
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
+Parameter bv_neg     : bitvector -> bitvector.
 
 Parameter size_bv_and   : bitvector -> bitvector -> N.
 Parameter size_bv_or    : bitvector -> bitvector -> N.
@@ -384,6 +386,8 @@ Parameter size_bv_xor   : bitvector -> bitvector -> N.
 Parameter size_bv_add   : bitvector -> bitvector -> N.
 Parameter size_bv_subst : bitvector -> bitvector -> N.
 Parameter size_bv_mult  : bitvector -> bitvector -> N.
+Parameter size_bv_not   : bitvector -> N.
+Parameter size_bv_neg   : bitvector -> N.
 
 (* All the operations are size-preserving *)
 
@@ -402,6 +406,7 @@ Axiom bv_add_size    : forall a b, size (bv_add a b) = _size.
 Axiom bv_subst_size  : forall a b, size (bv_subst a b) = _size.
 Axiom bv_mult_size   : forall a b, size (bv_mult a b) = _size.
 Axiom bv_not_size   : forall a, size a = _size -> size (bv_not a) = _size.
+Axiom bv_neg_size    : forall a,   size (bv_neg a) = _size.
 
 (* Specification *)
  Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
@@ -472,20 +477,11 @@ Module RAW2BITVECTOR_FIXED (M:RAWBITVECTOR_FIXED) <: BITVECTOR_FIXED.
 
   Definition bv_not (bv1: bitvector) : bitvector :=
     @MkBitvector (M.bv_not bv1) (M.bv_not_size (wf bv1)).
+  Definition bv_neg (bv1:bitvector) : bitvector :=
+    @MkBitvector (M.bv_neg bv1) (M.bv_neg_size bv1).
 
-  (* Definition bv_concat n m (bv1:bitvector n) (bv2: bitvector m) : bitvector (n + m) := *)
-  (*   @MkBitvector (n + m) (M.bv_concat bv1 bv2) (M.bv_concat_size (wf bv1) (wf bv2)). *)
-
-
-(*
-  Lemma bits_size: forall bv, N.of_nat (length (bits bv)) = (size bv).
-  Proof. intros. unfold size, bits. rewrite M.bits_size.
-         destruct bv0. simpl. exact wf0.
-  Qed.
-*)
-
- Lemma bits_size: forall bv, _size = (size bv).
- Proof. intros. unfold size. destruct bv0. simpl. easy. Qed.
+  Lemma bits_size: forall bv, _size = (size bv).
+  Proof. intros. unfold size. destruct bv0. simpl. easy. Qed.
 
 
 Lemma bv_eq_reflect (a b: bitvector): bv_eq a b = true <-> a = b.
@@ -727,6 +723,11 @@ Definition bv_add (a b : bitvector) : bitvector :=
 
 Definition twos_complement b :=
   add_list_ingr (map negb b) (mk_list_false (length b)) true.
+
+Definition bv_neg (a: bitvector) : bitvector :=
+  if ((@size a) =? _size)
+  then (twos_complement a)
+  else zeros.  
 
 Definition subst_list' a b := add_list a (twos_complement b).
 
@@ -1491,6 +1492,10 @@ Qed.
 Lemma bv_not_size: forall a, (size a) = _size -> size (bv_not a) = _size.
 Proof. intros a H. unfold bv_not. unfold size, bits in *. rewrite map_length; auto. Qed.
 
+
+Definition size_bv_not (a: bitvector) := _size.
+
+
 (*
 
 Lemma bv_not_involutative: forall a, bv_not (bv_not a) = a.
@@ -1726,6 +1731,37 @@ Qed.
 Lemma add_list_twice: forall a, add_list a a = removelast (false :: a).
 Proof. intro a. 
        unfold add_list. rewrite add_list_carry_twice. reflexivity.
+Qed.
+
+
+(* list bitwise NEG properties*)
+
+Lemma len_mk_list_false: forall n, length (mk_list_false n) = n.
+Proof. intros. 
+       induction n; simpl. easy.
+       now rewrite IHn.
+Qed.
+
+Lemma size_tc: forall a, size a = _size -> size (twos_complement a) = _size.
+Proof. intros. unfold twos_complement, size in *.
+       rewrite <- add_list_carry_length_eq.
+       now rewrite map_length.
+       now rewrite len_mk_list_false, map_length.
+Qed.
+
+(*bitvector NEG properties*)
+
+Definition size_bv_neg (a: bitvector) := _size.
+
+Lemma bv_neg_size : forall a, size (bv_neg a) = _size.
+Proof. intros.
+       unfold bv_neg.
+       case_eq (size a =? _size).
+       intros.
+       apply size_tc.
+       now rewrite N.eqb_eq in H.
+       
+       intros. now rewrite zeros_size.
 Qed.
 
 (*bitvector ADD properties*)

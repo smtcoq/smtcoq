@@ -454,7 +454,8 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   (* Helper function for bv_neg *)
   Fixpoint check_neg (bs br : list _lit) :=
     let z := map (fun _ => Lit._false) bs in
-    check_add bs z br (Clit Lit._true).
+    let nbs := map (fun l => Lit.neg l) bs in
+    check_add nbs z br (Clit Lit._true).
 
   
   (** Checker for bitblasting of bitvector negation *)
@@ -843,6 +844,7 @@ Proof. intros a bs.
         right. exact H5.
         omega.
         intro H3. rewrite H3 in H0. now contradict H0.
+        intros n0 Hn. rewrite Hn in H0. now contradict H0.
         intros n0 Hn. rewrite Hn in H0. now contradict H0.
         intros b0 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
         intros n0 l Heq. rewrite Heq in H0. now contradict H0.
@@ -4300,7 +4302,7 @@ Qed.
 Lemma valid_check_bbNeg pos lres : C.valid rho (check_bbNeg pos lres).
 Proof.
 (* TODO *)
-Admitted
+Admitted.
 
 Lemma prop_forallb2: forall {A B} {f: A -> B -> bool} l1 l2, forallb2 f l1 l2 = true -> length l1 = length l2.
 Proof. intros A B f l1.

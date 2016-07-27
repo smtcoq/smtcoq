@@ -697,7 +697,7 @@ Module Atom.
 
   Lemma reflect_uop_eqb : forall o1 o2, reflect (o1 = o2) (uop_eqb o1 o2).
   Proof.
-    intros [ | | | | | s1 n1 | s1 ] [ | | | | |s2 n2 | s2 ];simpl; try constructor;trivial; try discriminate.
+    intros [ | | | | | s1 n1 | s1 | s1 ] [ | | | | |s2 n2 | s2 | s2];simpl; try constructor;trivial; try discriminate.
     - apply iff_reflect. case_eq (Nat_eqb n1 n2).
       + case_eq ((s1 =? s2)%N).
         * rewrite N.eqb_eq, beq_nat_true_iff.
@@ -709,6 +709,9 @@ Module Atom.
         * rewrite beq_nat_false_iff in H. intros. contradict H0.
           intro H'. apply H. inversion H'. reflexivity.
         *  intros. contradict H0. easy.
+    - apply iff_reflect. rewrite N.eqb_eq. split; intro H.
+      + now inversion H.
+      + now rewrite H.
     - apply iff_reflect. rewrite N.eqb_eq. split; intro H.
       + now inversion H.
       + now rewrite H.

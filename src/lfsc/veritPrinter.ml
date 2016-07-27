@@ -97,7 +97,7 @@ let get_rule = function
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"
   | Bbnot -> "bbnot"
-  | Bbnot -> "bbneg"
+  | Bbneg -> "bbneg"
 
 
 let print_sharps () =

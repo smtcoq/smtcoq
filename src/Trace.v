@@ -429,7 +429,7 @@ Module Euf_Checker.
     - apply valid_check_bbConst; auto.
     - apply valid_check_bbOp; auto.
     - apply valid_check_bbNot; auto.
-    - apply valid_check_bbNeeg; auto.
+    - apply valid_check_bbNeg; auto.
     - apply valid_check_bbAdd; auto.
     - apply valid_check_bbMult; auto.
     - apply valid_check_bbEq; auto.

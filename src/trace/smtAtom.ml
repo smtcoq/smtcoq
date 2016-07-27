@@ -548,7 +548,7 @@ module Atom =
         Format.fprintf fmt "(bitof %d %a)" i to_smt h
       | Auop (UO_BVnot s, h) ->
         Format.fprintf fmt "(bvnot %a)" to_smt h
-      | Auop (UO_BVnot s, h) ->
+      | Auop (UO_BVneg s, h) ->
         Format.fprintf fmt "(bvneg %a)" to_smt h
       | Auop _ as a -> to_smt_int fmt (compute_int a)
       | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
