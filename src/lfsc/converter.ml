@@ -795,6 +795,13 @@ module Make (T : Translator_sig.S) = struct
          Some (mk_clause_cl Bbnot [res] [idx])
        | _ -> assert false
       )
+    | Some ("bv_bbl_bvneg", [n; x; _; rb; xbb]) ->
+      let res = bblast_term n (bvneg n x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbneg [res] [idx])
+       | _ -> assert false
+      )
     | Some ("bv_bbl_bvadd", [n; x; y; _; _; rb; xbb; ybb]) ->
       let res = bblast_term n (bvadd n x y) rb in
       (match bbt xbb, bbt ybb with

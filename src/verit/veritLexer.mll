@@ -104,6 +104,7 @@
         "bbeq", BBEQ;
         "bbop", BBOP;
         "bbnot", BBNOT;
+        "bbneg", BBNEG;
         "bbadd", BBADD;
         "bbmul", BBMUL;
         "bvand", BVAND;
@@ -119,6 +120,7 @@
         "bbT", BBT;
         "bitof", BITOF;
         "bvnot", BVNOT;
+        "bvneg", BVNEG;
       ]
 }
 

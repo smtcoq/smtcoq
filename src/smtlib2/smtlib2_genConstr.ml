@@ -208,6 +208,13 @@ let make_root ra rf t =
                | TBV s -> Atom (Atom.mk_bvnot ra s a')
                | _ -> assert false)
           | _ -> assert false)
+      | "bvneg", [a] ->
+        (match make_root_term a with
+          | Atom a' ->
+             (match Atom.type_of a' with
+               | TBV s -> Atom (Atom.mk_bvneg ra s a')
+               | _ -> assert false)
+          | _ -> assert false)
       | "bvand", [a;b] ->
         (match make_root_term a, make_root_term b with
           | Atom a', Atom b' ->

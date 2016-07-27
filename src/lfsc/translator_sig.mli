@@ -74,6 +74,7 @@ type rule =
   | Bbadd
   | Bbmul
   | Bbnot
+  | Bbneg
 
 
 (** Signature for translators *)

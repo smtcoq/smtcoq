@@ -91,6 +91,7 @@ let get_rule = function
   | Bbadd -> VeritSyntax.Bbadd
   | Bbmul -> VeritSyntax.Bbmul
   | Bbnot -> VeritSyntax.Bbnot
+  | Bbneg -> VeritSyntax.Bbneg
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -141,6 +142,7 @@ let string_of_rule = function
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"
   | Bbnot -> "bbnot"
+  | Bbneg -> "bbneg"
 
 
 
@@ -198,6 +200,11 @@ let rec term_smtcoq t = match value t with
          (let ha = term_smtcoq_atom a in
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvnot ra s ha)
+            | _ -> assert false)
+      | Some ("bvneg", [_; a]) ->
+         (let ha = term_smtcoq_atom a in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvneg ra s ha)
             | _ -> assert false)
       | Some ("bvand", [_; a; b]) ->
          (let ha = term_smtcoq_atom a in

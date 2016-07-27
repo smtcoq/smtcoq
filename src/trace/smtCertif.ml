@@ -133,10 +133,16 @@ type 'hform rule =
              bbT(a&b, [a0 /\ b0; ...; an /\ bn])
    *)
   | BBNot of 'hform clause * 'hform
-  (* Bit-blasting bitvector negation ...
+  (* Bit-blasting bitvector not
            bbT(a, [a0; ...; an])
        ------------------------------ bbNot
         bbT(not a, [~a0 ; ...; ~an])
+   *)
+  | BBNeg of 'hform clause * 'hform
+  (* Bit-blasting bitvector negation
+           bbT(a, [a0; ...; an])
+       ------------------------------ bbNot
+        bbT(-a, [...])
    *)
   | BBAdd of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting bitvector addition
@@ -188,7 +194,7 @@ let used_clauses r =
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
   | Weaken (c,_) | ImmFlatten (c,_)
   | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
-  | BBNot (c, _) -> [c]
+  | BBNot (c, _) | BBNeg (c, _) -> [c]
   | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
   | BBMul (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
   | Hole (cs, _) -> cs

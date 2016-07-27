@@ -68,6 +68,7 @@ type uop =
    | UO_Zopp
    | UO_BVbitOf of int * int
    | UO_BVnot of int
+   | UO_BVneg of int
 
 type bop = 
    | BO_Zplus
@@ -183,6 +184,7 @@ module Atom :
       val mk_distinct : reify_tbl -> btype -> hatom array -> hatom
       val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
       val mk_bvnot : reify_tbl -> int -> hatom -> hatom
+      val mk_bvneg : reify_tbl -> int -> hatom -> hatom
       val mk_bvconst : reify_tbl -> bool list -> hatom
 
     end

@@ -141,7 +141,7 @@ Section Checker.
     end.
 
   
-  (** Checker for bitblasting of bitvector negation *)
+  (** Checker for bitblasting of bitvector not *)
   Definition check_bbNot pos lres :=
     match S.get s pos with
     | l::nil =>
@@ -443,6 +443,45 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
+  (** * Bit-blasting bitvector negation ...
+
+           bbT(a, [a0; ...; an])
+        ------------------------------ bbNeg
+               bbT(-a, [...])
+   *)
+
+
+  (* Helper function for bv_neg *)
+  Fixpoint check_neg (bs br : list _lit) :=
+    let z := map (fun _ => Lit._false) bs in
+    check_add bs z br (Clit Lit._true).
+
+  
+  (** Checker for bitblasting of bitvector negation *)
+  Definition check_bbNeg pos lres :=
+    match S.get s pos with
+    | l::nil =>
+      if (Lit.is_pos l) && (Lit.is_pos lres) then
+        match get_form (Lit.blit l), get_form (Lit.blit lres) with
+        | FbbT a bs, FbbT r br =>
+          match get_atom r with
+          | Auop (UO_BVneg n) a' =>
+            if (a == a') && check_neg bs br &&
+              (N.of_nat (length bs) =? BVList._size)%N
+            then lres::nil
+            else C._true
+                   
+          | _ => C._true
+          end
+        | _, _ => C._true
+        end
+      else C._true
+    | _ => C._true
+    end.
+
+
+  (***)
+  
   Fixpoint and_with_bit (a: list _lit) (bt: _lit) : list carry :=
     match a with
       | nil => nil
@@ -4256,7 +4295,12 @@ Proof.
         rewrite map_length, H7r, N.eqb_compare, N.compare_refl.
         now rewrite map_length, H7r.
 Qed.
-       
+
+
+Lemma valid_check_bbNeg pos lres : C.valid rho (check_bbNeg pos lres).
+Proof.
+(* TODO *)
+Admitted
 
 Lemma prop_forallb2: forall {A B} {f: A -> B -> bool} l1 l2, forallb2 f l1 l2 = true -> length l1 = length l2.
 Proof. intros A B f l1.
