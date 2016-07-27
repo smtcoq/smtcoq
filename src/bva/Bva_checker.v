@@ -15,7 +15,7 @@
 (** A small checker for bit-vectors bit-blasting *)
 
 
-Require Import Int63 PArray.
+Require Import Int63 Int63Properties PArray.
 
 Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
 Require Import Misc State SMT_terms BVList Psatz.
@@ -840,17 +840,15 @@ Proof. intros.
        omega. omega. omega.
 Qed.
 
-(*
-Lemma prop_checkbb_len: forall (a: int) (bs: list _lit), 
-                               (check_bb a bs 0 (length bs) = true) ->
-                               BITVECTOR_LIST.size (interp_form_hatom_bv a ) = N.of_nat (length bs).
-Proof. 
-
-  Lemma of_bits_bitOf: forall i l, (@BITVECTOR_LIST.bitOf (N.of_nat (length l)) i 
-                                                          (BITVECTOR_LIST.of_bits l))
-                                                           = nth i l (Lit.interp rho false).
-*)
-
+Lemma eq_rec: forall a b, BITVECTOR_LIST_FIXED.bv a = BITVECTOR_LIST_FIXED.bv b 
+                         ->
+                          a = b.
+Proof. intros. destruct a, b. 
+       unfold BITVECTOR_LIST_FIXED.bv in H.
+       revert wf0.
+       rewrite H. intros.
+       now rewrite (proof_irrelevance wf0 wf1).
+Qed.
 
 Lemma nth_eq0: forall i a b xs ys,
 nth (S i) (a :: xs) false = nth (S i) (b :: ys) false -> nth i xs false = nth i ys false.
@@ -1107,17 +1105,120 @@ Proof.
   exact Hcheck1.
 Qed.
 
-
-(* TODO *)
-
 Lemma prop_check_not:
   forall bs br, length bs = length br ->
            check_not bs br = true ->
            map (Lit.interp rho) br = map (fun l => negb (Lit.interp rho l)) bs.
-Admitted.
+Proof.
+  intro bs; induction bs; intros br Hlen Hcheck.
+  - simpl in Hlen. symmetry in Hlen. apply empty_list_length in Hlen. rewrite Hlen; now simpl.
+  - case br in *.
+    + simpl in Hcheck; now contradict Hcheck.
+    + simpl in Hlen. inversion Hlen as [Hlen'].
+      simpl in Hcheck. rewrite andb_true_iff in Hcheck; destruct Hcheck as (Hcheck1, Hcheck2).
+      apply Int63Properties.eqb_spec in Hcheck1; rewrite Hcheck1.
+      simpl. rewrite Lit.interp_neg. apply f_equal.
+      apply IHbs; auto.
+Qed.
+
+Lemma check_not_length:
+  forall bs br, check_not bs br = true -> length bs = length br.
+Proof.
+  intro bs; induction bs; intros br Hcheck.
+  - case br in *.
+    + auto.
+    + simpl in Hcheck; now contradict Hcheck.
+  - case br in *.
+    + simpl in Hcheck; now contradict Hcheck.
+    + simpl in *.
+      rewrite andb_true_iff in Hcheck.
+      destruct Hcheck as (_, Hcheck').
+      apply IHbs in Hcheck'; auto.
+Qed.
 
 Lemma valid_check_bbNot pos lres : C.valid rho (check_bbNot pos lres).
-Admitted.
+Proof.
+  unfold check_bbNot.
+  case_eq (S.get s pos); [ (intros; now apply C.interp_true) | ].
+  intros l ls Hpos.
+  case_eq ls; [ | (intros; now apply C.interp_true) ].
+  intro Hnil.
+  case_eq (Lit.is_pos l && Lit.is_pos lres); [ | (intros; now apply C.interp_true) ].
+  intro Hpos'.
+  case_eq (t_form .[ Lit.blit l]); try (intros; now apply C.interp_true).
+  intros a bs HBl.
+  case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
+  intros r br HBr.
+  case_eq (t_atom .[ r]); try (intros; now apply C.interp_true).
+  intros u a'.
+  case_eq u; try (intros; now apply C.interp_true).
+  intros n Huot Hr.
+  case_eq ((a == a')
+             && check_not bs br
+             && (N.of_nat (Datatypes.length bs) =? _size)%N);
+    try (intros; now apply C.interp_true).
+  intro Hc.
+  rewrite !andb_true_iff in Hc.
+  destruct Hc as ((Ha, Hcheck), Hlen).
+  rewrite N.eqb_eq in Hlen.
+  apply Int63Properties.eqb_spec in Ha.
+  generalize (Hs pos).
+  rewrite Hpos, Hnil.
+  unfold C.valid, C.interp; simpl; rewrite !orb_false_r.
+  unfold Lit.interp, Var.interp.
+  rewrite andb_true_iff in Hpos'.
+  destruct Hpos' as (Hposl, Hposlres).
+  rewrite Hposl, Hposlres.
+  rewrite !rho_interp. rewrite HBl, HBr. simpl.
+
+  intro Heqa.
+  apply BITVECTOR_LIST_FIXED.bv_eq_reflect in Heqa.
+  apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
+
+
+  revert Heqa.
+  unfold Atom.interp_form_hatom_bv at 1.
+  unfold Atom.interp_form_hatom_bv at 2.
+  unfold Atom.interp_hatom.
+  rewrite !Atom.t_interp_wf; trivial.
+  rewrite Hr. subst a'.
+  simpl.
+  intro.
+
+  unfold wt, is_true in wt_t_atom;rewrite forallbi_spec in wt_t_atom.
+  assert (Hwtr: r < PArray.length t_atom = true).
+  apply PArray.get_not_default_lt. rewrite def_t_atom. now rewrite Hr.
+  apply wt_t_atom in Hwtr.
+  unfold get_type' in Hwtr.
+  rewrite Hr in Hwtr.
+  case_eq (v_type Typ.type (Typ.interp t_i) (t_interp .[ r]));
+    try (intros; rewrite H in Hwtr; now contradict Hwtr).
+  intro Htyr. rewrite Htyr in Hwtr. 
+  simpl in Hwtr.
+  apply Typ.eqb_spec in Hwtr.
+
+  rewrite <- Atom.t_interp_wf in Heqa; trivial.
+  unfold interp_bv, apply_unop.
+  destruct (t_interp.[a]) as (tya,va). simpl in Hwtr.
+  revert va Heqa; rewrite Hwtr; intros.
+  rewrite Typ.cast_refl.
+  simpl.
+  unfold interp_bv in Heqa; rewrite Typ.cast_refl in Heqa.
+  rewrite Heqa.
+  unfold BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
+  unfold BITVECTOR_LIST_FIXED.bv_not, RAWBITVECTOR_LIST_FIXED.bv_not.
+  simpl.
+  apply eq_rec. simpl.
+  rewrite !map_length.
+  specialize (check_not_length Hcheck); intro Hsamelen.
+  pose proof Hsamelen as Hlenbr.
+  apply (f_equal N.of_nat) in Hlenbr.
+  rewrite Hlen in Hlenbr.
+  rewrite Hlen. rewrite <- Hlenbr. simpl.
+  unfold RAWBITVECTOR_LIST_FIXED.bits.
+  rewrite map_map.
+  symmetry. apply prop_check_not. auto. auto.
+Qed.  
 
 
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
@@ -2154,17 +2255,6 @@ Proof.
   apply check_symopp_bvxor in H0. easy. easy. easy.
 Qed.
 
-
-Lemma eq_rec: forall a b, BITVECTOR_LIST_FIXED.bv a = BITVECTOR_LIST_FIXED.bv b 
-                         (*/\  BITVECTOR_LIST_FIXED.n a = BITVECTOR_LIST_FIXED.n b *)
-                         ->
-                          a = b.
-Proof. intros. destruct a, b. 
-       unfold BITVECTOR_LIST_FIXED.bv in H.
-       revert wf0.
-       rewrite H. intros.
-       now rewrite (proof_irrelevance wf0 wf1).
-Qed.
 
 Lemma valid_check_bbOp pos1 pos2 lres: C.valid rho (check_bbOp pos1 pos2 lres).
 Proof.
@@ -4190,8 +4280,6 @@ Proof. intro a.
        - intros. simpl in *. now rewrite IHa.
 Qed. 
 
-Lemma map_cons {A B : Type} {f: A -> B} (x:A) (l:list A) : map f (x :: l) = (f x) :: (map f l).
-Proof. now simpl. Qed.
 
 Lemma prop_mult_step_k_h: forall a b c k, 
                           map interp_carry (mult_step_k_h a b c k) = 
