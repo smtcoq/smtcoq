@@ -250,6 +250,17 @@ let bvlshr n a b = mk_app bvlshr_s [n; a; b]
 let bvashr n a b = mk_app bvashr_s [n; a; b]
 let concat n a b = mk_app concat_s [n; a; b]
 
+let _ = 
+  define "bvop1"
+	(pi_d "n" mpz (fun n ->
+	(pi "x" (term (bitVec n))
+           (term (bitVec n)))))
+
+let bvnot_s = declare_get "bvnot" (mk_const "bvop1")
+let bvneg_s = declare_get "bvneg" (mk_const "bvop1")
+
+let bvnot n a = mk_app bvnot_s [n; a]
+let bvneg n a = mk_app bvneg_s [n; a]
 
 
 module MInt = Map.Make (struct

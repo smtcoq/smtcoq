@@ -150,6 +150,7 @@ type uop =
    | UO_Zneg
    | UO_Zopp
    | UO_BVbitOf of int * int
+   | UO_BVnot of int
 
 type bop = 
    | BO_Zplus
@@ -210,16 +211,19 @@ module Op =
       | UO_Zneg -> Lazy.force cUO_Zneg
       | UO_Zopp -> Lazy.force cUO_Zopp
       | UO_BVbitOf (s, i) -> mklApp cUO_BVbitOf [|mkN s; mkNat i|]
+      | UO_BVnot s -> mklApp cUO_BVnot [|mkN s|]
 
     let u_type_of = function 
       | UO_xO | UO_xI -> Tpositive
       | UO_Zpos | UO_Zneg | UO_Zopp -> TZ
       | UO_BVbitOf _ -> Tbool
+      | UO_BVnot s -> TBV s
 
     let u_type_arg = function 
       | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
       | UO_Zopp -> TZ
       | UO_BVbitOf (s,_) -> TBV s
+      | UO_BVnot s -> TBV s
 
     let interp_uop = function
       | UO_xO -> Lazy.force cxO
@@ -228,6 +232,7 @@ module Op =
       | UO_Zneg -> Lazy.force cZneg
       | UO_Zopp -> Lazy.force copp
       | UO_BVbitOf (s,i) -> mklApp cbitOf [|mkN s; mkNat i|]
+      | UO_BVnot s -> mklApp cbv_not [|mkN s|]
 
     let eq_tbl = Hashtbl.create 17 
 
@@ -362,6 +367,7 @@ module Op =
       | UO_Zneg, UO_Zneg
       | UO_Zopp, UO_Zopp -> true
       | UO_BVbitOf (s1,i1), UO_BVbitOf (s2,i2) -> s1 == s2 && i1 == i2
+      | UO_BVnot s1, UO_BVnot s2 -> s1 == s2
       | _ -> false
 
     let b_equal op1 op2 =
@@ -504,7 +510,7 @@ module Atom =
           | UO_xI -> 2*(compute_hint h) + 1
           | UO_Zpos -> compute_hint h
           | UO_Zneg -> - (compute_hint h)
-          | UO_Zopp | UO_BVbitOf _ -> assert false)
+          | UO_Zopp | UO_BVbitOf _ | UO_BVnot _ -> assert false)
       | _ -> assert false
 
     and compute_hint h = compute_int (atom h)
@@ -531,9 +537,10 @@ module Atom =
         Format.fprintf fmt "(- ";
         to_smt fmt h;
         Format.fprintf fmt ")"
-      | Auop (UO_BVbitOf (s, i),h) ->
-        (* Format.fprintf fmt "%a[%d]" to_smt h i *)
+      | Auop (UO_BVbitOf (s, i), h) ->
         Format.fprintf fmt "(bitof %d %a)" i to_smt h
+      | Auop (UO_BVnot s, h) ->
+        Format.fprintf fmt "(bvnot %a)" to_smt h
       | Auop _ as a -> to_smt_int fmt (compute_int a)
       | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
       | Anop (op,a) -> to_smt_nop fmt op a
@@ -634,6 +641,7 @@ module Atom =
       | CCZneg
       | CCZopp
       | CCBVbitOf
+      | CCBVnot
       | CCZplus
       | CCZminus
       | CCZmult
@@ -658,7 +666,7 @@ module Atom =
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
-          cbitOf, CCBVbitOf;
+          cbitOf, CCBVbitOf; cbv_not, CCBVnot; 
           cadd,CCZplus; csub,CCZminus; cmul,CCZmult; cltb,CCZlt;
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
           cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
@@ -733,6 +741,7 @@ module Atom =
           | CCZneg -> mk_uop UO_Zneg args
           | CCZopp -> mk_uop UO_Zopp args
           | CCBVbitOf -> mk_bvbitof args
+          | CCBVnot -> mk_bvnot args
           | CCZplus -> mk_bop BO_Zplus args
           | CCZminus -> mk_bop BO_Zminus args
           | CCZmult -> mk_bop BO_Zmult args
@@ -763,7 +772,15 @@ module Atom =
         | _ -> assert false
 
       and mk_bvbitof = function
-        | [s;n;a] -> let h = mk_hatom a in get reify (Auop (UO_BVbitOf (mk_N s, mk_nat n),h))
+        | [s;n;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVbitOf (mk_N s, mk_nat n), h))
+        | _ -> assert false
+
+      and mk_bvnot = function
+        | [s;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVnot (mk_N s), h))
         | _ -> assert false
 
       and mk_bop op = function
@@ -945,6 +962,7 @@ module Atom =
     let mk_opp = mk_unop UO_Zopp
     let mk_distinct reify ty = mk_nop (NO_distinct ty) reify
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
+    let mk_bvnot reify s = mk_unop (UO_BVnot s) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
 
     

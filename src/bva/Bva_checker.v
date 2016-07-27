@@ -41,7 +41,8 @@ Section Checker.
   Local Notation get_form := (PArray.get t_form) (only parsing).
   Local Notation get_atom := (PArray.get t_atom) (only parsing).
 
-  (* Bit-blasting a constant bitvector:
+  
+  (** * Bit-blasting a constant bitvector:
 
        --------------------------- bbConst
         bbT(#b0010, [0; 1; 0; 0])
@@ -60,7 +61,7 @@ Section Checker.
     | _, _ => false
     end.
 
-  (** * Checker for bitblasting of bitvector constants *)
+  (** Checker for bitblasting of bitvector constants *)
   Definition check_bbConst lres :=
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
@@ -77,7 +78,7 @@ Section Checker.
     else C._true.
 
 
-  (* Bit-blasting a variable:
+  (** * Bit-blasting a variable:
 
               x ∈ BV n
        ----------------------- bbVar
@@ -107,7 +108,7 @@ Section Checker.
       else false
     end.               
 
-  (** * Checker for bitblasting of bitvector variables *)
+  (** Checker for bitblasting of bitvector variables *)
   Definition check_bbVar lres :=
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
@@ -122,130 +123,54 @@ Section Checker.
   Variable s : S.t.
 
 
-  (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
+  
+  (** * Bit-blasting bitvector not ...
+
+           bbT(a, [a0; ...; an])
+        ------------------------------ bbNot
+         bbT(not a, [~a0; ...; ~an])
+   *)
+
+
+  (* Helper function for bv_not *)
+  Fixpoint check_not (bs br : list _lit)  :=
+    match bs, br with
+    | nil, nil => true
+    | b::bs, r::br => (r == Lit.neg b) && check_not bs br
+    | _, _ => false
+    end.
+
+  
+  (** Checker for bitblasting of bitvector negation *)
+  Definition check_bbNot pos lres :=
+    match S.get s pos with
+    | l::nil =>
+      if (Lit.is_pos l) && (Lit.is_pos lres) then
+        match get_form (Lit.blit l), get_form (Lit.blit lres) with
+        | FbbT a bs, FbbT r br =>
+          match get_atom r with
+          | Auop (UO_BVnot n) a' =>
+            if (a == a') && check_not bs br &&
+              (N.of_nat (length bs) =? BVList._size)%N
+            then lres::nil
+            else C._true
+                   
+          | _ => C._true
+          end
+        | _, _ => C._true
+        end
+      else C._true
+    | _ => C._true
+    end.
+
+  
+  (** * Bit-blasting bitwise operations: bbAnd, bbOr, ...
+
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
        -------------------------------------------------- bbAnd
              bbT(a&b, [a0 /\ b0; ...; an /\ bn])
    *)
 
-  Definition get_and (f: form) :=
-    match f with
-    | Fand args => if PArray.length args == 2 then Some (args.[0], args.[1]) else None
-    | _ => None
-    end.
-
-  Definition get_or (f: form) :=
-    match f with
-    | For args => if PArray.length args == 2 then Some (args.[0], args.[1]) else None
-    | _ => None
-    end.
-
-  Definition get_xor (f: form) :=
-    match f with
-    | Fxor arg0 arg1 => Some (arg0, arg1)
-    | _ => None
-    end.
-
-
-(*
-  Definition get_not (f: form) :=
-    match f with
-    | Fnot arg => Some arg
-    | _ => None
-    end.
-*)
-
-  (* Check the validity of a *symmetric* operator *)
-  Definition check_symop (bs1 bs2 bsres : list _lit) (get_op: form -> option (_lit * _lit)) :=
-    match bs1, bs2, bsres with
-    | nil, nil, nil => true
-    | b1::bs1, b2::bs2, bres::bsres =>
-      if Lit.is_pos bres then
-        match get_op (get_form (Lit.blit bres)) with
-        | Some (a1, a2) => ((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1))
-        | _ => false
-        end
-      else false
-    | _, _, _ => false
-    end.
-
-Lemma get_and_none: forall (n: int), (forall a, t_form .[ Lit.blit n] <> Fand a) ->
-(get_and (get_form (Lit.blit n))) = None.
-Proof. intros n H.
-       unfold get_and.
-       case_eq (t_form .[ Lit.blit n]); try reflexivity.
-       intros. contradict H0. apply H.
-Qed.
-
-Lemma get_and_some: forall (n: int), 
-(forall a, PArray.length a == 2 -> t_form .[ Lit.blit n] = Fand a ->
- (get_and (get_form (Lit.blit n))) = Some (a .[ 0], a .[ 1])).
-Proof. intros. rewrite H0. unfold get_and. now rewrite H. Qed.
-
-Lemma check_symop_op_some: 
-forall a0 b0 c0 la lb lc get_op,
-let a := a0 :: la in
-let b := b0 :: lb in
-let c := c0 :: lc in
-Lit.is_pos c0 -> get_op (get_form (Lit.blit c0)) = Some (a0, b0) -> 
-check_symop a b c get_op = true.
-Proof. intros. simpl.
-       rewrite H.
-       rewrite H0.
-       cut (a0 == a0 = true).
-       intros H1; rewrite H1.
-       cut (b0 == b0 = true).
-       intros H2; rewrite H2.
-       simpl. reflexivity.
-       now rewrite Lit.eqb_spec.
-       now rewrite Lit.eqb_spec. 
-Qed.
-
-Lemma empty_false1: forall a b c get_op, a = [] -> c <> [] -> check_symop a b c get_op = false.
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - intros [ | ys IHys].
-         + intros [ | zs IHzs].
-           * intros. now contradict H0.
-           * intros. simpl. reflexivity.
-         + intros. simpl. reflexivity.
-       - intros. contradict H. easy.
-Qed.
-
-Lemma empty_false2: forall a b c, b = [] -> c <> [] -> check_symop a b c get_and = false.
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - intros [ | ys IHys].
-         + intros [ | zs IHzs].
-           * intros. now contradict H0.
-           * intros. simpl. reflexivity.
-         + intros. simpl. reflexivity.
-       - intros. rewrite H. simpl. reflexivity.
-Qed.
-
-Lemma empty_false3: forall a b c, c = [] -> a <> [] -> check_symop a b c get_and = false.
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - intros [ | ys IHys].
-         + intros [ | zs IHzs].
-           * intros. now contradict H0.
-           * intros. simpl. reflexivity.
-         + intros. simpl. reflexivity.
-       - intros. rewrite H. simpl.
-         case b; reflexivity.
-Qed.
-
-Lemma empty_false4: forall a b c, c = [] -> b <> [] -> check_symop a b c get_and = false.
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - intros [ | ys IHys].
-         + intros [ | zs IHzs].
-           * intros. now contradict H0.
-           * intros. simpl. reflexivity.
-         + intros. simpl. reflexivity.
-       - intros. rewrite H. simpl.
-         case b; reflexivity.
-Qed.
 
 Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     match bs1, bs2, bsres with
@@ -291,7 +216,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
          induction a; split; intros; auto; contradict H; easy.
   Qed.
 
-  (** * Checker for bitblasting of bitwise operators on bitvectors *)
+  (** Checker for bitblasting of bitwise operators on bitvectors *)
   Definition check_bbOp pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -330,18 +255,12 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
-   (* Bit-blasting equality
+   (** * Bit-blasting bitvector equality
+
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
        -------------------------------------------------- bbEq
          (a = b) <-> [(a0 <-> b0) /\ ... /\ (an <-> bn)]
    *)
-
-  Definition get_iff f :=
-    match f with
-    | Fiff l1 l2 => Some (l1, l2)
-    | _ => None
-    end.
-
   
 
   Fixpoint check_eq (bs1 bs2 bsres: list _lit) :=
@@ -388,7 +307,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
   
   
-  (** * Checker for bitblasting of equality between bitvector terms  *)
+  (** Checker for bitblasting of equality between bitvector terms  *)
   Definition check_bbEq pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
     | l1::nil, l2::nil =>
@@ -416,6 +335,9 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     | _, _ => C._true
     end.
 
+  
+  (** * Bitvector Arithmetic *)
+  
 
   (** Representaion for symbolic carry computations *)
   Inductive carry : Type :=
@@ -527,14 +449,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       | ai :: a' => (Cand (Clit bt) (Clit ai)) :: and_with_bit a' bt 
     end.
 
-  
-
- Fixpoint make_list_false (t: nat) : list carry :=
-  match t with
-    | O    => []
-    | S t' => Clit (Lit._false)::(make_list_false t')
-  end.
-  
+    
 
   Fixpoint mult_step_k_h (a b: list carry) (c: carry) (k: Z) : list carry :=
     match a, b with
@@ -548,24 +463,6 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           ai :: mult_step_k_h a' b c (k - 1)
       | ai :: a', nil =>  ai :: mult_step_k_h a' b c k
     end.
-
-(*
-Parameter cr: carry.
-
-Definition lc1 := [Clit 0; Clit 50; Clit 50; Clit 50; Clit 50; Clit 50].
-Definition lc2 := [Clit 0; Clit 50; Clit 50; Clit 50; Clit 50; (Cand (Clit 10) (Clit 150))].
-Definition lc3 := [Clit 0; Clit 50; Clit 50; Clit 50; Clit 50; Clit 50; Clit 100].
-
-Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
-
-*)
-
-  Fixpoint top_k_bits (a: list _lit) (k: int) : list _lit :=
-    if k == 0 then nil
-    else match a with
-           | nil => nil
-           | ai :: a' => ai :: top_k_bits a' (k - 1)
-         end.
 
 
   Fixpoint mult_step (a b: list _lit) (res: list carry) (k k': nat) : list carry :=
@@ -616,7 +513,8 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
     let bvm12 := bblast_bvmult bs1 bs2 (length bs1) in
     forallb2 eq_carry_lit bvm12 bsres
    else false.
-    
+
+  
   (** * Checker for bitblasting of bitvector multiplication *)
   Definition check_bbMult pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -640,6 +538,7 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
         else C._true
       | _, _ => C._true
     end.
+
 
   
   Section Proof.
@@ -711,7 +610,7 @@ Eval compute in mult_step_k_h lc1 lc2 lc3 (Clit 50) 8.
       Definition wf := PArray.forallbi lt_form t_form.
 
       Hypothesis wf_t_i : wf.
-      Variable interp_bvatom : atom -> BITVECTOR_LIST.bitvector.
+      Variable interp_bvatom : atom -> BITVECTOR_LIST_FIXED.bitvector.
       Notation atom := int (only parsing).
 (*
 Lemma prop_checkbb: forall (a: int) (bs: list _lit) (i n: nat),
@@ -905,6 +804,7 @@ Proof. intros a bs.
         right. exact H5.
         omega.
         intro H3. rewrite H3 in H0. now contradict H0.
+        intros n0 Hn. rewrite Hn in H0. now contradict H0.
         intros b0 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
         intros n0 l Heq. rewrite Heq in H0. now contradict H0.
         intros i2 l Heq. rewrite Heq in H0. now contradict H0.
@@ -1206,6 +1106,18 @@ Proof.
   rewrite N.eqb_compare, N.compare_refl. 
   exact Hcheck1.
 Qed.
+
+
+(* TODO *)
+
+Lemma prop_check_not:
+  forall bs br, length bs = length br ->
+           check_not bs br = true ->
+           map (Lit.interp rho) br = map (fun l => negb (Lit.interp rho l)) bs.
+Admitted.
+
+Lemma valid_check_bbNot pos lres : C.valid rho (check_bbNot pos lres).
+Admitted.
 
 
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
@@ -4299,15 +4211,6 @@ Proof. intro a.
          apply IHa.
          rewrite <- map_cons. simpl. apply f_equal.
          apply IHa.
-Qed.
-
-Lemma prop_top_k_bits: forall a k,
-      (map (Lit.interp rho) (top_k_bits a k)) = RAWBITVECTOR_LIST.top_k_bools (map (Lit.interp rho) a) k.
-Proof. intro a.
-       induction a as [ | xa xsa IHa ].
-       - intros. simpl. case ( k == 0). easy. easy.
-       - intros. simpl. case ( k == 0). easy.
-         simpl. apply f_equal. apply IHa.
 Qed.
 
 Lemma prop_interp_firstn: forall xk' a, map (Lit.interp rho) (List.firstn xk' a) = (List.firstn xk' (map (Lit.interp rho) a)).

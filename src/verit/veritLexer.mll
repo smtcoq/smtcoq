@@ -103,6 +103,7 @@
         "bbconst", BBCONST;
         "bbeq", BBEQ;
         "bbop", BBOP;
+        "bbnot", BBNOT;
         "bbadd", BBADD;
         "bbmul", BBMUL;
         "bvand", BVAND;
@@ -117,6 +118,7 @@
         "distinct", DIST;
         "bbT", BBT;
         "bitof", BITOF;
+        "bvnot", BVNOT;
       ]
 }
 

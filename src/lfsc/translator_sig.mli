@@ -73,6 +73,7 @@ type rule =
   | Bbop
   | Bbadd
   | Bbmul
+  | Bbnot
 
 
 (** Signature for translators *)

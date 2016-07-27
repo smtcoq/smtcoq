@@ -328,8 +328,8 @@ Module Type BITVECTOR_FIXED.
   (* Parameter bv_subst  : forall n, bitvector n -> bitvector n -> bitvector n. *)
   (* Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n. *)
 
-  (*binary operations*)
-  (* Parameter bv_not    : forall n, bitvector n -> bitvector n. *)
+  (*unary operations*)
+  Parameter bv_not    : bitvector -> bitvector.
 
   (* Specification *)
   Axiom bits_size     : forall bv, _size = (size bv).
@@ -401,13 +401,7 @@ Axiom bv_xor_size    : forall a b, size (bv_xor a b) = _size.
 Axiom bv_add_size    : forall a b, size (bv_add a b) = _size.
 Axiom bv_subst_size  : forall a b, size (bv_subst a b) = _size.
 Axiom bv_mult_size   : forall a b, size (bv_mult a b) = _size.
-
-(* Axiom bv_or_size     : forall a b, size a = size b -> size (bv_or a b) = size a. *)
-(* Axiom bv_xor_size    : forall a b, size a = n -> size b = n -> size (bv_xor a b) = n. *)
-(* Axiom bv_add_size    : forall a b, size a = n -> size b = n -> size (bv_add a b) = n. *)
-(* Axiom bv_subst_size  : forall a b, size a = n -> size b = n -> size (bv_subst a b) = n. *)
-(* Axiom bv_mult_size   : forall a b, size a = n -> size b = n -> size (bv_mult a b) = n. *)
-(* Axiom bv_not_size    : forall n a, size a = n -> size (bv_not a) = n. *)
+Axiom bv_not_size   : forall a, size a = _size -> size (bv_not a) = _size.
 
 (* Specification *)
  Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
@@ -476,23 +470,8 @@ Module RAW2BITVECTOR_FIXED (M:RAWBITVECTOR_FIXED) <: BITVECTOR_FIXED.
   Definition bv_mult (bv1 bv2:bitvector) : bitvector :=
     @MkBitvector (M.bv_mult bv1 bv2) (M.bv_mult_size bv1 bv2).
 
-  (*  Definition bv_or (bv1 bv2:bitvector) (p: M.size bv1 = M.size bv2) : bitvector :=
-    @MkBitvector (M.bv_or bv1 bv2) (M.size bv1) (M.bv_or_size p). *)
-
-  (* Definition bv_add n (bv1 bv2:bitvector n) : bitvector n := *)
-  (*   @MkBitvector n (M.bv_add bv1 bv2) (M.bv_add_size (wf bv1) (wf bv2)). *)
-
-  (* Definition bv_subst n (bv1 bv2:bitvector n) : bitvector n := *)
-  (*   @MkBitvector n (M.bv_subst bv1 bv2) (M.bv_subst_size (wf bv1) (wf bv2)). *)
-
-  (* Definition bv_mult n (bv1 bv2:bitvector n) : bitvector n := *)
-  (*   @MkBitvector n (M.bv_mult bv1 bv2) (M.bv_mult_size (wf bv1) (wf bv2)). *)
-
-  (* Definition bv_xor n (bv1 bv2:bitvector n) : bitvector n := *)
-  (*   @MkBitvector n (M.bv_xor bv1 bv2) (M.bv_xor_size (wf bv1) (wf bv2)). *)
-
-  (* Definition bv_not n (bv1: bitvector n) : bitvector n := *)
-  (*   @MkBitvector n (M.bv_not bv1) (M.bv_not_size (wf bv1)). *)
+  Definition bv_not (bv1: bitvector) : bitvector :=
+    @MkBitvector (M.bv_not bv1) (M.bv_not_size (wf bv1)).
 
   (* Definition bv_concat n m (bv1:bitvector n) (bv2: bitvector m) : bitvector (n + m) := *)
   (*   @MkBitvector (n + m) (M.bv_concat bv1 bv2) (M.bv_concat_size (wf bv1) (wf bv2)). *)
@@ -1507,11 +1486,12 @@ Proof. intro a.
          + simpl. rewrite negb_orb. apply f_equal. apply IHxs.
 Qed.
 
-(*
 (*bitvector NOT properties*)
 
 Lemma bv_not_size: forall a, (size a) = _size -> size (bv_not a) = _size.
-Proof. intros a H. unfold bv_not. now unfold size, bits in *. Qed.
+Proof. intros a H. unfold bv_not. unfold size, bits in *. rewrite map_length; auto. Qed.
+
+(*
 
 Lemma bv_not_involutative: forall a, bv_not (bv_not a) = a.
 Proof. intro a. unfold bv_not.
@@ -2760,7 +2740,6 @@ Qed.
 End RAWBITVECTOR_LIST_FIXED.
 
 Module BITVECTOR_LIST_FIXED <: BITVECTOR_FIXED := RAW2BITVECTOR_FIXED(RAWBITVECTOR_LIST_FIXED).
-
 
 
 (************************************************************************************************************)

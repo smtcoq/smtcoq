@@ -96,6 +96,7 @@ let get_rule = function
   | Bbop -> "bbop"
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"
+  | Bbnot -> "bbnot"
 
 
 let print_sharps () =
@@ -192,6 +193,10 @@ and print_term fmt t =
       | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul") as op, [_; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
+
+      | Some ("bvnot" as op, [_; a]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%s %a)" nb op print_term a
 
       | Some ("bitof", [a; {value = Int n}]) ->
         let nb = new_sharp t in

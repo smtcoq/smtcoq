@@ -112,6 +112,7 @@ let cbitvector = gen_constant bv_modules "bitvector"
 let cof_bits = gen_constant bv_modules "of_bits"
 let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
+let cbv_not = gen_constant bv_modules "bv_not"
 let cbv_and = gen_constant bv_modules "bv_and"
 let cbv_or = gen_constant bv_modules "bv_or"
 let cbv_xor = gen_constant bv_modules "bv_xor"
@@ -159,6 +160,7 @@ let cUO_Zpos = gen_constant smt_modules "UO_Zpos"
 let cUO_Zneg = gen_constant smt_modules "UO_Zneg"
 let cUO_Zopp = gen_constant smt_modules "UO_Zopp"
 let cUO_BVbitOf = gen_constant smt_modules "UO_BVbitOf"
+let cUO_BVnot = gen_constant smt_modules "UO_BVnot"
 
 let cBO_Zplus = gen_constant smt_modules "BO_Zplus"
 let cBO_Zminus = gen_constant smt_modules "BO_Zminus"
@@ -213,7 +215,7 @@ let make_certif_ops modules args =
   gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
   gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
   gen_constant "BBVar", gen_constant "BBConst",
-  gen_constant "BBOp", gen_constant "BBEq",
+  gen_constant "BBOp", gen_constant "BBNot", gen_constant "BBEq",
   gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "Hole")
   

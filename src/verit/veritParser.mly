@@ -41,8 +41,8 @@
 %token EOL SAT
 %token COLON
 %token LPAR RPAR LBRACKET RBRACKET
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEQ BBOP BBADD BBMUL
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVNOT
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEQ BBOP BBADD BBMUL BBNOT
 %token <int> INT SHARPINT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR BITV
@@ -144,6 +144,7 @@ typ:
   | BBOP                                                   { Bbop  }
   | BBADD                                                  { Bbadd }
   | BBMUL                                                  { Bbmul }
+  | BBNOT                                                  { Bbnot }
 ;
 
 clause:
@@ -205,6 +206,13 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
     { match $3 with
       | Atom h -> (match Atom.type_of h with
                    | TBV s -> Atom (Atom.mk_bitof ra s $2 h)
+                   | _ -> assert false)
+      | _ -> assert false }
+    
+  | BVNOT name_term
+    { match $2 with
+      | Atom h -> (match Atom.type_of h with
+                   | TBV s -> Atom (Atom.mk_bvnot ra s h)
                    | _ -> assert false)
       | _ -> assert false }
     

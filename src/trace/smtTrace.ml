@@ -280,7 +280,7 @@ let to_coq to_lit interp (cstep,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,  
     cEqTr, cEqCgr, cEqCgrP, 
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
-    cBBVar, cBBConst, cBBOp, cBBEq, cBBAdd, cBBMul,
+    cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBAdd, cBBMul,
     cHole) confl =
 
   let cuts = ref [] in
@@ -349,6 +349,8 @@ let to_coq to_lit interp (cstep,
         | BBConst res -> mklApp cBBConst [|out_c c; out_f res|]
         | BBOp (c1,c2,res) ->
           mklApp cBBOp [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBNot (c1,res) ->
+          mklApp cBBNot [|out_c c; out_c c1; out_f res|]
         | BBAdd (c1,c2,res) ->
           mklApp cBBAdd [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBMul (c1,c2,res) ->
