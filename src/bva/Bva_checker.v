@@ -452,7 +452,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
 
   (* Helper function for bv_neg *)
-  Fixpoint check_neg (bs br : list _lit) :=
+  Definition check_neg (bs br : list _lit) :=
     let z := map (fun _ => Lit._false) bs in
     let nbs := map (fun l => Lit.neg l) bs in
     check_add nbs z br (Clit Lit._true).
@@ -4313,17 +4313,6 @@ Admitted.
 Lemma check_neg_length: forall bs bsres,
   check_neg bs bsres = true -> (length bs = length bsres)%nat.
 Proof.
-Admitted.
-
-
-Lemma prop_check_neg: forall bs bsres, 
-  (N.of_nat(length bs) = BVList._size)%N -> 
-  (N.of_nat(length bsres) = BVList._size)%N ->  
-  check_neg bs bsres = true ->
-  BITVECTOR_LIST_FIXED.bv_neg (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs))
-  = BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bsres).
-Proof. intros.
-  (* TODO *)
 Admitted.
 
 Lemma valid_check_bbNeg pos lres : C.valid rho (check_bbNeg pos lres).
