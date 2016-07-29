@@ -7,7 +7,7 @@ Section Array.
     eq_refl : forall x : T, x = x;
     eq_sym : forall x y : T, x = y -> y = x;
     eq_trans : forall x y z : T, x = y -> y = z -> x = z;
-    eq_dec : forall x y : T, { x = y } + { x <> y };
+    eq_dec : forall x y : T, { x = y } + { x <> y }
   }.
   
   Hint Immediate eq_sym.
@@ -601,10 +601,10 @@ Section Array.
   Definition _In x m : Prop := In x m.(this).
   Definition _Empty m : Prop := Empty m.(this).
 
-  Definition _Equal m m' := forall y, find y m = find y m'.
-  Definition _Equiv (eq_elt:elt->elt->Prop) m m' :=
-    (forall k, In k m <-> In k m') /\
-    (forall k e e', MapsTo k e m -> MapsTo k e' m' -> eq_elt e e').
+  Definition _Equal m m' := forall y, _find y m = _find y m'.
+  Definition _Equiv m m' :=
+    (forall k, _In k m <-> _In k m') /\
+    (forall k e e', _MapsTo k e m -> _MapsTo k e' m' -> e = e').
   Definition _Equivb m m' : Prop := @Equivb m.(this) m'.(this).
 
   Definition _eq_key : (key*elt) -> (key*elt) -> Prop := eqk.
@@ -668,8 +668,7 @@ Section Array.
   Lemma _equal_2 : forall m m', _equal m m' = true -> _Equivb m m'.
   Proof. intros m m'; exact (@equal_2 m.(this) m.(NoDup) m'.(this) m'.(NoDup)). Qed.
 
-
-
+  
   
   Lemma eq_option_alt : forall (elt:Type)(o o':option elt),
       o=o' <-> (forall e, o=Some e <-> o'=Some e).
@@ -708,6 +707,69 @@ Qed.
   Hint Resolve add_neq_o.
 
 
+
+
+  Lemma MapsTo_fun : forall m x (e e':elt),
+      _MapsTo x e m -> _MapsTo x e' m -> e=e'.
+  Proof.
+    intros.
+    generalize (_find_1 H) (_find_1 H0); clear H H0.
+    intros; rewrite H in H0; injection H0; auto.
+  Qed.
+
+
+  (** Another characterisation of [Equal] *)
+
+  Lemma Equal_mapsto_iff : forall m1 m2 : _farray,
+      _Equal m1 m2 <-> (forall k e, _MapsTo k e m1 <-> _MapsTo k e m2).
+  Proof.
+    intros m1 m2. split; [intros Heq k e|intros Hiff].
+    rewrite 2 find_mapsto_iff, Heq. split; auto.
+    intro k. rewrite eq_option_alt. intro e.
+    rewrite <- 2 find_mapsto_iff; auto.
+  Qed.
+
+  (** * Relations between [Equal], [Equiv] and [Equivb]. *)
+
+  (** First, [Equal] is [Equiv] with Leibniz on elements. *)
+
+  Lemma Equal_Equiv : forall (m m' : _farray),
+      _Equal m m' <-> _Equiv m m'.
+  Proof.
+    intros. rewrite Equal_mapsto_iff. split; intros.
+    split.
+    split; intros (e,Hin); exists e; unfold _MapsTo in H; [rewrite <- H|rewrite H]; auto.
+    intros; apply MapsTo_fun with m k; auto; rewrite H; auto.
+    split; intros H'.
+    destruct H.
+    assert (Hin : _In k m') by (rewrite <- H; exists e; auto).
+    destruct Hin as (e',He').
+    rewrite (H0 k e e'); auto.
+    destruct H.
+    assert (Hin : _In k m) by (rewrite H; exists e; auto).
+    destruct Hin as (e',He').
+    rewrite <- (H0 k e' e); auto.
+  Qed.
+
+  Lemma Equiv_Equivb : forall m m', _Equiv m m' <-> _Equivb m m'.
+  Proof.
+    unfold _Equivb, _Equiv, Equivb; intuition.
+    rewrite eqb_elt_eq; apply H1 with k; unfold _MapsTo; auto.
+    rewrite <- eqb_elt_eq; apply H1 with k; unfold _MapsTo; auto.
+  Qed.
+
+
+  (** Composition of the two last results: relation between [Equal]
+    and [Equivb]. *)
+
+  Lemma Equal_Equivb : forall (m m':_farray), _Equal m m' <-> _Equivb m m'.
+  Proof.
+    intros; rewrite Equal_Equiv.
+    apply Equiv_Equivb; auto.
+  Qed.
+
+  
+
   (** * Functional arrays *)
 
   
@@ -736,38 +798,24 @@ Qed.
 
   (* TODO *)
   Lemma find_ext_dec:
-      (forall m1 m2: _farray, _Equal m1 m2 -> (_equal m1 m2) = true).
+    (forall m1 m2: _farray, _Equal m1 m2 -> (_equal m1 m2) = true).
   Proof. intros.
-    specialize(Equal_Equivb_eqdec eq_elt_dec m1 m2).
-    intros. apply H0 in H.
-    apply M.equal_1. exact H.
-  Qed.
-
-
-  Definition eq_elt_dec :
-    forall elt (elt_dec: DecType elt),
-    forall x y : elt, { x = y } + { x <> y }.
-    intros elt elt_dec. inversion elt_dec. auto.
-  Defined.
-
-
-  Definition eqb elt (elt_dec: DecType elt) a b :=
-    let cmp := fun e e' => if eq_elt_dec elt elt_dec e e' then true else false in
-    M.equal cmp a b.
-
-
-  Lemma extensionnality : forall elt (elt_dec: DecType elt) a b,
-      (forall i, select elt a i = select elt b i) -> eqb elt elt_dec a b = true.
-  Proof.
-    intros.
-    unfold select in H.
-    specialize (find_ext_dec elt (eq_elt_dec elt elt_dec)). intros Hext.
-    unfold M.Equal in Hext.
-    apply Hext in H. clear Hext.
+    apply Equal_Equivb in H.
+    apply _equal_1.
     exact H.
   Qed.
 
-End Make.
+
+  Lemma extensionnality : forall a b,
+      (forall i, select a i = select b i) -> _equal a b = true.
+  Proof.
+    intros.
+    unfold select in H.
+    apply find_ext_dec in H.
+    exact H.
+  Qed.
+
+End Array.
 
 
 (* 
