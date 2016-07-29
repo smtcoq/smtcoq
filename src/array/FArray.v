@@ -815,6 +815,12 @@ Qed.
     exact H.
   Qed.
 
+  Definition eq a b := _equal a b = true.
+  
+  Lemma equal_eq : forall a b, _equal a b = true -> eq a b.
+  Proof. unfold eq. auto. Qed.
+
+  
 End Array.
 
 
