@@ -15,7 +15,8 @@
 
 Require Import Bool Int63 PArray.
 Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
-Require Import Misc State BVList.
+Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
+Require FArray.
 Require List.
 Local Open Scope list_scope.
 Local Open Scope array_scope.
@@ -304,22 +305,26 @@ Module Typ.
   | TZ : type
   | Tbool : type
   | Tpositive : type
-  | TBV : type.
-
+  | TBV : type
+  (* | TFArray : type -> type -> type. *)
+  .
+  
   Definition ftype := (list type * type)%type.
 
   Section Interp.
 
     Variable t_i : PArray.array typ_eqb.
-
-    Definition interp t :=
+    
+    Fixpoint interp t :=
       match t with
       | Tindex i => (t_i.[i]).(te_carrier)
       | TZ => Z
       | Tbool => bool
       | Tpositive => positive
       | TBV => BITVECTOR_LIST_FIXED.bitvector
+      (* | TFArray i e => FArray._farray (interp i) (interp e) *)
       end.
+
 
     Definition interp_ftype (t:ftype) :=
       List.fold_right (fun dom codom =>interp dom -> codom)
@@ -328,14 +333,64 @@ Module Typ.
     (* Boolean equality over interpretation of a btype *)
     Section Interp_Equality.
 
-      Definition i_eqb (t:type) : interp t -> interp t -> bool :=
+
+      Lemma i_eqb_to_eq_dec (i_eqb : forall (t:type), interp t -> interp t -> bool) :
+        forall (t:type) (x y : (interp t)),
+          { i_eqb t x y = true } + { i_eqb t x y <> true }.
+      Proof. intros. case (i_eqb t x y); [ left | right ]; auto. Qed.
+      
+      Lemma i_eqb_to_DecType
+            (i_eqb : forall (t:type), interp t -> interp t -> bool)
+            (i_eqb_spec : forall t x y, i_eqb t x y <-> x = y):
+        forall (t:type), FArray.DecType (interp t).
+      Proof.
+        intros.
+        specialize (@i_eqb_to_eq_dec i_eqb t); intros.
+        split; auto.
+        intros.
+        rewrite H, <- H0. auto.
+        intros.
+        specialize (X x y).
+        destruct X as [X | X].
+        apply i_eqb_spec in X. left. auto.
+        right. unfold is_true in i_eqb_spec.
+        rewrite i_eqb_spec in X; auto.
+      Qed.
+
+      Fixpoint i_eqb (t:type) : interp t -> interp t -> bool :=
         match t with
         | Tindex i => (t_i.[i]).(te_eqb)
         | TZ => Zeq_bool
         | Tbool => Bool.eqb
         | Tpositive => Peqb
         | TBV => @BITVECTOR_LIST_FIXED.bv_eq
+        (* | TFArray i e => *)
+        (*   FArray._equal (i_eqb_to_DecType i_eqb i_eqb_spec i) *)
+        (*                 (i_eqb_to_DecType i_eqb i_eqb_spec e) *)
         end.
+
+      Lemma pos_eqb_eq : forall p q, (p =? q)%positive = true -> p=q.
+      Proof. apply Pos.eqb_eq. Qed.
+
+      Lemma index_t_eqb_eq : forall (i:index) (x y: interp (Tindex i)), t_i.[i].(te_eqb) x y = true -> x = y.
+      Proof. intros.
+        specialize (te_reflect (t_i.[i]) x y); intro.
+        apply reflect_iff in H0.
+        now apply H0 in H.
+      Qed.
+      
+      Lemma bv_eqb_eq : forall x y, BITVECTOR_LIST_FIXED.bv_eq x y = true -> x = y.
+      Proof. apply BITVECTOR_LIST_FIXED.bv_eq_reflect. Qed.
+      
+      Definition i_eqb_spec_d (t:type) :=
+        match t as t' return (forall (x y: interp t'), i_eqb t' x y -> x = y) with
+        | Tindex i => index_t_eqb_eq i
+        | TZ => Zeq_bool_eq
+        | Tbool => Bool.eqb_prop
+        | Tpositive => pos_eqb_eq
+        | TBV => bv_eqb_eq
+        end.
+        
 
       Lemma i_eqb_spec : forall t x y, i_eqb t x y <-> x = y.
       Proof.
@@ -362,6 +417,12 @@ Module Typ.
         change (i_eqb t y x = true) with (is_true (i_eqb t y x)); rewrite i_eqb_spec; intros H1 H2; subst y; pose (H:=reflect_i_eqb t x x); inversion H; [rewrite <- H0 in H2; discriminate|elim H1; auto].
       Qed.
 
+      (* Lemma i_eqb_refl : forall t x, i_eqb t x x = true. Admitted. *)
+      (* Lemma i_eqb_trans : forall t x y z, *)
+      (*     i_eqb t x y = true ->  i_eqb t y z = true -> i_eqb t x z = true. Admitted. *)
+      
+
+      
     End Interp_Equality.
 
   End Interp.
@@ -450,6 +511,7 @@ Module Typ.
       rewrite cast_refl;trivial.
       (* rewrite N_cast_refl;trivial. *)
     Qed.
+
 
     (* Remark : I use this definition because eqb will not be used only in the interpretation *)
     Definition eqb (A B: type) : bool :=
