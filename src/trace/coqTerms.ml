@@ -119,6 +119,8 @@ let cbv_or = gen_constant bv_modules "bv_or"
 let cbv_xor = gen_constant bv_modules "bv_xor"
 let cbv_add = gen_constant bv_modules "bv_add"
 let cbv_mult = gen_constant bv_modules "bv_mult"
+let cbv_ult = gen_constant bv_modules "bv_ult"
+let cbv_slt = gen_constant bv_modules "bv_slt"
 
 (* SMT_terms *)
 
@@ -177,6 +179,8 @@ let cBO_BVor = gen_constant smt_modules "BO_BVor"
 let cBO_BVxor = gen_constant smt_modules "BO_BVxor"
 let cBO_BVadd = gen_constant smt_modules "BO_BVadd"
 let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
+let cBO_BVult = gen_constant smt_modules "BO_BVult"
+let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
 
 let cNO_distinct = gen_constant smt_modules "NO_distinct"
 
@@ -219,6 +223,7 @@ let make_certif_ops modules args =
   gen_constant "BBVar", gen_constant "BBConst",
   gen_constant "BBOp", gen_constant "BBNot", gen_constant "BBEq",
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
+  gen_constant "BBUlt", gen_constant "BBSlt",
   gen_constant "Hole")
   
 

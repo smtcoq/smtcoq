@@ -73,6 +73,8 @@ type rule =
   | Bbop
   | Bbadd
   | Bbmul
+  | Bbult
+  | Bbslt
   | Bbnot
   | Bbneg
 

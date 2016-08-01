@@ -818,6 +818,22 @@ module Make (T : Translator_sig.S) = struct
        | _ -> assert false
       )
         
+    | Some ("bv_bbl_bvult", [n; x; y; _; _; rb; xbb; ybb]) ->
+      let res = bblast_term n (bvult n x y) rb in
+      (match bbt xbb, bbt ybb with
+       | Some idx, Some idy ->
+         Some (mk_clause_cl Bbult [res] [idx; idy])
+       | _ -> assert false
+      )
+        
+    | Some ("bv_bbl_bvslt", [n; x; y; _; _; rb; xbb; ybb]) ->
+      let res = bblast_term n (bvslt n x y) rb in
+      (match bbt xbb, bbt ybb with
+       | Some idx, Some idy ->
+         Some (mk_clause_cl Bbslt [res] [idx; idy])
+       | _ -> assert false
+      )
+        
     | None ->
       begin match name p with
       | Some h -> (* should be an declared clause *)

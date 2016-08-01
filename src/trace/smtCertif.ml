@@ -156,6 +156,18 @@ type 'hform rule =
        -------------------------------------------------- bbAnd
              bbT(a*b, [...])
    *)
+  | BBUlt of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector unsigned comparison
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bvult a b <-> ...
+   *)
+  | BBSlt of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector signed comparison
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bvslt a b <-> ...
+   *)
   | BBEq of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
@@ -196,7 +208,8 @@ let used_clauses r =
   | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
   | BBNot (c, _) | BBNeg (c, _) -> [c]
   | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
-  | BBMul (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
+  | BBMul (c1,c2,_)
+  | BBUlt (c1,c2,_) | BBSlt (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
   | Hole (cs, _) -> cs
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
