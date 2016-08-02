@@ -3991,7 +3991,22 @@ Lemma prop_check_ult2: forall bs1 bs2 bsres,
   length bs1 = length bs2 ->
 check_ult bs1 bs2 bsres = true ->
 interp_carry (ult_lit_list (rev bs1) (rev bs2)) = Lit.interp rho bsres.
-Proof. Admitted.
+Proof. intro bs1.
+       induction bs1 as [ | xbs1 xsbs1 IHbs1].
+       - intros.
+         case bs2 in *.
+         unfold check_ult in H0.
+         simpl in *.
+         case (Lit.is_pos bsres) in H0; rewrite eqb_spec in H0; now rewrite H0.
+         now contradict H.
+       - intros.
+         case bs2 in *.
+         now contradict H.
+         simpl.
+         unfold check_ult,rev_ult_lit_list in H0.
+         simpl in H0.
+         now apply prop_eq_carry_lit.
+Qed.
        
 
 Lemma prop_lit: forall bsres, 
