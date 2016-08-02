@@ -595,37 +595,23 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
 
-
   (** * Checker for bitblasting of bitvector comparison: lt *)
 
-Fixpoint ult_lit_list (bs1 bs2: list _lit) :=
-  match bs1, bs2 with
-    | nil, _ => Clit (Lit._false)
-    | _, nil => Clit (Lit._false)
-    | xi :: nil, yi :: nil => (Cand (Cneg (Clit xi)) (Clit yi))
-    | xi :: x', yi :: y'   => (Cor (Cand (Cneg (Cxor (Clit xi) (Clit yi))) (ult_lit_list x' y'))
-                              (Cand (Cneg (Clit xi)) (Clit yi)))
-  end.
+  Fixpoint ult_lit_list (bs1 bs2: list _lit) :=
+    match bs1, bs2 with
+      | nil, _ => Clit (Lit._false)
+      | _, nil => Clit (Lit._false)
+      | xi :: nil, yi :: nil => (Cand (Cneg (Clit xi)) (Clit yi))
+      | xi :: x', yi :: y'   => (Cor (Cand (Cneg (Cxor (Clit xi) (Clit yi))) (ult_lit_list x' y'))
+                                (Cand (Cneg (Clit xi)) (Clit yi)))
+    end.
 
-Definition rev_ult_lit_list (x y: list _lit) := (ult_lit_list (List.rev x) (List.rev y)).
+  Definition rev_ult_lit_list (x y: list _lit) := (ult_lit_list (List.rev x) (List.rev y)).
 
   Definition check_ult (bs1 bs2: list _lit) (bsres: _lit) : bool :=
-   eq_carry_lit (rev_ult_lit_list bs1 bs2) bsres.
-
-Definition slt_lit_list (x y: list _lit) :=
-  match x, y with
-    | nil, _ => Clit (Lit._false)
-    | _, nil => Clit (Lit._false)
-    | xi :: nil, yi :: nil => (Cand (Clit xi) (Cneg (Clit yi)))
-    | xi :: x', yi :: y'   => (Cor (Cand (Cneg (Cxor (Clit xi) (Clit yi))) (ult_lit_list x' y')) 
-                              (Cand (Clit xi) (Cneg (Clit yi))))
-  end.
-
-Definition rev_slt_lit_list (x y: list _lit) := (slt_lit_list (List.rev x) (List.rev y)).
- 
-Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool := 
-  eq_carry_lit (rev_slt_lit_list bs1 bs2) bsres.
-
+    if Lit.is_pos bsres then
+      eq_carry_lit (rev_ult_lit_list bs1 bs2) bsres
+    else false.
 
   Definition check_bbUlt pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -641,6 +627,7 @@ Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool :=
               if ((a1 == a1') && (a2 == a2'))
                    && (check_ult bs1 bs2 lbb)
                    && (N.of_nat (length bs1) =? (BVList._size))%N
+                   && (N.of_nat (length bs2) =? (BVList._size))%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -654,6 +641,19 @@ Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool :=
     | _, _ => C._true
     end.
 
+  Definition slt_lit_list (x y: list _lit) :=
+    match x, y with
+      | nil, _ => Clit (Lit._false)
+      | _, nil => Clit (Lit._false)
+      | xi :: nil, yi :: nil => (Cand (Clit xi) (Cneg (Clit yi)))
+      | xi :: x', yi :: y'   => (Cor (Cand (Cneg (Cxor (Clit xi) (Clit yi))) (ult_lit_list x' y')) 
+                                (Cand (Clit xi) (Cneg (Clit yi))))
+    end.
+
+  Definition rev_slt_lit_list (x y: list _lit) := (slt_lit_list (List.rev x) (List.rev y)).
+ 
+  Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool := 
+    eq_carry_lit (rev_slt_lit_list bs1 bs2) bsres.
 
   Definition check_bbSlt pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -669,6 +669,7 @@ Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool :=
               if ((a1 == a1') && (a2 == a2'))
                    && (check_slt bs1 bs2 lbb)
                    && (N.of_nat (length bs1) =? (BVList._size))%N
+                   && (N.of_nat (length bs2) =? (BVList._size))%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -3987,6 +3988,7 @@ Proof. intros.
            now inversion H.
 Qed.
 
+
 Lemma prop_check_ult2: forall bs1 bs2 bsres,
   length bs1 = length bs2 ->
 check_ult bs1 bs2 bsres = true ->
@@ -3997,21 +3999,33 @@ Proof. intro bs1.
          case bs2 in *.
          unfold check_ult in H0.
          simpl in *.
+
+         case_eq (Lit.is_pos bsres). intros Hbsres.
+         rewrite Hbsres in H0.
+
          case (Lit.is_pos bsres) in H0; rewrite eqb_spec in H0; now rewrite H0.
+         intros. rewrite H1 in H0. now contradict H0.
+         
          now contradict H.
+         
        - intros.
          case bs2 in *.
          now contradict H.
          simpl.
          unfold check_ult,rev_ult_lit_list in H0.
          simpl in H0.
+         
+         case_eq (Lit.is_pos bsres). intros Hbsres.
+         rewrite Hbsres in H0.        
+         
          now apply prop_eq_carry_lit.
+         
+         intros. rewrite H1 in H0. now contradict H0.
 Qed.
-       
 
 Lemma prop_lit: forall bsres, 
-Lit.is_pos bsres ->
-Lit.interp
+Lit.is_pos bsres = true ->
+Lit.interp 
   (interp_state_var (fun a0 : int => interp_bool t_i (t_interp .[ a0]))
      interp_form_hatom_bv t_form) bsres =
 Form.interp (fun a0 : int => interp_bool t_i (t_interp .[ a0]))
@@ -4023,7 +4037,23 @@ Proof. intros.
        rewrite H.
        simpl. easy.
 Qed.
-      
+
+Lemma prop_lit2: forall bsres, 
+Lit.is_pos bsres = false ->
+Lit.interp 
+  (interp_state_var (fun a0 : int => interp_bool t_i (t_interp .[ a0]))
+     interp_form_hatom_bv t_form) bsres =
+negb (Form.interp (fun a0 : int => interp_bool t_i (t_interp .[ a0]))
+  interp_form_hatom_bv t_form (t_form .[ Lit.blit bsres])).
+Proof. intros.
+       rewrite <- rho_interp.
+       simpl.
+       unfold Lit.interp, Var.interp.
+       rewrite H.
+       simpl. easy.
+Qed.
+
+
 
 Lemma valid_check_bbUlt pos1 pos2 lres : C.valid rho (check_bbUlt pos1 pos2 lres).
 Proof.
@@ -4045,7 +4075,8 @@ Proof.
        case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq15; try (now apply C.interp_true).
        
        case_eq (check_ult bs1 bs2 bsres &&
-      (N.of_nat (Datatypes.length bs1) =? _size)%N); 
+      (N.of_nat (Datatypes.length bs1) =? _size)%N &&
+      (N.of_nat (Datatypes.length bs2) =? _size)%N); 
        simpl; intros Heq16; try (now apply C.interp_true).
        
        unfold C.valid. simpl.
@@ -4172,22 +4203,23 @@ Proof.
 *)
 
         
-        rewrite andb_true_iff in Heq16.
-        destruct Heq16 as (Heq16 & Heq16r).
-        rewrite N.eqb_eq in Heq16r.
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as ((Heq16 & Heq16l) & Heq16r).
+        rewrite N.eqb_eq in Heq16r, Heq16l.
+        rewrite map_length, Heq16l.
+        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
+        rewrite map_length, Heq16l, N.compare_refl.
+        rewrite andb_true_l.
+
         rewrite map_length, Heq16r.
         do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
         rewrite map_length, Heq16r, N.compare_refl.
-        rewrite andb_true_l.
-         
-        cut (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2)) =? _size)%N.
-        intros Hbs2l.
-        rewrite Hbs2l. rewrite Hbs2l.
         
         unfold RAWBITVECTOR_LIST_FIXED.rev_ult_list.
         remember prop_check_ult.
         specialize (@prop_check_ult (List.rev bs1) (List.rev bs2)).
         intros.
+
         cut ( Datatypes.length (List.rev bs1) = Datatypes.length (List.rev bs2)).
         intros. specialize (H6 H7).
         do 2 rewrite <- List.map_rev.
@@ -4208,12 +4240,23 @@ Proof.
         simpl.
         now rewrite prop_lit.
         
-        admit.
-        admit.
+        rewrite !rev_length.
+        apply (f_equal nat_of_N) in Heq16l.
+        apply (f_equal nat_of_N) in Heq16r.
+        rewrite Nat2N.id in Heq16l, Heq16r.
+        now rewrite Heq16l, Heq16r.
+
+        intros.
         
-        intros. apply f_equal.
-        admit (** from repeat here**).
-        
+
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as ((Heq16 & Heq16l) & Heq16r).
+        rewrite N.eqb_eq in Heq16r, Heq16l.
+
+        contradict Heq16.   
+        unfold check_ult.
+        rewrite H6. easy.
+
         (** contradictions **)
         intros. rewrite H4 in H0. now contradict H4.
         intros. rewrite H4 in H0. now contradict H4.
