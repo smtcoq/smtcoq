@@ -241,9 +241,9 @@ module Op =
       | UO_Zpos -> Lazy.force cZpos
       | UO_Zneg -> Lazy.force cZneg
       | UO_Zopp -> Lazy.force copp
-      | UO_BVbitOf (s,i) -> mklApp cbitOf [|mkN s; mkNat i|]
-      | UO_BVnot s -> mklApp cbv_not [|mkN s|]
-      | UO_BVneg s -> mklApp cbv_neg [|mkN s|]
+      | UO_BVbitOf (_,i) -> mklApp cbitOf [|mkNat i|]
+      | UO_BVnot _ -> Lazy.force cbv_not
+      | UO_BVneg _ -> Lazy.force cbv_neg
 
     let eq_tbl = Hashtbl.create 17 
 

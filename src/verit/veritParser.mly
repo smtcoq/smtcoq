@@ -144,8 +144,8 @@ typ:
   | BBOP                                                   { Bbop  }
   | BBADD                                                  { Bbadd }
   | BBMUL                                                  { Bbmul }
-  | BBULT                                                  { Bbslt }
-  | BBSLT                                                  { Bbult }
+  | BBULT                                                  { Bbult }
+  | BBSLT                                                  { Bbslt }
   | BBNOT                                                  { Bbnot }
   | BBNEG                                                  { Bbneg }
 ;

@@ -858,16 +858,23 @@ module Make (T : Translator_sig.S) = struct
     | _ -> p
 
 
+  let bv_pred = function 
+    | "bv_bbl_=" -> Bbeq
+    | "bv_bbl_bvult" -> Bbult
+    | "bv_bbl_bvslt" -> Bbslt
+    | _ -> assert false
+
+  
   let rec bblast_eqs p = match app_name p with
     | Some ("th_let_pf", [f; pf; l]) ->
       begin match app_name pf with
-        | Some ("bv_bbl_=", [_; _; _; _; _; _; a; b]) ->
+        | Some (rule_name, [_; _; _; _; _; _; a; b]) ->
           begin match name a, name b with
           | Some na, Some nb ->
             let id1, id2 =
               try get_input_id na, get_input_id nb
               with Not_found -> assert false in
-            let clid = mk_clause_cl Bbeq [f] [id1; id2] in
+            let clid = mk_clause_cl (bv_pred rule_name) [f] [id1; id2] in
             begin match value l with
               | Lambda ({sname = Name h}, p) ->
                 register_decl_id h clid;
@@ -876,6 +883,7 @@ module Make (T : Translator_sig.S) = struct
             end
           | _ -> assert false
           end
+
         | _ -> assert false
       end
     | _ -> p

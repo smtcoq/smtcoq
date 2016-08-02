@@ -263,6 +263,21 @@ let bvnot n a = mk_app bvnot_s [n; a]
 let bvneg n a = mk_app bvneg_s [n; a]
 
 
+let _ = 
+  define "bvpred"
+	(pi_d "n" mpz (fun n ->
+	(pi "x" (term (bitVec n))
+        (pi "y" (term (bitVec n))
+           formula))))
+
+let bvult_s = declare_get "bvult" (mk_const "bvpred")
+let bvslt_s = declare_get "bvslt" (mk_const "bvpred")
+
+let bvult n a b = mk_app bvult_s [n; a; b]
+let bvslt n a b = mk_app bvslt_s [n; a; b]
+
+
+
 module MInt = Map.Make (struct
     type t = int
     let compare = Pervasives.compare

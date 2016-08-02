@@ -31,6 +31,7 @@ Import Form.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
+Local Open Scope list_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -350,7 +351,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   | Cand (_:carry) (_:carry)
   | Cor (_:carry) (_:carry)
   | Cxor (_:carry) (_:carry)
-  | Cneg (_:carry)
+  | Ciff (_:carry) (_:carry)
   .
 
   
@@ -362,16 +363,16 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       match carry with
         | Clit l => l == c
 
-        | Cneg c1 =>
-          match get_form (Lit.blit c) with
-            | Fnot a1 =>
-              (eq_carry_lit c1 a1)
-            | _ => false
-          end
-
         | Cxor c1 c2  =>
           match get_form (Lit.blit c) with
             | Fxor a1 a2 =>
+              (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
+                || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1)
+            | _ => false
+          end
+        | Ciff c1 c2  =>
+          match get_form (Lit.blit c) with
+            | Fiff a1 a2 =>
               (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
                 || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1)
             | _ => false
@@ -601,13 +602,17 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     match bs1, bs2 with
       | nil, _ => Clit (Lit._false)
       | _, nil => Clit (Lit._false)
-      | xi :: nil, yi :: nil => (Cand (Cneg (Clit xi)) (Clit yi))
-      | xi :: x', yi :: y'   => (Cor (Cand (Cneg (Cxor (Clit xi) (Clit yi))) (ult_lit_list x' y'))
-                                (Cand (Cneg (Clit xi)) (Clit yi)))
+      | xi :: nil, yi :: nil => (Cand (Clit (Lit.neg xi)) (Clit yi))
+      | xi :: x', yi :: y'   => (Cor (Cand (Ciff (Clit xi) (Clit yi)) (ult_lit_list x' y'))
+                                (Cand (Clit (Lit.neg xi)) (Clit yi)))
     end.
 
   Definition rev_ult_lit_list (x y: list _lit) := (ult_lit_list (List.rev x) (List.rev y)).
 
+
+  (* Variables (a0 a1 a2 a3 b0 b1 b2 b3 : _lit). *)
+  (* Compute (rev_ult_lit_list [of_Z 0; of_Z 2; of_Z 4; of_Z 6] [of_Z 8; of_Z 10; of_Z 12; of_Z 14]).  *)
+  
   Definition check_ult (bs1 bs2: list _lit) (bsres: _lit) : bool :=
     if Lit.is_pos bsres then
       eq_carry_lit (rev_ult_lit_list bs1 bs2) bsres
@@ -645,9 +650,9 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     match x, y with
       | nil, _ => Clit (Lit._false)
       | _, nil => Clit (Lit._false)
-      | xi :: nil, yi :: nil => (Cand (Clit xi) (Cneg (Clit yi)))
-      | xi :: x', yi :: y'   => (Cor (Cand (Cneg (Cxor (Clit xi) (Clit yi))) (ult_lit_list x' y')) 
-                                (Cand (Clit xi) (Cneg (Clit yi))))
+      | xi :: nil, yi :: nil => (Cand (Clit xi) (Clit (Lit.neg yi)))
+      | xi :: x', yi :: y'   => (Cor (Cand (Ciff (Clit xi) (Clit yi)) (ult_lit_list x' y')) 
+                                (Cand (Clit xi) (Clit (Lit.neg yi))))
     end.
 
   Definition rev_slt_lit_list (x y: list _lit) := (slt_lit_list (List.rev x) (List.rev y)).
@@ -710,10 +715,10 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   Fixpoint interp_carry (c: carry) : bool :=
     match c with
       | Clit l => (Lit.interp rho l)
-      | Cneg c => negb (interp_carry c)
       | Cand c1 c2 => (interp_carry c1) && (interp_carry c2)
       | Cor c1 c2 => (interp_carry  c1) || (interp_carry c2)
       | Cxor c1 c2 => xorb (interp_carry c1) (interp_carry c2)
+      | Ciff c1 c2 => Bool.eqb (interp_carry c1) (interp_carry c2)
     end.
 
     Hypothesis Hs : S.valid rho s.
@@ -961,9 +966,6 @@ Proof. intros a bs.
         intros a0 Heq. rewrite Heq in H0. now contradict H0.
         intros a0 Heq. rewrite Heq in H0. now contradict H0.
         intros a0 Heq. rewrite Heq in H0. now contradict H0.
-
-        intros i1 Heq. rewrite Heq in H0. now contradict H0.
-        
         intros i1 i2 Heq. rewrite Heq in H0. now contradict H0.
         intros i1 i2 Heq. rewrite Heq in H0. now contradict H0.
         intros i1 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
@@ -1069,7 +1071,7 @@ Proof. intros l a samelen H.
        unfold RAWBITVECTOR_LIST_FIXED.bitOf in *.
        unfold RAWBITVECTOR_LIST_FIXED.of_bits.
        unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.size, RAWBITVECTOR_LIST_FIXED.bits in *.
-       unfold BITVECTOR_LIST_FIXED.bits, size in *.
+       unfold BITVECTOR_LIST_FIXED.bits in *.
        unfold RAWBITVECTOR_LIST_FIXED.bits in *.
        unfold BITVECTOR_LIST_FIXED.bv in *.
        apply Nat2N.inj in samelen.
@@ -1364,7 +1366,8 @@ Proof.
   pose proof Hsamelen as Hlenbr.
   apply (f_equal N.of_nat) in Hlenbr.
   rewrite Hlen in Hlenbr.
-  rewrite Hlen. rewrite <- Hlenbr. simpl.
+  rewrite Hlen. rewrite <- Hlenbr.
+  rewrite N.eqb_refl.
   unfold RAWBITVECTOR_LIST_FIXED.bits.
   rewrite map_map.
   symmetry. apply prop_check_not. auto. auto.
@@ -1563,7 +1566,6 @@ Proof. intro bs1.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
-               intros. contradict H3. discriminate.
                rewrite Heq0 in H1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
@@ -1603,8 +1605,6 @@ Proof. intro bs1.
                rewrite Heq0 in H1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
-               try (intros a Heq; rewrite Heq in H1; now contradict H1).
-               rewrite Heq0 in H1.
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
@@ -1624,7 +1624,6 @@ Proof. intro bs1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
-               intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
@@ -1671,8 +1670,6 @@ Proof. intro bs1.
               rewrite Heq0 in H1.
               try (intros a Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
-              try (intros a Heq; rewrite Heq in H1; now contradict H1).
-              rewrite Heq0 in H1.
               try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
               try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
@@ -1691,7 +1688,6 @@ Proof. intro bs1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
-               intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
@@ -1740,8 +1736,6 @@ Proof. intro bs1.
               rewrite Heq0 in H1.
               try (intros a Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
-              try (intros a Heq; rewrite Heq in H1; now contradict H1).
-              rewrite Heq0 in H1.
               try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
               try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
@@ -1757,7 +1751,8 @@ Proof. intro bs1.
               apply (@check_symopp_and ibs1 ibs2 xbs1 ybs2 ibsres zbsres N).
               exact H1.
 Qed.
-  
+
+
 Lemma check_symopp_bvor: forall bs1 bs2 bsres N, 
   let n := length bsres in
   (length bs1 = n)%nat -> 
@@ -1846,7 +1841,6 @@ Proof. intro bs1.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
-               intros. contradict H3. discriminate.
                rewrite Heq0 in H1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
@@ -1886,8 +1880,6 @@ Proof. intro bs1.
                rewrite Heq0 in H1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
-               try (intros a Heq; rewrite Heq in H1; now contradict H1).
-               rewrite Heq0 in H1.
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
@@ -1907,7 +1899,6 @@ Proof. intro bs1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
-               intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
@@ -1953,8 +1944,6 @@ Proof. intro bs1.
               rewrite Heq0 in H1.
               try (intros a Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
-              try (intros a Heq; rewrite Heq in H1; now contradict H1).
-              rewrite Heq0 in H1.
               try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
               try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
@@ -1973,7 +1962,6 @@ Proof. intro bs1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                try (intros i i0 Heq; rewrite Heq in H1; now contradict H1).
-               intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
@@ -2017,8 +2005,6 @@ Proof. intro bs1.
                 intros. rewrite Heq0, H4 in H1. now contradict H1.
             
 
-              rewrite Heq0 in H1.
-              try (intros a Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
               try (intros a Heq; rewrite Heq in H1; now contradict H1).
               rewrite Heq0 in H1.
@@ -2117,7 +2103,6 @@ Proof. intro bs1.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
-               intros. contradict H3. discriminate.
                rewrite Heq0 in H1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
@@ -2130,7 +2115,6 @@ Proof. intro bs1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
-               intros. rewrite H2 in H1. rewrite Heq0 in H1. now contradict H1.
                
                intros. rewrite H2 in H1. simpl.
                 case_eq ((i == ibs1) && (i0 == ibs2)). intros H5.
@@ -2175,7 +2159,6 @@ Proof. intro bs1.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
-               intros. contradict H3. discriminate.
                rewrite Heq0 in H1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
@@ -2188,8 +2171,6 @@ Proof. intro bs1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
-               intros. rewrite H2 in H1. rewrite Heq0 in H1. now contradict H1.
-
 
                intros. rewrite H2 in H1. simpl.
 
@@ -2233,7 +2214,6 @@ Proof. intro bs1.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
                intros. contradict H3. discriminate.
-               intros. contradict H3. discriminate.
                rewrite Heq0 in H1.
                try (intros Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
@@ -2246,8 +2226,6 @@ Proof. intro bs1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
                rewrite Heq0 in H1.
                try (intros a Heq; rewrite Heq in H1; now contradict H1).
-               intros. rewrite H2 in H1. rewrite Heq0 in H1. now contradict H1.               
-
 
                intros. rewrite H2 in H1. simpl.
                 case_eq ((i == ibs1) && (i0 == ibs2)). intros H5.
@@ -3466,7 +3444,6 @@ Proof.
       case bs1; try easy; case bs2; easy.
       case bs1; try easy; case bs2; easy.
       case bs1; try easy; case bs2; easy.
-      case bs1; try easy; case bs2; easy.
       case bs1; try easy; case bs2.
       
       
@@ -3682,9 +3659,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         contradict Heq16.
         case bs1 in *; try now simpl; case bs2 in *; now simpl.
         case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        simpl. rewrite Hpos. case bs2; auto.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        intros _ l; case l; auto.
+        simpl. rewrite Hpos. case bs2; intros; auto; case l; auto.
         
         pose proof Heq16 as Heq16'.
          
@@ -3914,19 +3889,30 @@ Proof. intro c.
            unfold Lit.interp at 3. unfold Var.interp.
            rewrite Hip0. rewrite rho_interp. now rewrite xorb_comm.
          + intros. rewrite H2 in H. now contradict H.
-       - intros. simpl in *.
-         case_eq (Lit.is_pos i).
-           intros. rewrite H0 in H.
-             case_eq (t_form .[ Lit.blit i]); intros; rewrite H1 in H; try now contradict H.
-             specialize (@rho_interp ( Lit.blit i)). rewrite H1 in rho_interp.
-             simpl in rho_interp.
-             unfold Lit.interp. rewrite H0. unfold Var.interp.
-             rewrite rho_interp. apply f_equal.
-             now apply IHc in H.
-           intros. rewrite H0 in H. now contradict H.
+       - intros. simpl. 
+         pose proof IHc1. pose proof IHc2.
+         simpl in H.
+         case_eq ( Lit.is_pos i). intros Hip0.
+         rewrite Hip0 in H.
+         case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
+         rewrite orb_true_iff in H; do 2 rewrite andb_true_iff in H.
+
+         specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
+         simpl in rho_interp.
+
+         destruct H.
+         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
+           unfold Lit.interp at 3. unfold Var.interp.
+           rewrite Hip0. now rewrite rho_interp.
+         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
+           unfold Lit.interp at 3. unfold Var.interp.
+           rewrite Hip0. rewrite rho_interp.
+           case_eq (Bool.eqb (Lit.interp rho i0) (Lit.interp rho i1)).
+           intros. apply Bool.eqb_prop in H4. rewrite H4. apply Bool.eqb_reflx.
+           intros. apply Bool.eqb_false_iff in H4. apply Bool.eqb_false_iff. unfold not in *. intro. symmetry in H5.
+           apply H4; trivial.
+         + intros. rewrite H2 in H. now contradict H.
  Qed.
-
-
 
 
 Lemma map_cons T U (f: T -> U) (h: T) (l: list T): map f (h :: l) = f h :: map f l.
@@ -3950,7 +3936,7 @@ Proof. intro bs1.
          rewrite !map_cons.
          simpl.
          case xsbs1 in *. simpl.
-         case l in *. simpl. easy.
+         case l in *. simpl. now rewrite Lit.interp_neg.
          now contradict H2.
          case l in *. simpl.
          now contradict H2. 
@@ -3959,6 +3945,7 @@ Proof. intro bs1.
          fold interp_carry.
          specialize (@IHbs1 (i1 :: l)).
          rewrite !map_cons in IHbs1.
+         rewrite Lit.interp_neg.
          now rewrite IHbs1.
 Qed.
 
@@ -3974,7 +3961,7 @@ Proof. intros.
          now contradict H.
          rewrite !map_cons.
          case bs1 in *. simpl.
-         case bs2 in *. now simpl.
+         case bs2 in *. simpl. now rewrite Lit.interp_neg. 
          now contradict H.
          case bs2 in  *.
            now contradict H.
@@ -3984,6 +3971,7 @@ Proof. intros.
            unfold interp_carry.
            fold interp_carry.
            rewrite <- !map_cons.
+           rewrite Lit.interp_neg.
            rewrite prop_check_ult.
            now apply f_equal.
            simpl.
@@ -4296,7 +4284,6 @@ Proof.
         intros. rewrite H4 in H0. now contradict H4.
         intros. rewrite H4 in H0. now contradict H4.
 Qed.
-
 
 
 Lemma valid_check_bbSlt pos1 pos2 lres : C.valid rho (check_bbSlt pos1 pos2 lres).

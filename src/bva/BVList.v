@@ -33,7 +33,8 @@ Axiom proof_irrelevance : forall (P : Prop) (p1 p2 : P), p1 = p2.
 
 (* Variable _size : N. *)
 
-Definition _size := 4%N.
+Definition _size := 32%N.
+Global Opaque _size.
 
 Module Type BITVECTOR.
 
@@ -780,22 +781,23 @@ Fixpoint ult_list (x y: list bool) :=
     | nil, _  => false
     | _ , nil => false
     | xi :: nil, yi :: nil => (andb (negb xi) yi)
-    | xi :: x', yi :: y' =>   (orb (andb (negb (xorb xi yi)) (ult_list x' y')) 
+    | xi :: x', yi :: y' =>   (orb (andb (Bool.eqb xi yi) (ult_list x' y')) 
                               (andb (negb xi) yi))
   end.                    
 
 
-Definition rev_ult_list (x y: list bool) := (ult_list (rev x) (rev y)).
+Definition rev_ult_list (x y: list bool) := (ult_list (List.rev x) (List.rev y)).
 
 Fixpoint slt_list (x y: list bool) :=
   match x, y with
     | nil, _  => false
     | _ , nil => false
     | xi :: nil, yi :: nil => (andb xi (negb yi))
-    | xi :: x', yi :: y'   => (orb (andb (negb (xorb xi yi)) (ult_list x' y')) (andb xi (negb yi)))
-  end.  
+    | xi :: x', yi :: y'   => (orb (andb (Bool.eqb xi yi) (ult_list x' y'))
+                                  (andb xi (negb yi)))
+  end.
 
-Definition rev_slt_list (x y: list bool) := (slt_list (rev x) (rev y)).
+Definition rev_slt_list (x y: list bool) := (slt_list (List.rev x) (List.rev y)).
  
 
 Definition bv_ult (a b : bitvector) : bool :=
@@ -856,7 +858,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int63 then nil
+  if (k == 0)%int then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
@@ -3058,7 +3060,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int63 then nil
+  if (k == 0)%int then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)

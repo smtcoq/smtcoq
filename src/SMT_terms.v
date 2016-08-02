@@ -14,14 +14,9 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray.
-<<<<<<< HEAD
-Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/bva".
-Require Import Misc State BVList.
-=======
 Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
->>>>>>> 5f492c951f21a348f4a5611204a6aaf5f6c9ad97
 Require List.
 Local Open Scope list_scope.
 Local Open Scope array_scope.
@@ -45,7 +40,6 @@ Module Form.
   | Fand (_:fargs)
   | For  (_:fargs)
   | Fimp (_:fargs)
-  | Fnot (_:_lit) 
   | Fxor (_:_lit) (_:_lit) 
   | Fiff (_:_lit) (_:_lit)
   | Fite (_:_lit) (_:_lit) (_:_lit)
@@ -90,7 +84,6 @@ Module Form.
         | Ftrue => true
         | Ffalse => false
         | Fnot2 i l => fold (fun b => negb (negb b)) 1 i (Lit.interp interp_var l)
-        | Fnot l => negb (Lit.interp interp_var l)
         | Fand args => afold_left _ _ true andb (Lit.interp interp_var) args
         | For args => afold_left _ _ false orb (Lit.interp interp_var) args
         | Fimp args => afold_right _ _ true implb (Lit.interp interp_var) args
@@ -120,7 +113,6 @@ Module Form.
         match h with
         | Fatom _ | Ftrue | Ffalse => true
         | Fnot2 _ l => Lit.blit l < i
-        | Fnot l => Lit.blit l < i
         | Fand args | For args | Fimp args =>
           PArray.forallb (fun l => Lit.blit l < i) args
         | Fxor a b | Fiff a b => (Lit.blit a < i) && (Lit.blit b < i) 
@@ -142,10 +134,6 @@ Module Form.
         - apply afold_right_eq;unfold is_true in H0;
             rewrite PArray.forallb_spec in H0;intros;
               auto using Lit.interp_eq_compat.
-
-        - unfold is_true in H0. decompose [and] H0;
-            rewrite !(Lit.interp_eq_compat f1 f2);auto.
-
         - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
             rewrite !(Lit.interp_eq_compat f1 f2);auto.
         - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
