@@ -107,11 +107,15 @@
         "bbneg", BBNEG;
         "bbadd", BBADD;
         "bbmul", BBMUL;
+        "bbult", BBULT;
+        "bbslt", BBSLT;
         "bvand", BVAND;
         "bvor", BVOR;
         "bvxor", BVXOR;
         "bvadd", BVADD;
         "bvmul", BVMUL;
+        "bvult", BVULT;
+        "bvslt", BVSLT;
         "not", NOT;
         "xor", XOR;
         "ite", ITE;

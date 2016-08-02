@@ -171,6 +171,8 @@ type bop =
    | BO_BVxor of int
    | BO_BVadd of int
    | BO_BVmult of int
+   | BO_BVult of int
+   | BO_BVslt of int
 
 type nop =
   | NO_distinct of btype
@@ -266,17 +268,21 @@ module Op =
       | BO_BVxor s -> mklApp cBO_BVxor [|mkN s|]
       | BO_BVadd s -> mklApp cBO_BVadd [|mkN s|]
       | BO_BVmult s -> mklApp cBO_BVmult [|mkN s|]
+      | BO_BVult s -> mklApp cBO_BVult [|mkN s|]
+      | BO_BVslt s -> mklApp cBO_BVslt [|mkN s|]
 
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
-      | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _ -> Tbool
+      | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
+      | BO_BVult _ | BO_BVslt _ -> Tbool
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult 
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
-      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s ->
+      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
+      | BO_BVult s | BO_BVslt s ->
         (TBV s,TBV s)
 
     let interp_eq = function
@@ -300,6 +306,8 @@ module Op =
       | BO_BVxor s -> Lazy.force cbv_xor
       | BO_BVadd s -> Lazy.force cbv_add
       | BO_BVmult s -> Lazy.force cbv_mult
+      | BO_BVult s -> Lazy.force cbv_ult
+      | BO_BVslt s -> Lazy.force cbv_slt
 
     let n_to_coq = function
       | NO_distinct t -> mklApp cNO_distinct [|Btype.to_coq t|]
@@ -388,6 +396,8 @@ module Op =
         | BO_BVxor n1, BO_BVxor n2 -> n1 == n2
         | BO_BVadd n1, BO_BVadd n2 -> n1 == n2
         | BO_BVmult n1, BO_BVmult n2 -> n1 == n2
+        | BO_BVult n1, BO_BVult n2 -> n1 == n2
+        | BO_BVslt n1, BO_BVslt n2 -> n1 == n2
         | _ -> op1 == op2
 
     let n_equal op1 op2 =
@@ -581,6 +591,8 @@ module Atom =
         | BO_BVxor _ -> "bvxor"
         | BO_BVadd _ -> "bvadd"
         | BO_BVmult _ -> "bvmul"
+        | BO_BVult _ -> "bvult"
+        | BO_BVslt _ -> "bvslt"
       in
       Format.fprintf fmt "(%s " s;
       to_smt fmt h1;
@@ -668,6 +680,8 @@ module Atom =
       | CCBVxor
       | CCBVadd
       | CCBVmult
+      | CCBVult
+      | CCBVslt
       | CCeqb
       | CCeqbP
       | CCeqbZ
@@ -685,6 +699,7 @@ module Atom =
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
           cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
+          cbv_ult, CCBVult; cbv_slt, CCBVslt;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV
         ];
       tbl
@@ -769,6 +784,8 @@ module Atom =
           | CCBVxor -> mk_bop_bvxor args
           | CCBVadd -> mk_bop_bvadd args
           | CCBVmult -> mk_bop_bvmult args
+          | CCBVult -> mk_bop_bvult args
+          | CCBVslt -> mk_bop_bvslt args
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
@@ -858,6 +875,22 @@ module Atom =
            mk_bop (BO_BVmult s') [a1;a2]
         | [a1;a2] -> (* When all bv have same size *)
           mk_bop (BO_BVmult bvsize) [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvult = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVult s') [a1;a2]
+        | [a1;a2] -> (* When all bv have same size *)
+          mk_bop (BO_BVult bvsize) [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvslt = function
+        | [s;a1;a2] ->
+           let s' = mk_N s in
+           mk_bop (BO_BVslt s') [a1;a2]
+        | [a1;a2] -> (* When all bv have same size *)
+          mk_bop (BO_BVslt bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bveq = function
@@ -1000,6 +1033,8 @@ module Atom =
     let mk_bvxor reify s = mk_binop (BO_BVxor s) reify
     let mk_bvadd reify s = mk_binop (BO_BVadd s) reify
     let mk_bvmult reify s = mk_binop (BO_BVmult s) reify
+    let mk_bvult reify s = mk_binop (BO_BVult s) reify
+    let mk_bvslt reify s = mk_binop (BO_BVslt s) reify
     let mk_opp = mk_unop UO_Zopp
     let mk_distinct reify ty = mk_nop (NO_distinct ty) reify
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify

@@ -96,6 +96,8 @@ let get_rule = function
   | Bbop -> "bbop"
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"
+  | Bbult -> "bbult"
+  | Bbslt -> "bbslt"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
 
@@ -191,7 +193,8 @@ and print_term fmt t =
 
       | Some ("bvc", _) -> fprintf fmt "#b%a" print_bv_const t
 
-      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul") as op, [_; a; b]) ->
+      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul"|"bvult"|"bvslt") as op,
+              [_; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
 
