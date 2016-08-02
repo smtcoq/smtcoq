@@ -33,7 +33,7 @@ Axiom proof_irrelevance : forall (P : Prop) (p1 p2 : P), p1 = p2.
 
 (* Variable _size : N. *)
 
-Definition _size := 32%N.
+Definition _size := 4%N.
 
 Module Type BITVECTOR.
 
@@ -321,6 +321,8 @@ Module Type BITVECTOR_FIXED.
   Parameter bv_subst  : bitvector -> bitvector -> bitvector.
 
   Parameter bv_mult   : bitvector -> bitvector -> bitvector.
+  Parameter bv_ult    : bitvector -> bitvector -> bool.
+  Parameter bv_slt    : bitvector -> bitvector -> bool.
 
   (* forall (bv1 bv2 : bitvector), (size bv1 = size bv2) -> bitvector. *)
   (* Parameter bv_xor    : forall n, bitvector n -> bitvector n -> bitvector n. *)
@@ -379,6 +381,8 @@ Parameter bv_subst   : bitvector -> bitvector -> bitvector.
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
 Parameter bv_neg     : bitvector -> bitvector.
+Parameter bv_ult     : bitvector -> bitvector -> bool.
+Parameter bv_slt     : bitvector -> bitvector -> bool.
 
 Parameter size_bv_and   : bitvector -> bitvector -> N.
 Parameter size_bv_or    : bitvector -> bitvector -> N.
@@ -477,8 +481,13 @@ Module RAW2BITVECTOR_FIXED (M:RAWBITVECTOR_FIXED) <: BITVECTOR_FIXED.
 
   Definition bv_not (bv1: bitvector) : bitvector :=
     @MkBitvector (M.bv_not bv1) (M.bv_not_size (wf bv1)).
+
   Definition bv_neg (bv1:bitvector) : bitvector :=
     @MkBitvector (M.bv_neg bv1) (M.bv_neg_size bv1).
+
+  Definition bv_ult (bv1 bv2: bitvector) : bool := M.bv_ult bv1 bv2.
+
+  Definition bv_slt (bv1 bv2: bitvector) : bool := M.bv_slt bv1 bv2.
 
   Lemma bits_size: forall bv, _size = (size bv).
   Proof. intros. unfold size. destruct bv0. simpl. easy. Qed.
@@ -763,6 +772,45 @@ Definition bv_subst (a b : bitvector) : bitvector :=
   if ((@size a) =? _size) && ((@size b) =? _size)
   then subst_list a b
   else zeros.
+
+  (*lt*)
+ 
+Fixpoint ult_list (x y: list bool) :=
+  match x, y with
+    | nil, _  => false
+    | _ , nil => false
+    | xi :: nil, yi :: nil => (andb (negb xi) yi)
+    | xi :: x', yi :: y' =>   (orb (andb (negb (xorb xi yi)) (ult_list x' y')) 
+                              (andb (negb xi) yi))
+  end.                    
+
+
+Definition rev_ult_list (x y: list bool) := (ult_list (rev x) (rev y)).
+
+Fixpoint slt_list (x y: list bool) :=
+  match x, y with
+    | nil, _  => false
+    | _ , nil => false
+    | xi :: nil, yi :: nil => (andb xi (negb yi))
+    | xi :: x', yi :: y'   => (orb (andb (negb (xorb xi yi)) (ult_list x' y')) (andb xi (negb yi)))
+  end.  
+
+Definition rev_slt_list (x y: list bool) := (slt_list (rev x) (rev y)).
+ 
+
+Definition bv_ult (a b : bitvector) : bool :=
+  if ((@size a) =? _size) && ((@size b) =? _size)
+    then rev_ult_list a b
+    else false.
+
+Definition bv_slt (a b : bitvector) : bool :=
+  if ((@size a) =? _size) && ((@size b) =? _size)
+    then rev_slt_list a b
+    else false.
+
+(*Eval compute in rev_slt_list [true; true; true; true] [true; true; true; false].*)
+
+
   (*multiplication*)
 
 Fixpoint mult_list_carry (a b :list bool) n {struct a}: list bool :=
@@ -808,7 +856,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int then nil
+  if (k == 0)%int63 then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
@@ -3010,7 +3058,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int then nil
+  if (k == 0)%int63 then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
