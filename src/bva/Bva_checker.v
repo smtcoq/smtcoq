@@ -18,9 +18,14 @@
 Require Import Int63 Int63Properties PArray.
 
 Add LoadPath "/home/burak/Desktop/fize/smtcoq/src/bva".
+Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/array".
+
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity Nnat.
 Require Import BinPos BinNat Pnat Init.Peano.
+
+Require FArray.
+
 Import ListNotations.
 Import Form.
 
@@ -602,7 +607,7 @@ Fixpoint ult_lit_list (bs1 bs2: list _lit) :=
                               (Cand (Cneg (Clit xi)) (Clit yi)))
   end.
 
-Definition rev_ult_lit_list (x y: list _lit) := (ult_lit_list (rev x) (rev y)).
+Definition rev_ult_lit_list (x y: list _lit) := (ult_lit_list (List.rev x) (List.rev y)).
 
   Definition check_ult (bs1 bs2: list _lit) (bsres: _lit) : bool :=
    eq_carry_lit (rev_ult_lit_list bs1 bs2) bsres.
@@ -616,7 +621,7 @@ Definition slt_lit_list (x y: list _lit) :=
                               (Cand (Clit xi) (Cneg (Clit yi))))
   end.
 
-Definition rev_slt_lit_list (x y: list _lit) := (slt_lit_list (rev x) (rev y)).
+Definition rev_slt_lit_list (x y: list _lit) := (slt_lit_list (List.rev x) (List.rev y)).
  
 Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool := 
   eq_carry_lit (rev_slt_lit_list bs1 bs2) bsres.
@@ -648,7 +653,6 @@ Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool :=
       else C._true
     | _, _ => C._true
     end.
-
 
 
   Definition check_bbSlt pos1 pos2 lres :=
@@ -3983,6 +3987,29 @@ Proof. intros.
            now inversion H.
 Qed.
 
+Lemma prop_check_ult2: forall bs1 bs2 bsres,
+  length bs1 = length bs2 ->
+check_ult bs1 bs2 bsres = true ->
+interp_carry (ult_lit_list (rev bs1) (rev bs2)) = Lit.interp rho bsres.
+Proof. Admitted.
+       
+
+Lemma prop_lit: forall bsres, 
+Lit.is_pos bsres ->
+Lit.interp
+  (interp_state_var (fun a0 : int => interp_bool t_i (t_interp .[ a0]))
+     interp_form_hatom_bv t_form) bsres =
+Form.interp (fun a0 : int => interp_bool t_i (t_interp .[ a0]))
+  interp_form_hatom_bv t_form (t_form .[ Lit.blit bsres]).
+Proof. intros.
+       rewrite <- rho_interp.
+       simpl.
+       unfold Lit.interp, Var.interp.
+       rewrite H.
+       simpl. easy.
+Qed.
+      
+
 Lemma valid_check_bbUlt pos1 pos2 lres : C.valid rho (check_bbUlt pos1 pos2 lres).
 Proof.
       unfold check_bbUlt.
@@ -4110,7 +4137,12 @@ Proof.
         apply Bool.eqb_prop in Heq12.
         rewrite Heq12.
         rewrite HSp1, HSp2.
+
+        case_eq (Lit.is_pos bsres).
+        intros Hpos.
         
+        
+        (** repeat here **)
         unfold BITVECTOR_LIST_FIXED.bv_ult.
         unfold RAWBITVECTOR_LIST_FIXED.bv_ult, RAWBITVECTOR_LIST_FIXED.bits.
         unfold BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
@@ -4123,8 +4155,7 @@ Proof.
         generalize (rho_interp (Lit.blit bsres)). simpl.
         intro Hbres. rewrite Hbres.
 *)
-        case_eq (Lit.is_pos bsres).
-        intros Hpos.
+
         
         rewrite andb_true_iff in Heq16.
         destruct Heq16 as (Heq16 & Heq16r).
@@ -4133,60 +4164,45 @@ Proof.
         do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
         rewrite map_length, Heq16r, N.compare_refl.
         rewrite andb_true_l.
-
-(*
-
-       cut (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2)) =? _size)%N.
-       intros Hbs2l.
-       rewrite Hbs2l. rewrite Hbs2l.
-       unfold RAWBITVECTOR_LIST_FIXED.rev_ult_list.
-       unfold BITVECTOR_LIST_FIXED.of_bits in HSp1.
-       unfold RAWBITVECTOR_LIST_FIXED.of_bits in HSp1.
-       unfold BITVECTOR_LIST_FIXED.bv in HSp1.
-       simpl.
-
-        rewrite (@prop_check_eq _ _ [bsres]). simpl.
-        rewrite andb_true_r. unfold Lit.interp, Var.interp.
-        generalize (rho_interp (Lit.blit bsres)). simpl.
-        intro Hbres. rewrite Hbres. simpl.
-        rewrite Hpos.
-        simpl. now unfold Atom.interp_form_hatom, interp_hatom.
-        exact Hleq.       
-        (*
-        intros Hpos.
-
-        contradict Heq16.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        simpl. rewrite Hpos. case bs2; auto.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        simpl. rewrite Hpos. case bs2; auto.
-        intros _ l; case l; auto.
-        simpl. rewrite Hpos. case bs2; auto.
-        intros _ l; case l; auto.
-        apply length_check_eq in Heq16; auto.
-*)
-        exact Heq16.
-
-        intros Hpos.
-        rewrite andb_true_iff in Heq16.
-        destruct Heq16 as (Heq16 & Heq16r).
-
-        contradict Heq16.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        simpl. rewrite Hpos. case bs2; auto.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        intros _ l; case l; auto.
-        
-        pose proof Heq16 as Heq16'.
          
-        rewrite andb_true_iff in Heq16.
-        destruct Heq16 as (Heq16 & Heq16r).
-        apply length_check_eq in Heq16; auto.
-
-*)
-Admitted.   
+        cut (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2)) =? _size)%N.
+        intros Hbs2l.
+        rewrite Hbs2l. rewrite Hbs2l.
+        
+        unfold RAWBITVECTOR_LIST_FIXED.rev_ult_list.
+        remember prop_check_ult.
+        specialize (@prop_check_ult (List.rev bs1) (List.rev bs2)).
+        intros.
+        cut ( Datatypes.length (List.rev bs1) = Datatypes.length (List.rev bs2)).
+        intros. specialize (H6 H7).
+        do 2 rewrite <- List.map_rev.
+        rewrite H6.
+ 
+        pose proof (rho_interp).
+        specialize (H8 (Lit.blit a)).
+        rewrite Heq10 in H8.
+        simpl in H8.
+        
+        remember (prop_check_ult2).
+        rewrite !rev_length in H7.
+        specialize (@prop_check_ult2 bs1 bs2 bsres H7 Heq16).
+        intros.
+        rewrite H9.
+        simpl.       
+        unfold Atom.interp_form_hatom, interp_hatom.
+        simpl.
+        now rewrite prop_lit.
+        
+        admit.
+        admit.
+        
+        intros. apply f_equal.
+        admit (** from repeat here**).
+        
+        (** contradictions **)
+        intros. rewrite H4 in H0. now contradict H4.
+        intros. rewrite H4 in H0. now contradict H4.
+Qed.
 
 
 Lemma check_add_list:forall bs1 bs2 bsres c, 
