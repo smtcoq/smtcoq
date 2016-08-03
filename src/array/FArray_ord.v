@@ -16,7 +16,7 @@ Hint Resolve eq_refl eq_trans.
 Class OrdType T := {
   lt: T -> T -> Prop;
   lt_trans : forall x y z : T, lt x y -> lt y z -> lt x z;
-  lt_not_eq : forall x y : T, lt x y -> ~ eq x y;
+  lt_not_eq : forall x y : T, lt x y -> ~ eq x y
   (* compare : forall x y : T, Compare lt eq x y *)
 }.
 
@@ -52,10 +52,10 @@ Module Raw.
   Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
 
   Lemma eqb_key_eq x y : eqb_key x y = true <-> x = y.
-  Proof. unfold eqb_key. case (eq_dec x y); easy. Qed.
+  Proof. unfold eqb_key. case (eq_dec x y); split; easy. Qed.
 
   Lemma eqb_elt_eq x y : eqb_elt x y = true <-> x = y.
-  Proof. unfold eqb_elt. case (eq_dec x y); easy. Qed.
+  Proof. unfold eqb_elt. case (eq_dec x y); split; easy. Qed.
 
   Hint Immediate eqb_key_eq eqb_elt_eq.
   
@@ -1281,8 +1281,6 @@ Section FArray.
     destruct (compare x' x); auto; try (subst; apply lt_not_eq in l; now contradict l).
     apply (lt_trans x) in l; auto. subst. apply lt_not_eq in l; now contradict l.
   Qed.
-
-
   (* TODO *)
 
   
@@ -1322,7 +1320,6 @@ Section FArray.
     apply add_neq_mapsto_iff; auto.
   Qed.
   Hint Resolve add_neq_o.
-
 
 
 
@@ -1384,7 +1381,6 @@ Section FArray.
     intros; rewrite Equal_Equiv.
     apply Equiv_Equivb; auto.
   Qed.
-
   
 
   (** * Functional arrays *)
