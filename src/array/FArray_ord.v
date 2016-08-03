@@ -969,7 +969,10 @@ Section FArray.
     {this :> Raw.farray key elt; sorted : sort (Raw.ltk key_ord) this}.
   Definition farray := slist.
 
-
+  (* Boolean comparison over elements *)
+  Definition cmp (e e':elt) :=
+    match compare e e' with EQ _ => true | _ => false end.
+  
   Definition empty : farray := Build_slist (Raw.empty_sorted elt key_ord).
   Definition is_empty m : bool := Raw.is_empty m.(this).
   Definition add x e m : farray :=
@@ -982,17 +985,17 @@ Section FArray.
   Definition cardinal m := length m.(this).
   Definition fold (A:Type)(f:key->elt->A->A) m (i:A) : A :=
     Raw.fold f m.(this) i.
-  Definition equal cmp m m' : bool := Raw.equal key_comp cmp m.(this) m'.(this).
+  Definition equal m m' : bool := Raw.equal key_comp cmp m.(this) m'.(this).
 
   Definition MapsTo x e m : Prop := Raw.MapsTo x e m.(this).
   Definition In x m : Prop := Raw.In x m.(this).
   Definition Empty m : Prop := Raw.Empty m.(this).
 
   Definition Equal m m' := forall y, find y m = find y m'.
-  Definition Equiv (eq_elt:elt->elt->Prop) m m' :=
+  Definition Equiv m m' :=
     (forall k, In k m <-> In k m') /\
-    (forall k e e', MapsTo k e m -> MapsTo k e' m' -> eq_elt e e').
-  Definition Equivb cmp m m' : Prop := Raw.Equivb  cmp m.(this) m'.(this).
+    (forall k e e', MapsTo k e m -> MapsTo k e' m' -> e = e').
+  Definition Equivb m m' : Prop := Raw.Equivb cmp m.(this) m'.(this).
 
   Definition eq_key : (key*elt) -> (key*elt) -> Prop := @Raw.eqk key elt.
   Definition eq_key_elt : (key*elt) -> (key*elt) -> Prop:= @Raw.eqke key elt.
@@ -1050,16 +1053,12 @@ Section FArray.
       fold f m i = fold_left (fun a p => f (fst p) (snd p) a) (elements m) i.
   Proof. intros m; apply Raw.fold_1. Qed.
 
-  Lemma equal_1 : forall m m' cmp, Equivb cmp m m' -> equal cmp m m' = true.
+  Lemma equal_1 : forall m m', Equivb m m' -> equal m m' = true.
   Proof. intros m m'; apply Raw.equal_1; auto. apply m.(sorted). apply  m'.(sorted). Qed.
-  Lemma equal_2 : forall m m' cmp, equal cmp m m' = true -> Equivb cmp m m'.
+  Lemma equal_2 : forall m m', equal m m' = true -> Equivb m m'.
   Proof. intros m m'; apply Raw.equal_2; auto. apply m.(sorted). apply  m'.(sorted). Qed.
 
 
-
-  
-  Definition cmp (e e':elt) :=
-    match compare e e' with EQ _ => true | _ => false end.
 
 
   Fixpoint eq_list (m m' : list (key * elt)) : Prop :=
@@ -1075,7 +1074,7 @@ Section FArray.
 
   Definition eq m m' := eq_list m.(this) m'.(this).
 
-  Lemma eq_equal : forall m m', eq m m' <-> equal cmp m m' = true.
+  Lemma eq_equal : forall m m', eq m m' <-> equal m m' = true.
   Proof.
     intros (l,Hl); induction l.
     intros (l',Hl'); unfold eq; simpl.
@@ -1107,18 +1106,18 @@ Section FArray.
     unfold equal, eq in H6; simpl in H6; auto.
   Qed.
 
-  Lemma eq_1 : forall m m', Equivb cmp m m' -> eq m m'.
+  Lemma eq_1 : forall m m', Equivb m m' -> eq m m'.
   Proof.
     intros.
-    generalize (@equal_1 m m' cmp).
+    generalize (@equal_1 m m').
     generalize (@eq_equal m m').
     intuition.
   Qed.
 
-  Lemma eq_2 : forall m m', eq m m' -> Equivb cmp m m'.
+  Lemma eq_2 : forall m m', eq m m' -> Equivb m m'.
   Proof.
     intros.
-    generalize (@equal_2 m m' cmp).
+    generalize (@equal_2 m m').
     generalize (@eq_equal m m').
     intuition.
   Qed.
@@ -1258,10 +1257,12 @@ Section FArray.
     unfold lt_farray. simpl.
     destruct (compare x x'); auto.
     subst. apply lt_not_eq in l; now contradict l.
-    apply (lt_trans x') in l.
-    subst. apply lt_not_eq in l; now contradict l.
-    auto.
-    subst.
+    apply (lt_trans x') in l; auto. subst. apply lt_not_eq in l; now contradict l.
+    (* subst. *)
+    destruct (compare e e');
+      [ apply LT | | apply GT ].
+    unfold lt_farray. simpl.
+    destruct (compare x x'); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
     assert (Hm11 : sort (Raw.ltk key_ord) m1).
     inversion_clear Hm1; auto.
     assert (Hm22 : sort (Raw.ltk key_ord) m2).
@@ -1269,15 +1270,17 @@ Section FArray.
     destruct (IHm1 Hm11 (Build_slist Hm22));
       [ apply LT | apply EQ | apply GT ].
     unfold lt_farray in *. simpl.
-    destruct (compare x' x'); auto.
-    right. split; auto.
-    apply LT.
-    cmp_solve.
+    destruct (compare x x'); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
+    unfold eq in *. simpl.
+    destruct (compare x x'); auto; try (subst; apply lt_not_eq in l; now contradict l).
+    unfold lt_farray in *. simpl.
+    destruct (compare x' x); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
+    unfold lt_farray in *. simpl.
+    destruct (compare x' x); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
+    unfold lt_farray in *. simpl.
+    destruct (compare x' x); auto; try (subst; apply lt_not_eq in l; now contradict l).
+    apply (lt_trans x) in l; auto. subst. apply lt_not_eq in l; now contradict l.
   Qed.
-
-  
-
-
 
 
   (* TODO *)
@@ -1293,27 +1296,27 @@ Section FArray.
     symmetry; rewrite <- H; auto.
   Qed.
 
-  Lemma find_mapsto_iff : forall m x e, _MapsTo x e m <-> _find x m = Some e.
+  Lemma find_mapsto_iff : forall m x e, MapsTo x e m <-> find x m = Some e.
   Proof.
-    split; [apply _find_1|apply _find_2].
+    split; [apply find_1|apply find_2].
   Qed.
 
   Lemma add_neq_mapsto_iff : forall m x y e e',
-      x <> y -> (_MapsTo y e' (_add x e m)  <-> _MapsTo y e' m).
+      x <> y -> (MapsTo y e' (add x e m)  <-> MapsTo y e' m).
   Proof.
-    split; [apply _add_3|apply _add_2]; auto.
+    split; [apply add_3|apply add_2]; auto.
   Qed.
 
 
- Lemma add_eq_o : forall m x y e,
-      x = y -> _find y (_add x e m) = Some e.
+  Lemma add_eq_o : forall m x y e,
+      x = y -> find y (add x e m) = Some e.
   Proof. intros.
-    apply _find_1.
-    apply _add_1. auto.
-Qed.
+    apply find_1.
+    apply add_1. auto.
+  Qed.
 
   Lemma add_neq_o : forall m x y e,
-      ~ x = y -> _find y (_add x e m) = _find y m.
+      ~ x = y -> find y (add x e m) = find y m.
   Proof.
     intros. rewrite eq_option_alt. intro e'. rewrite <- 2 find_mapsto_iff.
     apply add_neq_mapsto_iff; auto.
@@ -1324,10 +1327,10 @@ Qed.
 
 
   Lemma MapsTo_fun : forall m x (e e':elt),
-      _MapsTo x e m -> _MapsTo x e' m -> e=e'.
+      MapsTo x e m -> MapsTo x e' m -> e=e'.
   Proof.
     intros.
-    generalize (_find_1 H) (_find_1 H0); clear H H0.
+    generalize (find_1 H) (find_1 H0); clear H H0.
     intros; rewrite H in H0; injection H0; auto.
   Qed.
 
@@ -1335,7 +1338,7 @@ Qed.
   (** Another characterisation of [Equal] *)
 
   Lemma Equal_mapsto_iff : forall m1 m2 : farray,
-      _Equal m1 m2 <-> (forall k e, _MapsTo k e m1 <-> _MapsTo k e m2).
+      Equal m1 m2 <-> (forall k e, MapsTo k e m1 <-> MapsTo k e m2).
   Proof.
     intros m1 m2. split; [intros Heq k e|intros Hiff].
     rewrite 2 find_mapsto_iff, Heq. split; auto.
@@ -1348,35 +1351,35 @@ Qed.
   (** First, [Equal] is [Equiv] with Leibniz on elements. *)
 
   Lemma Equal_Equiv : forall (m m' : farray),
-      _Equal m m' <-> _Equiv m m'.
+      Equal m m' <-> Equiv m m'.
   Proof.
     intros. rewrite Equal_mapsto_iff. split; intros.
     split.
-    split; intros (e,Hin); exists e; unfold _MapsTo in H; [rewrite <- H|rewrite H]; auto.
+    split; intros (e,Hin); exists e; unfold MapsTo in H; [rewrite <- H|rewrite H]; auto.
     intros; apply MapsTo_fun with m k; auto; rewrite H; auto.
     split; intros H'.
     destruct H.
-    assert (Hin : _In k m') by (rewrite <- H; exists e; auto).
+    assert (Hin : In k m') by (rewrite <- H; exists e; auto).
     destruct Hin as (e',He').
     rewrite (H0 k e e'); auto.
     destruct H.
-    assert (Hin : _In k m) by (rewrite H; exists e; auto).
+    assert (Hin : In k m) by (rewrite H; exists e; auto).
     destruct Hin as (e',He').
     rewrite <- (H0 k e' e); auto.
   Qed.
 
-  Lemma Equiv_Equivb : forall m m', _Equiv m m' <-> _Equivb m m'.
+  Lemma Equiv_Equivb : forall m m', Equiv m m' <-> Equivb m m'.
   Proof.
-    unfold _Equivb, _Equiv, Equivb; intuition.
-    rewrite eqb_elt_eq; apply H1 with k; unfold _MapsTo; auto.
-    rewrite <- eqb_elt_eq; apply H1 with k; unfold _MapsTo; auto.
+    unfold Equiv, Equivb, Raw.Equivb, cmp; intuition; specialize (H1 k e e' H H2).
+    destruct (compare e e'); auto; apply lt_not_eq in l; auto.
+    destruct (compare e e'); auto; now contradict H1.
   Qed.
 
 
   (** Composition of the two last results: relation between [Equal]
     and [Equivb]. *)
 
-  Lemma Equal_Equivb : forall (m m':farray), _Equal m m' <-> _Equivb m m'.
+  Lemma Equal_Equivb : forall (m m':farray), Equal m m' <-> Equivb m m'.
   Proof.
     intros; rewrite Equal_Equiv.
     apply Equiv_Equivb; auto.
@@ -1387,10 +1390,10 @@ Qed.
   (** * Functional arrays *)
 
   
-  Definition select (a: farray) (i: key) : option elt := _find i a.
+  Definition select (a: farray) (i: key) : option elt := find i a.
 
 
-  Definition store (a: farray) (i: key) (v: elt) : farray := _add i v a.
+  Definition store (a: farray) (i: key) (v: elt) : farray := add i v a.
 
 
   Lemma read_over_same_write : forall a i j v, i = j -> select (store a i v) j = Some v.
@@ -1412,16 +1415,16 @@ Qed.
 
   (* TODO *)
   Lemma find_ext_dec:
-    (forall m1 m2: farray, _Equal m1 m2 -> (_equal m1 m2) = true).
+    (forall m1 m2: farray, Equal m1 m2 -> (equal m1 m2) = true).
   Proof. intros.
     apply Equal_Equivb in H.
-    apply _equal_1.
+    apply equal_1.
     exact H.
   Qed.
 
 
   Lemma extensionnality : forall a b,
-      (forall i, select a i = select b i) -> _equal a b = true.
+      (forall i, select a i = select b i) -> equal a b = true.
   Proof.
     intros.
     unfold select in H.
@@ -1429,13 +1432,30 @@ Qed.
     exact H.
   Qed.
 
-  Definition eq a b := _equal a b = true.
+  Require Import ProofIrrelevance.
   
-  Lemma equal_eq : forall a b, _equal a b = true -> eq a b.
-  Proof. unfold eq. auto. Qed.
+  Lemma equal_eq : forall a b, equal a b = true -> a = b.
+  Proof. intros. apply eq_equal in H.
+    destruct a as (a, asort), b as (b, bsort).
+    unfold eq in H.
+    revert b bsort H.
+    induction a; intros; destruct b.
+    apply f_equal. apply proof_irrelevance.
+    simpl in H. now contradict H.
+    simpl in H. destruct a; now contradict H.
+    simpl in H. destruct a, p.
+    destruct (compare k k0); auto; try (now contradict H).
+    destruct H.
+    subst.
+    inversion_clear asort.
+    inversion_clear bsort.
+    specialize (IHa H b H2 H0).
+    inversion IHa. subst.
+    apply f_equal.  apply proof_irrelevance.
+ Qed.
 
   
-End Array.
+End FArray.
 
 
 (* 
