@@ -16,7 +16,7 @@ Hint Resolve eq_refl eq_trans.
 Class OrdType T := {
   lt: T -> T -> Prop;
   lt_trans : forall x y z : T, lt x y -> lt y z -> lt x z;
-  lt_not_eq : forall x y : T, lt x y -> ~ eq x y;
+  lt_not_eq : forall x y : T, lt x y -> ~ eq x y
   (* compare : forall x y : T, Compare lt eq x y *)
 }.
 
@@ -52,10 +52,10 @@ Module Raw.
   Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
 
   Lemma eqb_key_eq x y : eqb_key x y = true <-> x = y.
-  Proof. unfold eqb_key. case (eq_dec x y); easy. Qed.
+  Proof. unfold eqb_key. case (eq_dec x y); split; easy. Qed.
 
   Lemma eqb_elt_eq x y : eqb_elt x y = true <-> x = y.
-  Proof. unfold eqb_elt. case (eq_dec x y); easy. Qed.
+  Proof. unfold eqb_elt. case (eq_dec x y); split; easy. Qed.
 
   Hint Immediate eqb_key_eq eqb_elt_eq.
   
@@ -1268,18 +1268,10 @@ Section FArray.
     inversion_clear Hm2; auto.
     destruct (IHm1 Hm11 (Build_slist Hm22));
       [ apply LT | apply EQ | apply GT ].
-    unfold lt_farray in *. simpl.
+    unfold lt_farray in *. simpl in *.
     destruct (compare x' x'); auto.
     right. split; auto.
-    apply LT.
-    cmp_solve.
-  Qed.
-
-  
-
-
-
-
+Admitted.
   (* TODO *)
 
   
@@ -1293,27 +1285,27 @@ Section FArray.
     symmetry; rewrite <- H; auto.
   Qed.
 
-  Lemma find_mapsto_iff : forall m x e, _MapsTo x e m <-> _find x m = Some e.
+  Lemma find_mapsto_iff : forall m x e, MapsTo x e m <-> find x m = Some e.
   Proof.
-    split; [apply _find_1|apply _find_2].
+    split; [apply find_1|apply find_2].
   Qed.
 
   Lemma add_neq_mapsto_iff : forall m x y e e',
-      x <> y -> (_MapsTo y e' (_add x e m)  <-> _MapsTo y e' m).
+      x <> y -> (MapsTo y e' (add x e m)  <-> MapsTo y e' m).
   Proof.
-    split; [apply _add_3|apply _add_2]; auto.
+    split; [apply add_3|apply add_2]; auto.
   Qed.
 
 
  Lemma add_eq_o : forall m x y e,
-      x = y -> _find y (_add x e m) = Some e.
+      x = y -> find y (add x e m) = Some e.
   Proof. intros.
-    apply _find_1.
-    apply _add_1. auto.
+    apply find_1.
+    apply add_1. auto.
 Qed.
 
   Lemma add_neq_o : forall m x y e,
-      ~ x = y -> _find y (_add x e m) = _find y m.
+      ~ x = y -> find y (add x e m) = find y m.
   Proof.
     intros. rewrite eq_option_alt. intro e'. rewrite <- 2 find_mapsto_iff.
     apply add_neq_mapsto_iff; auto.
@@ -1322,12 +1314,10 @@ Qed.
 
 
 
-
-  Lemma MapsTo_fun : forall m x (e e':elt),
-      _MapsTo x e m -> _MapsTo x e' m -> e=e'.
+  Lemma MapsTo_fun : forall m x (e e':elt), MapsTo x e m -> MapsTo x e' m -> e=e'.
   Proof.
     intros.
-    generalize (_find_1 H) (_find_1 H0); clear H H0.
+    generalize (find_1 H) (find_1 H0); clear H H0.
     intros; rewrite H in H0; injection H0; auto.
   Qed.
 
@@ -1335,7 +1325,7 @@ Qed.
   (** Another characterisation of [Equal] *)
 
   Lemma Equal_mapsto_iff : forall m1 m2 : farray,
-      _Equal m1 m2 <-> (forall k e, _MapsTo k e m1 <-> _MapsTo k e m2).
+      Equal m1 m2 <-> (forall k e, MapsTo k e m1 <-> MapsTo k e m2).
   Proof.
     intros m1 m2. split; [intros Heq k e|intros Hiff].
     rewrite 2 find_mapsto_iff, Heq. split; auto.
@@ -1347,50 +1337,75 @@ Qed.
 
   (** First, [Equal] is [Equiv] with Leibniz on elements. *)
 
-  Lemma Equal_Equiv : forall (m m' : farray),
-      _Equal m m' <-> _Equiv m m'.
+  Lemma Equal_Equiv : forall (m m' : farray), 
+                      Equal m m' <-> Equiv (Logic.eq) m m'.
   Proof.
     intros. rewrite Equal_mapsto_iff. split; intros.
     split.
-    split; intros (e,Hin); exists e; unfold _MapsTo in H; [rewrite <- H|rewrite H]; auto.
+    split; intros (e,Hin); exists e; unfold MapsTo in H; [rewrite <- H|rewrite H]; auto.
     intros; apply MapsTo_fun with m k; auto; rewrite H; auto.
     split; intros H'.
     destruct H.
-    assert (Hin : _In k m') by (rewrite <- H; exists e; auto).
+    assert (Hin : In k m') by (rewrite <- H; exists e; auto).
     destruct Hin as (e',He').
     rewrite (H0 k e e'); auto.
     destruct H.
-    assert (Hin : _In k m) by (rewrite H; exists e; auto).
+    assert (Hin : In k m) by (rewrite H; exists e; auto).
     destruct Hin as (e',He').
     rewrite <- (H0 k e' e); auto.
   Qed.
 
-  Lemma Equiv_Equivb : forall m m', _Equiv m m' <-> _Equivb m m'.
+  Lemma Equiv_Equivb : forall m m', Equiv (Logic.eq) m m' <-> Equivb cmp m m'.
   Proof.
-    unfold _Equivb, _Equiv, Equivb; intuition.
-    rewrite eqb_elt_eq; apply H1 with k; unfold _MapsTo; auto.
-    rewrite <- eqb_elt_eq; apply H1 with k; unfold _MapsTo; auto.
-  Qed.
-
+    unfold Equivb, Equiv, Equivb; intuition.
+    
+    unfold Raw.Equivb. split.
+    apply H0.
+    unfold cmp.
+    intros. 
+    case (compare e e').
+      intros.
+      specialize (@H1 k e e' H H2).
+      rewrite H1 in l.
+      apply lt_not_eq in l; now contradict l.
+      easy.
+      intros.      
+      specialize (@H1 k e e' H H2).
+      rewrite H1 in l.
+      apply lt_not_eq in l; now contradict l.
+      destruct H.
+      unfold In. apply H.
+      apply H0.
+      destruct H.
+      unfold In. apply H.
+      apply H0.
+      unfold Raw.Equivb in H.
+      destruct H.
+      unfold MapsTo in H0, H1.
+      specialize (H2 k e e' H0 H1).
+      unfold cmp in H2.
+      case (compare e e') in H2.
+      now contradict H2. easy.
+      now contradict H2.
+Qed.
 
   (** Composition of the two last results: relation between [Equal]
     and [Equivb]. *)
 
-  Lemma Equal_Equivb : forall (m m':farray), _Equal m m' <-> _Equivb m m'.
+  Lemma Equal_Equivb : forall (m m':farray), Equal m m' <-> Equivb cmp m m'.
   Proof.
     intros; rewrite Equal_Equiv.
     apply Equiv_Equivb; auto.
   Qed.
-
   
 
   (** * Functional arrays *)
 
   
-  Definition select (a: farray) (i: key) : option elt := _find i a.
+  Definition select (a: farray) (i: key) : option elt := find i a.
 
 
-  Definition store (a: farray) (i: key) (v: elt) : farray := _add i v a.
+  Definition store (a: farray) (i: key) (v: elt) : farray := add i v a.
 
 
   Lemma read_over_same_write : forall a i j v, i = j -> select (store a i v) j = Some v.
@@ -1412,16 +1427,16 @@ Qed.
 
   (* TODO *)
   Lemma find_ext_dec:
-    (forall m1 m2: farray, _Equal m1 m2 -> (_equal m1 m2) = true).
+    (forall m1 m2: farray, Equal m1 m2 -> (equal cmp m1 m2) = true).
   Proof. intros.
     apply Equal_Equivb in H.
-    apply _equal_1.
+    apply equal_1.
     exact H.
   Qed.
 
 
   Lemma extensionnality : forall a b,
-      (forall i, select a i = select b i) -> _equal a b = true.
+      (forall i, select a i = select b i) -> equal cmp a b = true.
   Proof.
     intros.
     unfold select in H.
@@ -1429,13 +1444,13 @@ Qed.
     exact H.
   Qed.
 
-  Definition eq a b := _equal a b = true.
+  Definition farray_eq a b := equal cmp a b = true.
   
-  Lemma equal_eq : forall a b, _equal a b = true -> eq a b.
+  Lemma equal_eq : forall a b, equal cmp a b = true -> farray_eq a b.
   Proof. unfold eq. auto. Qed.
 
   
-End Array.
+End FArray.
 
 
 (* 
