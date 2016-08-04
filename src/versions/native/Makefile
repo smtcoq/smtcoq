@@ -48,6 +48,7 @@ OCAMLLIBS?=-I versions/native\
   -I lfsc\
   -I euf\
   -I cnf\
+  -I array\
   -I bva
 COQLIBS?=-I versions/native\
   -I zchaff\
@@ -58,6 +59,7 @@ COQLIBS?=-I versions/native\
   -I lfsc\
   -I euf\
   -I cnf\
+  -I array\
   -I bva -R . SMTCoq
 COQDOCLIBS?=-R . SMTCoq
 
@@ -150,6 +152,7 @@ VFILES:=Trace.v\
   lia/Lia.v\
   euf/Euf.v\
   cnf/Cnf.v\
+  array/FArray.v\
   bva/Bva_checker.v\
   bva/BVList.v
 

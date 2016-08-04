@@ -22,6 +22,7 @@
 -R . SMTCoq
 
 -I bva
+-I array
 -I cnf
 -I euf
 -I lfsc
@@ -65,6 +66,8 @@ versions/standard/structures.ml
 
 bva/BVList.v
 bva/Bva_checker.v
+
+array/FArray.v
 
 trace/coqTerms.ml
 trace/satAtom.ml

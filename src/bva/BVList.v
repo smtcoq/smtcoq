@@ -788,6 +788,7 @@ Fixpoint ult_list (x y: list bool) :=
 
 Definition rev_ult_list (x y: list bool) := (ult_list (List.rev x) (List.rev y)).
 
+
 Fixpoint slt_list (x y: list bool) :=
   match x, y with
     | nil, _  => false
@@ -935,6 +936,112 @@ Proof.
   unfold bv_eq. unfold bits. apply List_eq.
 Qed.
 
+
+
+Lemma ult_list_trans : forall x y z, ult_list x y = true -> ult_list y z = true -> ult_list x z = true.
+Proof.
+  intros x. induction x.
+  simpl. easy.
+  intros y z.
+  case y.
+  simpl. case x; easy.
+  intros b l.
+  intros.
+  simpl in *. case x in *.
+  case z in *. simpl in H0. case l in *; easy.
+  case l in *.
+  rewrite andb_true_iff in H.
+  destruct H.
+  apply negb_true_iff in H. subst.
+  simpl. case z in *. easy.
+  rewrite !orb_true_iff, !andb_true_iff in H0.
+  destruct H0.
+  destruct H.
+  apply Bool.eqb_prop in H.
+  subst.
+  rewrite orb_true_iff. now right.
+  destruct H. easy.
+  rewrite !orb_true_iff, !andb_true_iff in H, H0.
+  destruct H.
+  simpl in H. easy.
+  destruct H.
+  apply negb_true_iff in H. subst.
+  simpl.
+  destruct H0.
+  destruct H.
+  apply Bool.eqb_prop in H.
+  subst.
+  case z; easy.
+  destruct H. easy.
+  case l in *.
+  rewrite !orb_true_iff, !andb_true_iff in H.
+  simpl in H. destruct H. destruct H. case x in H1; easy.
+  destruct H.
+  apply negb_true_iff in H. subst.
+  simpl in H0.
+  case z in *; try easy.
+  case z in *; simpl in H0; try easy.
+  case b in H0; simpl in H0; try easy.
+  case z in *; try easy.
+  rewrite !orb_true_iff, !andb_true_iff in *.
+  destruct H.
+  destruct H.
+  destruct H0.
+  destruct H0.
+  apply Bool.eqb_prop in H.
+  apply Bool.eqb_prop in H0.
+  subst.
+  left.
+  split.
+  apply Bool.eqb_reflx.
+  now apply (IHx (b1 :: l) z H1 H2).
+  right. apply Bool.eqb_prop in H. now subst.
+  right. destruct H0, H0.
+  apply Bool.eqb_prop in H0. now subst.
+  easy.
+Qed.  
+  
+
+Lemma rev_ult_list_trans : forall x y z,
+    rev_ult_list x y = true -> rev_ult_list y z = true -> rev_ult_list x z = true.
+Proof. unfold rev_ult_list. intros x y z. apply ult_list_trans.
+Qed.
+
+
+Lemma ult_list_not_eq : forall x y, ult_list x y = true -> x <> y.
+Proof.
+  intros x. induction x.
+  simpl. easy.
+  intros y.
+  case y.
+  simpl. case x; easy.
+  intros b l.
+  simpl.
+  specialize (IHx l).
+  case x in *.
+  simpl.
+  case l in *. case a; case b; simpl; easy.
+  easy.
+  rewrite !orb_true_iff, !andb_true_iff.
+  intro.
+  destruct H.
+  destruct H.
+  apply IHx in H0.
+  apply Bool.eqb_prop in H.
+  rewrite H in *.
+  unfold not in *; intro.
+  inversion H1; subst. now apply H0.
+  destruct H.
+  apply negb_true_iff in H. subst. easy.
+Qed.  
+
+Lemma rev_ult_list_not_eq : forall x y, rev_ult_list x y = true -> x <> y.
+Proof. unfold rev_ult_list.
+  unfold not. intros.
+  apply ult_list_not_eq in H.
+  subst. auto.
+Qed.
+  
 (*
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = n + m.
 Proof.
