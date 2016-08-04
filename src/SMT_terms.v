@@ -337,12 +337,12 @@ Module Typ.
   Notation index := int (only parsing).
 
   Inductive type :=
+  | TFArray : type -> type -> type
   | Tindex : index -> type
   | TZ : type
   | Tbool : type
   | Tpositive : type
-  | TBV : type
-  (* | TFArray : type -> type -> type. *).
+  | TBV : type.
   
   Definition ftype := (list type * type)%type.
 
@@ -424,14 +424,14 @@ Module Typ.
       split; try auto.
       intros; subst; auto.
       apply Bool.bool_dec.
-    Qed.
+    Defined.
 
     Instance Z_dec : DecType Z.
     Proof.
       split; try auto.
       intros; subst; auto.
       apply Z.eq_dec.
-    Qed.
+    Defined.
 
 
     Instance Positive_dec : DecType positive.
@@ -439,7 +439,7 @@ Module Typ.
       split; try auto.
       intros; subst; auto.
       apply Pos.eq_dec.
-    Qed.
+    Defined.
 
 
     Instance BV_dec : DecType BITVECTOR_LIST_FIXED.bitvector.
@@ -454,7 +454,7 @@ Module Typ.
       apply not_true_iff_false in H.
       unfold not in H.
       apply H. now apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
-    Qed.
+    Defined.
 
     Instance TI_dec i : DecType (t_i.[i]).(te_carrier).
     Proof.
@@ -467,7 +467,7 @@ Module Typ.
       left. now apply H.
       right. unfold not in *. intros. apply H in H1.
       now rewrite H0 in H1.
-    Qed.
+    Defined.
 
     Instance FArray_dec key elt
              (key_ord: OrdType key)
@@ -493,10 +493,10 @@ Module Typ.
       apply eq_equal.
       apply eqfarray_refl.
       auto.
-    Qed.
+    Defined.
 
 
-    Instance Bool_comp: Comparable bool.
+    Instance bool_comp: Comparable bool.
     Proof.
       constructor.
       intros x y.
@@ -512,20 +512,20 @@ Module Typ.
       apply OrderedType.GT.
       unfold lt, bool_ord, lt_bool. auto.
       case x in *; case y in *; auto.
-    Qed.
+    Defined.
     
 
     Instance Z_comp: Comparable Z.
     Proof.
       constructor.
       apply Z_as_OT.compare.
-    Qed.
+    Defined.
 
     Instance Positive_comp: Comparable positive.
     Proof.
       constructor.
       apply Positive_as_OT.compare.
-    Qed.
+    Defined.
 
 
     Instance BV_comp: Comparable BITVECTOR_LIST_FIXED.bitvector.
@@ -555,45 +555,93 @@ Module Typ.
     specialize (t_i.[i].(te_reflect) x y); intros.
     apply reflect_iff in H. apply H. auto.
     unfold lt, TI_ord. auto.
-    Qed.
+    Defined.
+
+
+    Instance FArray_comp key elt
+             (key_ord: OrdType key)
+             (elt_ord: OrdType elt)
+             (elt_dec: DecType elt)
+             (key_comp: Comparable key)
+             (elt_comp: Comparable elt) : Comparable (farray elt key_ord).
+    Admitted.
+
     
-    Fixpoint interp (t:type) :=
-      match t with
-      | Tindex i => (t_i.[i]).(te_carrier)
-      | TZ => Z
-      | Tbool => bool
-      | Tpositive => positive
-      | TBV => BITVECTOR_LIST_FIXED.bitvector
-      (* | TFArray i e => farray (interp i) (interp e) *)
-      end.
+    Check existT.
+    Fixpoint even x := match x with O => True | S x => ~ (even x) end.
+    Lemma eO : even O. simpl; auto. Qed.
+    Check (existT _ O eO).
 
-    Fixpoint interp_ord (t:type) :=
-      match t as t' return (OrdType (interp t')) with
-      | Tindex i => TI_ord i
-      | TZ => Z_ord
-      | Tbool => bool_ord
-      | Tpositive => Positive_ord
-      | TBV => BV_ord
-      end.
+    Class CompDec := {
+      ty : Type;
+      Decidable :> DecType ty;       
+      Ordered :> OrdType ty;       
+      Comp :> Comparable ty
+    }.
 
-    Fixpoint interp_dec (t:type) :=
-      match t as t' return (DecType (interp t')) with
-      | Tindex i => TI_dec i
-      | TZ => Z_dec
-      | Tbool => bool_dec
-      | Tpositive => Positive_dec
-      | TBV => BV_dec
-      end.
+
+    Definition type_compdec (cd : CompDec) :=
+      let (ty, _, _, _) := cd in ty.
     
-    Fixpoint interp_comp (t:type) :=
-      match t as t' return (@Comparable (interp t') (interp_ord t')) with
-      | Tindex i => TI_comp i
-      | TZ => Z_comp
-      | Tbool => Bool_comp
-      | Tpositive => Positive_comp
-      | TBV => BV_comp
+    Instance bool_compdec : CompDec := {|
+      ty := bool;
+      Decidable := bool_dec;                                    
+      Ordered := bool_ord;                                    
+      Comp := bool_comp
+    |}.
+
+    Instance Z_compdec : CompDec := {|
+      ty := Z;
+      Decidable := Z_dec;                                    
+      Ordered := Z_ord;                                    
+      Comp := Z_comp
+    |}.
+
+    Instance Positive_compdec : CompDec := {|
+      ty := positive;
+      Decidable := Positive_dec;                                    
+      Ordered := Positive_ord;                                    
+      Comp := Positive_comp
+    |}.
+
+    Instance BV_compdec : CompDec := {|
+      ty := BITVECTOR_LIST_FIXED.bitvector;
+      Decidable := BV_dec;                                    
+      Ordered := BV_ord;                                    
+      Comp := BV_comp
+    |}.
+
+    Instance TI_compdec i : CompDec := {|
+      ty := (t_i.[i]).(te_carrier);
+      Decidable := TI_dec i;
+      Ordered := TI_ord i;
+      Comp := TI_comp i
+    |}.
+
+
+    Instance FArray_compdec (key_compdec elt_compdec: CompDec) : CompDec :=
+      let (key, key_dec, key_ord, key_comp) := key_compdec in
+      let (elt, elt_dec, elt_ord, elt_comp) := elt_compdec in
+      {|
+        ty := (farray elt key_ord);
+        Decidable := FArray_dec key elt key_ord elt_ord elt_dec key_comp elt_comp;
+        Ordered := FArray_ord key elt key_ord elt_ord elt_dec key_comp;
+        Comp := FArray_comp key elt key_ord elt_ord elt_dec key_comp elt_comp
+      |}.
+    
+    
+    Fixpoint interp_compdec (t:type) {struct t} :=
+      match t as t' return CompDec with
+      | Tindex i => TI_compdec i
+      | TZ => Z_compdec
+      | Tbool => bool_compdec
+      | Tpositive => Positive_compdec
+      | TBV => BV_compdec
+      | TFArray ti te => FArray_compdec (interp_compdec ti) (interp_compdec te)  
       end.
 
+    Definition interp (t:type) : Type :=
+      let (ty, _, _, _) := interp_compdec t in ty.
     
     Definition interp_ftype (t:ftype) :=
       List.fold_right (fun dom codom =>interp dom -> codom)
@@ -626,18 +674,31 @@ Module Typ.
         rewrite i_eqb_spec in X; auto.
       Qed.
 
-      Fixpoint i_eqb (t:type) : interp t -> interp t -> bool :=
-        match t with
-        | Tindex i => (t_i.[i]).(te_eqb)
-        | TZ => Zeq_bool
-        | Tbool => Bool.eqb
-        | Tpositive => Peqb
-        | TBV => @BITVECTOR_LIST_FIXED.bv_eq
-        (* | TFArray i e => *)
-        (*   FArray._equal (i_eqb_to_DecType i_eqb i_eqb_spec i) *)
-        (*                 (i_eqb_to_DecType i_eqb i_eqb_spec e) *)
-        end.
+      Check equal.
 
+      (* Variable (ti te:type). *)
+      (* Compute (interp (TFArray ti te)). *)
+
+
+      Definition eqb_of_compdec (c : CompDec) : type_compdec c -> type_compdec c -> bool.
+        destruct c.
+        destruct Decidable0.
+        simpl.
+        intros.
+        destruct (eq_dec X X0).
+        - apply true.
+        - apply false.
+      Defined.
+
+      Definition i_eqb (t:type) : interp t -> interp t -> bool :=
+        eqb_of_compdec (interp_compdec t).
+
+
+      Eval compute in (Zeq_bool 3%Z 4%Z).
+      Eval compute in (Zeq_bool 3%Z 3%Z).
+      Eval compute in (i_eqb TZ 3%Z 4%Z).
+      Eval compute in (i_eqb TZ 3%Z 3%Z).
+     
       Lemma pos_eqb_eq : forall p q, (p =? q)%positive = true -> p=q.
       Proof. apply Pos.eqb_eq. Qed.
 
@@ -650,33 +711,61 @@ Module Typ.
       
       Lemma bv_eqb_eq : forall x y, BITVECTOR_LIST_FIXED.bv_eq x y = true -> x = y.
       Proof. apply BITVECTOR_LIST_FIXED.bv_eq_reflect. Qed.
+
       
-      Definition i_eqb_spec_d (t:type) :=
-        match t as t' return (forall (x y: interp t'), i_eqb t' x y -> x = y) with
-        | Tindex i => index_t_eqb_eq i
-        | TZ => Zeq_bool_eq
-        | Tbool => Bool.eqb_prop
-        | Tpositive => pos_eqb_eq
-        | TBV => bv_eqb_eq
-        end.
-        
+      (* Definition i_eqb_spec_d (t:type) := *)
+      (*   match t as t' return (forall (x y: interp t'), i_eqb t' x y -> x = y) with *)
+      (*   | Tindex i => index_t_eqb_eq i *)
+      (*   | TZ => Zeq_bool_eq *)
+      (*   | Tbool => Bool.eqb_prop *)
+      (*   | Tpositive => pos_eqb_eq *)
+      (*   | TBV => bv_eqb_eq *)
+      (*   end. *)
+
+      Lemma eqb_compdec_spec (c : CompDec) : forall x y, eqb_of_compdec c x y = true <-> x = y.
+        split.
+        intros.
+        unfold eqb_of_compdec in H.
+        compute in H.
+        destruct c.
+        destruct Decidable0.
+        destruct (eq_dec x y); easy.
+        intros.
+        subst.
+        destruct c.
+        simpl in *.
+        destruct Decidable0.
+        destruct (eq_dec y y).
+        auto.
+        unfold not in n.
+        contradict n. auto.
+      Qed.
 
       Lemma i_eqb_spec : forall t x y, i_eqb t x y <-> x = y.
       Proof.
-       destruct t;simpl;intros.
-       symmetry;apply reflect_iff;apply te_reflect.
-       symmetry;apply Zeq_is_eq_bool.
-       apply Bool.eqb_true_iff.
-       apply Peqb_eq.
-       split.
-       apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
-       intro. rewrite H. 
-       apply BITVECTOR_LIST_FIXED.bv_eq_reflect. easy.
+        intros.
+        unfold i_eqb.
+        apply eqb_compdec_spec.
       Qed.
 
+      Lemma reflect_eqb_compdec (c : CompDec) : forall x y, reflect (x = y) (eqb_of_compdec c x y).
+        intros.
+        unfold eqb_of_compdec.
+        compute.
+        destruct c.
+        destruct Decidable0.
+        destruct (eq_dec x y).
+        subst.
+        apply ReflectT. auto.
+        apply ReflectF. auto.
+      Qed.
+
+      
       Lemma reflect_i_eqb : forall t x y, reflect (x = y) (i_eqb t x y).
       Proof.
-        intros;apply iff_reflect;symmetry;apply i_eqb_spec.
+        intros.
+        unfold i_eqb.
+        apply reflect_eqb_compdec.
       Qed.
 
       Lemma i_eqb_sym : forall t x y, i_eqb t x y = i_eqb t y x.
@@ -685,10 +774,6 @@ Module Typ.
         change (i_eqb t x y = true) with (is_true (i_eqb t x y)); rewrite i_eqb_spec; intros H1 H2; subst y; pose (H:=reflect_i_eqb t x x); inversion H; [rewrite <- H0 in H1; discriminate|elim H2; auto].
         change (i_eqb t y x = true) with (is_true (i_eqb t y x)); rewrite i_eqb_spec; intros H1 H2; subst y; pose (H:=reflect_i_eqb t x x); inversion H; [rewrite <- H0 in H2; discriminate|elim H1; auto].
       Qed.
-
-      (* Lemma i_eqb_refl : forall t x, i_eqb t x x = true. Admitted. *)
-      (* Lemma i_eqb_trans : forall t x y z, *)
-      (*     i_eqb t x y = true ->  i_eqb t y z = true -> i_eqb t x z = true. Admitted. *)
       
 
       
@@ -747,7 +832,10 @@ Module Typ.
       | _, _ => None
       end.
 
-    Definition cast (A B: type) : cast_result A B :=
+
+    (* TODO *)
+    
+    Fixpoint cast (A B: type) : cast_result A B :=
       match A as C, B as D return cast_result C D with
       | Tindex i, Tindex j =>
         match cast i j with
@@ -762,6 +850,17 @@ Module Typ.
         (* | Some k => Cast (fun P => k (fun y => P (TBV y))) *)
         (* | None => NoCast *)
         (* end *)
+      | TFArray k1 e1, TFArray k2 e2 =>
+        match cast k1 k2 with
+        | Cast k =>
+          match cast e1 e2 with
+          | Cast k' =>
+            Cast (fun P => k (fun x => k' (fun y => P (TFArray x y))))
+            (* Cast (fun P => k (fun y => P (fun P' => k' (fun x => P' (TFArray y x))))) *)
+          | NoCast => NoCast
+          end
+        | NoCast => NoCast
+        end
       | _, _ => NoCast
       end.
 
