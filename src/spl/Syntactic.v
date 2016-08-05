@@ -260,7 +260,7 @@ Section CheckAtom.
     unfold interp_form_hatom. intros Hwt H1 H2 h1 h2 H3. unfold interp_bool. generalize (check_neg_hatom_correct Hwt H1 H2 _ _ H3).
     case (interp_hatom t_i t_func t_atom h1).
     case (interp_hatom t_i t_func t_atom h2).
-    simpl. intros [i| | | | ] v1 [j| | | | ] v2; intro H; inversion H. rewrite Typ.cast_refl. auto.
+    simpl. intros [ |i| | | | ] v1 [ |j| | | | ] v2; intro H; inversion H. rewrite Typ.cast_refl. auto.
   Qed.
 
 End CheckAtom.

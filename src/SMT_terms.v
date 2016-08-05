@@ -567,11 +567,6 @@ Module Typ.
     Admitted.
 
     
-    Check existT.
-    Fixpoint even x := match x with O => True | S x => ~ (even x) end.
-    Lemma eO : even O. simpl; auto. Qed.
-    Check (existT _ O eO).
-
     Class CompDec := {
       ty : Type;
       Decidable :> DecType ty;       
@@ -674,11 +669,6 @@ Module Typ.
         rewrite i_eqb_spec in X; auto.
       Qed.
 
-      Check equal.
-
-      (* Variable (ti te:type). *)
-      (* Compute (interp (TFArray ti te)). *)
-
 
       Definition eqb_of_compdec (c : CompDec) : type_compdec c -> type_compdec c -> bool.
         destruct c.
@@ -693,11 +683,6 @@ Module Typ.
       Definition i_eqb (t:type) : interp t -> interp t -> bool :=
         eqb_of_compdec (interp_compdec t).
 
-
-      Eval compute in (Zeq_bool 3%Z 4%Z).
-      Eval compute in (Zeq_bool 3%Z 3%Z).
-      Eval compute in (i_eqb TZ 3%Z 4%Z).
-      Eval compute in (i_eqb TZ 3%Z 3%Z).
      
       Lemma pos_eqb_eq : forall p q, (p =? q)%positive = true -> p=q.
       Proof. apply Pos.eqb_eq. Qed.
@@ -776,7 +761,91 @@ Module Typ.
       Qed.
       
 
+      (* Lemma i_eqb_compdec_tbv (c: CompDec): forall x y,  TBV x y = BITVECTOR_LIST_FIXED.bv_eq x y.  *)
+      (* Proof. *)
+
+      Definition i_eqb_eqb (t:type) : interp t -> interp t -> bool :=
+        match t with
+        | Tindex i => (t_i.[i]).(te_eqb)
+        | TZ => Zeq_bool
+        | Tbool => Bool.eqb
+        | Tpositive => Peqb
+        | TBV => BITVECTOR_LIST_FIXED.bv_eq
+        | TFArray ti te => i_eqb (TFArray ti te)
+        end.
+
+      Lemma eqb_compdec_refl (c : CompDec) : forall x, eqb_of_compdec c x x = true.
+        intros.
+        unfold eqb_of_compdec.
+        compute.
+        destruct c.
+        destruct Decidable0.
+        destruct (eq_dec x x); auto.
+      Qed.
+
+      Lemma i_eqb_refl : forall t x, i_eqb t x x.
+      Proof.
+        intros.
+        unfold i_eqb.
+        apply eqb_compdec_refl.
+      Qed.
+
       
+      Lemma i_eqb_t : forall t x y, i_eqb t x y = i_eqb_eqb t x y.
+      Proof.
+        intros.
+        unfold i_eqb_eqb.
+        case_eq (i_eqb t x y); auto.
+        - change (i_eqb t x y = true) with (is_true (i_eqb t x y)); intros; rewrite i_eqb_spec in H.
+          symmetry. subst.
+          destruct t.
+          + apply i_eqb_refl.
+          + specialize ((t_i.[i]).(te_reflect) y y).
+            intros. apply reflect_iff in H. apply H; auto.
+          + unfold Zeq_bool. rewrite Z.compare_refl; auto.
+          + apply Bool.eqb_reflx.
+          + apply Pos.eqb_eq; auto.
+          + apply BITVECTOR_LIST_FIXED.bv_eq_reflect; auto.
+        - intros.
+          symmetry.
+          apply not_true_iff_false in H.
+          apply not_true_iff_false.
+          unfold not in *.
+          intros.
+          apply H.
+          destruct t.
+          + auto.
+          + specialize ((t_i.[i]).(te_reflect) x y).
+            intros. apply reflect_iff in H1. apply H1 in H0.
+            rewrite H0. apply i_eqb_refl.
+          + unfold Zeq_bool in H0.
+            case_eq (x ?= y)%Z; intro.
+            apply Z.compare_eq in H1. rewrite H1. apply i_eqb_refl.
+            rewrite H1 in H0; easy.
+            rewrite H1 in H0; easy.
+          + apply Bool.eqb_prop in H0. rewrite H0. apply i_eqb_refl.
+          + apply Pos.eqb_eq in H0.  rewrite H0. apply i_eqb_refl.
+          + apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H0. rewrite H0. apply i_eqb_refl.
+      Qed.
+      
+      Lemma i_eqb_tbv : forall x y, i_eqb TBV x y = BITVECTOR_LIST_FIXED.bv_eq x y. 
+      Proof.
+        intros.
+        case_eq (i_eqb TBV x y); auto.
+        change (i_eqb TBV x y = true) with (is_true (i_eqb TBV x y)); intros; rewrite i_eqb_spec in H.
+        symmetry. apply BITVECTOR_LIST_FIXED.bv_eq_reflect; auto.
+        intros.
+        symmetry.
+        apply not_true_iff_false in H.
+        apply not_true_iff_false.
+        unfold not in *.
+        intros.
+        apply H.
+        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H0.
+        change (i_eqb TBV x y = true) with (is_true (i_eqb TBV x y)).
+        rewrite i_eqb_spec; auto.
+      Qed.        
+        
     End Interp_Equality.
 
   End Interp.
@@ -838,7 +907,7 @@ Module Typ.
     Fixpoint cast (A B: type) : cast_result A B :=
       match A as C, B as D return cast_result C D with
       | Tindex i, Tindex j =>
-        match cast i j with
+        match Int63Op.cast i j with
         | Some k => Cast (fun P => k (fun y => P (Tindex y)))
         | None => NoCast
         end
@@ -851,15 +920,14 @@ Module Typ.
         (* | None => NoCast *)
         (* end *)
       | TFArray k1 e1, TFArray k2 e2 =>
-        match cast k1 k2 with
-        | Cast k =>
-          match cast e1 e2 with
-          | Cast k' =>
-            Cast (fun P => k (fun x => k' (fun y => P (TFArray x y))))
-            (* Cast (fun P => k (fun y => P (fun P' => k' (fun x => P' (TFArray y x))))) *)
-          | NoCast => NoCast
-          end
-        | NoCast => NoCast
+        match cast k1 k2, cast e1 e2 with
+        | Cast kk, Cast ke =>
+          let ka P :=
+              let Pb d := P (TFArray d e1) in
+              let Pc d := P (TFArray k2 d) in
+              fun x => ke Pc (kk Pb x)
+          in Cast ka
+        | _, _ => NoCast
         end
       | _, _ => NoCast
       end.
@@ -872,23 +940,26 @@ Module Typ.
       forall n, N_cast n n = Some (fun P (H : P n) => H).
     Proof. intros [ |p]; simpl; try rewrite positive_cast_refl; auto. Qed.
 
-    Lemma cast_refl:
-      forall A, cast A A = Cast (fun P (H : P A) => H).
+    Fixpoint cast_refl A:
+      cast A A = Cast (fun P (H : P A) => H).
     Proof.
-      intros A0;destruct A0;simpl;trivial.
-      rewrite cast_refl;trivial.
+      destruct A;simpl;trivial.
+      do 2 rewrite cast_refl. easy.
+      rewrite Int63Properties.cast_refl;trivial.
       (* rewrite N_cast_refl;trivial. *)
     Qed.
 
 
     (* Remark : I use this definition because eqb will not be used only in the interpretation *)
-    Definition eqb (A B: type) : bool :=
+    Fixpoint eqb (A B: type) : bool :=
       match A, B with
       | Tindex i, Tindex j => i == j
       | TZ, TZ => true
       | Tbool, Tbool => true
       | Tpositive, Tpositive => true
       | TBV, TBV => true
+      | TFArray k1 e1, TFArray k2 e2 =>
+        eqb k1 k2 && eqb e1 e2
       | _,_ => false
       end.
 
@@ -923,10 +994,14 @@ Module Typ.
         intro H. apply Heq. rewrite H. reflexivity.
     Qed.
 
-    Lemma cast_diff: forall A B, eqb A B = false -> cast A B = NoCast.
+    Fixpoint cast_diff A B: eqb A B = false -> cast A B = NoCast.
     Proof.
-      intros A0 B0;destruct A0; destruct B0;simpl;trivial;try discriminate.
-      intros Heq;rewrite (cast_diff _ _ Heq);trivial.
+      destruct A; destruct B;simpl;trivial;try discriminate.
+      intros.
+      rewrite andb_false_iff in H.
+      destruct H; apply cast_diff in H; rewrite H; auto.
+      case (cast A1 B1); auto.
+      intros H. rewrite (Int63Properties.cast_diff _ _ H);trivial.
       (* rewrite N.eqb_neq. intro Heq. now rewrite N_cast_diff. *)
     Qed.
 
@@ -936,9 +1011,21 @@ Module Typ.
       intros C D;case_eq (eqb C D);trivial;apply cast_diff.
     Qed.
 
-    Lemma reflect_eqb : forall x y, reflect (x = y) (eqb x y).
+    Fixpoint reflect_eqb x y: reflect (x = y) (eqb x y).
     Proof.
-      intros x y; destruct x;destruct y;simpl;try constructor;trivial;try discriminate.
+      destruct x;destruct y;simpl;try constructor;trivial;try discriminate.
+      apply iff_reflect.
+      split.
+      intro H. inversion H. subst.
+      rewrite andb_true_iff.
+      split;
+      [specialize (reflect_eqb y1 y1) | specialize (reflect_eqb y2 y2)];
+      apply reflect_iff in reflect_eqb; apply reflect_eqb; auto.
+      intros.
+      rewrite andb_true_iff in H; destruct H.
+      apply (reflect_iff _ _ (reflect_eqb x1 y1)) in H.
+      apply (reflect_iff _ _ (reflect_eqb x2 y2)) in H0.
+      subst; auto.
       apply iff_reflect;rewrite eqb_spec;split;intros H;[inversion H | subst]; trivial.
       (* apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial. *)
     Qed.
@@ -1763,12 +1850,12 @@ Qed.
       Proof.
         intros [op|op h|op h1 h2|op ha|f l]; simpl.
         (* Constants *)
-        destruct op; intros [i | | | | ]; simpl; try discriminate; intros _.
+        destruct op; intros [ | i | | | | ]; simpl; try discriminate; intros _.
         exists 1%positive; auto.
         exists 0%Z; auto.
         exists (BITVECTOR_LIST_FIXED.of_bits l); auto.
         (* Unary operators *)
-        destruct op; intros [i| | | | ]; simpl; try discriminate; try rewrite Typ.eqb_spec; intro H1; destruct (check_aux_interp_hatom h) 
+        destruct op; intros [ | i| | | | ]; simpl; try discriminate; try rewrite Typ.eqb_spec; intro H1; destruct (check_aux_interp_hatom h) 
         as [x Hx]; rewrite Hx; simpl; generalize x Hx; try rewrite H1; intros y Hy; try rewrite Typ.cast_refl.
         exists (y~0)%positive; auto.
         exists (y~1)%positive; auto.
@@ -1780,7 +1867,7 @@ Qed.
         exists (BITVECTOR_LIST_FIXED.bv_neg y); auto.
 
   (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8]; intros [i | | | |s]; 
+        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8]; intros [ | i | | | |s ]; 
         simpl; try discriminate; unfold is_true;
         try (rewrite andb_true_iff ;change (Typ.eqb (get_type h1) Typ.TZ = true /\ Typ.eqb (get_type h2) Typ.TZ = true) with 
         (is_true (Typ.eqb (get_type h1) Typ.TZ) /\ is_true (Typ.eqb (get_type h2) Typ.TZ)); 
@@ -1823,8 +1910,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -1850,8 +1939,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -1877,8 +1968,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -1904,8 +1997,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -1931,8 +2026,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -1958,8 +2055,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -1985,8 +2084,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -2010,8 +2111,10 @@ Qed.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. now contradict s.
+          intros. rewrite H in s. now contradict s.
           intros. rewrite H in s. simpl in s.
         case_eq (get_type h2).
+          intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
           intros. rewrite H0 in s. now contradict s.
@@ -2025,7 +2128,7 @@ Qed.
         rewrite Typ.cast_refl.
         exists (BITVECTOR_LIST_FIXED.bv_slt y1 y2); auto. 
         (* N-ary operators *)
-        destruct op as [A]; simpl; intros [ | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
+        destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
         intro l; exists (distinct (Typ.i_eqb t_i A) (rev l)); auto.
         exists true; auto.
         (* Application *)

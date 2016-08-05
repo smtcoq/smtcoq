@@ -1006,6 +1006,7 @@ Transparent build_z_atom.
       symmetry;apply Zgt_is_gt_bool.
       destruct t0;inversion H13;clear H13;subst.
       simpl.
+      rewrite Typ.i_eqb_t. simpl.
       symmetry;apply (Zeq_is_eq_bool (Zeval_expr (interp_vmap vm') pe1) (Zeval_expr (interp_vmap vm') pe2)).
     Qed.
 
@@ -1474,6 +1475,7 @@ Transparent build_z_atom.
      case_eq (vb <=? va); intros; subst.
      apply Zle_bool_imp_le in H2.
      apply Zle_bool_imp_le in H3.
+     rewrite Typ.i_eqb_t  in H. simpl in H.
      apply Zeq_bool_neq in H.
      (*pour la beauté du geste!*) lia.
      rewrite H3 in H1; simpl in H1; elim diff_true_false; trivial.
@@ -1609,3 +1611,11 @@ Transparent build_z_atom.
  End Proof.
 
 End certif.
+
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)
