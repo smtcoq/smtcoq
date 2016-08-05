@@ -14,7 +14,6 @@
 (**************************************************************************)
 
 
-(* Add LoadPath ".." as SMTCoq. *)
 Require Import Bool List Int63 PArray.
 (*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import State SMT_terms.
@@ -252,8 +251,8 @@ Section certif.
       destruct (Typ.cast ta u);destruct (Typ.cast tb u);trivial.
       apply f_equal; apply eq_true_iff_eq.
       match goal with |- ?x = _ <-> ?y = _ =>
-         change (is_true x <-> is_true y) end.
-      rewrite !Typ.i_eqb_spec;split;auto.
+                      change (is_true x <-> is_true y) end.
+      split; intro; rewrite Typ.i_eqb_sym in H; auto.
     Qed.
 
     Lemma interp_binop_eqb_trans:
@@ -274,7 +273,7 @@ Section certif.
       unfold Atom.interp_hatom.
       rewrite HHa, HHb, HHc;simpl;rewrite Typ.cast_refl.
       unfold Atom.interp_bool;simpl.
-      rewrite !Typ.i_eqb_spec;intros HH;rewrite HH;trivial.
+      apply Typ.i_eqb_trans.
     Qed.
 
     Lemma check_trans_aux_correct :
@@ -349,7 +348,7 @@ Section certif.
       generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H3. rewrite H3. intros [vb HHb].
       unfold Atom.interp_hatom.
       rewrite HHb;simpl;rewrite Typ.cast_refl;simpl.
-      rewrite !Typ.i_eqb_spec;trivial.
+      apply Typ.i_eqb_refl.
       auto.
       apply get_eq_interp;intros.
       apply check_trans_aux_correct with t;trivial.
@@ -416,9 +415,10 @@ Section certif.
        inversion H6;subst.
        unfold Atom.interp_hatom in H10.
        rewrite <- HHa; rewrite <- HHb, H10;trivial.
-      rewrite Typ.i_eqb_spec.
-      inversion H7.
-      apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+       inversion H7.
+       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+       rewrite H9.
+       apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto.
       (* bop *)
       destruct (Atom.reflect_bop_eqb b0 b1);[subst | auto].
@@ -436,9 +436,10 @@ Section certif.
        inversion H12;clear H12;subst.
        unfold Atom.interp_hatom in H10, H8.
        rewrite <- HHa. rewrite <- HHb, H10, H8;trivial.
-      rewrite Typ.i_eqb_spec.
       inversion H7.
       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+      rewrite H9.
+      apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto.
       (* op *)
       destruct (Int63Properties.reflect_eqb i i0);[subst | auto].
@@ -457,9 +458,10 @@ Section certif.
         induction H6;simpl;trivial.
         unfold Atom.interp_hatom in H4.
         rewrite IHForall2, H4;trivial.
-      rewrite Typ.i_eqb_spec.
       inversion H7.
       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+      rewrite H9.
+      apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto.
     Qed.
 
@@ -541,3 +543,10 @@ Section certif.
   End Proof.
 
 End certif.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)

@@ -3581,7 +3581,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         rewrite Heq12.
         rewrite HSp1, HSp2.
 
-        rewrite Typ.i_eqb_tbv.
+        rewrite Typ.i_eqb_t. simpl.
         
         unfold BITVECTOR_LIST_FIXED.bv_eq.
         unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.bits.
@@ -3708,7 +3708,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         case_eq (Lit.is_pos bsres). intros.
         rewrite HSp1, HSp2.
 
-        rewrite Typ.i_eqb_tbv.
+        rewrite Typ.i_eqb_t. simpl.
         
         unfold BITVECTOR_LIST_FIXED.bv_eq.
         unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.bits.

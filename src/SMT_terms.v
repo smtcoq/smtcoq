@@ -810,14 +810,39 @@ Module Typ.
         apply eqb_compdec_refl.
       Qed.
 
+
+      Lemma eqb_compdec_trans (c : CompDec) : forall x y z,
+          eqb_of_compdec c x y = true ->
+          eqb_of_compdec c y z = true ->
+          eqb_of_compdec c x z = true .
+        unfold eqb_of_compdec.
+        compute.
+        destruct c.
+        destruct Decidable0.
+        intros x y z.
+        destruct (eq_dec x y); auto;
+          destruct (eq_dec y z); auto;
+            destruct (eq_dec x z); auto.
+        contradict n.
+        apply (eq_trans _ y); auto.
+      Qed.
+
+      Lemma i_eqb_trans : forall t x y z, i_eqb t x y -> i_eqb t y z -> i_eqb t x z.
+      Proof.
+        intros.
+        unfold i_eqb.
+        apply (eqb_compdec_trans _ x y z); auto.
+      Qed.
+
+      
       
       Lemma i_eqb_t : forall t x y, i_eqb t x y = i_eqb_eqb t x y.
       Proof.
         intros.
         unfold i_eqb_eqb.
-        case_eq (i_eqb t x y); auto.
-        - change (i_eqb t x y = true) with (is_true (i_eqb t x y)); intros; rewrite i_eqb_spec in H.
-          symmetry. subst.
+        destruct (eq_dec x y).
+        - subst; rewrite i_eqb_refl.
+          symmetry.
           destruct t.
           + apply i_eqb_refl.
           + specialize ((t_i.[i]).(te_reflect) y y).
@@ -826,45 +851,94 @@ Module Typ.
           + apply Bool.eqb_reflx.
           + apply Pos.eqb_eq; auto.
           + apply BITVECTOR_LIST_FIXED.bv_eq_reflect; auto.
-        - intros.
-          symmetry.
-          apply not_true_iff_false in H.
-          apply not_true_iff_false.
-          unfold not in *.
-          intros.
-          apply H.
+        -
+          (* assert (i_eqb t x y = false). *)
+          (* apply not_true_iff_false. *)
+          (* unfold not. *)
+          (* intros. apply n. *)
+          (* symmetry. *)
+          (* apply not_true_iff_false in H. *)
+          (* apply not_true_iff_false. *)
+          (* unfold not in *. *)
+          (* intros. *)
+          (* apply H. *)
           destruct t.
           + auto.
-          + specialize ((t_i.[i]).(te_reflect) x y).
-            intros. apply reflect_iff in H1. apply H1 in H0.
-            rewrite H0. apply i_eqb_refl.
-          + unfold Zeq_bool in H0.
-            case_eq (x ?= y)%Z; intro.
-            apply Z.compare_eq in H1. rewrite H1. apply i_eqb_refl.
-            rewrite H1 in H0; easy.
-            rewrite H1 in H0; easy.
-          + apply Bool.eqb_prop in H0. rewrite H0. apply i_eqb_refl.
-          + apply Pos.eqb_eq in H0.  rewrite H0. apply i_eqb_refl.
-          + apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H0. rewrite H0. apply i_eqb_refl.
+          + unfold i_eqb, eqb_of_compdec. simpl.
+            destruct (if te_eqb (t_i .[ i]) x y as b return (te_eqb (t_i .[ i]) x y = b -> {x = y} + {x <> y})
+                      then
+                        fun H0 : te_eqb (t_i .[ i]) x y = true =>
+                          left
+                            (match reflect_iff (x = y) (te_eqb (t_i .[ i]) x y) (te_reflect (t_i .[ i]) x y) with
+                             | conj _ x0 => x0
+                             end H0)
+                      else
+                        fun H0 : te_eqb (t_i .[ i]) x y = false =>
+                          right
+                            (fun H1 : x = y =>
+                               match
+                                 eq_ind (te_eqb (t_i .[ i]) x y) (fun b : bool => b = true)
+                                        (match reflect_iff (x = y) (te_eqb (t_i .[ i]) x y) (te_reflect (t_i .[ i]) x y) with
+                                         | conj H _ => H
+                                         end H1) false H0 in (_ = y0) return (y0 = true -> False)
+                               with
+                               | Logic.eq_refl =>
+                                 fun H2 : false = true =>
+                                   False_ind False (eq_ind false (fun e : bool => if e then False else True) I true H2)
+                               end Logic.eq_refl)).
+            contradiction.
+            symmetry. apply not_true_iff_false.
+            unfold not.
+            intro.
+            specialize ((t_i.[i]).(te_reflect) x y).
+            intros. apply reflect_iff in H0.
+            apply H0 in H.
+            contradiction.
+          + unfold Zeq_bool.
+            unfold i_eqb, eqb_of_compdec.
+            simpl. case (Z.eq_dec x y).
+            intro. contradiction.
+            case_eq (x ?= y)%Z; intros.
+            apply Z.compare_eq in H.
+            contradiction. auto. auto.
+          + unfold i_eqb, eqb_of_compdec. simpl.
+            destruct (Bool.bool_dec x y). contradiction.
+            symmetry. apply not_true_iff_false.
+            unfold not.
+            intro. apply Bool.eqb_prop in H. contradiction.
+          + unfold i_eqb, eqb_of_compdec. simpl.
+            destruct (Pos.eq_dec x y). contradiction.
+            symmetry. apply not_true_iff_false.
+            unfold not.
+            intro. apply Pos.eqb_eq in H. contradiction.
+          + unfold i_eqb, eqb_of_compdec. simpl.
+            destruct ((if BITVECTOR_LIST_FIXED.bv_eq x y as b
+                          return (BITVECTOR_LIST_FIXED.bv_eq x y = b -> {x = y} + {x <> y})
+                       then
+                         fun H : BITVECTOR_LIST_FIXED.bv_eq x y = true =>
+                           left (match BITVECTOR_LIST_FIXED.bv_eq_reflect x y with
+                                 | conj H0 _ => H0
+                                 end H)
+                       else
+                         fun H : BITVECTOR_LIST_FIXED.bv_eq x y = false =>
+                           right
+                             (fun H0 : x = y =>
+                                eq_ind_r
+                                  (fun x0 : BITVECTOR_LIST_FIXED.bitvector =>
+                                     BITVECTOR_LIST_FIXED.bv_eq x0 y = false -> False)
+                                  (fun H1 : BITVECTOR_LIST_FIXED.bv_eq y y = false =>
+                                     match not_true_iff_false (BITVECTOR_LIST_FIXED.bv_eq y y) with
+                                     | conj _ x0 => x0
+                                     end H1
+                                         (match BITVECTOR_LIST_FIXED.bv_eq_reflect y y with
+                                          | conj _ x0 => x0
+                                          end Logic.eq_refl)) H0 H))).
+            contradiction.
+            symmetry. apply not_true_iff_false.
+            unfold not.
+            intro.
+            apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H. contradiction. 
       Qed.
-      
-      Lemma i_eqb_tbv : forall x y, i_eqb TBV x y = BITVECTOR_LIST_FIXED.bv_eq x y. 
-      Proof.
-        intros.
-        case_eq (i_eqb TBV x y); auto.
-        change (i_eqb TBV x y = true) with (is_true (i_eqb TBV x y)); intros; rewrite i_eqb_spec in H.
-        symmetry. apply BITVECTOR_LIST_FIXED.bv_eq_reflect; auto.
-        intros.
-        symmetry.
-        apply not_true_iff_false in H.
-        apply not_true_iff_false.
-        unfold not in *.
-        intros.
-        apply H.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H0.
-        change (i_eqb TBV x y = true) with (is_true (i_eqb TBV x y)).
-        rewrite i_eqb_spec; auto.
-      Qed.        
         
     End Interp_Equality.
 

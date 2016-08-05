@@ -557,3 +557,11 @@ Section Operators.
   End Valid.
 
 End Operators.
+
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)
