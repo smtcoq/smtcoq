@@ -14,7 +14,8 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray BinPos.
-Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
+Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/bva".
+Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/array".
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
 Require List .
@@ -27,6 +28,15 @@ Hint Unfold is_true.
 
 (* Remark: I use Notation instead of Definition du eliminate conversion check during the type checking *)
 Notation atom := int (only parsing).
+
+
+  Definition sigT_of_sigT2 {A : Type} {P Q : A -> Type} (X : sigT2 P Q) : sigT P
+    := existT P
+            (let (a, _, _) := X in a)
+            (let (x, p, _) as s return (P (let (a, _, _) := s in a)) := X in p).
+
+  Definition projT3 {A : Type} {P Q : A -> Type}  (e : sigT2 P Q) :=
+    let (a, b, c) return Q (projT1 (sigT_of_sigT2 e)) := e in c.
 
 Module Form.
 
@@ -564,8 +574,18 @@ Module Typ.
              (elt_dec: DecType elt)
              (key_comp: Comparable key)
              (elt_comp: Comparable elt) : Comparable (farray elt key_ord).
-    Admitted.
-
+    Proof.
+      constructor.
+      intros.
+      destruct (compare_farray key_comp elt_dec elt_comp x y).
+      - apply OrderedType.LT. auto.
+      - apply OrderedType.EQ.
+        specialize (@eq_equal key elt key_ord key_comp elt_ord elt_comp x y).
+        intros.
+        apply H in e.
+        now apply equal_eq in e.
+      - apply OrderedType.GT. auto.
+    Defined.
     
     Class CompDec := {
       ty : Type;
