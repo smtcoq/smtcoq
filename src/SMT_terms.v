@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Require Import Bool Int63 PArray BinPos.
+Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/bva".
 Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/array".
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
@@ -643,8 +643,7 @@ Module Typ.
         Ordered := FArray_ord key elt key_ord elt_ord elt_dec key_comp;
         Comp := FArray_comp key elt key_ord elt_ord elt_dec key_comp elt_comp
       |}.
-    
-    
+
     Fixpoint interp_compdec (t:type) {struct t} :=
       match t as t' return CompDec with
       | Tindex i => TI_compdec i
@@ -703,7 +702,32 @@ Module Typ.
       Definition i_eqb (t:type) : interp t -> interp t -> bool :=
         eqb_of_compdec (interp_compdec t).
 
-     
+
+    Instance CompDec_Setoid (c:CompDec) : Setoid (type_compdec c).
+    Proof.
+      set (eqb := (eqb_of_compdec c)).
+      destruct c.
+      destruct Decidable0.
+      simpl.
+      set (eq a b := if eqb a b then True else False). simpl in eq.
+      exists eq.
+      unfold eq, eqb, eqb_of_compdec.
+      constructor.
+      unfold Reflexive.
+      intros. destruct (eq_dec x x); auto.
+      unfold Symmetric.
+      intros. destruct (eq_dec x y); destruct (eq_dec y x); auto.
+      unfold Transitive.
+      intros. destruct (eq_dec x y); destruct (eq_dec y z); destruct (eq_dec x z); auto.
+      subst; auto.
+    Defined.
+
+    Instance Interp_Setoid (t:type) : Setoid (interp t).
+    Proof.
+      unfold interp.
+      exact (CompDec_Setoid (interp_compdec t)).
+    Defined.
+    
       Lemma pos_eqb_eq : forall p q, (p =? q)%positive = true -> p=q.
       Proof. apply Pos.eqb_eq. Qed.
 

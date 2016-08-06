@@ -363,6 +363,30 @@ Section certif.
        forall a b la lb, P a b -> Forall2 A B P la lb ->
          Forall2 A B P (a::la) (b::lb).
 
+    (** TODO (setoid rewrires with Typ.i_eqb)*)
+    (* Section X. *)
+
+    (*   Require Import Setoid SetoidClass. *)
+    (*   Local Close Scope int63_scope. *)
+
+    (*   Existing Instance Typ.Interp_Setoid. *)
+
+
+    (*   Instance atom_val_Setoid : Setoid (Atom.val Typ.type (Typ.interp t_i)). *)
+    (*     Proof. *)
+    (*       exists eq; constructor; auto. *)
+    (*       unfold Transitive. intros; subst; auto. *)
+    (*     Defined. *)
+          
+    (*   Lemma i_eqb_atom : forall t va vb, *)
+    (*       (* Typ.i_eqb t_i t va vb -> *) *)
+    (*       va == vb -> *)
+    (*       Atom.Bval t_i t vb == Atom.Bval t_i t va. *)
+    (*     intros. *)
+    (*     setoid_rewrite H. *)
+
+    (* End X. *)
+      
     Lemma build_congr_correct : forall lp l r c,
       (Forall2 _ _ (fun a b => interp_hatom a = interp_hatom b) l r -> C.interp rho c) ->
       C.interp rho (build_congr lp l r c).
