@@ -1032,7 +1032,6 @@ Section certif.
       apply ffalse; apply n; easy.
       apply ffalse; apply n; easy.
 
-
 (*****)
 
       destruct ti, ti1;
@@ -1453,7 +1452,7 @@ admit.
       apply (IHForall2 t_args (f v1)); auto.
       rewrite <- HHb.
 
-      Admitted.
+    Admitted.
       
 
     Lemma valid_check_congr_pred :
