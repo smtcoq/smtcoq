@@ -30,6 +30,10 @@ Class Comparable T {ot:OrdType T} := {
 }.
 
 
+Class Inhabited T := {
+    default_value : T
+  }.
+
 Set Implicit Arguments.
 
 
@@ -961,6 +965,7 @@ Section FArray.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
   Variable elt_comp : Comparable elt.
+  Variable elt_inh : Inhabited elt.
 
   Set Implicit Arguments.
 
@@ -1382,20 +1387,25 @@ Section FArray.
   Qed.
   
 
-  (** * Functional arrays *)
+  (** * Functional arrays with default value *)
 
   
-  Definition select (a: farray) (i: key) : option elt := find i a.
+  Definition select (a: farray) (i: key) : elt :=
+    match find i a with
+    | Some v => v
+    | None => default_value
+    end.
 
 
   Definition store (a: farray) (i: key) (v: elt) : farray := add i v a.
 
 
-  Lemma read_over_same_write : forall a i j v, i = j -> select (store a i v) j = Some v.
+  Lemma read_over_same_write : forall a i j v, i = j -> select (store a i v) j = v.
   Proof.
     intros a i j v Heq.
     unfold select, store.
-    intros. rewrite add_eq_o; auto.
+    apply (add_eq_o a v) in Heq.
+    rewrite Heq. auto.
   Qed.  
 
 
@@ -1404,7 +1414,8 @@ Section FArray.
   Proof.
     intros a i j v Hneq.
     unfold select, store.
-    rewrite add_neq_o; auto.
+    apply (add_neq_o a v) in Hneq.
+    rewrite Hneq. auto.
   Qed. 
 
 
@@ -1418,11 +1429,192 @@ Section FArray.
   Qed.
 
 
+  (** * [equal_farray] *)
+
+  Function equal_farray_list (m m' : Raw.farray key elt) {struct m} : bool :=
+    match m, m' with
+    | nil, nil => true
+    | (x,e)::l, (x',e')::l' =>
+      match compare x x' with
+      | EQ _ => cmp e e' && equal_farray_list l l'
+      | LT _ => cmp e' default_value && equal_farray_list l l'
+      | GT _ => cmp e default_value && equal_farray_list l l'
+      end
+    | _, _ => false
+    end.
+
+  Definition equal_farray m m' := equal_farray_list m.(this) m'.(this).
+
+
+  Definition Equal_farray m m' := forall y, select m y = select m' y.
+  Definition Equiv_farray m m' :=
+    (forall k, In k m -> ~In k m' -> MapsTo k default_value m') /\
+    (forall k, ~In k m -> In k m' -> MapsTo k default_value m) /\
+    (forall k e e', MapsTo k e m -> MapsTo k e' m' -> e = e').
+  Definition Equivb_farray m m' : Prop :=
+    (forall k, Raw.In k m.(this) -> ~Raw.In k m'.(this) -> Raw.MapsTo k default_value m'.(this)) /\
+    (forall k, ~Raw.In k m.(this) -> Raw.In k m'.(this) -> Raw.MapsTo k default_value m.(this)) /\
+    (forall k e e', Raw.MapsTo k e m.(this) -> Raw.MapsTo k e' m'.(this) -> e = e').
+
+
+  Lemma not_exists_forall : forall A P, ~ (exists x:A, P x) <-> (forall x:A, ~ P x).
+    split; unfold not in *; intros.
+    apply H. exists x; auto.
+    destruct H0. apply (H x H0).
+  Qed.
+    
+  
+  Lemma Equal_farray_mapsto_iff : forall m1 m2 : farray,
+      Equal_farray m1 m2 <->
+      (forall k e,
+          (~In k m1 /\ ~In k m2) \/
+          (In k m1 /\ In k m2 /\ (MapsTo k e m1 <-> MapsTo k e m2)) \/
+          (In k m1 /\ ~In k m2 /\ MapsTo k default_value m1) \/
+          (~In k m1 /\ In k m2 /\ MapsTo k default_value m2)
+      ).
+  Proof.
+    intros m1 m2. split; [intros Heq k e|intros Hiff].
+    unfold Equal_farray, select in Heq.
+    specialize Heq with k.
+    case_eq (find k m1); [intros v1 Heq1 | intros Heq1 ];
+      case_eq (find k m2); [intros v2 Heq2 | intros Heq2 | intros v2 Heq2 | intros Heq2 ];
+        rewrite Heq1, Heq2 in Heq.
+    - right; left.
+      subst v2.
+      apply find_mapsto_iff in Heq1. apply find_mapsto_iff in Heq2.
+      pose proof Heq1 as HI1. pose proof Heq2 as HI2.
+      unfold MapsTo in HI1, HI2.
+      unfold In, Raw.In.
+      split. exists v1; auto.
+      split. exists v1; auto.
+      rewrite 2 find_mapsto_iff.
+      apply find_mapsto_iff in Heq1.
+      apply find_mapsto_iff in Heq2. rewrite Heq1, Heq2.
+      split; intro H; inversion H; subst; auto.
+
+    - subst v1.
+      right; right; left.
+      split.
+      unfold In, Raw.In.
+      apply find_mapsto_iff in Heq1. exists default_value; auto.
+      split.
+      unfold In, Raw.In.
+      unfold not.
+      intro.
+      assert (forall e, find k m2 <> Some e).
+      rewrite Heq2. intros. unfold not.
+      intro. inversion H0. 
+      destruct H. specialize H0 with x.
+      apply find_mapsto_iff in H. rewrite H in H0; now contradict H0.
+      apply find_mapsto_iff in Heq1. auto.
+
+    - subst v2.
+      right; right; right.
+      split.
+      unfold In, Raw.In.
+      unfold not.
+      intro.
+      assert (forall e, find k m1 <> Some e).
+      rewrite Heq1. intros. unfold not.
+      intro. inversion H0. 
+      destruct H. specialize H0 with x.
+      apply find_mapsto_iff in H. rewrite H in H0; now contradict H0.
+
+      split.
+      apply find_mapsto_iff in Heq2. exists default_value; auto.
+      apply find_mapsto_iff in Heq2. auto.
+
+    - left.
+      assert (forall e, find k m1 <> Some e).
+      rewrite Heq1. intros. unfold not.
+      intro. inversion H. 
+      assert (forall e, find k m2 <> Some e).
+      rewrite Heq2. intros. unfold not.
+      intro. inversion H0. 
+      split; unfold In, Raw.In, not; intro; destruct H1; specialize H with x; specialize H0 with x;
+        apply find_mapsto_iff in H1.
+      rewrite H1 in H; now contradict H.
+      rewrite H1 in H0; now contradict H0.
+
+    - unfold Equal_farray, select.
+      intro k. specialize (Hiff k).
+
+      case_eq (find k m1); [intros v1 Heq1 | intros Heq1 ];
+        case_eq (find k m2); [intros v2 Heq2 | intros Heq2 | intros v2 Heq2 | intros Heq2 ].
+
+      + apply find_mapsto_iff in Heq1.
+        apply find_mapsto_iff in Heq2.
+        (* pose proof Hiff as Hiff'. *)
+        specialize (Hiff v1).
+        (* specialize (Hiff' v2). *)
+        destruct Hiff as [(Hiff1,Hiff2) | [(Hiff1,(Hiff2,Hiff3)) | [(Hiff1,(Hiff2,Hiff3))| (Hiff1,(Hiff2,Hiff3))]]];
+          try (unfold In, Raw.In in Hiff1; contradict Hiff1; exists v1; auto);
+          try (unfold In, Raw.In in Hiff2; contradict Hiff2; exists v2; auto).
+        * apply Hiff3 in Heq1. apply (MapsTo_fun Heq1 Heq2).
+
+      + apply find_mapsto_iff in Heq1.
+        specialize (Hiff v1).
+        destruct Hiff as [(Hiff1,Hiff2) | [(Hiff1,(Hiff2,Hiff3)) | [(Hiff1,(Hiff2,Hiff3))| (Hiff1,(Hiff2,Hiff3))]]];
+          try (unfold In, Raw.In in Hiff1; contradict Hiff1; exists v1; auto).
+        * apply Hiff3 in Heq1.
+          apply find_mapsto_iff in Heq1.
+          rewrite Heq1 in Heq2. now contradict Heq2.
+        * apply (MapsTo_fun Heq1 Hiff3).
+
+      + apply find_mapsto_iff in Heq2.
+        specialize (Hiff v2).
+        destruct Hiff as [(Hiff1,Hiff2) | [(Hiff1,(Hiff2,Hiff3)) | [(Hiff1,(Hiff2,Hiff3))| (Hiff1,(Hiff2,Hiff3))]]];
+          try (unfold In, Raw.In in Hiff2; contradict Hiff2; exists v2; auto).
+        * apply Hiff3 in Heq2.
+          apply find_mapsto_iff in Heq2.
+          rewrite Heq2 in Heq1. now contradict Heq1.
+        * apply (MapsTo_fun Hiff3 Heq2).
+
+      + auto.
+  Qed.
+
+  Lemma Equal_Equiv_farray : forall (m m' : farray),
+      Equal_farray m m' <-> Equiv_farray m m'.
+  Proof.
+    intros. rewrite Equal_mapsto_iff. split; intros.
+    split.
+    split; intros (e,Hin); exists e; unfold MapsTo in H; [rewrite <- H|rewrite H]; auto.
+    intros; apply MapsTo_fun with m k; auto; rewrite H; auto.
+    split; intros H'.
+    destruct H.
+    assert (Hin : In k m') by (rewrite <- H; exists e; auto).
+    destruct Hin as (e',He').
+    rewrite (H0 k e e'); auto.
+    destruct H.
+    assert (Hin : In k m) by (rewrite H; exists e; auto).
+    destruct Hin as (e',He').
+    rewrite <- (H0 k e' e); auto.
+  Qed.
+
+  
+
+  Lemma select_ext_dec:
+    (forall m1 m2: farray, Equal_farray m1 m2 -> (equal_farray m1 m2) = true).
+  Proof. intros.
+    apply Equal_Equivb_farray in H.
+    apply equal__farray_1.
+    exact H.
+  Qed.
+
+
+  
+
   Lemma extensionnality : forall a b,
       (forall i, select a i = select b i) -> equal a b = true.
   Proof.
     intros.
     unfold select in H.
+    assert (forall i, find i a = find i b).
+    intros. specialize H with i.
+    case (find i a) in *; case (find i b) in *; auto.
+    subst; auto.
+
+    case (find i a) in H.
     apply find_ext_dec in H.
     exact H.
   Qed.
