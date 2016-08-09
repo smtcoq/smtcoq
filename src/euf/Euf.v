@@ -14,7 +14,7 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray.
+Require Import Bool List Int63 PArray Eqdep_dec.
 (*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import State SMT_terms.
 Local Open Scope array_scope.
@@ -364,30 +364,288 @@ Section certif.
          Forall2 A B P (a::la) (b::lb).
 
     (** TODO (setoid rewrires with Typ.i_eqb)*)
-    (* Section X. *)
+    Section X.
 
-    (*   Require Import Setoid SetoidClass. *)
-    (*   Local Close Scope int63_scope. *)
+      Require Import Setoid SetoidClass.
+      Local Close Scope int63_scope.
 
-    (*   Existing Instance Typ.Interp_Setoid. *)
+      Existing Instance Typ.Interp_Setoid.
 
 
-    (*   Instance atom_val_Setoid : Setoid (Atom.val Typ.type (Typ.interp t_i)). *)
-    (*     Proof. *)
-    (*       exists eq; constructor; auto. *)
-    (*       unfold Transitive. intros; subst; auto. *)
-    (*     Defined. *)
-          
-    (*   Lemma i_eqb_atom : forall t va vb, *)
-    (*       (* Typ.i_eqb t_i t va vb -> *) *)
-    (*       va == vb -> *)
-    (*       Atom.Bval t_i t vb == Atom.Bval t_i t va. *)
-    (*     intros. *)
-    (*     setoid_rewrite H. *)
+      (* Instance atom_val_Setoid : Setoid (Atom.val Typ.type (Typ.interp t_i)). *)
+      (* Proof. *)
+      (*   exists eq; constructor; auto. *)
+      (*   unfold Transitive. intros; subst; auto. *)
+      (* Defined. *)
 
-    (* End X. *)
+
+      (* Definition type_equiv a b := if Typ.eqb a b then True else False. *)
+
+      (* Instance type_setoid : Setoid Typ.type. Admitted. *)
+
+      (* Check type_setoid. *)
+      (* Check (equiv type_setoid). *)
+      (* Check (relation (Setoid Typ.type)). *)
+
+      (* Instance type_setoid_setoid : Setoid (Setoid Typ.type). *)
+      (* destruct type_setoid. *)
+
       
+      (* Check (equiv type_setoid). *)
+
+      (* Variable t : Typ.type. *)
+      (* Check ((Atom.Bval t_i t)). *)
+
+      (* Variable equiv_type : (Setoid Typ.type) -> (Setoid Typ.type) -> Prop. *)
+
+      (* Instance interptype_setoid t : Setoid (Typ.interp t_i t). *)
+      (* exists eq. *)
+      (* split; auto. *)
+      (* unfold Transitive. intros; subst; auto. *)
+      (* Defined. *)
+                                                                   
+      (* Lemma aproper : forall t,  Proper (@equiv _ (interptype_setoid t)  ==> Logic.eq)  (Atom.Bval t_i t). *)
+      (*   unfold Proper. *)
+      (*   unfold SetoidClass.equiv. *)
+      (*   intro t. *)
+      (*   unfold interptype_setoid. *)
+      (*   intros x y. *)
+      (*   unfold Atom.Bval. *)
+      (*   intro. *)
+      (*   apply f_equal. *)
+      (*   auto. *)
+      (* Qed. *)
+
+
+      Definition Atomeq_prop t x va := x = Atom.Bval t_i t va.
+      
+      (* Lemma aproper : forall t,  Proper (@equiv _ (interptype_setoid t)  ==> Basics.impl) (forall x, Atomeq_prop t x). *)
+      (*   unfold Proper. *)
+      (*   unfold SetoidClass.equiv. *)
+      (*   intro t. *)
+      (*   unfold interptype_setoid. *)
+      (*   intros x y. *)
+      (*   unfold Atom.Bval. *)
+      (*   intro. *)
+      (*   apply f_equal. *)
+      (*   auto. *)
+      (* Qed. *)
+
+
+      
+      (* Lemma aproper : forall t,  Proper (SetoidClass.equiv ==> Logic.eq)  (Atom.Bval t_i t). *)
+      (*   unfold Proper. *)
+      (*   unfold SetoidClass.equiv. *)
+      (*   intro t. *)
+      (*   destruct (Typ.Interp_Setoid t_i t). *)
+      (*   intros x y. *)
+      (*   destruct setoid_equiv. *)
+      (*   unfold Atom.Bval. *)
+      (*   intro. *)
+      (*   apply f_equal. *)
+      (*   unfold. *)
+        
+      (*   unfold equiv. *)
+      (*   intro *)
+      (*     split. *)
+
+
+      (* Variable t : Typ.type. *)
+      (* Check (Atom.Bval t_i t). *)
+
+
+      Definition equiv_val t (f1 f2 : Typ.interp t_i t -> Atom.val Typ.type (Typ.interp t_i)) :=
+        forall v, f1 v = f2 v.
+      
+      Instance Atom_val_setoid t : Setoid (Typ.interp t_i t -> Atom.val Typ.type (Typ.interp t_i)).
+      Proof.
+        exists (equiv_val t).
+        unfold equiv_val.
+        split; auto.
+        unfold Transitive. intros.
+        specialize (H v).
+        specialize (H0 v).
+        rewrite <- H in H0. auto.
+      Defined.
+
+      (* Require Import FunctionalExtensionality. *)
+      
+      (* Lemma aproper4 : forall t f,  Proper (@equiv _ (Atom_val_setoid t) ==> Basics.impl) (Atom.Bval t_i t). *)
+      (* Proof. *)
+      (*     unfold Proper. *)
+      (*     unfold SetoidClass.equiv. *)
+      (*     unfold Atom_val_setoid. *)
+      (*     intros t f. *)
+      (*     unfold Basics.impl. *)
+      (*     intros fx fy. *)
+      (*     unfold equiv_val; intros. *)
+      (*     subst; auto. *)
+      (*     apply functional_extensionality. auto. *)
+      (* Qed. *)
+
+
+      (* Lemma l: forall t,  *)
+      
+      (* Lemma aproper : forall t,  Proper (@equiv _ (Typ.Interp_Setoid t)  ==> Basics.impl) (forall x, Atomeq_prop t x). *)
+      (*   unfold Proper. *)
+      (*   unfold SetoidClass.equiv. *)
+      (*   intro t. *)
+      (*   unfold interptype_setoid. *)
+      (*   intros x y. *)
+      (*   unfold Atom.Bval. *)
+      (*   intro. *)
+      (*   apply f_equal. *)
+      (*   auto. *)
+      (* Qed. *)
+        
+
+      (* Instance aproper2 t vb :  Proper (SetoidClass.equiv ==> Basics.flip Basics.impl) (eq (Atom.Bval t_i t vb)). *)
+      (* Proof. *)
+      (*     unfold Proper. *)
+      (*     unfold SetoidClass.equiv. *)
+      (*     unfold Atom_val_setoid. *)
+      (*     intros x y. *)
+      (*     intros. *)
+      (*     unfold Basics.flip. *)
+      (*     unfold Basics.impl. *)
+      (*     subst; auto. *)
+      (* Defined. *)
+
+      (* Instance aproper3 t y :  Proper (SetoidClass.equiv ==> Basics.flip Basics.impl) *)
+      (*                               (fun v => eq (Atom.Bval t_i t v) y). *)
+      (* Proof. *)
+      (*     unfold Proper. *)
+      (*     unfold SetoidClass.equiv. *)
+      (*     (* unfold Atom_val_setoid. *) *)
+      (*     unfold Typ.Interp_Setoid. *)
+      (*     intros a b. *)
+      (*     intros. *)
+      (*     unfold Basics.flip. *)
+      (*     unfold Basics.impl. *)
+      (*     subst; auto. *)
+      (* Defined. *)
+
+        
+      
+      (* Lemma i_eqb_atom2 : forall (t:Typ.type) x (va vb : Typ.interp t_i t), *)
+      (*     (* Typ.i_eqb t_i t va vb -> *) *)
+      (*     va == vb -> *)
+      (*     x = Atom.Bval t_i t vb -> *)
+      (*     x = Atom.Bval t_i t va. *)
+      (*   intros. *)
+      (*   setoid_rewrite H. auto. *)
+      (* Qed. *)
+
+        
+      (* Lemma i_eqb_atom : forall (t:Typ.type) (va vb : Typ.interp t_i t), *)
+      (*     (* Typ.i_eqb t_i t va vb -> *) *)
+      (*     va == vb -> *)
+      (*     Atom.Bval t_i t vb = Atom.Bval t_i t va. *)
+      (*   intros. *)
+      (*   setoid_rewrite H. auto. *)
+      (* Qed. *)
+      
+    End X.
+
+
+    (* Check i_eqb_atom. *)
+
+    Existing Instance Typ.Interp_Setoid.
+
+    Check interp_hatom.
+
+    Lemma typ_eq_dec : forall a b : Typ.type, { a = b } + { a <> b }.
+    Proof.
+      intros a b.
+      case_eq (Typ.eqb a b); intro.
+      left. apply Typ.eqb_spec in H. exact H.
+      right.
+      apply not_true_iff_false in H.
+      unfold not in *.
+      intro. apply H. apply Typ.eqb_spec. exact H0.
+    Qed.
+    
+    (* Definition i_eqb_atom (a b:atom) : bool. *)
+    (*   destruct (interp_hatom a) as (ta, va), (interp_hatom b) as (tb, vb). *)
+    (*   destruct (Typ.eqb_spec ta tb). *)
+    (*   destruct (Typ.eqb ta tb). *)
+    (*   assert true by constructor. *)
+    (*   specialize (H H1). *)
+    (*   subst tb. *)
+    (*   apply (Typ.i_eqb t_i ta va vb). *)
+    (*   apply false. *)
+    (* Defined. *)
+
+    
+    Definition i_eqb_atom (a b:atom) : bool :=
+      match interp_hatom a, interp_hatom b with
+      | Atom.Val ta va, Atom.Val tb vb =>
+        match Typ.cast tb ta with
+        | Typ.Cast k => Typ.i_eqb t_i ta va (k (Typ.interp t_i) vb)
+        | Typ.NoCast => false
+        end
+      end.
+              
+    (*   destruct (interp_hatom a) as (ta, va), (interp_hatom b) as (tb, vb). *)
+    (*   destruct (typ_eq_dec ta tb). *)
+    (*   rewrite <- e in vb. *)
+    (*   (* subst tb. *) *)
+    (*   apply (Typ.i_eqb t_i ta va vb). *)
+    (*   apply false. *)
+    (* Defined. *)
+
+    
+    (* Definition i_eqb_atom (a b:atom) : bool. *)
+    (*   destruct (interp_hatom a) as (ta, va), (interp_hatom b) as (tb, vb). *)
+    (*   destruct (typ_eq_dec ta tb). *)
+    (*   rewrite <- e in vb. *)
+    (*   (* subst tb. *) *)
+    (*   apply (Typ.i_eqb t_i ta va vb). *)
+    (*   apply false. *)
+    (* Defined. *)
+
+    
+    
+
+    Print i_eqb_atom.
+
+    Require Import Program.
+    
     Lemma build_congr_correct : forall lp l r c,
+        (Forall2 _ _ (fun a b => i_eqb_atom a b = true) l r -> C.interp rho c) ->
+        C.interp rho (build_congr lp l r c).
+    Proof.
+      induction lp;destruct l;destruct r;simpl;trivial;intros.
+      apply H;constructor.
+      destruct a.
+      apply get_eq_interp;intros.
+      match goal with |- context [if ?x then _ else _] =>
+                      case_eq x;intros;auto end.
+      apply IHlp;simpl;intros.
+      rewrite Lit.interp_nlit;unfold Var.interp.
+      case_eq (rho (Lit.blit i1));intros;simpl;[ | auto].
+      apply H;constructor;trivial.
+      generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H3. rewrite Typ.eqb_spec in H4. unfold Atom.get_type in H3, H4. rewrite H3,H4. intros [va HHa] [vb HHb].
+      revert H7;rewrite H2;unfold Atom.apply_binop; simpl.
+
+      rewrite orb_true_iff, !andb_true_iff in H5;destruct H5 as
+        [ [H5 H7] | [H5 H7]];
+      rewrite eqb_spec in H5; rewrite eqb_spec in H7;
+      subst i i0;
+      unfold i_eqb_atom;
+      unfold Atom.interp_hatom;
+      rewrite HHa, HHb;simpl;rewrite Typ.cast_refl;simpl;
+      intros W; [ | rewrite Typ.i_eqb_sym ]; auto.
+
+      destruct (Int63Properties.reflect_eqb i i0);[subst | auto].
+      apply IHlp;intros;apply H;constructor;auto.
+      unfold i_eqb_atom.
+      destruct (interp_hatom i0).
+      rewrite Typ.cast_refl;simpl. apply Typ.i_eqb_refl.
+    Qed.
+
+      
+    Lemma build_congr_correct2: forall lp l r c,
       (Forall2 _ _ (fun a b => interp_hatom a = interp_hatom b) l r -> C.interp rho c) ->
       C.interp rho (build_congr lp l r c).
     Proof.
@@ -401,11 +659,30 @@ Section certif.
       rewrite Lit.interp_nlit;unfold Var.interp.
       case_eq (rho (Lit.blit i1));intros;simpl;[ | auto].
       apply H;constructor;trivial.
+      
       generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H3. rewrite Typ.eqb_spec in H4. unfold Atom.get_type in H3, H4. rewrite H3,H4. intros [va HHa] [vb HHb].
       revert H7;rewrite H2;unfold Atom.apply_binop; simpl.
       unfold Atom.interp_hatom.
       rewrite HHa, HHb;simpl;rewrite Typ.cast_refl;simpl.
-      intros W;change (is_true (Typ.i_eqb t_i t va vb)) in W.
+      intros W.
+      (* apply Typ.i_eqb_is_equiv in W. *)
+      (* setoid_rewrite W in HHa. *)
+      (* specialize (@i_eqb_atom2 t (Atom.t_interp t_i t_func t_atom .[ a]) va vb W). *)
+      (* intro. *)
+      (* apply H7 in W. *)
+      
+      change (is_true (Typ.i_eqb t_i t va vb)) in W.
+
+      (* assert (va == vb). *)
+      (* unfold equiv. *)
+      (* unfold Typ.Interp_Setoid. *)
+      (* (* unfold Typ.interp_compdec. *) *)
+      (* unfold Typ.CompDec_Setoid. *)
+
+      (* simpl. *)
+      (* destruct (Typ.Interp_Setoid t_i t). *)
+      (* unfold equiv. *)
+      
       rewrite Typ.i_eqb_spec in W.
       rewrite orb_true_iff, !andb_true_iff in H5;destruct H5 as
         [ [H5 H7] | [H5 H7]].
@@ -435,59 +712,113 @@ Section certif.
       rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa.
       rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb.
       rewrite Typ.cast_refl;simpl.
-      assert (Atom.Bval t_i t va = Atom.Bval t_i t vb).
-       inversion H6;subst.
-       unfold Atom.interp_hatom in H10.
-       rewrite <- HHa; rewrite <- HHb, H10;trivial.
-       inversion H7.
-       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
-       rewrite H9.
-       apply Typ.i_eqb_refl.
-      intros x y;destruct (Typ.reflect_eqb x y);auto.
-      (* bop *)
-      destruct (Atom.reflect_bop_eqb b0 b1);[subst | auto].
-      apply build_congr_correct;intros.
-      simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
-      rewrite H1.
-      generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb].
-      unfold Atom.apply_binop. unfold Atom.interp_hatom;simpl.
-      rewrite HHb, HHa;simpl.
-      rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa.
-      rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb.
-      rewrite Typ.cast_refl;simpl.
-      assert (Atom.Bval t_i t va = Atom.Bval t_i t vb).
-       inversion H6;clear H6;subst.
-       inversion H12;clear H12;subst.
-       unfold Atom.interp_hatom in H10, H8.
-       rewrite <- HHa. rewrite <- HHb, H10, H8;trivial.
-      inversion H7.
-      apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
-      rewrite H9.
-      apply Typ.i_eqb_refl.
-      intros x y;destruct (Typ.reflect_eqb x y);auto.
-      (* op *)
-      destruct (Int63Properties.reflect_eqb i i0);[subst | auto].
-      apply build_congr_correct;intros.
-      simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
-      rewrite H1.
-      generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb].
-      unfold Atom.apply_binop;unfold Atom.interp_hatom;simpl.
-      rewrite HHb, HHa;simpl.
-      rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa.
-      rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb.
-      rewrite Typ.cast_refl;simpl.
-      assert (Atom.Bval t_i t va = Atom.Bval t_i t vb).
-        rewrite <- HHa;rewrite <- HHb;destruct (t_func.[i0]).
-        apply f_equal;clear HHa HHb va vb H5 H4.
-        induction H6;simpl;trivial.
-        unfold Atom.interp_hatom in H4.
-        rewrite IHForall2, H4;trivial.
-      inversion H7.
-      apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
-      rewrite H9.
-      apply Typ.i_eqb_refl.
-      intros x y;destruct (Typ.reflect_eqb x y);auto.
-    Qed.
+      inversion_clear H6.
+      unfold i_eqb_atom in H7.
+      unfold Atom.interp_hatom in H7.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i]) as (ti, vi).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i0]) as (ti0, vi0).
+      (* unfold Atom.Bval in HHa, HHb. *)
+      destruct u0; simpl in HHa, HHb;
+        destruct ti, ti0;
+        try (
+            simpl in HHa, HHb;
+            rewrite HHb in HHa;
+            apply Atom.Bval_inj2 in HHa;
+            rewrite HHa; apply Typ.i_eqb_refl);
+        try (
+            simpl in HHa, HHb;
+            inversion HHa;
+            inversion HHb;
+            rewrite <- H9 in H10; now contradict H10);
+        
+      simpl in H7;
+      destruct t; try (inversion HHa);
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7.
+
+      (* UO_xO *)
+      unfold sumbool_rec, sumbool_rect .
+      case (Pos.eq_dec vi vi0) in *; auto.
+
+      (* UO_xI *)
+      unfold sumbool_rec, sumbool_rect.
+      case (Pos.eq_dec vi vi0) in *; auto.
+      case (Pos.eq_dec vi vi0) in *; auto.
+      case (Pos.eq_dec vi vi0) in *; auto.
+
+      (* UO_Zopp *)
+      case ( Z.eq_dec (- vi) (- vi0)) in *; auto.
+      case ( Z.eq_dec (vi) (vi0)) in *; auto.
+      subst; auto.
+
+      (* Atom.UO_BVbitOf n n0 *)
+      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
+           return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
+          then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
+             else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
+      subst; auto.
+      case (bool_dec (BVList.BITVECTOR_LIST_FIXED.bitOf n0 vi0) (BVList.BITVECTOR_LIST_FIXED.bitOf n0 vi0)); auto.
+      now contradict H7.
+
+
+      (* UO_BVnot *)
+      simpl in H7.
+      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
+           return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
+          then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
+             else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
+      subst; auto.
+
+      Admitted.
+      
+    (*   (* bop *) *)
+    (*   destruct (Atom.reflect_bop_eqb b0 b1);[subst | auto]. *)
+    (*   apply build_congr_correct;intros. *)
+    (*   simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp. *)
+    (*   rewrite H1. *)
+    (*   generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb]. *)
+    (*   unfold Atom.apply_binop. unfold Atom.interp_hatom;simpl. *)
+    (*   rewrite HHb, HHa;simpl. *)
+    (*   rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa. *)
+    (*   rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb. *)
+    (*   rewrite Typ.cast_refl;simpl. *)
+    (*   assert (Atom.Bval t_i t va = Atom.Bval t_i t vb). *)
+    (*    inversion H6;clear H6;subst. *)
+    (*    inversion H12;clear H12;subst. *)
+    (*    unfold Atom.interp_hatom in H10, H8. *)
+    (*    rewrite <- HHa. rewrite <- HHb, H10, H8;trivial. *)
+    (*   inversion H7. *)
+    (*   apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial. *)
+    (*   rewrite H9. *)
+    (*   apply Typ.i_eqb_refl. *)
+    (*   intros x y;destruct (Typ.reflect_eqb x y);auto. *)
+    (*   (* op *) *)
+    (*   destruct (Int63Properties.reflect_eqb i i0);[subst | auto]. *)
+    (*   apply build_congr_correct;intros. *)
+    (*   simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp. *)
+    (*   rewrite H1. *)
+    (*   generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb]. *)
+    (*   unfold Atom.apply_binop;unfold Atom.interp_hatom;simpl. *)
+    (*   rewrite HHb, HHa;simpl. *)
+    (*   rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa. *)
+    (*   rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb. *)
+    (*   rewrite Typ.cast_refl;simpl. *)
+    (*   assert (Atom.Bval t_i t va = Atom.Bval t_i t vb). *)
+    (*     rewrite <- HHa;rewrite <- HHb;destruct (t_func.[i0]). *)
+    (*     apply f_equal;clear HHa HHb va vb H5 H4. *)
+    (*     induction H6;simpl;trivial. *)
+    (*     unfold Atom.interp_hatom in H4. *)
+    (*     rewrite IHForall2, H4;trivial. *)
+    (*   inversion H7. *)
+    (*   apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial. *)
+    (*   rewrite H9. *)
+    (*   apply Typ.i_eqb_refl. *)
+    (*   intros x y;destruct (Typ.reflect_eqb x y);auto. *)
+    (* Qed. *)
 
     Lemma valid_check_congr_pred :
        forall lpa lpb eqs,

@@ -722,12 +722,10 @@ Module Typ.
       subst; auto.
     Defined.
 
-    Instance Interp_Setoid (t:type) : Setoid (interp t).
-    Proof.
-      unfold interp.
-      exact (CompDec_Setoid (interp_compdec t)).
-    Defined.
     
+    Definition i_equiv (t:type) : interp t -> interp t -> Prop := fun x y => if i_eqb t x y then True else False.
+
+        
       Lemma pos_eqb_eq : forall p q, (p =? q)%positive = true -> p=q.
       Proof. apply Pos.eqb_eq. Qed.
 
@@ -963,7 +961,47 @@ Module Typ.
             intro.
             apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H. contradiction. 
       Qed.
-        
+
+
+    Instance i_equiv_equiv (t:type) : Equivalence (i_equiv t).
+    Proof.
+      constructor.
+      unfold Reflexive.
+      unfold i_equiv. intro x.
+      rewrite i_eqb_refl. auto.
+      unfold Symmetric.
+      unfold i_equiv.
+      intros x y.
+      case_eq (i_eqb t x y); case_eq (i_eqb t y x); auto.
+      intros. rewrite i_eqb_sym in H0. rewrite H in H0. now contradict H.
+      unfold Transitive.
+      unfold i_equiv.
+      intros x y z.
+      case_eq (i_eqb t x y); case_eq (i_eqb t y z); case_eq (i_eqb t x z); auto.
+      intros.
+      rewrite (i_eqb_trans _ _ _ _ H1 H0) in H.
+      now contradict H.
+    Defined.
+    
+      
+
+    Instance Interp_Setoid (t:type) : Setoid (interp t) :=
+      {|
+        equiv := i_equiv t;
+        setoid_equiv := i_equiv_equiv t
+      |}.
+
+
+    Lemma i_eqb_is_equiv : forall t a b, i_eqb t a b -> a == b.
+      intros.
+      unfold equiv.
+      unfold Interp_Setoid.
+      unfold i_equiv. rewrite H. auto.
+    Qed.
+    
+
+    
+      
     End Interp_Equality.
 
   End Interp.
