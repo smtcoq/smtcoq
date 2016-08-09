@@ -1161,6 +1161,18 @@ Module Typ.
       (* rewrite N.eqb_neq. intro Heq. now rewrite N_cast_diff. *)
     Qed.
 
+    Lemma cast_eqb A B k: cast A B = Cast k -> eqb A B = true.
+    Proof.
+      intros.
+      apply not_false_iff_true.
+      unfold not.
+      intro.
+      apply cast_diff in H0.
+      rewrite H in H0. inversion H0.
+    Qed.
+        
+    
+    
     Lemma neq_cast : forall A B,
       cast A B = (if eqb A B then cast A B else NoCast).
     Proof.
@@ -1197,6 +1209,32 @@ Module Typ.
     Lemma eqb_refl : forall x, eqb x x.
     Proof. intros; rewrite eqb_spec; auto. Qed.
 
+
+    Lemma cast_eq A B k: cast A B = Cast k -> A = B.
+    Proof.
+      intros. apply eqb_spec. apply (cast_eqb _ _ k). auto.
+    Qed.
+
+    Lemma nocast_refl A B: cast A B = NoCast -> cast B A = NoCast.
+    Proof.
+      intros.
+      apply cast_diff.
+      rewrite neq_cast in H.
+      case_eq (eqb A B). intro.
+      rewrite H0 in H.
+      apply eqb_spec in H0.
+      rewrite H0 in H.
+      rewrite cast_refl in H.
+      now contradict H.
+      intro.
+      apply not_true_iff_false.
+      unfold not.
+      intro.
+      apply eqb_spec in H1.
+      rewrite H1 in H0. rewrite eqb_refl in H0. now contradict H0.
+    Qed.
+
+    
   End Cast.
 
 End Typ.
