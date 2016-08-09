@@ -13,9 +13,11 @@
 (*                                                                        *)
 (**************************************************************************)
 
-
+Add Rec LoadPath "." as SMTCoq. 
 Require Import Bool List Int63 PArray Eqdep_dec.
+
 (*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
+
 Require Import State SMT_terms.
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -644,6 +646,9 @@ Section certif.
       rewrite Typ.cast_refl;simpl. apply Typ.i_eqb_refl.
     Qed.
 
+
+     Let rho_interp : forall x : int, rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[ x]).
+     Proof. intros x;apply wf_interp_form;trivial. Qed.
       
     Lemma build_congr_correct2: forall lp l r c,
       (Forall2 _ _ (fun a b => interp_hatom a = interp_hatom b) l r -> C.interp rho c) ->
@@ -693,120 +698,666 @@ Section certif.
       destruct (Int63Properties.reflect_eqb i i0);[subst | auto].
       apply IHlp;intros;apply H;constructor;auto.
     Qed.
+    
+    Lemma ffalse: (false = true <-> False).
+    Proof.  split; intros; now contradict H. Qed.
 
     Lemma valid_check_congr :
        forall leq eqs,
           C.interp rho (check_congr leq eqs).
     Proof.
-      unfold check_congr;intros leq eqs;apply get_eq_interp;intros.
-      case_eq (t_atom .[ a]);intros;auto;
-      case_eq (t_atom .[ b]);intros;auto.
-      (* uop *)
-      destruct (Atom.reflect_uop_eqb u u0);[subst | auto].
-      apply build_congr_correct;intros.
-      simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
-      rewrite H1.
-      generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb].
-      unfold Atom.apply_binop;unfold Atom.interp_hatom;simpl.
-      rewrite HHb, HHa. simpl.
-      rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa.
-      rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb.
-      rewrite Typ.cast_refl;simpl.
-      inversion_clear H6.
-      unfold i_eqb_atom in H7.
-      unfold Atom.interp_hatom in H7.
-      destruct (Atom.t_interp t_i t_func t_atom .[ i]) as (ti, vi).
-      destruct (Atom.t_interp t_i t_func t_atom .[ i0]) as (ti0, vi0).
-      (* unfold Atom.Bval in HHa, HHb. *)
-      destruct u0; simpl in HHa, HHb;
-        destruct ti, ti0;
-        try (
-            simpl in HHa, HHb;
-            rewrite HHb in HHa;
-            apply Atom.Bval_inj2 in HHa;
-            rewrite HHa; apply Typ.i_eqb_refl);
-        try (
-            simpl in HHa, HHb;
-            inversion HHa;
-            inversion HHb;
-            rewrite <- H9 in H10; now contradict H10);
-        
-      simpl in H7;
-      destruct t; try (inversion HHa);
+    unfold check_congr;intros leq eqs;apply get_eq_interp;intros.
+    case_eq (t_atom .[ a]);intros;auto;
+    case_eq (t_atom .[ b]);intros;auto.
+    (* uop *)
+    destruct (Atom.reflect_uop_eqb u u0);[subst | auto].
+    apply build_congr_correct;intros.
+    simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
+    rewrite H1.
+    generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb].
+    unfold Atom.apply_binop;unfold Atom.interp_hatom;simpl.
+    rewrite HHb, HHa. simpl.
+    rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa.
+    rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb.
+    rewrite Typ.cast_refl;simpl.
+    inversion_clear H6.
+    unfold i_eqb_atom in H7.
+    unfold Atom.interp_hatom in H7.
+    destruct (Atom.t_interp t_i t_func t_atom .[ i]) as (ti, vi).
+    destruct (Atom.t_interp t_i t_func t_atom .[ i0]) as (ti0, vi0).
+    (* unfold Atom.Bval in HHa, HHb. *)
+    destruct u0; simpl in HHa, HHb;
+      destruct ti, ti0;
+      try (
+          simpl in HHa, HHb;
+          rewrite HHb in HHa;
+          apply Atom.Bval_inj2 in HHa;
+          rewrite HHa; apply Typ.i_eqb_refl);
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H9 in H10; now contradict H10);
+      
+    simpl in H7;
+    destruct t; try (inversion HHa);
+    apply Atom.Bval_inj2 in HHa;
+    apply Atom.Bval_inj2 in HHb;
+    subst va vb; unfold is_true;
+    unfold Typ.i_eqb in *;
+    unfold Typ.eqb_of_compdec in *;
+    simpl; simpl in H7.
+
+    (* UO_xO *)
+    unfold sumbool_rec, sumbool_rect .
+    case (Pos.eq_dec vi vi0) in *; auto.
+
+    (* UO_xI *)
+    unfold sumbool_rec, sumbool_rect.
+    case (Pos.eq_dec vi vi0) in *; auto.
+    case (Pos.eq_dec vi vi0) in *; auto.
+    case (Pos.eq_dec vi vi0) in *; auto.
+
+    (* UO_Zopp *)
+    case ( Z.eq_dec (- vi) (- vi0)) in *; auto.
+    case ( Z.eq_dec (vi) (vi0)) in *; auto.
+    subst; auto.
+
+    (* Atom.UO_BVbitOf n n0 *)
+    case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
+           else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
+    subst; auto.
+    case (bool_dec (BVList.BITVECTOR_LIST_FIXED.bitOf n0 vi0) (BVList.BITVECTOR_LIST_FIXED.bitOf n0 vi0)); auto.
+    now contradict H7.
+
+
+    (* UO_BVnot *)
+    simpl in H7.
+    case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
+           else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
+    subst; auto.
+
+    case ((if
+        BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_not vi0)
+        (BVList.BITVECTOR_LIST_FIXED.bv_not vi0) as b0
+        return
+        (BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_not vi0)
+           (BVList.BITVECTOR_LIST_FIXED.bv_not vi0) = b0 ->
+         {BVList.BITVECTOR_LIST_FIXED.bv_not vi0 = BVList.BITVECTOR_LIST_FIXED.bv_not vi0} +
+           {BVList.BITVECTOR_LIST_FIXED.bv_not vi0 <> BVList.BITVECTOR_LIST_FIXED.bv_not vi0})
+        then
+          fun
+         H9 : BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_not vi0)
+               (BVList.BITVECTOR_LIST_FIXED.bv_not vi0) = true => in_left
+        else
+        fun
+        H9 : BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_not vi0)
+               (BVList.BITVECTOR_LIST_FIXED.bv_not vi0) = false => in_right) eq_refl).
+    easy.
+    intros. unfold not in n0.
+    assert (false = true <-> False).
+    split. intros. now contradict H9.
+    intros. now contradict H9.
+    apply H9. apply n0.
+    easy.
+    now contradict H7.
+    
+   (* UO_BVneg *)
+    simpl in H7.
+    case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
+           else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
+    subst; auto.
+
+    
+    case ( 
+  (if
+    BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0)
+      (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0) as b0
+    return
+      (BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0)
+         (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0) = b0 ->
+       {BVList.BITVECTOR_LIST_FIXED.bv_neg vi0 = BVList.BITVECTOR_LIST_FIXED.bv_neg vi0} +
+       {BVList.BITVECTOR_LIST_FIXED.bv_neg vi0 <> BVList.BITVECTOR_LIST_FIXED.bv_neg vi0})
+   then
+    fun
+      H9 : BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0)
+             (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0) = true => in_left
+   else
+    fun
+      H9 : BVList.BITVECTOR_LIST_FIXED.bv_eq (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0)
+             (BVList.BITVECTOR_LIST_FIXED.bv_neg vi0) = false => in_right) eq_refl
+          ).
+    easy.
+    intros.
+
+    unfold not in n0.
+    assert (false = true <-> False).
+    split. intros. now contradict H9.
+    intros. now contradict H9.
+    apply H9. apply n0.
+    easy.
+    now contradict H7.
+    
+        (*   (* bop *) *)
+   destruct (Atom.reflect_bop_eqb b0 b1);[subst | auto].
+   apply build_congr_correct;intros.
+   simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
+   rewrite H1. 
+   generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), 
+    (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). 
+    rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. 
+      unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb]. 
+   unfold Atom.apply_binop. unfold Atom.interp_hatom;simpl.
+   rewrite HHb, HHa;simpl.
+   rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa. 
+   rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb. 
+   rewrite Typ.cast_refl;simpl.
+   inversion_clear H6.
+   inversion_clear H8.
+    unfold i_eqb_atom in H7, H6.
+    unfold Atom.interp_hatom in H7, H6.
+    destruct (Atom.t_interp t_i t_func t_atom .[ i]) as (ti, vi).
+    destruct (Atom.t_interp t_i t_func t_atom .[ i0]) as (ti0, vi0).
+    destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+    destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+    destruct b1; simpl in HHa, HHb.
+(*****)
+(*****)
+(** Typ.TZ*)
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
       apply Atom.Bval_inj2 in HHa;
       apply Atom.Bval_inj2 in HHb;
-      subst va vb; unfold is_true;
+      subst va vb; unfold is_true;   
       unfold Typ.i_eqb in *;
       unfold Typ.eqb_of_compdec in *;
-      simpl; simpl in H7.
-
-      (* UO_xO *)
-      unfold sumbool_rec, sumbool_rect .
-      case (Pos.eq_dec vi vi0) in *; auto.
-
-      (* UO_xI *)
-      unfold sumbool_rec, sumbool_rect.
-      case (Pos.eq_dec vi vi0) in *; auto.
-      case (Pos.eq_dec vi vi0) in *; auto.
-      case (Pos.eq_dec vi vi0) in *; auto.
-
-      (* UO_Zopp *)
-      case ( Z.eq_dec (- vi) (- vi0)) in *; auto.
-      case ( Z.eq_dec (vi) (vi0)) in *; auto.
-      subst; auto.
-
-      (* Atom.UO_BVbitOf n n0 *)
-      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
-           return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
-          then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
-             else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
-      subst; auto.
-      case (bool_dec (BVList.BITVECTOR_LIST_FIXED.bitOf n0 vi0) (BVList.BITVECTOR_LIST_FIXED.bitOf n0 vi0)); auto.
-      now contradict H7.
-
-
-      (* UO_BVnot *)
-      simpl in H7.
-      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 as b
-           return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = b -> {vi = vi0} + {vi <> vi0})
-          then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = true => in_left
-             else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi0 = false => in_right)) in *.
-      subst; auto.
-
-      Admitted.
+      simpl; simpl in H7, H6.
       
-    (*   (* bop *) *)
-    (*   destruct (Atom.reflect_bop_eqb b0 b1);[subst | auto]. *)
-    (*   apply build_congr_correct;intros. *)
-    (*   simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp. *)
-    (*   rewrite H1. *)
-    (*   generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb]. *)
-    (*   unfold Atom.apply_binop. unfold Atom.interp_hatom;simpl. *)
-    (*   rewrite HHb, HHa;simpl. *)
-    (*   rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa. *)
-    (*   rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb. *)
-    (*   rewrite Typ.cast_refl;simpl. *)
-    (*   assert (Atom.Bval t_i t va = Atom.Bval t_i t vb). *)
-    (*    inversion H6;clear H6;subst. *)
-    (*    inversion H12;clear H12;subst. *)
-    (*    unfold Atom.interp_hatom in H10, H8. *)
-    (*    rewrite <- HHa. rewrite <- HHb, H10, H8;trivial. *)
-    (*   inversion H7. *)
-    (*   apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial. *)
-    (*   rewrite H9. *)
-    (*   apply Typ.i_eqb_refl. *)
-    (*   intros x y;destruct (Typ.reflect_eqb x y);auto. *)
+     (** Z.eq_dec *)
+
+      case (Z.eq_dec (vi + vi0) (vi1 + vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+     
+
+(*****)
+
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+     (** Z.eq_dec *)
+
+      case (Z.eq_dec (vi - vi0) (vi1 - vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+     
+(*****)
+
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+     (** Z.eq_dec *)
+
+      case (Z.eq_dec (vi * vi0) (vi1 * vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+
+
+(*****)
+
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+     (** Z.eq_dec *)
+
+      case (bool_dec (vi <? vi0) (vi1 <? vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+     
+(*****)
+
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+     (** Z.eq_dec *)
+
+      case (bool_dec (vi <=? vi0) (vi1 <=? vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.          
+
+(*****)
+
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+     (** Z.eq_dec *)
+
+      case (bool_dec (vi >=? vi0) (vi1 >=? vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+
+(*****)
+
+      destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+     (** Z.eq_dec *)
+
+      case (bool_dec (vi >? vi0) (vi1 >? vi2)) in *;  auto.
+      case (Z.eq_dec vi vi1) in *.
+      case (Z.eq_dec vi0 vi2) in *.
+      rewrite e, e0 in n; unfold not in n.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      apply ffalse; apply n; easy.
+      
+(*****)
+(*****)
+(** Typ.TFArray*)
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+admit.
+
+(*****)
+(*****)
+(** Typ.TBV*)
+
+   destruct ti, ti1;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      
+      destruct ti2;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      destruct ti0;
+      simpl in HHa, HHb;
+     try(
+      rewrite HHb in HHa;
+      apply Atom.Bval_inj2 in HHa;
+      rewrite HHa; apply Typ.i_eqb_refl);
+      simpl in HHa, HHb;
+      try (
+          simpl in HHa, HHb;
+          inversion HHa;
+          inversion HHb;
+          rewrite <- H10 in H11; now contradict H11);
+          
+      simpl in H7, H6;
+      destruct t; try inversion HHa;
+      apply Atom.Bval_inj2 in HHa;
+      apply Atom.Bval_inj2 in HHb;
+      subst va vb; unfold is_true;   
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *;
+      simpl; simpl in H7, H6.
+      
+      case (       
+        (if BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi1 as b return 
+        (BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi1 = b -> {vi = vi1} + {vi <> vi1})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi1 = true => in_left
+        else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi vi1 = false => in_right)) in H7.
+      case (
+       (if BVList.BITVECTOR_LIST_FIXED.bv_eq vi0 vi2 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi0 vi2 = b -> {vi0 = vi2} + {vi0 <> vi2})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi0 vi2 = true => in_left
+        else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi0 vi2 = false => in_right)) in H6.
+            
+      case ( bool_dec (BVList.BITVECTOR_LIST_FIXED.bv_slt vi vi0) 
+        (BVList.BITVECTOR_LIST_FIXED.bv_slt vi1 vi2)) in *.
+      auto.
+      rewrite e, e0 in n0.
+      apply ffalse. apply n0. easy.
+      now contradict H6.
+      now contradict H7.
+      
+      
     (*   (* op *) *)
-    (*   destruct (Int63Properties.reflect_eqb i i0);[subst | auto]. *)
-    (*   apply build_congr_correct;intros. *)
-    (*   simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp. *)
-    (*   rewrite H1. *)
-    (*   generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb]. *)
-    (*   unfold Atom.apply_binop;unfold Atom.interp_hatom;simpl. *)
-    (*   rewrite HHb, HHa;simpl. *)
-    (*   rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa. *)
-    (*   rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb. *)
-    (*   rewrite Typ.cast_refl;simpl. *)
+    destruct (Int63Properties.reflect_eqb i i0);[subst | auto].
+    apply build_congr_correct;intros.
+    simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
+    rewrite H1. 
+    generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a), 
+      (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). 
+        rewrite Typ.eqb_spec in H2. rewrite Typ.eqb_spec in H3. 
+          unfold Atom.get_type in H2, H3. rewrite H2,H3. intros [va HHa] [vb HHb]. 
+          
+    unfold Atom.apply_binop;unfold Atom.interp_hatom;simpl. 
+    rewrite HHb, HHa;simpl.
+    rewrite Atom.t_interp_wf in HHa; auto. rewrite H4 in HHa. simpl in HHa. 
+    rewrite Atom.t_interp_wf in HHb; auto. rewrite H5 in HHb. simpl in HHb. 
+    rewrite Typ.cast_refl;simpl.
+    
+    induction H6;simpl;trivial.
+      rewrite HHa in HHb.
+      apply Atom.Bval_inj2 in HHb.
+      rewrite HHb; apply Typ.i_eqb_refl.
+      
+      simpl in HHa, HHb.
+      (*
+      unfold i_eqb_atom in H6.
+      apply IHForall2.
+      
+      unfold Atom.interp_hatom in H6.
+      destruct (Atom.t_interp t_i t_func t_atom .[ a0]) as (ta0, va0).
+      destruct (Atom.t_interp t_i t_func t_atom .[ b0]) as (tb0, vb0).
+      simpl in HHa, HHb.
+    
+    
     (*   assert (Atom.Bval t_i t va = Atom.Bval t_i t vb). *)
     (*     rewrite <- HHa;rewrite <- HHb;destruct (t_func.[i0]). *)
     (*     apply f_equal;clear HHa HHb va vb H5 H4. *)
@@ -818,7 +1369,16 @@ Section certif.
     (*   rewrite H9. *)
     (*   apply Typ.i_eqb_refl. *)
     (*   intros x y;destruct (Typ.reflect_eqb x y);auto. *)
-    (* Qed. *)
+      
+      *)
+      
+
+  
+  
+
+
+      Admitted.
+      
 
     Lemma valid_check_congr_pred :
        forall lpa lpb eqs,
