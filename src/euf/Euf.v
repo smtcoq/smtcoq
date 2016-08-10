@@ -1980,7 +1980,7 @@ Section certif.
       case_eq (t_form.[Lit.blit lpb]);auto;intros.
       case_eq (t_atom.[i0]);auto; case_eq (t_atom.[i]);auto;intros.
       (* uop *)
-      destruct (Atom.reflect_uop_eqb u0 u);[subst | auto].
+      destruct (Atom.reflect_uop_eqb u0 u); [subst | auto].
       apply build_congr_correct;simpl;intros.
       rewrite orb_false_r, Lit.interp_lit, Lit.interp_nlit;unfold Var.interp.
       replace (rho (Lit.blit lpb)) with (rho (Lit.blit lpa)).
@@ -1999,39 +1999,215 @@ Section certif.
       rewrite !Atom.t_interp_wf, H1, H2;simpl;trivial.
       apply f_equal;apply f_equal.
       inversion_clear H3;subst;trivial.
-     
-     (*start here*) 
+    
+      
+      destruct u.
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
+      
       unfold i_eqb_atom in H4.
       unfold Atom.interp_hatom in H4.
       destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
       destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case (Pos.eq_dec vi2 vi1) in H4.
+      now rewrite e.
+      now contradict H4.
       
-      destruct u. simpl in H5, H6.
-      destruct ti1, ti2;
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
       
-          simpl in H5, H6;
-          rewrite H5 in H6;
-          apply Atom.Bval_inj2 in H5;
-          rewrite H6; apply Typ.i_eqb_refl.
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case (Pos.eq_dec vi2 vi1) in H4.
+      now rewrite e.
+      now contradict H4.
+      
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
+      
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case (Pos.eq_dec vi2 vi1) in H4.
+      now rewrite e.
+      now contradict H4.
 
-          simpl in H5, H6
-          inversion HHa.
-          inversion HHb;
-          rewrite <- H9 in H10; now contradict H10).
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
       
-    simpl in H7;
-    destruct t; try (inversion HHa);
-    apply Atom.Bval_inj2 in HHa;
-    apply Atom.Bval_inj2 in HHb;
-    subst va vb; unfold is_true;
-    unfold Typ.i_eqb in *;
-    unfold Typ.eqb_of_compdec in *;
-    simpl; simpl in H7.
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case (Pos.eq_dec vi2 vi1) in H4.
+      now rewrite e.
+      now contradict H4.
 
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
       
-      
-      
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case (Z.eq_dec vi2 vi1) in H4.
+      now rewrite e.
+      now contradict H4.
 
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
+      
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = b -> {vi2 = vi1} + {vi2 <> vi1})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = true => in_left
+        else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = false => in_right)
+      
+      ) in H4.
+      now rewrite e.
+      now contradict H4.
+
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
+      
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = b -> {vi2 = vi1} + {vi2 <> vi1})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = true => in_left
+        else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = false => in_right)
+      
+      ) in H4.
+      now rewrite e.
+      now contradict H4.
+      
+      (**)
+      rewrite H1 in H5; rewrite H2 in H6. simpl in H5, H6.
+      rewrite andb_true_iff in H5, H6.
+      destruct H5 as (H5a, H5b); destruct H6 as (H6a, H6b).
+      apply Typ.eqb_spec in H5b; apply Typ.eqb_spec in H6b.
+      unfold Atom.get_type', Atom.v_type in H5a, H6a, H5b, H6b.
+            
+      rewrite !Atom.t_interp_wf in H5a; trivial.
+      rewrite H1 in H5a. simpl in H5a.
+      unfold Atom.apply_unop in H5a.
+      
+      unfold i_eqb_atom in H4.
+      unfold Atom.interp_hatom in H4.
+      destruct (Atom.t_interp t_i t_func t_atom .[ i2]) as (ti2, vi2).
+      destruct (Atom.t_interp t_i t_func t_atom .[ i1]) as (ti1, vi1).
+      subst ti1 ti2.
+      rewrite Typ.cast_refl in H4.
+      unfold Typ.i_eqb in *;
+      unfold Typ.eqb_of_compdec in *.
+      simpl in H4.
+      case ((if BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 as b
+         return (BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = b -> {vi2 = vi1} + {vi2 <> vi1})
+        then fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = true => in_left
+        else fun H : BVList.BITVECTOR_LIST_FIXED.bv_eq vi2 vi1 = false => in_right)
+      
+      ) in H4.
+      now rewrite e.
+      now contradict H4.      
+     
       (* bop *)
       destruct (Atom.reflect_bop_eqb b0 b);[subst | auto].
       apply build_congr_correct;simpl;intros.
@@ -2053,6 +2229,9 @@ Section certif.
       inversion H3;clear H3;subst.
       inversion H11;clear H11;subst.
       apply f_equal; apply f_equal2;trivial.
+      
+      admit.
+      admit.
 
       (* op *)
       destruct (Int63Properties.reflect_eqb i2 i1);[subst | auto].
@@ -2075,8 +2254,10 @@ Section certif.
       apply f_equal;destruct (t_func.[i1]);apply f_equal.
       clear H H0 H1 H2 H5 H6.
       induction H3;simpl;trivial.
-      unfold Atom.interp_hatom in H;rewrite H, IHForall2;trivial.
-    Qed.
+      
+      admit.
+    (*  unfold Atom.interp_hatom in H;rewrite H, IHForall2;trivial. *)
+    Admitted.
 
   End Proof.
 
