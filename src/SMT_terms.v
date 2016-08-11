@@ -1252,10 +1252,14 @@ Module Atom.
    | BO_BVmult (_: N)
    | BO_BVult (_: N)
    | BO_BVslt (_: N)
+   | BO_select (_ : Typ.type) (_ : Typ.type)
   .
   
   Inductive nop : Type :=
    | NO_distinct (_ : Typ.type).
+
+  Inductive terop : Type :=
+   | TO_store (_ : Typ.type) (_ : Typ.type).
 
   Notation hatom := int (only parsing).
 
@@ -1263,6 +1267,7 @@ Module Atom.
    | Acop (_: cop)
    | Auop (_ : unop) (_:hatom)
    | Abop (_ : binop) (_:hatom) (_:hatom)
+   | Atop (_ : terop) (_:hatom) (_:hatom) (_:hatom)
    | Anop (_ : nop) (_: list hatom)
    | Aapp (_:func) (_: list hatom).
 
@@ -1310,7 +1315,13 @@ Module Atom.
    | BO_BVmult s1, BO_BVmult s2 => N.eqb s1 s2
    | BO_BVult s1, BO_BVult s2 => N.eqb s1 s2
    | BO_BVslt s1, BO_BVslt s2 => N.eqb s1 s2
+   | BO_select ti te, BO_select ti' te' => Typ.eqb ti ti' && Typ.eqb te te'
    | _,_ => false
+   end.
+
+  Definition top_eqb o o' :=
+   match o, o' with
+   | TO_store ti te, TO_store ti' te' => Typ.eqb ti ti' && Typ.eqb te te'
    end.
 
   Definition nop_eqb o o' :=
@@ -1324,6 +1335,8 @@ Module Atom.
     | Auop o t, Auop o' t' => uop_eqb o o' && (t == t')
     | Abop o t1 t2, Abop o' t1' t2' => bop_eqb o o' && (t1 == t1') && (t2 == t2')
     | Anop o t, Anop o' t' => nop_eqb o o' && list_beq Int63Native.eqb t t'
+    | Atop o t1 t2 t3, Atop o' t1' t2' t3' =>
+      top_eqb o o' && (t1 == t1') && (t2 == t2') && (t3 == t3')
     | Aapp a la, Aapp b lb => (a == b) && list_beq Int63Native.eqb la lb
     | _, _ => false
     end.
@@ -1369,7 +1382,9 @@ Module Atom.
 
   Lemma reflect_bop_eqb : forall o1 o2, reflect (o1 = o2) (bop_eqb o1 o2).
   Proof.
-   intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1] [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2];simpl;try (constructor;trivial;discriminate).
+    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 ]
+           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | I2 E2 ];
+      simpl;try (constructor;trivial;discriminate).
    - preflect (Typ.reflect_eqb A1 A2).
      constructor;subst;trivial.
    - preflect (N.eqb_spec s1 s2).
@@ -1388,8 +1403,19 @@ Module Atom.
      constructor;subst;trivial.
    - preflect (N.eqb_spec s1 s2).
      constructor;subst;trivial.
+   - preflect (Typ.reflect_eqb I1 I2).
+     preflect (Typ.reflect_eqb E1 E2).
+     constructor;subst;trivial.
 Qed.
 
+  Lemma reflect_top_eqb : forall o1 o2, reflect (o1 = o2) (top_eqb o1 o2).
+  Proof.
+    intros [ I1 E1 ] [ I2 E2 ]. simpl.
+    preflect (Typ.reflect_eqb I1 I2).
+    preflect (Typ.reflect_eqb E1 E2).
+    constructor;subst;trivial.
+  Qed.
+  
   Lemma reflect_nop_eqb : forall o1 o2, reflect (o1 = o2) (nop_eqb o1 o2).
   Proof.
     intros [t1] [t2]; simpl; preflect (Typ.reflect_eqb t1 t2); constructor; subst; reflexivity.
@@ -1408,8 +1434,16 @@ Qed.
     preflect (Int63Properties.reflect_eqb i i1);
     preflect (Int63Properties.reflect_eqb i0 i2);
     constructor;subst;trivial.
+    (* Ternary operators *)
+    preflect (reflect_top_eqb t t0).
+    preflect (Int63Properties.reflect_eqb i i2).
+    preflect (Int63Properties.reflect_eqb i0 i3).
+    preflect (Int63Properties.reflect_eqb i1 i4).
+    constructor;subst;trivial.
     (* N-ary operators *)
-    preflect (reflect_nop_eqb n n0); preflect (reflect_list_beq _ _ Int63Properties.reflect_eqb l l0); constructor; subst; reflexivity.
+    preflect (reflect_nop_eqb n n0);
+    preflect (reflect_list_beq _ _ Int63Properties.reflect_eqb l l0);
+    constructor; subst; reflexivity.
     (* Application *)
     preflect (Int63Properties.reflect_eqb i i0);
     preflect (reflect_list_beq _ _ Int63Properties.reflect_eqb l l0);
@@ -1500,6 +1534,12 @@ Qed.
         | BO_BVmult s   => ((Typ.TBV,Typ.TBV), Typ.TBV)
         | BO_BVult s   => ((Typ.TBV,Typ.TBV), Typ.Tbool)
         | BO_BVslt s   => ((Typ.TBV,Typ.TBV), Typ.Tbool)
+        | BO_select ti te => ((Typ.TFArray ti te, ti), te)
+        end.
+
+      Definition typ_top o := 
+        match o with
+        | TO_store ti te => ((Typ.TFArray ti te, ti, te), Typ.TFArray ti te)
         end.
 
       Definition typ_nop o :=
@@ -1524,6 +1564,11 @@ Qed.
           let (ta,t') := typ_bop o in
           let (ta1,ta2) := ta in
           Typ.eqb t' t && Typ.eqb (get_type a1) ta1 && Typ.eqb (get_type a2) ta2 
+        | Atop o a1 a2 a3 =>
+          let (ta, t') := typ_top o in
+          let '(ta1, ta2, ta3) := ta in
+          Typ.eqb t' t && Typ.eqb (get_type a1) ta1 &&
+                  Typ.eqb (get_type a2) ta2 && Typ.eqb (get_type a3) ta3 
         | Anop o a =>
           let (ta,t') := typ_nop o in
           (Typ.eqb t' t) && (List.forallb (fun t1 => Typ.eqb (get_type t1) ta) a)
@@ -1551,6 +1596,8 @@ Qed.
         intros [[H1 _] _] [[H2 _] _]; change (is_true (Typ.eqb (snd (typ_bop b)) t1)) in H1.
         change (is_true (Typ.eqb (snd (typ_bop b)) t2)) in H2.
         rewrite Typ.eqb_spec in H1, H2;subst;trivial.
+        (* Ternary operators *)
+        admit. (* TODO *)
         (* N-ary operators *)
         intros t1 t2; destruct (typ_nop n) as [ta t']; 
         unfold is_true; rewrite !andb_true_iff; 
