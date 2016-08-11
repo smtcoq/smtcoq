@@ -1253,7 +1253,11 @@ Section FArray.
     inversion_clear Hl.
     inversion_clear Hl'.
     
-    destruct (IHl H (Build_slist H2)).
+    apply NoDefault_cons in nodefault0.
+    apply NoDefault_cons in Hd.
+    
+    destruct (@IHl H Hd (Build_slist H2 nodefault0)).
+    
     unfold equal, eq in H5; simpl in H5; auto.
     destruct (andb_prop _ _ H); clear H.
     generalize H0; unfold cmp.
@@ -1263,7 +1267,11 @@ Section FArray.
     destruct (andb_prop _ _ H); clear H.
     inversion_clear Hl.
     inversion_clear Hl'.
-    destruct (IHl H (Build_slist H3)).
+    
+    apply NoDefault_cons in nodefault0.
+    apply NoDefault_cons in Hd.
+        
+    destruct (IHl H Hd (Build_slist H3 nodefault0)).
     unfold equal, eq in H6; simpl in H6; auto.
   Qed.
 
@@ -1292,14 +1300,17 @@ Section FArray.
     split.
     apply eq_refl.
     inversion_clear Hm.
-    apply (IHm H).
+    
+    apply NoDefault_cons in nodefault0.
+        
+    apply (IHm H nodefault0).
     apply lt_not_eq in Hlt. auto.
   Qed.
 
   Lemma eqfarray_sym : forall m1 m2 : farray, eq m1 m2 -> eq m2 m1.
   Proof.
-    intros (m,Hm); induction m;
-      intros (m', Hm'); destruct m'; unfold eq; simpl;
+    intros (m,Hm, Hd); induction m;
+      intros (m', Hm', Hd'); destruct m'; unfold eq; simpl;
         try destruct a as (x,e); try destruct p as (x',e'); auto.
     destruct (compare x x')  as [Hlt|Heq|Hlt]; try easy.
     inversion_clear Hm; inversion_clear Hm'.
@@ -1308,14 +1319,17 @@ Section FArray.
     case (compare x' x');
     subst; intro HH; try (apply lt_not_eq in HH; now contradict HH).
     split; auto.
-    apply (IHm H (Build_slist H1)); auto.
+    
+    apply NoDefault_cons in Hd; apply NoDefault_cons in Hd'.
+    
+    apply (IHm H Hd (Build_slist H1 Hd')); auto.
   Qed.
 
   Lemma eqfarray_trans : forall m1 m2 m3 : farray, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
   Proof.
-    intros (m1,Hm1); induction m1;
-      intros (m2, Hm2); destruct m2;
-        intros (m3, Hm3); destruct m3; unfold eq; simpl;
+    intros (m1,Hm1,Hd1); induction m1;
+      intros (m2, Hm2,Hd2); destruct m2;
+        intros (m3, Hm3, Hd3); destruct m3; unfold eq; simpl;
           try destruct a as (x,e);
           try destruct p as (x',e');
           try destruct p0 as (x'',e''); try contradiction; auto.
@@ -1326,7 +1340,10 @@ Section FArray.
     subst; intro HH; try (apply lt_not_eq in HH; now contradict HH).
     split; auto.
     inversion_clear Hm1; inversion_clear Hm2; inversion_clear Hm3.
-    apply (IHm1 H (Build_slist H3) (Build_slist H5)); intuition.
+    
+    apply NoDefault_cons in Hd1; apply NoDefault_cons in Hd2; apply NoDefault_cons in Hd3.
+    
+    apply (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)); intuition.
   Qed.
 
 
@@ -1350,9 +1367,9 @@ Section FArray.
   Lemma lt_farray_trans : forall m1 m2 m3 : farray,
       lt_farray m1 m2 -> lt_farray m2 m3 -> lt_farray m1 m3.
   Proof.
-    intros (m1,Hm1); induction m1;
-      intros (m2, Hm2); destruct m2;
-        intros (m3, Hm3); destruct m3; unfold lt_farray; simpl;
+    intros (m1,Hm1, Hd1); induction m1;
+      intros (m2, Hm2, Hd2); destruct m2;
+        intros (m3, Hm3, Hd3); destruct m3; unfold lt_farray; simpl;
           try destruct a as (x,e);
           try destruct p as (x',e');
           try destruct p0 as (x'',e''); try contradiction; auto.
@@ -1377,21 +1394,25 @@ Section FArray.
     left. destruct H. subst; auto.
     right. destruct H, H0. subst; split; auto.
     inversion_clear Hm1; inversion_clear Hm2; inversion_clear Hm3.
-    apply (IHm1 H (Build_slist H3) (Build_slist H5)); intuition.
+    
+    apply NoDefault_cons in Hd1; apply NoDefault_cons in Hd2; apply NoDefault_cons in Hd3.
+        
+    apply (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)); intuition.
     apply lt_not_eq in Hlt''. now contradict Hlt''.
   Qed.
 
   Lemma lt_farray_not_eq : forall m1 m2 : farray, lt_farray m1 m2 -> ~ eq m1 m2.
   Proof.
-    intros (m1,Hm1); induction m1;
-      intros (m2, Hm2); destruct m2; unfold eq, lt; simpl;
+    intros (m1,Hm1, Hd1); induction m1;
+      intros (m2, Hm2, Hd2); destruct m2; unfold eq, lt; simpl;
         try destruct a as (x,e);
         try destruct p as (x',e'); try contradiction; auto.
     destruct (compare x x') as [Hlt|Heq|Hlt]; auto.
     intuition.
     inversion_clear Hm1; inversion_clear Hm2.
-    subst.
-    apply (IHm1 H0 (Build_slist H4)); intuition.
+    subst. 
+    
+    apply (IHm1 H0 Hd1(Build_slist H4 Hd2)); intuition.
     unfold lt_farray in *.
     simpl in H.
     case (compare x' x') in *.
