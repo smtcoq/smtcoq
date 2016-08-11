@@ -14,8 +14,6 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
-Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/bva".
-Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/array".
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
 Require List .
@@ -28,15 +26,6 @@ Hint Unfold is_true.
 
 (* Remark: I use Notation instead of Definition du eliminate conversion check during the type checking *)
 Notation atom := int (only parsing).
-
-
-  Definition sigT_of_sigT2 {A : Type} {P Q : A -> Type} (X : sigT2 P Q) : sigT P
-    := existT P
-            (let (a, _, _) := X in a)
-            (let (x, p, _) as s return (P (let (a, _, _) := s in a)) := X in p).
-
-  Definition projT3 {A : Type} {P Q : A -> Type}  (e : sigT2 P Q) :=
-    let (a, b, c) return Q (projT1 (sigT_of_sigT2 e)) := e in c.
 
 Module Form.
 
@@ -261,6 +250,7 @@ End Form.
 (* TODO Move this *)
 Record typ_eqb : Type := Typ_eqb {
   te_carrier : Type;
+  te_inhabitant : te_carrier;
   te_eqb : te_carrier -> te_carrier -> bool;
   te_reflect : forall x y, reflect (x = y) (te_eqb x y);
   te_ltb : te_carrier -> te_carrier -> bool;
@@ -275,6 +265,7 @@ Record typ_eqb : Type := Typ_eqb {
 Section Typ_eqb_param.
 
   Variable A : Type.
+  Variable d : A.
   Variable r : { eq : A -> A -> bool & forall x y, reflect (x = y) (eq x y) }.
   Variable l : { ltb : A -> A -> bool
                  & forall x y z, ltb x y -> ltb y z -> ltb x z
@@ -284,7 +275,7 @@ Section Typ_eqb_param.
                         (fun x y => (projT1 r) x y = true) x y.
 
   Definition typ_eqb_of_typ_eqb_param : typ_eqb :=
-    Typ_eqb A (projT1 r) (projT2 r) (projT1 (sigT_of_sigT2 l)) (projT2 (sigT_of_sigT2 l)) (projT3 l) c.
+    Typ_eqb A d (projT1 r) (projT2 r) (projT1 (sigT_of_sigT2 l)) (projT2 (sigT_of_sigT2 l)) (projT3 l) c.
 
 End Typ_eqb_param.
 
@@ -295,7 +286,7 @@ End Typ_eqb_param.
 Section Unit_typ_eqb.
 
   Let carrier : Type := unit.
-
+  
   Let eqb : carrier -> carrier -> bool :=
     fun _ _ => true.
 
@@ -334,7 +325,7 @@ Section Unit_typ_eqb.
 Qed.    
 
   Definition unit_typ_eqb :=
-    Typ_eqb carrier eqb unit_reflect ltb unit_lt_trans unit_lt_not_eq unit_compare.
+    Typ_eqb carrier tt eqb unit_reflect ltb unit_lt_trans unit_lt_not_eq unit_compare.
 
   
 End Unit_typ_eqb.
@@ -410,9 +401,10 @@ Module Typ.
              (key_ord: OrdType key)
              (elt_ord: OrdType elt)
              (elt_dec: DecType elt)
-             (key_comp: Comparable key) : OrdType (farray elt key_ord).
+             (elt_inh: Inhabited elt)
+             (key_comp: Comparable key) : OrdType (farray key_ord elt_inh).
     Proof.
-      exists (@lt_farray key elt key_ord key_comp elt_ord).
+      exists (@lt_farray key elt key_ord key_comp elt_ord elt_inh).
       apply lt_farray_trans.
       unfold not.
       intros.
@@ -485,7 +477,8 @@ Module Typ.
              (elt_dec: DecType elt)
              (key_comp: Comparable key)
              (elt_comp: Comparable elt)
-      : DecType (farray elt key_ord).
+             (elt_inh: Inhabited elt)
+      : DecType (farray key_ord elt_inh).
     Proof.
       split; try auto.
       intros; subst; auto.
@@ -573,14 +566,15 @@ Module Typ.
              (elt_ord: OrdType elt)
              (elt_dec: DecType elt)
              (key_comp: Comparable key)
-             (elt_comp: Comparable elt) : Comparable (farray elt key_ord).
+             (elt_inh: Inhabited elt)
+             (elt_comp: Comparable elt) : Comparable (farray key_ord elt_inh).
     Proof.
       constructor.
       intros.
       destruct (compare_farray key_comp elt_dec elt_comp x y).
       - apply OrderedType.LT. auto.
       - apply OrderedType.EQ.
-        specialize (@eq_equal key elt key_ord key_comp elt_ord elt_comp x y).
+        specialize (@eq_equal key elt key_ord key_comp elt_ord elt_comp elt_inh x y).
         intros.
         apply H in e.
         now apply equal_eq in e.
@@ -591,57 +585,64 @@ Module Typ.
       ty : Type;
       Decidable :> DecType ty;       
       Ordered :> OrdType ty;       
-      Comp :> Comparable ty
+      Comp :> Comparable ty;
+      Inh :> Inhabited ty
     }.
 
 
     Definition type_compdec (cd : CompDec) :=
-      let (ty, _, _, _) := cd in ty.
+      let (ty, _, _, _, _) := cd in ty.
     
     Instance bool_compdec : CompDec := {|
       ty := bool;
       Decidable := bool_dec;                                    
       Ordered := bool_ord;                                    
-      Comp := bool_comp
+      Comp := bool_comp;
+      Inh := {| default_value := false|}
     |}.
-
+    
     Instance Z_compdec : CompDec := {|
       ty := Z;
       Decidable := Z_dec;                                    
       Ordered := Z_ord;                                    
-      Comp := Z_comp
+      Comp := Z_comp;
+      Inh := {| default_value := 0%Z |}
     |}.
 
     Instance Positive_compdec : CompDec := {|
       ty := positive;
       Decidable := Positive_dec;                                    
       Ordered := Positive_ord;                                    
-      Comp := Positive_comp
+      Comp := Positive_comp;
+      Inh := {| default_value := 1%positive |}
     |}.
 
     Instance BV_compdec : CompDec := {|
       ty := BITVECTOR_LIST_FIXED.bitvector;
       Decidable := BV_dec;                                    
       Ordered := BV_ord;                                    
-      Comp := BV_comp
+      Comp := BV_comp;
+      Inh := {| default_value := BITVECTOR_LIST_FIXED.zeros |}
     |}.
 
     Instance TI_compdec i : CompDec := {|
       ty := (t_i.[i]).(te_carrier);
       Decidable := TI_dec i;
       Ordered := TI_ord i;
-      Comp := TI_comp i
+      Comp := TI_comp i;
+      Inh := {| default_value := (t_i.[i]).(te_inhabitant) |}
     |}.
 
 
     Instance FArray_compdec (key_compdec elt_compdec: CompDec) : CompDec :=
-      let (key, key_dec, key_ord, key_comp) := key_compdec in
-      let (elt, elt_dec, elt_ord, elt_comp) := elt_compdec in
+      let (key, key_dec, key_ord, key_comp, _) := key_compdec in
+      let (elt, elt_dec, elt_ord, elt_comp, elt_inh) := elt_compdec in
       {|
-        ty := (farray elt key_ord);
-        Decidable := FArray_dec key elt key_ord elt_ord elt_dec key_comp elt_comp;
-        Ordered := FArray_ord key elt key_ord elt_ord elt_dec key_comp;
-        Comp := FArray_comp key elt key_ord elt_ord elt_dec key_comp elt_comp
+        ty := (farray key_ord elt_inh);
+        Decidable := FArray_dec key elt key_ord elt_ord elt_dec key_comp elt_comp elt_inh;
+        Ordered := FArray_ord key elt key_ord elt_ord elt_dec elt_inh key_comp;
+        Comp := FArray_comp key elt key_ord elt_ord elt_dec key_comp elt_inh elt_comp;
+        Inh := {| default_value := FArray.empty key_ord elt_inh |}
       |}.
 
     Fixpoint interp_compdec (t:type) {struct t} :=
@@ -655,7 +656,7 @@ Module Typ.
       end.
 
     Definition interp (t:type) : Type :=
-      let (ty, _, _, _) := interp_compdec t in ty.
+      let (ty, _, _, _, _) := interp_compdec t in ty.
     
     Definition interp_ftype (t:ftype) :=
       List.fold_right (fun dom codom =>interp dom -> codom)
@@ -857,14 +858,13 @@ Module Typ.
       Qed.
 
       
-      
-      Lemma i_eqb_t : forall t x y, i_eqb t x y = i_eqb_eqb t x y.
+            Lemma i_eqb_t : forall t x y, i_eqb t x y = i_eqb_eqb t x y.
       Proof.
         intros.
         unfold i_eqb_eqb.
-        destruct (eq_dec x y).
-        - subst; rewrite i_eqb_refl.
-          symmetry.
+        case_eq (i_eqb t x y); auto.
+        - change (i_eqb t x y = true) with (is_true (i_eqb t x y)); intros; rewrite i_eqb_spec in H.
+          symmetry. subst.
           destruct t.
           + apply i_eqb_refl.
           + specialize ((t_i.[i]).(te_reflect) y y).
@@ -873,95 +873,28 @@ Module Typ.
           + apply Bool.eqb_reflx.
           + apply Pos.eqb_eq; auto.
           + apply BITVECTOR_LIST_FIXED.bv_eq_reflect; auto.
-        -
-          (* assert (i_eqb t x y = false). *)
-          (* apply not_true_iff_false. *)
-          (* unfold not. *)
-          (* intros. apply n. *)
-          (* symmetry. *)
-          (* apply not_true_iff_false in H. *)
-          (* apply not_true_iff_false. *)
-          (* unfold not in *. *)
-          (* intros. *)
-          (* apply H. *)
+        - intros.
+          symmetry.
+          apply not_true_iff_false in H.
+          apply not_true_iff_false.
+          unfold not in *.
+          intros.
+          apply H.
           destruct t.
           + auto.
-          + unfold i_eqb, eqb_of_compdec. simpl.
-            destruct (if te_eqb (t_i .[ i]) x y as b return (te_eqb (t_i .[ i]) x y = b -> {x = y} + {x <> y})
-                      then
-                        fun H0 : te_eqb (t_i .[ i]) x y = true =>
-                          left
-                            (match reflect_iff (x = y) (te_eqb (t_i .[ i]) x y) (te_reflect (t_i .[ i]) x y) with
-                             | conj _ x0 => x0
-                             end H0)
-                      else
-                        fun H0 : te_eqb (t_i .[ i]) x y = false =>
-                          right
-                            (fun H1 : x = y =>
-                               match
-                                 eq_ind (te_eqb (t_i .[ i]) x y) (fun b : bool => b = true)
-                                        (match reflect_iff (x = y) (te_eqb (t_i .[ i]) x y) (te_reflect (t_i .[ i]) x y) with
-                                         | conj H _ => H
-                                         end H1) false H0 in (_ = y0) return (y0 = true -> False)
-                               with
-                               | Logic.eq_refl =>
-                                 fun H2 : false = true =>
-                                   False_ind False (eq_ind false (fun e : bool => if e then False else True) I true H2)
-                               end Logic.eq_refl)).
-            contradiction.
-            symmetry. apply not_true_iff_false.
-            unfold not.
-            intro.
-            specialize ((t_i.[i]).(te_reflect) x y).
-            intros. apply reflect_iff in H0.
-            apply H0 in H.
-            contradiction.
-          + unfold Zeq_bool.
-            unfold i_eqb, eqb_of_compdec.
-            simpl. case (Z.eq_dec x y).
-            intro. contradiction.
-            case_eq (x ?= y)%Z; intros.
-            apply Z.compare_eq in H.
-            contradiction. auto. auto.
-          + unfold i_eqb, eqb_of_compdec. simpl.
-            destruct (Bool.bool_dec x y). contradiction.
-            symmetry. apply not_true_iff_false.
-            unfold not.
-            intro. apply Bool.eqb_prop in H. contradiction.
-          + unfold i_eqb, eqb_of_compdec. simpl.
-            destruct (Pos.eq_dec x y). contradiction.
-            symmetry. apply not_true_iff_false.
-            unfold not.
-            intro. apply Pos.eqb_eq in H. contradiction.
-          + unfold i_eqb, eqb_of_compdec. simpl.
-            destruct ((if BITVECTOR_LIST_FIXED.bv_eq x y as b
-                          return (BITVECTOR_LIST_FIXED.bv_eq x y = b -> {x = y} + {x <> y})
-                       then
-                         fun H : BITVECTOR_LIST_FIXED.bv_eq x y = true =>
-                           left (match BITVECTOR_LIST_FIXED.bv_eq_reflect x y with
-                                 | conj H0 _ => H0
-                                 end H)
-                       else
-                         fun H : BITVECTOR_LIST_FIXED.bv_eq x y = false =>
-                           right
-                             (fun H0 : x = y =>
-                                eq_ind_r
-                                  (fun x0 : BITVECTOR_LIST_FIXED.bitvector =>
-                                     BITVECTOR_LIST_FIXED.bv_eq x0 y = false -> False)
-                                  (fun H1 : BITVECTOR_LIST_FIXED.bv_eq y y = false =>
-                                     match not_true_iff_false (BITVECTOR_LIST_FIXED.bv_eq y y) with
-                                     | conj _ x0 => x0
-                                     end H1
-                                         (match BITVECTOR_LIST_FIXED.bv_eq_reflect y y with
-                                          | conj _ x0 => x0
-                                          end Logic.eq_refl)) H0 H))).
-            contradiction.
-            symmetry. apply not_true_iff_false.
-            unfold not.
-            intro.
-            apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H. contradiction. 
+          + specialize ((t_i.[i]).(te_reflect) x y).
+            intros. apply reflect_iff in H1. apply H1 in H0.
+            rewrite H0. apply i_eqb_refl.
+          + unfold Zeq_bool in H0.
+            case_eq (x ?= y)%Z; intro.
+            apply Z.compare_eq in H1. rewrite H1. apply i_eqb_refl.
+            rewrite H1 in H0; easy.
+            rewrite H1 in H0; easy.
+          + apply Bool.eqb_prop in H0. rewrite H0. apply i_eqb_refl.
+          + apply Pos.eqb_eq in H0.  rewrite H0. apply i_eqb_refl.
+          + apply BITVECTOR_LIST_FIXED.bv_eq_reflect in H0. rewrite H0. apply i_eqb_refl.
       Qed.
-
+      
 
     Instance i_equiv_equiv (t:type) : Equivalence (i_equiv t).
     Proof.
