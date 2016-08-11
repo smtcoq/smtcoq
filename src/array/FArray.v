@@ -1154,9 +1154,26 @@ Section FArray.
   Qed.
   
   Lemma add_2 : forall m x y e e', ~ eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
-  Proof. intros m; apply Raw.add_2; auto. Qed.
+  Proof. intros.
+         unfold add, raw_add_nodefault, MapsTo. simpl.
+         case_eq (cmp e' default_value). intro.
+         unfold cmp in H1.
+         case_eq (compare e' default_value); intros; auto.
+         intros. apply Raw.add_2; auto.
+  Qed.  
+  
   Lemma add_3 : forall m x y e e', ~ eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
-  Proof. intros m; apply Raw.add_3; auto. Qed.
+  Proof. intros.
+         unfold MapsTo, add, raw_add_nodefault in *.
+         simpl in H0.
+         case_eq (cmp e' default_value); intros.
+         unfold cmp in *.
+         case_eq (compare e' default_value).
+          intros. rewrite H2 in H1. now contradict H1.
+          intros. now rewrite H2 in H0.
+          intros. rewrite H2 in H1. now contradict H1.
+         rewrite H1 in H0. apply Raw.add_3 in H0; auto.
+   Qed. 
 
   Lemma remove_1 : forall m x y, eq x y -> ~ In y (remove x m).
   Proof. intros m; apply Raw.remove_1; auto. apply m.(sorted). Qed.
@@ -1206,11 +1223,21 @@ Section FArray.
     end.
 
   Definition eq m m' := eq_list m.(this) m'.(this).
+  
+  Lemma NoDefault_cons: forall x l, NoDefault (x :: l) -> NoDefault l.
+  Proof. intros.
+         unfold NoDefault in *.
+         intros. destruct x. specialize (H k).
+         unfold not in *; intro; apply H.
+         unfold Raw.MapsTo in *.
+         apply InA_cons. now right.
+  Qed.
+         
 
   Lemma eq_equal : forall m m', eq m m' <-> equal m m' = true.
   Proof.
-    intros (l,Hl); induction l.
-    intros (l',Hl'); unfold eq; simpl.
+    intros (l,Hl, Hd); induction l.
+    intros (l',Hl', Hd'); unfold eq; simpl.
     destruct l'; unfold equal; simpl; intuition.
     intros (l',Hl'); unfold eq.
     destruct l'.
@@ -1225,6 +1252,7 @@ Section FArray.
     clear HH; simpl.
     inversion_clear Hl.
     inversion_clear Hl'.
+    
     destruct (IHl H (Build_slist H2)).
     unfold equal, eq in H5; simpl in H5; auto.
     destruct (andb_prop _ _ H); clear H.
