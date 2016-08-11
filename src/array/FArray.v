@@ -1,7 +1,8 @@
 Require Import SetoidList Bool OrderedType OrdersLists RelationPairs Orders.
 (* Require Import List Bool NArith Psatz Int63. *)
 Require Import RelationClasses.
-
+Require Import ProofIrrelevance.
+  
 
 Class DecType T := {
  eq_refl : forall x : T, x = x;
@@ -574,6 +575,16 @@ Module Raw.
     inversion_clear sorted; auto.
   Qed.
 
+  Lemma mem_3 : forall m (Hm:Sort m) x, mem x m = false -> ~ In x m.
+    intros.
+    rewrite <- not_true_iff_false in H.
+    unfold not in *. intros; apply H.
+    now apply mem_1.
+  Qed.
+  
+
+    
+  
   (** * [find] *)
 
   Function find (k:key) (s: farray) {struct s} : option elt :=
@@ -761,6 +772,76 @@ Module Raw.
     inversion_clear 1; inversion_clear 1; auto.
   Qed.
 
+  Lemma remove_4_aux : forall m (Hm:Sort m) x y,
+      ~ eq x y -> In y m -> In y (remove x m).
+  Proof.
+    intros m Hm x y; generalize Hm; clear Hm.
+    functional induction (remove x m);subst;auto;
+      match goal with
+      | [H: compare _ _ = _ |- _ ] => clear H
+      | _ => idtac
+      end.
+    rewrite In_alt.
+    inversion_clear 3; auto.
+    inversion H2.
+    unfold eqk in H3. simpl in H3. subst. now contradict H0.
+    apply In_alt.
+    exists x1. auto.
+    apply lt_not_eq in _x.
+    intros.
+    inversion_clear Hm.
+    inversion_clear H0.
+    unfold MapsTo in H3.
+    apply InA_eqke_eqk in H3.
+    unfold In.
+    destruct (eq_dec k' y).
+    exists x0.
+    apply InA_cons_hd.
+    split; simpl; auto.
+    inversion H3.
+    unfold eqk in H4. simpl in H4; subst. now contradict n.
+    assert ((exists e : elt, MapsTo y e (remove x l)) -> (exists e : elt, MapsTo y e ((k', x0) :: remove x l))).
+    intros.
+    destruct H6. exists x2.
+    apply InA_cons_tl. auto.
+    apply H6.
+    apply IHf; auto.
+    apply In_alt.
+    exists x1. auto.
+  Qed.    
+
+  Lemma remove_4 : forall m (Hm:Sort m) x y,
+      ~ eq x y -> In y m <-> In y (remove x m).
+  Proof.
+    split.
+    apply remove_4_aux; auto.
+    revert H.
+    generalize Hm; clear Hm.
+    functional induction (remove x m);subst;auto;
+      match goal with
+      | [H: compare _ _ = _ |- _ ] => clear H
+      | _ => idtac
+      end.
+    intros.
+    (* rewrite In_alt in *. *)
+    destruct H0 as (e, H0).
+    exists e.
+    apply InA_cons_tl. auto.
+    intros.
+    apply lt_not_eq in _x.
+    inversion_clear Hm.
+    apply In_inv in H0.
+    destruct H0.
+    (* destruct (eq_dec k' y). *)
+    exists x0.
+    apply InA_cons_hd. split; simpl; auto.
+    specialize (IHf H1 H H0).
+    inversion IHf.
+    exists x1.
+    apply InA_cons_tl. auto.
+  Qed.    
+
+  
   Lemma remove_Inf : forall (m:farray)(Hm : Sort m)(x x':key)(e':elt),
       Inf (x',e') m -> Inf (x',e') (remove x m).
   Proof.
@@ -1238,6 +1319,30 @@ Section FArray.
     unfold NoDefault. unfold not in *. intros.
     apply (H k). unfold Raw.MapsTo. apply InA_cons_tl. apply H0.
   Qed.
+
+
+  
+  Lemma raw_equal_eq : forall a (Ha: Sorted (Raw.ltk key_ord) a) b (Hb: Sorted (Raw.ltk key_ord) b),
+      Raw.equal key_comp cmp a b = true -> a = b.
+  Proof.
+    induction a; intros.
+    simpl in H.
+    case b in *; auto.
+    now contradict H.
+    destruct a as (xa, ea).
+    simpl in H.
+    case b in *.
+    now contradict H.
+    destruct p as (xb, eb).
+    destruct (compare xa xb); auto; try (now contradict H).
+    rewrite andb_true_iff in H. destruct H.
+    unfold cmp in H.
+    destruct (compare ea eb); auto; try (now contradict H).
+    subst. apply f_equal.
+    apply IHa; auto.
+    now inversion Ha.
+    now inversion Hb.
+  Qed.
   
   
   Lemma eq_equal : forall m m', eq m m' <-> equal m m' = true.
@@ -1495,16 +1600,58 @@ Section FArray.
     apply add_1; auto.
   Qed.
 
+
+  Lemma raw_add_d_rem : forall m (Hm: Sorted (Raw.ltk key_ord) m) x,
+      raw_add_nodefault x default_value m = Raw.remove key_comp x m.
+    intros.
+    unfold raw_add_nodefault.
+    rewrite cmp_refl.
+    case_eq (Raw.mem key_comp x m); intro.
+    auto.
+    apply Raw.mem_3 in H; auto.
+    apply raw_equal_eq; auto.
+    apply Raw.remove_sorted; auto.
+    apply Raw.equal_1; auto.
+    apply Raw.remove_sorted; auto.
+    unfold Raw.Equivb.
+    split.
+    intros.
+    destruct (eq_dec x k). subst.
+    split. intro. contradiction.
+    intro. contradict H0.
+    apply Raw.remove_1; auto.
+    apply Raw.remove_4; auto.
+
+    intros.
+    destruct (eq_dec x k).
+    assert (exists e, InA (Raw.eqk (elt:=elt)) (k, e) (Raw.remove key_comp x m)).
+    exists e'. apply Raw.InA_eqke_eqk; auto.
+    rewrite <- Raw.In_alt in H2; auto.
+    contradict H2.
+    apply Raw.remove_1; auto.
+    apply key_comp.
+    apply (Raw.remove_2 key_comp Hm n) in H0.
+    specialize (Raw.remove_sorted key_comp Hm x). intros.
+    specialize (Raw.MapsTo_inj key_dec H2 H0 H1).
+    intro. subst. apply cmp_refl.
+  Qed.
+    
+
+  
   Lemma add_d_rem : forall m x, add x default_value m = remove x m.
     intros.
-    destruct m.
-    unfold add, raw_add_nodefault.
-    unfold remove.
-    simpl.
-    (* TODO *)
-  Admitted.
-
-    
+    unfold add, remove.
+    specialize (raw_add_d_rem m.(sorted) x). intro.
+    generalize (add_sorted m.(sorted) x default_value).
+    generalize (add_nodefault (nodefault m) (sorted m) x default_value).
+    generalize (Raw.remove_sorted key_comp (sorted m) x).
+    generalize (remove_nodefault (nodefault m) (sorted m) x).
+    rewrite H.
+    intros H4 H3 H2 H1.
+    rewrite (proof_irrelevance _ H1 H3), (proof_irrelevance _ H2 H4).
+    reflexivity.
+  Qed.
+      
   
   Lemma add_eq_d : forall m x y,
       x = y -> find y (add x default_value m) = None.
@@ -1649,19 +1796,32 @@ Section FArray.
   Proof.
     intros.
     unfold select in H.
-    apply find_ext_dec in H.
-    exact H.
+    assert (forall i, find i a = find i b).
+    - intro i. specialize (H i).
+      case_eq (find i a);
+        case_eq (find i b);
+        intros; rewrite H0 in *; rewrite H1 in *; subst; auto.
+      + apply find_2 in H1.
+        contradict H1.
+        unfold MapsTo.
+        apply a.(nodefault).
+      + apply find_2 in H0.
+        contradict H0.
+        unfold MapsTo.
+        apply b.(nodefault).
+    - apply find_ext_dec in H0.
+      exact H0.
   Qed.
 
-  Require Import ProofIrrelevance.
-  
   Lemma equal_eq : forall a b, equal a b = true -> a = b.
   Proof. intros. apply eq_equal in H.
-    destruct a as (a, asort), b as (b, bsort).
+    destruct a as (a, asort, anodef), b as (b, bsort, bnodef).
     unfold eq in H.
-    revert b bsort H.
+    revert b bsort bnodef H.
     induction a; intros; destruct b.
-    apply f_equal. apply proof_irrelevance.
+    rewrite (proof_irrelevance _ asort bsort).
+    rewrite (proof_irrelevance _ anodef bnodef).
+    auto.
     simpl in H. now contradict H.
     simpl in H. destruct a; now contradict H.
     simpl in H. destruct a, p.
@@ -1670,9 +1830,13 @@ Section FArray.
     subst.
     inversion_clear asort.
     inversion_clear bsort.
-    specialize (IHa H b H2 H0).
+    specialize (nodefault_tail bnodef).
+    specialize (nodefault_tail anodef). intros.
+    specialize (IHa H H4 b H2 H5 H0).
     inversion IHa. subst.
-    apply f_equal.  apply proof_irrelevance.
+    rewrite (proof_irrelevance _ asort bsort).
+    rewrite (proof_irrelevance _ anodef bnodef).
+    reflexivity.
  Qed.
 
   
