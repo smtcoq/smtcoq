@@ -15,7 +15,7 @@
 
 
 (*** Spl -- a small checker for simplifications ***)
-
+Add Rec LoadPath "." as SMTCoq.
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms BVList.
 Require Lia.
@@ -115,12 +115,12 @@ Section CheckAtom.
     Lemma check_atom_aux_correct : forall a1 a2, check_atom_aux a1 a2 ->
       interp t_i t_func t_atom a1 = interp t_i t_func t_atom a2.
     Proof.
-      intros [op1|op1 i1|op1 i1 j1|op1 li1|f1 args1]; simpl.
+      intros [op1|op1 i1|op1 i1 j1|op1 li1|op1 li1|f1 args1]; simpl.
       (* Constants *)
-      - intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; pose (H:=reflect_cop_eqb op1 op2); inversion H; try discriminate; subst op1; auto.
+      - intros [op2|op2 i2|op2 i2 j2|op2 li2|op2 li2|f2 args2]; simpl; try discriminate; pose (H:=reflect_cop_eqb op1 op2); inversion H; try discriminate; subst op1; auto.
       (* Unary operators *)
       - 
-      intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; try (case op1; discriminate).
+      intros [op2|op2 i2|op2 i2 j2|op2 li2|op2 li2|f2 args2]; simpl; try discriminate; try (case op1; discriminate).
       case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [_ H]; rewrite (check_hatom_correct _ _ H); auto).
 
       case_eq (get_atom i2); try discriminate; intros [ | | | | | | | ] i Heq H; try discriminate; simpl;
@@ -139,7 +139,7 @@ Section CheckAtom.
       intros n m. simpl. unfold is_true. rewrite andb_true_iff, N.eqb_eq. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
       intros n m. simpl. unfold is_true. rewrite andb_true_iff, N.eqb_eq. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
             (* Binary operators *)
-      - intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); auto).
+      - intros [op2|op2 i2|op2 i2 j2|op2 li2|op2 li2|f2 args2]; simpl; try discriminate; case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); auto).
       unfold is_true, interp_bop, apply_binop. rewrite orb_true_iff, !andb_true_iff. intros [[H1 H2]|[H1 H2]]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.add_comm; reflexivity.
       unfold is_true, interp_bop, apply_binop. rewrite orb_true_iff, !andb_true_iff. intros [[H1 H2]|[H1 H2]]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.mul_comm; reflexivity.
       unfold interp_bop, apply_binop; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.gtb_ltb; auto.
@@ -153,10 +153,12 @@ Section CheckAtom.
       intros s1 s2; unfold is_true; rewrite !andb_true_iff, N.eqb_eq;
         intros [[-> H1] H2];
         now rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2).
+       (* Ternary operators *)
+     - intros. now contradict H.
       (* N-ary operators *)
-      - intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; destruct op1 as [t1]; destruct op2 as [t2]; unfold is_true; rewrite andb_true_iff; change (Typ.eqb t1 t2 = true) with (is_true (Typ.eqb t1 t2)); rewrite Typ.eqb_spec; intros [H1 H2]; subst t2; rewrite (list_beq_compute_interp _ _ _ H2); auto.
+      - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; destruct op1 as [t1]; destruct op2 as [t2]; unfold is_true; rewrite andb_true_iff; change (Typ.eqb t1 t2 = true) with (is_true (Typ.eqb t1 t2)); rewrite Typ.eqb_spec; intros [H1 H2]; subst t2; rewrite (list_beq_compute_interp _ _ _ H2); auto.
       (* Application *)
-      - intros [op2|op2 i2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H2 H1]; subst f2; rewrite (list_beq_correct _ _ H1); auto.
+      - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H2 H1]; subst f2; rewrite (list_beq_correct _ _ H1); auto.
     Qed.
 
   End AUX.
