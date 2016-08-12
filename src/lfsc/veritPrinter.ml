@@ -100,6 +100,9 @@ let get_rule = function
   | Bbslt -> "bbslt"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
+  | Row1 -> "row1"
+  | Row2 -> "row2" 
+
 
 
 let print_sharps () =
@@ -212,6 +215,14 @@ and print_term fmt t =
       | Some ("bblast_term", [_; a; bb]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(bbT %a [%a])" nb print_term a print_bblt bb
+
+      | Some ("read", [_; _]) -> fprintf fmt "select"
+      | Some ("write", [_; _]) -> fprintf fmt "store"
+
+      | Some ("write", [_; _; a; i; v]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(store %a %a %a)" nb
+          print_term a print_term i print_term v
 
       | Some (n, l) ->
         let n = smt2_of_lfsc n in

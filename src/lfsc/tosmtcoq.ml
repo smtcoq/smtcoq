@@ -94,6 +94,8 @@ let get_rule = function
   | Bbslt -> VeritSyntax.Bbslt
   | Bbnot -> VeritSyntax.Bbnot
   | Bbneg -> VeritSyntax.Bbneg
+  | Row1 -> VeritSyntax.Row1
+  | Row2 -> VeritSyntax.Row2
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -147,7 +149,8 @@ let string_of_rule = function
   | Bbslt -> "bbslt"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
-
+  | Row1 -> "row1"
+  | Row2 -> "row2" 
 
 
 let bit_to_bool t = match name t with

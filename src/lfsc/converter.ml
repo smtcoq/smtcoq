@@ -198,9 +198,8 @@ module Make (T : Translator_sig.S) = struct
     | Some (("symm"|"negsymm"), [_; _; _; r])
     | Some ("trans", [_; _; _; _; r; _])
     | Some ("refl", [_; r]) -> cong neqs (rm_used env r) r
-
     | _ ->
-      eprintf "something went wrong in congruence@.";
+      (* eprintf "something went wrong in congruence@."; *)
       neqs, env
 
 
@@ -539,6 +538,22 @@ module Make (T : Translator_sig.S) = struct
       let x_x = th_res p in
       { env with clauses = mk_clause_cl Eqre [x_x] [] :: env.clauses }
 
+    | Some ("row1", [_; _; a; i; v]) ->
+      let raiwaiv = th_res p in
+      { env with clauses = mk_clause_cl Row1 [raiwaiv] [] :: env.clauses }
+
+    | Some ("row", [ti; _; i; j; a; v; _]) ->
+      let i_eq_j = eq ti i j in
+      let pr1 = th_res p in
+      { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses }
+
+    | Some ("negativerow", [ti; _; i; j; a; v; npr1]) ->
+      let i_eq_j = eq ti i j in
+      let pr1 = match app_name (th_res p) with
+        | Some ("not", [pr1]) -> pr1
+        | _ -> assert false
+      in
+      { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses }
 
     | Some (rule, _) ->
       (* TODO *)

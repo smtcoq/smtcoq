@@ -77,7 +77,8 @@ type rule =
   | Bbslt
   | Bbnot
   | Bbneg
-
+  | Row1
+  | Row2 
 
 (** Signature for translators *)
 module type S = sig
