@@ -14,11 +14,8 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-
+Add Rec LoadPath "." as SMTCoq.
 Require Import Int63 Int63Properties PArray.
-
-Add LoadPath "/home/burak/Desktop/fize/smtcoq/src/bva".
-Add LoadPath "/home/burak/Desktop/fsize/smtcoq/src/array".
 
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity Nnat.
@@ -949,6 +946,7 @@ Proof. intros a bs.
         intros n0 Hn. rewrite Hn in H0. now contradict H0.
         intros n0 Hn. rewrite Hn in H0. now contradict H0.
         intros b0 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
+        intros t i2 i3 i4 Heq. rewrite Heq in H0. now contradict H0.        
         intros n0 l Heq. rewrite Heq in H0. now contradict H0.
         intros i2 l Heq. rewrite Heq in H0. now contradict H0.
         intros Heq. rewrite Heq in H0. now contradict H0.
@@ -2415,7 +2413,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
       (* BVand *)
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
 
@@ -3467,7 +3465,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
 
        case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true).
        
@@ -4071,7 +4069,7 @@ Proof.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
 
        case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq15; try (now apply C.interp_true).
        
@@ -4273,7 +4271,7 @@ Proof.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
 
        case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq15; try (now apply C.interp_true).
        
@@ -4692,7 +4690,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
       (* BVadd *)
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (
@@ -5372,7 +5370,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
       (* BVmult *)
       - case_eq ((a1 == a1') && (a2 == a2') (* || (a1 == a2') && (a2 == a1')*) ); simpl; intros Heq10; try (now apply C.interp_true).
       
