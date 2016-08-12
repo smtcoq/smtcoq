@@ -13,6 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+Add Rec LoadPath "." as SMTCoq.
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
@@ -1597,7 +1598,13 @@ Qed.
         change (is_true (Typ.eqb (snd (typ_bop b)) t2)) in H2.
         rewrite Typ.eqb_spec in H1, H2;subst;trivial.
         (* Ternary operators *)
-        admit. (* TODO *)
+        unfold is_true. intros.
+        destruct typ_top. destruct p. destruct p.
+        rewrite !andb_true_iff in H, H0.
+        destruct H as (((Ha, Hb), Hc), Hd).
+        destruct H0 as (((H0a, H0b), H0c), H0d).
+        apply Typ.eqb_spec in Ha.
+        apply Typ.eqb_spec in H0a. now subst.
         (* N-ary operators *)
         intros t1 t2; destruct (typ_nop n) as [ta t']; 
         unfold is_true; rewrite !andb_true_iff; 
@@ -1632,7 +1639,7 @@ Qed.
       Lemma check_aux_dec : forall a,
         {exists T, check_aux a T} + {forall T, check_aux a T = false}.
       Proof.
-        intros [op|op h|op h1 h2|op ha|f args]; simpl.
+        intros [op|op h|op h1 h2|op ha|f args | i e ]; simpl.
         (* Constants *)
         left; destruct op; simpl.
         exists Typ.Tpositive; auto.
@@ -1679,10 +1686,10 @@ Qed.
          (case (Typ.eqb (get_type h) Typ.TBV)).
            left. exists Typ.TBV. easy.
            right. intros. rewrite andb_false_r. easy.
-         
+
          (case (Typ.eqb (get_type h) Typ.TBV)).
            left. exists Typ.TBV. easy.
-           right. intros. rewrite andb_false_r. easy.  
+           right. intros. rewrite andb_false_r. easy.        
         
 
         (* Binary operators *)
@@ -1774,12 +1781,30 @@ Qed.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
+          
+       (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
+          left. exists t0. rewrite Typ.eqb_refl. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+        (* Ternary operators *)
+        destruct op; simpl. intros h1 h2.
+        (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _));
+        (case (Typ.eqb (get_type ha) _)).
+          left. exists (Typ.TFArray t t0). rewrite !Typ.eqb_refl. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
         (* N-ary operators *)
-        destruct op as [ty]; simpl; case (List.forallb (fun t1 : int => Typ.eqb (get_type t1) ty) ha).
+        destruct f as [ty]; simpl; case (List.forallb (fun t1 : int => Typ.eqb (get_type t1) ty) args).
         left; exists Typ.Tbool; auto.
         right; intro T; rewrite andb_false_r; auto.
         (* Application *)
-        case (v_type Typ.ftype interp_ft (t_func .[ f])); intros; apply check_args_dec.
+        case (v_type Typ.ftype interp_ft (t_func .[ i])); intros; apply check_args_dec.
       Qed.
 
     End Typ_Aux.
