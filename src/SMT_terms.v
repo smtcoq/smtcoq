@@ -663,6 +663,40 @@ Module Typ.
       List.fold_right (fun dom codom =>interp dom -> codom)
       (interp (snd t)) (fst t).
 
+
+    Definition dec_interp (t:type) : DecType (interp t).
+      unfold interp.
+      destruct (interp_compdec t).
+      apply Decidable0.
+    Defined.
+
+    Definition ord_interp (t:type) : OrdType (interp t).
+      unfold interp.
+      destruct (interp_compdec t).
+      apply Ordered0.
+    Defined.
+
+    Definition comp_interp (t:type) : Comparable (interp t).
+      unfold interp.
+      destruct (interp_compdec t).
+      apply Comp0.
+    Defined.
+
+    Definition inh_interp (t:type) : Inhabited (interp t).
+      unfold interp.
+      destruct (interp_compdec t).
+      apply Inh0.
+    Defined.
+
+    Definition inhabitant_interp (t:type) : interp t.
+      unfold interp.
+      destruct (interp_compdec t).
+      destruct Inh0.
+      apply default_value.
+    Defined.
+
+
+    
     (* Boolean equality over interpretation of a btype *)
     Section Interp_Equality.
 
@@ -1830,6 +1864,16 @@ Qed.
         | _, _ => bvtrue
         end.
 
+      Definition apply_terop (t1 t2 t3 r : Typ.type)
+            (op : interp_t t1 -> interp_t t2 -> interp_t t3 -> interp_t r) (tv1 tv2 tv3: bval) :=
+        let (t1', v1) := tv1 in
+        let (t2', v2) := tv2 in
+        let (t3', v3) := tv3 in
+        match Typ.cast t1' t1, Typ.cast t2' t2, Typ.cast t3' t3 with
+        | Typ.Cast k1, Typ.Cast k2, Typ.Cast k3  => Bval r (op (k1 _ v1) (k2 _ v2) (k3 _ v3))
+        | _, _, _ => bvtrue
+        end.
+
       Fixpoint apply_func
            targs tr (f:interp_ft (targs,tr)) (lv:list bval) : bval :=
         match targs as targs0 return interp_ft (targs0,tr) -> bval with
@@ -1871,6 +1915,32 @@ Qed.
         | UO_BVneg s => apply_unop Typ.TBV Typ.TBV BITVECTOR_LIST_FIXED.bv_neg
         end.
 
+
+      Lemma interp_farray_is_farray : forall ti te,
+          interp_t (Typ.TFArray ti te) =
+          FArray.farray (Typ.ord_interp t_i ti) (Typ.inh_interp t_i te).
+        intros.
+        unfold interp_t.
+        simpl.
+        unfold Typ.FArray_compdec.
+        unfold Typ.ord_interp.
+        unfold Typ.inh_interp.
+        destruct (Typ.interp_compdec t_i ti).
+        destruct (Typ.interp_compdec t_i te).
+        trivial.
+      Qed.
+
+      Definition _select ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te.
+        rewrite interp_farray_is_farray.
+        apply (@FArray.select _ _ _ _ _).
+      Defined.
+      
+      Definition _store ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te ->
+                                interp_t (Typ.TFArray ti te).
+        rewrite interp_farray_is_farray.
+        apply (@FArray.store _ _ _ _ _ _ _ _).
+      Defined.
+
       Definition interp_bop o :=
          match o with
          | BO_Zplus => apply_binop Typ.TZ Typ.TZ Typ.TZ Zplus
@@ -1897,8 +1967,14 @@ Qed.
            apply_binop Typ.TBV Typ.TBV Typ.Tbool BITVECTOR_LIST_FIXED.bv_ult
          | BO_BVslt s =>
            apply_binop Typ.TBV Typ.TBV Typ.Tbool BITVECTOR_LIST_FIXED.bv_slt
+         | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te (_select ti te)
          end.
 
+      Definition interp_top o :=
+         match o with
+         | TO_store ti te => apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te)
+                                        (_store ti te)
+         end.
 
       Fixpoint compute_interp ty acc l :=
         match l with
@@ -1996,6 +2072,7 @@ Qed.
         | Acop o => interp_cop o
         | Auop o a => interp_uop o (interp_hatom a)
         | Abop o a1 a2 => interp_bop o (interp_hatom a1) (interp_hatom a2)
+        | Atop o a1 a2 a3 => interp_top o (interp_hatom a1) (interp_hatom a2) (interp_hatom a3)
         | Anop (NO_distinct t) a =>
           match compute_interp t nil a with
             | Some l => Bval Typ.Tbool (distinct (Typ.i_eqb t_i t) (rev l))
