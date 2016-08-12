@@ -16,7 +16,6 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-Add Rec LoadPath "." as SMTCoq.
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
