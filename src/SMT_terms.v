@@ -2124,7 +2124,7 @@ Qed.
          check_aux get_type a t ->
          exists v, interp_aux a = (Bval t v).
       Proof.
-        intros [op|op h|op h1 h2|op ha|f l]; simpl.
+        intros [op|op h|op h1 h2|op h1 h2 h3|op ha|f l]; simpl.
         (* Constants *)
         destruct op; intros [ | i | | | | ]; simpl; try discriminate; intros _.
         exists 1%positive; auto.
@@ -2143,7 +2143,24 @@ Qed.
         exists (BITVECTOR_LIST_FIXED.bv_neg y); auto.
 
   (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8]; intros [ | i | | | |s ]; 
+        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | ti te];
+          [ intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            ];
         simpl; try discriminate; unfold is_true;
         try (rewrite andb_true_iff ;change (Typ.eqb (get_type h1) Typ.TZ = true /\ Typ.eqb (get_type h2) Typ.TZ = true) with 
         (is_true (Typ.eqb (get_type h1) Typ.TZ) /\ is_true (Typ.eqb (get_type h2) Typ.TZ)); 
@@ -2402,7 +2419,44 @@ Qed.
         revert x1 Hx1 x2 Hx2.
         rewrite H, H0. intros y1 Hy1 y2 Hy2.
         rewrite Typ.cast_refl.
-        exists (BITVECTOR_LIST_FIXED.bv_slt y1 y2); auto. 
+        exists (BITVECTOR_LIST_FIXED.bv_slt y1 y2); auto.
+
+        (* BO_select *)
+        intros t' H.
+        rewrite !andb_true_iff in H.
+        destruct H as ((H1, H2), H3).
+        destruct (check_aux_interp_hatom h1) as [x1 Hx1]. 
+        rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl.
+        apply Typ.eqb_spec in H1. 
+        apply Typ.eqb_spec in H2. 
+        apply Typ.eqb_spec in H3.
+        revert x1 Hx1 x2 Hx2.
+        rewrite H2, H3, H1.
+        rewrite !Typ.cast_refl.
+        intros.
+        exists (_select ti t' x1 x2); auto.
+
+        (* Ternary operatores *)
+        destruct op as [ti te]; intros [ ti' te' | | | | | ]; 
+          simpl; try discriminate; unfold is_true.
+        intros H.
+        rewrite !andb_true_iff in H.
+        destruct H as ((((H1, H2), H3), H4), H5).
+        apply Typ.eqb_spec in H1. 
+        apply Typ.eqb_spec in H2. 
+        apply Typ.eqb_spec in H3.
+        apply Typ.eqb_spec in H4.
+        apply Typ.eqb_spec in H5.
+        destruct (check_aux_interp_hatom h1) as [x1 Hx1]. rewrite Hx1;
+        destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2;
+        destruct (check_aux_interp_hatom h3) as [x3 Hx3]; rewrite Hx3; simpl.
+        revert x1 Hx1 x2 Hx2 x3 Hx3.
+        rewrite H3, H4, H5, H1, H2.
+        intros.
+        rewrite !Typ.cast_refl.
+        intros.
+        exists (_store ti' te' x1 x2 x3); auto.
+
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
         intro l; exists (distinct (Typ.i_eqb t_i A) (rev l)); auto.
@@ -2433,7 +2487,7 @@ Qed.
         (forall T, check_aux get_type a T = false) ->
         interp_aux a = bvtrue.
       Proof.
-        intros [op|op h|op h1 h2|op ha|f l]; simpl.
+        intros [op | op h | op h1 h2 | op h1 h2 h3 | op ha | f l]; simpl.
         (* Constants *)
         destruct op; simpl; intro H.
         discriminate (H Typ.Tpositive).
@@ -2546,7 +2600,31 @@ Qed.
         specialize (@Typ.cast_diff (get_type h2) Typ.TBV). intros.
         specialize (H1 H2). easy.
         easy.
+
         
+        (* BO_select *)
+        specialize (H t0). simpl in H.
+        rewrite !andb_false_iff in H. destruct H. destruct H.
+        rewrite Typ.eqb_refl in H. now contradict H.
+        rewrite (Typ.cast_diff _ _ H); auto.
+        rewrite (Typ.cast_diff _ _ H); auto.
+        case (Typ.cast (get_type h1) (Typ.TFArray t t0)); auto.
+
+        
+        (* Ternary operators *)
+        destruct op; simpl; intro H;
+          destruct (check_aux_interp_hatom h1) as [v1 Hv1]; 
+          destruct (check_aux_interp_hatom h2) as [v2 Hv2];
+          destruct (check_aux_interp_hatom h3) as [v3 Hv3];
+          rewrite Hv1, Hv2, Hv3; simpl.
+        specialize (H (Typ.TFArray t t0)). simpl in H.
+        rewrite !andb_false_iff in H.
+        destruct H as [[ [ [ H | H] | H] | H] | H];
+          try (rewrite (Typ.cast_diff _ _ H); auto);
+          try (case (Typ.cast (get_type h1) (Typ.TFArray t t0)); auto);
+          try (rewrite !Typ.eqb_refl in H; now contradict H).
+        intros. case (Typ.cast (get_type h2) t); auto.
+
         (* N-ary operators *)
         destruct op as [A]; simpl; intro H; generalize (H Typ.Tbool); simpl; clear H; assert (H: forall l1, List.forallb (fun t1 : int => Typ.eqb (get_type t1) A) ha = false -> match compute_interp A l1 ha with | Some l => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l)) | None => bvtrue end = bvtrue).
         induction ha as [ |h ha Iha]; simpl.
@@ -2574,6 +2652,7 @@ Qed.
         | Acop _ => true
         | Auop _ h => h < i
         | Abop _ h1 h2 => (h1 < i) && (h2 < i)
+        | Atop _ h1 h2 h3 => (h1 < i) && (h2 < i) && (h3 < i)
         | Anop _ ha => List.forallb (fun h => h < i) ha
         | Aapp f args => List.forallb (fun h => h < i) args
         end.
@@ -2588,6 +2667,8 @@ Qed.
         rewrite Hf;trivial.
         (* Binary operators *)
         unfold is_true in H;rewrite andb_true_iff in H;destruct H;rewrite !Hf;trivial.
+        (* Ternary operators *)
+        unfold is_true in H;rewrite !andb_true_iff in H;do 2 destruct H;rewrite !Hf;trivial.
         (* N-ary operators *)
         destruct n as [A]; replace (compute_interp f1 A nil l) with (compute_interp f2 A nil l); trivial; assert (H1: forall acc, compute_interp f2 A acc l = compute_interp f1 A acc l); auto; induction l as [ |k l IHl]; simpl; auto; intro acc; simpl in H; unfold is_true in H; rewrite andb_true_iff in H; destruct H as [H1 H2]; rewrite (Hf _ H1); destruct (f2 k) as [ta va]; destruct (Typ.cast ta A) as [ka| ]; auto.
         (* Application *)
@@ -2720,7 +2801,7 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.TBV); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST_FIXED.bv_neg (k interp_t x)) ; auto.
 
    (* Binary operators *)
-        intros [ | | | | | | |A | | | | | | | | ] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
+        intros [ | | | | | | |A | | | | | | | | | ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x - k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x * k2 interp_t y)%Z; auto.
@@ -2767,7 +2848,28 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TBV); simpl; try (exists true; auto);
         intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TBV) as [k2| ];
         simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST_FIXED.bv_slt (k1 interp_t x) (k2 interp_t y));
-        auto.
+          auto.
+        (* BO_select *)
+        case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TFArray ti te) );
+          simpl; try (exists true; auto); intro k1;
+            case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) ti) as [k2| ];
+            simpl; try (exists true; reflexivity).
+        exists (_select ti te (k1 interp_t x) (k2 interp_t y)); auto.
+
+        (* Ternary operators *)       
+        intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
+          destruct (IH h1 H1) as [x Hx];
+          destruct (IH h2 H2) as [y Hy];
+          destruct (IH h3 H3) as [z Hz]; rewrite Hx, Hy, Hz; simpl.
+         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TFArray ti te) );
+          simpl; try (exists true; auto); intro k1;
+         case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) ti );
+          simpl; try (exists true; auto); intro k2;
+            case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
+            simpl; try (exists true; reflexivity).
+         exists (_store ti te (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
+                     
+          
         (* N-ary operators *)       
         intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
         intros acc _; exists (distinct (Typ.i_eqb t_i A) (rev acc)); auto.

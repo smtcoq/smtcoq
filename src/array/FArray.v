@@ -1769,6 +1769,11 @@ Section FArray.
     rewrite (add_eq_o a Heq H0). auto.
   Qed.
 
+  Lemma read_over_write : forall a i v, select (store a i v) i = v.
+  Proof.
+    intros; apply read_over_same_write; auto.
+  Qed.
+
 
   Lemma read_over_other_write : forall a i j v,
       i <> j -> select (store a i v) j = select a j.
@@ -1790,7 +1795,7 @@ Section FArray.
   Qed.
 
 
-  Lemma extensionnality : forall a b,
+  Lemma extensionnality_eqb : forall a b,
       (forall i, select a i = select b i) -> equal a b = true.
   Proof.
     intros.
@@ -1812,6 +1817,7 @@ Section FArray.
       exact H0.
   Qed.
 
+  
   Lemma equal_eq : forall a b, equal a b = true -> a = b.
   Proof. intros. apply eq_equal in H.
     destruct a as (a, asort, anodef), b as (b, bsort, bnodef).
@@ -1838,7 +1844,28 @@ Section FArray.
     reflexivity.
  Qed.
 
-  
+
+
+  Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
+  Proof.
+    intros; apply equal_eq; apply extensionnality_eqb; auto.
+  Qed.
+
+  Section Classical_extensionnality.
+
+    Variable not_all_ex_not :
+      forall (U:Type) (P:U -> Prop), ~ (forall n:U, P n) -> exists n : U, ~ P n.
+
+    Lemma extensionnality2 : forall a b, a <> b -> (exists i, select a i <> select b i).
+    Proof.
+      intros.
+      apply not_all_ex_not.
+      unfold not in *.
+      intros. apply H. apply extensionnality; auto.
+    Qed.
+
+  End Classical_extensionnality.
+
 End FArray.
 
 
