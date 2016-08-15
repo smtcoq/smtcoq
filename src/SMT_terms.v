@@ -13,7 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Add Rec LoadPath "." as SMTCoq.
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
@@ -1930,12 +1929,12 @@ Qed.
         trivial.
       Qed.
 
-      Definition _select ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te.
+      Definition farray_select ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te.
         rewrite interp_farray_is_farray.
         apply (@FArray.select _ _ _ _ _).
       Defined.
       
-      Definition _store ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te ->
+      Definition farray_store ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te ->
                                 interp_t (Typ.TFArray ti te).
         rewrite interp_farray_is_farray.
         apply (@FArray.store _ _ _ _ _ _ _ _).
@@ -1967,13 +1966,13 @@ Qed.
            apply_binop Typ.TBV Typ.TBV Typ.Tbool BITVECTOR_LIST_FIXED.bv_ult
          | BO_BVslt s =>
            apply_binop Typ.TBV Typ.TBV Typ.Tbool BITVECTOR_LIST_FIXED.bv_slt
-         | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te (_select ti te)
+         | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te (farray_select ti te)
          end.
 
       Definition interp_top o :=
          match o with
          | TO_store ti te => apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te)
-                                        (_store ti te)
+                                        (farray_store ti te)
          end.
 
       Fixpoint compute_interp ty acc l :=
@@ -2434,7 +2433,7 @@ Qed.
         rewrite H2, H3, H1.
         rewrite !Typ.cast_refl.
         intros.
-        exists (_select ti t' x1 x2); auto.
+        exists (farray_select ti t' x1 x2); auto.
 
         (* Ternary operatores *)
         destruct op as [ti te]; intros [ ti' te' | | | | | ]; 
@@ -2455,7 +2454,7 @@ Qed.
         intros.
         rewrite !Typ.cast_refl.
         intros.
-        exists (_store ti' te' x1 x2 x3); auto.
+        exists (farray_store ti' te' x1 x2 x3); auto.
 
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
@@ -2854,7 +2853,7 @@ Qed.
           simpl; try (exists true; auto); intro k1;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) ti) as [k2| ];
             simpl; try (exists true; reflexivity).
-        exists (_select ti te (k1 interp_t x) (k2 interp_t y)); auto.
+        exists (farray_select ti te (k1 interp_t x) (k2 interp_t y)); auto.
 
         (* Ternary operators *)       
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
@@ -2867,7 +2866,7 @@ Qed.
           simpl; try (exists true; auto); intro k2;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
             simpl; try (exists true; reflexivity).
-         exists (_store ti te (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
+         exists (farray_store ti te (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
                      
           
         (* N-ary operators *)       

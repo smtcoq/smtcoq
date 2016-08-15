@@ -122,6 +122,10 @@ let cbv_mult = gen_constant bv_modules "bv_mult"
 let cbv_ult = gen_constant bv_modules "bv_ult"
 let cbv_slt = gen_constant bv_modules "bv_slt"
 
+
+let cOrderedTypeCompare =
+  gen_constant [["Coq";"Structures";"OrderedType"]] "Compare"
+
 (* SMT_terms *)
 
 let smt_modules = [ ["SMTCoq";"Misc"];
@@ -142,6 +146,10 @@ let cTbool = gen_constant smt_modules "Tbool"
 let cTpositive = gen_constant smt_modules "Tpositive"
 let cTBV = gen_constant smt_modules "TBV"
 let cTindex = gen_constant smt_modules "Tindex"
+let cTFArray = gen_constant smt_modules "TFArray"
+
+let ct_i = gen_constant smt_modules "t_i"
+let cinterp_t = gen_constant smt_modules "Typ.interp"
 
 let ctyp_eqb = gen_constant smt_modules "typ_eqb"
 let cTyp_eqb = gen_constant smt_modules "Typ_eqb"

@@ -33,6 +33,7 @@ type btype =
   | Tpositive
   | TBV of int
   | Tindex of indexed_type
+  (* | TFArray of btype * btype *)
 
 module Btype = 
   struct 
@@ -47,25 +48,29 @@ module Btype =
 	Hashtbl.add index_tbl i interp;
 	interp
 
-    let equal t1 t2 =
+    let rec equal t1 t2 =
       match t1,t2 with
         | Tindex i, Tindex j -> i.index == j.index
         | TBV i, TBV j -> i == j
+        (* | TFArray (ti, te), TFArray (ti', te') -> equal ti ti' && equal te te' *)
         | _ -> t1 == t2
 
-    let to_coq = function 
+    let rec to_coq = function 
       | TZ -> Lazy.force cTZ
       | Tbool -> Lazy.force cTbool
       | Tpositive -> Lazy.force cTpositive
       | TBV n -> Lazy.force cTBV
       | Tindex i -> index_to_coq i
+      (* | TFArray (ti, te) -> *)
+      (*   mklApp cTFArray [|to_coq ti; to_coq te|] *)
 
-    let to_smt fmt = function
+    let rec to_smt fmt = function
       | TZ -> Format.fprintf fmt "Int"
       | Tbool -> Format.fprintf fmt "Bool"
       | Tpositive -> Format.fprintf fmt "Int"
       | TBV i -> Format.fprintf fmt "(_ BitVec %i)" i
       | Tindex i -> Format.fprintf fmt "Tindex_%i" i.index
+      (* | TFArray ti te -> Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te *)
 
     (* reify table *)
     type reify_tbl = 
@@ -114,6 +119,7 @@ module Btype =
         let pair_ty = mklApp csigT [|eq_ty; refl_ty|] in
 
         reify.cuts <- (eq_name, pair_ty)::reify.cuts;
+        (* TODO (extra args) *)
         let ce = mklApp ctyp_eqb_of_typ_eqb_param [|t; eq_var|] in
         declare reify t ce
 
@@ -131,13 +137,28 @@ module Btype =
 	| _ -> acc in
       Hashtbl.fold set reify.tbl []
 
+    let make_t_i rt = interp_tbl rt
+
+    (* let interp_to_coq = *)
+    (*   let cpt = ref 0 in *)
+    (*   fun reify t -> *)
+    (*     incr cpt; *)
+    (*     (\* create local constant t_i (TODO: change this) *\) *)
+    (*     let nti = Names.id_of_string ("local_t_i_" ^ string_of_int !cpt) in *)
+    (*     let t_i = make_t_i reify in *)
+    (*     let c = Structures.mkUConst t_i in *)
+    (*     let ct_i = Term.mkConst *)
+    (*         (Declare.declare_constant ~local:true *)
+    (*            nti (DefinitionEntry c, IsDefinition Definition)) in *)
+    (*     mklApp cinterp_t [|ct_i ; to_coq t|] *)
+    
     let interp_to_coq reify = function
       | TZ -> Lazy.force cZ
       | Tbool -> Lazy.force cbool
       | Tpositive -> Lazy.force cpositive
-      | TBV _ -> Lazy.force cbitvector
+      | TBV n -> mklApp cbitvector [|mkN n|]
       | Tindex c -> mklApp cte_carrier [|c.hval|]
-
+    
   end
 
 (** Operators *)
@@ -173,6 +194,12 @@ type bop =
    | BO_BVmult of int
    | BO_BVult of int
    | BO_BVslt of int
+   (* | BO_select of btype * btype *)
+
+
+(* type top = *)
+(*   | TO_store of btype * btype *)
+
 
 type nop =
   | NO_distinct of btype
@@ -191,6 +218,7 @@ type op =
   | Cop of cop
   | Uop of uop
   | Bop of bop
+  (* | Top of top *)
   | Nop of nop
   | Iop of indexed_op
 
@@ -246,14 +274,30 @@ module Op =
       | UO_BVneg _ -> Lazy.force cbv_neg
 
     let eq_tbl = Hashtbl.create 17 
-
+    let select_tbl = Hashtbl.create 17 
+    let store_tbl = Hashtbl.create 17 
+    
     let eq_to_coq t =
       try Hashtbl.find eq_tbl t 
       with Not_found ->
 	let op = mklApp cBO_eq [|Btype.to_coq t|] in
 	Hashtbl.add eq_tbl t op;
 	op
-     
+
+    (* let select_to_coq ti te = *)
+    (*   try Hashtbl.find select_tbl (ti, te)  *)
+    (*   with Not_found -> *)
+    (*     let op = mklApp cBO_select [|Btype.to_coq ti; Btype.to_coq te|] in *)
+    (*     Hashtbl.add select_tbl t op; *)
+    (*     op *)
+
+    (* let store_to_coq ti te = *)
+    (*   try Hashtbl.find store_tbl (ti, te)  *)
+    (*   with Not_found -> *)
+    (*     let op = mklApp cTO_store [|Btype.to_coq ti; Btype.to_coq te|] in *)
+    (*     Hashtbl.add store_tbl t op; *)
+    (*     op *)
+
     let b_to_coq = function
       | BO_Zplus -> Lazy.force cBO_Zplus
       | BO_Zminus -> Lazy.force cBO_Zminus
@@ -270,12 +314,14 @@ module Op =
       | BO_BVmult s -> mklApp cBO_BVmult [|mkN s|]
       | BO_BVult s -> mklApp cBO_BVult [|mkN s|]
       | BO_BVslt s -> mklApp cBO_BVslt [|mkN s|]
-
+      (* | BO_select (ti, te) -> select_to_coq ti te *)
+        
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
       | BO_BVult _ | BO_BVslt _ -> Tbool
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
+      (* | BO_select (_, te) -> te *)
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult 
@@ -284,6 +330,7 @@ module Op =
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
       | BO_BVult s | BO_BVslt s ->
         (TBV s,TBV s)
+      (* | BO_select (ti, te) -> (TFArray (ti, te), ti) *)
 
     let interp_eq = function
       | TZ -> Lazy.force ceqbZ
@@ -1059,5 +1106,5 @@ let mk_ftype cod dom =
   let b = Btype.to_coq dom in
   mklApp cpair [|typea;typeb;a;b|]
 
-let make_t_i rt = Btype.interp_tbl rt
+let make_t_i = Btype.make_t_i
 let make_t_func ro t_i = Op.interp_tbl (mklApp ctval [|t_i|]) (fun cod dom value -> mklApp cTval [|t_i; mk_ftype cod dom; value|]) ro

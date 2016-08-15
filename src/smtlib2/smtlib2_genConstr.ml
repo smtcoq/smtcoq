@@ -78,14 +78,70 @@ let rec sort_of_sort = function
 let declare_sort rt sym =
   let s = string_of_symbol sym in
   let cons_t = declare_new_type (Names.id_of_string ("Smt_sort_"^s)) in
-  let eq_t = declare_new_variable (Names.id_of_string ("eq_"^s)) (Term.mkArrow cons_t (Term.mkArrow cons_t (Lazy.force cbool))) in
+  let inhabitant_t =
+    declare_new_variable (Names.id_of_string ("inhabitant_"^s)) cons_t in
+  let eq_t = declare_new_variable (Names.id_of_string ("eq_"^s))
+      (Term.mkArrow cons_t (Term.mkArrow cons_t (Lazy.force cbool))) in
+  let lt_t = declare_new_variable (Names.id_of_string ("lt_"^s))
+      (Term.mkArrow cons_t (Term.mkArrow cons_t (Lazy.force cbool))) in
   let x = mkName "x" in
   let y = mkName "y" in
-  let rx = Term.mkRel 2 in
-  let ry = Term.mkRel 1 in
-  let eq_refl = Term.mkProd (x,cons_t,Term.mkProd (y,cons_t,mklApp creflect [|mklApp ceq [|cons_t;rx;ry|];mklApp (lazy eq_t) [|rx;ry|]|])) in
-  let eq_refl_v = declare_new_variable (Names.id_of_string ("eq_refl_"^s)) eq_refl in
-  let ce = mklApp cTyp_eqb [|cons_t;eq_t;eq_refl_v|] in
+  let z = mkName "z" in
+  let v = Term.mkRel in
+  let eq_refl =
+    Term.mkProd (x,cons_t,
+    Term.mkProd (y,cons_t,
+      mklApp creflect [|mklApp ceq [|cons_t;v 2 (*x*);v 1 (*y*)|];
+                        mklApp (lazy eq_t) [|v 2 (*x*);v 1 (*y*)|]|])) in
+  let eq_refl_v =
+    declare_new_variable (Names.id_of_string ("eq_refl_"^s)) eq_refl in
+
+  let lt_trans =
+    Term.mkProd (x,cons_t,
+    Term.mkProd (y,cons_t,
+    Term.mkProd (z,cons_t,
+      Term.mkArrow
+       (mklApp ceq [|Lazy.force cbool;
+         mklApp (lazy lt_t) [|v 3(*x*);v 2(*y*)|]; Lazy.force ctrue|])
+       (Term.mkArrow
+          (mklApp ceq [|Lazy.force cbool;
+            mklApp (lazy lt_t) [|v 3(*y*);v 2(*z*)|]; Lazy.force ctrue|])
+          (mklApp ceq [|Lazy.force cbool;
+            mklApp (lazy lt_t) [|v 5(*x*);v 3(*z*)|]; Lazy.force ctrue|])))))
+  in
+  let lt_trans_v =
+    declare_new_variable (Names.id_of_string ("lt_trans_"^s)) lt_trans in
+
+  let lt_not_eq =
+    Term.mkProd (x,cons_t,
+    Term.mkProd (y,cons_t,
+      Term.mkArrow
+        (mklApp ceq [|Lazy.force cbool;
+          mklApp (lazy lt_t) [|v 2(*x*);v 1(*y*)|]; Lazy.force ctrue|])
+        (mklApp cnot [|mklApp ceq [|cons_t;v 3(*x*);v 2(*y*)|]|]))) in
+  let lt_not_eq_v =
+    declare_new_variable (Names.id_of_string ("lt_not_eq_"^s)) lt_not_eq in
+
+  let compare =
+    Term.mkProd (x,cons_t,
+    Term.mkProd (y,cons_t,
+      mklApp cOrderedTypeCompare [|
+        cons_t;
+        Term.mkLambda (x, cons_t,
+        Term.mkLambda (y, cons_t,
+          mklApp ceq [|Lazy.force cbool;
+            mklApp (lazy lt_t) [|v 2(*x*);v 1(*y*)|]; Lazy.force ctrue|]));
+        Term.mkLambda (x, cons_t,
+        Term.mkLambda (y, cons_t,
+          mklApp ceq [|Lazy.force cbool;
+            mklApp (lazy eq_t) [|v 2(*x*);v 1(*y*)|]; Lazy.force ctrue|]));
+        v 2(*x*); v 1(*y*)
+      |])) in
+  let compare_v =
+    declare_new_variable (Names.id_of_string ("compare_"^s)) compare in
+  
+  let ce = mklApp cTyp_eqb [|cons_t; inhabitant_t; eq_t; eq_refl_v;
+                             lt_t; lt_trans_v; lt_not_eq_v; compare_v|] in
   let res = Btype.declare rt cons_t ce in
   VeritSyntax.add_btype s res;
   res
@@ -95,10 +151,10 @@ let declare_fun rt ro sym arg cod =
   let s = string_of_symbol sym in
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
-
-  let coqTy = List.fold_right (fun typ c -> Term.mkArrow (Btype.interp_to_coq rt (fst typ)) c) tyl (Btype.interp_to_coq rt (fst ty)) in
+  let coqTy = List.fold_right (fun typ c ->
+      Term.mkArrow (Btype.interp_to_coq rt (fst typ)) c)
+      tyl (Btype.interp_to_coq rt (fst ty)) in
   let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
-
   let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) in
   VeritSyntax.add_fun s op;
   op
