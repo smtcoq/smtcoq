@@ -14,7 +14,7 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-Add Rec LoadPath "." as SMTCoq.
+(*Add Rec LoadPath "." as SMTCoq.*)
 Require Import Int63 Int63Properties PArray.
 
 Require Import Misc State SMT_terms BVList Psatz.
@@ -70,8 +70,8 @@ Section Checker.
       match get_form (Lit.blit lres) with
         | FbbT a bs =>
           match get_atom a with
-            | Acop (CO_BV bv) =>
-              if check_bbc bv bs && (N.of_nat (length bv) =? (BVList._size))%N
+            | Acop (CO_BV bv N) =>
+              if check_bbc bv bs && (N.of_nat (length bv) =? N)%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -116,7 +116,7 @@ Section Checker.
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
       | FbbT a bs =>
-        if check_bb a bs O (List.length bs) && (N.of_nat (length bs) =? (BVList._size))%N
+        if check_bb a bs O (List.length bs)%N
         then lres::nil
         else C._true
       | _ => C._true
@@ -152,9 +152,9 @@ Section Checker.
         match get_form (Lit.blit l), get_form (Lit.blit lres) with
         | FbbT a bs, FbbT r br =>
           match get_atom r with
-          | Auop (UO_BVnot n) a' =>
+          | Auop (UO_BVnot N) a' =>
             if (a == a') && check_not bs br &&
-              (N.of_nat (length bs) =? BVList._size)%N
+              (N.of_nat (length bs) =? N)%N
             then lres::nil
             else C._true
                    
@@ -201,9 +201,9 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
              (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)),
              BO_BVxor (n-1))
 
-          | Fiff a1 a2, (BO_eq (Typ.TBV))  =>
+          | Fiff a1 a2, (BO_eq (Typ.TBV n))  =>
              (((a1 == b1) && (a2 == b2)) || ((a1 == b2) && (a2 == b1)),
-             BO_eq (Typ.TBV))
+             BO_eq (Typ.TBV n))
 
           | _, _ => (false, bvop)
         end in
@@ -213,7 +213,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       else false
     | _, _, _ => false
     end.
-
+    
   Lemma empty_list_length: forall {A: Type} (a: list A), (length a = 0)%nat <-> a = [].
   Proof. intros A a.
          induction a; split; intros; auto; contradict H; easy.
@@ -231,21 +231,21 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           | Abop (BO_BVand n) a1' a2' =>
             if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                  && (@check_symopp bs1 bs2 bsres (BO_BVand n))
-                 && (N.of_nat (length bs1) =? (BVList._size))%N
+                 && (N.of_nat (length bs1) =? n)%N
             then lres::nil
             else C._true
 
           | Abop (BO_BVor n) a1' a2' =>
              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                   && (check_symopp bs1 bs2 bsres  (BO_BVor n))
-                  && (N.of_nat (length bs1) =? (BVList._size))%N
+                  && (N.of_nat (length bs1) =? n)%N
              then lres::nil
              else C._true
 
           | Abop (BO_BVxor n) a1' a2' =>
              if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                   && (check_symopp bs1 bs2 bsres  (BO_BVxor n))
-                  && (N.of_nat (length bs1) =? (BVList._size))%N
+                  && (N.of_nat (length bs1) =? n)%N
              then lres::nil
              else C._true
 
@@ -321,10 +321,10 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           match get_form (Lit.blit leq), get_form (Lit.blit lbb) with
           | Fatom a, _ (* | _, Fatom a *) =>
             match get_atom a with
-            | Abop (BO_eq (Typ.TBV)) a1' a2' =>
+            | Abop (BO_eq (Typ.TBV n)) a1' a2' =>
               if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                    && (check_eq bs1 bs2 [lbb])
-                   && (N.of_nat (length bs1) =? (BVList._size))%N
+                   && (N.of_nat (length bs1) =? n)%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -439,10 +439,10 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
             | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
               match get_atom a with
 
-                | Abop (BO_BVadd _) a1' a2' =>
+                | Abop (BO_BVadd n) a1' a2' =>
                   if (((a1 == a1') && (a2 == a2')) || ((a1 == a2') && (a2 == a1')))
                        && (check_add bs1 bs2 bsres (Clit Lit._false))
-                       && (N.of_nat (length bs1) =? (BVList._size))%N
+                       && (N.of_nat (length bs1) =? n)%N
                   then lres::nil
                   else C._true
 
@@ -480,7 +480,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           match get_atom r with
           | Auop (UO_BVneg n) a' =>
             if (a == a') && check_neg bs br &&
-              (N.of_nat (length bs) =? BVList._size)%N
+              (N.of_nat (length bs) =? n)%N
             then lres::nil
             else C._true
                    
@@ -577,10 +577,10 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
             | FbbT a1 bs1, FbbT a2 bs2, FbbT a bsres =>
               match get_atom a with
 
-                | Abop (BO_BVmult _) a1' a2' =>
+                | Abop (BO_BVmult n) a1' a2' =>
                   if (((a1 == a1') && (a2 == a2')) (* || ((a1 == a2') && (a2 == a1')) *) )
                        && (check_mult bs1 bs2 bsres)
-                       && (N.of_nat (length bs1) =? (BVList._size))%N
+                       && (N.of_nat (length bs1) =? n)%N
                   then lres::nil
                   else C._true
 
@@ -625,11 +625,11 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           match get_form (Lit.blit llt), get_form (Lit.blit lbb) with
           | Fatom a, _ (* | _, Fatom a *) =>
             match get_atom a with
-            | Abop (BO_BVult _) a1' a2' =>
+            | Abop (BO_BVult n) a1' a2' =>
               if ((a1 == a1') && (a2 == a2'))
                    && (check_ult bs1 bs2 lbb)
-                   && (N.of_nat (length bs1) =? (BVList._size))%N
-                   && (N.of_nat (length bs2) =? (BVList._size))%N
+                   && (N.of_nat (length bs1) =? n)%N
+                   && (N.of_nat (length bs2) =? n)%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -669,11 +669,11 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           match get_form (Lit.blit llt), get_form (Lit.blit lbb) with
           | Fatom a, _ (* | _, Fatom a *) =>
             match get_atom a with
-            | Abop (BO_BVslt _) a1' a2' =>
+            | Abop (BO_BVslt n) a1' a2' =>
               if ((a1 == a1') && (a2 == a2'))
                    && (check_slt bs1 bs2 lbb)
-                   && (N.of_nat (length bs1) =? (BVList._size))%N
-                   && (N.of_nat (length bs2) =? (BVList._size))%N
+                   && (N.of_nat (length bs1) =? n)%N
+                   && (N.of_nat (length bs2) =? n)%N
               then lres::nil
               else C._true
             | _ => C._true
@@ -758,7 +758,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       Definition wf := PArray.forallbi lt_form t_form.
 
       Hypothesis wf_t_i : wf.
-      Variable interp_bvatom : atom -> BITVECTOR_LIST_FIXED.bitvector.
+      Variable interp_bvatom : atom -> forall s, BITVECTOR_LIST.bitvector s.
       Notation atom := int (only parsing).
 (*
 Lemma prop_checkbb: forall (a: int) (bs: list _lit) (i n: nat),
@@ -825,7 +825,7 @@ Lemma prop_checkbb: forall (a: int) (bs: list _lit) (i n: nat),
                     (check_bb a bs i n = true) ->
                     (forall i0, (i <= i0 < n )%nat ->
                     Lit.interp rho (nth (i0 - i) bs 1) = 
-                    (@BITVECTOR_LIST_FIXED.bitOf i0 (interp_form_hatom_bv a))).
+                    (@BITVECTOR_LIST.bitOf (N.of_nat n) i0 (interp_form_hatom_bv a (N.of_nat n)))).
 Proof. intros a bs.
        revert a.
        induction bs as [ | b ys IHys].
@@ -907,30 +907,24 @@ Proof. intros a bs.
          rewrite H2. simpl.
          cut (i = n1). intro Hin1. rewrite Hin1.
          cut (n = (N.to_nat n0)). intro Hnn0.
-         (* rewrite Hnn0. *)
-         (* rewrite id''. *)
+         rewrite Hnn0. 
+         rewrite id''.
          case_eq (t_interp .[ i2]).
          
          intros. rewrite H9 in H7. rewrite <- H9.
          case_eq v_type1; intros; rewrite H10 in H7; try (now contradict H7).
-         (* cut (n2 = n0)%N. intros Hn2n0. rewrite Hn2n0 in H10. *)
+         cut (n2 = n0)%N. intros Hn2n0. rewrite Hn2n0 in H10. 
  
          rewrite H9. simpl.
          unfold interp_bool.
-         case_eq (Typ.cast v_type1 (Typ.TBV)).
+         case_eq (Typ.cast v_type1 (Typ.TBV n0)).
          (* split *)
          split. rewrite H10.
          simpl.
-         (* rewrite Typ.N_cast_refl. intros. *)
-         intros.
+         rewrite Typ.N_cast_refl. intros.
          contradict H11. easy.
          
-         (* rewrite N.eqb_compare in H7. *)
-         (* case_eq (n2 ?= n0)%N. *)
-         
-         (* intros. now rewrite N.compare_eq_iff in H11. *)
-         (* intros. rewrite H11 in H7. now contradict H7. *)
-         (* intros. rewrite H11 in H7. now contradict H7.          *)
+         apply Typ.eqb_spec in H7. inversion H7. easy.
 
          now apply Nat_eqb_eq in Hif2.
          now apply Nat_eqb_eq in Hif1.
@@ -966,7 +960,8 @@ Lemma prop_checkbb': forall (a: int) (bs: list _lit),
                      (check_bb a bs 0 (length bs) = true) ->
                      (forall i0, (i0 < (length bs) )%nat ->
                      (Lit.interp rho  (nth i0 bs 1)) = 
-                     (@BITVECTOR_LIST_FIXED.bitOf i0 (interp_form_hatom_bv a ))).
+                     (@BITVECTOR_LIST.bitOf (N.of_nat(length bs)) i0 
+                     (interp_form_hatom_bv a (N.of_nat (length bs))))).
 Proof. intros.
        specialize (@prop_checkbb a bs 0 (length bs)).
        intros Hp.
@@ -981,11 +976,12 @@ Proof. intros.
        omega. omega. omega.
 Qed.
 
-Lemma eq_rec: forall a b, BITVECTOR_LIST_FIXED.bv a = BITVECTOR_LIST_FIXED.bv b 
+
+Lemma eq_rec: forall (n: N) (a b: BITVECTOR_LIST.bitvector n), BITVECTOR_LIST.bv a = BITVECTOR_LIST.bv b 
                          ->
                           a = b.
 Proof. intros. destruct a, b. 
-       unfold BITVECTOR_LIST_FIXED.bv in H.
+       unfold BITVECTOR_LIST.bv in H.
        revert wf0.
        rewrite H. intros.
        now rewrite (proof_irrelevance wf0 wf1).
@@ -1044,69 +1040,56 @@ Proof. unfold Lit.interp.
        apply is_even_0.
 Qed.
 
-Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST_FIXED.bitvector),
-                               N.of_nat (length l) =  N.of_nat (length (BITVECTOR_LIST_FIXED.bits a)) ->
+Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST.bitvector (N.of_nat (length l))), 
                                (forall i, 
                                (i < (length l))%nat ->
                                nth i l false = 
-                               (@BITVECTOR_LIST_FIXED.bitOf i a))
+                               (@BITVECTOR_LIST.bitOf (N.of_nat (length l)) i a))
                                ->
-                               (BITVECTOR_LIST_FIXED.bv_eq a (BITVECTOR_LIST_FIXED.of_bits l)).
-Proof. intros l a samelen H.
+                               (BITVECTOR_LIST.bv_eq a (BITVECTOR_LIST.of_bits l)).
+Proof. intros l a H.
+       unfold BITVECTOR_LIST.of_bits in *.
+       unfold BITVECTOR_LIST.bitOf in *.
+       unfold BITVECTOR_LIST.bv_eq, BITVECTOR_LIST.bv in *.
+       unfold RAWBITVECTOR_LIST.bitOf in *.
        destruct a.
-       unfold BITVECTOR_LIST_FIXED.of_bits in *.
-       unfold BITVECTOR_LIST_FIXED.bitOf in *.
-       unfold BITVECTOR_LIST_FIXED.bv_eq, BITVECTOR_LIST_FIXED.bv in *.
-       unfold RAWBITVECTOR_LIST_FIXED.bitOf in *.
-       unfold RAWBITVECTOR_LIST_FIXED.of_bits.
-       unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.size, RAWBITVECTOR_LIST_FIXED.bits in *.
-       unfold BITVECTOR_LIST_FIXED.bits in *.
-       unfold RAWBITVECTOR_LIST_FIXED.bits in *.
-       unfold BITVECTOR_LIST_FIXED.bv in *.
-       apply Nat2N.inj in samelen.
-       apply (@nth_eq l bv samelen) in H.
+(*
+       cut (Lit.interp rho false = true). intro HiR.
+         rewrite HiR in H. 
+*)
+       unfold RAWBITVECTOR_LIST.of_bits.
+       unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
+       rewrite wf0.       
+       rewrite N.eqb_compare.
+       rewrite N.compare_refl.
+       cut (Datatypes.length l = Datatypes.length bv). intro wf1.
+       
+       apply (@nth_eq l bv wf1) in H.
+       
        rewrite H.
-       rewrite wf0.
-       rewrite N.eqb_compare, N.compare_refl.
-       now rewrite RAWBITVECTOR_LIST.List_eq_refl.
+       unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
+       rewrite RAWBITVECTOR_LIST.List_eq_refl; auto.
+       apply inj_iff in wf0. now do 2 rewrite id' in wf0.
+
 Qed.
 
-
-(* TODO: change *)
 Lemma valid_check_bbVar lres : C.valid rho (check_bbVar lres).
 Proof.
       unfold check_bbVar.
       case_eq (Lit.is_pos lres); intro Heq1; [ |now apply C.interp_true].
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bs Heq0.
-      case_eq (check_bb a bs 0 (Datatypes.length bs) &&
-      (N.of_nat (Datatypes.length bs) =? BVList._size)%N); 
-      intro Heq2; [ |now apply C.interp_true].
+      case_eq (check_bb a bs 0 (Datatypes.length bs)); intro Heq2; [ |now apply C.interp_true].
       unfold C.valid. simpl. rewrite orb_false_r.
       unfold Lit.interp. rewrite Heq1.
       unfold Var.interp.
       rewrite wf_interp_form; trivial. rewrite Heq0. simpl.
-      apply bitOf_of_bits.
-      destruct (interp_form_hatom_bv a).
-      unfold RAWBITVECTOR_LIST_FIXED.size in wf0.
-      unfold BITVECTOR_LIST_FIXED.bits.
-      unfold RAWBITVECTOR_LIST_FIXED.bits.
-      unfold BITVECTOR_LIST_FIXED.bv.
-      rewrite wf0.
-      rewrite andb_true_iff in Heq2.
-      destruct Heq2.
-      rewrite N.eqb_eq in H0.
-      now rewrite map_length, H0.
-      
-
-      intros. 
+      apply bitOf_of_bits. intros. 
       cut (Lit.interp rho 1 = false). intro Hr. rewrite <- Hr. 
       rewrite map_nth.
-      rewrite andb_true_iff in Heq2.
-      destruct Heq2.
-      
-      remember (@prop_checkbb' a bs H0 i).
+      remember (@prop_checkbb' a bs Heq2 i).
       rewrite map_length in H.
+      rewrite map_length.
       clear Heqe.
       now apply e in H.
       now apply rho_1.
@@ -1186,6 +1169,41 @@ Proof.
 Qed.
 
 
+Lemma prop_check_bbc2: forall l bs, check_bbc l bs = true ->
+RAWBITVECTOR_LIST.beq_list l (map (Lit.interp rho) bs) = true.
+Proof. intro l.
+       induction l as [ | xl xsl IHl ].
+       - intros. simpl in *.
+         case bs in *. now simpl. now contradict H.
+       - intros. simpl in H.
+         case bs in *. now contradict H.
+         simpl.
+         case_eq (Lit.is_pos i); intros.
+         rewrite H0 in H.
+         case_eq (t_form .[ Lit.blit i]); intros; try (rewrite H1 in H; now contradict H).
+         rewrite H1 in H.
+         case xl in *.
+         rewrite andb_true_iff. split.
+         unfold Lit.interp. rewrite H0.
+         unfold Var.interp.
+         specialize (rho_interp (Lit.blit i)).
+         rewrite H1 in rho_interp. simpl in rho_interp.
+         rewrite rho_interp. easy.
+         apply IHl; easy.
+         now contradict H.
+         rewrite H1 in H.
+         case xl in *. now contradict H.
+         rewrite andb_true_iff.
+         split.
+         specialize (rho_interp (Lit.blit i)).
+         rewrite H1 in rho_interp. simpl in rho_interp.
+         unfold Lit.interp. rewrite H0.
+         unfold Var.interp.
+         rewrite rho_interp. easy.
+         apply IHl; easy.
+         rewrite H0 in H. now contradict H.
+Qed.
+
 Lemma valid_check_bbConst lres : C.valid rho (check_bbConst lres).
 Proof.
   unfold check_bbConst.
@@ -1195,9 +1213,9 @@ Proof.
   case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
   intros c Ha.
   case_eq c; try (intros; now apply C.interp_true).
-  intros l Hc.
+  intros l N Hc.
   case_eq (check_bbc l bs &&
-      (N.of_nat (Datatypes.length l) =? BVList._size)%N);
+      (N.of_nat (Datatypes.length l) =? N)%N);
   try (intros; now apply C.interp_true).
   intro Hcheck.
   unfold C.valid. simpl. rewrite orb_false_r.
@@ -1212,40 +1230,43 @@ Proof.
   rewrite !Atom.t_interp_wf; trivial.
   rewrite Hinterpa.
   rewrite Ha, Hc. simpl.
+ 
+ unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+ 
+ assert ((N.of_nat (Datatypes.length (map (Lit.interp rho) bs))) = N).
+ rewrite andb_true_iff in Hcheck.
+ destruct Hcheck as (Hcheck1 & Hcheck2).
+ apply check_bbc_length in Hcheck1.
+ rewrite N.eqb_eq in Hcheck2.
+ rewrite Hcheck1 in Hcheck2.
+ now rewrite map_length.
 
-  apply bitOf_of_bits.
-
-  unfold BITVECTOR_LIST_FIXED.size, RAWBITVECTOR_LIST_FIXED.size.
+ generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs)
+        ).
+         
+ rewrite H.
+ intros.
+ 
+ rewrite Typ.N_cast_refl.
+ 
+  unfold BITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bv_eq.
   simpl.
-
-  unfold RAWBITVECTOR_LIST_FIXED.of_bits.
-  rewrite map_length. apply f_equal.
+  unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST._of_bits.
   
-  rewrite andb_true_iff in Hcheck.
-  destruct Hcheck as (Hcheck1 & Hcheck2).
-  
-  specialize (check_bbc_length Hcheck1). intros Hbblen.
-  rewrite N.eqb_eq in Hcheck2. rewrite Hcheck2.
-  now rewrite N.eqb_compare, N.compare_refl.
-
-  unfold BITVECTOR_LIST.bitOf, RAWBITVECTOR_LIST_FIXED.bitOf.
-  simpl.
-  unfold RAWBITVECTOR_LIST.of_bits.
-  rewrite map_length.
-  intro i.
-  rewrite <- rho_1 at 1.
-  rewrite map_nth.
-  apply prop_check_bbc. 
-
-  rewrite andb_true_iff in Hcheck.
-  destruct Hcheck as (Hcheck1 & Hcheck2).
-  unfold BITVECTOR_LIST_FIXED.of_bits.
-  simpl. unfold RAWBITVECTOR_LIST_FIXED.of_bits.
-  rewrite N.eqb_eq in Hcheck2. rewrite Hcheck2.
-  rewrite N.eqb_compare, N.compare_refl. 
-  exact Hcheck1.
+ rewrite andb_true_iff in Hcheck.
+ destruct Hcheck as (Hcheck1 & Hcheck2).
+ pose proof Hcheck1.
+ apply check_bbc_length in Hcheck1.
+ rewrite N.eqb_eq in Hcheck2.
+ rewrite Hcheck2.
+ rewrite N.eqb_refl.
+ rewrite Hcheck1, map_length, N.eqb_refl.
+ unfold RAWBITVECTOR_LIST.bits.
+ 
+ now apply prop_check_bbc2.
 Qed.
-
+ 
 Lemma prop_check_not:
   forall bs br, length bs = length br ->
            check_not bs br = true ->
@@ -1296,7 +1317,7 @@ Proof.
   intros n Huot Hr.
   case_eq ((a == a')
              && check_not bs br
-             && (N.of_nat (Datatypes.length bs) =? _size)%N);
+             && (N.of_nat (Datatypes.length bs) =? n)%N);
     try (intros; now apply C.interp_true).
   intro Hc.
   rewrite !andb_true_iff in Hc.
@@ -1311,55 +1332,103 @@ Proof.
   destruct Hpos' as (Hposl, Hposlres).
   rewrite Hposl, Hposlres.
   rewrite !rho_interp. rewrite HBl, HBr. simpl.
-
+  
+  
   intro Heqa.
-  apply BITVECTOR_LIST_FIXED.bv_eq_reflect in Heqa.
-  apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
+  apply BITVECTOR_LIST.bv_eq_reflect in Heqa.
+  apply BITVECTOR_LIST.bv_eq_reflect.
 
 
-  revert Heqa.
-  unfold Atom.interp_form_hatom_bv at 1.
-  unfold Atom.interp_form_hatom_bv at 2.
+  generalize wt_t_atom. unfold Atom.wt. unfold is_true.
+  rewrite PArray.forallbi_spec;intros.
+
+  pose proof (H r). assert (r < PArray.length t_atom).
+  apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Hr. easy.
+  specialize (@H0 H1). rewrite Hr in H0. simpl in H0.
+  rewrite !andb_true_iff in H0. destruct H0.
+
+  unfold get_type' in H0. unfold v_type in H0.
+  case_eq (t_interp .[ r]).
+  intros v_typer v_valr Htir. rewrite Htir in H0.
+  case_eq (v_typer); intros; rewrite H3 in H0; try (now contradict H1).
+  rename H3 into Hv.
+
+
+  (* interp_form_hatom_bv r = 
+          interp_bv t_i (interp_atom (t_atom .[r])) *)
+  assert (interp_form_hatom_bv r = 
+          interp_bv t_i (interp_atom (t_atom .[r]))).
+  unfold Atom.interp_form_hatom_bv.
   unfold Atom.interp_hatom.
   rewrite !Atom.t_interp_wf; trivial.
-  rewrite Hr. subst a'.
-  simpl.
-  intro.
-
-  unfold wt, is_true in wt_t_atom;rewrite forallbi_spec in wt_t_atom.
-  assert (Hwtr: r < PArray.length t_atom = true).
-  apply PArray.get_not_default_lt. rewrite def_t_atom. now rewrite Hr.
-  apply wt_t_atom in Hwtr.
-  unfold get_type' in Hwtr.
-  rewrite Hr in Hwtr.
-  case_eq (v_type Typ.type (Typ.interp t_i) (t_interp .[ r]));
-    try (intros; rewrite H in Hwtr; now contradict Hwtr).
-  intro Htyr. rewrite Htyr in Hwtr. 
-  simpl in Hwtr.
-  apply Typ.eqb_spec in Hwtr.
-
-  rewrite <- Atom.t_interp_wf in Heqa; trivial.
-  unfold interp_bv, apply_unop.
-  destruct (t_interp.[a]) as (tya,va). simpl in Hwtr.
-  revert va Heqa; rewrite Hwtr; intros.
+  rewrite H3, Hr. simpl.
+  unfold interp_bv.
+  
+  apply Typ.eqb_spec in H2.
+  unfold get_type' in H2.
+  unfold v_type in H2.
+  case_eq (t_interp .[ a']).
+  intros. rewrite H4 in H2. simpl.
+  
+  revert v_val0 H4.  
+  rewrite H2. intros.
   rewrite Typ.cast_refl.
   simpl.
-  unfold interp_bv in Heqa; rewrite Typ.cast_refl in Heqa.
-  rewrite Heqa.
-  unfold BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
-  unfold BITVECTOR_LIST_FIXED.bv_not, RAWBITVECTOR_LIST_FIXED.bv_not.
-  simpl.
-  apply eq_rec. simpl.
-  rewrite !map_length.
-  specialize (check_not_length Hcheck); intro Hsamelen.
-  pose proof Hsamelen as Hlenbr.
-  apply (f_equal N.of_nat) in Hlenbr.
-  rewrite Hlen in Hlenbr.
-  rewrite Hlen. rewrite <- Hlenbr.
-  rewrite N.eqb_refl.
-  unfold RAWBITVECTOR_LIST_FIXED.bits.
-  rewrite map_map.
-  symmetry. apply prop_check_not. auto. auto.
+  
+  assert ( (N.of_nat (Datatypes.length (map (Lit.interp rho) br))) = n).
+  apply check_not_length in Hcheck. rewrite Hcheck in Hlen.
+  now rewrite map_length.
+  
+  unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+
+  generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) br)
+        ).
+
+ rewrite H5.
+ intros.
+ rewrite Typ.N_cast_refl.
+ unfold BITVECTOR_LIST.bv_not, RAWBITVECTOR_LIST.bv_not.
+ 
+ apply eq_rec.
+ simpl.
+  
+ rewrite <- Ha in *.
+ 
+   (* interp_form_hatom_bv a = 
+          interp_bv t_i (interp_atom (t_atom .[a])) *)
+  assert (interp_form_hatom_bv a = 
+          interp_bv t_i (interp_atom (t_atom .[a]))).
+  unfold Atom.interp_form_hatom_bv.
+  unfold Atom.interp_hatom.
+  rewrite !Atom.t_interp_wf; trivial.
+  
+  rewrite H6 in Heqa.
+  unfold interp_bv in Heqa.
+  rewrite <- !Atom.t_interp_wf in Heqa; trivial.
+  rewrite H4 in Heqa.
+  revert Heqa . 
+  
+  assert ( (N.of_nat (Datatypes.length (map (Lit.interp rho) bs))) = n).
+  now rewrite map_length.
+  
+  unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+
+ generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs)
+        ).
+ 
+ rewrite H7.
+ rewrite Typ.cast_refl. intros.
+ rewrite Heqa. simpl.
+ 
+ specialize (@prop_check_not bs br). intros.
+ symmetry.
+ unfold RAWBITVECTOR_LIST.bits.
+ rewrite map_map; apply H8; auto.
+ 
+ now apply check_not_length in Hcheck.
+
 Qed.  
 
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
@@ -1475,7 +1544,7 @@ Lemma check_symopp_bvand: forall bs1 bs2 bsres N,
   (length bs2 = n)%nat -> 
   check_symopp bs1 bs2 bsres (BO_BVand N) = true ->
   (List.map (Lit.interp rho) bsres) = 
-  (RAWBITVECTOR_LIST_FIXED.map2 andb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
+  (RAWBITVECTOR_LIST.map2 andb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
 Proof. intro bs1.
          induction bs1 as [ | ibs1 xbs1 IHbs1].
          - intros. simpl in *. rewrite <- H0 in H.
@@ -1748,7 +1817,7 @@ Lemma check_symopp_bvor: forall bs1 bs2 bsres N,
   (length bs2 = n)%nat -> 
   check_symopp bs1 bs2 bsres (BO_BVor N) = true ->
   (List.map (Lit.interp rho) bsres) = 
-  (RAWBITVECTOR_LIST_FIXED.map2 orb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
+  (RAWBITVECTOR_LIST.map2 orb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
 Proof. intro bs1.
          induction bs1 as [ | ibs1 xbs1 IHbs1].
          - intros. simpl in *. rewrite <- H0 in H.
@@ -2020,7 +2089,7 @@ Lemma check_symopp_bvxor: forall bs1 bs2 bsres N,
   (length bs2 = n)%nat -> 
   check_symopp bs1 bs2 bsres (BO_BVxor N) = true ->
   (List.map (Lit.interp rho) bsres) = 
-  (RAWBITVECTOR_LIST_FIXED.map2 xorb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
+  (RAWBITVECTOR_LIST.map2 xorb (List.map (Lit.interp rho) bs1) (List.map (Lit.interp rho) bs2)).
 Proof. intro bs1.
          induction bs1 as [ | ibs1 xbs1 IHbs1].
          - intros. simpl in *. rewrite <- H0 in H.
@@ -2285,6 +2354,95 @@ Proof.
   easy.
 Qed.
 
+
+Lemma check_symopp_bvand_length2: forall bs1 bs2 bsres N,
+  let n := length bsres in
+  check_symopp bs1 bs2 bsres (BO_BVand N) = true ->
+  (length bs1 = n)%nat /\ (length bs2 = n)%nat .
+Proof.
+  intros.
+  revert bs1 bs2 N H.
+  induction bsres as [ | r rbsres ].
+  intros.
+  simpl in H.
+  case bs1 in *. simpl in H.
+  case bs2 in *. simpl in *. easy. easy.
+  case bs2 in *. simpl in *. easy.
+  simpl in *. easy.
+  intros.
+  case bs1 in *.
+  case bs2 in *.
+  simpl in *. easy.
+  simpl in *. easy.
+  case bs2 in *. simpl in *. easy.
+  set (n' := length rbsres).
+  fold n' in n, IHrbsres, H.
+  simpl in IHrbsres.
+  simpl in H.
+  case (Lit.is_pos r) in H.
+  case (t_form .[ Lit.blit r]) in H; try easy.
+  case (PArray.length a == 2) in H; try easy.
+  case ((a .[ 0] == i) && (a .[ 1] == i0) || (a .[ 0] == i0) && (a .[ 1] == i)) in H; try easy.
+  specialize (IHrbsres bs1 bs2 (N - 1)%N H).
+  simpl.
+  simpl in n.
+  fold n' in n.
+  unfold n.
+  split; apply f_equal. easy. easy.
+  easy.
+Qed.
+
+Lemma check_symopp_bvand_length3: forall bs1 bs2 bsres n,
+  check_symopp bs1 bs2 bsres (BO_BVand (N.of_nat n)) = true ->
+  (length bs1 = n)%nat ->
+  (length bsres = n)%nat.
+Proof. intros bs1 bs2 bsres.
+       revert bs1 bs2.
+       induction bsres as [ | xbsres xsbsres IHbsres ].
+       - intros.
+         case bs1 in *.
+           simpl in H. 
+           case bs2 in *.
+             easy. now contradict H.
+           case bs2 in *.
+            simpl in H. now contradict H.
+            simpl in H. now contradict H.
+       - intros.
+         case bs1 in *. 
+         simpl in H.
+         case bs2 in *.
+           now contradict H.
+           now contradict H.
+           simpl in H.
+           case bs2 in *.
+             now contradict H.
+             case (Lit.is_pos xbsres) in *.
+             case (t_form .[ Lit.blit xbsres] ) in *; try now contradict H.
+             case (PArray.length a == 2) in *.
+             case ((a .[ 0] == i) && (a .[ 1] == i0) || (a .[ 0] == i0) && (a .[ 1] == i)) in *.
+             specialize (IHbsres bs1 bs2 (n-1)%nat).
+             simpl in H0.
+             assert (length bs1 = (n-1)%nat). omega.
+             cut ( (BO_BVand (N.of_nat n - 1)) = (BO_BVand (N.of_nat (n - 1)))).
+             
+             intros.
+             revert H.
+             rewrite H2.
+             intros.
+             specialize (IHbsres H H1).
+             simpl. rewrite IHbsres. omega.
+             
+             simpl.
+             cut ((N.of_nat n - 1)%N = (N.of_nat (n - 1))).
+             intros. now rewrite H2.
+             
+            case n. now simpl.
+            intros. lia.
+             now contradict H.
+             now contradict H.
+             now contradict H.
+Qed.
+
 Lemma check_symopp_bvor_length: forall bs1 bs2 bsres N,
   let n := length bsres in
   check_symopp bs1 bs2 bsres (BO_BVor N) = true ->
@@ -2320,6 +2478,95 @@ Proof.
   unfold n.
   split; apply f_equal. easy. easy.
   easy.
+Qed.
+
+
+Lemma check_symopp_bvor_length2: forall bs1 bs2 bsres N,
+  let n := length bsres in
+  check_symopp bs1 bs2 bsres (BO_BVor N) = true ->
+  (length bs1 = n)%nat /\ (length bs2 = n)%nat .
+Proof.
+  intros.
+  revert bs1 bs2 N H.
+  induction bsres as [ | r rbsres ].
+  intros.
+  simpl in H.
+  case bs1 in *. simpl in H.
+  case bs2 in *. simpl in *. easy. easy.
+  case bs2 in *. simpl in *. easy.
+  simpl in *. easy.
+  intros.
+  case bs1 in *.
+  case bs2 in *.
+  simpl in *. easy.
+  simpl in *. easy.
+  case bs2 in *. simpl in *. easy.
+  set (n' := length rbsres).
+  fold n' in n, IHrbsres, H.
+  simpl in IHrbsres.
+  simpl in H.
+  case (Lit.is_pos r) in H.
+  case (t_form .[ Lit.blit r]) in H; try easy.
+  case (PArray.length a == 2) in H; try easy.
+  case ((a .[ 0] == i) && (a .[ 1] == i0) || (a .[ 0] == i0) && (a .[ 1] == i)) in H; try easy.
+  specialize (IHrbsres bs1 bs2 (N - 1)%N H).
+  simpl.
+  simpl in n.
+  fold n' in n.
+  unfold n.
+  split; apply f_equal. easy. easy.
+  easy.
+Qed.
+
+Lemma check_symopp_bvor_length3: forall bs1 bs2 bsres n,
+  check_symopp bs1 bs2 bsres (BO_BVor (N.of_nat n)) = true ->
+  (length bs1 = n)%nat ->
+  (length bsres = n)%nat.
+Proof. intros bs1 bs2 bsres.
+       revert bs1 bs2.
+       induction bsres as [ | xbsres xsbsres IHbsres ].
+       - intros.
+         case bs1 in *.
+           simpl in H. 
+           case bs2 in *.
+             easy. now contradict H.
+           case bs2 in *.
+            simpl in H. now contradict H.
+            simpl in H. now contradict H.
+       - intros.
+         case bs1 in *. 
+         simpl in H.
+         case bs2 in *.
+           now contradict H.
+           now contradict H.
+           simpl in H.
+           case bs2 in *.
+             now contradict H.
+             case (Lit.is_pos xbsres) in *.
+             case (t_form .[ Lit.blit xbsres] ) in *; try now contradict H.
+             case (PArray.length a == 2) in *.
+             case ((a .[ 0] == i) && (a .[ 1] == i0) || (a .[ 0] == i0) && (a .[ 1] == i)) in *.
+             specialize (IHbsres bs1 bs2 (n-1)%nat).
+             simpl in H0.
+             assert (length bs1 = (n-1)%nat). omega.
+             cut ( (BO_BVor (N.of_nat n - 1)) = (BO_BVor (N.of_nat (n - 1)))).
+             
+             intros.
+             revert H.
+             rewrite H2.
+             intros.
+             specialize (IHbsres H H1).
+             simpl. rewrite IHbsres. omega.
+             
+             simpl.
+             cut ((N.of_nat n - 1)%N = (N.of_nat (n - 1))).
+             intros. now rewrite H2.
+             
+            case n. now simpl.
+            intros. lia.
+             now contradict H.
+             now contradict H.
+             now contradict H.
 Qed.
 
 Lemma check_symopp_bvxor_length: forall bs1 bs2 bsres N,
@@ -2359,10 +2606,95 @@ Proof.
 Qed.
 
 
+Lemma check_symopp_bvxor_length2: forall bs1 bs2 bsres N,
+  let n := length bsres in
+  check_symopp bs1 bs2 bsres (BO_BVxor N) = true ->
+  (length bs1 = n)%nat /\ (length bs2 = n)%nat .
+Proof.
+  intros.
+  revert bs1 bs2 N H.
+  induction bsres as [ | r rbsres ].
+  intros.
+  simpl in H.
+  case bs1 in *. simpl in H.
+  case bs2 in *. simpl in *. easy. easy.
+  case bs2 in *. simpl in *. easy.
+  simpl in *. easy.
+  intros.
+  case bs1 in *.
+  case bs2 in *.
+  simpl in *. easy.
+  simpl in *. easy.
+  case bs2 in *. simpl in *. easy.
+  set (n' := length rbsres).
+  fold n' in n, IHrbsres, H.
+  simpl in IHrbsres.
+  simpl in H.
+  case (Lit.is_pos r) in H.
+  case (t_form .[ Lit.blit r]) in H; try easy.
+  case ((i1 == i) && (i2 == i0) || (i1 == i0) && (i2 == i)) in H; try easy.
+  specialize (IHrbsres bs1 bs2 (N - 1)%N H).
+  simpl.
+  simpl in n.
+  fold n' in n.
+  unfold n.
+  split; apply f_equal. easy. easy.
+  easy.
+Qed.
+
+Lemma check_symopp_bvxor_length3: forall bs1 bs2 bsres n,
+  check_symopp bs1 bs2 bsres (BO_BVxor (N.of_nat n)) = true ->
+  (length bs1 = n)%nat ->
+  (length bsres = n)%nat.
+Proof. intros bs1 bs2 bsres.
+       revert bs1 bs2.
+       induction bsres as [ | xbsres xsbsres IHbsres ].
+       - intros.
+         case bs1 in *.
+           simpl in H. 
+           case bs2 in *.
+             easy. now contradict H.
+           case bs2 in *.
+            simpl in H. now contradict H.
+            simpl in H. now contradict H.
+       - intros.
+         case bs1 in *. 
+         simpl in H.
+         case bs2 in *.
+           now contradict H.
+           now contradict H.
+           simpl in H.
+           case bs2 in *.
+             now contradict H.
+             case (Lit.is_pos xbsres) in *.
+             case (t_form .[ Lit.blit xbsres] ) in *; try now contradict H.
+             case ((i1 == i) && (i2 == i0) || (i1 == i0) && (i2 == i)) in *.
+             specialize (IHbsres bs1 bs2 (n-1)%nat).
+             simpl in H0.
+             assert (length bs1 = (n-1)%nat). omega.
+             cut ( (BO_BVxor (N.of_nat n - 1)) = (BO_BVxor (N.of_nat (n - 1)))).
+             
+             intros.
+             revert H.
+             rewrite H2.
+             intros.
+             specialize (IHbsres H H1).
+             simpl. rewrite IHbsres. omega.
+             
+             simpl.
+             cut ((N.of_nat n - 1)%N = (N.of_nat (n - 1))).
+             intros. now rewrite H2.
+             
+            case n. now simpl.
+            intros. lia.
+             now contradict H.
+             now contradict H.
+Qed.
+
 Lemma check_symopp_bvand_nl: forall bs1 bs2 bsres N, 
   check_symopp bs1 bs2 bsres (BO_BVand N) = true ->
   (List.map (Lit.interp rho) bsres) = 
-  (RAWBITVECTOR_LIST_FIXED.map2 andb (List.map (Lit.interp rho) bs1)
+  (RAWBITVECTOR_LIST.map2 andb (List.map (Lit.interp rho) bs1)
                           (List.map (Lit.interp rho) bs2)).
 Proof.
   intros.
@@ -2375,7 +2707,7 @@ Qed.
 Lemma check_symopp_bvor_nl: forall bs1 bs2 bsres N, 
   check_symopp bs1 bs2 bsres (BO_BVor N) = true ->
   (List.map (Lit.interp rho) bsres) = 
-  (RAWBITVECTOR_LIST_FIXED.map2 orb (List.map (Lit.interp rho) bs1)
+  (RAWBITVECTOR_LIST.map2 orb (List.map (Lit.interp rho) bs1)
                           (List.map (Lit.interp rho) bs2)).
 Proof.
   intros.
@@ -2389,7 +2721,7 @@ Qed.
 Lemma check_symopp_bvxor_nl: forall bs1 bs2 bsres N, 
   check_symopp bs1 bs2 bsres (BO_BVxor N) = true ->
   (List.map (Lit.interp rho) bsres) = 
-  (RAWBITVECTOR_LIST_FIXED.map2 xorb (List.map (Lit.interp rho) bs1)
+  (RAWBITVECTOR_LIST.map2 xorb (List.map (Lit.interp rho) bs1)
                           (List.map (Lit.interp rho) bs2)).
 Proof.
   intros.
@@ -2413,22 +2745,26 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true. intros. apply C.interp_true. easy.
       (* BVand *)
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
 
         case_eq (
                  check_symopp bs1 bs2 bsres (BO_BVand N) &&
-                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N); 
+                 (N.of_nat (Datatypes.length bs1) =? N)%N); 
         simpl; intros Heq11; try (now apply C.interp_true).
         
         unfold C.valid. simpl. rewrite orb_false_r.
         unfold Lit.interp. rewrite Heq5.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
-      
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
-
+        
+        
+      unfold Atom.interp_form_hatom_bv at 2, Atom.interp_hatom.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Heq9. simpl.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Atom.t_interp_wf; trivial.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
         rewrite PArray.forallbi_spec;intros.
@@ -2437,13 +2773,33 @@ Proof.
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
         specialize (@H0 H1). rewrite Heq9 in H0. simpl in H0.
         rewrite !andb_true_iff in H0. destruct H0. destruct H0.
+        unfold get_type' in H2, H3. unfold v_type in H2, H3.
+        case_eq (t_interp .[ a1']).
+          intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
+        case_eq (t_interp .[ a2']).
+          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
+        rewrite Atom.t_interp_wf in Htia1; trivial.
+        rewrite Atom.t_interp_wf in Htia2; trivial.
+        unfold apply_binop. rewrite Htia1, Htia2.
+        apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
 
         unfold get_type' in H0. unfold v_type in H0.
         case_eq (t_interp .[ a]).
         intros v_typea v_vala Htia. rewrite Htia in H0.
-        case_eq (v_typea); intros; rewrite H4 in H0; try (now contradict H0).
-        rename H4 into Hv.
-
+        case_eq (v_typea).
+          intros i j Hv. rewrite Hv in H0. now contradict H0.
+          intros i Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros n Hv. rewrite Hv in H0.
+          
+        (** n = N **)
+        apply N.eqb_eq in H0.
+        rewrite <- H0 in *.
+        revert v_vala Htia. rewrite Hv.
+        intros v_vala Htia.
+        
         generalize (Hs pos1). intros HSp1. unfold C.valid in HSp1. rewrite Heq1 in HSp1.
         unfold C.interp in HSp1. unfold existsb in HSp1. rewrite orb_false_r in HSp1.
         unfold Lit.interp in HSp1. rewrite Heq3 in HSp1. unfold Var.interp in HSp1.
@@ -2453,257 +2809,295 @@ Proof.
         unfold C.interp in HSp2. unfold existsb in HSp2. rewrite orb_false_r in HSp2.
         unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
         rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
-       
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
 
-        unfold get_type' in H2, H3. unfold v_type in H2, H3.
-        case_eq (t_interp .[ a1']).
-          intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
-        case_eq (t_interp .[ a2']).
-          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
-        rewrite Atom.t_interp_wf in Htia1; trivial.
-        rewrite Atom.t_interp_wf in Htia2; trivial.
-        unfold apply_binop.
-        apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
+        revert v_vala1 Htia1 v_vala2 Htia2.
+        rewrite H2, H3.
+        unfold bvtrue.
+        rewrite Typ.cast_refl.
 
+        intros v_vala1 Htia1 v_vala2 Htia2.
+        
         (** case a1 = a1' and a2 = a2' **)
         rewrite orb_true_iff in Heq10.
         do 2 rewrite andb_true_iff in Heq10.
         destruct Heq10 as [Heq10 | Heq10];
-          destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2
-        ;rewrite Heq10a1, Heq10a2 in *.
+          destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2.
+        rewrite Heq10a1, Heq10a2 in *.
 
-        (* interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a])) *)
-        assert (interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a]))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
-        rewrite Htia.
-        unfold Atom.interp_form_hatom_bv.
-        unfold Atom.interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia. easy.
-        rewrite H4. rewrite Heq9. simpl.
-        unfold interp_bv. unfold apply_binop.
-
-        rewrite !Atom.t_interp_wf; trivial.
-        revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
-        intros v_vala2 Htia2 v_vala1 Htia1.
-        rewrite Htia1, Htia2.
-        rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
-        
-
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+     
+        (*new*)
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
         assert (interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
         rewrite Htia1.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1. easy.
-        rewrite H5 in HSp1.
-        unfold interp_bv in HSp1.
+        
+        rewrite H4 in HSp1.
         rewrite Htia1 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
-        rewrite HSp1.
+
+        (*end*)
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
-        assert (interp_form_hatom_bv a2' = 
-                interp_bv t_i (interp_atom (t_atom .[a2']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
+        assert (interp_form_hatom_bv a2'
+        = 
+        interp_bv t_i (interp_atom (t_atom .[a2']))).
+
         rewrite Htia2.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia2. easy.
-        rewrite H6 in HSp2.
-        unfold interp_bv in HSp2.
+        (*end*)
+        rewrite H5 in HSp2.
+        simpl in HSp2.
         rewrite Htia2 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
-        rewrite HSp2.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        unfold Bval, interp_bv.
 
         rewrite (@check_symopp_bvand_nl bs1 bs2 bsres N).
-        
-
-(****************************************************************************************************)
-
-        unfold BITVECTOR_LIST_FIXED.bv_and, RAWBITVECTOR_LIST_FIXED.bv_and.
-        unfold RAWBITVECTOR_LIST_FIXED.size, BITVECTOR_LIST.bv, BITVECTOR_LIST_FIXED.of_bits, 
-        RAWBITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.bits.
-    
-        (** remaining split **)
-        simpl.
-        unfold BITVECTOR_LIST_FIXED.bv.
-        apply eq_rec.
-        unfold BITVECTOR_LIST_FIXED.bv.
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).
-        rewrite N.eqb_eq in Heq11r.
-        do 2 rewrite map_length.
-        rewrite Heq11r.
-        do 2 rewrite N.eqb_compare.  
-        rewrite N.compare_refl.
-        rewrite map_length.
-        rewrite Heq11r.
-        rewrite N.eqb_compare.
-        rewrite N.compare_refl.
-        rewrite andb_true_l.
-
-        specialize(@check_symopp_bvand_length bs1 bs2 bsres N Heq11); intro Hlen.
-        destruct Hlen as (Hlenbs1, Hlenbs2).
-        pose proof Hlenbs2 as Hlenbs3.
-        rewrite <- Hlenbs1 in Hlenbs3.
-        pose proof Heq11r as Heq11r'.
-        rewrite <- Hlenbs3 in Heq11r'.
-        
-        rewrite Heq11r'.
-        do 2 rewrite N.eqb_compare.
-        rewrite N.compare_refl.
-        rewrite map_length.
-        rewrite Heq11r'.
-        rewrite N.compare_refl.
-        
-        rewrite <- (@RAWBITVECTOR_LIST_FIXED.map2_and_length (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
-        rewrite map_length.
-        rewrite Heq11r.
-        now rewrite N.compare_refl.
-        do 2 rewrite map_length. now rewrite Hlenbs1.
-        
-        
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).
-        exact Heq11.
-
-(***********************************************************************************************)
           
-  (* interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a])) *)
-        assert (interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a]))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
-        rewrite Htia.
-        unfold Atom.interp_form_hatom_bv.
-        unfold Atom.interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia. easy.
-        rewrite H4. rewrite Heq9. simpl.
-        unfold interp_bv. unfold apply_binop.
-
-        rewrite !Atom.t_interp_wf; trivial.
-        revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
-        intros v_vala2 Htia2 v_vala1 Htia1.
-        rewrite Htia1, Htia2.
-        rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
+        assert (
+          H100: (N.of_nat
+            (Datatypes.length
+               (RAWBITVECTOR_LIST.map2 andb (map (Lit.interp rho) bs1)
+                  (map (Lit.interp rho) bs2)))) = N).
+        rewrite andb_true_iff in Heq11.                
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
         
+        specialize (@RAWBITVECTOR_LIST.map2_and_length 
+        (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
+        intros. rewrite <- H6.
+        now rewrite map_length.
+        apply check_symopp_bvand_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        now rewrite !map_length, Heq11a, Heq11b.
 
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        generalize (
+          BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 andb 
+          (map (Lit.interp rho) bs1) 
+          (map (Lit.interp rho) bs2))
+        ).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        
+        unfold BITVECTOR_LIST.bv_and, RAWBITVECTOR_LIST.bv_and.
+        unfold RAWBITVECTOR_LIST.size.
+        unfold RAWBITVECTOR_LIST.bits.
+        
+        unfold interp_bv in HSp1, HSp2.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits in HSp1, HSp2.
+        
+        assert (
+          H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_symopp_bvand_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp2.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)
+        ).
+
+        rewrite H101. intros.
+        
+        assert (
+        H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp1.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)
+        ).
+        
+        rewrite H102. intros.
+        
+        rewrite Typ.cast_refl in *.
+        
+        rewrite HSp1, HSp2. simpl.
+        
+        apply eq_rec. simpl.
+        
+        rewrite H101, H102.
+        rewrite N.eqb_compare, N.compare_refl. easy.
+       
+       rewrite andb_true_iff in Heq11.
+       destruct Heq11 as (Heq11, Heq11r).
+       exact Heq11.
+      
+       (** symmetric case*)
+        rewrite Heq10a1, Heq10a2 in *.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+     
+        (*new*)
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
         assert (interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
         rewrite Htia1.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1. easy.
-        rewrite H5 in HSp2.
-        unfold interp_bv in HSp2.
+        
+        rewrite H4 in HSp2.
         rewrite Htia1 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
-        rewrite HSp2.
+
+        (*end*)
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
-        assert (interp_form_hatom_bv a2' = 
-                interp_bv t_i (interp_atom (t_atom .[a2']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
+        assert (interp_form_hatom_bv a2'
+        = 
+        interp_bv t_i (interp_atom (t_atom .[a2']))).
+
         rewrite Htia2.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia2. easy.
-        rewrite H6 in HSp1.
-        unfold interp_bv in HSp1.
-        rewrite Htia2 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
-        rewrite HSp1.
+        (*end*)
 
+        rewrite H5 in HSp1.
+        simpl in HSp1.
+        rewrite Htia2 in HSp1.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        unfold Bval, interp_bv.
 
         rewrite (@check_symopp_bvand_nl bs1 bs2 bsres N).
-
-(****************************************************************************************************)
-
-        unfold BITVECTOR_LIST_FIXED.bv_and, RAWBITVECTOR_LIST_FIXED.bv_and.
-        unfold RAWBITVECTOR_LIST_FIXED.size, BITVECTOR_LIST.bv, BITVECTOR_LIST_FIXED.of_bits, 
-        RAWBITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.bits.
-    
-        (** remaining split **)
-        simpl.
-        unfold BITVECTOR_LIST_FIXED.bv.
-        apply eq_rec.
-        unfold BITVECTOR_LIST_FIXED.bv.
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).
-
-
-        specialize(@check_symopp_bvand_length bs1 bs2 bsres N Heq11); intro Hlen.
-        destruct Hlen as (Hlenbs1, Hlenbs2).
-        pose proof Hlenbs2 as Hlenbs3.
-        rewrite <- Hlenbs1 in Hlenbs3.
-        pose proof Heq11r as Heq11r'.
-        rewrite <- Hlenbs3 in Heq11r'.
-
-        rewrite N.eqb_eq in Heq11r'.
-        do 2 rewrite map_length.
-        rewrite Heq11r'.
-        do 2 rewrite N.eqb_compare.  
-        rewrite N.compare_refl.
-        rewrite map_length.
-        rewrite Heq11r'.
-        rewrite N.eqb_compare.
-        rewrite N.compare_refl.
-        rewrite andb_true_l.
-        
-        rewrite Heq11r.
-        rewrite map_length.
+          
+        assert (
+          H100: (N.of_nat
+            (Datatypes.length
+               (RAWBITVECTOR_LIST.map2 andb (map (Lit.interp rho) bs1)
+                  (map (Lit.interp rho) bs2)))) = N).
+        rewrite andb_true_iff in Heq11.                
+        destruct Heq11 as (Heq11, Heq11r).
         rewrite N.eqb_eq in Heq11r.
-        rewrite Heq11r.
-        rewrite N.eqb_compare.
-        rewrite N.compare_refl.
+        
+        specialize (@RAWBITVECTOR_LIST.map2_and_length 
+        (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
+        intros. rewrite <- H6.
+        apply check_symopp_bvand_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        (*rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.*)
+        now rewrite map_length.
+        
+        apply check_symopp_bvand_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        now rewrite !map_length, Heq11a, Heq11b.
 
-        rewrite <- (@RAWBITVECTOR_LIST_FIXED.map2_and_length (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
-        rewrite map_length.
-        rewrite Heq11r.
-        rewrite N.compare_refl.
-        now rewrite RAWBITVECTOR_LIST_FIXED.map2_and_comm.
-        do 2 rewrite map_length. now rewrite Hlenbs1.
         
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        generalize (
+          BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 andb 
+          (map (Lit.interp rho) bs1) 
+          (map (Lit.interp rho) bs2))
+        ).
         
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        
+        unfold BITVECTOR_LIST.bv_and, RAWBITVECTOR_LIST.bv_and.
+        unfold RAWBITVECTOR_LIST.size.
+        unfold RAWBITVECTOR_LIST.bits.
+        
+        unfold interp_bv in HSp1, HSp2.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits in HSp1, HSp2.
+        
+        assert (
+          H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
         rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).
-        exact Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_symopp_bvand_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
 
+        revert HSp2.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)
+        ).
+
+        rewrite H101. intros.
+        
+        assert (
+        H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp1.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)
+        ).
+        
+        rewrite H102. intros.
+        
+        rewrite Typ.cast_refl in *.
+        
+        rewrite HSp1, HSp2. simpl.
+        
+        apply eq_rec. simpl.
+        
+        rewrite H101, H102.
+        rewrite N.eqb_compare, N.compare_refl. 
+        now rewrite RAWBITVECTOR_LIST.map2_and_comm.
+       
+       rewrite andb_true_iff in Heq11.
+       destruct Heq11 as (Heq11, Heq11r).
+       exact Heq11.
 
       (* BVor *)
+      - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
 
-    - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
-    
         case_eq (
                  check_symopp bs1 bs2 bsres (BO_BVor N) &&
-                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
-        ); simpl; intros Heq11; try (now apply C.interp_true).
-
+                 (N.of_nat (Datatypes.length bs1) =? N)%N); 
+        simpl; intros Heq11; try (now apply C.interp_true).
+        
         unfold C.valid. simpl. rewrite orb_false_r.
         unfold Lit.interp. rewrite Heq5.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
-      
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
-
+        
+        
+      unfold Atom.interp_form_hatom_bv at 2, Atom.interp_hatom.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Heq9. simpl.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Atom.t_interp_wf; trivial.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
         rewrite PArray.forallbi_spec;intros.
@@ -2712,13 +3106,33 @@ Proof.
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
         specialize (@H0 H1). rewrite Heq9 in H0. simpl in H0.
         rewrite !andb_true_iff in H0. destruct H0. destruct H0.
+        unfold get_type' in H2, H3. unfold v_type in H2, H3.
+        case_eq (t_interp .[ a1']).
+          intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
+        case_eq (t_interp .[ a2']).
+          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
+        rewrite Atom.t_interp_wf in Htia1; trivial.
+        rewrite Atom.t_interp_wf in Htia2; trivial.
+        unfold apply_binop. rewrite Htia1, Htia2.
+        apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
 
         unfold get_type' in H0. unfold v_type in H0.
         case_eq (t_interp .[ a]).
         intros v_typea v_vala Htia. rewrite Htia in H0.
-        case_eq (v_typea);  intros; rewrite H4 in H0; try (now contradict H0).
-        rename H4 into Hv.
-
+        case_eq (v_typea).
+          intros i j Hv. rewrite Hv in H0. now contradict H0.
+          intros i Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros n Hv. rewrite Hv in H0.
+          
+        (** n = N **)
+        apply N.eqb_eq in H0.
+        rewrite <- H0 in *.
+        revert v_vala Htia. rewrite Hv.
+        intros v_vala Htia.
+        
         generalize (Hs pos1). intros HSp1. unfold C.valid in HSp1. rewrite Heq1 in HSp1.
         unfold C.interp in HSp1. unfold existsb in HSp1. rewrite orb_false_r in HSp1.
         unfold Lit.interp in HSp1. rewrite Heq3 in HSp1. unfold Var.interp in HSp1.
@@ -2728,219 +3142,295 @@ Proof.
         unfold C.interp in HSp2. unfold existsb in HSp2. rewrite orb_false_r in HSp2.
         unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
         rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
-       
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
 
-        unfold get_type' in H2, H3. unfold v_type in H2, H3.
-        case_eq (t_interp .[ a1']).
-          intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
-        case_eq (t_interp .[ a2']).
-          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
-        rewrite Atom.t_interp_wf in Htia1; trivial.
-        rewrite Atom.t_interp_wf in Htia2; trivial.
-        unfold apply_binop.
-        apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
+        revert v_vala1 Htia1 v_vala2 Htia2.
+        rewrite H2, H3.
+        unfold bvtrue.
+        rewrite Typ.cast_refl.
 
+        intros v_vala1 Htia1 v_vala2 Htia2.
+        
         (** case a1 = a1' and a2 = a2' **)
         rewrite orb_true_iff in Heq10.
         do 2 rewrite andb_true_iff in Heq10.
         destruct Heq10 as [Heq10 | Heq10];
-          destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2
-        ;rewrite Heq10a1, Heq10a2 in *.
+          destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2.
+        rewrite Heq10a1, Heq10a2 in *.
 
-        (* interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a])) *)
-        assert (interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a]))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
-        rewrite Htia.
-        unfold Atom.interp_form_hatom_bv.
-        unfold Atom.interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia. easy.
-        rewrite H4. rewrite Heq9. simpl.
-        unfold interp_bv. unfold apply_binop.
-
-        rewrite !Atom.t_interp_wf; trivial.
-        revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
-        intros v_vala2 Htia2 v_vala1 Htia1.
-        rewrite Htia1, Htia2.
-        rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
-        
-
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+     
+        (*new*)
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
         assert (interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
         rewrite Htia1.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1. easy.
-        rewrite H5 in HSp1.
-        unfold interp_bv in HSp1.
+        
+        rewrite H4 in HSp1.
         rewrite Htia1 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
-        rewrite HSp1.
+
+        (*end*)
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
-        assert (interp_form_hatom_bv a2' = 
-                interp_bv t_i (interp_atom (t_atom .[a2']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
+        assert (interp_form_hatom_bv a2'
+        = 
+        interp_bv t_i (interp_atom (t_atom .[a2']))).
+
         rewrite Htia2.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia2. easy.
-        rewrite H6 in HSp2.
-        unfold interp_bv in HSp2.
+        (*end*)
+        rewrite H5 in HSp2.
+        simpl in HSp2.
         rewrite Htia2 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
-        rewrite HSp2.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        unfold Bval, interp_bv.
 
         rewrite (@check_symopp_bvor_nl bs1 bs2 bsres N).
-        
-        
-        unfold BITVECTOR_LIST_FIXED.bv_or, RAWBITVECTOR_LIST_FIXED.bv_or.
-        unfold RAWBITVECTOR_LIST_FIXED.size, BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, 
-        RAWBITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.bits.
-        apply eq_rec.
-        simpl.
-        
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).
+          
+        assert (
+          H100: (N.of_nat
+            (Datatypes.length
+               (RAWBITVECTOR_LIST.map2 orb (map (Lit.interp rho) bs1)
+                  (map (Lit.interp rho) bs2)))) = N).
+        rewrite andb_true_iff in Heq11.                
+        destruct Heq11 as (Heq11, Heq11r).
         rewrite N.eqb_eq in Heq11r.
-        rewrite map_length, Heq11r.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite map_length, Heq11r, N.eqb_compare, N.compare_refl.
-        rewrite andb_true_l.
+        
+        specialize (@RAWBITVECTOR_LIST.map2_or_length 
+        (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
+        intros. rewrite <- H6.
+        now rewrite map_length.
+        apply check_symopp_bvor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        now rewrite !map_length, Heq11a, Heq11b.
 
-        specialize(@check_symopp_bvor_length bs1 bs2 bsres N Heq11); intro Hlen.
-        destruct Hlen as (Hlenbs1, Hlenbs2).
-        pose proof Hlenbs2 as Hlenbs3.
-        rewrite <- Hlenbs1 in Hlenbs3.
-        pose proof Heq11r as Heq11r'.
-        rewrite <- Hlenbs3 in Heq11r'.
-        rewrite map_length, Heq11r'.
-        rewrite N.eqb_compare, N.compare_refl.
-        rewrite map_length, Heq11r', N.eqb_compare, N.compare_refl.
-        rewrite <- (@RAWBITVECTOR_LIST_FIXED.map2_or_length 
-          (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
-        now rewrite map_length, Heq11r, N.compare_refl.
-        rewrite map_length, Hlenbs1.
-        now rewrite map_length, Hlenbs2.
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        generalize (
+          BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 orb 
+          (map (Lit.interp rho) bs1) 
+          (map (Lit.interp rho) bs2))
+        ).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        
+        unfold BITVECTOR_LIST.bv_or, RAWBITVECTOR_LIST.bv_or.
+        unfold RAWBITVECTOR_LIST.size.
+        unfold RAWBITVECTOR_LIST.bits.
+        
+        unfold interp_bv in HSp1, HSp2.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits in HSp1, HSp2.
+        
+        assert (
+          H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
         rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r). exact Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_symopp_bvor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp2.
         
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)
+        ).
 
-  (* interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a])) *)
-        assert (interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a]))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
-        rewrite Htia.
-        unfold Atom.interp_form_hatom_bv.
-        unfold Atom.interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia. easy.
-        rewrite H4. rewrite Heq9. simpl.
-        unfold interp_bv. unfold apply_binop.
-
-        rewrite !Atom.t_interp_wf; trivial.
-        revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
-        intros v_vala2 Htia2 v_vala1 Htia1.
-        rewrite Htia1, Htia2.
-        rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
+        rewrite H101. intros.
         
+        assert (
+        H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
 
+        revert HSp1.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)
+        ).
+        
+        rewrite H102. intros.
+        
+        rewrite Typ.cast_refl in *.
+        
+        rewrite HSp1, HSp2. simpl.
+        
+        apply eq_rec. simpl.
+        
+        rewrite H101, H102.
+        rewrite N.eqb_compare, N.compare_refl. easy.
+       
+       rewrite andb_true_iff in Heq11.
+       destruct Heq11 as (Heq11, Heq11r).
+       exact Heq11.
+      
+       (** symmetric case*)
+        rewrite Heq10a1, Heq10a2 in *.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+     
+        (*new*)
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
         assert (interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
         rewrite Htia1.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1. easy.
-        rewrite H5 in HSp2.
-        unfold interp_bv in HSp2.
+        
+        rewrite H4 in HSp2.
         rewrite Htia1 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
-        rewrite HSp2.
+
+        (*end*)
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
-        assert (interp_form_hatom_bv a2' = 
-                interp_bv t_i (interp_atom (t_atom .[a2']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
+        assert (interp_form_hatom_bv a2'
+        = 
+        interp_bv t_i (interp_atom (t_atom .[a2']))).
+
         rewrite Htia2.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia2. easy.
-        rewrite H6 in HSp1.
-        unfold interp_bv in HSp1.
-        rewrite Htia2 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
-        rewrite HSp1.
+        (*end*)
 
+        rewrite H5 in HSp1.
+        simpl in HSp1.
+        rewrite Htia2 in HSp1.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        unfold Bval, interp_bv.
 
         rewrite (@check_symopp_bvor_nl bs1 bs2 bsres N).
-
-
-        unfold BITVECTOR_LIST_FIXED.bv_or, RAWBITVECTOR_LIST_FIXED.bv_or.
-        unfold RAWBITVECTOR_LIST_FIXED.size, BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, 
-        RAWBITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.bits.
-        apply eq_rec.
-        simpl.
-
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).      
-        specialize(@check_symopp_bvor_length bs1 bs2 bsres N Heq11); intro Hlen.
-        destruct Hlen as (Hlenbs1, Hlenbs2).
-        
-        
-        do 2 rewrite map_length.
-        rewrite Hlenbs1, Hlenbs2.
-        pose proof Heq11r as Heq11r'.
-        rewrite N.eqb_eq in Heq11r'.
-        rewrite Hlenbs1 in Heq11r'.
-        rewrite Heq11r'.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite <- Hlenbs2 in Heq11r'.
-        rewrite map_length, Heq11r', N.eqb_compare, N.compare_refl.
-        rewrite andb_true_l.
+          
+        assert (
+          H100: (N.of_nat
+            (Datatypes.length
+               (RAWBITVECTOR_LIST.map2 orb (map (Lit.interp rho) bs1)
+                  (map (Lit.interp rho) bs2)))) = N).
+        rewrite andb_true_iff in Heq11.                
+        destruct Heq11 as (Heq11, Heq11r).
         rewrite N.eqb_eq in Heq11r.
-        rewrite map_length, Heq11r, N.eqb_compare, N.compare_refl.
-        rewrite <- (@RAWBITVECTOR_LIST_FIXED.map2_or_length 
-          (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
-        rewrite map_length, Heq11r, N.compare_refl.
-        now rewrite RAWBITVECTOR_LIST_FIXED.map2_or_comm.
-        do 2 rewrite map_length.
-        now rewrite Hlenbs1, Hlenbs2.
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r). exact Heq11.
+        
+        specialize (@RAWBITVECTOR_LIST.map2_or_length 
+        (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
+        intros. rewrite <- H6.
+        apply check_symopp_bvor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        (*rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.*)
+        now rewrite map_length.
+        
+        apply check_symopp_bvor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        now rewrite !map_length, Heq11a, Heq11b.
 
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        generalize (
+          BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 orb 
+          (map (Lit.interp rho) bs1) 
+          (map (Lit.interp rho) bs2))
+        ).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        
+        unfold BITVECTOR_LIST.bv_or, RAWBITVECTOR_LIST.bv_or.
+        unfold RAWBITVECTOR_LIST.size.
+        unfold RAWBITVECTOR_LIST.bits.
+        
+        unfold interp_bv in HSp1, HSp2.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits in HSp1, HSp2.
+        
+        assert (
+          H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_symopp_bvor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp2.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)
+        ).
+
+        rewrite H101. intros.
+        
+        assert (
+        H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp1.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)
+        ).
+        
+        rewrite H102. intros.
+        
+        rewrite Typ.cast_refl in *.
+        
+        rewrite HSp1, HSp2. simpl.
+        
+        apply eq_rec. simpl.
+        
+        rewrite H101, H102.
+        rewrite N.eqb_compare, N.compare_refl. 
+        now rewrite RAWBITVECTOR_LIST.map2_or_comm.
+       
+       rewrite andb_true_iff in Heq11.
+       destruct Heq11 as (Heq11, Heq11r).
+       exact Heq11.
 
 (** BVxor **)
+        - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
 
-     - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (
                  check_symopp bs1 bs2 bsres (BO_BVxor N) &&
-                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
-
-                 ); simpl; intros Heq11; try (now apply C.interp_true).
+                 (N.of_nat (Datatypes.length bs1) =? N)%N); 
+        simpl; intros Heq11; try (now apply C.interp_true).
+        
         unfold C.valid. simpl. rewrite orb_false_r.
         unfold Lit.interp. rewrite Heq5.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
-      
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
-
+        
+        
+      unfold Atom.interp_form_hatom_bv at 2, Atom.interp_hatom.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Heq9. simpl.
+        rewrite Atom.t_interp_wf; trivial.
+        rewrite Atom.t_interp_wf; trivial.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
         rewrite PArray.forallbi_spec;intros.
@@ -2949,13 +3439,33 @@ Proof.
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
         specialize (@H0 H1). rewrite Heq9 in H0. simpl in H0.
         rewrite !andb_true_iff in H0. destruct H0. destruct H0.
+        unfold get_type' in H2, H3. unfold v_type in H2, H3.
+        case_eq (t_interp .[ a1']).
+          intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
+        case_eq (t_interp .[ a2']).
+          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
+        rewrite Atom.t_interp_wf in Htia1; trivial.
+        rewrite Atom.t_interp_wf in Htia2; trivial.
+        unfold apply_binop. rewrite Htia1, Htia2.
+        apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
 
         unfold get_type' in H0. unfold v_type in H0.
         case_eq (t_interp .[ a]).
         intros v_typea v_vala Htia. rewrite Htia in H0.
-        case_eq (v_typea);  intros; rewrite H4 in H0; try (now contradict H0).
-        rename H4 into Hv.
-
+        case_eq (v_typea).
+          intros i j Hv. rewrite Hv in H0. now contradict H0.
+          intros i Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros Hv. rewrite Hv in H0. now contradict H0.
+          intros n Hv. rewrite Hv in H0.
+          
+        (** n = N **)
+        apply N.eqb_eq in H0.
+        rewrite <- H0 in *.
+        revert v_vala Htia. rewrite Hv.
+        intros v_vala Htia.
+        
         generalize (Hs pos1). intros HSp1. unfold C.valid in HSp1. rewrite Heq1 in HSp1.
         unfold C.interp in HSp1. unfold existsb in HSp1. rewrite orb_false_r in HSp1.
         unfold Lit.interp in HSp1. rewrite Heq3 in HSp1. unfold Var.interp in HSp1.
@@ -2965,208 +3475,282 @@ Proof.
         unfold C.interp in HSp2. unfold existsb in HSp2. rewrite orb_false_r in HSp2.
         unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
         rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
-       
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
 
-        unfold get_type' in H2, H3. unfold v_type in H2, H3.
-        case_eq (t_interp .[ a1']).
-          intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H3.
-        case_eq (t_interp .[ a2']).
-          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H2.
-        rewrite Atom.t_interp_wf in Htia1; trivial.
-        rewrite Atom.t_interp_wf in Htia2; trivial.
-        unfold apply_binop.
-        apply Typ.eqb_spec in H2. apply Typ.eqb_spec in H3.
+        revert v_vala1 Htia1 v_vala2 Htia2.
+        rewrite H2, H3.
+        unfold bvtrue.
+        rewrite Typ.cast_refl.
 
+        intros v_vala1 Htia1 v_vala2 Htia2.
+        
         (** case a1 = a1' and a2 = a2' **)
         rewrite orb_true_iff in Heq10.
         do 2 rewrite andb_true_iff in Heq10.
         destruct Heq10 as [Heq10 | Heq10];
-          destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2
-        ;rewrite Heq10a1, Heq10a2 in *.
+          destruct Heq10 as (Heq10a1 & Heq10a2); rewrite eqb_spec in Heq10a1, Heq10a2.
+        rewrite Heq10a1, Heq10a2 in *.
 
-        (* interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a])) *)
-        assert (interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a]))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
-        rewrite Htia.
-        unfold Atom.interp_form_hatom_bv.
-        unfold Atom.interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia. easy.
-        rewrite H4. rewrite Heq9. simpl.
-        unfold interp_bv. unfold apply_binop.
-
-        rewrite !Atom.t_interp_wf; trivial.
-        revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
-        intros v_vala2 Htia2 v_vala1 Htia1.
-        rewrite Htia1, Htia2.
-        rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
-        
-
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+     
+        (*new*)
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
         assert (interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
         rewrite Htia1.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1. easy.
-        rewrite H5 in HSp1.
-        unfold interp_bv in HSp1.
+        
+        rewrite H4 in HSp1.
         rewrite Htia1 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
-        rewrite HSp1.
+
+        (*end*)
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
-        assert (interp_form_hatom_bv a2' = 
-                interp_bv t_i (interp_atom (t_atom .[a2']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
+        assert (interp_form_hatom_bv a2'
+        = 
+        interp_bv t_i (interp_atom (t_atom .[a2']))).
+
         rewrite Htia2.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia2. easy.
-        rewrite H6 in HSp2.
-        unfold interp_bv in HSp2.
+        (*end*)
+        rewrite H5 in HSp2.
+        simpl in HSp2.
         rewrite Htia2 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
-        rewrite HSp2.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        unfold Bval, interp_bv.
 
         rewrite (@check_symopp_bvxor_nl bs1 bs2 bsres N).
-        
-        unfold BITVECTOR_LIST_FIXED.bv_xor, RAWBITVECTOR_LIST_FIXED.bv_xor.
-        unfold RAWBITVECTOR_LIST_FIXED.size, BITVECTOR_LIST.bv, BITVECTOR_LIST_FIXED.of_bits, 
-        RAWBITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.bits.
-
-        apply eq_rec.
-        simpl.       
-        do 2 rewrite map_length.
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).       
-
-        specialize(@check_symopp_bvxor_length bs1 bs2 bsres N Heq11); intro Hlen.
-        destruct Hlen as (Hlenbs1, Hlenbs2).
-        rewrite Hlenbs1, Hlenbs2.
-        
+          
+        assert (
+          H100: (N.of_nat
+            (Datatypes.length
+               (RAWBITVECTOR_LIST.map2 xorb (map (Lit.interp rho) bs1)
+                  (map (Lit.interp rho) bs2)))) = N).
+        rewrite andb_true_iff in Heq11.                
+        destruct Heq11 as (Heq11, Heq11r).
         rewrite N.eqb_eq in Heq11r.
-        rewrite <- Hlenbs1.
-        rewrite Heq11r.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite map_length, Heq11r, N.compare_refl.
-        rewrite andb_true_l.
-        pose proof Heq11r as Heq11r'.
-        rewrite Hlenbs1 in Heq11r'. rewrite <- Hlenbs2 in Heq11r'.
-        rewrite map_length, Heq11r', N.eqb_compare, N.compare_refl.
         
-        rewrite <- (@RAWBITVECTOR_LIST_FIXED.map2_xor_length 
-          (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
-        now rewrite map_length, Heq11r, N.eqb_compare, N.compare_refl.
-        rewrite map_length, Hlenbs1.
-        now rewrite map_length, Hlenbs2.
+        specialize (@RAWBITVECTOR_LIST.map2_xor_length 
+        (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
+        intros. rewrite <- H6.
+        now rewrite map_length.
+        apply check_symopp_bvxor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        now rewrite !map_length, Heq11a, Heq11b.
+
         
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        generalize (
+          BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 xorb 
+          (map (Lit.interp rho) bs1) 
+          (map (Lit.interp rho) bs2))
+        ).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        
+        unfold BITVECTOR_LIST.bv_xor, RAWBITVECTOR_LIST.bv_xor.
+        unfold RAWBITVECTOR_LIST.size.
+        unfold RAWBITVECTOR_LIST.bits.
+        
+        unfold interp_bv in HSp1, HSp2.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits in HSp1, HSp2.
+        
+        assert (
+          H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
         rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r). exact Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_symopp_bvxor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp2.
         
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)
+        ).
 
-  (* interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a])) *)
-        assert (interp_form_hatom_bv a = 
-                interp_bv t_i (interp_atom (t_atom .[a]))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
-        rewrite Htia.
-        unfold Atom.interp_form_hatom_bv.
-        unfold Atom.interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia. easy.
-        rewrite H4. rewrite Heq9. simpl.
-        unfold interp_bv. unfold apply_binop.
-
-        rewrite !Atom.t_interp_wf; trivial.
-        revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
-        intros v_vala2 Htia2 v_vala1 Htia1.
-        rewrite Htia1, Htia2.
-        rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
+        rewrite H101. intros.
         
+        assert (
+        H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
 
+        revert HSp1.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)
+        ).
+        
+        rewrite H102. intros.
+        
+        rewrite Typ.cast_refl in *.
+        
+        rewrite HSp1, HSp2. simpl.
+        
+        apply eq_rec. simpl.
+
+        
+        rewrite H101, H102.
+        rewrite N.eqb_compare, N.compare_refl. easy.
+       
+       rewrite andb_true_iff in Heq11.
+       destruct Heq11 as (Heq11, Heq11r).
+       exact Heq11.
+      
+       (** symmetric case*)
+        rewrite Heq10a1, Heq10a2 in *.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
+     
+        (*new*)
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
         assert (interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
         rewrite Htia1.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1. easy.
-        rewrite H5 in HSp2.
-        unfold interp_bv in HSp2.
+        
+        rewrite H4 in HSp2.
         rewrite Htia1 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
-        rewrite HSp2.
+
+        (*end*)
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
-        assert (interp_form_hatom_bv a2' = 
-                interp_bv t_i (interp_atom (t_atom .[a2']))).
-        rewrite !Atom.t_interp_wf in Htia; trivial.
+        assert (interp_form_hatom_bv a2'
+        = 
+        interp_bv t_i (interp_atom (t_atom .[a2']))).
+
         rewrite Htia2.
         unfold Atom.interp_form_hatom_bv.
         unfold Atom.interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia2. easy.
-        rewrite H6 in HSp1.
-        unfold interp_bv in HSp1.
-        rewrite Htia2 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
-        rewrite HSp1.
+        (*end*)
 
+        rewrite H5 in HSp1.
+        simpl in HSp1.
+        rewrite Htia2 in HSp1.
+
+        apply BITVECTOR_LIST.bv_eq_reflect.
+        unfold Bval, interp_bv.
 
         rewrite (@check_symopp_bvxor_nl bs1 bs2 bsres N).
-
-        unfold BITVECTOR_LIST_FIXED.bv_xor, RAWBITVECTOR_LIST_FIXED.bv_xor.
-        unfold RAWBITVECTOR_LIST_FIXED.size, BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, 
-        RAWBITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.bits.
-
-        apply eq_rec.
-        simpl.
-        
-        rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r).
+          
+        assert (
+          H100: (N.of_nat
+            (Datatypes.length
+               (RAWBITVECTOR_LIST.map2 xorb (map (Lit.interp rho) bs1)
+                  (map (Lit.interp rho) bs2)))) = N).
+        rewrite andb_true_iff in Heq11.                
+        destruct Heq11 as (Heq11, Heq11r).
         rewrite N.eqb_eq in Heq11r.
-
-        specialize(@check_symopp_bvxor_length bs1 bs2 bsres N Heq11); intro Hlen.
-        destruct Hlen as (Hlenbs1, Hlenbs2).
         
-        do 2 rewrite map_length.
-        rewrite Hlenbs1, Hlenbs2.
-        rewrite <- Hlenbs1.
-        rewrite Heq11r.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        pose proof Heq11r as Heq11r'.
-        rewrite Hlenbs1 in Heq11r'. rewrite <- Hlenbs2 in Heq11r'.
-        rewrite map_length, Heq11r', N.compare_refl.
-        rewrite andb_true_l.
-        rewrite map_length, Heq11r, N.eqb_compare, N.compare_refl.
+        specialize (@RAWBITVECTOR_LIST.map2_xor_length 
+        (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
+        intros. rewrite <- H6.
+        apply check_symopp_bvxor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        (*rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.*)
+        now rewrite map_length.
+        
+        apply check_symopp_bvxor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        now rewrite !map_length, Heq11a, Heq11b.
 
-        rewrite <- (@RAWBITVECTOR_LIST_FIXED.map2_xor_length 
-          (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)).
-        rewrite map_length, Heq11r, N.eqb_compare, N.compare_refl.
-        now rewrite RAWBITVECTOR_LIST_FIXED.map2_xor_comm.
-        rewrite map_length, Hlenbs1.
-        now rewrite map_length, Hlenbs2.
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        generalize (
+          BITVECTOR_LIST.of_bits_size (RAWBITVECTOR_LIST.map2 xorb 
+          (map (Lit.interp rho) bs1) 
+          (map (Lit.interp rho) bs2))
+        ).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        
+        unfold BITVECTOR_LIST.bv_xor, RAWBITVECTOR_LIST.bv_xor.
+        unfold RAWBITVECTOR_LIST.size.
+        unfold RAWBITVECTOR_LIST.bits.
+        
+        unfold interp_bv in HSp1, HSp2.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits in HSp1, HSp2.
+        
+        assert (
+          H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
         rewrite andb_true_iff in Heq11.
-        destruct Heq11 as (Heq11 & Heq11r). exact Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_symopp_bvxor_length2 in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite <- Heq11a in Heq11b.
+        rewrite <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp2.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)
+        ).
+
+        rewrite H101. intros.
+        
+        assert (
+        H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+
+        revert HSp1.
+        
+        generalize (
+        BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)
+        ).
+        
+        rewrite H102. intros.
+        
+        rewrite Typ.cast_refl in *.
+        
+        rewrite HSp1, HSp2. simpl.
+        
+        apply eq_rec. simpl.
+        
+        rewrite H101, H102.
+        rewrite N.eqb_compare, N.compare_refl. 
+        now rewrite RAWBITVECTOR_LIST.map2_xor_comm.
+       
+       rewrite andb_true_iff in Heq11.
+       destruct Heq11 as (Heq11, Heq11r).
+       exact Heq11.
+
 Qed.
 
-Lemma check_symopp_eq: forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres,
-      check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_eq (Typ.TBV)) = true ->
-      check_symopp xbs1 ybs2 zbsres (BO_eq (Typ.TBV))  = true.
+Lemma check_symopp_eq: forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres n,
+      check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_eq (Typ.TBV n)) = true ->
+      check_symopp xbs1 ybs2 zbsres (BO_eq (Typ.TBV n))  = true.
 Proof. intros.
        simpl in H. 
        case (Lit.is_pos ibsres) in H.
@@ -3180,8 +3764,8 @@ Qed.
 Lemma bool_eqb_comm: forall ibs1 ibs2,  Bool.eqb ibs1 ibs2 = Bool.eqb ibs2 ibs1.
 Proof. intros. case_eq ibs1. intros. case_eq ibs2. intros. easy. intros. easy. intros. easy. Qed.
 
-Lemma check_symopp_eq': forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres,
-      check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_eq (Typ.TBV)) = true ->
+Lemma check_symopp_eq': forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres n,
+      check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_eq (Typ.TBV n)) = true ->
       Bool.eqb (Lit.interp rho ibs1) (Lit.interp rho ibs2) = Lit.interp rho ibsres.
 Proof. intros.
        simpl in H.
@@ -3201,8 +3785,8 @@ Proof. intros.
        intros. rewrite H0 in H. now contradict H.
 Qed.
 
-Lemma  check_symopp_bveq: forall bs1 bs2 a4, check_symopp bs1 bs2 (to_list a4) (BO_eq Typ.TBV) = true ->
-                          RAWBITVECTOR_LIST_FIXED.beq_list (map (Lit.interp rho) bs1)
+Lemma  check_symopp_bveq: forall bs1 bs2 a4 n, check_symopp bs1 bs2 (to_list a4) (BO_eq (Typ.TBV n)) = true ->
+                          RAWBITVECTOR_LIST.beq_list (map (Lit.interp rho) bs1)
                           (map (Lit.interp rho) bs2) = forallb (Lit.interp rho) (to_list a4).
 Proof. intros. revert bs1 bs2 H.
        induction (to_list a4) as [ | xa4 xsa4 IHa4].
@@ -3229,8 +3813,8 @@ Proof. intros. revert bs1 bs2 H.
          exact H2.
 Qed.
 
-Lemma beq_list_comm: forall bs1 bs2, RAWBITVECTOR_LIST_FIXED.beq_list bs2 bs1 =  
-                                     RAWBITVECTOR_LIST_FIXED.beq_list bs1 bs2.
+Lemma beq_list_comm: forall bs1 bs2, RAWBITVECTOR_LIST.beq_list bs2 bs1 =  
+                                     RAWBITVECTOR_LIST.beq_list bs1 bs2.
 Proof. intro bs1. 
        induction bs1 as [ | xbs1 xsbs1 IHbs1].
        - intros. case bs2. easy.
@@ -3238,7 +3822,7 @@ Proof. intro bs1.
        - intros. case bs2. easy.
          intros.  simpl.
          specialize (@IHbs1 l). rewrite IHbs1.
-         case (RAWBITVECTOR_LIST_FIXED.beq_list xsbs1 l). do 2 rewrite andb_true_r.
+         case (RAWBITVECTOR_LIST.beq_list xsbs1 l). do 2 rewrite andb_true_r.
          unfold Bool.eqb.
          case b. easy. easy.
          now do 2 rewrite andb_false_r.
@@ -3353,9 +3937,7 @@ Proof. intro bs1.
                 (* --- *) destruct Hif2 as (Hx2, Hx1). rewrite Hx1, Hx2.
                      now rewrite bool_eqb_comm.
             (*  ** *) intros Hif. rewrite Hif in Hcheck. now contradict Hcheck.
-Qed.                 
-
-
+Qed.
 
 Lemma length_check_eq: forall bs1 bs2 bsres,
   check_eq bs1 bs2 bsres = true -> length bs1 = length bs2.
@@ -3465,12 +4047,14 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] n a1' a2'; try now apply C.interp_true.
+      intro Heq9.
+      
 
        case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq15; try (now apply C.interp_true).
        
        case_eq (check_eq bs1 bs2 [bsres] &&
-       (N.of_nat (Datatypes.length bs1) =? BVList._size)%N); 
+       (N.of_nat (Datatypes.length bs1) =? n)%N); 
        simpl; intros Heq16; try (now apply C.interp_true).
        
        unfold C.valid. simpl.
@@ -3556,10 +4140,39 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         unfold interp_bv in HSp2.
         
         generalize dependent v_vala1. generalize dependent v_vala2.
-        rewrite H2, H3. rewrite Typ.cast_refl. intros.
+        rewrite H2, H3.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        assert (
+        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = n
+        ).
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as (Heq16, Heq16r).
+        rewrite N.eqb_eq in Heq16r.
+        apply length_check_eq in Heq16.
+        rewrite Heq16 in Heq16r.
+        now rewrite map_length.
+        
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl.
+        
+        assert (
+        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = n
+        ).
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as (Heq16, Heq16r).
+        rewrite N.eqb_eq in Heq16r.
+        now rewrite map_length.
+        
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)).
+        
+        rewrite H101.
+        rewrite !Typ.cast_refl. intros.
 
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
         apply (@Bool.eqb_true_iff (Lit.interp rho a) (Lit.interp rho bsres)).
 
         unfold Lit.interp, Var.interp.
@@ -3572,40 +4185,41 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         rewrite Heq9. simpl.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1, Htia2. simpl.
+        rewrite Typ.N_cast_refl. simpl.
+       
         
         rewrite Form.wf_interp_form; trivial.
         simpl.
         apply Bool.eqb_prop in Heq12.
         rewrite Heq12.
         rewrite HSp1, HSp2.
-
-        rewrite Typ.i_eqb_t. simpl.
+        simpl.
+       
+        rewrite Typ.i_eqb_t. simpl.      
         
-        unfold BITVECTOR_LIST_FIXED.bv_eq.
-        unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.bits.
-        unfold BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
-        unfold RAWBITVECTOR_LIST_FIXED.beq_list.
+        unfold BITVECTOR_LIST.bv_eq.
+        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bits.
+        unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        unfold RAWBITVECTOR_LIST.size.
 (*
         rewrite (@prop_check_eq _ _ [bsres]). simpl.
         rewrite andb_true_r. unfold Lit.interp, Var.interp.
         generalize (rho_interp (Lit.blit bsres)). simpl.
         intro Hbres. rewrite Hbres.
 *)
+
         case_eq (Lit.is_pos bsres).
         intros Hpos.
         
         rewrite andb_true_iff in Heq16.
         destruct Heq16 as (Heq16 & Heq16r).
-        rewrite N.eqb_eq in Heq16r.
-        rewrite map_length, Heq16r.
+        rewrite N.eqb_eq in Heq16r. simpl.
+        pose proof Heq16 as Heq16p.
+        
+        apply length_check_eq in Heq16.
+        rewrite !map_length, Heq16.
         rewrite N.eqb_compare, N.compare_refl.
-        pose proof (Heq16) as Hleq.
-        apply length_check_eq in Hleq.
-        pose proof Heq16r as Heq16r'.
-        rewrite Hleq in Heq16r'.
-        rewrite map_length, Heq16r'.
-        rewrite N.eqb_compare, N.compare_refl.
-                
+        pose proof (Heq16) as Hleq.               
 
         rewrite (@prop_check_eq _ _ [bsres]). simpl.
         rewrite andb_true_r. unfold Lit.interp, Var.interp.
@@ -3628,7 +4242,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         intros _ l; case l; auto.
         apply length_check_eq in Heq16; auto.
 *)
-        exact Heq16.
+        exact Heq16p.
 
         intros Hpos.
         rewrite andb_true_iff in Heq16.
@@ -3636,8 +4250,8 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
 
         contradict Heq16.
         case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        case bs1 in *; try now simpl; case bs2 in *; now simpl.
-        simpl. rewrite Hpos. case bs2; intros; auto; case l; auto.
+        case bs2 in *. simpl. easy.
+        simpl. rewrite Hpos. case bs1; intros; auto; case bs2; auto.
         
         pose proof Heq16 as Heq16'.
          
@@ -3681,10 +4295,36 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         unfold interp_bv in HSp1.
         
         generalize dependent v_vala1. generalize dependent v_vala2.
-        rewrite H2, H3. rewrite Typ.cast_refl. intros.
+        rewrite H2, H3.
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        assert (
+        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = n
+        ).
+        rewrite N.eqb_eq in Heq16r.
+        now rewrite map_length.
+        
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)).
+        
+        rewrite H100.
+        rewrite !Typ.cast_refl.
 
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
+        assert (
+        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = n
+        ).
+        rewrite N.eqb_eq in Heq16r.
+        rewrite Heq16 in Heq16r.
+        now rewrite map_length.
+        
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)).
+        
+        rewrite H101.
+        rewrite Typ.cast_refl.
+        
+        intros.
+        
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
         apply (@Bool.eqb_true_iff (Lit.interp rho a) (Lit.interp rho bsres)).
 
         unfold Lit.interp, Var.interp.
@@ -3697,40 +4337,44 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         rewrite Heq9. simpl.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Htia1, Htia2. simpl.
+        rewrite Typ.N_cast_refl. simpl.
+       
         
         rewrite Form.wf_interp_form; trivial.
         simpl.
-
         apply Bool.eqb_prop in Heq12.
         rewrite Heq12.
-        case_eq (Lit.is_pos bsres). intros.
         rewrite HSp1, HSp2.
-
+        simpl.
+       
         rewrite Typ.i_eqb_t. simpl.
         
-        unfold BITVECTOR_LIST_FIXED.bv_eq.
-        unfold RAWBITVECTOR_LIST_FIXED.bv_eq, RAWBITVECTOR_LIST_FIXED.bits.
-        unfold BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
-        unfold RAWBITVECTOR_LIST_FIXED.beq_list.
-
-
-        rewrite beq_list_comm.
-        rewrite N.eqb_eq in Heq16r.
-        rewrite map_length, Heq16r, N.eqb_compare, N.compare_refl.
-        rewrite map_length. rewrite <- Heq16.
-        rewrite Heq16r, N.eqb_compare, N.compare_refl.
+        unfold BITVECTOR_LIST.bv_eq.
+        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bits.
+        unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        unfold RAWBITVECTOR_LIST.size.
+(*
         rewrite (@prop_check_eq _ _ [bsres]). simpl.
         rewrite andb_true_r. unfold Lit.interp, Var.interp.
         generalize (rho_interp (Lit.blit bsres)). simpl.
         intro Hbres. rewrite Hbres.
+*)
         case_eq (Lit.is_pos bsres).
         intros Hpos.
+
+        rewrite beq_list_comm.
+        rewrite !map_length, Heq16, N.eqb_compare, N.compare_refl.
+
+        rewrite (@prop_check_eq _ _ [bsres]). simpl.
+        rewrite andb_true_r. unfold Lit.interp, Var.interp.
+        generalize (rho_interp (Lit.blit bsres)). simpl.
+        intro Hbres. rewrite Hbres.
         
         rewrite andb_true_iff in Heq16'.
         destruct Heq16' as (Heq16' & Heq16'r).
+        rewrite Hpos.
         now unfold Atom.interp_form_hatom, interp_hatom.
-        intros. rewrite H6 in H7. now contradict H7.
-        exact Heq16.
+        intros. exact Heq16.
         
         rewrite andb_true_iff in Heq16'.
         destruct Heq16' as (Heq16' & Heq16'r).
@@ -3746,7 +4390,9 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         rewrite Hpos. (* now rewrite andb_false_l. *)
         case bs2 in *; try now simpl; case bs2 in *; now simpl.
         now rewrite andb_false_l.
-      Qed.
+        
+        case bs2 in *; rewrite Hpos; simpl; easy.
+Qed.
 
 Lemma check_add_bvadd_length: forall bs1 bs2 bsres c,
   let n := length bsres in
@@ -3897,7 +4543,7 @@ Proof. auto. Qed.
 
 Lemma prop_check_ult: forall bs1 bs2, 
   length bs1 = length bs2 ->
-  RAWBITVECTOR_LIST_FIXED.ult_list (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
+  RAWBITVECTOR_LIST.ult_list (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
   = interp_carry (ult_lit_list bs1 bs2).
 Proof. intro bs1.
        induction bs1 as [ | xbs1 xsbs1 IHbs1 ].
@@ -3927,7 +4573,7 @@ Qed.
 
 Lemma prop_check_slt: forall bs1 bs2, 
   length bs1 = length bs2 ->
-  RAWBITVECTOR_LIST_FIXED.slt_list (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
+  RAWBITVECTOR_LIST.slt_list (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
   = interp_carry (slt_lit_list bs1 bs2).
 Proof. intros.
        case bs1 in *. simpl.
@@ -3942,7 +4588,7 @@ Proof. intros.
          case bs2 in  *.
            now contradict H.
            unfold slt_lit_list.
-           unfold RAWBITVECTOR_LIST_FIXED.slt_list.
+           unfold RAWBITVECTOR_LIST.slt_list.
            rewrite !map_cons.
            unfold interp_carry.
            fold interp_carry.
@@ -4069,13 +4715,13 @@ Proof.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
-
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true. intros. apply C.interp_true; auto.
+      
        case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq15; try (now apply C.interp_true).
-       
+
        case_eq (check_ult bs1 bs2 bsres &&
-      (N.of_nat (Datatypes.length bs1) =? _size)%N &&
-      (N.of_nat (Datatypes.length bs2) =? _size)%N); 
+      (N.of_nat (Datatypes.length bs1) =? N)%N &&
+      (N.of_nat (Datatypes.length bs2) =? N)%N); 
        simpl; intros Heq16; try (now apply C.interp_true).
        
        unfold C.valid. simpl.
@@ -4158,10 +4804,40 @@ Proof.
         unfold interp_bv in HSp2.
         
         generalize dependent v_vala1. generalize dependent v_vala2.
-        rewrite H2, H3. rewrite Typ.cast_refl. intros.
+        rewrite H2, H3. 
+       
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        assert (
+        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as ((Heq16a, Heq16b), Heq16c).
+        rewrite N.eqb_eq in Heq16c.
+        now rewrite map_length.
 
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)).       
+        
+        rewrite H100.
+        
+        assert (
+        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as ((Heq16a, Heq16b), Heq16c).
+        rewrite N.eqb_eq in Heq16b.
+        now rewrite map_length.
+
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)).       
+        
+        rewrite H101.
+
+        rewrite Typ.cast_refl in *.
+        
+        intros.
+        
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
         apply (@Bool.eqb_true_iff (Lit.interp rho a) (Lit.interp rho bsres)).
 
         unfold Lit.interp, Var.interp.
@@ -4184,13 +4860,12 @@ Proof.
         case_eq (Lit.is_pos bsres).
         intros Hpos.
         
-        
         (** repeat here **)
-        unfold BITVECTOR_LIST_FIXED.bv_ult.
-        unfold RAWBITVECTOR_LIST_FIXED.bv_ult, RAWBITVECTOR_LIST_FIXED.bits.
-        unfold BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
+        unfold BITVECTOR_LIST.bv_ult.
+        unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bits.
+        unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
         simpl.
-        unfold RAWBITVECTOR_LIST_FIXED.size.
+        unfold RAWBITVECTOR_LIST.size.
         simpl.
 (*
         rewrite (@prop_check_eq _ _ [bsres]). simpl.
@@ -4199,20 +4874,15 @@ Proof.
         intro Hbres. rewrite Hbres.
 *)
 
-        
+        rewrite !Typ.N_cast_refl.
         rewrite !andb_true_iff in Heq16.
         destruct Heq16 as ((Heq16 & Heq16l) & Heq16r).
         rewrite N.eqb_eq in Heq16r, Heq16l.
         rewrite map_length, Heq16l.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite map_length, Heq16l, N.compare_refl.
-        rewrite andb_true_l.
-
-        rewrite map_length, Heq16r.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite map_length, Heq16r, N.compare_refl.
+        rewrite H100.
+        rewrite N.eqb_compare. rewrite N.compare_refl.
         
-        unfold RAWBITVECTOR_LIST_FIXED.rev_ult_list.
+        unfold RAWBITVECTOR_LIST.rev_ult_list.
         remember prop_check_ult.
         specialize (@prop_check_ult (List.rev bs1) (List.rev bs2)).
         intros.
@@ -4255,7 +4925,6 @@ Proof.
         rewrite H6. easy.
 Qed.
 
-
 Lemma valid_check_bbSlt pos1 pos2 lres : C.valid rho (check_bbSlt pos1 pos2 lres).
 Proof.
       unfold check_bbSlt.
@@ -4271,13 +4940,13 @@ Proof.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
-
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true. intros. apply C.interp_true; auto.
+      
        case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq15; try (now apply C.interp_true).
-       
+
        case_eq (check_slt bs1 bs2 bsres &&
-      (N.of_nat (Datatypes.length bs1) =? _size)%N &&
-      (N.of_nat (Datatypes.length bs2) =? _size)%N); 
+      (N.of_nat (Datatypes.length bs1) =? N)%N &&
+      (N.of_nat (Datatypes.length bs2) =? N)%N); 
        simpl; intros Heq16; try (now apply C.interp_true).
        
        unfold C.valid. simpl.
@@ -4360,10 +5029,40 @@ Proof.
         unfold interp_bv in HSp2.
         
         generalize dependent v_vala1. generalize dependent v_vala2.
-        rewrite H2, H3. rewrite Typ.cast_refl. intros.
+        rewrite H2, H3. 
+       
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        assert (
+        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N
+        ).
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as ((Heq16a, Heq16b), Heq16c).
+        rewrite N.eqb_eq in Heq16c.
+        now rewrite map_length.
 
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)).       
+        
+        rewrite H100.
+        
+        assert (
+        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N
+        ).
+        rewrite !andb_true_iff in Heq16.
+        destruct Heq16 as ((Heq16a, Heq16b), Heq16c).
+        rewrite N.eqb_eq in Heq16b.
+        now rewrite map_length.
+
+        generalize (BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)).       
+        
+        rewrite H101.
+
+        rewrite Typ.cast_refl in *.
+        
+        intros.
+        
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
         apply (@Bool.eqb_true_iff (Lit.interp rho a) (Lit.interp rho bsres)).
 
         unfold Lit.interp, Var.interp.
@@ -4386,13 +5085,12 @@ Proof.
         case_eq (Lit.is_pos bsres).
         intros Hpos.
         
-        
         (** repeat here **)
-        unfold BITVECTOR_LIST_FIXED.bv_slt.
-        unfold RAWBITVECTOR_LIST_FIXED.bv_slt, RAWBITVECTOR_LIST_FIXED.bits.
-        unfold BITVECTOR_LIST_FIXED.bv, BITVECTOR_LIST_FIXED.of_bits, RAWBITVECTOR_LIST_FIXED.of_bits.
+        unfold BITVECTOR_LIST.bv_slt.
+        unfold RAWBITVECTOR_LIST.bv_slt, RAWBITVECTOR_LIST.bits.
+        unfold BITVECTOR_LIST.bv, BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
         simpl.
-        unfold RAWBITVECTOR_LIST_FIXED.size.
+        unfold RAWBITVECTOR_LIST.size.
         simpl.
 (*
         rewrite (@prop_check_eq _ _ [bsres]). simpl.
@@ -4401,20 +5099,15 @@ Proof.
         intro Hbres. rewrite Hbres.
 *)
 
-        
+        rewrite !Typ.N_cast_refl.
         rewrite !andb_true_iff in Heq16.
         destruct Heq16 as ((Heq16 & Heq16l) & Heq16r).
         rewrite N.eqb_eq in Heq16r, Heq16l.
         rewrite map_length, Heq16l.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite map_length, Heq16l, N.compare_refl.
-        rewrite andb_true_l.
-
-        rewrite map_length, Heq16r.
-        do 2 rewrite N.eqb_compare. rewrite N.compare_refl.
-        rewrite map_length, Heq16r, N.compare_refl.
+        rewrite H100.
+        rewrite N.eqb_compare. rewrite N.compare_refl.
         
-        unfold RAWBITVECTOR_LIST_FIXED.rev_slt_list.
+        unfold RAWBITVECTOR_LIST.rev_slt_list.
         remember prop_check_slt.
         specialize (@prop_check_slt (List.rev bs1) (List.rev bs2)).
         intros.
@@ -4429,7 +5122,7 @@ Proof.
         rewrite Heq10 in H8.
         simpl in H8.
         
-        remember (prop_check_slt2).
+        remember (prop_check_ult2).
         rewrite !rev_length in H7.
         specialize (@prop_check_slt2 bs1 bs2 bsres H7 Heq16).
         intros.
@@ -4457,12 +5150,13 @@ Proof.
         rewrite H6. easy.
 Qed.
 
+
 Lemma check_add_list:forall bs1 bs2 bsres c, 
   let n := length bsres in
   (length bs1 = n)%nat -> 
   (length bs2 = n)%nat -> 
   check_add bs1 bs2 bsres c ->
-                      (RAWBITVECTOR_LIST_FIXED.add_list_ingr (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
+                      (RAWBITVECTOR_LIST.add_list_ingr (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
                         (interp_carry c))
                         =
                         (map (Lit.interp rho) bsres).
@@ -4495,8 +5189,8 @@ Proof. intro bs1.
         H10 H11 H8).
        
         
-        simpl in *. unfold RAWBITVECTOR_LIST_FIXED.of_bits in IHbs1.
-        case_eq (RAWBITVECTOR_LIST_FIXED.add_carry (Lit.interp rho xbs1) (Lit.interp rho i)
+        simpl in *. unfold RAWBITVECTOR_LIST.of_bits in IHbs1.
+        case_eq (RAWBITVECTOR_LIST.add_carry (Lit.interp rho xbs1) (Lit.interp rho i)
         (interp_carry c)). intros r c0 Heqrc.
 
         (** rho_interp Lit.blit i0 **)
@@ -4620,61 +5314,36 @@ Proof. intro bs1.
 Qed.
 
 
-Lemma check_add_bvadd: forall bs1 bs2 bsres, 
-  (N.of_nat(length bs1) = BVList._size)%N -> 
-  (N.of_nat(length bs2) = BVList._size)%N -> 
-  (N.of_nat(length bsres) = BVList._size)%N ->  
+
+Lemma check_add_bvadd: forall bs1 bs2 bsres n, 
+  (N.of_nat(length bs1) = n)%N -> 
+  (N.of_nat(length bs2) = n)%N -> 
+  (N.of_nat(length bsres) = n)%N ->  
   check_add bs1 bs2 bsres (Clit Lit._false) = true ->
-  BITVECTOR_LIST_FIXED.bv_add (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1))
-  (BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)) =
-  BITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bsres).
+  (RAWBITVECTOR_LIST.bv_add (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2) =
+   (map (Lit.interp rho) bsres)).
 Proof. intros.
        remember check_add_list.
        pose proof H as H'. pose proof H0 as H0'. pose proof H1 as H1'.
        rewrite <- H1 in H. apply Nat2N.inj in H.
        rewrite <- H1 in H0. apply Nat2N.inj in H0.
        specialize (@check_add_list bs1 bs2 bsres ( (Clit Lit._false)) H H0 H2). intros.
-       unfold BITVECTOR_LIST_FIXED.bv_add.
-       unfold RAWBITVECTOR_LIST_FIXED.bv_add.
-       unfold RAWBITVECTOR_LIST_FIXED.size, RAWBITVECTOR_LIST_FIXED.bits.
-       unfold BITVECTOR_LIST_FIXED.of_bits.
-       apply eq_rec.
-       unfold BITVECTOR_LIST_FIXED.bv.
-       assert (
-       N.of_nat((Datatypes.length
-          (RAWBITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs1)))) = BVList._size).
-       unfold RAWBITVECTOR_LIST_FIXED.of_bits. rewrite map_length.
-       rewrite H'. rewrite N.eqb_compare, N.compare_refl.
-       now rewrite map_length.
-       assert (
-        N.of_nat((Datatypes.length
-          (RAWBITVECTOR_LIST_FIXED.of_bits (map (Lit.interp rho) bs2)))) = BVList._size).
-       unfold RAWBITVECTOR_LIST_FIXED.of_bits. rewrite map_length.
-       rewrite H0'. rewrite N.eqb_compare, N.compare_refl.
-       now rewrite map_length.
-
-       rewrite H4, H5.
-       rewrite N.eqb_compare. rewrite N.compare_refl. rewrite andb_true_l.
-       unfold RAWBITVECTOR_LIST_FIXED.add_list.
-       unfold RAWBITVECTOR_LIST_FIXED.of_bits.
-       rewrite map_length, H', N.eqb_compare, N.compare_refl.
-       rewrite map_length, H0', N.eqb_compare, N.compare_refl.
-       rewrite map_length, H1', N.eqb_compare, N.compare_refl.
+       unfold RAWBITVECTOR_LIST.bv_add.
+       unfold RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits.
+       unfold BITVECTOR_LIST.of_bits.
+       rewrite !map_length, H, H0.
+       rewrite N.eqb_refl.
        
-       unfold interp_carry in H3.
+       assert (  (interp_carry (Clit Lit._false)) = false).
+       
        specialize (Lit.interp_false rho wf_rho). intros.
-       unfold is_true in H6.
-       rewrite not_true_iff_false in H6.
-       rewrite H6 in H3.
-
-       unfold BITVECTOR_LIST_FIXED.of_bits, BITVECTOR_LIST_FIXED.bv,
-       RAWBITVECTOR_LIST_FIXED.of_bits in H3.
-       (*
-       rewrite map_length, H', N.eqb_compare, N.compare_refl in H3.
-       rewrite map_length, H0', N.eqb_compare, N.compare_refl in H3.
-       *)
-       exact H3.
-Qed.       
+       unfold is_true in H4.
+       rewrite not_true_iff_false in H4.
+       now unfold interp_carry.
+       rewrite H4 in H3.
+       unfold RAWBITVECTOR_LIST.add_list.
+       apply H3.
+Qed.
 
 
 Lemma valid_check_bbAdd pos1 pos2 lres : C.valid rho (check_bbAdd pos1 pos2 lres).
@@ -4690,12 +5359,12 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N] a1' a2' Heq9; try now apply C.interp_true. intros. apply C.interp_true; auto.
       (* BVadd *)
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (
                  check_add bs1 bs2 bsres (Clit Lit._false) &&
-                 (N.of_nat (Datatypes.length bs1) =? BVList._size)%N
+                 (N.of_nat (Datatypes.length bs1) =? N)%N
         ); simpl; intros Heq11; try (now apply C.interp_true).
 
         unfold C.valid. simpl. rewrite orb_false_r.
@@ -4703,7 +5372,7 @@ Proof.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
       
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect.
+        apply BITVECTOR_LIST.bv_eq_reflect.
 
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
@@ -4730,8 +5399,8 @@ Proof.
         unfold Lit.interp in HSp2. rewrite Heq4 in HSp2. unfold Var.interp in HSp2.
         rewrite rho_interp in HSp2. rewrite Heq7 in HSp2. simpl in HSp2.
        
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp2.
-        apply BITVECTOR_LIST_FIXED.bv_eq_reflect in HSp1.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp2.
+        apply BITVECTOR_LIST.bv_eq_reflect in HSp1.
 
         unfold get_type' in H2, H3. unfold v_type in H2, H3.
         case_eq (t_interp .[ a1']).
@@ -4764,12 +5433,32 @@ Proof.
         unfold interp_bv. unfold apply_binop.
 
         rewrite !Atom.t_interp_wf; trivial.
+        
+        
+        
         revert v_vala1 Htia1. rewrite H3. revert v_vala2 Htia2. rewrite H2.
         intros v_vala2 Htia2 v_vala1 Htia1.
         rewrite Htia1, Htia2.
         rewrite Typ.cast_refl.
-        unfold Bval. rewrite Typ.cast_refl.
+        unfold Bval.
         
+        assert (H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bsres))) = N).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_add_bvadd_length in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite N.eqb_eq in Heq11r.
+        rewrite Heq11a in Heq11r.
+        now rewrite map_length.
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        generalize ( BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bsres)).
+        
+        rewrite H100.
+        rewrite Typ.cast_refl. intros.
+        simpl.
+
 
         (* interp_form_hatom_bv a1' = 
                 interp_bv t_i (interp_atom (t_atom .[a1'])) *)
@@ -4784,7 +5473,25 @@ Proof.
         rewrite H5 in HSp1.
         unfold interp_bv in HSp1.
         rewrite Htia1 in HSp1.
-        unfold interp_bv in HSp1. rewrite Typ.cast_refl in HSp1.
+        unfold interp_bv in HSp1. 
+        
+        revert HSp1.
+
+        assert (H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = N).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+        
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        generalize ( BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs1)).
+        
+        rewrite H101.
+        rewrite Typ.cast_refl. intros.
+        simpl.
+
         rewrite HSp1.
         (* interp_form_hatom_bv a2' = 
                 interp_bv t_i (interp_atom (t_atom .[a2'])) *)
@@ -4799,7 +5506,29 @@ Proof.
         rewrite H6 in HSp2.
         unfold interp_bv in HSp2.
         rewrite Htia2 in HSp2.
-        unfold interp_bv in HSp2. rewrite Typ.cast_refl in HSp2.
+        unfold interp_bv in HSp2. 
+
+        revert HSp2.
+
+        assert (H102: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = N).
+        rewrite andb_true_iff in Heq11.
+        destruct Heq11 as (Heq11, Heq11r).
+        apply check_add_bvadd_length in Heq11.
+        destruct Heq11 as (Heq11a, Heq11b).
+        rewrite Heq11a, <- Heq11b in Heq11r.
+        rewrite N.eqb_eq in Heq11r.
+        now rewrite map_length.
+        
+        unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
+        
+        generalize ( BITVECTOR_LIST.of_bits_size (map (Lit.interp rho) bs2)).
+        
+        rewrite H102.
+        rewrite Typ.cast_refl. intros.
+        simpl.
+        
+        
+
         rewrite HSp2.
 
         pose proof Heq11.
@@ -4810,9 +5539,16 @@ Proof.
         
         
         apply check_add_bvadd_length in Heq11.
-        apply check_add_bvadd.
-
-        easy. destruct Heq11 as (Heq11a & Heq11b).
+        
+        unfold BITVECTOR_LIST.bv_add. simpl.
+        apply eq_rec.
+        simpl.
+                
+        specialize (@check_add_bvadd bs1 bs2 bsres N).
+        
+        intros. apply H8.
+        exact Heq11r.
+        destruct Heq11 as (Heq11a & Heq11b).
         rewrite <- Heq11b in Heq11a.
         rewrite Heq11a in Heq11r. easy.
         destruct Heq11 as (Heq11a & Heq11b).
@@ -4821,6 +5557,8 @@ Proof.
         rewrite andb_true_iff in H7.
         destruct H7 as (H7 & H7r).
         exact H7.
+        
+        here...
 
         (** symmetic case **)
 
@@ -5532,7 +6270,6 @@ Proof.
         now rewrite H7r, N.compare_refl.
 Qed.
 
-       
 
   End Proof.
 
