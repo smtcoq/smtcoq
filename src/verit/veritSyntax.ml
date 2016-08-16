@@ -342,6 +342,14 @@ let mk_clause (id,typ,value,ids_params) =
          (match ids_params, value with
            | [id], [f] -> Other (BBNeg (get_clause id, f))
            | _, _ -> assert false)
+
+      | Row1 ->
+         (match value with
+           | [f] -> Other (RowEq f)
+           | _ -> assert false)
+
+      | Row2 -> Other (RowNeq value)
+
       (* Holes in proofs *)
       | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
       (* TODO *)

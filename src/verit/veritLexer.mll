@@ -125,6 +125,10 @@
         "bitof", BITOF;
         "bvnot", BVNOT;
         "bvneg", BVNEG;
+        "select", SELECT;
+        "store", STORE;
+        "row1", ROW1;
+        "row2", ROW2;
       ]
 }
 

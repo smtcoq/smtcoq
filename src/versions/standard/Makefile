@@ -184,6 +184,7 @@ VFILES:=versions/standard/Int63/Int63.v\
   bva/BVList.v\
   bva/Bva_checker.v\
   array/FArray.v\
+  array/Array_checker.v\
   cnf/Cnf.v\
   euf/Euf.v\
   lia/Lia.v\

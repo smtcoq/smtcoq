@@ -153,6 +153,7 @@ VFILES:=Trace.v\
   euf/Euf.v\
   cnf/Cnf.v\
   array/FArray.v\
+  array/Array_checker.v\
   bva/Bva_checker.v\
   bva/BVList.v
 

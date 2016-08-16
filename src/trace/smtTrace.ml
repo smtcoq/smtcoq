@@ -281,7 +281,7 @@ let to_coq to_lit interp (cstep,
     cEqTr, cEqCgr, cEqCgrP, 
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
     cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBNeg, cBBAdd, cBBMul,
-    cBBUlt, cBBSlt,
+    cBBUlt, cBBSlt, cRowEq, cRowNeq,
     cHole) confl =
 
   let cuts = ref [] in
@@ -364,6 +364,13 @@ let to_coq to_lit interp (cstep,
           mklApp cBBSlt [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBEq (c1,c2,res) ->
           mklApp cBBEq [|out_c c; out_c c1; out_c c2; out_f res|]
+        | RowEq (res) -> mklApp cRowEq [|out_c c; out_f res|]
+        | RowNeq (cl) ->
+          let out_cl cl =
+            List.fold_right (fun f l ->
+                mklApp ccons [|Lazy.force cint; out_f f; l|])
+              cl (mklApp cnil [|Lazy.force cint|]) in
+          mklApp cRowNeq [|out_c c; out_cl cl|]
         | Hole (prem_id, concl) ->
            let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
            let ass_name = Names.id_of_string ("ass"^(string_of_int (Hashtbl.hash concl))) in

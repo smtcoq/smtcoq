@@ -175,6 +175,18 @@ type 'hform rule =
          (a = b) <-> [(a0 <-> b0) /\ ... /\ (an <-> bn)]
    *)
 
+  | RowEq of 'hform
+  (* Read over write same index
+       ------------------------------- roweq
+         select (store a i v) i = v
+   *)
+
+  | RowNeq of 'hform list
+  (* Read over write other index
+       ------------------------------------------------- rowneq
+         i <> j -> select (store a i v) j = select a j
+   *)
+
   (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
   | Hole of ('hform clause) list * 'hform list
 
@@ -214,4 +226,4 @@ let used_clauses r =
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _
-  | BBVar _ | BBConst _ -> []
+  | BBVar _ | BBConst _ | RowEq _ | RowNeq _ -> []

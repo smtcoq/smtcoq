@@ -196,7 +196,7 @@ let cBO_BVult = gen_constant smt_modules "BO_BVult"
 let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
 let cBO_select = gen_constant smt_modules "BO_select"
 
-let cTO_store = gen_constant smt_modules "BO_store"
+let cTO_store = gen_constant smt_modules "TO_store"
 
 let cNO_distinct = gen_constant smt_modules "NO_distinct"
 
@@ -241,6 +241,7 @@ let make_certif_ops modules args =
   gen_constant "BBOp", gen_constant "BBNot", gen_constant "BBEq",
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "BBUlt", gen_constant "BBSlt",
+  gen_constant "RowEq", gen_constant "RowNeq",
   gen_constant "Hole")
   
 

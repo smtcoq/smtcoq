@@ -42,19 +42,16 @@ let identifier_of_qualidentifier = function
   | QualIdentifierId (_,id) | QualIdentifierAs (_,id,_) -> id
 
 
-let string_type s = match s with
-  | "Bool" -> Tbool
-  | "Int" -> TZ
+let string_type s =
+  match s with
+  | "Bool" -> fun _ -> Tbool
+  | "Int" -> fun _ -> TZ
+  | "Array" -> (function [ti;te] -> TFArray (ti, te) | _ -> assert false)
   | _ ->
-     let l = String.length s in
-     if l >= 7 && String.sub s 0 7 = "BitVec_" then
-       let size = int_of_string (String.sub s 7 (l-7)) in
-       TBV size
-     else
-       VeritSyntax.get_btype s
+    try Scanf.sscanf s "BitVec_%d%!" (fun size -> fun _ -> TBV size)
+    with _ -> fun _ -> VeritSyntax.get_btype s
 
-
-let sort_of_string s = (string_type s, [])
+let sort_of_string s = string_type s
 
 
 let sort_of_symbol s = sort_of_string (string_of_symbol s)
@@ -70,9 +67,9 @@ let string_of_qualidentifier id = string_of_identifier (identifier_of_qualidenti
 
 
 let rec sort_of_sort = function
-  | SortIdentifier (_,id) -> sort_of_string (string_of_identifier id)
+  | SortIdentifier (_,id) -> sort_of_string (string_of_identifier id) []
   | SortIdSortMulti (_,id,(_,l)) ->
-    (string_type (string_of_identifier id), List.map sort_of_sort l)
+    sort_of_string (string_of_identifier id) (List.map sort_of_sort l)
 
 
 let declare_sort rt sym =
@@ -152,10 +149,10 @@ let declare_fun rt ro sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
   let coqTy = List.fold_right (fun typ c ->
-      Term.mkArrow (Btype.interp_to_coq rt (fst typ)) c)
-      tyl (Btype.interp_to_coq rt (fst ty)) in
+      Term.mkArrow (Btype.interp_to_coq rt typ) c)
+      tyl (Btype.interp_to_coq rt ty) in
   let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
-  let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) in
+  let op = Op.declare ro cons_v (Array.of_list tyl) ty in
   VeritSyntax.add_fun s op;
   op
 
@@ -320,6 +317,22 @@ let make_root ra rf t =
             | TBV s -> Atom (Atom.mk_bvslt ra s a' b')
             | _ -> assert false)
          | _, _ -> assert false)
+      | "select", [a;i] ->
+        (match make_root_term a, make_root_term i with
+         | Atom a', Atom i' ->
+           (match Atom.type_of a' with
+            | TFArray (ti, te) -> Atom (Atom.mk_select ra ti te a' i')
+            | _ -> assert false)
+         | _ -> assert false)
+        
+      | "store", [a;i;v] ->
+        (match make_root_term a, make_root_term i, make_root_term v with
+         | Atom a', Atom i', Atom v' ->
+           (match Atom.type_of a' with
+            | TFArray (ti, te) -> Atom (Atom.mk_store ra ti te a' i' v')
+            | _ -> assert false)
+         | _ -> assert false)
+        
       | "distinct", _ ->
         let make_h h =
           match make_root_term h with

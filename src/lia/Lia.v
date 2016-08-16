@@ -15,10 +15,6 @@
 
 
 Require Import Bool List Int63 PArray.
-(*
-Add LoadPath "/home/burak/Desktop/smtcoq/src/euf".
-Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".
-*)
 Require Import Misc State SMT_terms Euf.
 
 Require Import RingMicromega ZMicromega Tauto Psatz.

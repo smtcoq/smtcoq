@@ -14,7 +14,7 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray.
-Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators Assumptions BVList Bva_checker.
+Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators Assumptions BVList Bva_checker Array_checker.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -357,6 +357,8 @@ Module Euf_Checker.
   | BBUlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBSlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBEq (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | RowEq (pos:int) (res: _lit)
+  | RowNeq (pos:int) (cl: C.t)
   (* Offer the possibility to discharge parts of the proof to (manual) Coq proofs.
      WARNING: this breaks extraction. *)
   | Hole (pos:int) (prem_id:list clause_id) (prem:list C.t) (concl:C.t)
@@ -397,6 +399,8 @@ Module Euf_Checker.
       | BBUlt pos orig1 orig2 res => S.set_clause s pos (check_bbUlt t_atom t_form s orig1 orig2 res)
       | BBSlt pos orig1 orig2 res => S.set_clause s pos (check_bbSlt t_atom t_form s orig1 orig2 res)
       | BBEq pos orig1 orig2 res => S.set_clause s pos (check_bbEq t_atom t_form s orig1 orig2 res)
+      | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
+      | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
       | @Hole pos prem_id prem concl _ => S.set_clause s pos (check_hole s prem_id prem concl)
     end.
 
@@ -408,7 +412,7 @@ Module Euf_Checker.
         forall st : step, S.valid rho (step_checker s st).
   Proof.
     set (empty_bv := (fun (a:Atom.atom) => BITVECTOR_LIST_FIXED.zeros)).
-    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
+    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos res|pos cl|pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
     - apply valid_check_flatten; auto; intros h1 h2 H.
@@ -439,6 +443,8 @@ Module Euf_Checker.
     - apply valid_check_bbUlt; auto.
     - apply valid_check_bbSlt; auto.
     - apply valid_check_bbEq; auto.
+    - apply valid_check_roweq; auto.
+    - apply valid_check_rowneq; auto.
     - apply valid_check_hole; auto.
   Qed.
 

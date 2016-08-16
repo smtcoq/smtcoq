@@ -379,7 +379,7 @@ module Op =
       | BO_BVult s -> Lazy.force cbv_ult
       | BO_BVslt s -> Lazy.force cbv_slt
       | BO_select (ti, te) ->
-        mklApp cfarray_select [|t_i; Btype.interp t_i ti; Btype.interp t_i te|]
+        mklApp cfarray_select [|t_i; Btype.to_coq ti; Btype.to_coq te|]
 
     let t_to_coq = function
       | TO_store (ti, te) -> store_to_coq ti te
@@ -392,7 +392,7 @@ module Op =
 
     let interp_top t_i = function
       | TO_store (ti, te) ->
-        mklApp cfarray_store [|t_i; Btype.interp t_i ti; Btype.interp t_i te|]
+        mklApp cfarray_store [|t_i; Btype.to_coq ti; Btype.to_coq te|]
 
     
     let n_to_coq = function
