@@ -1169,6 +1169,7 @@ Module Atom.
    | BO_BVult (_: N)
    | BO_BVslt (_: N)
    | BO_select (_ : Typ.type) (_ : Typ.type)
+   | BO_diffarray (_ : Typ.type) (_ : Typ.type)
   .
   
   Inductive nop : Type :=
@@ -1231,7 +1232,8 @@ Module Atom.
    | BO_BVmult s1, BO_BVmult s2 => N.eqb s1 s2
    | BO_BVult s1, BO_BVult s2 => N.eqb s1 s2
    | BO_BVslt s1, BO_BVslt s2 => N.eqb s1 s2
-   | BO_select ti te, BO_select ti' te' => Typ.eqb ti ti' && Typ.eqb te te'
+   | BO_select ti te, BO_select ti' te'
+   | BO_diffarray ti te, BO_diffarray ti' te' => Typ.eqb ti ti' && Typ.eqb te te'
    | _,_ => false
    end.
 
@@ -1298,8 +1300,8 @@ Module Atom.
 
   Lemma reflect_bop_eqb : forall o1 o2, reflect (o1 = o2) (bop_eqb o1 o2).
   Proof.
-    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 ]
-           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | I2 E2 ];
+    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 | I1 E1 ]
+           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | I2 E2 | I2 E2 ];
       simpl;try (constructor;trivial;discriminate).
    - preflect (Typ.reflect_eqb A1 A2).
      constructor;subst;trivial.
@@ -1318,6 +1320,9 @@ Module Atom.
    - preflect (N.eqb_spec s1 s2).
      constructor;subst;trivial.
    - preflect (N.eqb_spec s1 s2).
+     constructor;subst;trivial.
+   - preflect (Typ.reflect_eqb I1 I2).
+     preflect (Typ.reflect_eqb E1 E2).
      constructor;subst;trivial.
    - preflect (Typ.reflect_eqb I1 I2).
      preflect (Typ.reflect_eqb E1 E2).
@@ -1451,6 +1456,7 @@ Qed.
         | BO_BVult s   => ((Typ.TBV,Typ.TBV), Typ.Tbool)
         | BO_BVslt s   => ((Typ.TBV,Typ.TBV), Typ.Tbool)
         | BO_select ti te => ((Typ.TFArray ti te, ti), te)
+        | BO_diffarray ti te => ((Typ.TFArray ti te, Typ.TFArray ti te), ti)
         end.
 
       Definition typ_top o := 
@@ -1702,7 +1708,15 @@ Qed.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
-        (* Ternary operators *)
+
+          
+       (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
+          left. exists t. rewrite Typ.eqb_refl. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+
+          (* Ternary operators *)
         destruct op; simpl. intros h1 h2.
         (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _));
         (case (Typ.eqb (get_type ha) _)).
@@ -1822,6 +1836,12 @@ Qed.
         apply (@FArray.store _ _ _ _ _ _ _ _).
       Defined.
 
+      Definition farray_diff ti te :
+        interp_t (Typ.TFArray ti te) -> interp_t (Typ.TFArray ti te) -> interp_t ti.
+        rewrite interp_farray_is_farray.
+        apply (@FArray.diff _ _ _ _ _ _ _ _ _ _).
+      Defined.
+      
       Definition interp_bop o :=
          match o with
          | BO_Zplus => apply_binop Typ.TZ Typ.TZ Typ.TZ Zplus
@@ -1849,6 +1869,8 @@ Qed.
          | BO_BVslt s =>
            apply_binop Typ.TBV Typ.TBV Typ.Tbool BITVECTOR_LIST_FIXED.bv_slt
          | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te (farray_select ti te)
+         | BO_diffarray ti te =>
+           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (farray_diff ti te)
          end.
 
       Definition interp_top o :=
@@ -2024,7 +2046,7 @@ Qed.
         exists (BITVECTOR_LIST_FIXED.bv_neg y); auto.
 
   (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | ti te];
+        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | ti te | ti te];
           [ intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
@@ -2040,7 +2062,7 @@ Qed.
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
-            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] | |
             ];
         simpl; try discriminate; unfold is_true;
         try (rewrite andb_true_iff ;change (Typ.eqb (get_type h1) Typ.TZ = true /\ Typ.eqb (get_type h2) Typ.TZ = true) with 
@@ -2317,6 +2339,21 @@ Qed.
         intros.
         exists (farray_select ti t' x1 x2); auto.
 
+        (* BO_diffarray *)
+        intros t' H.
+        rewrite !andb_true_iff in H.
+        destruct H as ((H1, H2), H3).
+        destruct (check_aux_interp_hatom h1) as [x1 Hx1]. 
+        rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl.
+        apply Typ.eqb_spec in H1. 
+        apply Typ.eqb_spec in H2. 
+        apply Typ.eqb_spec in H3.
+        revert x1 Hx1 x2 Hx2.
+        rewrite H2, H3, H1.
+        rewrite !Typ.cast_refl.
+        intros.
+        exists (farray_diff t' te x1 x2); auto.
+
         (* Ternary operatores *)
         destruct op as [ti te]; intros [ ti' te' | | | | | ]; 
           simpl; try discriminate; unfold is_true.
@@ -2491,6 +2528,13 @@ Qed.
         rewrite (Typ.cast_diff _ _ H); auto.
         case (Typ.cast (get_type h1) (Typ.TFArray t t0)); auto.
 
+        (* BO_diffarray *)
+        specialize (H t). simpl in H.
+        rewrite !andb_false_iff in H. destruct H. destruct H.
+        rewrite Typ.eqb_refl in H. now contradict H.
+        rewrite (Typ.cast_diff _ _ H); auto.
+        rewrite (Typ.cast_diff _ _ H); auto.
+        case (Typ.cast (get_type h1) (Typ.TFArray t t0)); auto.
         
         (* Ternary operators *)
         destruct op; simpl; intro H;
@@ -2682,7 +2726,7 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.TBV); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST_FIXED.bv_neg (k interp_t x)) ; auto.
 
    (* Binary operators *)
-        intros [ | | | | | | |A | | | | | | | | | ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
+        intros [ | | | | | | |A | | | | | | | | | ti te| ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x - k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x * k2 interp_t y)%Z; auto.
@@ -2736,6 +2780,13 @@ Qed.
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) ti) as [k2| ];
             simpl; try (exists true; reflexivity).
         exists (farray_select ti te (k1 interp_t x) (k2 interp_t y)); auto.
+
+        (* BO_diffarray *)
+        case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TFArray ti te) );
+          simpl; try (exists true; auto); intro k1;
+            case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TFArray ti te)) as [k2| ];
+            simpl; try (exists true; reflexivity).
+        exists (farray_diff ti te (k1 interp_t x) (k2 interp_t y)); auto.
 
         (* Ternary operators *)       
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];

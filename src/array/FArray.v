@@ -1112,6 +1112,7 @@ Section FArray.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
   Variable elt_comp : Comparable elt.
+  Variable key_inh :  Inhabited key.
   Variable elt_inh :  Inhabited elt.
 
   Set Implicit Arguments.
@@ -1869,8 +1870,14 @@ Section FArray.
     reflexivity.
  Qed.
 
-
-
+  Lemma notequal_neq : forall a b, equal a b = false -> a <> b.
+    intros.
+    red. intros.
+    apply not_true_iff_false in H.
+    apply H. rewrite H0.
+    apply eq_equal. apply eqfarray_refl.
+  Qed.    
+      
   Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
   Proof.
     intros; apply equal_eq; apply extensionnality_eqb; auto.
@@ -1878,9 +1885,9 @@ Section FArray.
 
   Section Classical_extensionnality.
 
-    Variable not_all_ex_not :
-      forall (U:Type) (P:U -> Prop), ~ (forall n:U, P n) -> exists n : U, ~ P n.
+    Require Import Classical_Pred_Type ClassicalEpsilon.
 
+    
     Lemma extensionnality2 : forall a b, a <> b -> (exists i, select a i <> select b i).
     Proof.
       intros.
@@ -1889,10 +1896,29 @@ Section FArray.
       intros. apply H. apply extensionnality; auto.
     Qed.
 
+    Definition diff_index_p : forall a b, a <> b -> { i | select a i <> select b i } :=
+      (fun a b u => constructive_indefinite_description _ (@extensionnality2 _ _ u)).
+
+    Definition diff_index : forall a b, a <> b -> key :=
+      (fun a b u => proj1_sig (diff_index_p u)).
+
+
+    Example d : forall a b (u:a <> b), let i := diff_index u in select a i <> select b i.
+      unfold diff_index.
+      intros.
+      destruct (diff_index_p u). simpl. auto.
+    Qed.
+
+    Definition diff (a b: farray) : key.
+      case_eq (equal a b); intro.
+      - apply default_value.
+      - apply (diff_index (notequal_neq H)).
+        (* destruct (diff_index_p H). apply x. *)
+    Defined.
+    
   End Classical_extensionnality.
 
 End FArray.
-
 
 (* 
    Local Variables:
