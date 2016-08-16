@@ -25,6 +25,7 @@ type btype =
   | Tpositive
   | TBV of int
   | Tindex of indexed_type
+  | TFArray of btype * btype
 
 module Btype : 
     sig
@@ -86,6 +87,10 @@ type bop =
    | BO_BVmult of int
    | BO_BVult of int
    | BO_BVslt of int
+   | BO_select of btype * btype
+
+type top =
+   | TO_store of btype * btype
 
 type nop =
   | NO_distinct of btype
@@ -121,8 +126,9 @@ type hatom
 
 type atom = 
   | Acop of cop
-  | Auop of uop * hatom 
-  | Abop of bop * hatom * hatom 
+  | Auop of uop * hatom
+  | Abop of bop * hatom * hatom
+  | Atop of top * hatom * hatom * hatom
   | Anop of nop * hatom array
   | Aapp of indexed_op * hatom array
 
@@ -163,7 +169,7 @@ module Atom :
 
       val interp_tbl : reify_tbl -> Term.constr
 
-      val interp_to_coq : (int, Term.constr) Hashtbl.t ->
+      val interp_to_coq : Term.constr -> (int, Term.constr) Hashtbl.t ->
 	t -> Term.constr
 
       (* Generation of atoms *)
@@ -190,6 +196,9 @@ module Atom :
       val mk_bvnot : reify_tbl -> int -> hatom -> hatom
       val mk_bvneg : reify_tbl -> int -> hatom -> hatom
       val mk_bvconst : reify_tbl -> bool list -> hatom
+      val mk_select : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
+      val mk_store :
+        reify_tbl -> btype -> btype -> hatom -> hatom -> hatom -> hatom
 
     end
 

@@ -65,19 +65,19 @@ let compute_roots roots last_root =
   used_roots [] !r
 
 
-let interp_uf ta tf c =
+let interp_uf t_i ta tf c =
   let rec interp = function
     | [] -> Lazy.force cfalse
-    | [l] -> Form.interp_to_coq (Atom.interp_to_coq ta) tf l
-    | l::c -> mklApp corb [|Form.interp_to_coq (Atom.interp_to_coq ta) tf l; interp c|] in
+    | [l] -> Form.interp_to_coq (Atom.interp_to_coq t_i ta) tf l
+    | l::c -> mklApp corb [|Form.interp_to_coq (Atom.interp_to_coq t_i ta) tf l; interp c|] in
   interp c
 
-let interp_conseq_uf (prem, concl) =
+let interp_conseq_uf t_i (prem, concl) =
   let ta = Hashtbl.create 17 in
   let tf = Hashtbl.create 17 in
   let rec interp = function
-    | [] -> mklApp cis_true [|interp_uf ta tf concl|]
-    | c::prem -> Term.mkArrow (mklApp cis_true [|interp_uf ta tf c|]) (interp prem) in
+    | [] -> mklApp cis_true [|interp_uf t_i ta tf concl|]
+    | c::prem -> Term.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
   interp prem
 
 
@@ -106,7 +106,8 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
   let ce2 = Structures.mkUConst t_form' in
   let ct_form = Term.mkConst (declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition)) in
 
-  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl in
+  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
+      (interp_conseq_uf ct_i) (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -139,8 +140,8 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
 
 (* Given an SMT-LIB2 file and a certif, build the corresponding theorem *)
 
-let interp_roots roots =
-  let interp = Form.interp_to_coq (Atom.interp_to_coq (Hashtbl.create 17)) (Hashtbl.create 17) in
+let interp_roots t_i roots =
+  let interp = Form.interp_to_coq (Atom.interp_to_coq t_i (Hashtbl.create 17)) (Hashtbl.create 17) in
   match roots with
     | [] -> Lazy.force ctrue
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
@@ -161,7 +162,9 @@ let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
 
-  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
+      (interp_conseq_uf (v 4(*t_i*)))
+      (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -183,7 +186,7 @@ let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
     Structures.mkArray (Lazy.force cint, res) in
 
-  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots roots|]|] in
+  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
   let theorem_proof =
    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
@@ -220,7 +223,9 @@ let checker ((rt, ro, ra, rf, roots, max_id, confl) as p) =
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
 
-  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
+      (interp_conseq_uf (v 4(*t_i*)))
+      (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -273,7 +278,9 @@ let build_body rt ro ra rf l b (max_id, confl) =
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq
+      (interp_conseq_uf (v 4(*t_i*)))
+      (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -304,7 +311,9 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq
+      (interp_conseq_uf  (v 4(*t_i*)))
+      (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 

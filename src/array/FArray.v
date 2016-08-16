@@ -1,7 +1,23 @@
 Require Import SetoidList Bool OrderedType OrdersLists RelationPairs Orders.
 Require Import RelationClasses.
 Require Import ProofIrrelevance.
+
+
+Definition eqb_to_eq_dec : forall T (eqb : T -> T -> bool) (eqb_spec : forall x y, eqb x y = true <-> x = y)
+                      (x y : T), { x = y } + { x <> y }.
+  intros.
+  case_eq (eqb x y); intro.
+  left. apply eqb_spec; auto.
+  right. red. intro. apply eqb_spec in H0. rewrite H in H0. now contradict H0.
+  Defined.
   
+
+
+Class EqbType T := {
+ eqb : T -> T -> bool;
+ eqb_spec : forall x y, eqb x y = true <-> x = y
+}.
+
 
 Class DecType T := {
  eq_refl : forall x : T, x = x;
@@ -9,6 +25,15 @@ Class DecType T := {
  eq_trans : forall x y z : T, x = y -> y = z -> x = z;
  eq_dec : forall x y : T, { x = y } + { x <> y }
 }.
+
+
+Instance EqbToDecType T `(EqbType T) : DecType T.
+Proof.
+  destruct H.
+  split; auto.
+  intros; subst; auto.
+  apply (eqb_to_eq_dec _ eqb0); auto.
+Defined.
 
 Hint Immediate eq_sym.
 Hint Resolve eq_refl eq_trans.

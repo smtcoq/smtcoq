@@ -66,8 +66,8 @@ let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
 (* Je ne comprends pas pourquoi ça fonctionne avec Zeq_bool et pas avec
    Z.eqb *)
-(* let ceqbZ = gen_constant z_modules "eqb" *)
-let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool"
+let ceqbZ = gen_constant z_modules "eqb"
+(* let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool" *)
 
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
@@ -150,6 +150,8 @@ let cTFArray = gen_constant smt_modules "TFArray"
 
 let ct_i = gen_constant smt_modules "t_i"
 let cinterp_t = gen_constant smt_modules "Typ.interp"
+let cinterp_eqb = gen_constant smt_modules "i_eqb"
+let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb"
 
 let ctyp_eqb = gen_constant smt_modules "typ_eqb"
 let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
@@ -157,6 +159,9 @@ let cte_carrier = gen_constant smt_modules "te_carrier"
 let cte_eqb = gen_constant smt_modules "te_eqb"
 let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
+
+let cfarray_select = gen_constant smt_modules "farray_select"
+let cfarray_store = gen_constant smt_modules "farray_store"
 
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"
@@ -189,6 +194,9 @@ let cBO_BVadd = gen_constant smt_modules "BO_BVadd"
 let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
 let cBO_BVult = gen_constant smt_modules "BO_BVult"
 let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
+let cBO_select = gen_constant smt_modules "BO_select"
+
+let cTO_store = gen_constant smt_modules "BO_store"
 
 let cNO_distinct = gen_constant smt_modules "NO_distinct"
 
@@ -196,6 +204,7 @@ let catom = gen_constant smt_modules "atom"
 let cAcop = gen_constant smt_modules "Acop"
 let cAuop = gen_constant smt_modules "Auop"
 let cAbop = gen_constant smt_modules "Abop"
+let cAtop = gen_constant smt_modules "Atop"
 let cAnop = gen_constant smt_modules "Anop"
 let cAapp = gen_constant smt_modules "Aapp"
 
