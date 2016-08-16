@@ -344,19 +344,22 @@ module Op =
     let interp_ieq t_i t =
       mklApp cinterp_eqb [|t_i ; Btype.to_coq t|]
 
-    let interp_ieq_eval t_i t =
-      let te = mklApp cinterp_eqb [|t_i ; Btype.to_coq t|] in
+    let veval_t te =
       let env = Global.env () in
       let evd = Evd.from_env env in
       let evd, ty = Typing.type_of env evd te in
       Vnorm.cbv_vm env te ty
-
+    
+    let interp_ieq_eval t_i t =
+      let te = mklApp cinterp_eqb [|t_i ; Btype.to_coq t|] in
+      veval_t te
+        
     let interp_eq t_i = function
       | TZ -> Lazy.force ceqbZ
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
       | TBV _ -> Lazy.force cbv_eq
-      | Tindex i -> mklApp cte_eqb [|i.hval|]
+      | Tindex i -> veval_t (mklApp cte_eqb [|i.hval|])
       | (TFArray _) as t -> interp_ieq t_i t
     
     let interp_bop t_i = function
