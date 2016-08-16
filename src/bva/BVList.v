@@ -30,7 +30,7 @@ Unset Strict Implicit.
 Axiom proof_irrelevance : forall (P : Prop) (p1 p2 : P), p1 = p2.
 
 Lemma inj a a' : N.to_nat a = N.to_nat a' -> a = a'.
-Admitted.
+Proof. intros. lia. Qed.
 
 Module Type BITVECTOR.
 
