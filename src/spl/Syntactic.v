@@ -373,7 +373,7 @@ Section FLATTEN.
 
   (** Correctness proofs *)
   Variable interp_atom : atom -> bool.
-  Variable interp_bvatom : atom -> BITVECTOR_LIST_FIXED.bitvector.
+  Variable interp_bvatom : atom -> forall s, BITVECTOR_LIST.bitvector s.
   Hypothesis default_thf : default t_form = Ftrue.
   Hypothesis wf_thf : wf t_form.
   Hypothesis check_atom_correct :

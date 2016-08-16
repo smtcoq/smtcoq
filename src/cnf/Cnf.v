@@ -16,7 +16,6 @@
 
 (* Add LoadPath ".." as SMTCoq. *)
 Require Import PArray List Bool.
-(*Add LoadPath "/home/burak/Desktop/smtcoq/src/bva".*)
 Require Import Misc State SMT_terms BVList.
 
 Import Form.
@@ -256,7 +255,7 @@ Section CHECKER.
   (** The correctness proofs *)
 
   Variable interp_atom : atom -> bool.
-  Variable interp_bvatom : atom -> BITVECTOR_LIST_FIXED.bitvector.
+  Variable interp_bvatom : atom -> forall s, BITVECTOR_LIST.bitvector s.
 
   Hypothesis Hch_f : check_form t_form.
 
