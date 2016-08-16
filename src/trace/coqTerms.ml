@@ -107,9 +107,10 @@ let ceq = gen_constant init_modules "eq"
 let crefl_equal = gen_constant init_modules "eq_refl"
 
 (* Bit vectors *)
-let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST_FIXED"]]
+let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
 let cbitvector = gen_constant bv_modules "bitvector"
 let cof_bits = gen_constant bv_modules "of_bits"
+let c_of_bits = gen_constant bv_modules "_of_bits"
 let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
 let cbv_not = gen_constant bv_modules "bv_not"
@@ -121,6 +122,7 @@ let cbv_add = gen_constant bv_modules "bv_add"
 let cbv_mult = gen_constant bv_modules "bv_mult"
 let cbv_ult = gen_constant bv_modules "bv_ult"
 let cbv_slt = gen_constant bv_modules "bv_slt"
+let cbv_concat = gen_constant bv_modules "bv_concat"
 
 
 let cOrderedTypeCompare =
@@ -194,6 +196,7 @@ let cBO_BVadd = gen_constant smt_modules "BO_BVadd"
 let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
 let cBO_BVult = gen_constant smt_modules "BO_BVult"
 let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
+let cBO_BVconcat = gen_constant smt_modules "BO_BVconcat"
 let cBO_select = gen_constant smt_modules "BO_select"
 
 let cTO_store = gen_constant smt_modules "TO_store"
@@ -240,7 +243,7 @@ let make_certif_ops modules args =
   gen_constant "BBVar", gen_constant "BBConst",
   gen_constant "BBOp", gen_constant "BBNot", gen_constant "BBEq",
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
-  gen_constant "BBUlt", gen_constant "BBSlt",
+  gen_constant "BBUlt", gen_constant "BBSlt", gen_constant "BBConcat",
   gen_constant "RowEq", gen_constant "RowNeq",
   gen_constant "Hole")
   

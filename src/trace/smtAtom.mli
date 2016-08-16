@@ -87,6 +87,7 @@ type bop =
    | BO_BVmult of int
    | BO_BVult of int
    | BO_BVslt of int
+   | BO_BVconcat of int * int
    | BO_select of btype * btype
 
 type top =
@@ -190,6 +191,7 @@ module Atom :
       val mk_bvmult : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_bvult : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_bvslt : reify_tbl -> int -> hatom -> hatom -> hatom
+      val mk_bvconcat : reify_tbl -> int -> int -> hatom -> hatom -> hatom
       val mk_opp : reify_tbl -> hatom -> hatom
       val mk_distinct : reify_tbl -> btype -> hatom array -> hatom
       val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom

@@ -100,6 +100,7 @@ let get_rule = function
   | Bbslt -> "bbslt"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
+  | Bbconc -> "bbconcat"
   | Row1 -> "row1"
   | Row2 -> "row2" 
 

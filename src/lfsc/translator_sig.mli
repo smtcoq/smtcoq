@@ -77,6 +77,7 @@ type rule =
   | Bbslt
   | Bbnot
   | Bbneg
+  | Bbconc
   | Row1
   | Row2 
 

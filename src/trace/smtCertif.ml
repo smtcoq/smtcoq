@@ -168,6 +168,12 @@ type 'hform rule =
        -------------------------------------------------- bbAnd
              bvslt a b <-> ...
    *)
+  | BBConc of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector concatenation
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbConc
+             bbT(concat a b, [a0; ...; an; b0; ...; bn])
+   *)
   | BBEq of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
@@ -220,7 +226,7 @@ let used_clauses r =
   | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
   | BBNot (c, _) | BBNeg (c, _) -> [c]
   | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
-  | BBMul (c1,c2,_)
+  | BBMul (c1,c2,_) | BBConc (c1,c2,_)
   | BBUlt (c1,c2,_) | BBSlt (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
   | Hole (cs, _) -> cs
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _

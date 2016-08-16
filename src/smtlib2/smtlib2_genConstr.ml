@@ -317,6 +317,13 @@ let make_root ra rf t =
             | TBV s -> Atom (Atom.mk_bvslt ra s a' b')
             | _ -> assert false)
          | _, _ -> assert false)
+      | "concat", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a', Atom.type_of b' with
+            | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
       | "select", [a;i] ->
         (match make_root_term a, make_root_term i with
          | Atom a', Atom i' ->

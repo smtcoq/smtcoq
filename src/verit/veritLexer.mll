@@ -109,6 +109,7 @@
         "bbmul", BBMUL;
         "bbult", BBULT;
         "bbslt", BBSLT;
+        "bbconcat", BBCONC;
         "bvand", BVAND;
         "bvor", BVOR;
         "bvxor", BVXOR;
@@ -125,6 +126,7 @@
         "bitof", BITOF;
         "bvnot", BVNOT;
         "bvneg", BVNEG;
+        "concat", BVCONC;
         "select", SELECT;
         "store", STORE;
         "row1", ROW1;

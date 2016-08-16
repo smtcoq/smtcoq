@@ -94,6 +94,7 @@ let get_rule = function
   | Bbslt -> VeritSyntax.Bbslt
   | Bbnot -> VeritSyntax.Bbnot
   | Bbneg -> VeritSyntax.Bbneg
+  | Bbconc -> VeritSyntax.Bbconc
   | Row1 -> VeritSyntax.Row1
   | Row2 -> VeritSyntax.Row2
 
@@ -149,6 +150,7 @@ let string_of_rule = function
   | Bbslt -> "bbslt"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
+  | Bbconc -> "bbconcat"
   | Row1 -> "row1"
   | Row2 -> "row2" 
 
@@ -254,6 +256,12 @@ let rec term_smtcoq t = match value t with
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvslt ra s ha hb)
+            | _ -> assert false)
+      | Some ("concat", [_; _; _; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha, Atom.type_of hb with
+            | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
             | _ -> assert false)
       | Some ("<_Int", [a; b]) ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))

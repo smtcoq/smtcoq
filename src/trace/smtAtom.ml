@@ -20,10 +20,6 @@ open CoqTerms
 (** Syntaxified version of Coq type *)
 type indexed_type = Term.constr gen_hashed
 
-(** Hardcoded size of bitvectors for use with the corresponding Coq
-    specification (in BVList) *)
-let bvsize = 32
-
 let dummy_indexed_type i = {index = i; hval = Term.mkProp}
 let indexed_type_index i = i.index
 
@@ -59,7 +55,7 @@ module Btype =
       | TZ -> Lazy.force cTZ
       | Tbool -> Lazy.force cTbool
       | Tpositive -> Lazy.force cTpositive
-      | TBV n -> Lazy.force cTBV
+      | TBV n -> mklApp cTBV [|mkN n|]
       | Tindex i -> index_to_coq i
       | TFArray (ti, te) ->
         mklApp cTFArray [|to_coq ti; to_coq te|]
@@ -203,6 +199,7 @@ type bop =
    | BO_BVmult of int
    | BO_BVult of int
    | BO_BVslt of int
+   | BO_BVconcat of int * int
    | BO_select of btype * btype
 
 
@@ -236,7 +233,7 @@ module Op =
     let c_to_coq = function
       | CO_xH -> Lazy.force cCO_xH
       | CO_Z0 -> Lazy.force cCO_Z0
-      | CO_BV bv -> mklApp cCO_BV [|mk_bv_list bv|]
+      | CO_BV bv -> mklApp cCO_BV [|mk_bv_list bv; mkN (List.length bv)|]
 
     let c_type_of = function
       | CO_xH -> Tpositive
@@ -246,7 +243,7 @@ module Op =
     let interp_cop = function
       | CO_xH -> Lazy.force cxH
       | CO_Z0 -> Lazy.force cZ0
-      | CO_BV bv -> mklApp cof_bits [|mk_bv_list bv|]
+      | CO_BV bv -> mklApp c_of_bits [|mk_bv_list bv; mkN (List.length bv)|]
 
     let u_to_coq = function 
       | UO_xO -> Lazy.force cUO_xO
@@ -323,6 +320,7 @@ module Op =
       | BO_BVmult s -> mklApp cBO_BVmult [|mkN s|]
       | BO_BVult s -> mklApp cBO_BVult [|mkN s|]
       | BO_BVslt s -> mklApp cBO_BVslt [|mkN s|]
+      | BO_BVconcat (s1, s2) -> mklApp cBO_BVconcat [|mkN s1; mkN s2|]
       | BO_select (ti, te) -> select_to_coq ti te
         
     let b_type_of = function
@@ -330,6 +328,7 @@ module Op =
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
       | BO_BVult _ | BO_BVslt _ -> Tbool
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
+      | BO_BVconcat (s1, s2) -> TBV (s1 + s2)
       | BO_select (_, te) -> te
 
     let b_type_args = function
@@ -339,6 +338,7 @@ module Op =
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
       | BO_BVult s | BO_BVslt s ->
         (TBV s,TBV s)
+      | BO_BVconcat (s1, s2) -> (TBV s1, TBV s2)
       | BO_select (ti, te) -> (TFArray (ti, te), ti)
 
     let interp_ieq t_i t =
@@ -358,7 +358,7 @@ module Op =
       | TZ -> Lazy.force ceqbZ
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
-      | TBV _ -> Lazy.force cbv_eq
+      | TBV s -> mklApp cbv_eq [|mkN s|]
       | Tindex i -> veval_t (mklApp cte_eqb [|i.hval|])
       | (TFArray _) as t -> interp_ieq t_i t
     
@@ -371,13 +371,14 @@ module Op =
       | BO_Zge -> Lazy.force cgeb
       | BO_Zgt -> Lazy.force cgtb
       | BO_eq t -> interp_eq t_i t
-      | BO_BVand s -> Lazy.force cbv_and
-      | BO_BVor s -> Lazy.force cbv_or
-      | BO_BVxor s -> Lazy.force cbv_xor
-      | BO_BVadd s -> Lazy.force cbv_add
-      | BO_BVmult s -> Lazy.force cbv_mult
-      | BO_BVult s -> Lazy.force cbv_ult
-      | BO_BVslt s -> Lazy.force cbv_slt
+      | BO_BVand s -> mklApp cbv_and [|mkN s|]
+      | BO_BVor s -> mklApp cbv_or [|mkN s|]
+      | BO_BVxor s -> mklApp cbv_xor [|mkN s|]
+      | BO_BVadd s -> mklApp cbv_add [|mkN s|]
+      | BO_BVmult s -> mklApp cbv_mult [|mkN s|]
+      | BO_BVult s -> mklApp cbv_ult [|mkN s|]
+      | BO_BVslt s -> mklApp cbv_slt [|mkN s|]
+      | BO_BVconcat (s1,s2) -> mklApp cbv_concat [|mkN s1; mkN s2|]
       | BO_select (ti, te) ->
         mklApp cfarray_select [|t_i; Btype.to_coq ti; Btype.to_coq te|]
 
@@ -479,6 +480,7 @@ module Op =
         | BO_BVmult n1, BO_BVmult n2 -> n1 == n2
         | BO_BVult n1, BO_BVult n2 -> n1 == n2
         | BO_BVslt n1, BO_BVslt n2 -> n1 == n2
+        | BO_BVconcat (n1,m1), BO_BVconcat (n2,m2) -> n1 == n2 && m1 == m2
         | BO_select (ti1, te1), BO_select (ti2, te2) ->
           Btype.equal ti1 ti2 && Btype.equal te1 te2
         | _ -> op1 == op2
@@ -693,6 +695,7 @@ module Atom =
         | BO_BVmult _ -> "bvmul"
         | BO_BVult _ -> "bvult"
         | BO_BVslt _ -> "bvslt"
+        | BO_BVconcat _ -> "concat"
         | BO_select _ -> "select"
       in
       Format.fprintf fmt "(%s %a %a)" s to_smt h1 to_smt h2
@@ -791,6 +794,7 @@ module Atom =
       | CCBVmult
       | CCBVult
       | CCBVslt
+      | CCBVconcat
       | CCeqb
       | CCeqbP
       | CCeqbZ
@@ -810,7 +814,7 @@ module Atom =
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
           cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
-          cbv_ult, CCBVult; cbv_slt, CCBVslt;
+          cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
           cfarray_select, CCselect; cfarray_store, CCstore 
         ];
@@ -890,7 +894,6 @@ module Atom =
       else if Term.eq_constr c (Lazy.force cTBV) then
         match args with
         | [s] -> TBV (mk_N s)
-        | [] -> TBV bvsize
         | _ -> assert false
       else if Term.eq_constr c (Lazy.force cTFArray) then
         match args with
@@ -934,6 +937,7 @@ module Atom =
           | CCBVmult -> mk_bop_bvmult args
           | CCBVult -> mk_bop_bvult args
           | CCBVslt -> mk_bop_bvslt args
+          | CCBVconcat -> mk_bop_bvconcat args
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
@@ -947,7 +951,7 @@ module Atom =
       and mk_cop op args = match op, args with
         | CCxH, [] -> get reify (Acop CO_xH)
         | CCZ0, [] -> get reify (Acop CO_Z0)
-        | CCBV, [bs] -> get reify (Acop (CO_BV (mk_bool_list bs)))
+        | CCBV, [bs; _] -> get reify (Acop (CO_BV (mk_bool_list bs)))
         | _ -> assert false
           
     
@@ -959,27 +963,18 @@ module Atom =
         | [s;n;a] ->
           let h = mk_hatom a in
           get reify (Auop (UO_BVbitOf (mk_N s, mk_nat n), h))
-        | [n;a] -> (* When all bv have same size *)
-          let h = mk_hatom a in
-          get reify (Auop (UO_BVbitOf (bvsize, mk_nat n), h))
         | _ -> assert false
 
       and mk_bvnot = function
         | [s;a] ->
           let h = mk_hatom a in
           get reify (Auop (UO_BVnot (mk_N s), h))
-        | [a] -> (* When all bv have same size *)
-          let h = mk_hatom a in
-          get reify (Auop (UO_BVnot bvsize, h))
         | _ -> assert false
 
       and mk_bvneg = function
         | [s;a] ->
           let h = mk_hatom a in
           get reify (Auop (UO_BVneg (mk_N s), h))
-        | [a] -> (* When all bv have same size *)
-          let h = mk_hatom a in
-          get reify (Auop (UO_BVneg bvsize, h))
         | _ -> assert false
 
       and mk_bop op = function
@@ -1001,64 +996,53 @@ module Atom =
         | [s;a1;a2] ->
            let s' = mk_N s in
            mk_bop (BO_BVand s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-           mk_bop (BO_BVand bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvor = function
         | [s;a1;a2] ->
            let s' = mk_N s in
            mk_bop (BO_BVor s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-           mk_bop (BO_BVor bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvxor = function
         | [s;a1;a2] ->
           let s' = mk_N s in
           mk_bop (BO_BVxor s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-          mk_bop (BO_BVxor bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvadd = function
         | [s;a1;a2] ->
            let s' = mk_N s in
            mk_bop (BO_BVadd s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-          mk_bop (BO_BVadd bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvmult = function
         | [s;a1;a2] ->
            let s' = mk_N s in
            mk_bop (BO_BVmult s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-          mk_bop (BO_BVmult bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvult = function
         | [s;a1;a2] ->
            let s' = mk_N s in
            mk_bop (BO_BVult s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-          mk_bop (BO_BVult bvsize) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvslt = function
         | [s;a1;a2] ->
            let s' = mk_N s in
            mk_bop (BO_BVslt s') [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-          mk_bop (BO_BVslt bvsize) [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvconcat = function
+        | [s1;s2;a1;a2] ->
+           mk_bop (BO_BVconcat (mk_N s1, mk_N s2)) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bveq = function
         | [s;a1;a2] ->
           let s' = mk_N s in
           mk_bop (BO_eq (TBV s')) [a1;a2]
-        | [a1;a2] -> (* When all bv have same size *)
-          mk_bop (BO_eq (TBV bvsize)) [a1;a2]
         | _ -> assert false
 
       and mk_bop_select = function
@@ -1222,6 +1206,7 @@ module Atom =
     let mk_bvmult reify s = mk_binop (BO_BVmult s) reify
     let mk_bvult reify s = mk_binop (BO_BVult s) reify
     let mk_bvslt reify s = mk_binop (BO_BVslt s) reify
+    let mk_bvconcat reify s1 s2 = mk_binop (BO_BVconcat (s1, s2)) reify
     let mk_opp = mk_unop UO_Zopp
     let mk_distinct reify ty = mk_nop (NO_distinct ty) reify
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
