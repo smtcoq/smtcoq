@@ -66,8 +66,8 @@ let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
 (* Je ne comprends pas pourquoi ça fonctionne avec Zeq_bool et pas avec
    Z.eqb *)
-(* let ceqbZ = gen_constant z_modules "eqb" *)
-let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool"
+let ceqbZ = gen_constant z_modules "eqb"
+(* let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool" *)
 
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
@@ -110,10 +110,23 @@ let crefl_equal = gen_constant init_modules "eq_refl"
 let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
 let cbitvector = gen_constant bv_modules "bitvector"
 let cof_bits = gen_constant bv_modules "of_bits"
+let c_of_bits = gen_constant bv_modules "_of_bits"
 let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
+let cbv_not = gen_constant bv_modules "bv_not"
+let cbv_neg = gen_constant bv_modules "bv_neg"
 let cbv_and = gen_constant bv_modules "bv_and"
 let cbv_or = gen_constant bv_modules "bv_or"
+let cbv_xor = gen_constant bv_modules "bv_xor"
+let cbv_add = gen_constant bv_modules "bv_add"
+let cbv_mult = gen_constant bv_modules "bv_mult"
+let cbv_ult = gen_constant bv_modules "bv_ult"
+let cbv_slt = gen_constant bv_modules "bv_slt"
+let cbv_concat = gen_constant bv_modules "bv_concat"
+
+
+let cOrderedTypeCompare =
+  gen_constant [["Coq";"Structures";"OrderedType"]] "Compare"
 
 (* SMT_terms *)
 
@@ -135,6 +148,12 @@ let cTbool = gen_constant smt_modules "Tbool"
 let cTpositive = gen_constant smt_modules "Tpositive"
 let cTBV = gen_constant smt_modules "TBV"
 let cTindex = gen_constant smt_modules "Tindex"
+let cTFArray = gen_constant smt_modules "TFArray"
+
+let ct_i = gen_constant smt_modules "t_i"
+let cinterp_t = gen_constant smt_modules "Typ.interp"
+let cinterp_eqb = gen_constant smt_modules "i_eqb"
+let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb"
 
 let ctyp_eqb = gen_constant smt_modules "typ_eqb"
 let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
@@ -143,11 +162,15 @@ let cte_eqb = gen_constant smt_modules "te_eqb"
 let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
 
+let cfarray_select = gen_constant smt_modules "farray_select"
+let cfarray_store = gen_constant smt_modules "farray_store"
+
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"
 
 let cCO_xH = gen_constant smt_modules "CO_xH"
 let cCO_Z0 = gen_constant smt_modules "CO_Z0"
+let cCO_BV = gen_constant smt_modules "CO_BV"
 
 let cUO_xO = gen_constant smt_modules "UO_xO"
 let cUO_xI = gen_constant smt_modules "UO_xI"
@@ -155,6 +178,8 @@ let cUO_Zpos = gen_constant smt_modules "UO_Zpos"
 let cUO_Zneg = gen_constant smt_modules "UO_Zneg"
 let cUO_Zopp = gen_constant smt_modules "UO_Zopp"
 let cUO_BVbitOf = gen_constant smt_modules "UO_BVbitOf"
+let cUO_BVnot = gen_constant smt_modules "UO_BVnot"
+let cUO_BVneg = gen_constant smt_modules "UO_BVneg"
 
 let cBO_Zplus = gen_constant smt_modules "BO_Zplus"
 let cBO_Zminus = gen_constant smt_modules "BO_Zminus"
@@ -166,6 +191,15 @@ let cBO_Zgt = gen_constant smt_modules "BO_Zgt"
 let cBO_eq = gen_constant smt_modules "BO_eq"
 let cBO_BVand = gen_constant smt_modules "BO_BVand"
 let cBO_BVor = gen_constant smt_modules "BO_BVor"
+let cBO_BVxor = gen_constant smt_modules "BO_BVxor"
+let cBO_BVadd = gen_constant smt_modules "BO_BVadd"
+let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
+let cBO_BVult = gen_constant smt_modules "BO_BVult"
+let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
+let cBO_BVconcat = gen_constant smt_modules "BO_BVconcat"
+let cBO_select = gen_constant smt_modules "BO_select"
+
+let cTO_store = gen_constant smt_modules "TO_store"
 
 let cNO_distinct = gen_constant smt_modules "NO_distinct"
 
@@ -173,6 +207,7 @@ let catom = gen_constant smt_modules "atom"
 let cAcop = gen_constant smt_modules "Acop"
 let cAuop = gen_constant smt_modules "Auop"
 let cAbop = gen_constant smt_modules "Abop"
+let cAtop = gen_constant smt_modules "Atop"
 let cAnop = gen_constant smt_modules "Anop"
 let cAapp = gen_constant smt_modules "Aapp"
 
@@ -205,7 +240,11 @@ let make_certif_ops modules args =
   gen_constant"ImmBuildDef2",
   gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
   gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
-  gen_constant "BBVar", gen_constant "BBOp", gen_constant "BBEq",
+  gen_constant "BBVar", gen_constant "BBConst",
+  gen_constant "BBOp", gen_constant "BBNot", gen_constant "BBEq",
+  gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
+  gen_constant "BBUlt", gen_constant "BBSlt", gen_constant "BBConcat",
+  gen_constant "RowEq", gen_constant "RowNeq",
   gen_constant "Hole")
   
 
@@ -237,3 +276,14 @@ let rec mkPositive = function
 let mkN = function
   | 0 -> Lazy.force cN0
   | i -> SmtMisc.mklApp cNpos [|mkPositive i|]
+
+(* Compute a Boolean *)
+let rec mkBool = function
+  | true -> Lazy.force ctrue
+  | false -> Lazy.force cfalse
+
+(* Compute a Boolean list *)
+let rec mk_bv_list = function
+  | [] -> SmtMisc.mklApp cnil [|Lazy.force cbool|]
+  | b :: bv ->
+    SmtMisc.mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]

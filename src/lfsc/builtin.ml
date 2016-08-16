@@ -189,6 +189,13 @@ let a_var_bv_s = declare_get "a_var_bv"
          (pi "v" var_bv (term (bitVec n)))))
 let a_var_bv n v = mk_app a_var_bv_s [n; v]
 
+let a_bv_s = declare_get "a_bv"
+    (pi_d "n" mpz (fun n ->
+         (pi "v" bv (term (bitVec n)))))
+let a_bv n v = mk_app a_bv_s [n; v]
+
+
+
 let bitof_s = declare_get "bitof" (pi "x" var_bv (pi "n" mpz formula))
 let bitof x n =  mk_app bitof_s [x; n]
 
@@ -222,7 +229,6 @@ let bvsmod_s = declare_get "bvsmod" (mk_const "bvop2")
 let bvshl_s = declare_get "bvshl" (mk_const "bvop2")
 let bvlshr_s = declare_get "bvlshr" (mk_const "bvop2")
 let bvashr_s = declare_get "bvashr" (mk_const "bvop2")
-let concat_s = declare_get "concat" (mk_const "bvop2")
 
 let bvand n a b = mk_app bvand_s [n; a; b]
 let bvor n a b = mk_app bvor_s [n; a; b]
@@ -241,8 +247,43 @@ let bvsmod n a b = mk_app bvsmod_s [n; a; b]
 let bvshl n a b = mk_app bvshl_s [n; a; b]
 let bvlshr n a b = mk_app bvlshr_s [n; a; b]
 let bvashr n a b = mk_app bvashr_s [n; a; b]
-let concat n a b = mk_app concat_s [n; a; b]
 
+let _ = 
+  define "bvop1"
+	(pi_d "n" mpz (fun n ->
+	(pi "x" (term (bitVec n))
+           (term (bitVec n)))))
+
+let bvnot_s = declare_get "bvnot" (mk_const "bvop1")
+let bvneg_s = declare_get "bvneg" (mk_const "bvop1")
+
+let bvnot n a = mk_app bvnot_s [n; a]
+let bvneg n a = mk_app bvneg_s [n; a]
+
+
+let _ = 
+  define "bvpred"
+	(pi_d "n" mpz (fun n ->
+	(pi "x" (term (bitVec n))
+        (pi "y" (term (bitVec n))
+           formula))))
+
+let bvult_s = declare_get "bvult" (mk_const "bvpred")
+let bvslt_s = declare_get "bvslt" (mk_const "bvpred")
+
+let bvult n a b = mk_app bvult_s [n; a; b]
+let bvslt n a b = mk_app bvslt_s [n; a; b]
+
+
+let concat_s = declare_get "concat"
+    (pi_d "n" mpz (fun n ->
+    (pi_d "m" mpz (fun m -> 
+    (pi_d "m'" mpz (fun m' ->
+    (pi "t1" (term (bitVec m))
+    (pi "t2" (term (bitVec m'))
+       (term (bitVec n))))))))))
+
+let concat n m m' a b = mk_app concat_s [n; m; m'; a; b]
 
 
 module MInt = Map.Make (struct

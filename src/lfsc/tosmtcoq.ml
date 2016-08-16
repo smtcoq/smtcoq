@@ -67,6 +67,14 @@ let get_rule = function
   | Equp2 -> VeritSyntax.Equp2
   | Equn1 -> VeritSyntax.Equn1
   | Equn2 -> VeritSyntax.Equn2
+  | Xor1 -> VeritSyntax.Xor1
+  | Xor2 -> VeritSyntax.Xor2
+  | Xorp1 -> VeritSyntax.Xorp1
+  | Xorp2 -> VeritSyntax.Xorp2
+  | Xorn1 -> VeritSyntax.Xorn1
+  | Xorn2 -> VeritSyntax.Xorn2
+  | Nxor1 -> VeritSyntax.Nxor1
+  | Nxor2 -> VeritSyntax.Nxor2
   | Eqtr -> VeritSyntax.Eqtr
   | Eqcp -> VeritSyntax.Eqcp
   | Eqco -> VeritSyntax.Eqco
@@ -75,9 +83,20 @@ let get_rule = function
   | Flat -> VeritSyntax.Flat
   | Hole -> VeritSyntax.Hole
   | True -> VeritSyntax.True
+  | Fals -> VeritSyntax.Fals
   | Bbva -> VeritSyntax.Bbva
+  | Bbconst -> VeritSyntax.Bbconst
   | Bbeq -> VeritSyntax.Bbeq
   | Bbop -> VeritSyntax.Bbop
+  | Bbadd -> VeritSyntax.Bbadd
+  | Bbmul -> VeritSyntax.Bbmul
+  | Bbult -> VeritSyntax.Bbult
+  | Bbslt -> VeritSyntax.Bbslt
+  | Bbnot -> VeritSyntax.Bbnot
+  | Bbneg -> VeritSyntax.Bbneg
+  | Bbconc -> VeritSyntax.Bbconc
+  | Row1 -> VeritSyntax.Row1
+  | Row2 -> VeritSyntax.Row2
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -104,6 +123,14 @@ let string_of_rule = function
   | Equp2 -> "equiv_pos2"
   | Equn1 -> "equiv_neg1"
   | Equn2 -> "equiv_neg2"
+  | Xor1 -> "xor1"
+  | Xor2 -> "xor2"
+  | Xorp1 -> "xor_pos1"
+  | Xorp2 -> "xor_pos2"
+  | Xorn1 -> "xor_neg1"
+  | Xorn2 -> "xor_neg2"
+  | Nxor1 -> "not_xor1"
+  | Nxor2 -> "not_xor2"
   | Eqtr -> "eq_transitive"
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
@@ -112,14 +139,43 @@ let string_of_rule = function
   | Flat -> "flatten"
   | Hole -> "hole"
   | True -> "true"
+  | Fals -> "false"
   | Bbva -> "bbvar"
+  | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
   | Bbop -> "bbop"
+  | Bbadd -> "bbadd"
+  | Bbmul -> "bbmul"
+  | Bbult -> "bbult"
+  | Bbslt -> "bbslt"
+  | Bbnot -> "bbnot"
+  | Bbneg -> "bbneg"
+  | Bbconc -> "bbconcat"
+  | Row1 -> "row1"
+  | Row2 -> "row2" 
+
+
+let bit_to_bool t = match name t with
+  | Some "b0" -> false
+  | Some "b1" -> true
+  | _ -> assert false
+
+let rec const_bv_aux acc t = match name t with
+  | Some "bvn" -> acc
+  | _ ->
+    match app_name t with
+    | Some ("bvc", [b; t]) -> const_bv_aux (bit_to_bool b :: acc) t
+    | _ -> assert false
+
+let const_bv t =
+  let bv_list = const_bv_aux [] t in
+  Atom (Atom.mk_bvconst ra bv_list)
 
 
 let rec term_smtcoq t = match value t with
   | Const {sname=Name "true"} -> Form Form.pform_true
   | Const {sname=Name "false"} -> Form Form.pform_false
+  | Const {sname=Name "bvn"} -> const_bv t
   | Const {sname=Name n} -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
   | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
   | App _ ->
@@ -140,6 +196,8 @@ let rec term_smtcoq t = match value t with
       | Some ("a_int", [{value = Int bi}]) ->
         Atom (Atom.hatom_Z_of_bigint ra bi)
       | Some ("a_var_bv", [_; v]) -> term_smtcoq v
+      | Some ("bvc", _) -> const_bv t
+      | Some ("a_bv", [_; v]) -> term_smtcoq v
       | Some ("bitof", [a; {value = Int n}]) ->
          (let ha = term_smtcoq_atom a in
           match Atom.type_of ha with
@@ -147,6 +205,16 @@ let rec term_smtcoq t = match value t with
             | _ -> assert false)
       | Some ("bblast_term", [_; a; bb]) ->
         Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
+      | Some ("bvnot", [_; a]) ->
+         (let ha = term_smtcoq_atom a in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvnot ra s ha)
+            | _ -> assert false)
+      | Some ("bvneg", [_; a]) ->
+         (let ha = term_smtcoq_atom a in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvneg ra s ha)
+            | _ -> assert false)
       | Some ("bvand", [_; a; b]) ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
@@ -158,6 +226,42 @@ let rec term_smtcoq t = match value t with
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvor ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvxor", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvxor ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvadd", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvadd ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvmul", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvmult ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvult", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvult ra s ha hb)
+            | _ -> assert false)
+      | Some ("bvslt", [_; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvslt ra s ha hb)
+            | _ -> assert false)
+      | Some ("concat", [_; _; _; a; b]) ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha, Atom.type_of hb with
+            | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
             | _ -> assert false)
       | Some ("<_Int", [a; b]) ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
@@ -282,7 +386,8 @@ let mk_clause ?(reuse=true) rule cl args =
   | NewCl id ->
     (* Format.eprintf "mk_clause %d : %a@." id print_clause cl; *)
     (* Format.eprintf "mk_clause %d@." id; *)
-    eprintf "%d:(%s _%a)@." id (string_of_rule rule)
+    eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
+      print_clause cl
     (fun fmt -> List.iter (fprintf fmt " %d")) args;
     VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
   | OldCl id ->

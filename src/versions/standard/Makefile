@@ -50,6 +50,7 @@ vo_to_obj = $(addsuffix .o,\
 ##########################
 
 OCAMLLIBS?=-I "bva"\
+  -I "array"\
   -I "cnf"\
   -I "euf"\
   -I "lfsc"\
@@ -64,6 +65,7 @@ OCAMLLIBS?=-I "bva"\
 COQLIBS?=\
   -R "." SMTCoq\
   -I "bva"\
+  -I "array"\
   -I "cnf"\
   -I "euf"\
   -I "lfsc"\
@@ -181,6 +183,8 @@ VFILES:=versions/standard/Int63/Int63.v\
   versions/standard/Array/PArray.v\
   bva/BVList.v\
   bva/Bva_checker.v\
+  array/FArray.v\
+  array/Array_checker.v\
   cnf/Cnf.v\
   euf/Euf.v\
   lia/Lia.v\
@@ -464,6 +468,8 @@ uninstall: uninstall_me.sh
 	@echo "B $(COQLIB) config" >> .merlin
 	@echo "B bva" >> .merlin
 	@echo "S bva" >> .merlin
+	@echo "B array" >> .merlin
+	@echo "S array" >> .merlin
 	@echo "B cnf" >> .merlin
 	@echo "S cnf" >> .merlin
 	@echo "B euf" >> .merlin

@@ -73,6 +73,14 @@ let get_rule = function
   | Equp2 -> "equiv_pos2"
   | Equn1 -> "equiv_neg1"
   | Equn2 -> "equiv_neg2"
+  | Xor1 -> "xor1"
+  | Xor2 -> "xor2"
+  | Xorp1 -> "xor_pos1"
+  | Xorp2 -> "xor_pos2"
+  | Xorn1 -> "xor_neg1"
+  | Xorn2 -> "xor_neg2"
+  | Nxor1 -> "not_xor1"
+  | Nxor2 -> "not_xor2"
   | Eqtr -> "eq_transitive"
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
@@ -81,9 +89,21 @@ let get_rule = function
   | Flat -> "flatten"
   | Hole -> "hole"
   | True -> "true"
+  | Fals -> "false"
   | Bbva -> "bbvar"
+  | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
   | Bbop -> "bbop"
+  | Bbadd -> "bbadd"
+  | Bbmul -> "bbmul"
+  | Bbult -> "bbult"
+  | Bbslt -> "bbslt"
+  | Bbnot -> "bbnot"
+  | Bbneg -> "bbneg"
+  | Bbconc -> "bbconcat"
+  | Row1 -> "row1"
+  | Row2 -> "row2" 
+
 
 
 let print_sharps () =
@@ -112,6 +132,19 @@ let new_sharp t =
   incr cpt;
   HT.add sharp_tbl t !cpt;
   !cpt
+
+
+let print_bit fmt b = match name b with
+  | Some "b0" -> fprintf fmt "0"
+  | Some "b1" -> fprintf fmt "1"
+  | _ -> assert false
+
+let rec print_bv_const fmt t = match name t with
+  | Some "bvn" -> ()
+  | _ -> match app_name t with
+    | Some ("bvc", [b; t]) ->
+      fprintf fmt "%a%a" print_bit b print_bv_const t
+    | _ -> assert false
 
 let rec print_apply fmt t = match app_name t with
   | Some ("apply", [_; _; f; a]) ->
@@ -160,9 +193,18 @@ and print_term fmt t =
 
       | Some ("a_var_bv", [_; a]) -> print_term fmt a
 
-      | Some (("bvand"|"bvor"|"bvxor") as op, [_; a; b]) ->
+      | Some ("a_bv", [_; a]) -> print_term fmt a
+
+      | Some ("bvc", _) -> fprintf fmt "#b%a" print_bv_const t
+
+      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul"|"bvult"|"bvslt") as op,
+              [_; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
+
+      | Some (("bvnot"|"bvneg") as op, [_; a]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%s %a)" nb op print_term a
 
       | Some ("bitof", [a; {value = Int n}]) ->
         let nb = new_sharp t in
@@ -174,6 +216,14 @@ and print_term fmt t =
       | Some ("bblast_term", [_; a; bb]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(bbT %a [%a])" nb print_term a print_bblt bb
+
+      | Some ("read", [_; _]) -> fprintf fmt "select"
+      | Some ("write", [_; _]) -> fprintf fmt "store"
+
+      | Some ("write", [_; _; a; i; v]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(store %a %a %a)" nb
+          print_term a print_term i print_term v
 
       | Some (n, l) ->
         let n = smt2_of_lfsc n in

@@ -50,6 +50,14 @@ type rule =
   | Equp2
   | Equn1
   | Equn2
+  | Xor1
+  | Xor2
+  | Xorp1
+  | Xorp2
+  | Xorn1
+  | Xorn2
+  | Nxor1
+  | Nxor2
   | Eqtr
   | Eqcp
   | Eqco
@@ -58,10 +66,20 @@ type rule =
   | Flat
   | Hole
   | True
+  | Fals
   | Bbva
+  | Bbconst
   | Bbeq
   | Bbop
-
+  | Bbadd
+  | Bbmul
+  | Bbult
+  | Bbslt
+  | Bbnot
+  | Bbneg
+  | Bbconc
+  | Row1
+  | Row2 
 
 (** Signature for translators *)
 module type S = sig

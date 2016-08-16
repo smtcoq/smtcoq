@@ -100,10 +100,23 @@
         "flatten", FLAT;
         "hole", HOLE;
         "bbvar", BBVA;
+        "bbconst", BBCONST;
         "bbeq", BBEQ;
         "bbop", BBOP;
+        "bbnot", BBNOT;
+        "bbneg", BBNEG;
+        "bbadd", BBADD;
+        "bbmul", BBMUL;
+        "bbult", BBULT;
+        "bbslt", BBSLT;
+        "bbconcat", BBCONC;
         "bvand", BVAND;
         "bvor", BVOR;
+        "bvxor", BVXOR;
+        "bvadd", BVADD;
+        "bvmul", BVMUL;
+        "bvult", BVULT;
+        "bvslt", BVSLT;
         "not", NOT;
         "xor", XOR;
         "ite", ITE;
@@ -111,11 +124,20 @@
         "distinct", DIST;
         "bbT", BBT;
         "bitof", BITOF;
+        "bvnot", BVNOT;
+        "bvneg", BVNEG;
+        "concat", BVCONC;
+        "select", SELECT;
+        "store", STORE;
+        "row1", ROW1;
+        "row2", ROW2;
       ]
 }
 
 
 let digit = [ '0'-'9' ]
+let bit = [ '0'-'1' ]
+let bitvector = '#' 'b' bit+
 let alpha = [ 'a'-'z' 'A' - 'Z' ]
 let blank = [' ' '\t']
 let newline = ['\n' '\r']
@@ -129,7 +151,7 @@ rule token = parse
   | newline +                  { EOL }
 
   | ":"                        { COLON }
-  | "#"                        { SHARP }
+  | "#" (int as i)             { SHARPINT (int_of_string i) }
 
   | "("                        { LPAR }
   | ")"                        { RPAR }
@@ -150,14 +172,13 @@ rule token = parse
 
   | "Formula is Satisfiable"   { SAT }
 
-  | int                        { try INT (int_of_string (Lexing.lexeme lexbuf))
+  | (int as i)                 { try INT (int_of_string i)
 	                         with _ -> 
-                                   BIGINT 
-                                     (Big_int.big_int_of_string 
-					(Lexing.lexeme lexbuf)) }
+                                   BIGINT (Big_int.big_int_of_string i) }
+  | bitvector as bv            { BITV bv }
   | var                        { let v = Lexing.lexeme lexbuf in
                                  try Hashtbl.find typ_table v with
                                    | Not_found -> VAR v }
-  | bindvar                    { BINDVAR (Lexing.lexeme lexbuf) }
+  | bindvar as v               { BINDVAR v }
 
   | eof                        { raise Eof }
