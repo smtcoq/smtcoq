@@ -353,6 +353,7 @@ Module Euf_Checker.
   | BBNot (pos:int) (orig:clause_id) (res:_lit)
   | BBNeg (pos:int) (orig:clause_id) (res:_lit)
   | BBAdd (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBConcat (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBMul (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBUlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBSlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
@@ -393,6 +394,7 @@ Module Euf_Checker.
       | BBNot pos orig res => S.set_clause s pos (check_bbNot t_atom t_form s orig res)
       | BBNeg pos orig res => S.set_clause s pos (check_bbNeg t_atom t_form s orig res)
       | BBAdd pos orig1 orig2 res => S.set_clause s pos (check_bbAdd t_atom t_form s orig1 orig2 res)
+      | BBConcat pos orig1 orig2 res => S.set_clause s pos (check_bbConcat t_atom t_form s orig1 orig2 res)
       | BBMul pos orig1 orig2 res => S.set_clause s pos (check_bbMult t_atom t_form s orig1 orig2 res)
       | BBUlt pos orig1 orig2 res => S.set_clause s pos (check_bbUlt t_atom t_form s orig1 orig2 res)
       | BBSlt pos orig1 orig2 res => S.set_clause s pos (check_bbSlt t_atom t_form s orig1 orig2 res)
@@ -408,7 +410,7 @@ Module Euf_Checker.
         forall st : step, S.valid rho (step_checker s st).
   Proof.
     set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
-    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
+    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res |pos orig1 orig2 res |pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
     - apply valid_check_flatten; auto; intros h1 h2 H.
@@ -435,6 +437,7 @@ Module Euf_Checker.
     - apply valid_check_bbNot; auto.
     - apply valid_check_bbNeg; auto.
     - apply valid_check_bbAdd; auto.
+    - apply valid_check_bbConcat; auto.
     - apply valid_check_bbMult; auto.
     - apply valid_check_bbUlt; auto.
     - apply valid_check_bbSlt; auto.
