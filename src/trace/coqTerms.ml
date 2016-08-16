@@ -107,9 +107,10 @@ let ceq = gen_constant init_modules "eq"
 let crefl_equal = gen_constant init_modules "eq_refl"
 
 (* Bit vectors *)
-let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST_FIXED"]]
+let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
 let cbitvector = gen_constant bv_modules "bitvector"
 let cof_bits = gen_constant bv_modules "of_bits"
+let c_of_bits = gen_constant bv_modules "_of_bits"
 let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
 let cbv_not = gen_constant bv_modules "bv_not"

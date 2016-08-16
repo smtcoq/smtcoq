@@ -13,7 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Add Rec LoadPath "." as SMTCoq.
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
