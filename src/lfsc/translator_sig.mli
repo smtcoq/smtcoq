@@ -80,6 +80,7 @@ type rule =
   | Bbconc
   | Row1
   | Row2 
+  | Exte
 
 (** Signature for translators *)
 module type S = sig
@@ -135,6 +136,10 @@ module type S = sig
   val register_decl : string -> term -> unit
 
   val register_decl_id : string -> int -> unit
+
+  (** register an index name (like array_ext_index_1) as a skolem diff for
+      array extensionality*)
+  val register_diff : string -> term -> unit
 
   (** Clear and reset global tables and values. *)
   val clear : unit -> unit

@@ -246,7 +246,7 @@ let make_certif_ops modules args =
   gen_constant "BBOp", gen_constant "BBNot", gen_constant "BBEq",
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "BBUlt", gen_constant "BBSlt", gen_constant "BBConcat",
-  gen_constant "RowEq", gen_constant "RowNeq",
+  gen_constant "RowEq", gen_constant "RowNeq", gen_constant "Ext",
   gen_constant "Hole")
   
 

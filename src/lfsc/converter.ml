@@ -124,7 +124,32 @@ module Make (T : Translator_sig.S) = struct
     | _ -> p
 
 
-  
+
+  (** Handle deferred declarations in LFSC (for extensionality rule atm.) *)
+  let rec deferred p = match app_name p with
+    | Some ("ext", [ty_i; ty_e; a; b; p]) ->
+      begin match value p with
+        | Lambda ({sname = Name index_diff}, p) ->
+          begin match value p with
+            | Lambda ({sname = Name h}, p) ->
+              let diff_a_b = (apply_diff ty_i ty_e a b) in
+              register_diff index_diff diff_a_b;
+              let f =
+                or_ (eq (array ty_i ty_e) a b)
+                  (not_ (eq ty_e
+                           (apply_read ty_i ty_e a diff_a_b)
+                           (apply_read ty_i ty_e b diff_a_b))) in
+              let cid = mk_clause_cl Exte [f] [] in
+              register_decl_id h cid;
+              deferred p
+            | _ -> assert false
+          end
+        | _ -> assert false
+      end
+    | _ -> p
+
+
+   
   (** Registers a propositional variable as an abstraction for a
       formula. Proofs in SMTCoq have to be given in terms of formulas. *)
   let rec register_prop_vars p = match app_name p with
@@ -936,8 +961,11 @@ module Make (T : Translator_sig.S) = struct
 
     |> ignore_decls
     |> produce_inputs
+
+    |> deferred
+  
     |> admit_preproc
-    
+
     |> register_prop_vars
     |> satlem
 

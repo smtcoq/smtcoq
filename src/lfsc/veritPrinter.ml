@@ -41,6 +41,7 @@ let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let sharp_tbl = HT.create 13
 let inputs : (string, int) Hashtbl.t = HS.create 13
+let diffarray_tbl = HS.create 17
 
 let cpt = ref 0
 let cl_cpt = ref 0
@@ -103,6 +104,7 @@ let get_rule = function
   | Bbconc -> "bbconcat"
   | Row1 -> "row1"
   | Row2 -> "row2" 
+  | Exte -> "exte" 
 
 
 
@@ -168,7 +170,12 @@ and print_term fmt t =
     | Int n -> fprintf fmt "%s" (Big_int.string_of_big_int n)
     | _ ->
     match name t with
-    | Some n -> pp_print_string fmt (smt2_of_lfsc n)
+    | Some n ->
+      begin
+        try
+          print_term fmt (HS.find diffarray_tbl n)
+        with Not_found -> pp_print_string fmt (smt2_of_lfsc n)
+      end
     | None -> match app_name t with
 
       | Some ("=", [ty; a; b]) ->
@@ -219,11 +226,7 @@ and print_term fmt t =
 
       | Some ("read", [_; _]) -> fprintf fmt "select"
       | Some ("write", [_; _]) -> fprintf fmt "store"
-
-      | Some ("write", [_; _; a; i; v]) ->
-        let nb = new_sharp t in
-        fprintf fmt "#%d:(store %a %a %a)" nb
-          print_term a print_term i print_term v
+      | Some ("diff", [_; _]) -> fprintf fmt "diff"
 
       | Some (n, l) ->
         let n = smt2_of_lfsc n in
@@ -386,7 +389,6 @@ let mk_admit_preproc name formula =
    | OldCl _ -> ()
 
 
-
 let register_prop_abstr vt formula = HT.add propvars vt formula
 
 
@@ -405,12 +407,16 @@ let register_decl name formula =
 let register_decl_id name id = HS.add inputs name id
 
 
+let register_diff name_index t = HS.add diffarray_tbl name_index t
+
+
 let clear () =
   HCl.clear clauses_ids;
   Hashtbl.clear ids_clauses;
   HT.clear propvars;
   HT.clear sharp_tbl;
   Hashtbl.clear inputs;
+  HS.clear diffarray_tbl;
   cl_cpt := 0;
   cpt := 0
   

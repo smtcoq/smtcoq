@@ -123,155 +123,158 @@ let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 (******************************************************************************)
 
 
-module Form2 = struct
-  (* Just for printing *)
+(* module Form2 = struct *)
+(*   (\* Just for printing *\) *)
 
-  open Form
+(*   open Form *)
 
-  let rec to_smt atom_to_smt fmt f =
-    if is_pos f then to_smt_pform atom_to_smt fmt (pform f)
-    else fprintf fmt "(not %a)" (to_smt_pform atom_to_smt) (pform f)
+(*   let rec to_smt atom_to_smt fmt f = *)
+(*     if is_pos f then to_smt_pform atom_to_smt fmt (pform f) *)
+(*     else fprintf fmt "(not %a)" (to_smt_pform atom_to_smt) (pform f) *)
 
-  and to_smt_pform atom_to_smt fmt = function
-    | Fatom a -> atom_to_smt fmt a
-    | Fapp (op,args) -> to_smt_op atom_to_smt op fmt (Array.to_list args)
+(*   and to_smt_pform atom_to_smt fmt = function *)
+(*     | Fatom a -> atom_to_smt fmt a *)
+(*     | Fapp (op,args) -> to_smt_op atom_to_smt op fmt (Array.to_list args) *)
+(*     | _ -> assert false *)
 
-  and to_smt_op atom_to_smt op fmt args =
-    match op, args with
-      | Ftrue, [] -> fprintf fmt "true"
-      | Ffalse, [] -> fprintf fmt "false"
-      | Fand, [x; y] ->
-        fprintf fmt "(and %a %a)" (to_smt atom_to_smt) x (to_smt atom_to_smt) y
-      | For, [x; y] ->
-        fprintf fmt "(or %a %a)" (to_smt atom_to_smt) x (to_smt atom_to_smt) y
-      | Fand, x :: rargs ->
-        fprintf fmt "(and %a %a)" (to_smt atom_to_smt) x
-          (to_smt_op atom_to_smt Fand) rargs
-      | For, x :: rargs ->
-        fprintf fmt "(or %a %a)" (to_smt atom_to_smt) x
-          (to_smt_op atom_to_smt For) rargs
-      (* andb and orb are left-associative in Coq *)
-      (* | Fand, _ -> left_assoc atom_to_smt Fand fmt (List.rev args) *)
-      (* | For, _ -> left_assoc atom_to_smt For fmt (List.rev args) *)
-      | Fxor, _ ->
-        fprintf fmt "(xor%a)"
-          (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
-      | Fimp, _ ->
-        fprintf fmt "(=>%a)"
-          (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
-      | Fiff, _ ->
-        fprintf fmt "(=%a)"
-          (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
-      | Fite, _ ->
-        fprintf fmt "(ite%a)"
-          (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
-      | Fnot2 _, _ ->
-        fprintf fmt "(not (not %a))"
-          (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args
-      | _ -> assert false
+(*   and to_smt_op atom_to_smt op fmt args = *)
+(*     match op, args with *)
+(*       | Ftrue, [] -> fprintf fmt "true" *)
+(*       | Ffalse, [] -> fprintf fmt "false" *)
+(*       | Fand, [x; y] -> *)
+(*         fprintf fmt "(and %a %a)" (to_smt atom_to_smt) x (to_smt atom_to_smt) y *)
+(*       | For, [x; y] -> *)
+(*         fprintf fmt "(or %a %a)" (to_smt atom_to_smt) x (to_smt atom_to_smt) y *)
+(*       | Fand, x :: rargs -> *)
+(*         fprintf fmt "(and %a %a)" (to_smt atom_to_smt) x *)
+(*           (to_smt_op atom_to_smt Fand) rargs *)
+(*       | For, x :: rargs -> *)
+(*         fprintf fmt "(or %a %a)" (to_smt atom_to_smt) x *)
+(*           (to_smt_op atom_to_smt For) rargs *)
+(*       (\* andb and orb are left-associative in Coq *\) *)
+(*       (\* | Fand, _ -> left_assoc atom_to_smt Fand fmt (List.rev args) *\) *)
+(*       (\* | For, _ -> left_assoc atom_to_smt For fmt (List.rev args) *\) *)
+(*       | Fxor, _ -> *)
+(*         fprintf fmt "(xor%a)" *)
+(*           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args *)
+(*       | Fimp, _ -> *)
+(*         fprintf fmt "(=>%a)" *)
+(*           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args *)
+(*       | Fiff, _ -> *)
+(*         fprintf fmt "(=%a)" *)
+(*           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args *)
+(*       | Fite, _ -> *)
+(*         fprintf fmt "(ite%a)" *)
+(*           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args *)
+(*       | Fnot2 _, _ -> *)
+(*         fprintf fmt "(not (not %a))" *)
+(*           (fun fmt -> List.iter (fprintf fmt " %a" (to_smt atom_to_smt))) args *)
+(*       | _ -> assert false *)
 
-  and left_assoc atom_to_smt op fmt args =
-    (* args is reversed *)
-    match op, args with
-    | Fand, [x; y] ->
-      fprintf fmt "(and %a %a)" (to_smt atom_to_smt) y (to_smt atom_to_smt) x
-    | For, [x; y] ->
-      fprintf fmt "(or %a %a)" (to_smt atom_to_smt) y (to_smt atom_to_smt) x
-    | Fand, last :: rargs ->
-      fprintf fmt "(and %a %a)"
-        (left_assoc atom_to_smt Fand) rargs (to_smt atom_to_smt) last
-    | For, last :: rargs ->
-      fprintf fmt "(or %a %a)"
-        (left_assoc atom_to_smt For) rargs (to_smt atom_to_smt) last
-    | _ -> assert false
+(*   and left_assoc atom_to_smt op fmt args = *)
+(*     (\* args is reversed *\) *)
+(*     match op, args with *)
+(*     | Fand, [x; y] -> *)
+(*       fprintf fmt "(and %a %a)" (to_smt atom_to_smt) y (to_smt atom_to_smt) x *)
+(*     | For, [x; y] -> *)
+(*       fprintf fmt "(or %a %a)" (to_smt atom_to_smt) y (to_smt atom_to_smt) x *)
+(*     | Fand, last :: rargs -> *)
+(*       fprintf fmt "(and %a %a)" *)
+(*         (left_assoc atom_to_smt Fand) rargs (to_smt atom_to_smt) last *)
+(*     | For, last :: rargs -> *)
+(*       fprintf fmt "(or %a %a)" *)
+(*         (left_assoc atom_to_smt For) rargs (to_smt atom_to_smt) last *)
+(*     | _ -> assert false *)
 
-end
+(* end *)
 
 
-module Atom2 = struct
-  (* Just for printing *)
+(* module Atom2 = struct *)
+(*   (\* Just for printing *\) *)
 
-  open Atom
+(*   open Atom *)
   
-  let distrib x l = List.map (fun y -> (x,y)) l
+(*   let distrib x l = List.map (fun y -> (x,y)) l *)
 
-  let rec cross acc l = match l with
-    | [] | [_] -> List.rev acc
-    | x :: r ->
-      cross (List.rev_append (distrib x r) acc) r
+(*   let rec cross acc l = match l with *)
+(*     | [] | [_] -> List.rev acc *)
+(*     | x :: r -> *)
+(*       cross (List.rev_append (distrib x r) acc) r *)
 
-  let cross = cross []
+(*   let cross = cross [] *)
   
-  let rec compute_int = function
-    | Acop c ->
-      (match c with
-       | CO_xH -> 1
-       | CO_Z0 -> 0)
-    | Auop (op,h) ->
-      (match op with
-       | UO_xO -> 2*(compute_hint h)
-       | UO_xI -> 2*(compute_hint h) + 1
-       | UO_Zpos -> compute_hint h
-       | UO_Zneg -> - (compute_hint h)
-       | UO_Zopp -> assert false)
-    | _ -> assert false
+(*   let rec compute_int = function *)
+(*     | Acop c -> *)
+(*       (match c with *)
+(*        | CO_xH -> 1 *)
+(*        | CO_Z0 -> 0 *)
+(*        | CO_BV _ -> assert false) *)
+(*     | Auop (op,h) -> *)
+(*       (match op with *)
+(*        | UO_xO -> 2*(compute_hint h) *)
+(*        | UO_xI -> 2*(compute_hint h) + 1 *)
+(*        | UO_Zpos -> compute_hint h *)
+(*        | UO_Zneg -> - (compute_hint h) *)
+(*        | _ -> assert false) *)
+(*     | _ -> assert false *)
 
-  and compute_hint h = compute_int (atom h)
+(*   and compute_hint h = compute_int (atom h) *)
 
-  let to_smt_int fmt i =
-    let s1 = if i < 0 then "(- " else "" in
-    let s2 = if i < 0 then ")" else "" in
-    let j = if i < 0 then -i else i in
-    fprintf fmt "%s%i%s" s1 j s2
+(*   let to_smt_int fmt i = *)
+(*     let s1 = if i < 0 then "(- " else "" in *)
+(*     let s2 = if i < 0 then ")" else "" in *)
+(*     let j = if i < 0 then -i else i in *)
+(*     fprintf fmt "%s%i%s" s1 j s2 *)
 
-  let rec to_smt fmt h = to_smt_atom fmt (atom h)
+(*   let rec to_smt fmt h = to_smt_atom fmt (atom h) *)
 
-  and to_smt_atom fmt = function
-    | Acop _ as a -> to_smt_int fmt (compute_int a)
-    | Auop (UO_Zopp,h) ->
-      fprintf fmt "(- ";
-      to_smt fmt h;
-      fprintf fmt ")"
-    | Auop _ as a -> to_smt_int fmt (compute_int a)
-    | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
-    | Anop (op,a) -> to_smt_nop fmt op a
-    | Aapp (op,a) ->
-      if Array.length a = 0 then (
-        fprintf fmt "op_%i" (indexed_op_index op);
-      ) else (
-        fprintf fmt "(op_%i" (indexed_op_index op);
-        Array.iter (fun h -> fprintf fmt " "; to_smt fmt h) a;
-        fprintf fmt ")"
-      )
+(*   and to_smt_atom fmt = function *)
+(*     | Acop _ as a -> to_smt_int fmt (compute_int a) *)
+(*     | Auop (UO_Zopp,h) -> *)
+(*       fprintf fmt "(- "; *)
+(*       to_smt fmt h; *)
+(*       fprintf fmt ")" *)
+(*     | Auop _ as a -> to_smt_int fmt (compute_int a) *)
+(*     | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2 *)
+(*     | Atop (op,h1,h2,h3) -> to_smt_bop fmt op h1 h2 h3 *)
+(*     | Anop (op,a) -> to_smt_nop fmt op a *)
+(*     | Aapp (op,a) -> *)
+(*       if Array.length a = 0 then ( *)
+(*         fprintf fmt "op_%i" (indexed_op_index op); *)
+(*       ) else ( *)
+(*         fprintf fmt "(op_%i" (indexed_op_index op); *)
+(*         Array.iter (fun h -> fprintf fmt " "; to_smt fmt h) a; *)
+(*         fprintf fmt ")" *)
+(*       ) *)
 
-  and str_op = function
-      | BO_Zplus -> "+"
-      | BO_Zminus -> "-"
-      | BO_Zmult -> "*"
-      | BO_Zlt -> "<"
-      | BO_Zle -> "<="
-      | BO_Zge -> ">="
-      | BO_Zgt -> ">"
-      | BO_eq _ -> "="
+(*   and str_op = function *)
+(*       | BO_Zplus -> "+" *)
+(*       | BO_Zminus -> "-" *)
+(*       | BO_Zmult -> "*" *)
+(*       | BO_Zlt -> "<" *)
+(*       | BO_Zle -> "<=" *)
+(*       | BO_Zge -> ">=" *)
+(*       | BO_Zgt -> ">" *)
+(*       | BO_eq _ -> "=" *)
   
-  and to_smt_bop fmt op h1 h2 =
-    match op with
-    | BO_Zlt -> fprintf fmt "(not (>= %a %a)" to_smt h1 to_smt h2
-    | BO_Zle -> fprintf fmt "(not (>= %a (+ %a 1))" to_smt h1 to_smt h2
-    | BO_Zgt -> fprintf fmt "(>= %a (+ %a 1)" to_smt h1 to_smt h2
-    | _ -> fprintf fmt "(%s %a %a)" (str_op op) to_smt h1 to_smt h2
+(*   and to_smt_bop fmt op h1 h2 = *)
+(*     match op with *)
+(*     | BO_Zlt -> fprintf fmt "(not (>= %a %a)" to_smt h1 to_smt h2 *)
+(*     | BO_Zle -> fprintf fmt "(not (>= %a (+ %a 1))" to_smt h1 to_smt h2 *)
+(*     | BO_Zgt -> fprintf fmt "(>= %a (+ %a 1)" to_smt h1 to_smt h2 *)
+(*     | _ -> fprintf fmt "(%s %a %a)" (str_op op) to_smt h1 to_smt h2 *)
 
-  and to_smt_nop fmt op a =
-    let rec pp fmt = function
-      | [] -> assert false
-      | [x, y] -> fprintf fmt "(not (= %a %a))" to_smt x to_smt y
-      | (x, y) :: r ->
-        fprintf fmt "(and (not (= %a %a)) %a)" to_smt x to_smt y pp r
-    in
-    let pairs = cross (Array.to_list a) in
-    pp fmt pairs
+(*   and to_smt_nop fmt op a = *)
+(*     let rec pp fmt = function *)
+(*       | [] -> assert false *)
+(*       | [x, y] -> fprintf fmt "(not (= %a %a))" to_smt x to_smt y *)
+(*       | (x, y) :: r -> *)
+(*         fprintf fmt "(and (not (= %a %a)) %a)" to_smt x to_smt y pp r *)
+(*     in *)
+(*     let pairs = cross (Array.to_list a) in *)
+(*     pp fmt pairs *)
 
-end
+(* end *)
 
 
 

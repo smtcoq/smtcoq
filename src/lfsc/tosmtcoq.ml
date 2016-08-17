@@ -38,6 +38,7 @@ let clauses_ids = HCl.create 201
 let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let inputs : (string, int) Hashtbl.t = HS.create 13
+let diffarray_tbl = HS.create 17
 
 let cl_cpt = ref 0
 
@@ -97,6 +98,7 @@ let get_rule = function
   | Bbconc -> VeritSyntax.Bbconc
   | Row1 -> VeritSyntax.Row1
   | Row2 -> VeritSyntax.Row2
+  | Exte -> VeritSyntax.Exte
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -153,6 +155,7 @@ let string_of_rule = function
   | Bbconc -> "bbconcat"
   | Row1 -> "row1"
   | Row2 -> "row2" 
+  | Exte -> "ext" 
 
 
 let bit_to_bool t = match name t with
@@ -303,6 +306,7 @@ and args_smtcoq args =
   List.map (fun t -> lit_of_atom_form_lit rf (term_smtcoq t)) args
   |> Array.of_list
 
+(* TODO : read, write, diff *)
 and uncurry acc t = match app_name t with
   | Some ("apply", [_; _; f; a]) -> uncurry (term_smtcoq_atom a :: acc) f
   | None ->
@@ -425,6 +429,9 @@ let mk_admit_preproc name formula =
 let register_prop_abstr vt formula = HT.add propvars vt formula
 
 
+let register_diff name_index t = HS.add diffarray_tbl name_index t
+
+
 let get_clause_id cl =
   try HCl.find clauses_ids cl with Not_found -> assert false
 
@@ -450,5 +457,6 @@ let clear () =
   Hashtbl.clear ids_clauses;
   HT.clear propvars;
   Hashtbl.clear inputs;
+  HS.clear diffarray_tbl;
   cl_cpt := 0
   
