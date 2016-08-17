@@ -13,6 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+Add Rec LoadPath "." as SMTCoq.
+
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
@@ -380,26 +382,23 @@ Module Typ.
       exact Positive_as_OT.lt_not_eq.
     Defined.
 
-
     Instance BV_ord n : OrdType (@BITVECTOR_LIST.bitvector n).
     Proof.
-    Admitted.
-(*
-      exists (BITVECTOR_LIST.bv_ult n). unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult.
-      intros x y z; destruct x, y, z.
-      simpl.
-      rewrite wf, wf0, wf1. rewrite N.eqb_refl. simpl.
-      apply RAWBITVECTOR_LIST_FIXED.rev_ult_list_trans.
-      intros x y; destruct x, y.
-      simpl.
-      intros.
-      rewrite wf, wf0 in H.
-      rewrite N.eqb_refl in H. simpl in H.
-      apply RAWBITVECTOR_LIST_FIXED.rev_ult_list_not_eq in H.
-      unfold not in *. intros.
-      apply H. inversion H0. auto.
-    Defined.
-    *)
+    exists (fun a b => (BITVECTOR_LIST.bv_ult a b)).
+    unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult.
+    intros x y z; destruct x, y, z.
+    simpl. rewrite wf, wf0, wf1. rewrite N.eqb_refl. simpl.
+    apply RAWBITVECTOR_LIST.rev_ult_list_trans.
+    intros x y; destruct x, y.
+    simpl.
+    intros. unfold not.
+    intros. rewrite H0 in H.
+    unfold BITVECTOR_LIST.bv_ult, BITVECTOR_LIST.bv in *.
+    unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size in H.
+    rewrite N.eqb_refl in H.
+    apply RAWBITVECTOR_LIST.ult_list_not_eq in H.
+    apply H. easy.
+Qed.
 
     Instance FArray_ord key elt
              (key_ord: OrdType key)
@@ -549,8 +548,7 @@ Module Typ.
       intros.
       apply OrderedType.GT.
       unfold lt, BV_ord. auto.
-      admit.
-    Admitted.
+
     *)
 
     Instance TI_comp i : Comparable (t_i.[i]).(te_carrier).
