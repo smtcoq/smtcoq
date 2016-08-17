@@ -16,6 +16,9 @@
 
 open SmtMisc
 open CoqTerms
+open Entries
+open Declare
+open Decl_kinds
 
 (** Syntaxified version of Coq type *)
 type indexed_type = Term.constr gen_hashed
@@ -141,7 +144,7 @@ module Btype =
       let t_i = make_t_i reify in
       let c = Structures.mkUConst t_i in
       Term.mkConst
-        (Declare.declare_constant ~local:true
+        (declare_constant ~local:true
            nti (DefinitionEntry c, IsDefinition Definition))
     
 

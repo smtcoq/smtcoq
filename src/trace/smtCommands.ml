@@ -146,7 +146,7 @@ let interp_roots t_i roots =
     | [] -> Lazy.force ctrue
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
-let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
+let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -207,7 +207,7 @@ let theorem name ((rt, ro, ra, rf, roots, max_id, confl) as p) =
 
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
-let checker ((rt, ro, ra, rf, roots, max_id, confl) as p) =
+let checker (rt, ro, ra, rf, roots, max_id, confl) =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
