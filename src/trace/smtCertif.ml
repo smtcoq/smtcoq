@@ -193,6 +193,12 @@ type 'hform rule =
          i <> j -> select (store a i v) j = select a j
    *)
 
+  | Ext of 'hform
+  (* Extensionality over arrays
+       ------------------------------------------------------- ext
+         a = b \/ select a (diff a b) <> select b (diff a b)
+   *)
+
   (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
   | Hole of ('hform clause) list * 'hform list
 

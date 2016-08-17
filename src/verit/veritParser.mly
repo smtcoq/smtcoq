@@ -41,8 +41,8 @@
 %token EOL SAT
 %token COLON
 %token LPAR RPAR LBRACKET RBRACKET
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVCONC BVNOT BVNEG SELECT STORE
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEQ BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVCONC BVNOT BVNEG SELECT STORE DIFF
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEQ BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE
 %token <int> INT SHARPINT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR BITV
@@ -149,8 +149,9 @@ typ:
   | BBNOT                                                  { Bbnot }
   | BBNEG                                                  { Bbneg }
   | BBCONC                                                 { Bbconc }
-  | ROW1                                                   { Row1 }
-  | ROW2                                                   { Row2 }
+  | ROW1                                                   { Row1  }
+  | ROW2                                                   { Row2  }
+  | EXTE                                                   { Exte  }
 ;
 
 clause:
@@ -290,6 +291,14 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
     | Atom h1, Atom h2 ->
        (match Atom.type_of h1 with
         | TFArray (ti,te) -> Atom (Atom.mk_select ra ti te h1 h2)
+        | _ -> assert false)
+    | _,_ -> assert false
+    }        
+  | DIFF name_term name_term {
+    match $2,$3 with
+    | Atom h1, Atom h2 ->
+       (match Atom.type_of h1 with
+        | TFArray (ti,te) -> Atom (Atom.mk_diffarray ra ti te h1 h2)
         | _ -> assert false)
     | _,_ -> assert false
     }        

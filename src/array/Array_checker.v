@@ -76,6 +76,47 @@ Section certif.
     end.
 
 
+  Definition check_ext lres :=
+    if Lit.is_pos lres then
+      match get_form (Lit.blit lres) with
+      | For args =>
+        if PArray.length args == 2 then
+          let l1 := args.[0] in
+          let l2 := args.[1] in
+          if Lit.is_pos l1 && negb (Lit.is_pos l2) then
+            match get_form (Lit.blit l1), get_form (Lit.blit l2) with
+            | Fatom eqa, Fatom eqsel =>
+              match get_atom eqa, get_atom eqsel with
+              | Abop (BO_eq (Typ.TFArray ti te)) a b, Abop (BO_eq te') sela selb => 
+                if Typ.eqb te te' then
+                  match get_atom sela, get_atom selb with
+                  | Abop (BO_select ti1 te1) a' d1, Abop (BO_select ti2 te2) b' d2 =>
+                    if Typ.eqb ti ti1 && Typ.eqb ti ti2 &&
+                       Typ.eqb te te1 && Typ.eqb te te2 &&
+                       (a == a') && (b == b') && (d1 == d2) then
+                      match get_atom d1 with
+                      | Abop (BO_diffarray ti3 te3) a3 b3 =>
+                        if Typ.eqb ti ti3 && Typ.eqb te te3 &&
+                           (a3 == a) && (b3 == b) then
+                          lres :: nil
+                        else C._true
+                      | _ => C._true
+                      end
+                    else C._true
+                  | _, _ => C._true
+                  end
+                else C._true
+              | _, _ => C._true
+              end
+            | _, _ => C._true
+            end
+          else C._true
+        else C._true
+      | _ => C._true
+      end
+    else C._true.
+
+
   Section Correct.
 
     Variables (t_i : array typ_eqb)
@@ -378,6 +419,10 @@ Admitted.
         
     
     Lemma valid_check_rowneq cl : C.valid rho (check_rowneq cl).
+    Admitted.
+
+    
+    Lemma valid_check_ext lres : C.valid rho (check_ext lres).
     Admitted.
 
     

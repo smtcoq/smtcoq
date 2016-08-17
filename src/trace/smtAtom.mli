@@ -89,6 +89,7 @@ type bop =
    | BO_BVslt of int
    | BO_BVconcat of int * int
    | BO_select of btype * btype
+   | BO_diffarray of btype * btype
 
 type top =
    | TO_store of btype * btype
@@ -199,6 +200,7 @@ module Atom :
       val mk_bvneg : reify_tbl -> int -> hatom -> hatom
       val mk_bvconst : reify_tbl -> bool list -> hatom
       val mk_select : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
+      val mk_diffarray : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
       val mk_store :
         reify_tbl -> btype -> btype -> hatom -> hatom -> hatom -> hatom
 

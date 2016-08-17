@@ -281,7 +281,7 @@ let to_coq to_lit interp (cstep,
     cEqTr, cEqCgr, cEqCgrP, 
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
     cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBNeg, cBBAdd, cBBMul,
-    cBBUlt, cBBSlt, cBBConc, cRowEq, cRowNeq,
+    cBBUlt, cBBSlt, cBBConc, cRowEq, cRowNeq, cExt,
     cHole) confl =
 
   let cuts = ref [] in
@@ -373,6 +373,7 @@ let to_coq to_lit interp (cstep,
                 mklApp ccons [|Lazy.force cint; out_f f; l|])
               cl (mklApp cnil [|Lazy.force cint|]) in
           mklApp cRowNeq [|out_c c; out_cl cl|]
+        | Ext (res) -> mklApp cExt [|out_c c; out_f res|]
         | Hole (prem_id, concl) ->
            let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
            let ass_name = Names.id_of_string ("ass"^(string_of_int (Hashtbl.hash concl))) in

@@ -16,6 +16,9 @@
 
 open SmtMisc
 open CoqTerms
+open Entries
+open Declare
+open Decl_kinds
 
 (** Syntaxified version of Coq type *)
 type indexed_type = Term.constr gen_hashed
@@ -141,7 +144,7 @@ module Btype =
       let t_i = make_t_i reify in
       let c = Structures.mkUConst t_i in
       Term.mkConst
-        (Declare.declare_constant ~local:true
+        (declare_constant ~local:true
            nti (DefinitionEntry c, IsDefinition Definition))
     
 
@@ -201,6 +204,7 @@ type bop =
    | BO_BVslt of int
    | BO_BVconcat of int * int
    | BO_select of btype * btype
+   | BO_diffarray of btype * btype
 
 
 type top =
@@ -282,6 +286,7 @@ module Op =
     let eq_tbl = Hashtbl.create 17 
     let select_tbl = Hashtbl.create 17 
     let store_tbl = Hashtbl.create 17 
+    let diffarray_tbl = Hashtbl.create 17 
     
     let eq_to_coq t =
       try Hashtbl.find eq_tbl t 
@@ -304,6 +309,13 @@ module Op =
         Hashtbl.add store_tbl (ti, te) op;
         op
 
+    let diffarray_to_coq ti te =
+      try Hashtbl.find diffarray_tbl (ti, te)
+      with Not_found ->
+        let op = mklApp cBO_diffarray [|Btype.to_coq ti; Btype.to_coq te|] in
+        Hashtbl.add diffarray_tbl (ti, te) op;
+        op
+
     let b_to_coq = function
       | BO_Zplus -> Lazy.force cBO_Zplus
       | BO_Zminus -> Lazy.force cBO_Zminus
@@ -322,6 +334,7 @@ module Op =
       | BO_BVslt s -> mklApp cBO_BVslt [|mkN s|]
       | BO_BVconcat (s1, s2) -> mklApp cBO_BVconcat [|mkN s1; mkN s2|]
       | BO_select (ti, te) -> select_to_coq ti te
+      | BO_diffarray (ti, te) -> diffarray_to_coq ti te
         
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
@@ -330,6 +343,7 @@ module Op =
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
       | BO_BVconcat (s1, s2) -> TBV (s1 + s2)
       | BO_select (_, te) -> te
+      | BO_diffarray (ti, _) -> ti
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult 
@@ -340,6 +354,8 @@ module Op =
         (TBV s,TBV s)
       | BO_BVconcat (s1, s2) -> (TBV s1, TBV s2)
       | BO_select (ti, te) -> (TFArray (ti, te), ti)
+      | BO_diffarray (ti, te) -> (TFArray (ti, te), TFArray (ti, te))
+                                 
 
     let interp_ieq t_i t =
       mklApp cinterp_eqb [|t_i ; Btype.to_coq t|]
@@ -381,6 +397,8 @@ module Op =
       | BO_BVconcat (s1,s2) -> mklApp cbv_concat [|mkN s1; mkN s2|]
       | BO_select (ti, te) ->
         mklApp cfarray_select [|t_i; Btype.to_coq ti; Btype.to_coq te|]
+      | BO_diffarray (ti, te) ->
+        mklApp cfarray_diff [|t_i; Btype.to_coq ti; Btype.to_coq te|]
 
     let t_to_coq = function
       | TO_store (ti, te) -> store_to_coq ti te
@@ -481,7 +499,8 @@ module Op =
         | BO_BVult n1, BO_BVult n2 -> n1 == n2
         | BO_BVslt n1, BO_BVslt n2 -> n1 == n2
         | BO_BVconcat (n1,m1), BO_BVconcat (n2,m2) -> n1 == n2 && m1 == m2
-        | BO_select (ti1, te1), BO_select (ti2, te2) ->
+        | BO_select (ti1, te1), BO_select (ti2, te2)
+        | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) ->
           Btype.equal ti1 ti2 && Btype.equal te1 te2
         | _ -> op1 == op2
 
@@ -697,6 +716,7 @@ module Atom =
         | BO_BVslt _ -> "bvslt"
         | BO_BVconcat _ -> "concat"
         | BO_select _ -> "select"
+        | BO_diffarray _ -> "diff" (* should not be used in goals *)
       in
       Format.fprintf fmt "(%s %a %a)" s to_smt h1 to_smt h2
 
@@ -800,6 +820,7 @@ module Atom =
       | CCeqbZ
       | CCeqbBV
       | CCselect
+      | CCdiffarray
       | CCstore
       | CCunknown
 
@@ -816,7 +837,8 @@ module Atom =
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
-          cfarray_select, CCselect; cfarray_store, CCstore 
+          cfarray_select, CCselect; cfarray_diff, CCdiffarray;
+          cfarray_store, CCstore;
         ];
       tbl
 
@@ -943,6 +965,7 @@ module Atom =
           | CCeqbZ -> mk_bop (BO_eq TZ) args
           | CCeqbBV -> mk_bop_bveq args
           | CCselect -> mk_bop_select args
+          | CCdiffarray -> mk_bop_diffarray args
           | CCstore -> mk_top_store args
 	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
 
@@ -1050,6 +1073,13 @@ module Atom =
           let ti' = mk_ty rt ti in
           let te' = mk_ty rt te in
           mk_bop (BO_select (ti', te')) [a; i]
+        | _ -> assert false
+
+      and mk_bop_diffarray = function
+        | [ti;te;a;b] ->
+          let ti' = mk_ty rt ti in
+          let te' = mk_ty rt te in
+          mk_bop (BO_diffarray (ti', te')) [a; b]
         | _ -> assert false
 
       and mk_top_store = function
@@ -1214,6 +1244,7 @@ module Atom =
     let mk_bvneg reify s = mk_unop (UO_BVneg s) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
     let mk_select reify ti te = mk_binop (BO_select (ti, te)) reify
+    let mk_diffarray reify ti te = mk_binop (BO_diffarray (ti, te)) reify
     let mk_store reify ti te = mk_terop (TO_store (ti, te)) reify
     
   end
