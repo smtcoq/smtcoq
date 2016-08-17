@@ -94,7 +94,7 @@ Section certif.
                        (a == a') && (b == b') && (d1 == d2) then
                       match get_atom d1 with
                       | Abop (BO_diffarray ti3 te3) a3 b3 =>
-                        if Typ.eqb te te1 && Typ.eqb te te3 &&
+                        if Typ.eqb ti ti3 && Typ.eqb te te3 &&
                            (a3 == a) && (b3 == b) then
                           lres :: nil
                         else C._true
