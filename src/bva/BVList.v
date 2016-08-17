@@ -15,8 +15,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Add Rec LoadPath "." as SMTCoq.
-
 Require Import List Bool NArith Psatz Int63 Nnat.
 Require Import Misc.
 Import ListNotations.

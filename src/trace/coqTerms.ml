@@ -163,6 +163,7 @@ let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_par
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
 
 let cfarray_select = gen_constant smt_modules "farray_select"
+let cfarray_diff = gen_constant smt_modules "farray_diff"
 let cfarray_store = gen_constant smt_modules "farray_store"
 
 let ctval =  gen_constant smt_modules "tval"
@@ -198,6 +199,7 @@ let cBO_BVult = gen_constant smt_modules "BO_BVult"
 let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
 let cBO_BVconcat = gen_constant smt_modules "BO_BVconcat"
 let cBO_select = gen_constant smt_modules "BO_select"
+let cBO_diffarray = gen_constant smt_modules "BO_diffarray"
 
 let cTO_store = gen_constant smt_modules "TO_store"
 
