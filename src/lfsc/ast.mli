@@ -223,9 +223,9 @@ val register_symbol : symbol -> unit
 
 val remove_symbol : symbol -> unit
 
-val add_definition : symbol -> term -> unit
+val add_definition : name -> term -> unit
 
-val remove_definition : symbol -> unit
+val remove_definition : name -> unit
 
 
 (** {2 Side-conditions} *)

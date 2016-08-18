@@ -104,7 +104,7 @@ let get_rule = function
   | Bbconc -> "bbconcat"
   | Row1 -> "row1"
   | Row2 -> "row2" 
-  | Exte -> "exte" 
+  | Exte -> "ext" 
 
 
 

@@ -577,7 +577,7 @@ Module S.
   (* Weakening *)
 
   Definition set_weaken (s:t) pos (cid:clause_id) (w:array _lit) : t :=
-    let c := foldi (fun i => insert (w.[i])) 0 ((PArray.length w) - 1) (get s cid) in
+    let c := foldi (fun i => insert (w.[i])) 0 (PArray.length w) (get s cid) in
     internal_set s pos c.
 
   Lemma valid_set_weaken :

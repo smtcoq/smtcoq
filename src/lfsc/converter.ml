@@ -220,25 +220,52 @@ module Make (T : Translator_sig.S) = struct
         | _ -> assert false
       end
 
+    (* | Some (("symm"|"negsymm"), [_; _; _; r]) *)
+    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _]) *)
+    (* | Some ("refl", [_; r]) -> cong neqs (rm_used env r) r *)
+    (* | _ -> *)
+    (*   (\* eprintf "something went wrong in congruence@."; *\) *)
+    (*   neqs, env *)
+
     | Some (("symm"|"negsymm"), [_; _; _; r])
-    | Some ("trans", [_; _; _; _; r; _])
-    | Some ("refl", [_; r]) -> cong neqs (rm_used env r) r
+    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _]) *)
+      ->
+      cong neqs (rm_used env r) r
+      
+    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _]) *)
+    | Some ("refl", [_; r]) -> neqs, rm_used env r
+
     | _ ->
       (* eprintf "something went wrong in congruence@."; *)
-      neqs, env
+      neqs, lem env p (* env *)
 
 
   (** Accumulates equalities for transitivity to chain them together. *)
-  and trans neqs env p = match app_name p with
-    | Some ("trans", [ty; x; y; z; p1; p2]) ->
+  and trans  neqs env p = match app_name p with
+    | Some ("trans" as r, [ty; x; y; z; p1; p2])
+    | Some (("negtrans"|"negtrans1") as r, [ty; x; z; y; p1; p2])
+    | Some ("negtrans2" as r, [ty; y; x; z; p1; p2]) ->
 
+      (* let merge = match r with *)
+      (*   | "negtrans"|"negtrans1"|"negtrans1" -> false *)
+      (*   | _ -> true in *)
+      let merge = true in
+      
       (* let clauses = lem mpred assum (lem mpred assum clauses p1) p2 in *)
 
-      let neqs1, env = trans neqs env p1 in
-      let neqs2, env = trans neqs env p2 in
+      let neqs1, env = if merge then trans neqs env p1 else [], lem env p1 in
+      let neqs2, env = if merge then trans neqs env p2 else [], lem env p2 in
 
-      let x_y = th_res p1 in
-      let y_z = th_res p2 in
+      (* begin match app_name p with *)
+      (*   | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2]) -> *)
+      (*     eprintf "trans : \n  %a\n  %a\n@." print_term p1 print_term p2; *)
+      (*   | _ -> () *)
+      (* end; *)
+
+      (* let x_y = th_res p1 in *)
+      (* let y_z = th_res p2 in *)
+      let x_y = eq ty x y in
+      let y_z = eq ty y z in
 
       let neqs = match neqs1, neqs2 with
         | [], [] -> [not_ x_y; not_ y_z]
@@ -250,7 +277,15 @@ module Make (T : Translator_sig.S) = struct
       neqs, env
 
     | Some (("symm"|"negsymm"), [_; _; _; r]) -> trans neqs (rm_used env r) r
+    | Some ("refl", [_; r]) -> neqs, rm_used env r
 
+    (* | Some (("symm"|"negsymm"), [_; _; _; r]) *)
+    (* | Some ("refl", [_; r]) -> neqs, rm_used env r *)
+                                 
+    (* (\* assume trust are for lia lemma for now *\) *)
+    (* | Some ("trust_f", [f]) -> *)
+    (*   neqs, { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses } *)
+  
     | _ -> neqs, lem env p
 
 
@@ -484,6 +519,10 @@ module Make (T : Translator_sig.S) = struct
     | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem env r
 
 
+    (* assume trust are for lia lemma for now *)
+    | Some ("trust_f", [f]) ->
+      { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses }
+      
     | Some ("trans", [_; _; _; _; r; w])
       when (match app_name w with
             Some (("pred_eq_t"|"pred_eq_f"), _) -> true | _ -> false)
@@ -502,7 +541,9 @@ module Make (T : Translator_sig.S) = struct
 
       lem env r
 
-    | Some ("trans", [ty; x; y; z; p1; p2]) ->
+    | Some ("trans", [ty; x; y; z; p1; p2])
+    | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2])
+    | Some ("negtrans2", [ty; y; x; z; p1; p2]) ->
 
       let neqs, env = trans [] env p in
       let x_z = eq ty x z in
@@ -567,10 +608,13 @@ module Make (T : Translator_sig.S) = struct
       let raiwaiv = th_res p in
       { env with clauses = mk_clause_cl Row1 [raiwaiv] [] :: env.clauses }
 
-    | Some ("row", [ti; _; i; j; a; v; _]) ->
+    | Some ("row", [ti; _; i; j; a; v; r]) ->
+      let env = lem env r in
       let i_eq_j = eq ti i j in
       let pr1 = th_res p in
-      { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses }
+      { env with
+        clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses;
+        ax = true}
 
     | Some ("negativerow", [ti; _; i; j; a; v; npr1]) ->
       let i_eq_j = eq ti i j in
@@ -588,7 +632,7 @@ module Make (T : Translator_sig.S) = struct
 
       match name p with
 
-      | Some ("A0"|"truth") ->
+      | Some ("truth") ->
         { env with clauses = mk_clause_cl True [ttrue] [] :: env.clauses }
       
       | Some h ->

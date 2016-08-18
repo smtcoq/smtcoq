@@ -238,4 +238,4 @@ let used_clauses r =
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _
-  | BBVar _ | BBConst _ | RowEq _ | RowNeq _ -> []
+  | BBVar _ | BBConst _ | RowEq _ | RowNeq _ | Ext _ -> []

@@ -66,6 +66,9 @@
                	   (! u (th_holds (not (= _ y z)))
                      (th_holds (not (= _ x z))))))))))
 
+(define negtrans negtrans1)
+
+
 (declare cong (! s1 sort
               (! s2 sort
               (! a1 (term (arrow s1 s2))

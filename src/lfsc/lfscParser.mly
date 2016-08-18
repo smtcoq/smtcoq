@@ -172,11 +172,12 @@ untyped_sym:
 
 let_binding:
   | STRING term {
+    let x = $1 in
     let t = $2 in
-    let s = mk_symbol $1 t.ttype in
+    let s = mk_symbol x t.ttype in
     register_symbol s;
-    add_definition s t;
-    s
+    add_definition s.sname t;
+    s.sname
   }
 ;
 

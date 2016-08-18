@@ -189,7 +189,18 @@ let mkDistinctElim old value =
 (* Clause difference (wrt to their sets of literals) *)
 
 let clause_diff c1 c2 =
-  List.filter (fun t1 -> not (List.exists (fun t2 -> t1 == t2) c2)) c1
+  let r =
+    List.filter (fun t1 -> not (List.exists (SmtAtom.Form.equal t1) c2)) c1
+  in
+  Format.eprintf "[";
+  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c1;
+  Format.eprintf "] -- [";
+  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c2;
+  Format.eprintf "] ==\n [";
+  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) r;
+  Format.eprintf "] @.";
+  r
+    
 
 
 (* Generating clauses *)
@@ -275,7 +286,7 @@ let mk_clause (id,typ,value,ids_params) =
            let cid = get_clause id in
            (match cid.value with
            | None -> Other (Weaken (cid, value))
-           | Some c -> Other (Weaken (cid, value @ c))
+           | Some c -> Other (Weaken (cid, value))
             (* need to add c, otherwise dosen't terminate or returns false,
                we would like instead: clause_diff value c *)
            )

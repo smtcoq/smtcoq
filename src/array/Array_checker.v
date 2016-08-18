@@ -50,14 +50,14 @@ Section certif.
           match get_atom eqij, get_atom eqrow with
           | Abop (BO_eq ti) i j, Abop (BO_eq te) xa x =>
             match get_atom xa, get_atom x with
-            | Abop (BO_select ti1 te1) sa i1, Abop (BO_select ti2 te2) sa2 i2 =>
+            | Abop (BO_select ti1 te1) sa j1, Abop (BO_select ti2 te2) sa2 j2 =>
               if Typ.eqb ti ti1 && Typ.eqb ti ti2 &&
                  Typ.eqb te te1 && Typ.eqb te te2 &&
-                 (i1 == i) && (i2 == i) then
+                 (j1 == j) && (j2 == j) then
                 match get_atom sa with
-                | Atop (TO_store ti3 te3) sa1 j1 _ =>
+                | Atop (TO_store ti3 te3) sa1 i1 _ =>
                   if Typ.eqb ti ti3 && Typ.eqb ti ti3 &&
-                     (j1 == j) && (sa1 == sa2) then
+                     (i1 == i) && (sa1 == sa2) then
                     cl
                   else C._true
                 | _ => C._true

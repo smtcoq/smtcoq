@@ -317,6 +317,7 @@ let to_coq to_lit interp (cstep,
                    (lits.(i) <- out_f f;
                     l := tl)
             done;
+            assert (!l = []);
             mklApp cWeaken [|out_c c;out_c c'; Structures.mkArray (Lazy.force cint, lits)|])
 	| ImmFlatten (c',f) -> mklApp cImmFlatten [|out_c c;out_c c'; out_f f|]
         | True -> mklApp cTrue [|out_c c|]

@@ -302,8 +302,8 @@ let remove_symbol s = Hashtbl.remove symbols s.sname
 
 
 let definitions = Hashtbl.create 21
-let add_definition s t = Hashtbl.add definitions s t
-let remove_definition s = Hashtbl.remove definitions s
+let add_definition n t = Hashtbl.add definitions n t
+let remove_definition n = Hashtbl.remove definitions n
 
 
 exception TypingError of term * term
@@ -431,7 +431,7 @@ let get_t ?(gen=true) sigma s =
     if not gen && is_hole x then raise Not_found;
     x
   with Not_found -> try
-      Hashtbl.find definitions s
+      Hashtbl.find definitions s.sname
     with Not_found ->
       { value = Const s; ttype = s.stype }
 
@@ -732,7 +732,8 @@ let mk_const x =
   try
     let stype = Hashtbl.find symbols (Name x) in
     let s = mk_symbol x stype in
-    try Hashtbl.find definitions s
+    try
+      Hashtbl.find definitions s.sname
     with Not_found -> { value = Const s; ttype = stype }
   with Not_found -> failwith ("Symbol " ^ x ^ " is not declared.")
 
@@ -862,7 +863,7 @@ let mk_declare n ty =
 let mk_define n t =
   let s = mk_symbol n t.ttype in
   register_symbol s;
-  add_definition s t
+  add_definition s.sname t
 
 
 
