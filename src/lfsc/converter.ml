@@ -242,17 +242,16 @@ module Make (T : Translator_sig.S) = struct
 
   (** Accumulates equalities for transitivity to chain them together. *)
   and trans  neqs env p = match app_name p with
-    | Some ("trans" as r, [ty; x; y; z; p1; p2])
-    | Some (("negtrans"|"negtrans1") as r, [ty; x; z; y; p1; p2])
-    | Some ("negtrans2" as r, [ty; y; x; z; p1; p2]) ->
 
-      (* let merge = match r with *)
-      (*   | "negtrans"|"negtrans1"|"negtrans1" -> false *)
-      (*   | _ -> true in *)
+    | Some ("trans", [ty; x; y; z; p1; p2]) ->
+    (* | Some (("negtrans"|"negtrans1") as r, [ty; x; z; y; p1; p2]) *)
+    (* | Some ("negtrans2" as r, [ty; y; x; z; p1; p2]) *)
+
       let merge = true in
       
       (* let clauses = lem mpred assum (lem mpred assum clauses p1) p2 in *)
 
+      (* maybe reverse? *)
       let neqs1, env = if merge then trans neqs env p1 else [], lem env p1 in
       let neqs2, env = if merge then trans neqs env p2 else [], lem env p2 in
 
@@ -264,6 +263,8 @@ module Make (T : Translator_sig.S) = struct
 
       (* let x_y = th_res p1 in *)
       (* let y_z = th_res p2 in *)
+      (* let x_y = match r with "negtrans2" -> eq ty y x | _ -> eq ty x y in *)
+      (* let y_z = match r with "negtrans"|"negtrans1" -> eq ty z y | _ -> eq ty y z in *)
       let x_y = eq ty x y in
       let y_z = eq ty y z in
 
@@ -282,13 +283,11 @@ module Make (T : Translator_sig.S) = struct
     (* | Some (("symm"|"negsymm"), [_; _; _; r]) *)
     (* | Some ("refl", [_; r]) -> neqs, rm_used env r *)
                                  
-    (* (\* assume trust are for lia lemma for now *\) *)
-    (* | Some ("trust_f", [f]) -> *)
-    (*   neqs, { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses } *)
   
     | _ -> neqs, lem env p
 
 
+  
 
   (** Convert the local proof of a [satlem]. We use decductive style rules when
       possible but revert to axiomatic ones when the context forces us to. *)
@@ -519,9 +518,20 @@ module Make (T : Translator_sig.S) = struct
     | Some (("pred_eq_t"|"pred_eq_f"), [_; r]) -> lem env r
 
 
-    (* assume trust are for lia lemma for now *)
     | Some ("trust_f", [f]) ->
-      { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses }
+      begin match app_name f with
+        | Some ("=", ty :: _) when name ty = Some "Int" ->
+          (* trust are for lia lemma if equality between integers *)
+          { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses }
+        | Some ("not", [x]) ->
+          begin match app_name x with
+            | Some ("=", ty :: _) when name ty = Some "Int" ->
+              (* trust are for lia lemma if disequality between integers *)
+              { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses }
+            | _ -> { env with clauses = mk_clause_cl Hole [f] [] :: env.clauses }
+          end
+        | _ -> { env with clauses = mk_clause_cl Hole [f] [] :: env.clauses }
+      end
       
     | Some ("trans", [_; _; _; _; r; w])
       when (match app_name w with
@@ -541,10 +551,42 @@ module Make (T : Translator_sig.S) = struct
 
       lem env r
 
-    | Some ("trans", [ty; x; y; z; p1; p2])
-    | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2])
-    | Some ("negtrans2", [ty; y; x; z; p1; p2]) ->
 
+    | Some (("negtrans"|"negtrans1"), [ty; x; y; z; p1; p2]) ->
+
+      if term_equal x y || term_equal x z || term_equal y z then env
+      else 
+        let env = lem env p2 in
+        let env = lem env p1 in
+
+        let x_y = eq ty x y in
+        let y_z = eq ty y z in
+        let x_z = eq ty x z in
+
+        { env with
+          clauses = mk_clause_cl Eqtr [x_y; not_ y_z; not_ x_z] [] :: env.clauses;
+          ax = true }
+
+    | Some ("negtrans2", [ty; x; y; z; p1; p2]) ->
+
+      if term_equal x y || term_equal x z || term_equal y z then env
+      else 
+        let env = lem env p2 in
+        let env = lem env p1 in
+
+        let x_y = eq ty x y in
+        let y_z = eq ty y z in
+        let x_z = eq ty x z in
+
+        { env with
+          clauses = mk_clause_cl Eqtr [not_ x_y; y_z; not_ x_z] [] :: env.clauses;
+          ax = true }
+
+    | Some ("trans", [ty; x; y; z; p1; p2]) ->
+    (* | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2]) *)
+    (* | Some ("negtrans2", [ty; y; x; z; p1; p2]) *)
+
+      
       let neqs, env = trans [] env p in
       let x_z = eq ty x z in
       { env with
