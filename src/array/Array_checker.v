@@ -177,8 +177,20 @@ Section certif.
     Notation atom := int (only parsing).
 
 
-
-
+    Lemma wrap_read_over_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
+                                  (i:Typ.interp t_i ti) (v:Typ.interp t_i te),
+        farray_select t_i ti te (farray_store t_i ti te a i v) i = v.
+      intros.
+      unfold farray_select, farray_store.
+      unfold eq_rect_r,eq_rect,eq_sym.
+      generalize a.
+      rewrite interp_farray_is_farray.
+      intro.
+      apply FArray.read_over_write.
+      exact (Typ.dec_interp t_i te).
+    Qed.
+    
+    
     Lemma valid_check_roweq lres : C.valid rho (check_roweq lres).
     Proof.
       unfold check_roweq.
@@ -190,9 +202,9 @@ Section certif.
       case_eq (t_atom .[ a1]); try (intros; now apply C.interp_true).
       intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] b1 b2 Heq4; try (intros; now apply C.interp_true).
       case_eq (t_atom .[ b1]); try (intros; now apply C.interp_true).
-      intros [ ] c1 c2 c3 Heq5. case t2. intros.
+      intros [ ] c1 c2 c3 Heq5.
       (* roweq *)
-      - case_eq (Typ.eqb t0 (Typ.TFArray t4 t5) && Typ.eqb t t1 && 
+      - case_eq (Typ.eqb t0 t2 && Typ.eqb t t1 && 
              Typ.eqb t t3 && (b2 == c2) && (a2 == c3)); simpl; intros Heq6; try (now apply C.interp_true).
         
         unfold C.valid. simpl. rewrite orb_false_r.
@@ -407,14 +419,10 @@ Section certif.
         specialize (Atom.Bval_inj2 t_i t v_val4 v_vala2).
         intros. specialize (H20 Htia2).
         rewrite <- H20.
-        
-        unfold farray_select, farray_store.
-        unfold eq_rect_r, eq_rect, Logic.eq_sym.
-        generalize ( interp_farray_is_farray t_i t0 t).
-        intros.
-        
-        (* rewrite <- e0.  *)
-Admitted.
+        apply Typ.i_eqb_spec.
+
+        apply wrap_read_over_write.
+    Qed.
         
     
     Lemma valid_check_rowneq cl : C.valid rho (check_rowneq cl).

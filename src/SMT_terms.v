@@ -1848,23 +1848,25 @@ Qed.
         trivial.
       Qed.
 
-      Definition farray_select ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te.
-        rewrite interp_farray_is_farray.
-        apply (@FArray.select _ _ _ _ _).
+
+
+      Definition farray_select ti te (a:interp_t (Typ.TFArray ti te)) (i:interp_t ti) : interp_t te.
+        rewrite interp_farray_is_farray in a.
+        exact (@FArray.select _ _ _ _ _ a i).
       Defined.
       
-      Definition farray_store ti te : interp_t (Typ.TFArray ti te) -> interp_t ti -> interp_t te ->
-                                interp_t (Typ.TFArray ti te).
-        rewrite interp_farray_is_farray.
-        apply (@FArray.store _ _ _ _ _ _ _ _).
+      Definition farray_store ti te (a:interp_t (Typ.TFArray ti te)) (i:interp_t ti) (v:interp_t te) :
+        interp_t (Typ.TFArray ti te).
+        rewrite interp_farray_is_farray in *.
+        exact (@FArray.store _ _ _ _ _ _ _ _ a i v).
+      Defined.
+                    
+      Definition farray_diff ti te (a:interp_t (Typ.TFArray ti te)) (b:interp_t (Typ.TFArray ti te)) :
+        interp_t ti.
+        rewrite interp_farray_is_farray in a, b.
+        exact (@FArray.diff _ _ _ _ _ _ _ _ _ _ a b).
       Defined.
 
-      Definition farray_diff ti te :
-        interp_t (Typ.TFArray ti te) -> interp_t (Typ.TFArray ti te) -> interp_t ti.
-        rewrite interp_farray_is_farray.
-        apply (@FArray.diff _ _ _ _ _ _ _ _ _ _).
-      Defined.
-      
       Definition interp_bop o :=
          match o with
          | BO_Zplus => apply_binop Typ.TZ Typ.TZ Typ.TZ Zplus
