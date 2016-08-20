@@ -1,3 +1,5 @@
+Add Rec LoadPath "." as SMTCoq.
+
 Require Import Bool List Int63 PArray.
 Require Import Misc State SMT_terms FArray.
 
@@ -55,7 +57,7 @@ Section certif.
                  Typ.eqb te te1 && Typ.eqb te te2 then
                 match get_atom sa with
                 | Atop (TO_store ti3 te3) sa1 i1 _ =>
-                  if Typ.eqb ti ti3 && Typ.eqb ti ti3 &&
+                  if Typ.eqb ti ti3 && Typ.eqb te te3 &&
                      (sa1 == sa2) && 
                      (((i1 == i) && (j1 == j) && (j2 == j)) ||
                       ((i1 == j) && (j1 == i) && (j2 == i))) then
@@ -178,19 +180,31 @@ Section certif.
 
 
     Lemma wrap_read_over_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
-                                  (i:Typ.interp t_i ti) (v:Typ.interp t_i te),
+                                (i:Typ.interp t_i ti) (v:Typ.interp t_i te),
         farray_select t_i ti te (farray_store t_i ti te a i v) i = v.
       intros.
       unfold farray_select, farray_store.
       unfold eq_rect_r,eq_rect,eq_sym.
       generalize a.
       rewrite interp_farray_is_farray.
-      intro.
+      intro; simpl.
       apply FArray.read_over_write.
       exact (Typ.dec_interp t_i te).
     Qed.
-    
-    
+
+    Lemma wrap_read_over_other_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
+                                      (i j :Typ.interp t_i ti) (v:Typ.interp t_i te),
+        i <> j -> farray_select t_i ti te (farray_store t_i ti te a i v) j = farray_select t_i ti te a j.
+      intros.
+      unfold farray_select, farray_store.
+      unfold eq_rect_r,eq_rect,eq_sym.
+      generalize a.
+      rewrite interp_farray_is_farray.
+      intro. simpl.
+      apply FArray.read_over_other_write.
+      exact H.
+    Qed.
+
     Lemma valid_check_roweq lres : C.valid rho (check_roweq lres).
     Proof.
       unfold check_roweq.
@@ -212,12 +226,6 @@ Section certif.
         unfold Var.interp.
         rewrite wf_interp_form; trivial. rewrite Heq2. simpl.
         
-       (* case_eq t0; intros.
-          rewrite H in Heq6.
-          case_eq t3; intros.
-            rewrite H0 in Heq6.
-             rewrite Heq3. simpl.
-          *)
             rewrite !andb_true_iff in Heq6.
             destruct Heq6 as ((((Heq6a, Heq6b), Heq6c), Heq6d), Heq6e).
             
@@ -269,13 +277,6 @@ Section certif.
         remember Atom.Bval_inj2.
         specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t v_vala1 v_vala2) (v_vala)).
         intros. specialize (H5 Htia).
-
-(*        unfold interp_form_hatom, interp_hatom.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Heq3. simpl.
-        rewrite !Atom.t_interp_wf; trivial.
-        rewrite Htia1, Htia2.
-        simpl. rewrite Typ.cast_refl. simpl.*)
 
         
         pose proof (H a1). assert (a1 < PArray.length t_atom).
@@ -426,7 +427,110 @@ Section certif.
         
     
     Lemma valid_check_rowneq cl : C.valid rho (check_rowneq cl).
+    Proof.
+      unfold check_rowneq.
+      case_eq (cl); [ intros | intros i l ]; simpl; try now apply C.interp_true.
+      case_eq (l); [ intros | intros j xsl ]; simpl; try now apply C.interp_true.
+      case_eq (xsl); intros; simpl; try now apply C.interp_true.
+      case_eq (Lit.is_pos i); intro Heq; simpl; try now apply C.interp_true.
+      case_eq (Lit.is_pos j); intro Heq2; simpl; try now apply C.interp_true.
+      case_eq (t_form .[ Lit.blit i]); try (intros; now apply C.interp_true).
+      intros a Heq3.
+      case_eq (t_form .[ Lit.blit j]); try (intros; now apply C.interp_true).
+      intros b Heq4.
+      case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] a1 a2 Heq5; try (intros; now apply C.interp_true).
+      case_eq (t_atom .[ b]); try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] b1 b2 Heq6; try (intros; now apply C.interp_true).
+      case_eq (t_atom .[ b1]); try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] c1 c2 Heq7; try (intros; now apply C.interp_true).
+      case_eq (t_atom .[ b2]); try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] d1 d2 Heq8; try (intros; now apply C.interp_true).
+      case_eq (Typ.eqb t t1 && Typ.eqb t t3 && Typ.eqb t0 t2 && Typ.eqb t0 t4); 
+        try (intros; now apply C.interp_true). intros Heq9.
+      case_eq (t_atom .[ c1]); try (intros; now apply C.interp_true).
+      intros [ ] e1 e2 e3 Heq10.
+
+      case_eq (
+        Typ.eqb t t5 && Typ.eqb t0 t6 && (e1 == d1) &&
+        ((e2 == a1) && (c2 == a2) && (d2 == a2) || (e2 == a2) && (c2 == a1) && (d2 == a1)));
+        simpl; intros Heq11; try (now apply C.interp_true).
+        
+      unfold C.valid. simpl. rewrite orb_false_r.
+      unfold Lit.interp. rewrite Heq, Heq2.
+      unfold Var.interp.
+      rewrite !wf_interp_form; trivial. rewrite Heq3, Heq4. simpl.
+      
+      rewrite !andb_true_iff in Heq9.
+      destruct Heq9 as (((Heq9a, Heq9b), Heq9c), Heq9d).
+      
+      apply Typ.eqb_spec in Heq9a.
+      apply Typ.eqb_spec in Heq9b.
+      apply Typ.eqb_spec in Heq9c.
+      apply Typ.eqb_spec in Heq9d.
+      
+      rewrite !andb_true_iff in Heq11.
+      destruct Heq11 as (((Heq11a, Heq11b), Heq11c), Heq11d).
+      rewrite !orb_true_iff in Heq11d.
+      destruct Heq11d as [ Heq11d | Heq11d ].
+      
+      apply Typ.eqb_spec in Heq11a.
+      apply Typ.eqb_spec in Heq11b.
+      apply Int63Properties.eqb_spec in Heq11c.
+      rewrite !andb_true_iff in Heq11d.
+      destruct Heq11d as ((Heq11d1, Heq11d2), Heq11d3).
+      apply Int63Properties.eqb_spec in Heq11d1.
+      apply Int63Properties.eqb_spec in Heq11d2.
+      apply Int63Properties.eqb_spec in Heq11d3.
+         
+      pose proof (rho_interp (Lit.blit i)) as Hrho.
+      rewrite Heq3 in Hrho. simpl in Hrho.
+        
+      generalize wt_t_atom. unfold Atom.wt. unfold is_true.
+      rewrite PArray.forallbi_spec;intros.
+
+      pose proof (H2 a). assert (a < PArray.length t_atom).
+      apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq5. easy.
+      specialize (H3 H4). simpl in H3.
+      rewrite Heq5 in H3. simpl in H3.
+      rewrite !andb_true_iff in H3. destruct H3. destruct H3.
+      unfold get_type' in H3, H5, H6. unfold v_type in H3, H5, H6.
+        
+      case_eq (t_interp .[ a]).
+        intros v_typea v_vala Htia. rewrite Htia in H3.
+        case_eq v_typea; intros; rewrite H7 in H3; try now contradict H3.
+        
+      case_eq (t_interp .[ a1]).
+        intros v_typea1 v_vala1 Htia1. rewrite Htia1 in H6.
+      case_eq (t_interp .[ a2]).
+          intros v_typea2 v_vala2 Htia2. rewrite Htia2 in H5.
+      rewrite Atom.t_interp_wf in Htia; trivial.
+      rewrite Atom.t_interp_wf in Htia1; trivial.
+      rewrite Atom.t_interp_wf in Htia2; trivial.
+      rewrite Heq5 in Htia. simpl in Htia.
+      rewrite !Atom.t_interp_wf in Htia; trivial.
+      rewrite Htia1, Htia2 in Htia. simpl in Htia.
+
+      apply Typ.eqb_spec in H5. apply Typ.eqb_spec in H6.
+
+      generalize dependent v_vala1. generalize dependent v_vala2.
+      generalize dependent v_vala.
+      rewrite H5, H6, H7.
+      rewrite !Typ.cast_refl. intros. simpl in Htia.
+      unfold Bval in Htia.
+
+      remember Atom.Bval_inj2.
+      specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t v_vala1 v_vala2) (v_vala)).
+      intros. specialize (H8 Htia).
+        
+        (* get the same kind of info for b, b1, b2 and c1 *)
+
+      
+      
+      
+    
     Admitted.
+    
 
     
     Lemma valid_check_ext lres : C.valid rho (check_ext lres).
