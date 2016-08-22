@@ -179,7 +179,12 @@ let rec term_smtcoq t = match value t with
   | Const {sname=Name "true"} -> Form Form.pform_true
   | Const {sname=Name "false"} -> Form Form.pform_false
   | Const {sname=Name "bvn"} -> const_bv t
-  | Const {sname=Name n} -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
+  | Const {sname=Name n} ->
+    begin
+      try
+        term_smtcoq  (HS.find diffarray_tbl n)
+      with Not_found -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
+    end
   | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
   | App _ ->
     begin match app_name t with
@@ -281,7 +286,7 @@ let rec term_smtcoq t = match value t with
       | Some ("*_Int", [a; b]) ->
         Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("u-_Int", [a]) -> Atom (Atom.mk_opp ra (term_smtcoq_atom a))
-      | Some (n, _) -> failwith (n ^ " not implemented")        
+      | Some (n, _) -> failwith ("LFSC function symbol "^n^" not supported.")
       | _ -> assert false
     end
 
@@ -306,16 +311,26 @@ and args_smtcoq args =
   List.map (fun t -> lit_of_atom_form_lit rf (term_smtcoq t)) args
   |> Array.of_list
 
-(* TODO : read, write, diff *)
-and uncurry acc t = match app_name t with
-  | Some ("apply", [_; _; f; a]) -> uncurry (term_smtcoq_atom a :: acc) f
-  | None ->
+and uncurry acc t = match app_name t, acc with
+  | Some ("apply", [_; _; f; a]), _ -> uncurry (term_smtcoq_atom a :: acc) f
+  | Some ("read", [_; _]), [h1; h2] ->
+    (match Atom.type_of h1 with
+     | TFArray (ti,te) -> Atom (Atom.mk_select ra ti te h1 h2)
+     | _ -> assert false)
+  | Some ("write", [_; _]), [h1; h2; h3] ->
+    (match Atom.type_of h1 with
+     | TFArray (ti,te) -> Atom (Atom.mk_store ra ti te h1 h2 h3)
+     | _ -> assert false)
+  | Some ("diff", [_; _]), [h1; h2] ->
+    (match Atom.type_of h1 with
+     | TFArray (ti,te) -> Atom (Atom.mk_diffarray ra ti te h1 h2)
+     | _ -> assert false)
+  | None, _ ->
     (match name t with
      | Some n ->
        let args = Array.of_list acc in
        Atom (Atom.get ra (Aapp (get_fun n, args)))
-     | _ -> assert false
-    )
+     | _ -> assert false)
   | _ ->
     eprintf "uncurry fail: %a@." Ast.print_term t;
     assert false
