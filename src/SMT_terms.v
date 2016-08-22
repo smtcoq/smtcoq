@@ -741,11 +741,34 @@ Qed.
         auto.
       Qed.
 
+      Lemma eqb_compdec_spec_false (c : CompDec) : forall x y, eqb_of_compdec c x y = false <-> x <> y.
+        intros.
+        destruct c.
+        destruct Eqb0.
+        simpl.
+        split. intros. 
+        unfold not. intros.
+        apply eqb_spec in H0. 
+        rewrite H in H0. now contradict H0.
+        intros. unfold not in H.
+        rewrite <- not_true_iff_false.
+        unfold not. intros.
+        apply eqb_spec in H0. 
+        apply H in H0. now contradict H0.
+      Qed.
+
       Lemma i_eqb_spec : forall t x y, i_eqb t x y <-> x = y.
       Proof.
         intros.
         unfold i_eqb.
         apply eqb_compdec_spec.
+      Qed.
+
+      Lemma i_eqb_spec_false : forall t x y, i_eqb t x y = false <-> x <> y.
+      Proof.
+        intros.
+        unfold i_eqb.
+        apply eqb_compdec_spec_false.
       Qed.
 
       Lemma reflect_eqb_compdec (c : CompDec) : forall x y, reflect (x = y) (eqb_of_compdec c x y).
