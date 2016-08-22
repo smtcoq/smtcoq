@@ -1874,9 +1874,10 @@ Section FArray.
     intros.
     red. intros.
     apply not_true_iff_false in H.
+    unfold not in *. intros.
     apply H. rewrite H0.
     apply eq_equal. apply eqfarray_refl.
-  Qed.    
+  Qed.
       
   Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
   Proof.
@@ -1916,6 +1917,13 @@ Section FArray.
         (* destruct (diff_index_p H). apply x. *)
     Defined.
     
+   Lemma select_over_diff: forall a b, a <> b ->
+            select a (diff a b) <> select b (diff a b).
+   Proof. intros a b H. unfold diff.
+             assert (equal a b = false) by admit.
+   Admitted.
+
+       
   End Classical_extensionnality.
 
 End FArray.
