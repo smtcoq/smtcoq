@@ -313,7 +313,13 @@ module Make (T : Translator_sig.S) = struct
                   |"iff_elim_1"
                   |"iff_elim_2"
                   |"xor_elim_1"
-                  |"xor_elim_2"), _) -> true | _ -> false)
+                  |"xor_elim_2"
+                  |"ite_elim_1"
+                  |"ite_elim_2"
+                  |"ite_elim_3"
+                  |"not_ite_elim_1"
+                  |"not_ite_elim_2"
+                  |"not_ite_elim_3"), _) -> true | _ -> false)
       ->
       let env = rm_used env x in
       let env = lem env r in
@@ -361,6 +367,70 @@ module Make (T : Translator_sig.S) = struct
           mk_clause_cl Xorp1 [not_ a_xor_b; a; b] [] :: env.clauses
       in
       { env with clauses }
+
+    | Some ("ite_elim_1", [a; b; c; r]) ->
+      let env = lem env r in
+      let clauses = match env.clauses with
+        | [_] when not env.ax ->
+          mk_clause_cl Ite2 [not_ a; b] env.clauses :: []
+        | _ ->
+          let ite_a_b_c = ifte_ a b c in
+          mk_clause_cl Itep2 [not_ ite_a_b_c; not_ a; b] [] :: env.clauses
+      in
+      { env with clauses }
+
+    | Some ("ite_elim_2", [a; b; c; r]) ->
+      let env = lem env r in
+      let clauses = match env.clauses with
+        | [_] when not env.ax ->
+          mk_clause_cl Ite1 [a; c] env.clauses :: []
+        | _ ->
+          let ite_a_b_c = ifte_ a b c in
+          mk_clause_cl Itep1 [not_ ite_a_b_c; a; c] [] :: env.clauses
+      in
+      { env with clauses }
+
+    | Some ("not_ite_elim_1", [a; b; c; r]) ->
+      let env = lem env r in
+      let clauses = match env.clauses with
+        | [_] when not env.ax ->
+          mk_clause_cl Nite2 [not_ a; not_ b] env.clauses :: []
+        | _ ->
+          let ite_a_b_c = ifte_ a b c in
+          mk_clause_cl Iten2 [ite_a_b_c; not_ a; not_ b] [] :: env.clauses
+      in
+      { env with clauses }
+
+    | Some ("not_ite_elim_2", [a; b; c; r]) ->
+      let env = lem env r in
+      let clauses = match env.clauses with
+        | [_] when not env.ax ->
+          mk_clause_cl Nite1 [a; not_ c] env.clauses :: []
+        | _ ->
+          let ite_a_b_c = ifte_ a b c in
+          mk_clause_cl Iten1 [ite_a_b_c; a; not_ c] [] :: env.clauses
+      in
+      { env with clauses }
+
+    | Some ("ite_elim_3", [a; b; c; r]) ->
+      let env = lem env r in
+      let ite_a_b_c = ifte_ a b c in
+      { env with
+        clauses =
+          mk_clause_cl Itep1 [not_ ite_a_b_c; a; c] [] ::
+          mk_clause_cl Itep2 [not_ ite_a_b_c; not_ a; b] [] ::
+          env.clauses;
+        ax = true }
+
+    | Some ("not_ite_elim_3", [a; b; c; r]) ->
+      let env = lem env r in
+      let ite_a_b_c = ifte_ a b c in
+      { env with
+        clauses =
+          mk_clause_cl Iten1 [ite_a_b_c; a; not_ c] [] ::
+          mk_clause_cl Iten2 [ite_a_b_c; not_ a; not_ b] [] ::
+          env.clauses;
+        ax = true }
 
     | Some ("iff_elim_1", [a; b; r]) ->
       begin match app_name r with

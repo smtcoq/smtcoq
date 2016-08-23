@@ -97,6 +97,7 @@ let import_trace filename first =
 
 let clear_all () =
   SmtTrace.clear ();
+  VeritSyntax.clear ();
   C.clear ()
 
 
@@ -318,7 +319,7 @@ let call_cvc4 rt ro rf root =
 
   let command =
     "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
-     --no-bv-eq --no-bv-ineq --no-bv-algebraic"
+     --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
     ^ logfilename in
   eprintf "%s@." command;
@@ -338,6 +339,7 @@ let call_cvc4 rt ro rf root =
     "th_int.plf";
     "th_bv.plf";
     "th_bv_bitblast.plf";
+    "th_arrays.plf";
   ] in
   let signatures_arg =
     signatures
@@ -346,6 +348,8 @@ let call_cvc4 rt ro rf root =
   in
   Sys.command ("cat "^signatures_arg^" "^logfilename^" > "^prooffilename)
   |> ignore;
+  
+  eprintf "LFSC proof in %s@." prooffilename;
   
   try import_trace prooffilename (Some root)
   with No_proof -> Structures.error "CVC4 did not generate a proof"
@@ -358,4 +362,5 @@ let tactic env sigma t =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
+  eprintf "caca@.";
   SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t

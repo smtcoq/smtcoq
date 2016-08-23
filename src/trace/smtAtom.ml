@@ -119,16 +119,20 @@ module Btype =
 
         reify.cuts <- (eq_name, pair_ty)::reify.cuts;
         (* TODO (extra args) *)
+        assert false;
+        Format.eprintf "ici@.";
         let ce = mklApp ctyp_eqb_of_typ_eqb_param [|t; eq_var|] in
         declare reify t ce
 
+
     let interp_tbl reify =
       let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_eqb) in
-      let set _ = function 
-	| Tindex it -> t.(it.index) <- it.hval
-	| _ -> () in
+      let set _ = function
+        | Tindex it -> t.(it.index) <- it.hval
+        | _ -> () in
       Hashtbl.iter set reify.tbl;
       Structures.mkArray (Lazy.force ctyp_eqb, t)
+
 
     let to_list reify =
       let set _ t acc = match t with
@@ -890,7 +894,10 @@ module Atom =
       if Term.eq_constr c (Lazy.force cN0) then
         0
       else if Term.eq_constr c (Lazy.force cNpos) then
-        mk_positive n (* ? *)
+        match args with
+        | [n] -> mk_positive n
+        | _ -> assert false
+        (* mk_positive n (\* ? *\) *)
       else assert false
 
     

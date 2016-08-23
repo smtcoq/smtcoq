@@ -58,6 +58,14 @@ type rule =
   | Xorn2
   | Nxor1
   | Nxor2
+  | Itep1
+  | Itep2
+  | Iten1
+  | Iten2
+  | Ite1
+  | Ite2
+  | Nite1
+  | Nite2
   | Eqtr
   | Eqcp
   | Eqco

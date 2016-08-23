@@ -66,7 +66,7 @@ let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
 (* Je ne comprends pas pourquoi ça fonctionne avec Zeq_bool et pas avec
    Z.eqb *)
-let ceqbZ = gen_constant z_modules "eqb"
+let ceqbZ = gen_constant [["Coq";"ZArith";"BinInt";"Z"]] "eqb"
 (* let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool" *)
 
 (* Booleans *)
@@ -161,6 +161,7 @@ let cte_carrier = gen_constant smt_modules "te_carrier"
 let cte_eqb = gen_constant smt_modules "te_eqb"
 let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
+let cmkarray_unit_typ_eqb = gen_constant smt_modules "mkarray_unit_typ_eqb"
 
 let cfarray_select = gen_constant smt_modules "farray_select"
 let cfarray_diff = gen_constant smt_modules "farray_diff"

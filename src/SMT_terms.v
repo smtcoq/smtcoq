@@ -384,21 +384,21 @@ Module Typ.
 
     Instance BV_ord n : OrdType (@BITVECTOR_LIST.bitvector n).
     Proof.
-    exists (fun a b => (BITVECTOR_LIST.bv_ult a b)).
-    unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult.
-    intros x y z; destruct x, y, z.
-    simpl. rewrite wf, wf0, wf1. rewrite N.eqb_refl. simpl.
-    apply RAWBITVECTOR_LIST.rev_ult_list_trans.
-    intros x y; destruct x, y.
-    simpl.
-    intros. unfold not.
-    intros. rewrite H0 in H.
-    unfold BITVECTOR_LIST.bv_ult, BITVECTOR_LIST.bv in *.
-    unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size in H.
-    rewrite N.eqb_refl in H.
-    apply RAWBITVECTOR_LIST.ult_list_not_eq in H.
-    apply H. easy.
-Qed.
+      exists (fun a b => (BITVECTOR_LIST.bv_ult a b)).
+      unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult.
+      intros x y z; destruct x, y, z.
+      simpl. rewrite wf, wf0, wf1. rewrite N.eqb_refl. simpl.
+      apply RAWBITVECTOR_LIST.rev_ult_list_trans.
+      intros x y; destruct x, y.
+      simpl.
+      intros. unfold not.
+      intros. rewrite H0 in H.
+      unfold BITVECTOR_LIST.bv_ult, BITVECTOR_LIST.bv in *.
+      unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size in H.
+      rewrite N.eqb_refl in H.
+      apply RAWBITVECTOR_LIST.ult_list_not_eq in H.
+      apply H. easy.
+    Defined.
 
     Instance FArray_ord key elt
              (key_ord: OrdType key)
@@ -440,6 +440,9 @@ Qed.
 
     Instance Z_eqbtype : EqbType Z :=
       {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
+
+    (* Instance Z_eqbtype : EqbType Z := *)
+    (*   {| eqb := Zeq_bool; eqb_spec := fun x y => symmetry (Zeq_is_eq_bool x y) |}. *)
     
     Instance Z_dec : DecType Z :=
       EqbToDecType _ Z_eqbtype.
@@ -532,25 +535,26 @@ Qed.
     Defined.
 
     Instance BV_comp n: Comparable (BITVECTOR_LIST.bitvector n).
-    Proof.
     Admitted.
-(*
-      constructor.
-      intros x y.
-      case_eq (BITVECTOR_LIST.bv_ult x y).
-      intros.
-      apply OrderedType.LT.
-      unfold lt, BV_ord. auto.
-      case_eq (BITVECTOR_LIST.bv_eq x y).
-      intros.
-      apply OrderedType.EQ.
-      apply BITVECTOR_LIST_FIXED.bv_eq_reflect. auto.
-      intros.
-      apply OrderedType.GT.
-      unfold lt, BV_ord. auto.
+    (* Proof. *)
+    (*   constructor. *)
+    (*   intros x y. *)
+    (*   case_eq (BITVECTOR_LIST.bv_ult x y). *)
+    (*   intros. *)
+    (*   apply OrderedType.LT. *)
+    (*   unfold lt, BV_ord. auto. *)
+    (*   case_eq (BITVECTOR_LIST.bv_eq x y). *)
+    (*   intros. *)
+    (*   apply OrderedType.EQ. *)
+    (*   apply BITVECTOR_LIST.bv_eq_reflect. auto. *)
+    (*   intros. *)
+    (*   apply OrderedType.GT. *)
+    (*   unfold lt. *)
+    (*   unfold BV_ord. *)
+    (*   apply lt_trans. *)
+    (* Qed. *)
 
-    *)
-
+    
     Instance TI_comp i : Comparable (t_i.[i]).(te_carrier).
     constructor.
     intros x y.
@@ -802,7 +806,7 @@ Qed.
       Definition i_eqb_eqb (t:type) : interp t -> interp t -> bool :=
         match t with
         | Tindex i => (t_i.[i]).(te_eqb)
-        | TZ => Z.eqb
+        | TZ => Z.eqb (* Zeq_bool *)
         | Tbool => Bool.eqb
         | Tpositive => Peqb
         | TBV n => (@BITVECTOR_LIST.bv_eq n)
@@ -2882,8 +2886,29 @@ Qed.
 
 End Atom.
 
+
+
+
 Arguments Atom.Val {_} {_} _ _.
 
+
+
+Section PredefinedArrays.
+  Variable t_i : PArray.array typ_eqb.
+
+  Definition mkarray_typ_eqb := @PArray.make typ_eqb.
+  Definition arrayset_typ_eqb := @PArray.set typ_eqb.
+  
+  Definition mkarray_func := @PArray.make (Atom.tval t_i).
+  Definition arrayset_func := @PArray.set (Atom.tval t_i).
+
+  Definition mkarray_form := @PArray.make Form.form.
+  Definition arrayset_form := @PArray.set Form.form.
+
+  Definition mkarray_atom := @PArray.make Atom.atom.
+  Definition arrayset_atom := @PArray.set Atom.atom.
+
+End PredefinedArrays.
 
 (* 
    Local Variables:
