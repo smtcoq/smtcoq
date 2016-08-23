@@ -291,7 +291,7 @@ module Make (T : Translator_sig.S) = struct
 
   (** Convert the local proof of a [satlem]. We use decductive style rules when
       possible but revert to axiomatic ones when the context forces us to. *)
-  and lem env p = match app_name p with
+  and lem ?(toplevel=false) env p = match app_name p with
     | Some ("or_elim_1", [el; rem; x; r])
     | Some ("or_elim_2", [rem; el; x; r])
       when (match app_name r with
@@ -508,7 +508,31 @@ module Make (T : Translator_sig.S) = struct
           { env with clauses }
       end
 
-    (* Ignore symmetry of equlity rules *)
+    (* Only handle symmetry rules when they are the only rule of the lemma *)
+      
+    | Some ("symm", [ty; a; b; r]) when
+        toplevel &&
+        match name r with Some _ -> true | _ -> false ->
+      let env = lem env r in
+      let a_b = eq ty a b in
+      let b_a = eq ty b a in
+
+      { env with
+        clauses = mk_clause_cl Eqtr [not_ a_b; b_a] [] :: env.clauses;
+        ax = true }
+
+    | Some ("negsymm", [ty; a; b; r]) when
+        toplevel &&
+        match name r with Some _ -> true | _ -> false ->
+      let env = lem env r in
+      let a_b = eq ty a b in
+      let b_a = eq ty b a in
+
+      { env with
+        clauses = mk_clause_cl Eqtr [a_b; not_ b_a] [] :: env.clauses;
+        ax = true }
+
+    (* Ignore other symmetry of equlity rules *)
     | Some (("symm"|"negsymm"), [_; _; _; r]) -> lem (rm_used env r) r
 
     (* Ignore double negation *)
@@ -722,6 +746,24 @@ module Make (T : Translator_sig.S) = struct
   let reso_of_QR qr = reso_of_QR [] qr |> List.rev
 
 
+  let rec reso_of_QR qr = match app_name qr with
+    | Some (("Q"|"R"), [_; _; u1; u2; _]) ->
+      reso_of_QR u1 @ reso_of_QR u2
+    | _ -> [clause_qr qr]
+
+  let rec reso_of_QR depth acc qr = match app_name qr with
+    | Some (("Q"|"R"), [_; _; u1; u2; _]) ->
+      let depth = depth + 1 in
+      reso_of_QR depth (reso_of_QR depth acc u1) u2
+    | _ -> (depth, clause_qr qr) :: acc
+
+  (** Returns clauses used in a linear resolution chain *)
+  let reso_of_QR qr =
+    reso_of_QR 0 [] qr
+    |> List.rev
+    |> List.stable_sort (fun (d1, _) (d2, _) -> d2 - d1)
+    |> List.map snd
+  
   
   (** convert resolution proofs of [satlem_simplify] *)
   let satlem_simplify p = match app_name p with
@@ -854,7 +896,7 @@ module Make (T : Translator_sig.S) = struct
              let env = { empty with assum = assumptions } in
              let lem =
                if is_bbr_satlem_lam p || List.exists has_intro_bv l then bb_lem
-               else lem in
+               else lem ~toplevel:true in
              let env =
                List.fold_left (fun env p ->
                    let local_env =
@@ -890,6 +932,21 @@ module Make (T : Translator_sig.S) = struct
 
           satlem ?prefix_cont lem_cont
       end
+
+    | Some ("satlem_simplify", [_; _; _; _; l]) ->
+      (match value l with
+       | Lambda ({sname=Name _}, r) ->
+         (match name r with
+          | Some _ -> p
+          | None -> match app_name r with
+            | Some ("satlem_simplify", _) -> p
+            | _ ->
+              (* Intermediate satlem_simplify *)
+              (* eprintf ">>>>>> intermediate satlemsimplify@."; *)
+              snd (satlem_simplify p) |> satlem ?prefix_cont
+         )
+       | _ -> p)
+
     | _ -> p
 
 

@@ -329,7 +329,7 @@ Module Euf_Checker.
 
   Inductive step :=
   | Res (pos:int) (res:resolution)
-  | Weaken (pos:int) (cid:clause_id) (w:array _lit)
+  | Weaken (pos:int) (cid:clause_id) (cl:list _lit)
   | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
   | CTrue (pos:int)
   | CFalse (pos:int)
@@ -374,7 +374,7 @@ Module Euf_Checker.
   Definition step_checker s (st:step) :=
     match st with
       | Res pos res => S.set_resolve s pos res
-      | Weaken pos cid w => S.set_weaken s pos cid w
+      | Weaken pos cid cl => S.set_weaken s pos cid cl
       | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_atom t_form s cid lf)
       | CTrue pos => S.set_clause s pos Cnf.check_True
       | CFalse pos => S.set_clause s pos Cnf.check_False

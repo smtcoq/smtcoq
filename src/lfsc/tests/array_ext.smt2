@@ -1,4 +1,5 @@
-(set-logic QF_ALIA)
+;; (set-logic QF_ALIA)
+(set-logic QF_AUFBVLIA)
 
 (declare-fun a () (Array Int Int))
 (declare-fun b () (Array Int Int))

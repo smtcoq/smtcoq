@@ -307,18 +307,11 @@ let to_coq to_lit interp (cstep,
     | Other other ->
 	begin match other with
         | Weaken (c',l') ->
-           (let size = List.length l' in
-            let lits = Array.make size (mkInt 0) in
-            let l = ref l' in
-            for i = 0 to size - 1 do
-              match !l with
-                | [] -> assert false
-                | f::tl ->
-                   (lits.(i) <- out_f f;
-                    l := tl)
-            done;
-            assert (!l = []);
-            mklApp cWeaken [|out_c c;out_c c'; Structures.mkArray (Lazy.force cint, lits)|])
+          let out_cl cl =
+            List.fold_right (fun f l ->
+                mklApp ccons [|Lazy.force cint; out_f f; l|])
+              cl (mklApp cnil [|Lazy.force cint|]) in
+          mklApp cWeaken [|out_c c;out_c c'; out_cl l'|]
 	| ImmFlatten (c',f) -> mklApp cImmFlatten [|out_c c;out_c c'; out_f f|]
         | True -> mklApp cTrue [|out_c c|]
 	| False -> mklApp cFalse [|out_c c|]
