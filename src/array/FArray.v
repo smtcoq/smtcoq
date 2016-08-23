@@ -1877,7 +1877,7 @@ Section FArray.
     unfold not in *. intros.
     apply H. rewrite H0.
     apply eq_equal. apply eqfarray_refl.
-  Defined.
+  Qed.
       
   Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
   Proof.
