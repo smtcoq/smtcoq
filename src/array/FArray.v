@@ -1877,7 +1877,7 @@ Section FArray.
     unfold not in *. intros.
     apply H. rewrite H0.
     apply eq_equal. apply eqfarray_refl.
-  Qed.
+  Defined.
       
   Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
   Proof.
@@ -1916,12 +1916,21 @@ Section FArray.
       - apply (diff_index (notequal_neq H)).
         (* destruct (diff_index_p H). apply x. *)
     Defined.
+
     
    Lemma select_over_diff: forall a b, a <> b ->
             select a (diff a b) <> select b (diff a b).
-   Proof. intros a b H. unfold diff.
-             assert (equal a b = false) by admit.
-   Admitted.
+   Proof.
+     intros a b H. unfold diff.
+     assert (equal a b = false).
+     apply not_true_iff_false.
+     red. intro. apply equal_eq in H0. subst. auto.
+     generalize (@notequal_neq a b).
+     rewrite H0.
+     intro.
+     unfold diff_index.
+     destruct (diff_index_p (n Logic.eq_refl)). simpl; auto.
+   Qed.
 
        
   End Classical_extensionnality.
