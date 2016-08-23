@@ -398,7 +398,7 @@ Module Typ.
     rewrite N.eqb_refl in H.
     apply RAWBITVECTOR_LIST.ult_list_not_eq in H.
     apply H. easy.
-Qed.
+   Defined.
 
     Instance FArray_ord key elt
              (key_ord: OrdType key)
@@ -531,10 +531,13 @@ Qed.
       apply Positive_as_OT.compare.
     Defined.
 
+    Lemma id n : N.to_nat (N.of_nat n) = n.
+    Proof.
+    induction n; simpl; trivial. apply SuccNat2Pos.id_succ.
+    Qed.
+
     Instance BV_comp n: Comparable (BITVECTOR_LIST.bitvector n).
     Proof.
-    Admitted.
-(*
       constructor.
       intros x y.
       case_eq (BITVECTOR_LIST.bv_ult x y).
@@ -544,12 +547,32 @@ Qed.
       case_eq (BITVECTOR_LIST.bv_eq x y).
       intros.
       apply OrderedType.EQ.
-      apply BITVECTOR_LIST_FIXED.bv_eq_reflect. auto.
+      apply BITVECTOR_LIST.bv_eq_reflect. auto.
       intros.
       apply OrderedType.GT.
       unfold lt, BV_ord. auto.
-
-    *)
+      destruct (BV_ord n).
+      unfold BITVECTOR_LIST.bv_ult.
+      unfold BITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bv_eq,
+      RAWBITVECTOR_LIST.bits in H.
+      unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult in H0.
+      unfold is_true.
+      
+      unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size.
+      destruct x, y. simpl in *.
+      unfold RAWBITVECTOR_LIST.size in *.
+      rewrite wf, wf0 in *.
+      rewrite N.eqb_refl in *.
+      
+      apply RAWBITVECTOR_LIST.nlt_neq_gt.
+      rewrite !List.rev_length.
+      apply (f_equal (N.to_nat)) in wf.
+      apply (f_equal (N.to_nat)) in wf0.
+      rewrite id in wf, wf0.
+      now rewrite wf, wf0.
+      unfold RAWBITVECTOR_LIST.rev_ult_list in H0. easy.
+      now apply RAWBITVECTOR_LIST.rev_neq in H.
+    Defined.
 
     Instance TI_comp i : Comparable (t_i.[i]).(te_carrier).
     constructor.
@@ -561,7 +584,6 @@ Qed.
     apply reflect_iff in H. apply H. auto.
     unfold lt, TI_ord. auto.
     Defined.
-
 
     Instance FArray_comp key elt
              (key_ord: OrdType key)
@@ -582,7 +604,7 @@ Qed.
         now apply equal_eq in e.
       - apply OrderedType.GT. auto.
     Defined.
-    
+
     Class CompDec := {
       ty : Type;
       Eqb :> EqbType ty;
@@ -627,7 +649,7 @@ Qed.
       Comp := BV_comp n;
       Inh := {| default_value := BITVECTOR_LIST.zeros n |}
     |}.
-   
+
 
     Instance TI_compdec i : CompDec := {|
       ty := (t_i.[i]).(te_carrier);

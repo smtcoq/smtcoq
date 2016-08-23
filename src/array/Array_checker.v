@@ -1,3 +1,5 @@
+Add Rec LoadPath "." as SMTCoq.
+
 Require Import Bool List Int63 PArray.
 Require Import Misc State SMT_terms FArray.
 
@@ -1614,7 +1616,6 @@ Require Import Psatz.
       
       apply wrap_extensionality.
       now rewrite H44, H45 in H0.
-      
 Qed.
 
 

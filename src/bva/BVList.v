@@ -654,6 +654,28 @@ Proof.
     - rewrite andb_true_iff. split. apply eqb_reflx. apply IHl. exact m.
 Qed.
 
+Lemma List_neq : forall (l m: list bool), beq_list l m = false -> l <> m.
+Proof. 
+       intro l.
+       induction l.
+       - intros. case m in *; simpl. now contradict H. easy.
+       - intros. simpl in H.
+         case_eq m; intros; rewrite H0 in H. 
+           easy. simpl.
+           case_eq (Bool.eqb a b); intros.
+           rewrite H1 in H. rewrite andb_true_l in H.
+           apply Bool.eqb_prop in H1.
+           specialize (IHl l0 H).
+           rewrite H1. 
+           unfold not in *.
+           intros. apply IHl.
+           now inversion H2.
+           apply Bool.eqb_false_iff in H1.
+           unfold not in *.
+           intros. apply H1.
+           now inversion H2.
+Qed.
+
 Lemma bv_eq_reflect a b : bv_eq a b = true <-> a = b.
 Proof.
   unfold bv_eq. case_eq (size a =? size b); intro Heq; simpl.
@@ -1740,6 +1762,93 @@ Proof. unfold rev_ult_list.
   subst. auto.
 Qed.
 
+
+Lemma nlt_neq_gt: forall x y, length x  = length y ->
+                              ult_list x y = false ->  beq_list x y = false -> ult_list y x = true.
+Proof. intro x.
+       induction x as [ | x xs IHxs ].
+       - intros. simpl in *. case y in *; now contradict H. 
+       - intros.
+         simpl in H1.
+
+         case_eq y; intros.
+         rewrite H2 in H. now contradict H.
+         simpl.
+         case_eq l. intros. case_eq xs. intros.
+         rewrite H2 in H1.
+         rewrite H4 in H0, H. simpl in H0, H.
+         rewrite H2, H3 in H0, H.
+         rewrite H4, H3 in H1. simpl in H1. rewrite andb_true_r in H1.
+         case b in *; case x in *; easy.
+         intros.
+         rewrite H4, H2, H3 in H. now contradict H.
+         intros.
+         rewrite H2, H3 in H0, H1.
+         
+         simpl in H0.
+         case_eq xs. intros. rewrite H4, H2, H3 in H. now contradict H.
+         intros. rewrite H4 in H0.
+         rewrite <- H3, <- H4.
+         rewrite <- H3, <- H4 in H0.
+         rewrite <- H3 in H1.
+         rewrite orb_false_iff in H0.
+         destruct H0.
+         
+         case_eq (Bool.eqb x b); intros.
+         rewrite H6 in H0, H1.
+         rewrite andb_true_l in H0, H1.
+         assert (Bool.eqb b x = true).
+          { case b in *; case x in *; easy. }
+         rewrite H7. rewrite andb_true_l.
+         rewrite orb_true_iff.
+         left.
+         apply IHxs. rewrite H2 in H.
+         now inversion H.
+         easy. easy.
+         assert (Bool.eqb b x = false). 
+           { case b in *; case x in *; easy. }
+         rewrite H7. rewrite orb_false_l.
+         case x in *. case b in *.
+         now contradict H6.
+         now easy.
+         case b in *.
+         now contradict H5.
+         now contradict H6.
+Qed.
+
+
+Lemma rev_eq: forall x y, beq_list x y = true ->
+                          beq_list (List.rev x) (List.rev y)  = true.
+Proof. intros.
+       apply List_eq in H.
+       rewrite H.
+       now apply List_eq_refl.
+Qed.
+
+Lemma rev_neq: forall x y, beq_list x y = false ->
+                           beq_list (List.rev x) (List.rev y) = false.
+Proof. intros.
+       specialize (@List_neq x y H).
+       intros.
+       apply not_true_is_false.
+       unfold not in *.
+       intros. apply H0.
+       apply List_eq in H1.
+       
+       specialize (f_equal (@List.rev bool) H1 ).
+       intros.
+       now rewrite !rev_involutive in H2.
+Qed.
+
+Lemma rev_nlt_neq_gt: forall x y, length x  = length y ->
+                                  rev_ult_list x y = false -> 
+                                  beq_list x y = false -> rev_ult_list y x = true.
+Proof. intros. unfold rev_ult_list in *.
+       apply nlt_neq_gt.
+       now rewrite !rev_length.
+       easy. 
+       now apply rev_neq in H1. 
+Qed.
 
 (* bitvector SUBT properties *)
 
