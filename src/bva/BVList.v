@@ -302,7 +302,7 @@ Proof.
       rewrite <- EqNat.beq_nat_refl in Heq. discriminate.
 Qed.
 
-Definition bv_concat (a b: bitvector) : bitvector := a ++ b.
+Definition bv_concat (a b: bitvector) : bitvector := b ++ a.
 
 Section Map2.
 
@@ -655,7 +655,7 @@ Qed.
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = n + m.
 Proof.
   unfold bv_concat, size. intros H0 H1.
-  rewrite app_length, Nat2N.inj_add, H0, H1; reflexivity.
+  rewrite app_length, Nat2N.inj_add, H0, H1; now rewrite N.add_comm.
 Qed.
 
 (*list bitwise AND properties*)

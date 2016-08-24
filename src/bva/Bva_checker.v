@@ -677,7 +677,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     end.
 
   Definition check_concat (bs1 bs2 bsres: list _lit) : bool :=
-    if (forallb2 eq_carry_lit (lit_to_carry (bs1 ++ bs2)) bsres) then true else false.
+    if (forallb2 eq_carry_lit (lit_to_carry (bs2 ++ bs1)) bsres) then true else false.
 
   Definition check_bbConcat pos1 pos2 lres :=
     match S.get s pos1, S.get s pos2 with
@@ -6363,6 +6363,11 @@ Proof. intro bs1.
        - intros. simpl. now rewrite IHbs1.
 Qed.
 
+Lemma concat_nil: forall {A} (a: list A), a ++ [] = a.
+Proof. intros A a.
+       case a; [ easy | intros; apply app_nil_r ].
+Qed.
+
 Lemma check_concat_bvconcat: forall bs1 bs2 bsres , 
   check_concat bs1 bs2 bsres = true ->
   (RAWBITVECTOR_LIST.bv_concat (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2) =
@@ -6372,19 +6377,26 @@ Proof. intro bs1.
        - intros. simpl.
          unfold check_concat in H. simpl in H.
          case_eq (forallb2 eq_carry_lit (lit_to_carry bs2) bsres); intros.
+         rewrite concat_nil in H.
          apply prop_eq_carry_lit2 in H0.
+         unfold RAWBITVECTOR_LIST.bv_concat.
+         rewrite concat_nil.
          now rewrite prop_interp_carry3 in H0.
+         unfold RAWBITVECTOR_LIST.bv_concat.
+         rewrite concat_nil.
+         rewrite concat_nil in H.
          rewrite H0 in H. now contradict H.
        - intros. unfold check_concat in H.
-         case_eq (forallb2 eq_carry_lit (lit_to_carry ((xbs1 :: xsbs1) ++ bs2)) bsres); intros.
+         case_eq (forallb2 eq_carry_lit (lit_to_carry (bs2 ++ xbs1 :: xsbs1)) bsres); intros.
          apply prop_eq_carry_lit2 in H0.
          rewrite prop_interp_carry3 in H0.
          simpl in H0. simpl.
          unfold RAWBITVECTOR_LIST.bv_concat.
          specialize (concat_map (Lit.interp rho)). intros.
-         rewrite <- H0.
+         rewrite <- H0. simpl.
+         rewrite <- !check_concat_map.
          apply f_equal.
-         apply check_concat_map.
+         now simpl.
          rewrite H0 in H; now contradict H.
 Qed.
 
