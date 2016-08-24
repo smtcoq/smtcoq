@@ -2,7 +2,6 @@ Require Import SetoidList Bool OrderedType OrdersLists RelationPairs Orders.
 Require Import RelationClasses.
 Require Import ProofIrrelevance.
 
-
 Definition eqb_to_eq_dec : forall T (eqb : T -> T -> bool) (eqb_spec : forall x y, eqb x y = true <-> x = y)
                       (x y : T), { x = y } + { x <> y }.
   intros.
@@ -10,14 +9,11 @@ Definition eqb_to_eq_dec : forall T (eqb : T -> T -> bool) (eqb_spec : forall x 
   left. apply eqb_spec; auto.
   right. red. intro. apply eqb_spec in H0. rewrite H in H0. now contradict H0.
   Defined.
-  
-
 
 Class EqbType T := {
  eqb : T -> T -> bool;
  eqb_spec : forall x y, eqb x y = true <-> x = y
 }.
-
 
 Class DecType T := {
  eq_refl : forall x : T, x = x;
@@ -25,7 +21,6 @@ Class DecType T := {
  eq_trans : forall x y z : T, x = y -> y = z -> x = z;
  eq_dec : forall x y : T, { x = y } + { x <> y }
 }.
-
 
 Instance EqbToDecType T `(EqbType T) : DecType T.
 Proof.
@@ -45,7 +40,6 @@ Class OrdType T := {
   (* compare : forall x y : T, Compare lt eq x y *)
 }.
 
-
 Hint Resolve lt_not_eq lt_trans.
 
 (* Global Instance Comparable T `(OrdType T) : *)
@@ -54,20 +48,16 @@ Class Comparable T {ot:OrdType T} := {
   compare : forall x y : T, Compare lt eq x y
 }.
 
-
 Class Inhabited T := {
     default_value : T
   }.
 
 Set Implicit Arguments.
 
-
-
 Module Raw.
-  
+
   Section Array.
 
-  
   Variable key : Type.
   Variable elt : Type.
   Variable key_dec : DecType key.
@@ -76,8 +66,6 @@ Module Raw.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
 
-
-  
   Definition eqb_key (x y : key) : bool := if eq_dec x y then true else false.
   Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
 
@@ -88,7 +76,7 @@ Module Raw.
   Proof. unfold eqb_elt. case (eq_dec x y); split; easy. Qed.
 
   Hint Immediate eqb_key_eq eqb_elt_eq.
-  
+
   Definition farray := list (key * elt).
 
   Definition eqk (a b : (key * elt)) := fst a = fst b.
@@ -99,10 +87,9 @@ Module Raw.
 
   (* Definition ltke (a b : (key * elt)) := *)
   (*   lt (fst a) (fst b) \/ ( (fst a) = (fst b) /\ lt (snd a) (snd b)). *)
-  
+
   Hint Unfold ltk (* ltke *) eqk eqke.
   Hint Extern 2 (eqke ?a ?b) => split.
-
 
   Global Instance StrictOrder_OrdType T `(OrdType T) :
     StrictOrder (lt : T -> T -> Prop).
@@ -112,14 +99,13 @@ Module Raw.
     intros. apply lt_not_eq in H0; auto.
     unfold Transitive. intros x y z. apply lt_trans.
   Qed.
-  
+
   Global Instance lt_key_strorder : StrictOrder (lt : key -> key -> Prop).
   Proof. apply StrictOrder_OrdType. Qed.
 
   Global Instance lt_elt_strorder : StrictOrder (lt : elt -> elt -> Prop).
   Proof. apply StrictOrder_OrdType. Qed.
 
-  
   Global Instance ke_dec : DecType (key * elt).
   Proof.
     split; auto.
@@ -142,7 +128,6 @@ Module Raw.
     apply (lt_not_eq k k0); auto.
   Qed.
 
-
   (* ltk ignore the second components *)
 
    Lemma ltk_right_r : forall x k e e', ltk x (k,e) -> ltk x (k,e').
@@ -152,12 +137,9 @@ Module Raw.
    Proof. auto. Qed.
    Hint Immediate ltk_right_r ltk_right_l.
 
-
-  
-  
   Notation Sort := (sort ltk).
   Notation Inf := (lelistA (ltk)).
-  
+
   Definition MapsTo (k:key)(e:elt):= InA eqke (k,e).
   Definition In k m := exists e:elt, MapsTo k e m.
 
@@ -165,7 +147,6 @@ Module Raw.
 
   Hint Unfold MapsTo In.
 
-  
   (* Instance ke_ord: OrdType (key * elt). *)
   (* Proof. *)
   (*   exists ltke. *)
@@ -196,7 +177,6 @@ Module Raw.
   (*   apply GT. left; assumption. *)
   (* Qed. *)
 
-  
   (* Hint Immediate ke_ord. *)
   (* Let ke_ord := ke_ord. *)
 
@@ -232,7 +212,7 @@ Module Raw.
   Proof.
     unfold eqke; intuition; [ eauto | congruence ].
   Qed.
-   
+
   Lemma ltk_trans : forall e e' e'', ltk e e' -> ltk e' e'' -> ltk e e''.
   Proof. eauto. Qed.
 
@@ -244,21 +224,16 @@ Module Raw.
     unfold eqke, ltk; intuition; simpl in *; subst.
     apply lt_not_eq in H. auto.
   Qed.
-  
 
   Hint Resolve eqk_trans eqke_trans eqk_refl eqke_refl.
   Hint Resolve ltk_trans ltk_not_eqk ltk_not_eqke.
   Hint Immediate eqk_sym eqke_sym.
 
-
-  
   Global Instance eqk_equiv : Equivalence eqk.
   Proof. split; eauto. Qed.
 
   Global Instance eqke_equiv : Equivalence eqke.
   Proof. split; eauto. Qed.
-
-
 
   Global Instance ltk_strorder : StrictOrder ltk.
   Proof.
@@ -267,7 +242,6 @@ Module Raw.
     intros. apply lt_not_eq in H; auto.
     unfold Transitive. intros x y z. apply lt_trans.
   Qed.
-
 
   (* Instance ltke_strorder : StrictOrder ltke. *)
   (* Proof. *)
@@ -282,18 +256,17 @@ Module Raw.
     split; auto.
     unfold Transitive. apply eq_trans.
   Qed.
-    
+
   (* Instance ltke_compat : Proper (eq ==> eq ==> iff) ltke. *)
   (* Proof. *)
   (*   split; rewrite H, H0; trivial. *)
   (* Qed. *)
-    
+
   Global Instance ltk_compat : Proper (eq ==> eq ==> iff) ltk.
   Proof.
     split; rewrite H, H0; trivial.
   Qed.
 
-  
   Global Instance ltk_compatk : Proper (eqk==>eqk==>iff) ltk.
   Proof.
   intros (x,e) (x',e') Hxx' (y,f) (y',f') Hyy'; compute.
@@ -306,10 +279,8 @@ Module Raw.
    compute in Hxx'; compute in Hyy'. rewrite Hxx', Hyy'; auto.
   Qed.
 
-
   Global Instance ltk_asym : Asymmetric ltk.
   Proof. apply (StrictOrder_Asymmetric ltk_strorder). Qed.
-    
 
   (* Additional facts *)
 
@@ -364,8 +335,6 @@ Module Raw.
   (* Lemma Inf_eq : forall l x y, x = y -> Inf y l -> Inf x l. *)
   (* Proof. exact (InfA_eqA eq_equiv ltk_compat). Qed. *)
 
-
-
   (* An alternative formulation for [In k l] is [exists e, InA eqk (k,e) l] *)
 
   Lemma In_alt : forall k l, In k l <-> exists e, InA eqk (k,e) l.
@@ -398,16 +367,12 @@ Module Raw.
   Hint Immediate Inf_eq.
   Hint Resolve Inf_lt.
 
-  
-
   Lemma Sort_Inf_In :
     forall l p q, Sort l -> Inf q l -> InA eqk p l -> ltk q p.
   Proof.
     exact (SortA_InfA_InA eqk_equiv ltk_strorder ltk_compatk).
   Qed.
 
-
-  
   Lemma Sort_Inf_NotIn :
     forall l k e, Sort l -> Inf (k,e) l ->  ~In k l.
   Proof.
@@ -419,7 +384,7 @@ Module Raw.
   Qed.
 
   Hint Resolve Sort_Inf_NotIn.
-  
+
   Lemma Sort_NoDupA: forall l, Sort l -> NoDupA l.
   Proof.
     exact (SortA_NoDupA eqk_equiv ltk_strorder ltk_compatk).
@@ -465,12 +430,7 @@ Module Raw.
 
   Hint Resolve In_inv_2 In_inv_3.
 
-
-
   (** * FMAPLIST interface implementaion  *)
-
-
-
 
   (** * [empty] *)
 
@@ -491,8 +451,6 @@ Module Raw.
   Proof.
     unfold empty; auto.
   Qed.
-
-
 
   Lemma MapsTo_inj : forall x e e' l (Hl:Sort l),
       MapsTo x e l -> MapsTo x e' l -> e = e'.
@@ -534,8 +492,6 @@ Module Raw.
         unfold ltk. simpl. intro. apply lt_not_eq in H3. contradiction.
   Qed.
 
-
-  
   (** * [is_empty] *)
 
   Definition is_empty (l : farray) : bool := if l then true else false.
@@ -605,10 +561,7 @@ Module Raw.
     unfold not in *. intros; apply H.
     now apply mem_1.
   Qed.
-  
 
-    
-  
   (** * [find] *)
 
   Function find (k:key) (s: farray) {struct s} : option elt :=
@@ -645,14 +598,14 @@ Module Raw.
     apply (lt_trans k') in _x; auto.
     apply lt_not_eq in _x.
     now contradict _x.
-    
+
     clear e1;inversion_clear 2.
     compute in H0; destruct H0; intuition congruence.
     generalize (Sort_In_cons_1 Hm (InA_eqke_eqk H0)); compute.
     (* order. *)
     intros.
     apply lt_not_eq in H. now contradict H.
-    
+
     clear e1; do 2 inversion_clear 1; auto.
     compute in H2; destruct H2.
     (* order. *)
@@ -695,7 +648,6 @@ Module Raw.
     intros y' e'' eqky'; inversion_clear 1; intuition.
   Qed.
 
-
   Lemma add_3 : forall m x y e e',
       ~ eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
   Proof.
@@ -706,7 +658,6 @@ Module Raw.
     constructor 2; apply (In_inv_3 H0); compute; auto.
     inversion_clear H0; auto.
   Qed.
-
 
   Lemma add_Inf : forall (m:farray)(x x':key)(e e':elt),
       Inf (x',e') m -> ltk (x',e') (x,e) -> Inf (x',e') (add x e m).
@@ -756,7 +707,6 @@ Module Raw.
 
     clear e0. inversion Hm. subst.
     apply Sort_Inf_NotIn with x0; auto.
-    
 
     (* clear e0;inversion_clear Hm. *)
     (* apply Sort_Inf_NotIn with x0; auto. *)
@@ -832,7 +782,7 @@ Module Raw.
     apply IHf; auto.
     apply In_alt.
     exists x1. auto.
-  Qed.    
+  Qed.
 
   Lemma remove_4 : forall m (Hm:Sort m) x y,
       ~ eq x y -> In y m <-> In y (remove x m).
@@ -863,9 +813,8 @@ Module Raw.
     inversion IHf.
     exists x1.
     apply InA_cons_tl. auto.
-  Qed.    
+  Qed.
 
-  
   Lemma remove_Inf : forall (m:farray)(Hm : Sort m)(x x':key)(e':elt),
       Inf (x',e') m -> Inf (x',e') (remove x m).
   Proof.
@@ -1024,7 +973,6 @@ Module Raw.
     destruct p;destruct p0;contradiction.
   Qed.
 
-
   Lemma equal_2 : forall m (Hm:Sort m) m' (Hm:Sort m') cmp,
       equal cmp m m' = true -> Equivb cmp m m'.
   Proof.
@@ -1100,8 +1048,6 @@ End Array.
 
 End Raw.
 
-
-
 Section FArray.
 
   Variable key : Type.
@@ -1126,7 +1072,6 @@ Section FArray.
     }.
   Definition farray := slist.
 
-
   Lemma empty_nodefault : NoDefault (Raw.empty key elt).
     unfold NoDefault.
     intros.
@@ -1144,7 +1089,6 @@ Section FArray.
     destruct (compare e e); auto;
       apply lt_not_eq in l; now contradict l.
   Qed.
-  
 
   Lemma remove_nodefault : forall l (Hd:NoDefault l) (Hs:Sorted (Raw.ltk key_ord) l) x ,
       NoDefault (Raw.remove key_comp x l).
@@ -1155,8 +1099,7 @@ Section FArray.
     apply Raw.remove_3 in H; auto.
     now apply Hd in H.
   Qed.
-  
-  
+
   Definition raw_add_nodefault (k:key) (x:elt) (l:Raw.farray key elt) :=
     if cmp x default_value then
       if Raw.mem key_comp k l then Raw.remove key_comp k l
@@ -1174,8 +1117,7 @@ Section FArray.
     apply Raw.remove_sorted; auto.
     apply Raw.add_sorted; auto.
   Qed.
-  
-  
+
   Lemma add_nodefault : forall l (Hd:NoDefault l) (Hs:Sorted (Raw.ltk key_ord) l) x e,
       NoDefault (raw_add_nodefault x e l).
   Proof.
@@ -1203,22 +1145,21 @@ Section FArray.
       specialize (Raw.add_3 key_dec key_comp l e H2 H1).
       intro. now apply Hd in H3.
   Qed.
-    
-  
+
   Definition empty : farray :=
     Build_slist (Raw.empty_sorted elt key_ord) empty_nodefault.
-  
+
   Definition is_empty m : bool := Raw.is_empty m.(this).
-  
+
   Definition add x e m : farray :=
     Build_slist (add_sorted m.(sorted) x e)
                 (add_nodefault m.(nodefault) m.(sorted) x e).
-  
+
   Definition find x m : option elt := Raw.find key_comp x m.(this).
-  
+
   Definition remove x m : farray :=
     Build_slist (Raw.remove_sorted key_comp m.(sorted) x) (remove_nodefault m.(nodefault) m.(sorted) x).
-  
+
   Definition mem x m : bool := Raw.mem key_comp x m.(this).
   Definition elements m : list (key*elt) := Raw.elements m.(this).
   Definition cardinal m := length m.(this).
@@ -1265,7 +1206,7 @@ Section FArray.
     unfold cmp in H1. destruct (compare e default_value); try now contradict H1.
     apply Raw.add_1; auto.
   Qed.
-  
+
   Lemma add_2 : forall m x y e e', ~ eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
   Proof.
     intros.
@@ -1275,7 +1216,7 @@ Section FArray.
     apply (Raw.remove_2 _ m.(sorted)); auto.
     apply Raw.add_2; auto.
   Qed.
-  
+
   Lemma add_3 : forall m x y e e', ~ eq x y -> MapsTo y e (add x e' m) -> MapsTo y e m.
   Proof.
     unfold add, raw_add_nodefault, MapsTo. simpl.
@@ -1288,26 +1229,28 @@ Section FArray.
 
   Lemma remove_1 : forall m x y, eq x y -> ~ In y (remove x m).
   Proof. intros m; apply Raw.remove_1; auto. apply m.(sorted). Qed.
-  
+
   Lemma remove_2 : forall m x y e, ~ eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
   Proof. intros m; apply Raw.remove_2; auto. apply m.(sorted). Qed.
-  
+
   Lemma remove_3 : forall m x y e, MapsTo y e (remove x m) -> MapsTo y e m.
   Proof. intros m; apply Raw.remove_3; auto. apply m.(sorted). Qed.
 
   Lemma find_1 : forall m x e, MapsTo x e m -> find x m = Some e.
   Proof. intros m; apply Raw.find_1; auto. apply m.(sorted). Qed.
-  
+
   Lemma find_2 : forall m x e, find x m = Some e -> MapsTo x e m.
   Proof. intros m; apply Raw.find_2; auto. Qed.
 
   Lemma elements_1 : forall m x e, MapsTo x e m -> InA eq_key_elt (x,e) (elements m).
   Proof. intros m; apply Raw.elements_1. Qed.
-  
+
   Lemma elements_2 : forall m x e, InA eq_key_elt (x,e) (elements m) -> MapsTo x e m.
   Proof. intros m; apply Raw.elements_2. Qed.
+
   Lemma elements_3 : forall m, sort lt_key (elements m).
   Proof. intros m; apply Raw.elements_3; auto. apply m.(sorted). Qed.
+
   Lemma elements_3w : forall m, NoDupA eq_key (elements m).
   Proof. intros m; apply (Raw.elements_3w key_dec m.(sorted)). Qed.
 
@@ -1320,11 +1263,9 @@ Section FArray.
 
   Lemma equal_1 : forall m m', Equivb m m' -> equal m m' = true.
   Proof. intros m m'; apply Raw.equal_1; auto. apply m.(sorted). apply  m'.(sorted). Qed.
+
   Lemma equal_2 : forall m m', equal m m' = true -> Equivb m m'.
   Proof. intros m m'; apply Raw.equal_2; auto. apply m.(sorted). apply  m'.(sorted). Qed.
-
-
-
 
   Fixpoint eq_list (m m' : list (key * elt)) : Prop :=
     match m, m' with
@@ -1339,14 +1280,11 @@ Section FArray.
 
   Definition eq m m' := eq_list m.(this) m'.(this).
 
-
   Lemma nodefault_tail : forall x m, NoDefault (x :: m) -> NoDefault m.
     unfold NoDefault. unfold not in *. intros.
     apply (H k). unfold Raw.MapsTo. apply InA_cons_tl. apply H0.
   Qed.
 
-
-  
   Lemma raw_equal_eq : forall a (Ha: Sorted (Raw.ltk key_ord) a) b (Hb: Sorted (Raw.ltk key_ord) b),
       Raw.equal key_comp cmp a b = true -> a = b.
   Proof.
@@ -1368,8 +1306,7 @@ Section FArray.
     now inversion Ha.
     now inversion Hb.
   Qed.
-  
-  
+
   Lemma eq_equal : forall m m', eq m m' <-> equal m m' = true.
   Proof.
     intros (l,Hl,Hd); induction l.
@@ -1473,8 +1410,6 @@ Section FArray.
     apply (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)); intuition.
   Qed.
 
-
-
   Fixpoint lt_list (m m' : list (key * elt)) : Prop :=
     match m, m' with
     | nil, nil => False
@@ -1490,7 +1425,6 @@ Section FArray.
 
   Definition lt_farray m m' := lt_list m.(this) m'.(this).
 
-  
   Lemma lt_farray_trans : forall m1 m2 m3 : farray,
       lt_farray m1 m2 -> lt_farray m2 m3 -> lt_farray m1 m3.
   Proof.
@@ -1593,10 +1527,7 @@ Section FArray.
     destruct (compare x' x); auto; try (subst; apply lt_not_eq in l; now contradict l).
     apply (lt_trans x) in l; auto. subst. apply lt_not_eq in l; now contradict l.
   Qed.
-  (* TODO *)
 
-  
-  
   Lemma eq_option_alt : forall (elt:Type)(o o':option elt),
       o=o' <-> (forall e, o=Some e <-> o'=Some e).
   Proof.
@@ -1624,7 +1555,6 @@ Section FArray.
     apply find_1.
     apply add_1; auto.
   Qed.
-
 
   Lemma raw_add_d_rem : forall m (Hm: Sorted (Raw.ltk key_ord) m) x,
       raw_add_nodefault x default_value m = Raw.remove key_comp x m.
@@ -1660,9 +1590,7 @@ Section FArray.
     specialize (Raw.MapsTo_inj key_dec H2 H0 H1).
     intro. subst. apply cmp_refl.
   Qed.
-    
 
-  
   Lemma add_d_rem : forall m x, add x default_value m = remove x m.
     intros.
     unfold add, remove.
@@ -1676,8 +1604,7 @@ Section FArray.
     rewrite (proof_irrelevance _ H1 H3), (proof_irrelevance _ H2 H4).
     reflexivity.
   Qed.
-      
-  
+
   Lemma add_eq_d : forall m x y,
       x = y -> find y (add x default_value m) = None.
   Proof.
@@ -1695,7 +1622,7 @@ Section FArray.
     apply remove_1; auto.
     apply key_comp.
   Qed.
-  
+
   Lemma add_neq_o : forall m x y e,
       ~ x = y -> find y (add x e m) = find y m.
   Proof.
@@ -1704,8 +1631,6 @@ Section FArray.
   Qed.
   Hint Resolve add_neq_o.
 
-
-
   Lemma MapsTo_fun : forall m x (e e':elt),
       MapsTo x e m -> MapsTo x e' m -> e=e'.
   Proof.
@@ -1713,7 +1638,6 @@ Section FArray.
     generalize (find_1 H) (find_1 H0); clear H H0.
     intros; rewrite H in H0; injection H0; auto.
   Qed.
-
 
   (** Another characterisation of [Equal] *)
 
@@ -1755,7 +1679,6 @@ Section FArray.
     destruct (compare e e'); auto; now contradict H1.
   Qed.
 
-
   (** Composition of the two last results: relation between [Equal]
     and [Equivb]. *)
 
@@ -1764,7 +1687,6 @@ Section FArray.
     intros; rewrite Equal_Equiv.
     apply Equiv_Equivb; auto.
   Qed.
-  
 
   (** * Functional arrays with default value *)
 
@@ -1774,9 +1696,7 @@ Section FArray.
     | None => default_value
     end.
 
-
   Definition store (a: farray) (i: key) (v: elt) : farray := add i v a.
-
 
   Lemma read_over_same_write : forall a i j v, i = j -> select (store a i v) j = v.
   Proof.
@@ -1800,7 +1720,6 @@ Section FArray.
     intros; apply read_over_same_write; auto.
   Qed.
 
-
   Lemma read_over_other_write : forall a i j v,
       i <> j -> select (store a i v) j = select a j.
   Proof.
@@ -1808,10 +1727,8 @@ Section FArray.
     unfold select, store.
     apply (add_neq_o a v) in Hneq.
     rewrite Hneq. auto.
-  Qed. 
+  Qed.
 
-  
-  (* TODO *)
   Lemma find_ext_dec:
     (forall m1 m2: farray, Equal m1 m2 -> (equal m1 m2) = true).
   Proof. intros.
@@ -1819,7 +1736,6 @@ Section FArray.
     apply equal_1.
     exact H.
   Qed.
-
 
   Lemma extensionnality_eqb : forall a b,
       (forall i, select a i = select b i) -> equal a b = true.
@@ -1843,7 +1759,6 @@ Section FArray.
       exact H0.
   Qed.
 
-  
   Lemma equal_eq : forall a b, equal a b = true -> a = b.
   Proof. intros. apply eq_equal in H.
     destruct a as (a, asort, anodef), b as (b, bsort, bnodef).
@@ -1878,7 +1793,7 @@ Section FArray.
     apply H. rewrite H0.
     apply eq_equal. apply eqfarray_refl.
   Qed.
-      
+
   Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
   Proof.
     intros; apply equal_eq; apply extensionnality_eqb; auto.
@@ -1888,7 +1803,6 @@ Section FArray.
 
     Require Import Classical_Pred_Type ClassicalEpsilon.
 
-    
     Lemma extensionnality2 : forall a b, a <> b -> (exists i, select a i <> select b i).
     Proof.
       intros.
@@ -1917,7 +1831,6 @@ Section FArray.
         (* destruct (diff_index_p H). apply x. *)
     Defined.
 
-    
    Lemma select_over_diff: forall a b, a <> b ->
             select a (diff a b) <> select b (diff a b).
    Proof.
@@ -1932,7 +1845,6 @@ Section FArray.
      destruct (diff_index_p (n Logic.eq_refl)). simpl; auto.
    Qed.
 
-       
   End Classical_extensionnality.
 
 End FArray.
