@@ -221,6 +221,10 @@ and print_term fmt t =
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a)" nb op print_term a
 
+      | Some ("concat" as op, [_; _; _; a; b]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
+
       | Some ("bitof", [a; {value = Int n}]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(bitof %s %a)" nb
