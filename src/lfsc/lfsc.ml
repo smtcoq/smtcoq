@@ -277,11 +277,22 @@ let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 
 (* end *)
 
+let print_logic fmt ro f =
+  let l = SL.union (Op.logic_ro ro) (Form.logic f) in
+  fprintf fmt "(set-logic QF_";
+  if SL.is_empty l then fprintf fmt "SAT"
+  else begin 
+    if SL.mem LArrays l then fprintf fmt "A";
+    if SL.mem LUF l || SL.mem LLia l then fprintf fmt "UF";
+    if SL.mem LBitvectors l then fprintf fmt "BV";
+    if SL.mem LLia l then fprintf fmt "LIA"
+  end;
+  fprintf fmt ")@."
 
 
 let export out_channel rt ro l =
   let fmt = formatter_of_out_channel out_channel in
-  fprintf fmt "(set-logic QF_UFLIA)@.";
+  print_logic fmt ro l;
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
@@ -331,6 +342,8 @@ let call_cvc4 rt ro rf root =
     failwith ("Lfsc.call_cvc4: command "^command^
 	      " exited with code "^(string_of_int exit_code));
 
+  eprintf "Running in %s@." Sys.executable_name;
+
   let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
   let signatures = [
     "sat.plf";
@@ -362,5 +375,4 @@ let tactic env sigma t =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  eprintf "caca@.";
   SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t

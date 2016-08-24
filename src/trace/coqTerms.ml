@@ -131,6 +131,14 @@ let cbv_slt = gen_constant bv_modules "bv_slt"
 let cbv_concat = gen_constant bv_modules "bv_concat"
 
 
+(* Arrays *)
+let array_modules = [["SMTCoq";"array";"FArray"]]
+let cfarray = gen_constant array_modules "FArray.farray"
+let cselect = gen_constant array_modules "cselect"
+let cstore = gen_constant array_modules "cstore"
+let cdiff = gen_constant array_modules "cdiff"
+
+
 let cOrderedTypeCompare =
   gen_constant [["Coq";"Structures";"OrderedType"]] "Compare"
 

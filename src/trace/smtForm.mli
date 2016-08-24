@@ -13,6 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open SmtMisc
 
 module type ATOM = 
   sig 
@@ -24,6 +25,8 @@ module type ATOM =
 
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
+
+    val logic : t -> logic
 
   end 
 
@@ -65,6 +68,8 @@ module type FORM =
       val is_neg : t -> bool
 
       val to_smt : (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
+
+      val logic : t -> logic
 
       (* Building formula from positive formula *)
       exception NotWellTyped of pform

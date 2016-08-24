@@ -362,8 +362,11 @@ let tactic call_solver rt ro ra rf env sigma t =
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl in
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
+  (* let quantify_assum forall_let body = *)
+  (*   List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in *)
   let res = compose_lam_assum forall_let body in
   let cuts = (Btype.get_cuts rt)@cuts in
   List.fold_right (fun (eqn, eqt) tac ->
+    (* let eqt = quantify_assum forall_let eqt in *)
     Structures.tclTHENLAST (Structures.assert_before (Names.Name eqn) eqt) tac
   ) cuts (Structures.vm_cast_no_check res)

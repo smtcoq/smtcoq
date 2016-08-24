@@ -4,6 +4,21 @@ Require Import Bool PArray Int63 List ZArith.
 Local Open Scope int63_scope.
 
 
+Section BV.
+
+  Require Import BVList.
+  Import BITVECTOR_LIST.
+
+  Goal forall (a b c: bitvector 4), implb
+                                 (bv_eq c (bv_and a b))
+                                 (bv_eq (bv_and (bv_and a c) b) c).
+  Proof.
+    cvc4.
+  Qed.
+  
+End BV.
+
+
   
 (* CVC4 tactic *)
 
@@ -344,11 +359,16 @@ Qed.
 
 (* lia1.smt *)
 
+
+(* lia1.smt *)
+
 Theorem lia1: forall x y z, implb ((x <=? 3) && ((y <=? 7) || (z <=? 9)))
   ((x + y <=? 10) || (x + z <=? 12)) = true.
 Proof.
+  intros.
   cvc4.
-Admitted.
+  verit.
+Qed.
 
 Print Assumptions lia1.
 
@@ -356,29 +376,29 @@ Print Assumptions lia1.
 
 Theorem lia2: forall x, implb (Z.eqb (x - 3) 7) (x >=? 10) = true.
 Proof.
+  intros.
   cvc4.
-Admitted.
-
-Print Assumptions lia2.
+  verit.
+Qed.
 
 
 (* lia3.smt *)
 
 Theorem lia3: forall x y, implb (x >? y) (y + 1 <=? x) = true.
 Proof.
+  intros.
   cvc4.
-Admitted.
+  verit.
+Qed.
 
-Print Assumptions lia3.
 
 (* lia4.smt *)
 
 Theorem lia4: forall x y, Bool.eqb (x <? y) (x <=? y - 1) = true.
 Proof.
-  cvc4.
+  intros.
+  cvc4; verit.
 Admitted.
-
-Print Assumptions lia4.
 
 
 (* lia5.smt *)
@@ -396,19 +416,17 @@ Print Assumptions lia4.
 
 Theorem lia6: forall x, implb (andb ((x - 3) <=? 7) (7 <=? (x - 3))) (x >=? 10) = true.
 Proof.
-  cvc4.
-Admitted.
-
-Print Assumptions lia6.
+  intros.
+  cvc4; verit.
+Qed.
 
 (* lia7.smt *)
 
 Theorem lia7: forall x, implb (Z.eqb (x - 3) 7) (10 <=? x) = true.
 Proof.
-  cvc4.
-Admitted.
-
-Print Assumptions lia7.
+  intros.
+  cvc4; verit.
+Qed.
 
 
 (* More general examples *)
@@ -433,10 +451,9 @@ Theorem lia8: forall b1 b2 x1 x2,
     (ifb b2 (Z.eqb (2*x1) (2*x2+1)) (Z.eqb (2*x1) (2*x2))))
   ((implb b1 b2) && (implb b2 b1) && (Z.eqb x1 x2)).
 Proof.
-  cvc4.
+  intros.
+  cvc4; verit.
 Admitted.
-
-Print Assumptions lia8.
 
 
 (* With let ... in ... *)

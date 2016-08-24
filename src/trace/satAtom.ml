@@ -57,6 +57,8 @@ module Atom =
     let interp_tbl reify =
       Structures.mkArray (Lazy.force cbool, atom_tbl reify)
 
+    let logic _ = SL.empty
+    
   end
 
 module Form = SmtForm.Make(Atom)

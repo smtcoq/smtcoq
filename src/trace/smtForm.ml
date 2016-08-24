@@ -30,6 +30,8 @@ module type ATOM =
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
 
+    val logic : t -> logic
+
   end 
 
 
@@ -71,6 +73,8 @@ module type FORM =
 
       val to_smt : (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
 
+      val logic : t -> logic
+        
       (* Building formula from positive formula *)
       exception NotWellTyped of pform
       type reify 
@@ -188,7 +192,19 @@ module Make (Atom:ATOM) =
       Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
       Format.fprintf fmt "%s" s2
 
+    
+    let rec logic_pform = function
+      | Fatom a -> Atom.logic a
+      | Fapp (_, args) ->
+        Array.fold_left (fun l f ->
+            SL.union (logic f) l  
+          ) SL.empty args
+      | FbbT _ -> SL.singleton LBitvectors
 
+    and logic = function
+      | Pos hp | Neg hp -> logic_pform hp.hval
+
+    
     module HashedForm =
       struct 
 	
