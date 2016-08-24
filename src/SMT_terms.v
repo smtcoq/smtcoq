@@ -536,24 +536,42 @@ Module Typ.
     Defined.
 
     Instance BV_comp n: Comparable (BITVECTOR_LIST.bitvector n).
-    Admitted.
-    (* Proof. *)
-    (*   constructor. *)
-    (*   intros x y. *)
-    (*   case_eq (BITVECTOR_LIST.bv_ult x y). *)
-    (*   intros. *)
-    (*   apply OrderedType.LT. *)
-    (*   unfold lt, BV_ord. auto. *)
-    (*   case_eq (BITVECTOR_LIST.bv_eq x y). *)
-    (*   intros. *)
-    (*   apply OrderedType.EQ. *)
-    (*   apply BITVECTOR_LIST.bv_eq_reflect. auto. *)
-    (*   intros. *)
-    (*   apply OrderedType.GT. *)
-    (*   unfold lt. *)
-    (*   unfold BV_ord. *)
-    (*   apply lt_trans. *)
-    (* Qed. *)
+    Proof.
+      constructor.
+      intros x y.
+      case_eq (BITVECTOR_LIST.bv_ult x y).
+      intros.
+      apply OrderedType.LT.
+      unfold lt, BV_ord. auto.
+      case_eq (BITVECTOR_LIST.bv_eq x y).
+      intros.
+      apply OrderedType.EQ.
+      apply BITVECTOR_LIST.bv_eq_reflect. auto.
+      intros.
+      apply OrderedType.GT.
+      unfold lt, BV_ord. auto.
+      destruct (BV_ord n).
+      unfold BITVECTOR_LIST.bv_ult.
+      unfold BITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bv_eq,
+      RAWBITVECTOR_LIST.bits in H.
+      unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult in H0.
+      unfold is_true.
+      
+      unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size.
+      destruct x, y. simpl in *.
+      unfold RAWBITVECTOR_LIST.size in *.
+      rewrite wf, wf0 in *.
+      rewrite N.eqb_refl in *.
+      
+      apply RAWBITVECTOR_LIST.nlt_neq_gt.
+      rewrite !List.rev_length.
+      apply (f_equal (N.to_nat)) in wf.
+      apply (f_equal (N.to_nat)) in wf0.
+      rewrite Nnat.Nat2N.id in wf, wf0.
+      now rewrite wf, wf0.
+      unfold RAWBITVECTOR_LIST.rev_ult_list in H0. easy.
+      now apply RAWBITVECTOR_LIST.rev_neq in H.
+    Defined.
 
     
     Instance TI_comp i : Comparable (t_i.[i]).(te_carrier).
@@ -587,7 +605,7 @@ Module Typ.
         now apply equal_eq in e.
       - apply OrderedType.GT. auto.
     Defined.
-    
+
     Class CompDec := {
       ty : Type;
       Eqb :> EqbType ty;
@@ -632,7 +650,7 @@ Module Typ.
       Comp := BV_comp n;
       Inh := {| default_value := BITVECTOR_LIST.zeros n |}
     |}.
-   
+
 
     Instance TI_compdec i : CompDec := {|
       ty := (t_i.[i]).(te_carrier);
