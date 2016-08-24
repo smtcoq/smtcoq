@@ -564,6 +564,28 @@ let () =
 let mpz_sub x y = mp_add x (mp_mul (mpz_of_int (-1)) y)
 
 
+
+let rec bv_constants_are_disequal x y =
+  match value x with
+  | Const _ when term_equal x bvn -> failwith "bv_constants_are_disequal"
+  | App (f, [bx; x']) when term_equal f bvc_s ->
+    (match value y with
+     | Const _ when term_equal y bvn -> failwith "bv_constants_are_disequal"
+     | App (f, [by; y']) when term_equal f bvc_s ->
+       if term_equal bx b0 then
+         if term_equal by b0 then
+           bv_constants_are_disequal x' y'
+         else ttrue
+       else if term_equal bx b1 then
+         if term_equal by b1 then
+           bv_constants_are_disequal x' y'
+         else ttrue
+       else failwith "bv_constants_are_disequal"
+     | _ -> failwith "bv_constants_are_disequal")
+  | _ -> failwith "bv_constants_are_disequal"
+
+
+
 (* calculate the length of a bit-blasted term *)
 let rec bblt_len v =
   (* eprintf "bblt_len %a@." print_term v; *)
@@ -906,6 +928,11 @@ let () =
       (function
         | [c] -> simplify_clause c
         | _ -> failwith "simplify_clause: Wrong number of arguments");
+
+      "bv_constants_are_disequal",
+      (function
+        | [x; y] -> bv_constants_are_disequal x y
+        | _ -> failwith "bv_constants_are_disequal: Wrong number of arguments");
 
       "bblt_len",
       (function

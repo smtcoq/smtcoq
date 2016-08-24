@@ -109,16 +109,30 @@ module Make (T : Translator_sig.S) = struct
     | _ -> p
 
 
+  let dvar_of_v t = match app_name t with
+    | Some ("a_var_bv", [_; v]) -> v
+    | _ -> t
+
+  
+  let trust_vareq_as_alias formula = match app_name formula with
+    | Some ("=", [ty; alias; t]) ->
+      (match name (dvar_of_v alias) with
+      | Some n -> register_alias n t; true
+      | None -> false)
+    | _ -> false
+
+  
   let rec admit_preproc p = match app_name p with
     | Some ("th_let_pf", [_; tr; p]) ->
       begin match app_name tr with
         | Some ("trust_f", [formula]) ->
-          begin match value p with
-            | Lambda ({sname = Name h}, p) ->
-              mk_admit_preproc h formula;
-              admit_preproc p
-            | _ -> assert false
-          end
+            begin match value p with
+              | Lambda ({sname = Name h}, p) ->
+                if not (trust_vareq_as_alias formula) then
+                  mk_admit_preproc h formula;
+                admit_preproc p
+              | _ -> assert false
+            end
         | _ -> assert false
       end
     | _ -> p
@@ -133,7 +147,7 @@ module Make (T : Translator_sig.S) = struct
           begin match value p with
             | Lambda ({sname = Name h}, p) ->
               let diff_a_b = (apply_diff ty_i ty_e a b) in
-              register_diff index_diff diff_a_b;
+              register_alias index_diff diff_a_b;
               let f =
                 or_ (eq (array ty_i ty_e) a b)
                   (not_ (eq ty_e
@@ -753,6 +767,7 @@ module Make (T : Translator_sig.S) = struct
         ax = true}
 
     | Some ("negativerow", [ti; _; i; j; a; v; npr1]) ->
+      let env = lem env npr1 in
       let i_eq_j = eq ti i j in
       let pr1 = match app_name (th_res p) with
         | Some ("not", [pr1]) -> pr1
@@ -760,9 +775,9 @@ module Make (T : Translator_sig.S) = struct
       in
       { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses }
 
-    | Some (rule, _) ->
-      (* TODO *)
-      failwith (sprintf "Rule %s not implemented" rule)
+    | Some (rule, args) ->
+      eprintf "Warning: Introducing hole for unsupported rule %s@." rule;
+      { env with clauses = mk_clause_cl Hole [th_res p] [] :: env.clauses }
 
     | None ->
 
@@ -1116,11 +1131,27 @@ module Make (T : Translator_sig.S) = struct
           bblast_decls p
         | _ -> assert false
       end
+      
+    | Some ("decl_bblast_with_alias", [n; b; t; a; bb; _; l]) ->
+      (* register_termalias a t; *)
+      (* begin match name a with *)
+      (*   | Some n -> register_alias n t *)
+      (*   | None -> () *)
+      (* end; *)
+      let id = match bbt bb with Some id -> id | None -> assert false in
+      begin match value l with
+        | Lambda ({sname = Name h}, p) ->
+          register_decl_id h id;
+          bblast_decls p
+        | _ -> assert false
+      end
+
     | _ -> p
 
 
   let bv_pred = function 
     | "bv_bbl_=" -> Bbeq
+    | "bv_bbl_=_swap" -> Bbeq
     | "bv_bbl_bvult" -> Bbult
     | "bv_bbl_bvslt" -> Bbslt
     | _ -> assert false
@@ -1153,7 +1184,7 @@ module Make (T : Translator_sig.S) = struct
   (** Bit-blasting and bitvector proof conversion (returns rest of the sat
       proof) *)
   let bb_proof p = match app_name p with
-    | Some ("decl_bblast", _) ->
+    | Some (("decl_bblast"| "decl_bblast_with_alias"), _) ->
       p
       |> bblast_decls
       |> bblast_eqs

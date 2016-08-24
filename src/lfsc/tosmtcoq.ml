@@ -38,7 +38,8 @@ let clauses_ids = HCl.create 201
 let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let inputs : (string, int) Hashtbl.t = HS.create 13
-let diffarray_tbl = HS.create 17
+let alias_tbl = HS.create 17
+(* let termalias_tbl = HT.create 17 *)
 
 let cl_cpt = ref 0
 
@@ -191,14 +192,16 @@ let const_bv t =
   Atom (Atom.mk_bvconst ra bv_list)
 
 
-let rec term_smtcoq t = match value t with
+let rec term_smtcoq t =
+  (* try HT.find termalias_tbl (deref t) |> term_smtcoq  with Not_found -> *)
+  match value t with
   | Const {sname=Name "true"} -> Form Form.pform_true
   | Const {sname=Name "false"} -> Form Form.pform_false
   | Const {sname=Name "bvn"} -> const_bv t
   | Const {sname=Name n} ->
     begin
       try
-        term_smtcoq  (HS.find diffarray_tbl n)
+        term_smtcoq  (HS.find alias_tbl n)
       with Not_found -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
     end
   | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
@@ -468,7 +471,10 @@ let mk_admit_preproc name formula =
 let register_prop_abstr vt formula = HT.add propvars vt formula
 
 
-let register_diff name_index t = HS.add diffarray_tbl name_index t
+let register_alias name_index t = HS.add alias_tbl name_index t
+
+
+(* let register_termalias a t = HT.add termalias_tbl a t *)
 
 
 let get_clause_id cl =
@@ -496,6 +502,7 @@ let clear () =
   Hashtbl.clear ids_clauses;
   HT.clear propvars;
   HS.clear inputs;
-  HS.clear diffarray_tbl;
+  HS.clear alias_tbl;
+  (* HT.clear termalias_tbl; *)
   cl_cpt := 0
   
