@@ -264,6 +264,7 @@ Record typ_eqb : Type := Typ_eqb {
 }.
 
 
+
 Section Typ_eqb_param.
 
   Variable A : Type.
@@ -641,6 +642,37 @@ Module Typ.
       Inh := {| default_value := (t_i.[i]).(te_inhabitant) |}
     |}.
 
+
+
+    Definition compdec_typ_eqb (ty:CompDec) : typ_eqb.
+      destruct ty.
+      destruct Eqb0, Decidable0, Ordered0, Comp0, Inh0.
+      set (ltb x y := match compare x y with OrderedType.LT _ => true | _ => false end).
+      refine (Typ_eqb ty0 default_value eqb _ ltb _ _ _).
+      intros. apply iff_reflect; symmetry; auto.
+      intros x y z.
+      unfold ltb.
+      destruct (compare x y);
+      destruct (compare y z);
+      destruct (compare x z); auto.
+      subst. apply (lt_trans _ _ _ l0) in l. apply lt_not_eq in l. auto.
+      apply (lt_trans _ _ _ (lt_trans _ _ _ l l0)) in l1. apply lt_not_eq in l. auto.
+      apply lt_not_eq in l1. auto.
+      intros x y.
+      unfold ltb. destruct (compare x y); intuition; subst; apply lt_not_eq in l; auto.
+      intros x y.
+      unfold ltb. case_eq (compare x y); intros.
+      apply OrderedType.LT.
+      destruct (compare x y); try discriminate H; auto.
+      apply OrderedType.EQ.
+      destruct (compare x y); try discriminate H; auto.
+      apply eqb_spec; auto.
+      apply OrderedType.GT.
+      destruct (compare y x); try discriminate H; auto; clear H.
+      subst; apply lt_not_eq in l; auto.
+      subst. apply (lt_trans _ _ _ l0) in l. apply lt_not_eq in l. auto.
+    Defined.
+    
 
     Instance FArray_compdec (key_compdec elt_compdec: CompDec) : CompDec :=
       let (key, key_eqbtype, key_dec, key_ord, key_comp, _) := key_compdec in

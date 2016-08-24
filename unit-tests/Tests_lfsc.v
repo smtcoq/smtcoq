@@ -9,32 +9,32 @@ Local Open Scope int63_scope.
 
 (* Simple connectors *)
 
-(* Goal forall (a:bool), a || negb a. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall (a:bool), a || negb a.
+  cvc4.
+Qed.
 
 
-(* Goal forall a, negb (a || negb a) = false. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, negb (a || negb a) = false.
+  cvc4.
+Qed.
 
-(* Goal forall a, (a && negb a) = false. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, (a && negb a) = false.
+  cvc4.
+Qed.
 
-(* Goal forall a, negb (a && negb a). *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, negb (a && negb a).
+  cvc4.
+Qed.
 
-(* Goal forall a, implb a a. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, implb a a.
+  cvc4.
+Qed.
 
-(* Goal forall a, negb (implb a a) = false. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, negb (implb a a) = false.
+  cvc4.
+Qed.
 
-(* (* *)
+(* *)
 (* Goal forall a , (xorb a a) || negb (xorb a a). *)
 (*   cvc4. *)
 (* Qed. *)
@@ -44,43 +44,43 @@ Local Open Scope int63_scope.
 (*   cvc4. *)
 (* Qed. *)
 (* Print Unnamed_thm5. *)
-(* *) *)
+(* *)
 
-(* (* Polarities *) *)
+(* Polarities *)
 
-(* Goal forall a b, andb (orb (negb (negb a)) b) (negb (orb a b)) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
-
-
-(* Goal forall a b, andb (orb a b) (andb (negb a) (negb b)) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a b, andb (orb (negb (negb a)) b) (negb (orb a b)) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-
-(* (* Multiple negations *) *)
-
-(* Goal forall a, orb a (negb (negb (negb a))) = true. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a b, andb (orb a b) (andb (negb a) (negb b)) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-(* (* sat5.smt *) *)
-(* (* (a ∨ b ∨ c) ∧ (¬a ∨ ¬b ∨ ¬c) ∧ (¬a ∨ b) ∧ (¬b ∨ c) ∧ (¬c ∨ a) = ⊥ *) *)
 
-(* Goal forall a b c, *)
-(*   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+(* Multiple negations *)
+
+Goal forall a, orb a (negb (negb (negb a))) = true.
+Proof.
+  cvc4.
+Qed.
+
+
+(* sat5.smt *)
+(* (a ∨ b ∨ c) ∧ (¬a ∨ ¬b ∨ ¬c) ∧ (¬a ∨ b) ∧ (¬b ∨ c) ∧ (¬c ∨ a) = ⊥ *)
+
+Goal forall a b c,
+  (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
+Proof.
+  cvc4.
+Qed.
 
 
  
-(* (* *)
+(* *)
 (* Goal true. *)
 (*   cvc4. *)
 (* Qed. *)
@@ -127,179 +127,179 @@ Local Open Scope int63_scope.
 (* Proof. *)
 (*   cvc4. *)
 (* Qed. *)
-(* *) *)
+(* *)
 
-(* Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)). *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
-
-
-(* Goal forall x y z, Bool.eqb (ifb x y z) ((x && y) || ((negb x) && z)). *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
+Proof.
+  cvc4.
+Qed.
 
 
-(* (* sat2.smt *) *)
-(* (* ((a ∧ b) ∨ (b ∧ c)) ∧ ¬b = ⊥ *) *)
-
-(* Goal forall a b c, (((a && b) || (b && c)) && (negb b)) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall x y z, Bool.eqb (ifb x y z) ((x && y) || ((negb x) && z)).
+Proof.
+  cvc4.
+Qed.
 
 
-(* (* sat3.smt *) *)
-(* (* (a ∨ a) ∧ ¬a = ⊥ *) *)
+(* sat2.smt *)
+(* ((a ∧ b) ∨ (b ∧ c)) ∧ ¬b = ⊥ *)
 
-(* Goal forall a, ((a || a) && (negb a)) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
-
-
-(* (* sat4.smt *) *)
-(* (* ¬(a ∨ ¬a) = ⊥ *) *)
-
-(* Goal forall a, (negb (a || (negb a))) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a b c, (((a && b) || (b && c)) && (negb b)) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-(* (* sat5.smt *) *)
-(* (* (a ∨ b ∨ c) ∧ (¬a ∨ ¬b ∨ ¬c) ∧ (¬a ∨ b) ∧ (¬b ∨ c) ∧ (¬c ∨ a) = ⊥ *) *)
+(* sat3.smt *)
+(* (a ∨ a) ∧ ¬a = ⊥ *)
 
-(* Goal forall a b c, *)
-(*   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
-
-
-(* (* Le même, mais où a, b et c sont des termes concrets *) *)
-
-(* Goal forall i j k, *)
-(*   let a := i == j in *)
-(*   let b := j == k in *)
-(*   let c := k == i in *)
-(*   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, ((a || a) && (negb a)) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-(* (* sat6.smt *) *)
-(* (* (a ∧ b) ∧ (c ∨ d) ∧ ¬(c ∨ (a ∧ b ∧ d)) = ⊥ *) *)
+(* sat4.smt *)
+(* ¬(a ∨ ¬a) = ⊥ *)
 
-(* Goal forall a b c d, ((a && b) && (c || d) && (negb (c || (a && b && d)))) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
-
-
-(* (* sat7.smt *) *)
-(* (* a ∧ b ∧ c ∧ (¬a ∨ ¬b ∨ d) ∧ (¬d ∨ ¬c) = ⊥ *) *)
-
-(* Goal forall a b c d, (a && b && c && ((negb a) || (negb b) || d) && ((negb d) || (negb c))) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, (negb (a || (negb a))) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-(* (* Pigeon hole: 4 holes, 5 pigeons *) *)
+(* sat5.smt *)
+(* (a ∨ b ∨ c) ∧ (¬a ∨ ¬b ∨ ¬c) ∧ (¬a ∨ b) ∧ (¬b ∨ c) ∧ (¬c ∨ a) = ⊥ *)
 
-(* Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, ( *)
-(*   (orb (negb x11) (negb x21)) && *)
-(*   (orb (negb x11) (negb x31)) && *)
-(*   (orb (negb x11) (negb x41)) && *)
-(*   (orb (negb x21) (negb x31)) && *)
-(*   (orb (negb x21) (negb x41)) && *)
-(*   (orb (negb x31) (negb x41)) && *)
-
-(*   (orb (negb x12) (negb x22)) && *)
-(*   (orb (negb x12) (negb x32)) && *)
-(*   (orb (negb x12) (negb x42)) && *)
-(*   (orb (negb x22) (negb x32)) && *)
-(*   (orb (negb x22) (negb x42)) && *)
-(*   (orb (negb x32) (negb x42)) && *)
-
-(*   (orb (negb x13) (negb x23)) && *)
-(*   (orb (negb x13) (negb x33)) && *)
-(*   (orb (negb x13) (negb x43)) && *)
-(*   (orb (negb x23) (negb x33)) && *)
-(*   (orb (negb x23) (negb x43)) && *)
-(*   (orb (negb x33) (negb x43)) && *)
-
-(*   (orb (negb x14) (negb x24)) && *)
-(*   (orb (negb x14) (negb x34)) && *)
-(*   (orb (negb x14) (negb x44)) && *)
-(*   (orb (negb x24) (negb x34)) && *)
-(*   (orb (negb x24) (negb x44)) && *)
-(*   (orb (negb x34) (negb x44)) && *)
-
-(*   (orb (negb x15) (negb x25)) && *)
-(*   (orb (negb x15) (negb x35)) && *)
-(*   (orb (negb x15) (negb x45)) && *)
-(*   (orb (negb x25) (negb x35)) && *)
-(*   (orb (negb x25) (negb x45)) && *)
-(*   (orb (negb x35) (negb x45)) && *)
+Goal forall a b c,
+  (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-(*   (orb (negb x11) (negb x12)) && *)
-(*   (orb (negb x11) (negb x13)) && *)
-(*   (orb (negb x11) (negb x14)) && *)
-(*   (orb (negb x11) (negb x15)) && *)
-(*   (orb (negb x12) (negb x13)) && *)
-(*   (orb (negb x12) (negb x14)) && *)
-(*   (orb (negb x12) (negb x15)) && *)
-(*   (orb (negb x13) (negb x14)) && *)
-(*   (orb (negb x13) (negb x15)) && *)
-(*   (orb (negb x14) (negb x15)) && *)
+(* Le même, mais où a, b et c sont des termes concrets *)
 
-(*   (orb (negb x21) (negb x22)) && *)
-(*   (orb (negb x21) (negb x23)) && *)
-(*   (orb (negb x21) (negb x24)) && *)
-(*   (orb (negb x21) (negb x25)) && *)
-(*   (orb (negb x22) (negb x23)) && *)
-(*   (orb (negb x22) (negb x24)) && *)
-(*   (orb (negb x22) (negb x25)) && *)
-(*   (orb (negb x23) (negb x24)) && *)
-(*   (orb (negb x23) (negb x25)) && *)
-(*   (orb (negb x24) (negb x25)) && *)
-
-(*   (orb (negb x31) (negb x32)) && *)
-(*   (orb (negb x31) (negb x33)) && *)
-(*   (orb (negb x31) (negb x34)) && *)
-(*   (orb (negb x31) (negb x35)) && *)
-(*   (orb (negb x32) (negb x33)) && *)
-(*   (orb (negb x32) (negb x34)) && *)
-(*   (orb (negb x32) (negb x35)) && *)
-(*   (orb (negb x33) (negb x34)) && *)
-(*   (orb (negb x33) (negb x35)) && *)
-(*   (orb (negb x34) (negb x35)) && *)
-
-(*   (orb (negb x41) (negb x42)) && *)
-(*   (orb (negb x41) (negb x43)) && *)
-(*   (orb (negb x41) (negb x44)) && *)
-(*   (orb (negb x41) (negb x45)) && *)
-(*   (orb (negb x42) (negb x43)) && *)
-(*   (orb (negb x42) (negb x44)) && *)
-(*   (orb (negb x42) (negb x45)) && *)
-(*   (orb (negb x43) (negb x44)) && *)
-(*   (orb (negb x43) (negb x45)) && *)
-(*   (orb (negb x44) (negb x45)) && *)
+Goal forall i j k,
+  let a := i == j in
+  let b := j == k in
+  let c := k == i in
+  (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
+Proof.
+  cvc4.
+Qed.
 
 
-(*   (orb (orb (orb x11 x21) x31) x41) && *)
-(*   (orb (orb (orb x12 x22) x32) x42) && *)
-(*   (orb (orb (orb x13 x23) x33) x43) && *)
-(*   (orb (orb (orb x14 x24) x34) x44) && *)
-(*   (orb (orb (orb x15 x25) x35) x45)) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+(* sat6.smt *)
+(* (a ∧ b) ∧ (c ∨ d) ∧ ¬(c ∨ (a ∧ b ∧ d)) = ⊥ *)
+
+Goal forall a b c d, ((a && b) && (c || d) && (negb (c || (a && b && d)))) = false.
+Proof.
+  cvc4.
+Qed.
+
+
+(* sat7.smt *)
+(* a ∧ b ∧ c ∧ (¬a ∨ ¬b ∨ d) ∧ (¬d ∨ ¬c) = ⊥ *)
+
+Goal forall a b c d, (a && b && c && ((negb a) || (negb b) || d) && ((negb d) || (negb c))) = false.
+Proof.
+  cvc4.
+Qed.
+
+
+(* Pigeon hole: 4 holes, 5 pigeons *)
+
+Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, (
+  (orb (negb x11) (negb x21)) &&
+  (orb (negb x11) (negb x31)) &&
+  (orb (negb x11) (negb x41)) &&
+  (orb (negb x21) (negb x31)) &&
+  (orb (negb x21) (negb x41)) &&
+  (orb (negb x31) (negb x41)) &&
+
+  (orb (negb x12) (negb x22)) &&
+  (orb (negb x12) (negb x32)) &&
+  (orb (negb x12) (negb x42)) &&
+  (orb (negb x22) (negb x32)) &&
+  (orb (negb x22) (negb x42)) &&
+  (orb (negb x32) (negb x42)) &&
+
+  (orb (negb x13) (negb x23)) &&
+  (orb (negb x13) (negb x33)) &&
+  (orb (negb x13) (negb x43)) &&
+  (orb (negb x23) (negb x33)) &&
+  (orb (negb x23) (negb x43)) &&
+  (orb (negb x33) (negb x43)) &&
+
+  (orb (negb x14) (negb x24)) &&
+  (orb (negb x14) (negb x34)) &&
+  (orb (negb x14) (negb x44)) &&
+  (orb (negb x24) (negb x34)) &&
+  (orb (negb x24) (negb x44)) &&
+  (orb (negb x34) (negb x44)) &&
+
+  (orb (negb x15) (negb x25)) &&
+  (orb (negb x15) (negb x35)) &&
+  (orb (negb x15) (negb x45)) &&
+  (orb (negb x25) (negb x35)) &&
+  (orb (negb x25) (negb x45)) &&
+  (orb (negb x35) (negb x45)) &&
+
+
+  (orb (negb x11) (negb x12)) &&
+  (orb (negb x11) (negb x13)) &&
+  (orb (negb x11) (negb x14)) &&
+  (orb (negb x11) (negb x15)) &&
+  (orb (negb x12) (negb x13)) &&
+  (orb (negb x12) (negb x14)) &&
+  (orb (negb x12) (negb x15)) &&
+  (orb (negb x13) (negb x14)) &&
+  (orb (negb x13) (negb x15)) &&
+  (orb (negb x14) (negb x15)) &&
+
+  (orb (negb x21) (negb x22)) &&
+  (orb (negb x21) (negb x23)) &&
+  (orb (negb x21) (negb x24)) &&
+  (orb (negb x21) (negb x25)) &&
+  (orb (negb x22) (negb x23)) &&
+  (orb (negb x22) (negb x24)) &&
+  (orb (negb x22) (negb x25)) &&
+  (orb (negb x23) (negb x24)) &&
+  (orb (negb x23) (negb x25)) &&
+  (orb (negb x24) (negb x25)) &&
+
+  (orb (negb x31) (negb x32)) &&
+  (orb (negb x31) (negb x33)) &&
+  (orb (negb x31) (negb x34)) &&
+  (orb (negb x31) (negb x35)) &&
+  (orb (negb x32) (negb x33)) &&
+  (orb (negb x32) (negb x34)) &&
+  (orb (negb x32) (negb x35)) &&
+  (orb (negb x33) (negb x34)) &&
+  (orb (negb x33) (negb x35)) &&
+  (orb (negb x34) (negb x35)) &&
+
+  (orb (negb x41) (negb x42)) &&
+  (orb (negb x41) (negb x43)) &&
+  (orb (negb x41) (negb x44)) &&
+  (orb (negb x41) (negb x45)) &&
+  (orb (negb x42) (negb x43)) &&
+  (orb (negb x42) (negb x44)) &&
+  (orb (negb x42) (negb x45)) &&
+  (orb (negb x43) (negb x44)) &&
+  (orb (negb x43) (negb x45)) &&
+  (orb (negb x44) (negb x45)) &&
+
+
+  (orb (orb (orb x11 x21) x31) x41) &&
+  (orb (orb (orb x12 x22) x32) x42) &&
+  (orb (orb (orb x13 x23) x33) x43) &&
+  (orb (orb (orb x14 x24) x34) x44) &&
+  (orb (orb (orb x15 x25) x35) x45)) = false.
+Proof.
+  cvc4.
+Qed.
 
 
 (* uf1.smt *)
@@ -480,21 +480,47 @@ Proof.
 Qed.
 
 Section Concret.
-  Goal forall i j,
+  Theorem c1: forall i j,
     (i == j) && (negb (i == j)) = false.
   Proof.
     cvc4.
-  Qed.
+  Admitted.
+  Print Assumptions c1.
+
+  
 End Concret.
 
 Section Concret2.
   Lemma concret : forall i j, (i == j) || (negb (i == j)).
   Proof.
     cvc4.
-  Qed.
+    econstructor; eexact Int63Properties.reflect_eqb.
+    apply 0.
+    exists Int63Native.ltb.
+    intros x y z; rewrite !Int63Axioms.ltb_spec; apply Z.lt_trans.
+    intros x y; rewrite !Int63Axioms.ltb_spec, <- Int63Properties.to_Z_eq.
+    apply Z.lt_neq.
+    intros.
+    destruct eq0 as (eq0, r0), ltb0 as (ltb, ltb_trans, ltb_neq); simpl.
+    (* destruct (Typ.Z_comp). *)
+    (* unfold FArray.lt in compare. *)
+    (* destruct (Typ.Z_ord). *)
+    (* destruct (compare [|x|] [|y|]). *)
+
+    case_eq (Int63Native.ltb x y); intro.
+    
+    case_eq (Int63Op.compare x y); rewrite Int63Properties.compare_spec; intro.
+    - apply OrderedType.EQ.
+      apply (reflect_iff _ _ (r0 x y)).
+      apply Int63Properties.to_Z_eq.
+      apply Z.compare_eq; trivial.
+    - apply OrderedType.LT.
+Admitted.
   Check concret.
+  Print Assumptions concret.
 End Concret2.
 Check concret.
+
 
 
 (* Congruence in which some premices are REFL *)

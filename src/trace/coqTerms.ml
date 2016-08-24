@@ -100,6 +100,12 @@ let cpair = gen_constant init_modules "pair"
 
 (* Dependent pairs *)
 let csigT = gen_constant init_modules "sigT"
+let cprojT1 = gen_constant init_modules "projT1"
+let cprojT2 = gen_constant init_modules "projT2"
+let cprojT3 = gen_constant init_modules "projT3"
+
+let csigT2 = gen_constant init_modules "sigT2"
+let csigT_of_sigT2 = gen_constant init_modules "sigT_of_sigT2"
 
 (* Logical Operators *)
 let cnot = gen_constant init_modules "not"
