@@ -3,17 +3,20 @@
 (*     SMTCoq                                                             *)
 (*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
+(*     Michaël  Armand   *                                                *)
+(*     Benjamin Grégoire *                                                *)
+(*     Chantal  Keller   *                                                *)
+(*     Alain    Mebsout  ♯                                                *)
+(*     Burak    Ekici    ♯                                                *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*    * Inria - École Polytechnique - Université Paris-Sud                *)
+(*    ♯ The University of Iowa                                            *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
 
-Add Rec LoadPath "." as SMTCoq.
+(*Add Rec LoadPath "." as SMTCoq.*)
 
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
@@ -557,13 +560,13 @@ Module Typ.
       RAWBITVECTOR_LIST.bits in H.
       unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult in H0.
       unfold is_true.
-      
+
       unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size.
       destruct x, y. simpl in *.
       unfold RAWBITVECTOR_LIST.size in *.
       rewrite wf, wf0 in *.
       rewrite N.eqb_refl in *.
-      
+
       apply RAWBITVECTOR_LIST.nlt_neq_gt.
       rewrite !List.rev_length.
       apply (f_equal (N.to_nat)) in wf.
@@ -2723,7 +2726,7 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bv_not (k interp_t x)) ; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bv_neg (k interp_t x)) ; auto.
 
-   (* Binary operators *)
+       (* Binary operators *)
         intros [ | | | | | | |A | | | | | | | | | | ti te| ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x - k2 interp_t y)%Z; auto.
@@ -2791,7 +2794,7 @@ Qed.
             simpl; try (exists true; reflexivity).
         exists (farray_diff ti te (k1 interp_t x) (k2 interp_t y)); auto.
 
-        (* Ternary operators *)       
+        (* Ternary operators *)
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
           destruct (IH h1 H1) as [x Hx];
           destruct (IH h2 H2) as [y Hy];
@@ -2803,9 +2806,8 @@ Qed.
             case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
             simpl; try (exists true; reflexivity).
          exists (farray_store ti te (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
-                     
-          
-        (* N-ary operators *)       
+
+        (* N-ary operators *)
         intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
         intros acc _; exists (distinct (Typ.i_eqb t_i A) (rev acc)); auto.
         intro acc; rewrite andb_true_iff; intros [H1 H2]; destruct (IH _ H1) as [va Hva]; rewrite Hva; simpl; case (Typ.cast (v_type Typ.type interp_t (a .[ i])) A); simpl; try (exists true; auto); intro k; destruct (IHl (k interp_t va :: acc) H2) as [vb Hvb]; exists vb; auto.

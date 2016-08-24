@@ -3,11 +3,14 @@
 (*     SMTCoq                                                             *)
 (*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
+(*     Michaël  Armand   *                                                *)
+(*     Benjamin Grégoire *                                                *)
+(*     Chantal  Keller   *                                                *)
+(*     Alain    Mebsout  ♯                                                *)
+(*     Burak    Ekici    ♯                                                *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*    * Inria - École Polytechnique - Université Paris-Sud                *)
+(*    ♯ The University of Iowa                                            *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -525,7 +528,6 @@ Module S.
      | Gt => l2 :: insert_keep l1 c'
      end
    end.
-
 
   Fixpoint sort c :=
     match c with
