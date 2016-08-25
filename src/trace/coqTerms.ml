@@ -66,7 +66,7 @@ let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
 (* Je ne comprends pas pourquoi ça fonctionne avec Zeq_bool et pas avec
    Z.eqb *)
-let ceqbZ = gen_constant z_modules "eqb"
+let ceqbZ = gen_constant [["Coq";"ZArith";"BinInt";"Z"]] "eqb"
 (* let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool" *)
 
 (* Booleans *)
@@ -100,6 +100,12 @@ let cpair = gen_constant init_modules "pair"
 
 (* Dependent pairs *)
 let csigT = gen_constant init_modules "sigT"
+let cprojT1 = gen_constant init_modules "projT1"
+let cprojT2 = gen_constant init_modules "projT2"
+let cprojT3 = gen_constant init_modules "projT3"
+
+let csigT2 = gen_constant init_modules "sigT2"
+let csigT_of_sigT2 = gen_constant init_modules "sigT_of_sigT2"
 
 (* Logical Operators *)
 let cnot = gen_constant init_modules "not"
@@ -123,6 +129,14 @@ let cbv_mult = gen_constant bv_modules "bv_mult"
 let cbv_ult = gen_constant bv_modules "bv_ult"
 let cbv_slt = gen_constant bv_modules "bv_slt"
 let cbv_concat = gen_constant bv_modules "bv_concat"
+
+
+(* Arrays *)
+let array_modules = [["SMTCoq";"array";"FArray"]]
+let cfarray = gen_constant array_modules "FArray.farray"
+let cselect = gen_constant array_modules "cselect"
+let cstore = gen_constant array_modules "cstore"
+let cdiff = gen_constant array_modules "cdiff"
 
 
 let cOrderedTypeCompare =
@@ -161,6 +175,7 @@ let cte_carrier = gen_constant smt_modules "te_carrier"
 let cte_eqb = gen_constant smt_modules "te_eqb"
 let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
+let cmkarray_unit_typ_eqb = gen_constant smt_modules "mkarray_unit_typ_eqb"
 
 let cfarray_select = gen_constant smt_modules "farray_select"
 let cfarray_diff = gen_constant smt_modules "farray_diff"

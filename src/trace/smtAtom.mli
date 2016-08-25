@@ -13,6 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open SmtMisc
+
 
 type indexed_type
 
@@ -51,6 +53,10 @@ module Btype :
       val interp_to_coq : reify_tbl -> btype -> Term.constr
 
       val get_cuts : reify_tbl -> (Structures.names_id_t * Term.types) list
+
+      val logic : btype -> logic
+
+      val logic_of_coq : reify_tbl -> Term.constr -> logic
 
     end
 
@@ -119,6 +125,8 @@ module Op :
 
     val to_list : reify_tbl -> (int * (btype array) * btype * indexed_op) list
 
+    val logic_ro : reify_tbl -> logic
+    
   end
 
 
@@ -174,6 +182,8 @@ module Atom :
       val interp_to_coq : Term.constr -> (int, Term.constr) Hashtbl.t ->
 	t -> Term.constr
 
+      val logic : t -> logic
+      
       (* Generation of atoms *)
       val hatom_Z_of_int : reify_tbl -> int -> hatom
       val hatom_Z_of_bigint : reify_tbl -> Big_int.big_int -> hatom

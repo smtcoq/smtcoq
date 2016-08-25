@@ -58,6 +58,14 @@ type rule =
   | Xorn2
   | Nxor1
   | Nxor2
+  | Itep1
+  | Itep2
+  | Iten1
+  | Iten2
+  | Ite1
+  | Ite2
+  | Nite1
+  | Nite2
   | Eqtr
   | Eqcp
   | Eqco
@@ -137,9 +145,11 @@ module type S = sig
 
   val register_decl_id : string -> int -> unit
 
-  (** register an index name (like array_ext_index_1) as a skolem diff for
-      array extensionality*)
-  val register_diff : string -> term -> unit
+  (** register an alias name for a term *)
+  val register_alias : string -> term -> unit
+
+  (* (\** register a term as an alias for another term *\) *)
+  (* val register_termalias : term -> term -> unit *)
 
   (** Clear and reset global tables and values. *)
   val clear : unit -> unit

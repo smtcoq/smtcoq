@@ -34,6 +34,74 @@ type btype =
   | Tindex of indexed_type
   | TFArray of btype * btype
 
+
+
+let mk_bool b =
+  let c, args = Term.decompose_app b in
+  if Term.eq_constr c (Lazy.force ctrue) then true
+  else if Term.eq_constr c (Lazy.force cfalse) then false
+  else assert false
+
+let rec mk_bool_list bs =
+  let c, args = Term.decompose_app bs in
+  if Term.eq_constr c (Lazy.force cnil) then []
+  else if Term.eq_constr c (Lazy.force ccons) then
+    match args with
+    | [_; b; bs] -> mk_bool b :: mk_bool_list bs
+    | _ -> assert false
+  else assert false
+
+let rec mk_nat n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cO) then
+    0
+  else if Term.eq_constr c (Lazy.force cS) then
+    match args with
+    | [n] -> (mk_nat n) + 1
+    | _ -> assert false
+  else assert false
+
+let rec mk_positive n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cxH) then
+    1
+  else if Term.eq_constr c (Lazy.force cxO) then
+    match args with
+    | [n] -> 2 * (mk_positive n)
+    | _ -> assert false
+  else if Term.eq_constr c (Lazy.force cxI) then
+    match args with
+    | [n] -> 2 * (mk_positive n) + 1
+    | _ -> assert false
+  else assert false
+
+
+let mk_N n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cN0) then
+    0
+  else if Term.eq_constr c (Lazy.force cNpos) then
+    match args with
+    | [n] -> mk_positive n
+    | _ -> assert false
+  else assert false
+
+
+let mk_Z n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cZ0) then 0
+  else if Term.eq_constr c (Lazy.force cZpos) then
+    match args with
+    | [n] -> mk_positive n
+    | _ -> assert false
+  else if Term.eq_constr c (Lazy.force cZneg) then
+    match args with
+    | [n] -> - mk_positive n
+    | _ -> assert false
+  else assert false
+
+
+
 module Btype = 
   struct 
 
@@ -71,6 +139,13 @@ module Btype =
       | Tindex i -> Format.fprintf fmt "Tindex_%i" i.index
       | TFArray (ti, te) -> Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
 
+    let rec logic = function
+      | TZ | Tpositive -> SL.singleton LLia
+      | Tbool -> SL.empty
+      | TBV _ -> SL.singleton LBitvectors
+      | Tindex _ -> SL.singleton LUF
+      | TFArray (ti, te) -> SL.add LArrays (SL.union (logic ti) (logic te))
+          
     (* reify table *)
     type reify_tbl = 
         { mutable count : int;
@@ -97,38 +172,133 @@ module Btype =
       reify.count <- reify.count + 1;
       res
 
-    let of_coq reify t =
-      try
+
+    let rec of_coq reify t =
+      let c, args = Term.decompose_app t in
+      if Term.eq_constr c (Lazy.force cbool) ||
+         Term.eq_constr c (Lazy.force cTbool) then Tbool
+      else if Term.eq_constr c (Lazy.force cZ) ||
+              Term.eq_constr c (Lazy.force cTZ) then TZ
+      else if Term.eq_constr c (Lazy.force cpositive) ||
+              Term.eq_constr c (Lazy.force cTpositive) then Tpositive
+      else if Term.eq_constr c (Lazy.force cbitvector) ||
+              Term.eq_constr c (Lazy.force cTBV) then
+        match args with
+        | [s] -> TBV (mk_N s)
+        | _ -> assert false
+      else if Term.eq_constr c (Lazy.force cfarray) ||
+              Term.eq_constr c (Lazy.force cTFArray) then
+        match args with
+        | ti :: te :: _ -> TFArray (of_coq reify ti, of_coq reify te)
+        | _ -> assert false
+      else try
         Hashtbl.find reify.tbl t
       with | Not_found ->
         let n = string_of_int (List.length reify.cuts) in
         let eq_name = Names.id_of_string ("eq"^n) in
         let eq_var = Term.mkVar eq_name in
-
         let eq_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
-
         let eq = mkName "eq" in
+
+        let ltb_name = Names.id_of_string ("ltb"^n) in
+        let ltb_var = Term.mkVar ltb_name in
+        let ltb_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
+        let ltb = mkName "ltb" in
+
+        let d_name = Names.id_of_string ("d"^n) in
+        let d_var = Term.mkVar d_name in
+        let d_ty = t in
+
         let x = mkName "x" in
         let y = mkName "y" in
-        let req = Term.mkRel 3 in
-        let rx = Term.mkRel 2 in
-        let ry = Term.mkRel 1 in
-        let refl_ty = Term.mkLambda (eq, eq_ty, Term.mkProd (x,t,Term.mkProd (y,t,mklApp creflect [|mklApp ceq [|t;rx;ry|]; Term.mkApp (req, [|rx;ry|])|]))) in
+        let z = mkName "z" in
+        let v = Term.mkRel in
+        let h = Term.mkMeta in
+        
+        let refl_ty =
+          Term.mkLambda (eq, eq_ty,
+            Term.mkProd (x, t,
+            Term.mkProd (y, t,
+              mklApp creflect [| 
+                mklApp ceq [|t; v 2(*x*); v 1(*y*)|];
+                Term.mkApp (v 3(*eq*), [|v 2(*x*); v 1(*y*)|])|]))) in
+        let eq_pair_r = mklApp csigT [|eq_ty; refl_ty|] in
 
-        let pair_ty = mklApp csigT [|eq_ty; refl_ty|] in
+        let lt_trans =
+          Term.mkLambda (ltb, ltb_ty,
+          Term.mkProd (x, t,
+          Term.mkProd (y, t,
+          Term.mkProd (z, t,
+            Term.mkArrow
+             (mklApp ceq [|Lazy.force cbool;
+               Term.mkApp (v 4(*ltb*), [|v 3(*x*);v 2(*y*)|]); Lazy.force ctrue|])
+             (Term.mkArrow
+                (mklApp ceq [|Lazy.force cbool;
+                   Term.mkApp (v 5(*ltb*), [|v 3(*y*);v 2(*z*)|]); Lazy.force ctrue|])
+                (mklApp ceq [|Lazy.force cbool;
+                  Term.mkApp (v 6(*ltb*), [|v 5(*x*);v 3(*z*)|]); Lazy.force ctrue|]))))))
+        in
 
-        reify.cuts <- (eq_name, pair_ty)::reify.cuts;
-        (* TODO (extra args) *)
-        let ce = mklApp ctyp_eqb_of_typ_eqb_param [|t; eq_var|] in
+        let lt_not_eq =
+          Term.mkLambda (ltb, ltb_ty,
+            Term.mkProd (x, t,
+            Term.mkProd (y, t,
+              Term.mkArrow
+                (mklApp ceq [|Lazy.force cbool;
+                   Term.mkApp (v 3(*ltb*), [|v 2(*x*);v 1(*y*)|]); Lazy.force ctrue|])
+                (mklApp cnot [|mklApp ceq [|t; v 3(*x*);v 2(*y*)|]|]))))
+        in
+        let lt_pair_l = mklApp csigT2 [|ltb_ty; lt_trans; lt_not_eq|] in
+
+        let compare_name = Names.id_of_string ("compare"^n) in
+        let compare_var = Term.mkVar compare_name in
+        let compare_ty =
+          Term.mkProd (x, t,
+          Term.mkProd (y, t,
+            mklApp cOrderedTypeCompare [|
+              t;
+              Term.mkLambda (x, t,
+              Term.mkLambda (y, t,
+                mklApp ceq [|Lazy.force cbool;
+                  Term.mkApp (
+                    mklApp cprojT1 [|ltb_ty; lt_trans;
+                      mklApp csigT_of_sigT2 [| ltb_ty; lt_trans; lt_not_eq; ltb_var |] |],
+                    [|v 2(*x*);v 1(*y*)|]);
+                  Lazy.force ctrue|]));
+              Term.mkLambda (x, t,
+              Term.mkLambda (y, t,
+                mklApp ceq [|Lazy.force cbool;
+                  Term.mkApp (
+                    mklApp cprojT1 [|eq_ty; refl_ty; eq_var |],
+                    [|v 2(*x*);v 1(*y*)|]);
+                  Lazy.force ctrue|]));
+              v 2(*x*); v 1(*y*)
+            |])) in
+
+        
+        reify.cuts <-
+          (eq_name, eq_pair_r) ::
+          (d_name, d_ty) ::
+          (ltb_name, lt_pair_l) ::
+          (compare_name, compare_ty) ::
+          reify.cuts;
+
+        let ce = mklApp ctyp_eqb_of_typ_eqb_param
+            [|t; d_var; eq_var; ltb_var; compare_var|] in
         declare reify t ce
+
+    
+    let logic_of_coq reify t = logic (of_coq reify t)
+    
 
     let interp_tbl reify =
       let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_eqb) in
-      let set _ = function 
-	| Tindex it -> t.(it.index) <- it.hval
-	| _ -> () in
+      let set _ = function
+        | Tindex it -> t.(it.index) <- it.hval
+        | _ -> () in
       Hashtbl.iter set reify.tbl;
       Structures.mkArray (Lazy.force ctyp_eqb, t)
+
 
     let to_list reify =
       let set _ t acc = match t with
@@ -224,13 +394,6 @@ type indexed_op = op_def gen_hashed
 let dummy_indexed_op i dom codom = {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
 let indexed_op_index op = op.index
 
-type op = 
-  | Cop of cop
-  | Uop of uop
-  | Bop of bop
-  | Top of top
-  | Nop of nop
-  | Iop of indexed_op
 
 module Op =
   struct 
@@ -515,6 +678,58 @@ module Op =
 
     let i_equal op1 op2 = op1.index == op2.index
 
+
+
+
+    let logic_of_cop = function
+      | CO_xH | CO_Z0 -> SL.singleton LLia
+      | CO_BV _ -> SL.singleton LBitvectors
+
+    let logic_of_uop = function
+      | UO_xO | UO_xI
+      | UO_Zpos | UO_Zneg | UO_Zopp -> SL.singleton LLia
+      | UO_BVbitOf _ | UO_BVnot _ | UO_BVneg _ -> SL.singleton LBitvectors
+
+    let logic_of_bop = function
+      | BO_Zplus
+      | BO_Zminus
+      | BO_Zmult
+      | BO_Zlt
+      | BO_Zle
+      | BO_Zge
+      | BO_Zgt -> SL.singleton LLia
+      | BO_eq ty -> Btype.logic ty
+      | BO_BVand _
+      | BO_BVor _
+      | BO_BVxor _
+      | BO_BVadd _
+      | BO_BVmult _
+      | BO_BVult _
+      | BO_BVslt _
+      | BO_BVconcat _ -> SL.singleton LBitvectors
+      | BO_select (ti, te)
+      | BO_diffarray (ti, te) ->
+        SL.add LArrays (SL.union (Btype.logic ti) (Btype.logic te))
+
+
+    let logic_of_top = function
+      | TO_store (ti, te) ->
+        SL.add LArrays (SL.union (Btype.logic ti) (Btype.logic te))
+
+    let logic_of_nop = function
+      | NO_distinct ty -> Btype.logic ty
+
+    
+    let logic_of_indexed t =
+      Array.fold_left (fun l ty ->
+         SL.union (Btype.logic ty) l  
+        ) (Btype.logic t.hval.tres) t.hval.tparams
+
+
+    let logic_ro reify =
+      Hashtbl.fold (fun _ op -> SL.union (logic_of_indexed op))
+        reify.tbl SL.empty
+
   end
 
 
@@ -611,6 +826,8 @@ module HashedAtom =
             | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index in
           (hash_args lsl 5 + op.index lsl 3) lxor 4
 
+
+    
   end
 
 module HashAtom = Hashtbl.Make(HashedAtom)
@@ -741,31 +958,31 @@ module Atom =
       match a with
       | Acop _ -> ()
       | Auop(op,h) -> 
-	  if not (Btype.equal (Op.u_type_arg op) (type_of h)) then
-	    raise (NotWellTyped a)
+	if not (Btype.equal (Op.u_type_arg op) (type_of h)) then
+	  raise (NotWellTyped a)
       | Abop(op,h1,h2) ->
-	  let (t1,t2) = Op.b_type_args op in
-	  if not (Btype.equal t1 (type_of h1) && Btype.equal t2 (type_of h2))
-	  then raise (NotWellTyped a)
+	let (t1,t2) = Op.b_type_args op in
+ 	if not (Btype.equal t1 (type_of h1) && Btype.equal t2 (type_of h2))
+	then raise (NotWellTyped a)
       | Atop(op,h1,h2,h3) ->
-	  let (t1,t2,t3) = Op.t_type_args op in
-          if not (Btype.equal t1 (type_of h1) &&
-                  Btype.equal t2 (type_of h2) &&
-                  Btype.equal t3 (type_of h3))
-	  then raise (NotWellTyped a)
+	let (t1,t2,t3) = Op.t_type_args op in
+        if not (Btype.equal t1 (type_of h1) &&
+                Btype.equal t2 (type_of h2) &&
+                Btype.equal t3 (type_of h3))
+	then raise (NotWellTyped a)
       | Anop(op,ha) ->
         let ty = Op.n_type_args op in
         Array.iter (fun h -> if not (Btype.equal ty (type_of h)) then raise (NotWellTyped a)) ha
       | Aapp(op,args) ->
-	  let tparams = Op.i_type_args op in
-	  Array.iteri (fun i t -> 
+	let tparams = Op.i_type_args op in
+	Array.iteri (fun i t -> 
 	    if not (Btype.equal t (type_of args.(i))) then
-		raise (NotWellTyped a)) tparams
+	      raise (NotWellTyped a)) tparams
 
     type reify_tbl =
-        { mutable count : int;
-	          tbl : hatom HashAtom.t 
-	}
+      { mutable count : int;
+	tbl : hatom HashAtom.t 
+      }
 
     let create () = 
       { count = 0;
@@ -845,88 +1062,7 @@ module Atom =
     let op_tbl = lazy (op_tbl ())
 
 
-    let mk_bool b =
-      let c, args = Term.decompose_app b in
-      if Term.eq_constr c (Lazy.force ctrue) then true
-      else if Term.eq_constr c (Lazy.force cfalse) then false
-      else assert false
-    
-    let rec mk_bool_list bs =
-      let c, args = Term.decompose_app bs in
-      if Term.eq_constr c (Lazy.force cnil) then []
-      else if Term.eq_constr c (Lazy.force ccons) then
-        match args with
-          | [_; b; bs] -> mk_bool b :: mk_bool_list bs
-          | _ -> assert false
-      else assert false
-
-    let rec mk_nat n =
-      let c, args = Term.decompose_app n in
-      if Term.eq_constr c (Lazy.force cO) then
-        0
-      else if Term.eq_constr c (Lazy.force cS) then
-        match args with
-          | [n] -> (mk_nat n) + 1
-          | _ -> assert false
-      else assert false
-
-    let rec mk_positive n =
-      let c, args = Term.decompose_app n in
-      if Term.eq_constr c (Lazy.force cxH) then
-        1
-      else if Term.eq_constr c (Lazy.force cxO) then
-        match args with
-          | [n] -> 2 * (mk_positive n)
-          | _ -> assert false
-      else if Term.eq_constr c (Lazy.force cxI) then
-        match args with
-          | [n] -> 2 * (mk_positive n) + 1
-          | _ -> assert false
-      else assert false
-
-
-    let mk_N n =
-      let c, args = Term.decompose_app n in
-      if Term.eq_constr c (Lazy.force cN0) then
-        0
-      else if Term.eq_constr c (Lazy.force cNpos) then
-        mk_positive n (* ? *)
-      else assert false
-
-    
-    let mk_Z n =
-      let c, args = Term.decompose_app n in
-      if Term.eq_constr c (Lazy.force cZ0) then 0
-      else if Term.eq_constr c (Lazy.force cZpos) then
-        match args with
-          | [n] -> mk_positive n
-          | _ -> assert false
-      else if Term.eq_constr c (Lazy.force cZneg) then
-        match args with
-        | [n] -> - mk_positive n
-        | _ -> assert false
-      else assert false
-
-    
-    let rec mk_ty rt t =
-      let c, args = Term.decompose_app t in
-      if Term.eq_constr c (Lazy.force cTbool) then Tbool
-      else if Term.eq_constr c (Lazy.force cTZ) then TZ
-      else if Term.eq_constr c (Lazy.force cTpositive) then Tpositive
-      else if Term.eq_constr c (Lazy.force cTBV) then
-        match args with
-        | [s] -> TBV (mk_N s)
-        | _ -> assert false
-      else if Term.eq_constr c (Lazy.force cTFArray) then
-        match args with
-        | [ti; te] -> TFArray (mk_ty rt ti, mk_ty rt te)
-        | _ -> assert false
-      else if Term.eq_constr c (Lazy.force cTindex) then
-        Btype.of_coq rt t
-      else assert false
-                        
-      
-    
+        
     let of_coq rt ro reify env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
@@ -1070,22 +1206,22 @@ module Atom =
 
       and mk_bop_select = function
         | [ti;te;a;i] ->
-          let ti' = mk_ty rt ti in
-          let te' = mk_ty rt te in
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
           mk_bop (BO_select (ti', te')) [a; i]
         | _ -> assert false
 
       and mk_bop_diffarray = function
         | [ti;te;a;b] ->
-          let ti' = mk_ty rt ti in
-          let te' = mk_ty rt te in
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
           mk_bop (BO_diffarray (ti', te')) [a; b]
         | _ -> assert false
 
       and mk_top_store = function
         | [ti;te;a;i;e] ->
-          let ti' = mk_ty rt ti in
-          let te' = mk_ty rt te in
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
           mk_top (TO_store (ti', te')) [a; i; e]
         | _ -> assert false
 
@@ -1246,6 +1382,23 @@ module Atom =
     let mk_select reify ti te = mk_binop (BO_select (ti, te)) reify
     let mk_diffarray reify ti te = mk_binop (BO_diffarray (ti, te)) reify
     let mk_store reify ti te = mk_terop (TO_store (ti, te)) reify
+
+
+    let rec logic_atom = function
+      | Acop c -> Op.logic_of_cop c
+      | Auop (u, h) -> SL.union (Op.logic_of_uop u) (logic h)
+      | Abop (b, h1, h2) ->
+        SL.union (Op.logic_of_bop b) (SL.union (logic h1) (logic h2))
+      | Atop (t, h1, h2, h3) -> 
+        SL.union (Op.logic_of_top t)
+          (SL.union (logic h1) (SL.union (logic h2) (logic h3)))
+      | Anop (n, ha) ->
+        Array.fold_left (fun l h -> SL.union (logic h) l) (Op.logic_of_nop n) ha
+      | Aapp (i, ha) ->
+        Array.fold_left (fun l h -> SL.union (logic h) l)
+          (Op.logic_of_indexed i) ha
+
+    and logic h = logic_atom h.hval
     
   end
 

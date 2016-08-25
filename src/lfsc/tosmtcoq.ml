@@ -38,7 +38,8 @@ let clauses_ids = HCl.create 201
 let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let inputs : (string, int) Hashtbl.t = HS.create 13
-let diffarray_tbl = HS.create 17
+let alias_tbl = HS.create 17
+(* let termalias_tbl = HT.create 17 *)
 
 let cl_cpt = ref 0
 
@@ -76,6 +77,14 @@ let get_rule = function
   | Xorn2 -> VeritSyntax.Xorn2
   | Nxor1 -> VeritSyntax.Nxor1
   | Nxor2 -> VeritSyntax.Nxor2
+  | Itep1 -> VeritSyntax.Itep1
+  | Itep2 -> VeritSyntax.Itep2
+  | Iten1 -> VeritSyntax.Iten1
+  | Iten2 -> VeritSyntax.Iten2
+  | Ite1 -> VeritSyntax.Ite1
+  | Ite2 -> VeritSyntax.Ite2
+  | Nite1 -> VeritSyntax.Nite1
+  | Nite2 -> VeritSyntax.Nite2
   | Eqtr -> VeritSyntax.Eqtr
   | Eqcp -> VeritSyntax.Eqcp
   | Eqco -> VeritSyntax.Eqco
@@ -133,6 +142,14 @@ let string_of_rule = function
   | Xorn2 -> "xor_neg2"
   | Nxor1 -> "not_xor1"
   | Nxor2 -> "not_xor2"
+  | Itep1 -> "ite_pos1"
+  | Itep2 -> "ite_pos2"
+  | Iten1 -> "ite_neg1"
+  | Iten2 -> "ite_neg2"
+  | Ite1 -> "ite1"
+  | Ite2 -> "ite2"
+  | Nite1 -> "not_ite1"
+  | Nite2 -> "not_ite2"
   | Eqtr -> "eq_transitive"
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
@@ -175,14 +192,16 @@ let const_bv t =
   Atom (Atom.mk_bvconst ra bv_list)
 
 
-let rec term_smtcoq t = match value t with
+let rec term_smtcoq t =
+  (* try HT.find termalias_tbl (deref t) |> term_smtcoq  with Not_found -> *)
+  match value t with
   | Const {sname=Name "true"} -> Form Form.pform_true
   | Const {sname=Name "false"} -> Form Form.pform_false
   | Const {sname=Name "bvn"} -> const_bv t
   | Const {sname=Name n} ->
     begin
       try
-        term_smtcoq  (HS.find diffarray_tbl n)
+        term_smtcoq  (HS.find alias_tbl n)
       with Not_found -> Atom (Atom.get ra (Aapp (get_fun n,[||])))
     end
   | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
@@ -203,6 +222,12 @@ let rec term_smtcoq t = match value t with
       | Some ("p_app", [p]) -> term_smtcoq p
       | Some ("a_int", [{value = Int bi}]) ->
         Atom (Atom.hatom_Z_of_bigint ra bi)
+      | Some ("a_int", [ni]) ->
+        begin match app_name ni with
+          | Some ("~", [{value = Int bi}]) ->
+            Atom (Atom.hatom_Z_of_bigint ra (Big_int.minus_big_int bi))
+          | _ -> assert false
+        end
       | Some ("a_var_bv", [_; v]) -> term_smtcoq v
       | Some ("bvc", _) -> const_bv t
       | Some ("a_bv", [_; v]) -> term_smtcoq v
@@ -286,7 +311,9 @@ let rec term_smtcoq t = match value t with
       | Some ("*_Int", [a; b]) ->
         Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some ("u-_Int", [a]) -> Atom (Atom.mk_opp ra (term_smtcoq_atom a))
-      | Some (n, _) -> failwith ("LFSC function symbol "^n^" not supported.")
+      | Some (n, _) ->
+        Format.eprintf "\nTerm: %a\n@." print_term t;
+        failwith ("LFSC function symbol "^n^" not supported.")
       | _ -> assert false
     end
 
@@ -444,7 +471,10 @@ let mk_admit_preproc name formula =
 let register_prop_abstr vt formula = HT.add propvars vt formula
 
 
-let register_diff name_index t = HS.add diffarray_tbl name_index t
+let register_alias name_index t = HS.add alias_tbl name_index t
+
+
+(* let register_termalias a t = HT.add termalias_tbl a t *)
 
 
 let get_clause_id cl =
@@ -471,7 +501,8 @@ let clear () =
   HCl.clear clauses_ids;
   Hashtbl.clear ids_clauses;
   HT.clear propvars;
-  Hashtbl.clear inputs;
-  HS.clear diffarray_tbl;
+  HS.clear inputs;
+  HS.clear alias_tbl;
+  (* HT.clear termalias_tbl; *)
   cl_cpt := 0
   

@@ -97,6 +97,7 @@ let import_trace filename first =
 
 let clear_all () =
   SmtTrace.clear ();
+  VeritSyntax.clear ();
   C.clear ()
 
 
@@ -276,11 +277,22 @@ let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 
 (* end *)
 
+let print_logic fmt ro f =
+  let l = SL.union (Op.logic_ro ro) (Form.logic f) in
+  fprintf fmt "(set-logic QF_";
+  if SL.is_empty l then fprintf fmt "SAT"
+  else begin 
+    if SL.mem LArrays l then fprintf fmt "A";
+    if SL.mem LUF l || SL.mem LLia l then fprintf fmt "UF";
+    if SL.mem LBitvectors l then fprintf fmt "BV";
+    if SL.mem LLia l then fprintf fmt "LIA"
+  end;
+  fprintf fmt ")@."
 
 
 let export out_channel rt ro l =
   let fmt = formatter_of_out_channel out_channel in
-  fprintf fmt "(set-logic QF_UFLIA)@.";
+  print_logic fmt ro l;
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
@@ -318,7 +330,7 @@ let call_cvc4 rt ro rf root =
 
   let command =
     "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
-     --no-bv-eq --no-bv-ineq --no-bv-algebraic"
+     --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
     ^ logfilename in
   eprintf "%s@." command;
@@ -330,6 +342,8 @@ let call_cvc4 rt ro rf root =
     failwith ("Lfsc.call_cvc4: command "^command^
 	      " exited with code "^(string_of_int exit_code));
 
+  eprintf "Running in %s@." Sys.executable_name;
+
   let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
   let signatures = [
     "sat.plf";
@@ -338,6 +352,7 @@ let call_cvc4 rt ro rf root =
     "th_int.plf";
     "th_bv.plf";
     "th_bv_bitblast.plf";
+    "th_arrays.plf";
   ] in
   let signatures_arg =
     signatures
@@ -346,6 +361,8 @@ let call_cvc4 rt ro rf root =
   in
   Sys.command ("cat "^signatures_arg^" "^logfilename^" > "^prooffilename)
   |> ignore;
+  
+  eprintf "LFSC proof in %s@." prooffilename;
   
   try import_trace prooffilename (Some root)
   with No_proof -> Structures.error "CVC4 did not generate a proof"

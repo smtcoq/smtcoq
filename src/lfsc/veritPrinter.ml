@@ -41,7 +41,8 @@ let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let sharp_tbl = HT.create 13
 let inputs : (string, int) Hashtbl.t = HS.create 13
-let diffarray_tbl = HS.create 17
+let alias_tbl = HS.create 17
+(* let termalias_tbl = HT.create 17 *)
 
 let cpt = ref 0
 let cl_cpt = ref 0
@@ -82,6 +83,14 @@ let get_rule = function
   | Xorn2 -> "xor_neg2"
   | Nxor1 -> "not_xor1"
   | Nxor2 -> "not_xor2"
+  | Itep1 -> "ite_pos1"
+  | Itep2 -> "ite_pos2"
+  | Iten1 -> "ite_neg1"
+  | Iten2 -> "ite_neg2"
+  | Ite1 -> "ite1"
+  | Ite2 -> "ite2"
+  | Nite1 -> "not_ite1"
+  | Nite2 -> "not_ite2"
   | Eqtr -> "eq_transitive"
   | Eqcp -> "eq_congruent_pred"
   | Eqco -> "eq_congruent"
@@ -164,8 +173,8 @@ and print_bblt fmt t = match name t with
 
 
 and print_term fmt t =
-  try HT.find sharp_tbl t |> fprintf fmt "#%d"
-  with Not_found ->
+  try HT.find sharp_tbl t |> fprintf fmt "#%d" with Not_found ->
+  (* try HT.find termalias_tbl (deref t) |> print_term fmt with Not_found -> *)
     match value t with
     | Int n -> fprintf fmt "%s" (Big_int.string_of_big_int n)
     | _ ->
@@ -173,7 +182,7 @@ and print_term fmt t =
     | Some n ->
       begin
         try
-          print_term fmt (HS.find diffarray_tbl n)
+          print_term fmt (HS.find alias_tbl n)
         with Not_found -> pp_print_string fmt (smt2_of_lfsc n)
       end
     | None -> match app_name t with
@@ -212,7 +221,7 @@ and print_term fmt t =
       | Some (("bvnot"|"bvneg") as op, [_; a]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a)" nb op print_term a
-        
+
       | Some ("concat" as op, [_; _; _; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
@@ -411,7 +420,10 @@ let register_decl name formula =
 let register_decl_id name id = HS.add inputs name id
 
 
-let register_diff name_index t = HS.add diffarray_tbl name_index t
+let register_alias name_index t = HS.add alias_tbl name_index t
+
+
+(* let register_termalias a t = HT.add termalias_tbl a t *)
 
 
 let clear () =
@@ -420,8 +432,9 @@ let clear () =
   HT.clear propvars;
   HT.clear sharp_tbl;
   Hashtbl.clear inputs;
-  HS.clear diffarray_tbl;
+  HS.clear alias_tbl;
+  (* HT.clear termalias_tbl; *)
   cl_cpt := 0;
   cpt := 0
   
-
+>>>>>>> 3a2f8c2a3d3f8366750472fe043923d599412fc3

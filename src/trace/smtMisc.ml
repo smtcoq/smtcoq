@@ -38,3 +38,19 @@ let declare_new_variable = Structures.declare_new_variable
 let mkName s =
   let id = Names.id_of_string s in
   Names.Name id
+
+
+(** Logics *)
+
+type logic_item =
+  | LUF
+  | LLia
+  | LBitvectors
+  | LArrays
+
+module SL = Set.Make (struct
+    type t = logic_item
+    let compare = Pervasives.compare
+  end)
+
+type logic = SL.t
