@@ -171,6 +171,7 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
 
   Definition bv_eq n (bv1 bv2:bitvector n) := M.bv_eq bv1 bv2.
 
+
   Definition bv_and n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_and bv1 bv2) (M.bv_and_size (wf bv1) (wf bv2)).
 
@@ -211,7 +212,8 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
     unfold bv_eq. rewrite M.bv_eq_reflect. split.
     - revert a b. intros [a Ha] [b Hb]. simpl. intros ->.
       rewrite (proof_irrelevance Ha Hb). reflexivity.
-    - now intros ->.
+    - intros. case a in *. case b in *. simpl in *.
+      now inversion H. (* now intros ->. *)
   Qed.
 
   Lemma bv_and_comm n (a b:bitvector n) : bv_eq (bv_and a b) (bv_and b a) = true.
