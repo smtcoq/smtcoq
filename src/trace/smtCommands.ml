@@ -349,9 +349,11 @@ let tactic call_solver rt ro ra rf env sigma t =
   let env = Environ.push_rel_context forall_let env in
   let a, b = get_arguments concl in
   let (body, cuts) =
-    if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
+    if ((Term.eq_constr b (Lazy.force ctrue)) ||
+        (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
-      let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+      let l' =
+        if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver rt ro rf l' in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl
     else
@@ -359,14 +361,23 @@ let tactic call_solver rt ro ra rf env sigma t =
       let l2 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver rt ro rf l in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl in
+      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+        (Form.to_coq l) max_id_confl in
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
-  (* let quantify_assum forall_let body = *)
-  (*   List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in *)
+  let quantify_assum forall_let body =
+    List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in
   let res = compose_lam_assum forall_let body in
-  let cuts = (Btype.get_cuts rt)@cuts in
+  (* let cuts = (Btype.get_cuts rt)@cuts in *)
   List.fold_right (fun (eqn, eqt) tac ->
-    (* let eqt = quantify_assum forall_let eqt in *)
-    Structures.tclTHENLAST (Structures.assert_before (Names.Name eqn) eqt) tac
-  ) cuts (Structures.vm_cast_no_check res)
+      Structures.tclTHENLAST
+        (Structures.assert_before (Names.Name eqn) eqt)
+        tac
+    ) (Btype.get_cuts rt) (Structures.vm_cast_no_check res)
+  |> List.fold_right (fun (n, t) tac ->
+    let t = quantify_assum forall_let t in
+      Structures.tclTHENLAST
+        (Structures.assert_before (Names.Name n) t)
+        tac
+    ) cuts
+                             
