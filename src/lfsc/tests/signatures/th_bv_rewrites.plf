@@ -19,4 +19,4 @@
 (declare rr_bv_default
 	 (! t1 formula
  	 (! t2 formula
-	     (th_holds (iff t1 t2))))))
+	     (th_holds (iff t1 t2)))))

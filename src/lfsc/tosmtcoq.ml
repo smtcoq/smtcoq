@@ -97,6 +97,7 @@ let get_rule = function
   | Bbva -> VeritSyntax.Bbva
   | Bbconst -> VeritSyntax.Bbconst
   | Bbeq -> VeritSyntax.Bbeq
+  | Bbdis -> VeritSyntax.Bbdis
   | Bbop -> VeritSyntax.Bbop
   | Bbadd -> VeritSyntax.Bbadd
   | Bbmul -> VeritSyntax.Bbmul
@@ -162,6 +163,7 @@ let string_of_rule = function
   | Bbva -> "bbvar"
   | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
+  | Bbdis -> "bv_const_neq"
   | Bbop -> "bbop"
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"

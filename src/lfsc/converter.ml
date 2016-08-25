@@ -775,6 +775,9 @@ module Make (T : Translator_sig.S) = struct
       in
       { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses }
 
+    | Some ("bv_disequal_constants", [_; x; y]) ->
+      { env with clauses = mk_clause_cl Bbdis [th_res p] [] :: env.clauses }
+  
     | Some (rule, args) ->
       eprintf "Warning: Introducing hole for unsupported rule %s@." rule;
       { env with clauses = mk_clause_cl Hole [th_res p] [] :: env.clauses }

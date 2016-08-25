@@ -103,6 +103,7 @@ let get_rule = function
   | Bbva -> "bbvar"
   | Bbconst -> "bbconst"
   | Bbeq -> "bbeq"
+  | Bbdis -> "bv_const_neq"
   | Bbop -> "bbop"
   | Bbadd -> "bbadd"
   | Bbmul -> "bbmul"

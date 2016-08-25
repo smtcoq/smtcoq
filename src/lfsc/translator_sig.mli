@@ -78,6 +78,7 @@ type rule =
   | Bbva
   | Bbconst
   | Bbeq
+  | Bbdis
   | Bbop
   | Bbadd
   | Bbmul

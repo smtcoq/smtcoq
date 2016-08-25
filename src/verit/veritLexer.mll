@@ -102,6 +102,7 @@
         "bbvar", BBVA;
         "bbconst", BBCONST;
         "bbeq", BBEQ;
+        "bv_const_neq", BBDIS;
         "bbop", BBOP;
         "bbnot", BBNOT;
         "bbneg", BBNEG;

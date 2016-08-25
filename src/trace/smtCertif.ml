@@ -181,6 +181,13 @@ type 'hform rule =
          (a = b) <-> [(a0 <-> b0) /\ ... /\ (an <-> bn)]
    *)
 
+  | BBDiseq of 'hform
+  (* disequality over constant bitvectors
+
+       ----------------------------- bbDiseq
+         #b000010101 <> #b00000000
+   *)
+
   | RowEq of 'hform
   (* Read over write same index
        ------------------------------- roweq
@@ -238,4 +245,5 @@ let used_clauses r =
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _
-  | BBVar _ | BBConst _ | RowEq _ | RowNeq _ | Ext _ -> []
+  | BBVar _ | BBConst _ | BBDiseq _
+  | RowEq _ | RowNeq _ | Ext _ -> []
