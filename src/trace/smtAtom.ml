@@ -316,11 +316,22 @@ module Btype =
       Term.mkConst
         (declare_constant ~local:true
            nti (DefinitionEntry c, IsDefinition Definition))
-    
 
     let interp t_i t =
         mklApp cinterp_t [|t_i ; to_coq t|]
 
+
+    let dec_interp t_i t =
+      mklApp cdec_interp [|t_i ; to_coq t|]
+        
+    let ord_interp t_i t =
+      mklApp cord_interp [|t_i ; to_coq t|]
+        
+    let comp_interp t_i t =
+      mklApp ccomp_interp [|t_i ; to_coq t|]
+        
+    let inh_interp t_i t =
+        mklApp cinh_interp [|t_i ; to_coq t|]
 
     let interp_to_coq =
       let cpt = ref 0 in
@@ -329,6 +340,10 @@ module Btype =
         (* create local constant t_i (TODO: change this) *)
         interp (local_t_i reify !cpt) t
 
+    let interp_to_coq reify t =
+        interp (make_t_i reify) t
+
+    
     (* let rec interp_to_coq reify = function *)
     (*   | TZ -> Lazy.force cZ *)
     (*   | Tbool -> Lazy.force cbool *)
@@ -540,6 +555,13 @@ module Op =
       | TBV s -> mklApp cbv_eq [|mkN s|]
       | Tindex i -> veval_t (mklApp cte_eqb [|i.hval|])
       | (TFArray _) as t -> interp_ieq t_i t
+
+    (* let e i = Term.mkEvar (i,[||]) *)
+    let e s = Term.mkVar (Names.id_of_string s)
+    let e i = e ("kkk"^string_of_int i)
+    let e = Term.mkMeta
+
+
     
     let interp_bop t_i = function
       | BO_Zplus -> Lazy.force cadd
@@ -559,9 +581,22 @@ module Op =
       | BO_BVslt s -> mklApp cbv_slt [|mkN s|]
       | BO_BVconcat (s1,s2) -> mklApp cbv_concat [|mkN s1; mkN s2|]
       | BO_select (ti, te) ->
-        mklApp cfarray_select [|t_i; Btype.to_coq ti; Btype.to_coq te|]
+        mklApp cselect [|Btype.interp t_i ti; Btype.interp t_i te;
+                         Btype.ord_interp t_i ti;
+                         Btype.comp_interp t_i ti;
+                         Btype.inh_interp t_i te|]
+        (* mklApp cfarray_select [|t_i; Btype.to_coq ti; Btype.to_coq te|] *)
       | BO_diffarray (ti, te) ->
-        mklApp cfarray_diff [|t_i; Btype.to_coq ti; Btype.to_coq te|]
+        mklApp cdiff [|Btype.interp t_i ti; Btype.interp t_i te;
+                       Btype.dec_interp t_i ti;
+                       Btype.ord_interp t_i ti;
+                       Btype.comp_interp t_i ti;
+                       Btype.dec_interp t_i te;
+                       Btype.ord_interp t_i te;
+                       Btype.comp_interp t_i te;
+                       Btype.inh_interp t_i ti;
+                       Btype.inh_interp t_i te |]
+        (* mklApp cfarray_diff [|t_i; Btype.to_coq ti; Btype.to_coq te|] *)
 
     let t_to_coq = function
       | TO_store (ti, te) -> store_to_coq ti te
@@ -574,7 +609,14 @@ module Op =
 
     let interp_top t_i = function
       | TO_store (ti, te) ->
-        mklApp cfarray_store [|t_i; Btype.to_coq ti; Btype.to_coq te|]
+        mklApp cstore [|Btype.interp t_i ti; Btype.interp t_i te;
+                        Btype.dec_interp t_i ti;
+                        Btype.ord_interp t_i ti;
+                        Btype.comp_interp t_i ti;
+                        Btype.ord_interp t_i te;
+                        Btype.comp_interp t_i te;
+                        Btype.inh_interp t_i te |]
+        (* mklApp cfarray_store [|t_i; Btype.to_coq ti; Btype.to_coq te|] *)
 
     
     let n_to_coq = function
@@ -1036,9 +1078,13 @@ module Atom =
       | CCeqbP
       | CCeqbZ
       | CCeqbBV
+      | CCeqbA
       | CCselect
-      | CCdiffarray
+      | CCdiff
       | CCstore
+      | CCfarrayselect
+      | CCfarraydiff
+      | CCfarraystore
       | CCunknown
 
     let op_tbl () =
@@ -1054,8 +1100,11 @@ module Atom =
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
-          cfarray_select, CCselect; cfarray_diff, CCdiffarray;
-          cfarray_store, CCstore;
+          cselect, CCselect; cdiff, CCdiff;
+          cstore, CCstore;
+          cfarray_select, CCfarrayselect; cfarray_diff, CCfarraydiff;
+          cfarray_store, CCfarraystore;
+          cequalarray, CCeqbA;
         ];
       tbl
 
@@ -1099,10 +1148,14 @@ module Atom =
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
+          | CCeqbA -> mk_bop_farray_equal args
           | CCeqbBV -> mk_bop_bveq args
           | CCselect -> mk_bop_select args
-          | CCdiffarray -> mk_bop_diffarray args
+          | CCdiff -> mk_bop_diff args
           | CCstore -> mk_top_store args
+          | CCfarrayselect -> mk_bop_farray_select args
+          | CCfarraydiff -> mk_bop_farray_diff args
+          | CCfarraystore -> mk_top_farray_store args
 	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
 
       (* TODO Farray_equal *)
@@ -1204,8 +1257,15 @@ module Atom =
           mk_bop (BO_eq (TBV s')) [a1;a2]
         | _ -> assert false
 
+      and mk_bop_farray_select = function
+        | [_;ti;te;a;i] ->
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
+          mk_bop (BO_select (ti', te')) [a; i]
+        | _ -> assert false
+
       and mk_bop_select = function
-        | [ti;te;a;i] ->
+        | [ti;te;_;_;_;a;i] ->
           let ti' = Btype.of_coq rt ti in
           let te' = Btype.of_coq rt te in
           mk_bop (BO_select (ti', te')) [a; i]
@@ -1218,11 +1278,39 @@ module Atom =
           mk_bop (BO_diffarray (ti', te')) [a; b]
         | _ -> assert false
 
-      and mk_top_store = function
-        | [ti;te;a;i;e] ->
+      and mk_bop_farray_diff = function
+        | [_;ti;te;a;b] ->
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
+          mk_bop (BO_diffarray (ti', te')) [a; b]
+        | _ -> assert false
+
+      and mk_bop_diff = function
+        | [ti;te;_;_;_;_;_;_;_;_;a;b] ->
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
+          mk_bop (BO_diffarray (ti', te')) [a; b]
+        | _ -> assert false
+
+      and mk_top_farray_store = function
+        | [_;ti;te;a;i;e] ->
           let ti' = Btype.of_coq rt ti in
           let te' = Btype.of_coq rt te in
           mk_top (TO_store (ti', te')) [a; i; e]
+        | _ -> assert false
+
+      and mk_top_store = function
+        | [ti;te;_;_;_;_;_;_;a;i;e] ->
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
+          mk_top (TO_store (ti', te')) [a; i; e]
+        | _ -> assert false
+
+      and mk_bop_farray_equal = function
+        | [ti;te;_;_;_;_;_;a;b] ->
+          let ti' = Btype.of_coq rt ti in
+          let te' = Btype.of_coq rt te in
+          mk_bop (BO_eq (TFArray (ti', te'))) [a; b]
         | _ -> assert false
 
     

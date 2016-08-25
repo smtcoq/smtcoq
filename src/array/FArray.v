@@ -1849,6 +1849,13 @@ Section FArray.
 
 End FArray.
 
+Arguments farray _ _ {_} {_}.
+Arguments select {_} {_} {_} {_} {_} _ _.
+Arguments store {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
+Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
+
+
 (* 
    Local Variables:
    coq-load-path: ((rec ".." "SMTCoq"))

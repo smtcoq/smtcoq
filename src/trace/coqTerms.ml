@@ -134,10 +134,10 @@ let cbv_concat = gen_constant bv_modules "bv_concat"
 (* Arrays *)
 let array_modules = [["SMTCoq";"array";"FArray"]]
 let cfarray = gen_constant array_modules "FArray.farray"
-let cselect = gen_constant array_modules "cselect"
-let cstore = gen_constant array_modules "cstore"
-let cdiff = gen_constant array_modules "cdiff"
-
+let cselect = gen_constant array_modules "select"
+let cstore = gen_constant array_modules "store"
+let cdiff = gen_constant array_modules "diff"
+let cequalarray = gen_constant array_modules "FArray.equal"
 
 let cOrderedTypeCompare =
   gen_constant [["Coq";"Structures";"OrderedType"]] "Compare"
@@ -166,6 +166,11 @@ let cTFArray = gen_constant smt_modules "TFArray"
 
 let ct_i = gen_constant smt_modules "t_i"
 let cinterp_t = gen_constant smt_modules "Typ.interp"
+let cdec_interp = gen_constant smt_modules "dec_interp"
+let cord_interp = gen_constant smt_modules "ord_interp"
+let ccomp_interp = gen_constant smt_modules "comp_interp"
+let cinh_interp = gen_constant smt_modules "inh_interp"
+
 let cinterp_eqb = gen_constant smt_modules "i_eqb"
 let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb"
 

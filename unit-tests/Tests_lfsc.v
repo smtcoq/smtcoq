@@ -3,6 +3,38 @@ Require Import Bool PArray Int63 List ZArith.
 
 Local Open Scope int63_scope.
 
+Section Arrays.
+  Local Close Scope int63_scope.
+
+  Require Import FArray.
+  (* Existing Instance Typ.Z_ord. *)
+  (* Existing Instance Typ.Z_dec. *)
+  (* Existing Instance Typ.Z_comp. *)
+  (* Existing Instance Typ.Z_inh. *)
+
+  
+  Goal forall (a b c d: farray Z Z),
+      (implb (equal c (store b 0 4))
+      (implb (equal d (store (store b 0 4) 1 4))
+      (implb (equal a (store d 1 (select b 1)))
+      (equal a c)))).
+  Proof.
+    cvc4.
+    Qed.
+  Admitted.
+
+  
+  Goal forall (a b: farray Z Z) i,
+        (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
+  Proof.
+    intros.
+    cvc4.
+    simpl.
+  Qed.
+
+
+  
+End Arrays.
 
 Section BV.
 

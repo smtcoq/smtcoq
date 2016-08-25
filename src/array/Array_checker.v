@@ -194,7 +194,7 @@ Section certif.
 
     Lemma wrap_read_over_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
                                 (i:Typ.interp t_i ti) (v:Typ.interp t_i te),
-        farray_select t_i ti te (farray_store t_i ti te a i v) i = v.
+        farray_select t_i (farray_store t_i a i v) i = v.
       intros.
       unfold farray_select, farray_store.
       unfold eq_rect_r,eq_rect,eq_sym.
@@ -207,7 +207,7 @@ Section certif.
 
     Lemma wrap_read_over_other_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
                                       (i j :Typ.interp t_i ti) (v:Typ.interp t_i te),
-        i <> j -> farray_select t_i ti te (farray_store t_i ti te a i v) j = farray_select t_i ti te a j.
+        i <> j -> farray_select t_i (farray_store t_i a i v) j = farray_select t_i a j.
       intros.
       unfold farray_select, farray_store.
       unfold eq_rect_r,eq_rect,eq_sym.
@@ -218,10 +218,10 @@ Section certif.
       exact H.
     Qed.
 
-    Lemma wrap_extensionality: forall t t0 a b,
+    Lemma wrap_extensionality: forall ti te (a b:Typ.interp t_i (Typ.TFArray ti te)),
         a <> b -> 
-        farray_select t_i t t0 a (farray_diff t_i t t0 a b) <>
-        farray_select t_i t t0 b (farray_diff t_i t t0 a b).
+        farray_select t_i a (farray_diff t_i a b) <>
+        farray_select t_i b (farray_diff t_i a b).
     Proof.
        intros.
        unfold farray_select, farray_diff.
@@ -414,7 +414,7 @@ Section certif.
         rewrite H6d1, H6d2, H14.
         intros.
         specialize (Atom.Bval_inj2 t_i (Typ.TFArray t0 t) 
-        (farray_store t_i t0 t v_val2 v_val3 v_val4) (v_val0)).
+        (farray_store t_i v_val2 v_val3 v_val4) (v_val0)).
         intros. specialize (H18 H6).
         rewrite <- H18.
 
@@ -622,7 +622,7 @@ Section certif.
       generalize dependent v_valb1'.
 
       rewrite H15. intros.
-      specialize (Atom.Bval_inj2 t_i (v_typeb1') (farray_select t_i t1 v_typeb1' v_valc1 v_valc2) (v_valb1')).
+      specialize (Atom.Bval_inj2 t_i (v_typeb1') (farray_select t_i v_valc1 v_valc2) (v_valb1')).
       intros. specialize (H19 Htib1').
 
       (* b2 *)
@@ -663,7 +663,7 @@ Section certif.
       generalize dependent v_valb2'.
 
       rewrite H20. intros.
-      specialize (Atom.Bval_inj2 t_i (v_typeb2') (farray_select t_i t3 v_typeb2' v_vald1 v_vald2) (v_valb2')).
+      specialize (Atom.Bval_inj2 t_i (v_typeb2') (farray_select t_i v_vald1 v_vald2) (v_valb2')).
       intros. specialize (H24 Htib2').
 
       (* c1 *)
@@ -711,7 +711,7 @@ Section certif.
 
       rewrite H25a, H25b, H30. intros.
       specialize (Atom.Bval_inj2 t_i (Typ.TFArray t7 t8) 
-        (farray_store t_i t7 t8 v_vale1 v_vale2 v_vale3) (v_valc1')).
+        (farray_store t_i v_vale1 v_vale2 v_vale3) (v_valc1')).
       intros. specialize (H25 Htic1').
 
       unfold interp_form_hatom, interp_hatom.
@@ -927,7 +927,7 @@ Section certif.
       generalize dependent v_valb1'.
 
       rewrite H15. intros.
-      specialize (Atom.Bval_inj2 t_i (v_typeb1') (farray_select t_i t1 v_typeb1' v_valc1 v_valc2) (v_valb1')).
+      specialize (Atom.Bval_inj2 t_i (v_typeb1') (farray_select t_i  v_valc1 v_valc2) (v_valb1')).
       intros. specialize (H19 Htib1').
 
       (* b2 *)
@@ -969,7 +969,7 @@ Section certif.
 
       rewrite H20. intros.
       specialize (Atom.Bval_inj2 t_i (v_typeb2') 
-                 (farray_select t_i t3 v_typeb2' v_vald1 v_vald2) (v_valb2')).
+                 (farray_select t_i  v_vald1 v_vald2) (v_valb2')).
       intros. specialize (H24 Htib2').
 
       (* c1 *)
@@ -1018,7 +1018,7 @@ Section certif.
 
       rewrite H25a, H25b, H30. intros.
       specialize (Atom.Bval_inj2 t_i (Typ.TFArray t7 t8) 
-        (farray_store t_i t7 t8 v_vale1 v_vale2 v_vale3) (v_valc1')).
+        (farray_store t_i v_vale1 v_vale2 v_vale3) (v_valc1')).
       intros. specialize (H25 Htic1').
 
       unfold interp_form_hatom, interp_hatom.
@@ -1316,7 +1316,7 @@ Require Import Psatz.
       unfold Bval. rewrite <- H15.
       rewrite !Typ.cast_refl. intros.
 
-      specialize (Atom.Bval_inj2 t_i t4 (farray_select t_i t3 t4 v_vald1 v_vald2) (v_valc1')).
+      specialize (Atom.Bval_inj2 t_i t4 (farray_select t_i v_vald1 v_vald2) (v_valc1')).
       intros. specialize (H19 Htic1').
 
      (* c2 *)
@@ -1353,7 +1353,7 @@ Require Import Psatz.
       unfold Bval. rewrite <- H20.
       rewrite !Typ.cast_refl. intros.
 
-      specialize (Atom.Bval_inj2 t_i t6 (farray_select t_i t5 t6 v_vale1 v_vale2) (v_valc2')).
+      specialize (Atom.Bval_inj2 t_i t6 (farray_select t_i v_vale1 v_vale2) (v_valc2')).
       intros. specialize (H24 Htic2').
 
      (* d2 *)
@@ -1389,7 +1389,7 @@ Require Import Psatz.
       unfold Bval. rewrite <- H25.
       rewrite !Typ.cast_refl. intros.
 
-      specialize (Atom.Bval_inj2 t_i t7 (farray_diff t_i t7 t8 v_valf1 v_valf2) (v_vald2')).
+      specialize (Atom.Bval_inj2 t_i t7 (farray_diff t_i v_valf1 v_valf2) (v_vald2')).
       intros. specialize (H29 Htid2').
 
      (* semantics *)

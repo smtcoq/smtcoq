@@ -379,12 +379,14 @@ Module Typ.
       exact Z_as_OT.lt_not_eq.
     Defined.
 
+
     Instance Positive_ord : OrdType positive.
     Proof.
       exists Positive_as_OT.lt.
       exact Positive_as_OT.lt_trans.
       exact Positive_as_OT.lt_not_eq.
     Defined.
+    
 
     Instance BV_ord n : OrdType (@BITVECTOR_LIST.bitvector n).
     Proof.
@@ -404,12 +406,13 @@ Module Typ.
       apply H. easy.
     Defined.
 
+
     Instance FArray_ord key elt
              (key_ord: OrdType key)
              (elt_ord: OrdType elt)
              (elt_dec: DecType elt)
              (elt_inh: Inhabited elt)
-             (key_comp: Comparable key) : OrdType (farray key_ord elt_inh).
+             (key_comp: Comparable key) : OrdType (farray key elt).
     Proof.
       exists (@lt_farray key elt key_ord key_comp elt_ord elt_inh).
       apply lt_farray_trans.
@@ -421,12 +424,17 @@ Module Typ.
       apply eqfarray_refl. auto.
     Defined.
 
-    Global Instance TI_ord i : OrdType (t_i.[i]).(te_carrier).
+
+    Instance TI_ord i : OrdType (t_i.[i]).(te_carrier).
     Proof.
       exists (t_i.[i]).(te_ltb).
       apply (t_i.[i]).(te_lt_trans).
       apply (t_i.[i]).(te_lt_not_eq).
     Defined.
+
+    Hint Resolve
+         bool_ord Z_ord Positive_ord
+         BV_ord FArray_ord TI_ord : typeclass_instances.
 
     Section Eqb_Dec.
 
@@ -442,6 +450,8 @@ Module Typ.
     Instance bool_dec : DecType bool :=
       EqbToDecType _ bool_eqbtype.
 
+
+    
     Instance Z_eqbtype : EqbType Z :=
       {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
 
@@ -484,9 +494,9 @@ Module Typ.
              (key_comp: Comparable key)
              (elt_comp: Comparable elt)
              (elt_inh: Inhabited elt)
-      : EqbType (farray key_ord elt_inh).
+      : EqbType (farray key elt).
     Proof.
-      exists (@FArray.equal _ _ _ key_comp _ elt_comp elt_inh).
+      exists FArray.equal.
       intros.
       split.
       apply FArray.equal_eq.
@@ -502,9 +512,17 @@ Module Typ.
              (key_comp: Comparable key)
              (elt_comp: Comparable elt)
              (elt_inh: Inhabited elt)
-      : DecType (farray key_ord elt_inh) :=
+      : DecType (farray key elt) :=
       EqbToDecType _ (FArray_eqbtype key elt _ _ _ _ _ _).
-    
+
+    Hint Resolve
+         bool_eqbtype Z_eqbtype Positive_eqbtype
+         BV_eqbtype FArray_eqbtype TI_eqbtype : typeclass_instances.
+
+    Hint Resolve
+         bool_dec Z_dec Positive_dec
+         BV_dec FArray_dec TI_dec : typeclass_instances.
+
     End Eqb_Dec.
 
     Instance bool_comp: Comparable bool.
@@ -595,7 +613,7 @@ Module Typ.
              (elt_eqbtype: EqbType elt)
              (key_comp: Comparable key)
              (elt_inh: Inhabited elt)
-             (elt_comp: Comparable elt) : Comparable (farray key_ord elt_inh).
+             (elt_comp: Comparable elt) : Comparable (farray key elt).
     Proof.
       constructor.
       intros.
@@ -609,6 +627,28 @@ Module Typ.
       - apply OrderedType.GT. auto.
     Defined.
 
+    Hint Resolve
+         bool_comp Z_comp Positive_comp
+         BV_comp FArray_comp TI_comp : typeclass_instances.
+
+
+    Instance bool_inh : Inhabited bool := {| default_value := false|}.
+    Instance Z_inh : Inhabited Z := {| default_value := 0%Z |}.
+    Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
+    Instance BV_inh n : Inhabited (BITVECTOR_LIST.bitvector n) :=
+      {| default_value := BITVECTOR_LIST.zeros n |}.
+    Instance TI_inh i: Inhabited (t_i.[i]).(te_carrier) :=
+      {| default_value := (t_i.[i]).(te_inhabitant) |}.
+    Instance FArray_inh key elt
+             (key_ord: OrdType key)
+             (elt_inh: Inhabited elt) : Inhabited (farray key elt) :=
+      {| default_value := FArray.empty key_ord elt_inh |}.
+
+    
+    Hint Resolve bool_inh Z_inh Positive_inh
+         BV_inh FArray_inh TI_inh : typeclass_instances.
+
+    
     Class CompDec := {
       ty : Type;
       Eqb :> EqbType ty;
@@ -627,7 +667,7 @@ Module Typ.
       Eqb := bool_eqbtype;                                    
       Ordered := bool_ord;                                    
       Comp := bool_comp;
-      Inh := {| default_value := false|}
+      Inh := bool_inh
     |}.
     
     Instance Z_compdec : CompDec := {|
@@ -635,7 +675,7 @@ Module Typ.
       Eqb := Z_eqbtype;                                    
       Ordered := Z_ord;                                    
       Comp := Z_comp;
-      Inh := {| default_value := 0%Z |}
+      Inh := Z_inh
     |}.
 
     Instance Positive_compdec : CompDec := {|
@@ -643,7 +683,7 @@ Module Typ.
       Eqb := Positive_eqbtype;                                    
       Ordered := Positive_ord;                                    
       Comp := Positive_comp;
-      Inh := {| default_value := 1%positive |}
+      Inh := Positive_inh
     |}.
 
     Instance BV_compdec n: CompDec := {|
@@ -651,7 +691,7 @@ Module Typ.
       Eqb := BV_eqbtype n;                                    
       Ordered := BV_ord n;                                    
       Comp := BV_comp n;
-      Inh := {| default_value := BITVECTOR_LIST.zeros n |}
+      Inh := BV_inh n
     |}.
 
 
@@ -660,7 +700,7 @@ Module Typ.
       Eqb := TI_eqbtype i;
       Ordered := TI_ord i;
       Comp := TI_comp i;
-      Inh := {| default_value := (t_i.[i]).(te_inhabitant) |}
+      Inh := TI_inh i
     |}.
 
 
@@ -699,13 +739,22 @@ Module Typ.
       let (key, key_eqbtype, key_dec, key_ord, key_comp, _) := key_compdec in
       let (elt, elt_eqbtype, elt_dec, elt_ord, elt_comp, elt_inh) := elt_compdec in
       {|
-        ty := (farray key_ord elt_inh);
+        ty := (farray key elt);
         Eqb := FArray_eqbtype key elt key_ord elt_ord elt_eqbtype key_comp elt_comp elt_inh;
         Ordered := FArray_ord key elt key_ord elt_ord elt_dec elt_inh key_comp;
         Comp := FArray_comp key elt key_ord elt_ord elt_eqbtype key_comp elt_inh elt_comp;
-        Inh := {| default_value := FArray.empty key_ord elt_inh |}
+        Inh := FArray_inh key elt key_ord elt_inh
       |}.
 
+    
+    Hint Resolve bool_compdec : typeclass_instances.
+    Hint Resolve Z_compdec : typeclass_instances.
+    Hint Resolve Positive_compdec : typeclass_instances.
+    Hint Resolve BV_compdec : typeclass_instances.
+    Hint Resolve FArray_compdec : typeclass_instances.
+    Hint Resolve TI_compdec : typeclass_instances.
+
+    
     Fixpoint interp_compdec (t:type) {struct t} :=
       match t as t' return CompDec with
       | Tindex i => TI_compdec i
@@ -1171,6 +1220,7 @@ Module Typ.
     
   End Cast.
 
+
 End Typ.
 
 Arguments Typ.Cast {_} {_} _.
@@ -1215,6 +1265,7 @@ Proof.
   intros;apply iff_reflect;symmetry;apply HA.
 Qed.
 (* End move *)
+
 
 Module Atom.
 
@@ -1916,7 +1967,7 @@ Qed.
 
       Lemma interp_farray_is_farray : forall ti te,
           interp_t (Typ.TFArray ti te) =
-          FArray.farray (Typ.ord_interp t_i ti) (Typ.inh_interp t_i te).
+          FArray.farray (Typ.interp t_i ti) (Typ.interp t_i te).
         intros.
         unfold interp_t.
         simpl.
@@ -1930,21 +1981,21 @@ Qed.
 
 
 
-      Definition farray_select ti te (a:interp_t (Typ.TFArray ti te)) (i:interp_t ti) : interp_t te.
+      Definition farray_select {ti} {te} (a:interp_t (Typ.TFArray ti te)) (i:interp_t ti) : interp_t te.
         rewrite interp_farray_is_farray in a.
-        exact (@FArray.select _ _ _ _ _ a i).
+        exact (FArray.select a i).
       Defined.
       
-      Definition farray_store ti te (a:interp_t (Typ.TFArray ti te)) (i:interp_t ti) (v:interp_t te) :
+      Definition farray_store {ti} {te} (a:interp_t (Typ.TFArray ti te)) (i:interp_t ti) (v:interp_t te) :
         interp_t (Typ.TFArray ti te).
         rewrite interp_farray_is_farray in *.
-        exact (@FArray.store _ _ _ _ _ _ _ _ a i v).
+        exact (FArray.store a i v).
       Defined.
                     
-      Definition farray_diff ti te (a:interp_t (Typ.TFArray ti te)) (b:interp_t (Typ.TFArray ti te)) :
+      Definition farray_diff {ti} {te} (a:interp_t (Typ.TFArray ti te)) (b:interp_t (Typ.TFArray ti te)) :
         interp_t ti.
         rewrite interp_farray_is_farray in a, b.
-        exact (@FArray.diff _ _ _ _ _ _ _ _ _ _ a b).
+        exact (FArray.diff a b).
       Defined.
 
       Definition interp_bop o :=
@@ -1975,15 +2026,15 @@ Qed.
            apply_binop (Typ.TBV s) (Typ.TBV s) Typ.Tbool (@BITVECTOR_LIST.bv_slt s) 
          | BO_BVconcat s1 s2 =>
            apply_binop (Typ.TBV s1) (Typ.TBV s2) (Typ.TBV (s1 + s2)) (@BITVECTOR_LIST.bv_concat s1 s2) 
-         | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te (farray_select ti te)
+         | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te farray_select
          | BO_diffarray ti te =>
-           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (farray_diff ti te)
+           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti farray_diff
          end.
 
       Definition interp_top o :=
          match o with
          | TO_store ti te => apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te)
-                                        (farray_store ti te)
+                                        farray_store
          end.
 
       Fixpoint compute_interp ty acc l :=
@@ -2353,7 +2404,7 @@ Qed.
         rewrite H2, H3, H1.
         rewrite !Typ.cast_refl.
         intros.
-        exists (farray_select ti t' x1 x2); auto.
+        exists (farray_select x1 x2); auto.
 
         (* BO_diffarray *)
         intros t' H.
@@ -2368,7 +2419,7 @@ Qed.
         rewrite H2, H3, H1.
         rewrite !Typ.cast_refl.
         intros.
-        exists (farray_diff t' te x1 x2); auto.
+        exists (farray_diff x1 x2); auto.
 
         (* Ternary operatores *)
         destruct op as [ti te]; intros [ ti' te' | | | | | ]; 
@@ -2389,7 +2440,7 @@ Qed.
         intros.
         rewrite !Typ.cast_refl.
         intros.
-        exists (farray_store ti' te' x1 x2 x3); auto.
+        exists (farray_store x1 x2 x3); auto.
 
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
@@ -2817,14 +2868,14 @@ Qed.
           simpl; try (exists true; auto); intro k1;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) ti) as [k2| ];
             simpl; try (exists true; reflexivity).
-        exists (farray_select ti te (k1 interp_t x) (k2 interp_t y)); auto.
+        exists (farray_select (k1 interp_t x) (k2 interp_t y)); auto.
 
         (* BO_diffarray *)
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TFArray ti te) );
           simpl; try (exists true; auto); intro k1;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TFArray ti te)) as [k2| ];
             simpl; try (exists true; reflexivity).
-        exists (farray_diff ti te (k1 interp_t x) (k2 interp_t y)); auto.
+        exists (farray_diff (k1 interp_t x) (k2 interp_t y)); auto.
 
         (* Ternary operators *)
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
@@ -2837,7 +2888,7 @@ Qed.
           simpl; try (exists true; auto); intro k2;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
             simpl; try (exists true; reflexivity).
-         exists (farray_store ti te (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
+         exists (farray_store (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
 
         (* N-ary operators *)
         intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
@@ -2944,7 +2995,6 @@ End Atom.
 Arguments Atom.Val {_} {_} _ _.
 
 
-
 Section PredefinedArrays.
   Variable t_i : PArray.array typ_eqb.
 
@@ -2961,6 +3011,17 @@ Section PredefinedArrays.
   Definition arrayset_atom := @PArray.set Atom.atom.
 
 End PredefinedArrays.
+
+
+Import Typ.
+
+Hint Resolve bool_ord Z_ord Positive_ord BV_ord FArray_ord TI_ord : typeclass_instances.
+Hint Resolve bool_eqbtype Z_eqbtype Positive_eqbtype BV_eqbtype FArray_eqbtype TI_eqbtype : typeclass_instances.
+Hint Resolve bool_dec Z_dec Positive_dec BV_dec FArray_dec TI_dec : typeclass_instances.
+Hint Resolve bool_comp Z_comp Positive_comp BV_comp FArray_comp TI_comp : typeclass_instances.
+Hint Resolve bool_inh Z_inh Positive_inh BV_inh FArray_inh TI_inh : typeclass_instances.
+Hint Resolve bool_compdec Z_compdec Positive_compdec BV_compdec FArray_compdec TI_compdec : typeclass_instances.
+
 
 (* 
    Local Variables:
