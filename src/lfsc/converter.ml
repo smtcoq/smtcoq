@@ -125,14 +125,17 @@ module Make (T : Translator_sig.S) = struct
   let rec admit_preproc p = match app_name p with
     | Some ("th_let_pf", [_; tr; p]) ->
       begin match app_name tr with
-        | Some ("trust_f", [formula]) ->
-            begin match value p with
-              | Lambda ({sname = Name h}, p) ->
-                if not (trust_vareq_as_alias formula) then
-                  mk_admit_preproc h formula;
-                admit_preproc p
-              | _ -> assert false
-            end
+        | Some ("trust_f", _) -> eprintf "Warning: hole for trust_f.@."
+        | Some (rule, _) ->
+          eprintf "Warning: hole for unsupported rule %s.@." rule
+        | None -> eprintf "Warning: hole@."
+      end;
+      let formula = th_res tr in
+      begin match value p with
+        | Lambda ({sname = Name h}, p) ->
+          if not (trust_vareq_as_alias formula) then
+            mk_admit_preproc h formula;
+          admit_preproc p
         | _ -> assert false
       end
     | _ -> p
