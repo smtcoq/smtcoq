@@ -61,13 +61,13 @@ let import_trace filename first =
         let aux = VeritSyntax.get_clause 1 in
         match first, aux.value with
         | Some (root,l), Some (fl::nil) ->
-          Format.eprintf "Root: %a ,,,,,,\n\
-                          input: %a@."
-            (Form.to_smt Atom.to_smt) l (Form.to_smt Atom.to_smt) fl;
+          (* Format.eprintf "Root: %a ,,,,,,\n\ *)
+          (*                 input: %a@." *)
+          (*   (Form.to_smt Atom.to_smt) l (Form.to_smt Atom.to_smt) fl; *)
           if Form.equal l fl then
             aux
           else (
-            eprintf "ADDING Flatten rule@.";
+            (* eprintf "ADDING Flatten rule@."; *)
             aux.kind <- Other (ImmFlatten(root,fl));
             SmtTrace.link root aux;
             root
@@ -332,17 +332,16 @@ let call_cvc4 rt ro rf root =
     "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
-    ^ logfilename in
+    ^ logfilename ^ " ; ( exit ${PIPESTATUS[0]} )" in
   eprintf "%s@." command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
+  
   let t1 = Sys.time () in
   eprintf "CVC4 = %.5f@." (t1-.t0);
-  if exit_code <> 0 then
-    failwith ("Lfsc.call_cvc4: command "^command^
-	      " exited with code "^(string_of_int exit_code));
 
-  eprintf "Running in %s@." Sys.executable_name;
+  if exit_code <> 0 then
+    Structures.error ("CVC4 crashed: return code "^string_of_int exit_code);
 
   let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
   let signatures = [
@@ -352,6 +351,7 @@ let call_cvc4 rt ro rf root =
     "th_int.plf";
     "th_bv.plf";
     "th_bv_bitblast.plf";
+    "th_bv_rewrites.plf";
     "th_arrays.plf";
   ] in
   let signatures_arg =
@@ -361,11 +361,11 @@ let call_cvc4 rt ro rf root =
   in
   Sys.command ("cat "^signatures_arg^" "^logfilename^" > "^prooffilename)
   |> ignore;
-  
-  eprintf "LFSC proof in %s@." prooffilename;
-  
+
   try import_trace prooffilename (Some root)
-  with No_proof -> Structures.error "CVC4 did not generate a proof"
+  with
+  | No_proof -> Structures.error "CVC4 did not generate a proof"
+  | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
 
 
 

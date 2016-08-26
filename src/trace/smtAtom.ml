@@ -101,6 +101,21 @@ let mk_Z n =
   else assert false
 
 
+(* size of bivectors are either N.of_nat (length l) or an N *)
+let mk_bvsize n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cof_nat) then
+    match args with
+    | [nl] ->
+      let c, args = Term.decompose_app nl in
+      if Term.eq_constr c (Lazy.force clength) then
+        match args with
+        | [_; l] -> List.length (mk_bool_list l)
+        | _ -> assert false
+      else assert false
+    | _ -> assert false
+  else mk_N n
+
 
 module Btype = 
   struct 
@@ -137,7 +152,8 @@ module Btype =
       | Tpositive -> Format.fprintf fmt "Int"
       | TBV i -> Format.fprintf fmt "(_ BitVec %i)" i
       | Tindex i -> Format.fprintf fmt "Tindex_%i" i.index
-      | TFArray (ti, te) -> Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
+      | TFArray (ti, te) ->
+        Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
 
     let rec logic = function
       | TZ | Tpositive -> SL.singleton LLia
@@ -184,7 +200,7 @@ module Btype =
       else if Term.eq_constr c (Lazy.force cbitvector) ||
               Term.eq_constr c (Lazy.force cTBV) then
         match args with
-        | [s] -> TBV (mk_N s)
+        | [s] -> TBV (mk_bvsize s)
         | _ -> assert false
       else if Term.eq_constr c (Lazy.force cfarray) ||
               Term.eq_constr c (Lazy.force cTFArray) then
@@ -213,7 +229,6 @@ module Btype =
         let y = mkName "y" in
         let z = mkName "z" in
         let v = Term.mkRel in
-        let h = Term.mkMeta in
         
         let refl_ty =
           Term.mkLambda (eq, eq_ty,
@@ -309,17 +324,8 @@ module Btype =
     let make_t_i rt = interp_tbl rt
 
 
-    let local_t_i reify n =
-      let nti = Names.id_of_string ("local_t_i_" ^ string_of_int n) in
-      let t_i = make_t_i reify in
-      let c = Structures.mkUConst t_i in
-      Term.mkConst
-        (declare_constant ~local:true
-           nti (DefinitionEntry c, IsDefinition Definition))
-
-    let interp t_i t =
+    let interp_t t_i t =
         mklApp cinterp_t [|t_i ; to_coq t|]
-
 
     let dec_interp t_i t =
       mklApp cdec_interp [|t_i ; to_coq t|]
@@ -333,24 +339,20 @@ module Btype =
     let inh_interp t_i t =
         mklApp cinh_interp [|t_i ; to_coq t|]
 
-    let interp_to_coq =
-      let cpt = ref 0 in
-      fun reify t ->
-        incr cpt;
-        (* create local constant t_i (TODO: change this) *)
-        interp (local_t_i reify !cpt) t
-
-    let interp_to_coq reify t =
-        interp (make_t_i reify) t
+    let rec interp t_i = function
+      | TZ -> Lazy.force cZ
+      | Tbool -> Lazy.force cbool
+      | Tpositive -> Lazy.force cpositive
+      | TBV n -> mklApp cbitvector [|mkN n|]
+      | Tindex c -> mklApp cte_carrier [|c.hval|]
+      (* | TFArray _ as t -> interp_t t_i t *)
+      | TFArray (ti,te) ->
+        mklApp cfarray [| interp t_i ti; interp t_i te;
+                          ord_interp t_i ti; inh_interp t_i te |]
 
     
-    (* let rec interp_to_coq reify = function *)
-    (*   | TZ -> Lazy.force cZ *)
-    (*   | Tbool -> Lazy.force cbool *)
-    (*   | Tpositive -> Lazy.force cpositive *)
-    (*   | TBV n -> mklApp cbitvector [|mkN n|] *)
-    (*   | Tindex c -> mklApp cte_carrier [|c.hval|] *)
-    (*   | TFArray (ti,te) ->  *)
+    let interp_to_coq reify t = interp (make_t_i reify) t
+
     
   end
 
@@ -547,22 +549,47 @@ module Op =
     let interp_ieq_eval t_i t =
       let te = mklApp cinterp_eqb [|t_i ; Btype.to_coq t|] in
       veval_t te
-        
+
+
+    let interp_eqarray t_i ti te =
+      mklApp cequalarray
+        Btype.[|interp t_i ti; interp t_i te;
+                ord_interp t_i ti; comp_interp t_i ti;
+                ord_interp t_i te; comp_interp t_i te;
+                inh_interp t_i te |]
+
+    let interp_select t_i ti te =
+      mklApp cselect
+        Btype.[|interp t_i ti; interp t_i te;
+                ord_interp t_i ti; comp_interp t_i ti;
+                inh_interp t_i te|]
+
+    let interp_diff t_i ti te =
+      mklApp cdiff
+        Btype.[|interp t_i ti; interp t_i te;
+                dec_interp t_i ti; ord_interp t_i ti; comp_interp t_i ti;
+                dec_interp t_i te; ord_interp t_i te; comp_interp t_i te;
+                inh_interp t_i ti; inh_interp t_i te |]
+
+
+    let interp_store t_i ti te =
+      mklApp cstore
+        Btype.[|interp t_i ti; interp t_i te;
+                dec_interp t_i ti; ord_interp t_i ti; comp_interp t_i ti;
+                ord_interp t_i te; comp_interp t_i te; inh_interp t_i te |]
+
+    
     let interp_eq t_i = function
       | TZ -> Lazy.force ceqbZ
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
       | TBV s -> mklApp cbv_eq [|mkN s|]
       | Tindex i -> veval_t (mklApp cte_eqb [|i.hval|])
-      | (TFArray _) as t -> interp_ieq t_i t
-
-    (* let e i = Term.mkEvar (i,[||]) *)
-    let e s = Term.mkVar (Names.id_of_string s)
-    let e i = e ("kkk"^string_of_int i)
-    let e = Term.mkMeta
-
+      (* | (TFArray _) as t -> interp_ieq t_i t *)
+      | TFArray (ti, te) -> interp_eqarray t_i ti te
 
     
+
     let interp_bop t_i = function
       | BO_Zplus -> Lazy.force cadd
       | BO_Zminus -> Lazy.force csub
@@ -580,23 +607,8 @@ module Op =
       | BO_BVult s -> mklApp cbv_ult [|mkN s|]
       | BO_BVslt s -> mklApp cbv_slt [|mkN s|]
       | BO_BVconcat (s1,s2) -> mklApp cbv_concat [|mkN s1; mkN s2|]
-      | BO_select (ti, te) ->
-        mklApp cselect [|Btype.interp t_i ti; Btype.interp t_i te;
-                         Btype.ord_interp t_i ti;
-                         Btype.comp_interp t_i ti;
-                         Btype.inh_interp t_i te|]
-        (* mklApp cfarray_select [|t_i; Btype.to_coq ti; Btype.to_coq te|] *)
-      | BO_diffarray (ti, te) ->
-        mklApp cdiff [|Btype.interp t_i ti; Btype.interp t_i te;
-                       Btype.dec_interp t_i ti;
-                       Btype.ord_interp t_i ti;
-                       Btype.comp_interp t_i ti;
-                       Btype.dec_interp t_i te;
-                       Btype.ord_interp t_i te;
-                       Btype.comp_interp t_i te;
-                       Btype.inh_interp t_i ti;
-                       Btype.inh_interp t_i te |]
-        (* mklApp cfarray_diff [|t_i; Btype.to_coq ti; Btype.to_coq te|] *)
+      | BO_select (ti, te) -> interp_select t_i ti te
+      | BO_diffarray (ti, te) -> interp_diff t_i ti te
 
     let t_to_coq = function
       | TO_store (ti, te) -> store_to_coq ti te
@@ -605,18 +617,10 @@ module Op =
       | TO_store (ti, te) -> TFArray (ti, te)
 
     let t_type_args = function
-      | TO_store (ti, te) -> (TFArray (ti, te), ti, te)
+      | TO_store (ti, te) -> TFArray (ti, te), ti, te
 
     let interp_top t_i = function
-      | TO_store (ti, te) ->
-        mklApp cstore [|Btype.interp t_i ti; Btype.interp t_i te;
-                        Btype.dec_interp t_i ti;
-                        Btype.ord_interp t_i ti;
-                        Btype.comp_interp t_i ti;
-                        Btype.ord_interp t_i te;
-                        Btype.comp_interp t_i te;
-                        Btype.inh_interp t_i te |]
-        (* mklApp cfarray_store [|t_i; Btype.to_coq ti; Btype.to_coq te|] *)
+      | TO_store (ti, te) -> interp_store t_i ti te
 
     
     let n_to_coq = function
@@ -832,12 +836,15 @@ module HashedAtom =
         let nb = Array.length hb in
         let i = ref (-1) in
         Op.n_equal opa opb && na == nb &&
-        Array.fold_left (fun b h -> incr i; b && h.index == hb.(!i).index) true ha
+        Array.fold_left
+          (fun b h -> incr i; b && h.index == hb.(!i).index) true ha
       | Aapp (va,ha), Aapp (vb,hb) ->
         let na = Array.length ha in
         let nb = Array.length hb in
         let i = ref (-1) in
-        Op.i_equal va vb && na == nb && Array.fold_left (fun b h -> incr i; b && h.index == hb.(!i).index) true ha
+        Op.i_equal va vb && na == nb &&
+        Array.fold_left
+          (fun b h -> incr i; b && h.index == hb.(!i).index) true ha
       | _, _ -> false
 
     let hash = function
@@ -846,18 +853,17 @@ module HashedAtom =
           (( (h.index lsl 3) + (Hashtbl.hash op)) lsl 3) lxor 2
       | Abop (op,h1,h2) ->
         (((( (h1.index lsl 2) + h2.index) lsl 3) + Hashtbl.hash op) lsl 3) lxor 3
-
       | Atop (op,h1,h2,h3) ->
         (((( ((h1.index lsl 2) + h2.index) lsl 3) + h3.index) lsl 4
           + Hashtbl.hash op) lsl 4) lxor 4
-
       | Anop (op, args) ->
           let hash_args =
             match Array.length args with
             | 0 -> 0
             | 1 -> args.(0).index
             | 2 -> args.(1).index lsl 2 + args.(0).index
-            | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index in
+            | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index
+          in
           (hash_args lsl 5 + (Hashtbl.hash op) lsl 3) lxor 4
       | Aapp (op, args) ->
           let hash_args =
@@ -865,7 +871,8 @@ module HashedAtom =
             | 0 -> 0
             | 1 -> args.(0).index
             | 2 -> args.(1).index lsl 2 + args.(0).index
-            | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index in
+            | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index
+          in
           (hash_args lsl 5 + op.index lsl 3) lxor 4
 
 
@@ -1014,7 +1021,9 @@ module Atom =
 	then raise (NotWellTyped a)
       | Anop(op,ha) ->
         let ty = Op.n_type_args op in
-        Array.iter (fun h -> if not (Btype.equal ty (type_of h)) then raise (NotWellTyped a)) ha
+        Array.iter
+          (fun h -> if not (Btype.equal ty (type_of h)) then
+              raise (NotWellTyped a)) ha
       | Aapp(op,args) ->
 	let tparams = Op.i_type_args op in
 	Array.iteri (fun i t -> 
@@ -1082,9 +1091,6 @@ module Atom =
       | CCselect
       | CCdiff
       | CCstore
-      | CCfarrayselect
-      | CCfarraydiff
-      | CCfarraystore
       | CCunknown
 
     let op_tbl () =
@@ -1102,8 +1108,6 @@ module Atom =
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
           cselect, CCselect; cdiff, CCdiff;
           cstore, CCstore;
-          cfarray_select, CCfarrayselect; cfarray_diff, CCfarraydiff;
-          cfarray_store, CCfarraystore;
           cequalarray, CCeqbA;
         ];
       tbl
@@ -1153,17 +1157,13 @@ module Atom =
           | CCselect -> mk_bop_select args
           | CCdiff -> mk_bop_diff args
           | CCstore -> mk_top_store args
-          | CCfarrayselect -> mk_bop_farray_select args
-          | CCfarraydiff -> mk_bop_farray_diff args
-          | CCfarraystore -> mk_top_farray_store args
 	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
 
-      (* TODO Farray_equal *)
     
       and mk_cop op args = match op, args with
         | CCxH, [] -> get reify (Acop CO_xH)
         | CCZ0, [] -> get reify (Acop CO_Z0)
-        | CCBV, [bs; _] -> get reify (Acop (CO_BV (mk_bool_list bs)))
+        | CCBV, [bs] -> get reify (Acop (CO_BV (mk_bool_list bs)))
         | _ -> assert false
           
     
@@ -1174,19 +1174,19 @@ module Atom =
       and mk_bvbitof = function
         | [s;n;a] ->
           let h = mk_hatom a in
-          get reify (Auop (UO_BVbitOf (mk_N s, mk_nat n), h))
+          get reify (Auop (UO_BVbitOf (mk_bvsize s, mk_nat n), h))
         | _ -> assert false
 
       and mk_bvnot = function
         | [s;a] ->
           let h = mk_hatom a in
-          get reify (Auop (UO_BVnot (mk_N s), h))
+          get reify (Auop (UO_BVnot (mk_bvsize s), h))
         | _ -> assert false
 
       and mk_bvneg = function
         | [s;a] ->
           let h = mk_hatom a in
-          get reify (Auop (UO_BVneg (mk_N s), h))
+          get reify (Auop (UO_BVneg (mk_bvsize s), h))
         | _ -> assert false
 
       and mk_bop op = function
@@ -1206,62 +1206,55 @@ module Atom =
 
       and mk_bop_bvand = function
         | [s;a1;a2] ->
-           let s' = mk_N s in
+           let s' = mk_bvsize s in
            mk_bop (BO_BVand s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvor = function
         | [s;a1;a2] ->
-           let s' = mk_N s in
+           let s' = mk_bvsize s in
            mk_bop (BO_BVor s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvxor = function
         | [s;a1;a2] ->
-          let s' = mk_N s in
+          let s' = mk_bvsize s in
           mk_bop (BO_BVxor s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvadd = function
         | [s;a1;a2] ->
-           let s' = mk_N s in
+           let s' = mk_bvsize s in
            mk_bop (BO_BVadd s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvmult = function
         | [s;a1;a2] ->
-           let s' = mk_N s in
+           let s' = mk_bvsize s in
            mk_bop (BO_BVmult s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvult = function
         | [s;a1;a2] ->
-           let s' = mk_N s in
+           let s' = mk_bvsize s in
            mk_bop (BO_BVult s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvslt = function
         | [s;a1;a2] ->
-           let s' = mk_N s in
+           let s' = mk_bvsize s in
            mk_bop (BO_BVslt s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvconcat = function
         | [s1;s2;a1;a2] ->
-           mk_bop (BO_BVconcat (mk_N s1, mk_N s2)) [a1;a2]
+           mk_bop (BO_BVconcat (mk_bvsize s1, mk_bvsize s2)) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bveq = function
         | [s;a1;a2] ->
-          let s' = mk_N s in
+          let s' = mk_bvsize s in
           mk_bop (BO_eq (TBV s')) [a1;a2]
-        | _ -> assert false
-
-      and mk_bop_farray_select = function
-        | [_;ti;te;a;i] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
-          mk_bop (BO_select (ti', te')) [a; i]
         | _ -> assert false
 
       and mk_bop_select = function
@@ -1271,32 +1264,11 @@ module Atom =
           mk_bop (BO_select (ti', te')) [a; i]
         | _ -> assert false
 
-      and mk_bop_diffarray = function
-        | [ti;te;a;b] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
-          mk_bop (BO_diffarray (ti', te')) [a; b]
-        | _ -> assert false
-
-      and mk_bop_farray_diff = function
-        | [_;ti;te;a;b] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
-          mk_bop (BO_diffarray (ti', te')) [a; b]
-        | _ -> assert false
-
       and mk_bop_diff = function
         | [ti;te;_;_;_;_;_;_;_;_;a;b] ->
           let ti' = Btype.of_coq rt ti in
           let te' = Btype.of_coq rt te in
           mk_bop (BO_diffarray (ti', te')) [a; b]
-        | _ -> assert false
-
-      and mk_top_farray_store = function
-        | [_;ti;te;a;i;e] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
-          mk_top (TO_store (ti', te')) [a; i; e]
         | _ -> assert false
 
       and mk_top_store = function
@@ -1339,11 +1311,15 @@ module Atom =
 	  mklApp cAtop [|Op.t_to_coq op;to_coq h1; to_coq h2; to_coq h3|]
       | Anop (op,ha) ->
         let cop = Op.n_to_coq op in
-        let cargs = Array.fold_right (fun h l -> mklApp ccons [|Lazy.force cint; to_coq h; l|]) ha (mklApp cnil [|Lazy.force cint|]) in
+        let cargs = Array.fold_right
+            (fun h l -> mklApp ccons [|Lazy.force cint; to_coq h; l|])
+            ha (mklApp cnil [|Lazy.force cint|]) in
         mklApp cAnop [|cop; cargs|]
       | Aapp (op,args) ->
         let cop = Op.i_to_coq op in
-        let cargs = Array.fold_right (fun h l -> mklApp ccons [|Lazy.force cint; to_coq h; l|]) args (mklApp cnil [|Lazy.force cint|]) in
+        let cargs = Array.fold_right
+            (fun h l -> mklApp ccons [|Lazy.force cint; to_coq h; l|])
+            args (mklApp cnil [|Lazy.force cint|]) in
         mklApp cAapp [|cop; cargs|]
 
     let dft_atom = lazy (mklApp cAcop [| Lazy.force cCO_xH |])
@@ -1432,7 +1408,8 @@ module Atom =
         if Big_int.gt_big_int i Big_int.zero_big_int then
           mk_unop UO_Zpos reify (hatom_pos_of_bigint reify i)
         else
-          mk_unop UO_Zneg reify (hatom_pos_of_bigint reify (Big_int.minus_big_int i))
+          mk_unop UO_Zneg reify
+            (hatom_pos_of_bigint reify (Big_int.minus_big_int i))
 
     let mk_eq reify ty h1 h2 =
       let op = BO_eq ty in
@@ -1500,9 +1477,13 @@ module Trace = SmtTrace.MakeOpt(Form)
 let mk_ftype cod dom =
   let typeb = Lazy.force ctype in
   let typea = mklApp clist [|typeb|] in
-  let a = Array.fold_right (fun bt acc -> mklApp ccons [|typeb; Btype.to_coq bt; acc|]) cod (mklApp cnil [|typeb|]) in
+  let a = Array.fold_right
+      (fun bt acc -> mklApp ccons [|typeb; Btype.to_coq bt; acc|])
+      cod (mklApp cnil [|typeb|]) in
   let b = Btype.to_coq dom in
   mklApp cpair [|typea;typeb;a;b|]
 
 let make_t_i = Btype.make_t_i
-let make_t_func ro t_i = Op.interp_tbl (mklApp ctval [|t_i|]) (fun cod dom value -> mklApp cTval [|t_i; mk_ftype cod dom; value|]) ro
+let make_t_func ro t_i =
+  Op.interp_tbl (mklApp ctval [|t_i|])
+    (fun cod dom value -> mklApp cTval [|t_i; mk_ftype cod dom; value|]) ro

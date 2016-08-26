@@ -192,45 +192,7 @@ Section certif.
     Hypothesis wf_t_i : wf.
     Notation atom := int (only parsing).
 
-    Lemma wrap_read_over_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
-                                (i:Typ.interp t_i ti) (v:Typ.interp t_i te),
-        farray_select t_i (farray_store t_i a i v) i = v.
-      intros.
-      unfold farray_select, farray_store.
-      unfold eq_rect_r,eq_rect,eq_sym.
-      generalize a.
-      rewrite interp_farray_is_farray.
-      intro; simpl.
-      apply FArray.read_over_write.
-      exact (Typ.dec_interp t_i te).
-    Qed.
-
-    Lemma wrap_read_over_other_write: forall ti te (a:Typ.interp t_i (Typ.TFArray ti te))
-                                      (i j :Typ.interp t_i ti) (v:Typ.interp t_i te),
-        i <> j -> farray_select t_i (farray_store t_i a i v) j = farray_select t_i a j.
-      intros.
-      unfold farray_select, farray_store.
-      unfold eq_rect_r,eq_rect,eq_sym.
-      generalize a.
-      rewrite interp_farray_is_farray.
-      intro. simpl.
-      apply FArray.read_over_other_write.
-      exact H.
-    Qed.
-
-    Lemma wrap_extensionality: forall ti te (a b:Typ.interp t_i (Typ.TFArray ti te)),
-        a <> b -> 
-        farray_select t_i a (farray_diff t_i a b) <>
-        farray_select t_i b (farray_diff t_i a b).
-    Proof.
-       intros.
-       unfold farray_select, farray_diff.
-       unfold eq_rect_r,eq_rect,eq_sym. intros.
-       generalize dependent a. generalize dependent b.
-       rewrite interp_farray_is_farray. intros.
-       now apply select_over_diff.
-    Qed.
-
+    
     Lemma valid_check_roweq lres : C.valid rho (check_roweq lres).
     Proof.
       unfold check_roweq.
@@ -414,7 +376,7 @@ Section certif.
         rewrite H6d1, H6d2, H14.
         intros.
         specialize (Atom.Bval_inj2 t_i (Typ.TFArray t0 t) 
-        (farray_store t_i v_val2 v_val3 v_val4) (v_val0)).
+        (store v_val2 v_val3 v_val4) (v_val0)).
         intros. specialize (H18 H6).
         rewrite <- H18.
 
@@ -431,7 +393,8 @@ Section certif.
         rewrite <- H20.
         apply Typ.i_eqb_spec.
 
-        apply wrap_read_over_write.
+        apply read_over_write.
+        exact (Typ.dec_interp _ _).
     Qed.
 
     Lemma valid_check_rowneq cl : C.valid rho (check_rowneq cl).
@@ -622,7 +585,7 @@ Section certif.
       generalize dependent v_valb1'.
 
       rewrite H15. intros.
-      specialize (Atom.Bval_inj2 t_i (v_typeb1') (farray_select t_i v_valc1 v_valc2) (v_valb1')).
+      specialize (Atom.Bval_inj2 t_i (v_typeb1') (select v_valc1 v_valc2) (v_valb1')).
       intros. specialize (H19 Htib1').
 
       (* b2 *)
@@ -663,7 +626,7 @@ Section certif.
       generalize dependent v_valb2'.
 
       rewrite H20. intros.
-      specialize (Atom.Bval_inj2 t_i (v_typeb2') (farray_select t_i v_vald1 v_vald2) (v_valb2')).
+      specialize (Atom.Bval_inj2 t_i (v_typeb2') (select v_vald1 v_vald2) (v_valb2')).
       intros. specialize (H24 Htib2').
 
       (* c1 *)
@@ -711,7 +674,7 @@ Section certif.
 
       rewrite H25a, H25b, H30. intros.
       specialize (Atom.Bval_inj2 t_i (Typ.TFArray t7 t8) 
-        (farray_store t_i v_vale1 v_vale2 v_vale3) (v_valc1')).
+        (store v_vale1 v_vale2 v_vale3) (v_valc1')).
       intros. specialize (H25 Htic1').
 
       unfold interp_form_hatom, interp_hatom.
@@ -779,7 +742,7 @@ Section certif.
       specialize (Atom.Bval_inj2 t_i t7 (v_vald2) (v_valc2)).
       intros. specialize (H40 Htic2). rewrite H40.
 
-      apply wrap_read_over_other_write.
+      apply read_over_other_write.
 
       unfold Lit.interp in isif.
       apply Typ.i_eqb_spec_false in isif.
@@ -927,7 +890,7 @@ Section certif.
       generalize dependent v_valb1'.
 
       rewrite H15. intros.
-      specialize (Atom.Bval_inj2 t_i (v_typeb1') (farray_select t_i  v_valc1 v_valc2) (v_valb1')).
+      specialize (Atom.Bval_inj2 t_i (v_typeb1') (select v_valc1 v_valc2) (v_valb1')).
       intros. specialize (H19 Htib1').
 
       (* b2 *)
@@ -969,7 +932,7 @@ Section certif.
 
       rewrite H20. intros.
       specialize (Atom.Bval_inj2 t_i (v_typeb2') 
-                 (farray_select t_i  v_vald1 v_vald2) (v_valb2')).
+                 (select v_vald1 v_vald2) (v_valb2')).
       intros. specialize (H24 Htib2').
 
       (* c1 *)
@@ -1018,7 +981,7 @@ Section certif.
 
       rewrite H25a, H25b, H30. intros.
       specialize (Atom.Bval_inj2 t_i (Typ.TFArray t7 t8) 
-        (farray_store t_i v_vale1 v_vale2 v_vale3) (v_valc1')).
+        (store v_vale1 v_vale2 v_vale3) (v_valc1')).
       intros. specialize (H25 Htic1').
 
       unfold interp_form_hatom, interp_hatom.
@@ -1087,7 +1050,7 @@ Section certif.
       specialize (Atom.Bval_inj2 t_i t7 (v_vald2) (v_valc2)).
       intros. specialize (H40 Htic2). rewrite H40.
 
-      apply wrap_read_over_other_write.
+      apply read_over_other_write.
 
       unfold Lit.interp in isif.
       apply Typ.i_eqb_spec_false in isif.
@@ -1316,7 +1279,7 @@ Require Import Psatz.
       unfold Bval. rewrite <- H15.
       rewrite !Typ.cast_refl. intros.
 
-      specialize (Atom.Bval_inj2 t_i t4 (farray_select t_i v_vald1 v_vald2) (v_valc1')).
+      specialize (Atom.Bval_inj2 t_i t4 (select v_vald1 v_vald2) (v_valc1')).
       intros. specialize (H19 Htic1').
 
      (* c2 *)
@@ -1353,7 +1316,7 @@ Require Import Psatz.
       unfold Bval. rewrite <- H20.
       rewrite !Typ.cast_refl. intros.
 
-      specialize (Atom.Bval_inj2 t_i t6 (farray_select t_i v_vale1 v_vale2) (v_valc2')).
+      specialize (Atom.Bval_inj2 t_i t6 (select v_vale1 v_vale2) (v_valc2')).
       intros. specialize (H24 Htic2').
 
      (* d2 *)
@@ -1389,7 +1352,7 @@ Require Import Psatz.
       unfold Bval. rewrite <- H25.
       rewrite !Typ.cast_refl. intros.
 
-      specialize (Atom.Bval_inj2 t_i t7 (farray_diff t_i v_valf1 v_valf2) (v_vald2')).
+      specialize (Atom.Bval_inj2 t_i t7 (diff v_valf1 v_valf2) (v_vald2')).
       intros. specialize (H29 Htid2').
 
      (* semantics *)
@@ -1500,7 +1463,7 @@ Require Import Psatz.
       specialize (Atom.Bval_inj2 t_i (Typ.TFArray t7 t6) (v_valb2) (v_valf2)).
       intros. specialize (H45 Htif2). rewrite H45.
 
-      apply wrap_extensionality.
+      apply select_over_diff.
       now rewrite H44, H45 in H0.
       
 Qed.

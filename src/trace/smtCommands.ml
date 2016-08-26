@@ -368,16 +368,17 @@ let tactic call_solver rt ro ra rf env sigma t =
   let quantify_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in
   let res = compose_lam_assum forall_let body in
-  (* let cuts = (Btype.get_cuts rt)@cuts in *)
-  List.fold_right (fun (eqn, eqt) tac ->
+  let tac =
+    List.fold_right (fun (eqn, eqt) tac ->
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name eqn) eqt)
         tac
     ) (Btype.get_cuts rt) (Structures.vm_cast_no_check res)
-  |> List.fold_right (fun (n, t) tac ->
+  in
+  List.fold_left (fun tac (n, t) ->
     let t = quantify_assum forall_let t in
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name n) t)
         tac
-    ) cuts
+    ) tac cuts
                              

@@ -3,15 +3,13 @@ Require Import Bool PArray Int63 List ZArith.
 
 Local Open Scope int63_scope.
 
+Import ListNotations.
+Local Open Scope list_scope.
+
 Section Arrays.
   Local Close Scope int63_scope.
-
-  Require Import FArray.
-  (* Existing Instance Typ.Z_ord. *)
-  (* Existing Instance Typ.Z_dec. *)
-  (* Existing Instance Typ.Z_comp. *)
-  (* Existing Instance Typ.Z_inh. *)
-
+  Import BVList.BITVECTOR_LIST.
+  Import FArray.
   
   Goal forall (a b c d: farray Z Z),
       (implb (equal c (store b 0 4))
@@ -20,17 +18,30 @@ Section Arrays.
       (equal a c)))).
   Proof.
     cvc4.
-    Qed.
-  Admitted.
+  Qed.
 
-  
+
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      (implb (bv_eq (of_bits [false; false; false; false]) bv1)
+      (implb (bv_eq (of_bits [false; false; false; true]) bv2)
+      (implb (equal c (store b bv1 4))
+      (implb (equal d (store (store b bv1 4) bv2 4))
+      (implb (equal a (store d bv2 (select b bv2)))
+             (equal a c)))))).
+    Proof.
+    cvc4.
+    Qed.
+    
   Goal forall (a b: farray Z Z) i,
         (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
   Proof.
     intros.
     cvc4.
-    simpl.
-  Qed.
+    admit.
+    cvc4.
+    admit. admit.
+  Admitted.
 
 
   
@@ -38,8 +49,7 @@ End Arrays.
 
 Section BV.
 
-  Require Import BVList.
-  Import BITVECTOR_LIST.
+  Import BVList.BITVECTOR_LIST.
 
   Goal forall (a b c: bitvector 4), implb
                                  (bv_eq c (bv_and a b))
@@ -47,7 +57,7 @@ Section BV.
   Proof.
     cvc4.
   Qed.
-  
+
 End BV.
 
 
@@ -81,17 +91,17 @@ Goal forall a, negb (implb a a) = false.
   cvc4.
 Qed.
 
-(* *)
-(* Goal forall a , (xorb a a) || negb (xorb a a). *)
-(*   cvc4. *)
-(* Qed. *)
+
+Goal forall a , (xorb a a) || negb (xorb a a).
+  cvc4; verit.
+Admitted.
 
                                     
-(* Goal forall a, (a||negb a) || negb (a||negb a). *)
-(*   cvc4. *)
-(* Qed. *)
-(* Print Unnamed_thm5. *)
-(* *)
+Goal forall a, (a||negb a) || negb (a||negb a).
+  cvc4.
+Qed.
+
+
 
 (* Polarities *)
 
@@ -127,27 +137,30 @@ Qed.
 
 
  
-(* *)
-(* Goal true. *)
-(*   cvc4. *)
-(* Qed. *)
+
+Goal true.
+  cvc4; verit.
+Admitted.
 
                                     
-(* Goal negb false. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal negb false.
+  cvc4.
+  simpl. auto.
+Admitted.
 
 
  
-(* Goal forall a, Bool.eqb a a. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall a, Bool.eqb a a.
+Proof.
+  intros.
+  cvc4.
+Admitted.
 
  
-(* Goal forall (a:bool), a = a. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal forall (a:bool), a = a.
+  intros.
+  cvc4.
+Admitted.
 
 
 (* (* Other connectors *) *)
@@ -402,7 +415,6 @@ Proof.
   verit.
 Qed.
 
-Print Assumptions lia1.
 
 (* lia2.smt *)
 
@@ -430,6 +442,7 @@ Theorem lia4: forall x y, Bool.eqb (x <? y) (x <=? y - 1) = true.
 Proof.
   intros.
   cvc4; verit.
+(* Qed. *)
 Admitted.
 
 
@@ -457,7 +470,7 @@ Qed.
 Theorem lia7: forall x, implb (Z.eqb (x - 3) 7) (10 <=? x) = true.
 Proof.
   intros.
-  cvc4; verit.
+  cvc4. verit.
 Qed.
 
 
@@ -503,7 +516,7 @@ Goal forall b,
 Proof.
   cvc4.
 Qed.
-(* Does not work since the [is_true] coercion includes [let in]
+(* Does not work since the [is_true] coercion includes [let in] 
 Goal forall b,
   let a := b in
   a || (negb a).
@@ -534,7 +547,6 @@ Section Concret.
   Proof.
     cvc4.
   Admitted.
-  Print Assumptions c1.
 
   
 End Concret.

@@ -41,11 +41,14 @@ let cxH = gen_constant positive_modules "xH"
 let ceqbP = gen_constant positive_modules "eqb"
 
 (* N *)
-let n_modules = [["Coq";"Numbers";"BinNums"]]
+let n_modules = [["Coq";"NArith";"BinNat";"N"]]
 
 let cN = gen_constant positive_modules "N"
 let cN0 = gen_constant positive_modules "N0"
 let cNpos = gen_constant positive_modules "Npos"
+    
+let cof_nat = gen_constant n_modules "of_nat"
+
 
 (* Z *)
 let z_modules = [["Coq";"Numbers";"BinNums"];
@@ -88,7 +91,7 @@ let creflect = gen_constant bool_modules "reflect"
 let clist = gen_constant init_modules "list"
 let cnil = gen_constant init_modules "nil"
 let ccons = gen_constant init_modules "cons"
-
+let clength = gen_constant init_modules "length"
 
 (* Option *)
 let coption = gen_constant init_modules "option"
@@ -172,7 +175,7 @@ let ccomp_interp = gen_constant smt_modules "comp_interp"
 let cinh_interp = gen_constant smt_modules "inh_interp"
 
 let cinterp_eqb = gen_constant smt_modules "i_eqb"
-let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb"
+let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb_eqb"
 
 let ctyp_eqb = gen_constant smt_modules "typ_eqb"
 let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
@@ -180,11 +183,6 @@ let cte_carrier = gen_constant smt_modules "te_carrier"
 let cte_eqb = gen_constant smt_modules "te_eqb"
 let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
 let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
-let cmkarray_unit_typ_eqb = gen_constant smt_modules "mkarray_unit_typ_eqb"
-
-let cfarray_select = gen_constant smt_modules "farray_select"
-let cfarray_diff = gen_constant smt_modules "farray_diff"
-let cfarray_store = gen_constant smt_modules "farray_store"
 
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"
