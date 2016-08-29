@@ -14,7 +14,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-Add Rec LoadPath "." as SMTCoq.
+(*Add Rec LoadPath "." as SMTCoq.*)
 
 Require Import Bool List Int63 PArray.
 Require Import Misc State SMT_terms FArray.

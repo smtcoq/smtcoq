@@ -17,7 +17,7 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-(* Add Rec LoadPath "." as SMTCoq. *)
+(*Add Rec LoadPath "." as SMTCoq.*)
 
 Require Import Int63 Int63Properties PArray.
 
