@@ -406,7 +406,7 @@ Module Euf_Checker.
       | BBUlt pos orig1 orig2 res => S.set_clause s pos (check_bbUlt t_atom t_form s orig1 orig2 res)
       | BBSlt pos orig1 orig2 res => S.set_clause s pos (check_bbSlt t_atom t_form s orig1 orig2 res)
       | BBEq pos orig1 orig2 res => S.set_clause s pos (check_bbEq t_atom t_form s orig1 orig2 res)
-      | BBDiseq pos res => S.set_clause s pos (check_bbIneq t_atom t_form res)
+      | BBDiseq pos res => S.set_clause s pos (check_bbDiseq t_atom t_form res)
       | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
       | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
       | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
@@ -455,7 +455,7 @@ Module Euf_Checker.
     - apply valid_check_bbUlt; auto.
     - apply valid_check_bbSlt; auto.
     - apply valid_check_bbEq; auto.
-    - apply valid_check_bbIneq; auto.
+    - apply valid_check_bbDiseq; auto.
     - apply valid_check_roweq; auto.
     - apply valid_check_rowneq; auto.
     - apply valid_check_ext; auto.

@@ -17,7 +17,7 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-(* Add Rec LoadPath "." as SMTCoq. *)
+(*Add Rec LoadPath "." as SMTCoq.*)
 
 Require Import Int63 Int63Properties PArray.
 
@@ -705,16 +705,6 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
 (* bitwise inequality *)
 
-Fixpoint List_ineq (a b: list _lit) : carry :=
-  match a, b with
-    | nil, nil =>  Clit (Lit._false)
-    | xa :: xsa, xb :: xsb =>
-      if (eq_carry_lit (Clit xa) false) then 
-        (if (eq_carry_lit (Clit xb) false) then List_ineq xsa xsb else  Clit (Lit._true))
-      else (if (eq_carry_lit (Clit xb) true) then List_ineq xsa xsb else  Clit (Lit._true))
-    | _, _ =>  Clit (Lit._true)
-  end.
-  
   Fixpoint List_ineqb (a b: list bool) : bool :=
   match a, b with
     | nil, nil =>  false
@@ -727,7 +717,7 @@ Fixpoint List_ineq (a b: list _lit) : carry :=
 
 
   (** Checker for bitvector inequality *)
-  Definition check_bbIneq lres :=
+  Definition check_bbDiseq lres :=
   if negb (Lit.is_pos lres) then
       match get_form (Lit.blit lres) with
           | Fatom f => 
@@ -911,9 +901,9 @@ Proof. intro la.
           simpl in *. now contradict H.
 Qed.
 
-Lemma valid_check_bbIneq lres : C.valid rho (check_bbIneq lres).
+Lemma valid_check_bbDiseq lres : C.valid rho (check_bbDiseq lres).
 Proof. 
-      unfold check_bbIneq.
+      unfold check_bbDiseq.
       case_eq (Lit.is_pos lres); intro Heq; simpl; try now apply C.interp_true.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
         intros f Heq2.
