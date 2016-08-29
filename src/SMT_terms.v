@@ -16,6 +16,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+Add Rec LoadPath "." as SMTCoq.
+
 Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
@@ -1352,7 +1354,6 @@ Module Atom.
    match o, o' with
    | CO_xH, CO_xH 
    | CO_Z0, CO_Z0 => true
- (*  | CO_BV bv, CO_BV bv' => RAWBITVECTOR_LIST.beq_list bv bv' *)
    | CO_BV bv s, CO_BV bv' s' => N.eqb s s' && RAWBITVECTOR_LIST.beq_list bv bv'
    | _,_ => false
    end.
