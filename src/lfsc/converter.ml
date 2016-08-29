@@ -237,15 +237,8 @@ module Make (T : Translator_sig.S) = struct
         | _ -> assert false
       end
 
-    (* | Some (("symm"|"negsymm"), [_; _; _; r]) *)
-    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _]) *)
-    (* | Some ("refl", [_; r]) -> cong neqs (rm_used env r) r *)
-    (* | _ -> *)
-    (*   (\* eprintf "something went wrong in congruence@."; *\) *)
-    (*   neqs, env *)
-
     | Some (("symm"|"negsymm"), [_; _; _; r])
-    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _]) *)
+    | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _])
       ->
       cong neqs (rm_used env r) r
       
@@ -1204,6 +1197,7 @@ module Make (T : Translator_sig.S) = struct
 
   (** Convert an LFSC proof (this is the entry point) *)
   let convert p =
+    eprintf "Converting LFSC proof to SMTCoq.@.";
     p
       
     (* |> ignore_all_decls *)

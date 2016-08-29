@@ -30,8 +30,18 @@ type clause = lit list
 
 
 module HS = Hashtbl
-module HT = Hashtbl.Make (Term)
+(* module HT = Hashtbl.Make (Term) *)
 module HCl = Hashtbl
+
+module HT = struct
+  module M = Map.Make (Term)
+  let create _ = ref M.empty
+  let add h k v = h := M.add k v !h
+  let find h k = M.find k !h
+  let clear h = h := M.empty
+  let iter f h = M.iter f !h
+end
+
 
 
 let clauses_ids = HCl.create 201

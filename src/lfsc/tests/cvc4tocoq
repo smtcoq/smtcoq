@@ -18,7 +18,7 @@ Section File.
 End File.
 EOF
 
-echo "Checking LFSC proof with Coq directly..."
+# echo "Checking LFSC proof with Coq directly..."
 coqc -q -R $DIR/../.. SMTCoq ${name}_lfsc.v
 
 exit 0

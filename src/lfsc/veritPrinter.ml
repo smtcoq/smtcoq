@@ -24,14 +24,41 @@ type lit = term
 
 type clause = term list
 
+(* module HT = Hashtbl.Make (Term) *)
+(* module HT = struct *)
+(*   include Hashtbl.Make (Term) *)
+(*   let add h k v = flatten_term k; add h k v *)
+(*   let find h k = flatten_term k; find h k *)
+(* end *)
+
+(* module HCl = Hashtbl.Make (struct *)
+(*     type t = clause *)
+(*     let equal c1 c2 = compare_term_list c1 c2 = 0 *)
+(*     let hash = List.fold_left (fun acc t -> Term.hash t + acc) 0  *)
+(*   end) *)
 
 module HS = Hashtbl
-module HT = Hashtbl.Make (Term)
-module HCl = Hashtbl.Make (struct
-    type t = clause
-    let equal c1 c2 = compare_term_list c1 c2 = 0
-    let hash = List.fold_left (fun acc t -> Term.hash t + acc) 0 
-  end)
+
+module HT = struct
+  module M = Map.Make (Term)
+  let create _ = ref M.empty
+  let add h k v = h := M.add k v !h
+  let find h k = M.find k !h
+  let clear h = h := M.empty
+  let iter f h = M.iter f !h
+end
+
+module HCl = struct
+  module M = Map.Make (struct
+      type t = clause
+      let compare c1 c2 = compare_term_list c1 c2
+    end)
+  let create _ = ref M.empty
+  let add h k v = h := M.add k v !h
+  let find h k = M.find k !h
+  let clear h = h := M.empty
+  let iter f h = M.iter f !h
+end
 
 
 let fmt = std_formatter

@@ -94,11 +94,14 @@ let to_verit () =
   in
   let buf = Lexing.from_channel chan in
 
+  eprintf "Type-checking LFSC proof.@.";
   try
 
     match LfscParser.last_command LfscLexer.main buf with
     | Some (Check p) ->
-      flatten_term p;
+      (* eprintf "Flattening pointer structures...@."; *)
+      (* flatten_term p; *)
+      (* eprintf "Done (flatten)@."; *)
       C.convert p |> ignore
     | _ -> eprintf "No proof@."; exit 1
 

@@ -10,7 +10,7 @@ cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --n
 echo "Writing LFSC proof..."
 cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $name.tmp.lfsc > $name.lfsc
 
-echo "Convert LFSC proof to SMTCoq..."
+# echo "Convert LFSC proof to SMTCoq..."
 $DIR/../lfsctosmtcoq.native $name.lfsc | grep "^1:" -A 9999999 > $name.log
 
 echo "Creating Coq file..."

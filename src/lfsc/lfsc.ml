@@ -47,13 +47,13 @@ let import_trace filename first =
      conflicting step *)
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
+  eprintf "Type-checking LFSC proof.@.";
   try
-
     match LfscParser.last_command LfscLexer.main lexbuf with
 
     | Some (Ast.Check p) ->
       close_in chan;
-      Ast.flatten_term p;
+      (* Ast.flatten_term p; *)
       let confl_num = C.convert p in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)

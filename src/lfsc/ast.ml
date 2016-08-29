@@ -260,6 +260,20 @@ module Term = struct
   let compare = compare_term ~mod_eq:false
   let equal x y = compare_term x y = 0
   let hash t = Hashtbl.hash_param 100 500 t.value (* hash_term *)
+  (* let hasht = Hashtbl.hash_param 100 500 *)
+  (* let rec hash t = *)
+  (*   let v = t.value in *)
+  (*   match t.value with *)
+  (*   | Hole _ | Type | Kind |  Mpz | Mpq | Int _ | Rat _ | Const _ -> hasht v *)
+  (*   | SideCond (_, args, exp, t) -> *)
+  (*     List.fold_left (fun acc t -> hash t + 31*acc) (hash t) args *)
+  (*   | App (f, args) -> *)
+  (*     List.fold_left (fun acc t -> hash t + 31*acc) (hash f) args *)
+  (*   | Pi (s, x) -> ((Hashtbl.hash s) + 31*(hash x)) * 7 *)
+  (*   | Lambda (s, x) -> ((Hashtbl.hash s) + 31*(hash x)) * 9 *)
+  (*   | Ptr t' -> *)
+  (*     t.value <- t'.value; *)
+  (*     hash (deref t') *)
 end
 
 
@@ -529,15 +543,16 @@ let rec flatten_term_value t = match t.value with
     flatten_term s.stype;
     flatten_term x    
   | Ptr t' ->
-    t.value <- t'.value;
-    flatten_term t
+    t.value <- (deref t').value
+    (* flatten_term t *)
 
 
 and flatten_term t =
-  flatten_term_value t;
-  match t.value with
-  | Type | Kind -> ()
-  | _ -> flatten_term t.ttype
+  flatten_term_value t
+  (* ; *)
+  (* match t.value with *)
+  (* | Type | Kind -> () *)
+  (* | _ -> flatten_term t.ttype *)
 
 
 let rec has_ptr_val t = match t.value with
