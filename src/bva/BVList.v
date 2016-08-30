@@ -1995,8 +1995,18 @@ Qed.
 
 End RAWBITVECTOR_LIST.
 
-Module BITVECTOR_LIST <: BITVECTOR := RAW2BITVECTOR(RAWBITVECTOR_LIST).
+Module BITVECTOR_LIST <: BITVECTOR.
 
+  Include RAW2BITVECTOR(RAWBITVECTOR_LIST).
+
+  Notation "x |0" := (cons false x) (left associativity, at level 73, format "x |0"): bv_scope.
+  Notation "x |1" := (cons true x) (left associativity, at level 73, format "x |1"): bv_scope.
+  Notation "'b|0'" := [false] (at level 70): bv_scope.
+  Notation "'b|1'" := [true] (at level 70): bv_scope.
+  Notation "# x |" := (@of_bits x) (no associativity, at level 1, format "# x |"): bv_scope.
+  Notation "v @ p" := (bitOf p v) (at level 1, format "v @ p ") : bv_scope.
+
+End BITVECTOR_LIST.
 
 (* 
    Local Variables:

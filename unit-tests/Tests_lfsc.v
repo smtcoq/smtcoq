@@ -1,21 +1,24 @@
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith.
-
-Local Open Scope int63_scope.
-
 Import ListNotations.
 Local Open Scope list_scope.
 
+Infix "-->" := implb (at level 60, right associativity) : bool_scope.
+
+
 Section Arrays.
-  Local Close Scope int63_scope.
   Import BVList.BITVECTOR_LIST.
   Import FArray.
+
+  Local Open Scope farray_scope.
+  Local Open Scope bv_scope.
+
   
   Goal forall (a b c d: farray Z Z),
-      (implb (equal c (store b 0 4))
-      (implb (equal d (store (store b 0 4) 1 4))
-      (implb (equal a (store d 1 (select b 1)))
-      (equal a c)))).
+      equal c b[0 <- 4]  -->
+      equal d b[0 <- 4][1 <- 4]  -->
+      equal a d[1 <- b[1]]  -->
+      equal a c.
   Proof.
     cvc4.
   Qed.
@@ -23,15 +26,45 @@ Section Arrays.
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
-      (implb (bv_eq (of_bits [false; false; false; false]) bv1)
-      (implb (bv_eq (of_bits [false; false; false; true]) bv2)
-      (implb (equal c (store b bv1 4))
-      (implb (equal d (store (store b bv1 4) bv2 4))
-      (implb (equal a (store d bv2 (select b bv2)))
-             (equal a c)))))).
-    Proof.
+      bv_eq #b|0|0|0|0| bv1  -->
+      bv_eq #b|1|0|0|0| bv2  -->
+      equal c b[bv1 <- 4]  -->
+      equal d b[bv1 <- 4][bv2 <- 4]  -->
+      equal a d[bv2 <- b[bv2]]  -->
+      equal a c.
+  Proof.
     cvc4.
-    Qed.
+  Qed.
+
+    
+
+  (* CVC4 crash *)
+  Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
+         (a b c d : farray (bitvector 4) (bitvector 4)),
+      bv_eq #b|0|0|0|0| bv1  -->
+      bv_eq #b|1|0|0|0| bv2  -->
+      equal c b[bv1 <- x]  -->
+      equal d b[bv1 <- x][bv2 <- x]  -->
+      equal a d[bv2 <- b[bv2]]  -->
+      equal a c.
+  Proof.
+    (* cvc4. *)
+  Abort.
+
+  (* CVC4 bad LFSC proof *)
+  Goal forall (bv1 bv2 : bitvector 4) (x: Z)
+         (a b c d : farray (bitvector 4) Z),
+      bv_eq #b|0|0|0|0| bv1  -->
+      bv_eq #b|1|0|0|0| bv2  -->
+      equal c b[bv1 <- x]  -->
+      equal d b[bv1 <- x][bv2 <- x]  -->
+      equal a d[bv2 <- b[bv2]]  -->
+      equal a c.
+  Proof.
+    (* cvc4. *)
+  Abort.
+
+
     
   Goal forall (a b: farray Z Z) i,
         (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
@@ -61,6 +94,9 @@ Section BV.
 End BV.
 
 
+Local Open Scope int63_scope.
+
+
   
 (* CVC4 tactic *)
 
@@ -69,7 +105,6 @@ End BV.
 Goal forall (a:bool), a || negb a.
   cvc4.
 Qed.
-
 
 Goal forall a, negb (a || negb a) = false.
   cvc4.

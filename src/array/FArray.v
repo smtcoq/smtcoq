@@ -1856,6 +1856,12 @@ Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
 
 
+Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.
+Notation "a '[' i '<-' v ']'" := (store a i v)
+   (at level 1, format "a [ i  <-  v ]") : farray_scope.
+
+
+
 (* 
    Local Variables:
    coq-load-path: ((rec ".." "SMTCoq"))
