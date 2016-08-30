@@ -57,10 +57,33 @@ let sort_of_string s = string_type s
 let sort_of_symbol s = sort_of_string (string_of_symbol s)
 
 
+let rec int_binary_size acc i size =
+  match i, size with
+  | _, 0 -> "#b" ^ String.concat "" acc
+  | 0, _ -> int_binary_size ("0" :: acc) i (size - 1)
+  | _, _ ->
+    assert (i > 0 && size > 0);
+    int_binary_size (string_of_int (i land 1) :: acc) (i lsr 1) (size - 1)
+
+let int_bv i size = int_binary_size [] i size
+
+
+exception DecimalBv of string
+
 let string_of_identifier = function
   | IdSymbol (_,s) -> (string_of_symbol s)
   | IdUnderscoreSymNum (_,s,(_,l)) ->
-    List.fold_left (fun c c' -> c^"_"^c') (string_of_symbol s) l
+    let s = string_of_symbol s in
+    let isbvdec =
+      try s.[0] = 'b' && s.[1]= 'v' with Invalid_argument _ -> false in
+    (match isbvdec, l with
+     (* rewrite bitvectors decimal constants *)
+     | true, [size] ->
+       let sbv =
+         Scanf.sscanf s "bv%d" (fun n -> int_bv n (int_of_string size)) in
+       raise (DecimalBv sbv)
+     | _ -> List.fold_left (fun c c' -> c^"_"^c') s l
+    )
 
 
 let string_of_qualidentifier id = string_of_identifier (identifier_of_qualidentifier id)
@@ -195,11 +218,14 @@ let make_root ra rf t =
 
   let rec make_root_term = function
     | TermSpecConst (_,c) -> Atom (make_root_specconstant ra c)
-    | TermQualIdentifier (_,id) ->
-      let v = string_of_qualidentifier id in
-      (try Hashtbl.find hlets v with
-        | Not_found ->
-          make_root_app v [])
+    | TermQualIdentifier (loc,id) ->
+      (try
+        let v = string_of_qualidentifier id in
+        (try Hashtbl.find hlets v with Not_found -> make_root_app v [])
+       with
+       | DecimalBv sbv ->
+         make_root_term (TermSpecConst (loc, SpecConstsBinary (loc, sbv)))
+      )
     | TermQualIdTerm (_,id,(_,l)) ->
       let v = string_of_qualidentifier id in
       make_root_app v l
