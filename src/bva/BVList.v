@@ -465,43 +465,47 @@ Definition subst_list (a b: list bool) := subst_list_borrow a b false.
 
 Definition bv_subt (a b : bitvector) : bitvector :=
   match (@size a) =? (@size b) with 
-    | true => (subst_list (@bits a) (@bits b))
+    | true => subst_list (@bits a) (@bits b)
     | _    => nil 
   end.
   
 (*less than*)
 
-Fixpoint ult_list (x y: list bool) :=
+Fixpoint ult_list_big_endian (x y: list bool) :=
   match x, y with
     | nil, _  => false
     | _ , nil => false
-    | xi :: nil, yi :: nil => (andb (negb xi) yi)
-    | xi :: x', yi :: y' =>   (orb (andb (Bool.eqb xi yi) (ult_list x' y')) 
-                              (andb (negb xi) yi))
+    | xi :: nil, yi :: nil => andb (negb xi) yi
+    | xi :: x', yi :: y' =>
+      orb (andb (Bool.eqb xi yi) (ult_list_big_endian x' y'))
+          (andb (negb xi) yi)
   end.
 
-Definition rev_ult_list (x y: list bool) := (ult_list (List.rev x) (List.rev y)).
+Definition ult_list (x y: list bool) :=
+  (ult_list_big_endian (List.rev x) (List.rev y)).
 
 
-Fixpoint slt_list (x y: list bool) :=
+Fixpoint slt_list_big_endian (x y: list bool) :=
   match x, y with
     | nil, _  => false
     | _ , nil => false
-    | xi :: nil, yi :: nil => (andb xi (negb yi))
-    | xi :: x', yi :: y'   => (orb (andb (Bool.eqb xi yi) (ult_list x' y'))
-                                  (andb xi (negb yi)))
+    | xi :: nil, yi :: nil => andb xi (negb yi)
+    | xi :: x', yi :: y' =>
+      orb (andb (Bool.eqb xi yi) (ult_list_big_endian x' y'))
+          (andb xi (negb yi))
   end.
 
-Definition rev_slt_list (x y: list bool) := (slt_list (List.rev x) (List.rev y)).
+Definition slt_list (x y: list bool) :=
+  slt_list_big_endian (List.rev x) (List.rev y).
+
+
 Definition bv_ult (a b : bitvector) : bool :=
-  if ((@size a) =? (@size b))
-    then rev_ult_list a b
-    else false.
+  if @size a =? @size b then ult_list a b else false.
+
 
 Definition bv_slt (a b : bitvector) : bool :=
-  if ((@size a) =? (@size b))
-    then rev_slt_list a b
-    else false.
+  if @size a =? @size b then slt_list a b else false.
+
 
   (*multiplication*)
 
@@ -1621,7 +1625,10 @@ Qed.
 
 (* some list ult and slt properties *)
 
-Lemma ult_list_trans : forall x y z, ult_list x y = true -> ult_list y z = true -> ult_list x z = true.
+Lemma ult_list_big_endian_trans : forall x y z,
+    ult_list_big_endian x y = true ->
+    ult_list_big_endian y z = true ->
+    ult_list_big_endian x z = true.
 Proof.
   intros x. induction x.
   simpl. easy.
@@ -1685,12 +1692,13 @@ Proof.
 Qed.  
   
 
-Lemma rev_ult_list_trans : forall x y z,
-    rev_ult_list x y = true -> rev_ult_list y z = true -> rev_ult_list x z = true.
-Proof. unfold rev_ult_list. intros x y z. apply ult_list_trans.
+Lemma ult_list_trans : forall x y z,
+    ult_list x y = true -> ult_list y z = true -> ult_list x z = true.
+Proof. unfold ult_list. intros x y z. apply ult_list_big_endian_trans.
 Qed.
 
-Lemma ult_list_not_eq : forall x y, ult_list x y = true -> x <> y.
+Lemma ult_list_big_endian_not_eq : forall x y,
+    ult_list_big_endian x y = true -> x <> y.
 Proof.
   intros x. induction x.
   simpl. easy.
@@ -1717,16 +1725,17 @@ Proof.
   apply negb_true_iff in H. subst. easy.
 Qed.  
 
-Lemma rev_ult_list_not_eq : forall x y, rev_ult_list x y = true -> x <> y.
-Proof. unfold rev_ult_list.
+Lemma ult_list_not_eq : forall x y, ult_list x y = true -> x <> y.
+Proof. unfold ult_list.
   unfold not. intros.
-  apply ult_list_not_eq in H.
+  apply ult_list_big_endian_not_eq in H.
   subst. auto.
 Qed.
 
 
-Lemma nlt_neq_gt: forall x y, length x  = length y ->
-                              ult_list x y = false ->  beq_list x y = false -> ult_list y x = true.
+Lemma nlt_be_neq_gt: forall x y,
+    length x = length y -> ult_list_big_endian x y = false ->
+    beq_list x y = false -> ult_list_big_endian y x = true.
 Proof. intro x.
        induction x as [ | x xs IHxs ].
        - intros. simpl in *. case y in *; now contradict H. 
@@ -1779,7 +1788,7 @@ Proof. intro x.
 Qed.
 
 Lemma rev_eq: forall x y, beq_list x y = true ->
-                          beq_list (List.rev x) (List.rev y)  = true.
+                     beq_list (List.rev x) (List.rev y)  = true.
 Proof. intros.
        apply List_eq in H.
        rewrite H.
@@ -1787,7 +1796,7 @@ Proof. intros.
 Qed.
 
 Lemma rev_neq: forall x y, beq_list x y = false ->
-                           beq_list (List.rev x) (List.rev y) = false.
+                      beq_list (List.rev x) (List.rev y) = false.
 Proof. intros.
        specialize (@List_neq x y H).
        intros.
@@ -1801,26 +1810,27 @@ Proof. intros.
        now rewrite !rev_involutive in H2.
 Qed.
 
-Lemma rev_nlt_neq_gt: forall x y, length x  = length y ->
-                                  rev_ult_list x y = false -> 
-                                  beq_list x y = false -> rev_ult_list y x = true.
-Proof. intros. unfold rev_ult_list in *.
-       apply nlt_neq_gt.
-       now rewrite !rev_length.
-       easy. 
-       now apply rev_neq in H1.
+Lemma nlt_neq_gt: forall x y,
+    length x = length y -> ult_list x y = false -> 
+    beq_list x y = false -> ult_list y x = true.
+Proof. intros.
+  unfold ult_list in *.
+  apply nlt_be_neq_gt.
+  now rewrite !rev_length.
+  easy. 
+  now apply rev_neq in H1.
 Qed.
 
 (* bitvector SUBT properties *)
 
-Lemma bv_subt_size: forall n a b, (size a) = n -> (size b) = n -> size (bv_subt a b) = n.
+Lemma bv_subt_size: forall n a b, size a = n -> size b = n -> size (bv_subt a b) = n.
 Proof. intros n a b H0 H1.
        unfold bv_subt, size, bits in *. rewrite H0, H1. rewrite N.eqb_compare.
        rewrite N.compare_refl. rewrite <- subst_list_length. exact H0.
        now rewrite <- Nat2N.inj_iff, H0.
 Qed.
 
-Lemma bv_subt_empty_neutral_r: forall a, (bv_subt a  (mk_list_false (length (bits a)))) = a.
+Lemma bv_subt_empty_neutral_r: forall a, (bv_subt a (mk_list_false (length (bits a)))) = a.
 Proof. intro a. unfold bv_subt, size, bits.
        rewrite N.eqb_compare. rewrite length_mk_list_false.
        rewrite N.compare_refl.

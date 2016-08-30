@@ -1831,7 +1831,7 @@ Section FArray.
         (* destruct (diff_index_p H). apply x. *)
     Defined.
 
-   Lemma select_over_diff: forall a b, a <> b ->
+   Lemma select_at_diff: forall a b, a <> b ->
             select a (diff a b) <> select b (diff a b).
    Proof.
      intros a b H. unfold diff.

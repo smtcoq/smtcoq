@@ -4753,7 +4753,7 @@ Require Import Psatz.
       specialize (Atom.Bval_inj2 t_i (Typ.TFArray t7 t6) (v_valb2) (v_valf2)).
       intros. specialize (H45 Htif2). rewrite H45.
 
-      apply select_over_diff.
+      apply select_at_diff.
       now rewrite H44, H45 in H0.
       
 Qed.

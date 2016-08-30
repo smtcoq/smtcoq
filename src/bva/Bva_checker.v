@@ -562,20 +562,22 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
   (** * Checker for bitblasting of bitvector comparison: lt *)
 
-  Fixpoint ult_lit_list (bs1 bs2: list _lit) :=
+  Fixpoint ult_big_endian_lit_list (bs1 bs2: list _lit) :=
     match bs1, bs2 with
       | nil, _ => Clit (Lit._false)
       | _, nil => Clit (Lit._false)
       | xi :: nil, yi :: nil => (Cand (Clit (Lit.neg xi)) (Clit yi))
-      | xi :: x', yi :: y'   => (Cor (Cand (Ciff (Clit xi) (Clit yi)) (ult_lit_list x' y'))
-                                (Cand (Clit (Lit.neg xi)) (Clit yi)))
+      | xi :: x', yi :: y'   =>
+        (Cor (Cand (Ciff (Clit xi) (Clit yi)) (ult_big_endian_lit_list x' y'))
+             (Cand (Clit (Lit.neg xi)) (Clit yi)))
     end.
 
-  Definition rev_ult_lit_list (x y: list _lit) := (ult_lit_list (List.rev x) (List.rev y)).
+  Definition ult_lit_list (x y: list _lit) :=
+    ult_big_endian_lit_list (List.rev x) (List.rev y).
 
   Definition check_ult (bs1 bs2: list _lit) (bsres: _lit) : bool :=
     if Lit.is_pos bsres then
-      eq_carry_lit (rev_ult_lit_list bs1 bs2) bsres
+      eq_carry_lit (ult_lit_list bs1 bs2) bsres
     else false.
 
   Definition check_bbUlt pos1 pos2 lres :=
@@ -606,20 +608,22 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
     | _, _ => C._true
     end.
 
-  Definition slt_lit_list (x y: list _lit) :=
+  Definition slt_big_endian_lit_list (x y: list _lit) :=
     match x, y with
       | nil, _ => Clit (Lit._false)
       | _, nil => Clit (Lit._false)
       | xi :: nil, yi :: nil => (Cand (Clit xi) (Clit (Lit.neg yi)))
-      | xi :: x', yi :: y'   => (Cor (Cand (Ciff (Clit xi) (Clit yi)) (ult_lit_list x' y')) 
-                                (Cand (Clit xi) (Clit (Lit.neg yi))))
+      | xi :: x', yi :: y'   =>
+        (Cor (Cand (Ciff (Clit xi) (Clit yi)) (ult_big_endian_lit_list x' y')) 
+             (Cand (Clit xi) (Clit (Lit.neg yi))))
     end.
 
-  Definition rev_slt_lit_list (x y: list _lit) := (slt_lit_list (List.rev x) (List.rev y)).
+  Definition slt_lit_list (x y: list _lit) :=
+    slt_big_endian_lit_list (List.rev x) (List.rev y).
 
   Definition check_slt (bs1 bs2: list _lit) (bsres: _lit) : bool := 
     if Lit.is_pos bsres then
-      eq_carry_lit (rev_slt_lit_list bs1 bs2) bsres
+      eq_carry_lit (slt_lit_list bs1 bs2) bsres
     else false.
 
   Definition check_bbSlt pos1 pos2 lres :=
@@ -4731,8 +4735,9 @@ Proof. auto. Qed.
 
 Lemma prop_check_ult: forall bs1 bs2, 
   length bs1 = length bs2 ->
-  RAWBITVECTOR_LIST.ult_list (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
-  = interp_carry (ult_lit_list bs1 bs2).
+  RAWBITVECTOR_LIST.ult_list_big_endian
+    (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
+  = interp_carry (ult_big_endian_lit_list bs1 bs2).
 Proof. intro bs1.
        induction bs1 as [ | xbs1 xsbs1 IHbs1 ].
        - intros. simpl in *. 
@@ -4761,8 +4766,9 @@ Qed.
 
 Lemma prop_check_slt: forall bs1 bs2, 
   length bs1 = length bs2 ->
-  RAWBITVECTOR_LIST.slt_list (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
-  = interp_carry (slt_lit_list bs1 bs2).
+  RAWBITVECTOR_LIST.slt_list_big_endian
+    (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2)
+  = interp_carry (slt_big_endian_lit_list bs1 bs2).
 Proof. intros.
        case bs1 in *. simpl.
        specialize (Lit.interp_false rho wf_rho).
@@ -4775,8 +4781,8 @@ Proof. intros.
          now contradict H.
          case bs2 in  *.
            now contradict H.
-           unfold slt_lit_list.
-           unfold RAWBITVECTOR_LIST.slt_list.
+           unfold slt_big_endian_lit_list.
+           unfold RAWBITVECTOR_LIST.slt_list_big_endian.
            rewrite !map_cons.
            unfold interp_carry.
            fold interp_carry.
@@ -4791,7 +4797,7 @@ Qed.
 Lemma prop_check_ult2: forall bs1 bs2 bsres,
 length bs1 = length bs2 ->
 check_ult bs1 bs2 bsres = true ->
-interp_carry (ult_lit_list (rev bs1) (rev bs2)) = Lit.interp rho bsres.
+interp_carry (ult_big_endian_lit_list (rev bs1) (rev bs2)) = Lit.interp rho bsres.
 Proof. intro bs1.
        induction bs1 as [ | xbs1 xsbs1 IHbs1].
        - intros.
@@ -4809,7 +4815,7 @@ Proof. intro bs1.
          case bs2 in *.
          now contradict H.
          simpl.
-         unfold check_ult,rev_ult_lit_list in H0.
+         unfold check_ult,ult_lit_list in H0.
          simpl in H0.
          case_eq (Lit.is_pos bsres). intros Hbsres.
          rewrite Hbsres in H0.
@@ -4822,7 +4828,7 @@ Qed.
 Lemma prop_check_slt2: forall bs1 bs2 bsres,
 length bs1 = length bs2 ->
 check_slt bs1 bs2 bsres = true ->
-interp_carry (slt_lit_list (rev bs1) (rev bs2)) = Lit.interp rho bsres.
+interp_carry (slt_big_endian_lit_list (rev bs1) (rev bs2)) = Lit.interp rho bsres.
 Proof. intro bs1.
        induction bs1 as [ | xbs1 xsbs1 IHbs1].
        - intros.
@@ -4840,7 +4846,7 @@ Proof. intro bs1.
          case bs2 in *.
          now contradict H.
          simpl.
-         unfold check_slt,rev_slt_lit_list in H0.
+         unfold check_slt, slt_lit_list in H0.
          simpl in H0.
          case_eq (Lit.is_pos bsres). intros Hbsres.
          rewrite Hbsres in H0.
@@ -5066,7 +5072,7 @@ Proof.
         rewrite H100.
         rewrite N.eqb_compare. rewrite N.compare_refl.
 
-        unfold RAWBITVECTOR_LIST.rev_ult_list.
+        unfold RAWBITVECTOR_LIST.ult_list.
         remember prop_check_ult.
         specialize (@prop_check_ult (List.rev bs1) (List.rev bs2)).
         intros.
@@ -5293,7 +5299,7 @@ Proof.
         rewrite H100.
         rewrite N.eqb_compare. rewrite N.compare_refl.
 
-        unfold RAWBITVECTOR_LIST.rev_slt_list.
+        unfold RAWBITVECTOR_LIST.slt_list.
         remember prop_check_slt.
         specialize (@prop_check_slt (List.rev bs1) (List.rev bs2)).
         intros.

@@ -394,7 +394,7 @@ Module Typ.
       unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult.
       intros x y z; destruct x, y, z.
       simpl. rewrite wf, wf0, wf1. rewrite N.eqb_refl. simpl.
-      apply RAWBITVECTOR_LIST.rev_ult_list_trans.
+      apply RAWBITVECTOR_LIST.ult_list_trans.
       intros x y; destruct x, y.
       simpl.
       intros. unfold not.
@@ -579,13 +579,13 @@ Module Typ.
       rewrite wf, wf0 in *.
       rewrite N.eqb_refl in *.
 
-      apply RAWBITVECTOR_LIST.nlt_neq_gt.
+      apply RAWBITVECTOR_LIST.nlt_be_neq_gt.
       rewrite !List.rev_length.
       apply (f_equal (N.to_nat)) in wf.
       apply (f_equal (N.to_nat)) in wf0.
       rewrite Nnat.Nat2N.id in wf, wf0.
       now rewrite wf, wf0.
-      unfold RAWBITVECTOR_LIST.rev_ult_list in H0. easy.
+      unfold RAWBITVECTOR_LIST.ult_list in H0. easy.
       now apply RAWBITVECTOR_LIST.rev_neq in H.
     Defined.
 
