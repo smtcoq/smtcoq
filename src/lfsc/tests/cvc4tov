@@ -15,11 +15,43 @@ $DIR/../lfsctosmtcoq.native $name.lfsc | grep "^1:" -A 9999999 > $name.log
 
 echo "Creating Coq file..."
 cat > $name.v <<EOF
-Require Import SMTCoq.
+Require Import SMTCoq Bool List.
+Import ListNotations BVList.BITVECTOR_LIST FArray.
+Local Open Scope list_scope.
+Local Open Scope farray_scope.
+Local Open Scope bv_scope.
+
 Section File.
   Verit_Checker "$name.smt2" "$name.log".
 End File.
 EOF
+
+cat > ${name}_debug.v <<EOF
+Require Import SMTCoq Bool List.
+Import ListNotations BVList.BITVECTOR_LIST FArray.
+Local Open Scope list_scope.
+
+Section File.
+  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace "$name.smt2" "$name.log".
+  Compute (
+      let (nclauses, t, confl) := trace in
+      let s := add_roots (S.make nclauses) root used_roots in
+      let s' := PArray.fold_left (fun s a =>
+                                   PArray.fold_left (@Euf_Checker.step_checker t_i t_func t_atom t_form) s a) s t in
+
+
+      let s'' := PArray.mapi (fun i c => (to_Z i, List.map to_Z c)) s' in
+      (PArray.to_list s'', to_Z confl)).
+End File.
+EOF
+
+cat > ${name}_debug.sh <<EOF
+#!/bin/sh
+coqc -q -R $DIR/../.. SMTCoq ${name}_debug.v | grep --color -E "\[0(;\s+0)*\]| 0|"
+EOF
+
+chmod +x ${name}_debug.sh
+
 
 echo "Checking with Coq..."
 coqc -q -R $DIR/../.. SMTCoq $name.v

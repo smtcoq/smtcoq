@@ -427,7 +427,7 @@ module Op =
     let interp_cop = function
       | CO_xH -> Lazy.force cxH
       | CO_Z0 -> Lazy.force cZ0
-      | CO_BV bv -> mklApp c_of_bits [|mk_bv_list bv; mkN (List.length bv)|]
+      | CO_BV bv -> mklApp cof_bits [|mk_bv_list bv|]
 
     let u_to_coq = function 
       | UO_xO -> Lazy.force cUO_xO
@@ -1443,6 +1443,7 @@ module Atom =
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
     let mk_bvnot reify s = mk_unop (UO_BVnot s) reify
     let mk_bvneg reify s = mk_unop (UO_BVneg s) reify
+    let mk_bitof reify s i = mk_unop (UO_BVbitOf (s,i)) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
     let mk_select reify ti te = mk_binop (BO_select (ti, te)) reify
     let mk_diffarray reify ti te = mk_binop (BO_diffarray (ti, te)) reify

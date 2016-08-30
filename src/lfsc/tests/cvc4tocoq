@@ -12,7 +12,12 @@ cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,
 
 echo "Creating Coq file..."
 cat > ${name}_lfsc.v <<EOF
-Require Import SMTCoq.
+Require Import SMTCoq Bool List.
+Import ListNotations BVList.BITVECTOR_LIST FArray.
+Local Open Scope list_scope.
+Local Open Scope farray_scope.
+Local Open Scope bv_scope.
+
 Section File.
   Lfsc_Checker "$name.smt2" "$name.lfsc".
 End File.

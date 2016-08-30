@@ -35,7 +35,17 @@ Section Arrays.
   Proof.
     cvc4.
   Qed.
-
+  
+  Goal forall (a b: farray Z Z)
+         (v w x y: Z)
+         (g: farray Z Z -> Z)
+         (f: Z -> Z),
+         equal a[x <- v] b && equal a[y <- w] b  -->
+         Z.eqb (f x) (f y) || Z.eqb (g a) (g b).
+  Proof.
+    cvc4.
+  Qed.
+  
     
 
   (* CVC4 crash *)
