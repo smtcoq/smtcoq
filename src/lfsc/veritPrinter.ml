@@ -269,6 +269,11 @@ and print_term fmt t =
       | Some ("write", [_; _]) -> fprintf fmt "store"
       | Some ("diff", [_; _]) -> fprintf fmt "diff"
 
+      | Some ("ite", [_; c; a; b]) ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(ite %a %a %a)" nb
+          print_term c print_term a print_term b
+
       | Some (n, l) ->
         let n = smt2_of_lfsc n in
         let nb = new_sharp t in
@@ -289,10 +294,10 @@ let rec print_clause elim_or fmt t = match name t with
   | None ->
     match app_name t with
     | Some ("pos", [v]) ->
-      let t = HT.find propvars (deref v) in
+      let t = try HT.find propvars (deref v) with Not_found -> assert false in
       fprintf fmt "%a" print_term t
     | Some ("neg", [v]) ->
-      let t = HT.find propvars (deref v) in
+      let t = try HT.find propvars (deref v) with Not_found -> assert false in
       fprintf fmt "(not %a)" print_term t
     | Some ("clc", [a; cl]) ->
       fprintf fmt "%a %a" (print_clause elim_or) a (print_clause elim_or) cl
@@ -312,10 +317,12 @@ let rec to_clause acc t = match name t with
   | None ->
     match app_name t with
     | Some ("pos", [v]) ->
-      let t = HT.find propvars (deref v) in
+      let t = try HT.find propvars (deref v) with Not_found -> assert false in
       t :: acc
     | Some ("neg", [v]) ->
-      let t = HT.find propvars (deref v) |> not_ in
+      let t =
+        try HT.find propvars (deref v) |> not_
+        with Not_found -> assert false in
       t :: acc
     | Some ("clc", [a; cl]) ->
       to_clause (to_clause acc a) cl

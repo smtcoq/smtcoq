@@ -237,12 +237,15 @@ module Make (T : Translator_sig.S) = struct
         | _ -> assert false
       end
 
-    | Some (("symm"|"negsymm"), [_; _; _; r])
-    | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _])
-      ->
+    | Some (("symm"|"negsymm"), [_; _; _; r]) ->
+    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; _; r]) *)
       cong neqs (rm_used env r) r
-      
-    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r; _]) *)
+
+    | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r2; r1])
+      ->
+      let neqs1, env1 = cong neqs (rm_used env r1) r1 in
+      cong neqs1 (rm_used env1 r2) r2
+
     | Some ("refl", [_; r]) -> neqs, rm_used env r
 
     | _ ->
