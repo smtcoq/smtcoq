@@ -343,6 +343,26 @@ let make_root ra rf t =
             | TBV s -> Atom (Atom.mk_bvslt ra s a' b')
             | _ -> assert false)
          | _, _ -> assert false)
+      | "bvule", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom h1, Atom h2 ->
+           (match Atom.type_of h1 with
+            | TBV s ->
+              let a = Atom.mk_bvult ra s h2 h1 in
+              Form (Form.neg (Form.get rf (Fatom a)))
+            | _ -> assert false)
+         | _,_ -> assert false
+        )
+      | "bvsle", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom h1, Atom h2 ->
+           (match Atom.type_of h1 with
+            | TBV s ->
+              let a = Atom.mk_bvslt ra s h2 h1 in
+              Form (Form.neg (Form.get rf (Fatom a)))
+            | _ -> assert false)
+         | _,_ -> assert false
+        )
       | "concat", [a;b] ->
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' ->

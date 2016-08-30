@@ -241,7 +241,7 @@ and print_term fmt t =
 
       | Some ("bvc", _) -> fprintf fmt "#b%a" print_bv_const t
 
-      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul"|"bvult"|"bvslt") as op,
+      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul"|"bvult"|"bvslt"|"bvule"|"bvsle") as op,
               [_; a; b]) ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b

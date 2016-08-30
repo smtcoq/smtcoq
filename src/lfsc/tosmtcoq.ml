@@ -302,6 +302,22 @@ let rec term_smtcoq t =
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvslt ra s ha hb)
             | _ -> assert false)
+      | Some ("bvule", [_; a; b]) ->
+        (let ha = term_smtcoq_atom a in
+         let hb = term_smtcoq_atom b in
+         match Atom.type_of ha with
+         | TBV s ->
+           let a = Atom (Atom.mk_bvult ra s hb ha) in
+           Lit (Form.neg (lit_of_atom_form_lit rf a))
+         | _ -> assert false)
+      | Some ("bvsle", [_; a; b]) ->
+        (let ha = term_smtcoq_atom a in
+         let hb = term_smtcoq_atom b in
+         match Atom.type_of ha with
+         | TBV s ->
+           let a = Atom (Atom.mk_bvslt ra s hb ha) in
+           Lit (Form.neg (lit_of_atom_form_lit rf a))
+         | _ -> assert false)         
       | Some ("concat", [_; _; _; a; b]) ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in

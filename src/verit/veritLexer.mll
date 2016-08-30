@@ -118,6 +118,8 @@
         "bvmul", BVMUL;
         "bvult", BVULT;
         "bvslt", BVSLT;
+        "bvule", BVULE;
+        "bvsle", BVSLE;
         "not", NOT;
         "xor", XOR;
         "ite", ITE;
