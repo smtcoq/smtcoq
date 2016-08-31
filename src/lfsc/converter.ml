@@ -228,8 +228,10 @@ module Make (T : Translator_sig.S) = struct
   let rec cong neqs env p = match app_name p with
     | Some ("cong", [ty; rty; f; f'; x; y; p_f_eq_f'; r]) ->
 
-      let neqs = not_ (eq ty x y) :: neqs in
-      let env = lem env r in
+      let ne = not_ (eq ty x y) in
+      let neqs, env =
+        if List.exists (Term.equal ne) neqs then neqs, env
+        else ne :: neqs, lem env r in
 
       begin match name f, name f' with
         | Some n, Some n' when n = n' -> neqs, env
@@ -237,20 +239,20 @@ module Make (T : Translator_sig.S) = struct
         | _ -> assert false
       end
 
-    | Some (("symm"|"negsymm"), [_; _; _; r]) ->
-    (* | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; _; r]) *)
+    | Some (("symm"|"negsymm"), [_; _; _; r])
+      ->
       cong neqs (rm_used env r) r
 
-    | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r2; r1])
+    | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r1; r2])
       ->
       let neqs1, env1 = cong neqs (rm_used env r1) r1 in
       cong neqs1 (rm_used env1 r2) r2
 
     | Some ("refl", [_; r]) -> neqs, rm_used env r
 
-    | _ ->
+    | _ -> neqs, env
       (* eprintf "something went wrong in congruence@."; *)
-      neqs, lem env p (* env *)
+      (* neqs, lem env p (\* env *\) *)
 
 
   (** Accumulates equalities for transitivity to chain them together. *)
