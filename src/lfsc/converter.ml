@@ -243,10 +243,16 @@ module Make (T : Translator_sig.S) = struct
       ->
       cong neqs (rm_used env r) r
 
-    | Some (("trans"|"negtrans"|"negtrans1"|"negtrans2"), [_; _; _; _; r1; r2])
+    | Some ("trans", [_; x; y; z; r1; r2])
+    | Some (("negtrans"|"negtrans1"), [_; x; z; y; r1; r2])
+    | Some ("negtrans2", [_; y; x; z; r1; r2])
       ->
-      let neqs1, env1 = cong neqs (rm_used env r1) r1 in
-      cong neqs1 (rm_used env1 r2) r2
+      (* ignore useless transitivity *)
+      if term_equal x y then cong neqs (rm_used env r2) r2
+      else if term_equal y z then cong neqs (rm_used env r1) r1
+      else
+        let neqs1, env1 = cong neqs (rm_used env r1) r1 in
+        cong neqs1 (rm_used env1 r2) r2
 
     | Some ("refl", [_; r]) -> neqs, rm_used env r
 
