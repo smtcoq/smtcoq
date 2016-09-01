@@ -269,7 +269,6 @@ Section certif.
         rewrite !Typ.cast_refl. intros. simpl in Htia.
         unfold Bval in Htia.
 
-        remember Atom.Bval_inj2.
         specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t v_vala1 v_vala2) (v_vala)).
         intros. specialize (H5 Htia).
 
@@ -547,7 +546,6 @@ Section certif.
         rewrite !Typ.cast_refl. intros. simpl in Htib1'.
         unfold Bval in Htib1'.
 
-        remember Atom.Bval_inj2.
 
         generalize dependent v_valc1. generalize dependent v_valc2.
         generalize dependent v_valb1'.
@@ -579,7 +577,6 @@ Section certif.
         rewrite !Typ.cast_refl. intros. simpl in Htib2'.
         unfold Bval in Htib2'.
 
-        remember Atom.Bval_inj2.
 
         generalize dependent v_vald1. generalize dependent v_vald2.
         generalize dependent v_valb2'.
@@ -679,7 +676,6 @@ Section certif.
           rewrite !Typ.cast_refl. intros. simpl in Htid1'.
           unfold Bval in Htid1'.
 
-          remember Atom.Bval_inj2.
 
           generalize dependent v_vale1. generalize dependent v_vale2.
           generalize dependent v_vale3. generalize dependent v_vald1'.
@@ -836,7 +832,6 @@ Section certif.
           rewrite !Typ.cast_refl. intros. simpl in Htic1'.
           unfold Bval in Htic1'.
 
-          remember Atom.Bval_inj2.
 
           generalize dependent v_vale1. generalize dependent v_vale2.
           generalize dependent v_vale3. generalize dependent v_valc1'.
@@ -1074,7 +1069,6 @@ Require Import Psatz.
       rewrite !Typ.cast_refl. intros. simpl in Htic.
       unfold Bval in Htic.
 
-      remember Atom.Bval_inj2.
       specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t2 v_valc1 v_valc2) (v_valc)).
       intros. specialize (H14 Htic).
 

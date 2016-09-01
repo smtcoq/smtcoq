@@ -711,15 +711,15 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       | _, _ => C._true
     end.
 
-(* bitwise inequality *)
+(* bitwise disequality *)
 
-  Fixpoint List_ineqb (a b: list bool) : bool :=
+  Fixpoint List_diseqb (a b: list bool) : bool :=
   match a, b with
     | nil, nil =>  false
     | xa :: xsa, xb :: xsb =>
       if (Bool.eqb xa false) then 
-        (if (Bool.eqb xb false) then List_ineqb xsa xsb else  true)
-      else (if (Bool.eqb xb true) then List_ineqb xsa xsb else  true)
+        (if (Bool.eqb xb false) then List_diseqb xsa xsb else  true)
+      else (if (Bool.eqb xb true) then List_diseqb xsa xsb else  true)
     | _, _ => true
   end.
 
@@ -733,7 +733,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
             |  Abop (BO_eq (Typ.TBV n)) a b =>
              match (get_atom a), (get_atom b) with
                | (Acop (CO_BV bv1 n1)), (Acop (CO_BV bv2 n2)) =>
-                  if List_ineqb bv1 bv2 && (N.of_nat (length bv1) =? n)%N
+                  if List_diseqb bv1 bv2 && (N.of_nat (length bv1) =? n)%N
                      && (N.of_nat (length bv2) =? n)%N
                      && (n1 =? n)%N && (n2 =? n)%N
                   then lres::nil
@@ -869,8 +869,8 @@ Proof. induction n.
        specialize (@IHn n0 Hm). now rewrite IHn.
 Qed.
 
-Lemma ineq_neg_eq: forall (la lb: list bool),
-      List_ineqb la lb = true -> negb (RAWBITVECTOR_LIST.beq_list la lb) = true.
+Lemma diseq_neg_eq: forall (la lb: list bool),
+      List_diseqb la lb = true -> negb (RAWBITVECTOR_LIST.beq_list la lb) = true.
 Proof. intro la.
        induction la.
        - intros. simpl in H. case lb in *.
@@ -916,7 +916,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
         intros f Heq2.
       case_eq (t_atom .[ f]); try (intros; now apply C.interp_true).
-      
+
       intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | ];
          try (intros; now apply C.interp_true). intros n a b Heq3.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
@@ -927,7 +927,7 @@ Proof.
       intros c0 Heq6.
       case_eq c0; try (intros; now apply C.interp_true).
       intros lb n2 Heq7.
-      case_eq ( List_ineqb la lb && (N.of_nat (Datatypes.length la) =? n)%N
+      case_eq (List_diseqb la lb && (N.of_nat (Datatypes.length la) =? n)%N
               && (N.of_nat (Datatypes.length lb) =? n)%N 
               && (n1 =? n)%N && (n2 =? n)%N);
          try (intros; now apply C.interp_true). intros Heq8.
@@ -942,7 +942,7 @@ Proof.
       rewrite !Atom.t_interp_wf; trivial.
       rewrite Heq4, Heq6. simpl.
       rewrite Heq5, Heq7. simpl.
-      
+
         rewrite !andb_true_iff in Heq8.
         destruct Heq8 as (((Heq8, Ha), Hb), Hc).
         destruct Heq8 as (Heq8, Hd).
@@ -952,7 +952,7 @@ Proof.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
         rewrite PArray.forallbi_spec;intros.
-        
+
         (* a *)
         pose proof (H a). 
         assert (a < PArray.length t_atom).
@@ -1035,7 +1035,7 @@ Proof.
         rewrite N.eqb_refl.
         unfold RAWBITVECTOR_LIST.bits.
 
-        apply ineq_neg_eq. easy.
+        apply diseq_neg_eq. easy.
 Qed.
 
 Lemma prop_checkbb: forall (a: int) (bs: list _lit) (i n: nat),
@@ -5080,7 +5080,6 @@ Proof.
         rewrite N.eqb_compare. rewrite N.compare_refl.
 
         unfold RAWBITVECTOR_LIST.ult_list.
-        remember prop_check_ult.
         specialize (@prop_check_ult (List.rev bs1) (List.rev bs2)).
         intros.
 
@@ -5094,7 +5093,6 @@ Proof.
         rewrite Heq10 in H8.
         simpl in H8.
 
-        remember (prop_check_ult2).
         rewrite !rev_length in H7.
         specialize (@prop_check_ult2 bs1 bs2 bsres H7 Heq16).
         intros.
@@ -5307,7 +5305,6 @@ Proof.
         rewrite N.eqb_compare. rewrite N.compare_refl.
 
         unfold RAWBITVECTOR_LIST.slt_list.
-        remember prop_check_slt.
         specialize (@prop_check_slt (List.rev bs1) (List.rev bs2)).
         intros.
 
@@ -5321,7 +5318,6 @@ Proof.
         rewrite Heq10 in H8.
         simpl in H8.
 
-        remember (prop_check_ult2).
         rewrite !rev_length in H7.
         specialize (@prop_check_slt2 bs1 bs2 bsres H7 Heq16).
         intros.
@@ -5512,7 +5508,6 @@ Lemma check_add_bvadd: forall bs1 bs2 bsres n,
   (RAWBITVECTOR_LIST.bv_add (map (Lit.interp rho) bs1) (map (Lit.interp rho) bs2) =
    (map (Lit.interp rho) bsres)).
 Proof. intros.
-       remember check_add_list.
        pose proof H as H'. pose proof H0 as H0'. pose proof H1 as H1'.
        rewrite <- H1 in H. apply Nat2N.inj in H.
        rewrite <- H1 in H0. apply Nat2N.inj in H0.
