@@ -205,6 +205,12 @@ module Make (T : Translator_sig.S) = struct
   (** Remove used assumptions from the environment *)
   let rm_used env t = { env with assum = rm_used' env.assum t }
 
+
+  let rm_duplicates eq l =
+    let rec aux acc = function
+      | x :: r -> if List.exists (eq x) acc then aux acc r else aux (x :: acc) r
+      | [] -> acc in
+    aux [] (List.rev l)
   
   (** Create an intermediate resolution step in [satlem] with the accumulated
       clauses. {!Reso} ignores the resulting clause so we can just give the
@@ -243,18 +249,26 @@ module Make (T : Translator_sig.S) = struct
       ->
       cong neqs (rm_used env r) r
 
-    | Some ("trans", [_; x; y; z; r1; r2])
-    | Some (("negtrans"|"negtrans1"), [_; x; z; y; r1; r2])
-    | Some ("negtrans2", [_; y; x; z; r1; r2])
+    | Some ("trans", [t; x; y; z; r1; r2])
+    | Some (("negtrans"|"negtrans1"), [t; x; z; y; r1; r2])
+    | Some ("negtrans2", [t; y; x; z; r1; r2])
       ->
+
       (* ignore useless transitivity *)
-      if term_equal x y then cong neqs (rm_used env r2) r2
+      if term_equal x z then
+        match app_name x, t, x with
+        | Some ("apply", [t; _; _; x]), _, _
+        | _, t, x ->
+          let x_x = eq t x x in
+          not_ x_x :: neqs,
+          { env with clauses = mk_clause_cl Eqre [x_x] [] :: env.clauses }
+      else if term_equal x y then cong neqs (rm_used env r2) r2
       else if term_equal y z then cong neqs (rm_used env r1) r1
       else
         let neqs1, env1 = cong neqs (rm_used env r1) r1 in
         cong neqs1 (rm_used env1 r2) r2
 
-    | Some ("refl", [_; r]) -> neqs, rm_used env r
+    (* | Some ("refl", [_; r]) -> neqs, rm_used env r *)
 
     | _ -> neqs, env
       (* eprintf "something went wrong in congruence@."; *)
@@ -262,7 +276,7 @@ module Make (T : Translator_sig.S) = struct
 
 
   (** Accumulates equalities for transitivity to chain them together. *)
-  and trans  neqs env p = match app_name p with
+  and trans neqs env p = match app_name p with
 
     | Some ("trans", [ty; x; y; z; p1; p2]) ->
     (* | Some (("negtrans"|"negtrans1") as r, [ty; x; z; y; p1; p2]) *)
@@ -272,38 +286,31 @@ module Make (T : Translator_sig.S) = struct
       
       (* let clauses = lem mpred assum (lem mpred assum clauses p1) p2 in *)
 
-      (* maybe reverse? *)
-      let neqs1, env = if merge then trans neqs env p1 else [], lem env p1 in
-      let neqs2, env = if merge then trans neqs env p2 else [], lem env p2 in
-
-      (* begin match app_name p with *)
-      (*   | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2]) -> *)
-      (*     eprintf "trans : \n  %a\n  %a\n@." print_term p1 print_term p2; *)
-      (*   | _ -> () *)
-      (* end; *)
-
       (* let x_y = th_res p1 in *)
       (* let y_z = th_res p2 in *)
       (* let x_y = match r with "negtrans2" -> eq ty y x | _ -> eq ty x y in *)
       (* let y_z = match r with "negtrans"|"negtrans1" -> eq ty z y | _ -> eq ty y z in *)
-      let x_y = eq ty x y in
-      let y_z = eq ty y z in
+      let n_x_y = not_ (eq ty x y) in
+      let n_y_z = not_ (eq ty y z) in
+
+      let neqs2, env = if merge then trans neqs env p2 else [], lem env p2 in
+      let neqs1, env = if merge then trans neqs env p1 else [], lem env p1 in
 
       let neqs = match neqs1, neqs2 with
-        | [], [] -> [not_ x_y; not_ y_z]
-        | [], _ -> not_ x_y :: neqs2
-        | _, [] -> neqs1 @ [not_ y_z]
+        | [], [] -> [n_x_y; n_y_z]
+        | [], _ -> n_x_y :: neqs2
+        | _, [] -> neqs1 @ [n_y_z]
         | _, _ -> neqs1 @ neqs2
       in
 
+      (* rm_duplicates Term.equal neqs *)
       neqs, env
 
-    | Some (("symm"|"negsymm"), [_; _; _; r]) -> trans neqs (rm_used env r) r
+    | Some (("symm"|"negsymm"), [_; _; _; r]) ->
+      let neqs, env = trans neqs (rm_used env r) r in
+      List.rev neqs, env
+      
     | Some ("refl", [_; r]) -> neqs, rm_used env r
-
-    (* | Some (("symm"|"negsymm"), [_; _; _; r]) *)
-    (* | Some ("refl", [_; r]) -> neqs, rm_used env r *)
-                                 
   
     | _ -> neqs, lem env p
 
@@ -704,8 +711,11 @@ module Make (T : Translator_sig.S) = struct
       
       let neqs, env = trans [] env p in
       let x_z = eq ty x z in
-      { env with
-        clauses = mk_clause_cl Eqtr (neqs @ [x_z]) [] :: env.clauses;
+      let cl = (neqs @ [x_z]) in
+      let id = mk_clause_cl Eqtr cl [] in
+      let id = mk_clause_cl ~reuse:false Weak cl [id] in
+      { env with 
+        clauses = id :: env.clauses;
         ax = true }
 
     (* | Some ("trans", [ty; x; y; z; p1; p2]) ->
@@ -1012,9 +1022,8 @@ module Make (T : Translator_sig.S) = struct
              (* eprintf "remaining assumptions:"; *)
              (* List.iter (eprintf "%s, ") env.assu; *)
              (* eprintf "@."; *)
-             let satlem_id =
-               if env.assum = [] then id else mk_clause Weak cl [id]
-             in
+             (* if env.assum = [] then id else *) 
+             let satlem_id = mk_clause Weak cl [id] in
              register_clause_id cl satlem_id;
              register_decl_id lem_name satlem_id;
              (* eprintf "--- SATLEM@."; *)

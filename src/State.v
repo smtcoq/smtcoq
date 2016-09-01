@@ -655,7 +655,7 @@ Module S.
     if len == 0 then s
     else
       let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 (len - 1) (get s (r.[0])) in
-      internal_set s pos c.
+      (* S.set_clause *) internal_set s pos c.
 
   Lemma valid_set_resolve :
     forall rho s, Valuation.wf rho -> valid rho s ->
@@ -664,6 +664,7 @@ Module S.
     unfold set_resolve; intros rho s Hrho Hv pos r.
     destruct (Int63Properties.reflect_eqb (length r) 0);[trivial | ].
     apply valid_internal_set;trivial.
+    (* apply S.valid_set_clause; auto. *)
     apply foldi_ind;auto.
     intros i c _ _ Hc. apply C.resolve_correct;auto;apply Hv.
   Qed.

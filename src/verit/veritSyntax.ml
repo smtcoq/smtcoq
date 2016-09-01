@@ -56,14 +56,21 @@ let is_eq l =
 
 let rec process_trans a b prem res =
   try
-    let (l,(c,c')) = List.find (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
-    let prem = List.filter (fun (l',(d,d')) -> (not (Form.equal l' l)) || (not (Atom.equal d c)) || (not (Atom.equal d' c'))) prem in
-    let c = if Atom.equal c b then c' else c in
-    if Atom.equal a c
-    then List.rev (l::res)
-    else process_trans a c prem (l::res)
+    let cands = List.find_all (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
+    let process (l,(c,c')) =
+      let prem = List.filter (fun (l',(d,d')) -> (not (Form.equal l' l)) || (not (Atom.equal d c)) || (not (Atom.equal d' c'))) prem in
+      let c = if Atom.equal c b then c' else c in
+      if Atom.equal a c
+      then List.rev (l::res)
+      else process_trans a c prem (l::res)
+    in
+    let rec process_cands = function
+      | [] -> raise Not_found
+      | c :: r -> try process c with Exit -> process_cands r
+    in
+    process_cands cands
   with
-    |Not_found -> if Atom.equal a b then [] else assert false
+    |Not_found -> if Atom.equal a b then [] else raise Exit
 
 
 let mkTrans p =
@@ -85,8 +92,13 @@ let rec process_congr a_args b_args prem res =
       (* if a = b *)
       (* then process_congr a_args b_args prem (None::res) *)
       (* else *)
-        let (l,(a',b')) = List.find (fun (l,(a',b')) -> ((Atom.equal a a') && (Atom.equal b b'))||((Atom.equal a b') && (Atom.equal b a'))) prem in
-        process_congr a_args b_args prem ((Some l)::res)
+      (try
+         let (l,(a',b')) =
+           List.find (fun (l,(a',b')) ->
+               ((Atom.equal a a') && (Atom.equal b b'))||
+               ((Atom.equal a b') && (Atom.equal b a'))) prem in
+         process_congr a_args b_args prem ((Some l)::res)
+       with Not_found -> assert false)
     | [],[] -> List.rev res
     | _ -> failwith "VeritSyntax.process_congr: incorrect number of arguments in function application"
 

@@ -110,6 +110,8 @@ let clr_s = declare_get "clr" (pi "l" lit (pi "c" clause clause))
 let formula = declare_get "formula" lfsc_type
 let th_holds_s = declare_get "th_holds" (pi "f" formula lfsc_type)
 
+let th_holds f = mk_app th_holds_s [f]
+
 let ttrue = declare_get "true" formula
 let tfalse = declare_get "false" formula
 
@@ -327,6 +329,28 @@ let apply_write s1 s2 a i v =
 let apply_diff s1 s2 a b =
   apply (array s1 s2) s1
     (apply (array s1 s2) (arrow (array s1 s2) s1) (diff s1 s2) a) b
+
+
+let refl_s = declare_get "refl"
+    (pi_d "s" sort (fun s ->
+    (pi_d "t" (term s) (fun t ->
+    (th_holds (eq s t t))))))
+
+let refl s t = mk_app refl_s [s; t]
+
+let cong_s = declare_get "cong"
+    (pi_d "s1" sort (fun s1 ->
+    (pi_d "s2" sort (fun s2 ->
+    (pi_d "a1" (term (arrow s1 s2)) (fun a1 ->
+    (pi_d "b1" (term (arrow s1 s2)) (fun b1 ->
+    (pi_d "a2" (term s1) (fun a2 ->
+    (pi_d "b2" (term s1) (fun b2 ->
+    (pi_d "u1" (th_holds (eq (arrow s1 s2) a1 b1)) (fun u1 ->
+    (pi_d "u2" (th_holds (eq s1 a2 b2)) (fun u2 ->
+    (th_holds (eq s2 (apply s1 s2 a1 a2) (apply s1 s2 b1 b2)))))))))))))))))))
+
+let cong s1 s2 a1 b1 a2 b2 u1 u2 =
+  mk_app cong_s [s1; s2; a1; b1; a2; b2; u1; u2]
 
 
 module MInt = Map.Make (struct

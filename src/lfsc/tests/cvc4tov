@@ -30,6 +30,8 @@ cat > ${name}_debug.v <<EOF
 Require Import SMTCoq Bool List.
 Import ListNotations BVList.BITVECTOR_LIST FArray.
 Local Open Scope list_scope.
+Local Open Scope bv_scope.
+Local Open Scope farray_scope.
 
 Section File.
   Parse_certif_verit t_i t_func t_atom t_form root used_roots trace "$name.smt2" "$name.log".
