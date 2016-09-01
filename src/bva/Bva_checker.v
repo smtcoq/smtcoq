@@ -333,11 +333,12 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   Inductive carry : Type :=
   | Clit (_:_lit)
   | Cand (_:carry) (_:carry)
-  | Cor (_:carry) (_:carry)
   | Cxor (_:carry) (_:carry)
+  | Cor (_:carry) (_:carry)
   | Ciff (_:carry) (_:carry)
   .
 
+  
   (** Check if a symbolic carry computation is equal to a literal
      representation. This function does not account for potential symmetries *)
   (* c should always be a positive literal in carry computations *)
@@ -346,37 +347,40 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       match carry with
         | Clit l => l == c
 
-        | Cxor c1 c2  =>
-          match get_form (Lit.blit c) with
-            | Fxor a1 a2 =>
-              (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
-                || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1)
-            | _ => false
-          end
-        | Ciff c1 c2  =>
-          match get_form (Lit.blit c) with
-            | Fiff a1 a2 =>
-              (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
-                || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1)
-            | _ => false
-          end
         | Cand c1 c2  =>
           match get_form (Lit.blit c) with
           | Fand args =>
             if PArray.length args == 2 then
               (eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1]))
-              || (eq_carry_lit c1 (args.[1]) && eq_carry_lit c2 (args.[0]))
+              (* || (eq_carry_lit c1 (args.[1]) && eq_carry_lit c2 (args.[0])) *)
             else false
           | _ => false
           end
+
+        | Cxor c1 c2  =>
+          match get_form (Lit.blit c) with
+            | Fxor a1 a2 =>
+              (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
+                (* || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1) *)
+            | _ => false
+          end
+
         | Cor c1 c2  =>
           match get_form (Lit.blit c) with
           | For args =>
             if PArray.length args == 2 then
               (eq_carry_lit c1 (args.[0]) && eq_carry_lit c2 (args.[1]))
-                || (eq_carry_lit c1 (args.[1]) && eq_carry_lit c2 (args.[0]))
+                (* || (eq_carry_lit c1 (args.[1]) && eq_carry_lit c2 (args.[0])) *)
             else false
           | _ => false
+          end
+
+        | Ciff c1 c2  =>
+          match get_form (Lit.blit c) with
+            | Fiff a1 a2 =>
+              (eq_carry_lit c1 a1 && eq_carry_lit c2 a2)
+                (* || (eq_carry_lit c1 a2 && eq_carry_lit c2 a1) *)
+            | _ => false
           end
       end
     else
@@ -4627,108 +4631,111 @@ Qed.
 
 Lemma prop_eq_carry_lit: forall c i, eq_carry_lit c i = true -> interp_carry c = (Lit.interp rho i).
 Proof. intro c.
-       induction c. 
-       - intros. simpl in *. 
-         case (Lit.is_pos i0 ) in H; rewrite eqb_spec in H; now rewrite H.
-       - intros. simpl. 
-         pose proof IHc1. pose proof IHc2.
-         simpl in H.
-         case_eq ( Lit.is_pos i). intros Hip0.
-         rewrite Hip0 in H.
-         case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
-         case_eq (PArray.length a == 2). intros Hl. rewrite Hl in H.
-         rewrite orb_true_iff in H; do 2 rewrite andb_true_iff in H.
+  induction c. 
+  - intros. simpl in *. 
+    case (Lit.is_pos i0 ) in H; rewrite eqb_spec in H; now rewrite H.
+  - intros. simpl. 
+    pose proof IHc1. pose proof IHc2.
+    simpl in H.
+    case_eq ( Lit.is_pos i). intros Hip0.
+    rewrite Hip0 in H.
+    case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
+    case_eq (PArray.length a == 2). intros Hl. rewrite Hl in H.
+    (* rewrite orb_true_iff in H; do 2 *) rewrite andb_true_iff in H.
 
-         specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
-         simpl in rho_interp.
-         rewrite afold_left_and in rho_interp.
-         rewrite eqb_spec in Hl.
-         apply to_list_two in Hl.
-         rewrite Hl in rho_interp.
-         simpl in rho_interp.
-         rewrite andb_true_r in rho_interp.
+    specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
+    simpl in rho_interp.
+    rewrite afold_left_and in rho_interp.
+    rewrite eqb_spec in Hl.
+    apply to_list_two in Hl.
+    rewrite Hl in rho_interp.
+    simpl in rho_interp.
+    rewrite andb_true_r in rho_interp.
 
-         destruct H.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. now rewrite rho_interp.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. rewrite rho_interp. now rewrite andb_comm.
-         + intros. rewrite H3 in H. now contradict H.
-         + intros. rewrite H2 in H. now contradict H.
+    (* destruct H. *)
+    + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
+      unfold Lit.interp at 3. unfold Var.interp.
+      rewrite Hip0. now rewrite rho_interp.
+    (* + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3. *)
+    (*   unfold Lit.interp at 3. unfold Var.interp. *)
+    (*   rewrite Hip0. rewrite rho_interp. now rewrite andb_comm. *)
+    + intros. rewrite H3 in H. now contradict H.
+    + intros. rewrite H2 in H. now contradict H.
 
-       - intros. simpl. 
-         pose proof IHc1. pose proof IHc2.
-         simpl in H.
-         case_eq ( Lit.is_pos i). intros Hip0.
-         rewrite Hip0 in H.
-         case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
-         case_eq (PArray.length a == 2). intros Hl. rewrite Hl in H.
-         rewrite orb_true_iff in H; do 2 rewrite andb_true_iff in H.
+  - intros. simpl. 
+    pose proof IHc1. pose proof IHc2.
+    simpl in H.
+    case_eq ( Lit.is_pos i). intros Hip0.
+    rewrite Hip0 in H.
+    case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
+    (* rewrite orb_true_iff in H; do 2 *) rewrite andb_true_iff in H.
 
-         specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
-         simpl in rho_interp.
-         rewrite afold_left_or in rho_interp.
-         rewrite eqb_spec in Hl.
-         apply to_list_two in Hl.
-         rewrite Hl in rho_interp.
-         simpl in rho_interp.
-         rewrite orb_false_r in rho_interp.
+    specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
+    simpl in rho_interp.
 
-         destruct H.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. now rewrite rho_interp.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. rewrite rho_interp. now rewrite orb_comm.
-         + intros. rewrite H3 in H. now contradict H.
-         + intros. rewrite H2 in H. now contradict H.
+    (* destruct H. *)
+    + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
+      unfold Lit.interp at 3. unfold Var.interp.
+      rewrite Hip0. now rewrite rho_interp.
+    (* + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3. *)
+    (*   unfold Lit.interp at 3. unfold Var.interp. *)
+    (*   rewrite Hip0. rewrite rho_interp. now rewrite xorb_comm. *)
+    + intros. rewrite H2 in H. now contradict H.
 
-       - intros. simpl. 
-         pose proof IHc1. pose proof IHc2.
-         simpl in H.
-         case_eq ( Lit.is_pos i). intros Hip0.
-         rewrite Hip0 in H.
-         case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
-         rewrite orb_true_iff in H; do 2 rewrite andb_true_iff in H.
+  - intros. simpl. 
+    pose proof IHc1. pose proof IHc2.
+    simpl in H.
+    case_eq ( Lit.is_pos i). intros Hip0.
+    rewrite Hip0 in H.
+    case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
+    case_eq (PArray.length a == 2). intros Hl. rewrite Hl in H.
+    (* rewrite orb_true_iff in H; do 2 *) rewrite andb_true_iff in H.
 
-         specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
-         simpl in rho_interp.
+    specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
+    simpl in rho_interp.
+    rewrite afold_left_or in rho_interp.
+    rewrite eqb_spec in Hl.
+    apply to_list_two in Hl.
+    rewrite Hl in rho_interp.
+    simpl in rho_interp.
+    rewrite orb_false_r in rho_interp.
 
-         destruct H.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. now rewrite rho_interp.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. rewrite rho_interp. now rewrite xorb_comm.
-         + intros. rewrite H2 in H. now contradict H.
-       - intros. simpl. 
-         pose proof IHc1. pose proof IHc2.
-         simpl in H.
-         case_eq ( Lit.is_pos i). intros Hip0.
-         rewrite Hip0 in H.
-         case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
-         rewrite orb_true_iff in H; do 2 rewrite andb_true_iff in H.
+    (* destruct H. *)
+    + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
+      unfold Lit.interp at 3. unfold Var.interp.
+      rewrite Hip0. now rewrite rho_interp.
+    (* + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3. *)
+    (*   unfold Lit.interp at 3. unfold Var.interp. *)
+    (*   rewrite Hip0. rewrite rho_interp. now rewrite orb_comm. *)
+    + intros. rewrite H3 in H. now contradict H.
+    + intros. rewrite H2 in H. now contradict H.
 
-         specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
-         simpl in rho_interp.
+  - intros. simpl. 
+    pose proof IHc1. pose proof IHc2.
+    simpl in H.
+    case_eq ( Lit.is_pos i). intros Hip0.
+    rewrite Hip0 in H.
+    case_eq (t_form .[ Lit.blit i]); intros; rewrite H2 in H; try now contradict H.
+    (* rewrite orb_true_iff in H; do 2 *) rewrite andb_true_iff in H.
 
-         destruct H.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. now rewrite rho_interp.
-         + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
-           unfold Lit.interp at 3. unfold Var.interp.
-           rewrite Hip0. rewrite rho_interp.
-           case_eq (Bool.eqb (Lit.interp rho i0) (Lit.interp rho i1)).
-           intros. apply Bool.eqb_prop in H4. rewrite H4. apply Bool.eqb_reflx.
-           intros. apply Bool.eqb_false_iff in H4. apply Bool.eqb_false_iff. unfold not in *. intro. symmetry in H5.
-           apply H4; trivial.
-         + intros. rewrite H2 in H. now contradict H.
- Qed.
+    specialize (@rho_interp ( Lit.blit i)). rewrite H2 in rho_interp.
+    simpl in rho_interp.
+
+    (* destruct H. *)
+    + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3.
+      unfold Lit.interp at 3. unfold Var.interp.
+      rewrite Hip0. now rewrite rho_interp.
+    (* + destruct H. apply H0 in H. apply H1 in H3. rewrite H, H3. *)
+    (*   unfold Lit.interp at 3. unfold Var.interp. *)
+    (*   rewrite Hip0. rewrite rho_interp. *)
+    (*   case_eq (Bool.eqb (Lit.interp rho i0) (Lit.interp rho i1)). *)
+    (*   intros. apply Bool.eqb_prop in H4. rewrite H4. apply Bool.eqb_reflx. *)
+    (*   intros. apply Bool.eqb_false_iff in H4. apply Bool.eqb_false_iff. unfold not in *. intro. symmetry in H5. *)
+    (*   apply H4; trivial. *)
+    + intros. rewrite H2 in H. now contradict H.
+Qed.
+
+
 
 Lemma map_cons T U (f: T -> U) (h: T) (l: list T): map f (h :: l) = f h :: map f l.
 Proof. auto. Qed.
@@ -6327,6 +6334,7 @@ Proof. intros. unfold check_mult in H.
        intros. rewrite H0 in H. now contradict H.
 Qed.
 
+
 Lemma valid_check_bbMult pos1 pos2 lres : C.valid rho (check_bbMult pos1 pos2 lres).
 Proof.  
       unfold check_bbMult.
@@ -6558,6 +6566,7 @@ Proof.
         easy.
 Qed.
 
+  
 Lemma prop_interp_carry3: forall bs2,  map interp_carry (lit_to_carry bs2) = map (Lit.interp rho) bs2.
 Proof. intro bs2.
        induction bs2 as [ | xbs2 xsbs2 IHbs2 ].
