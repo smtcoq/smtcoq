@@ -674,7 +674,9 @@ Module S.
 
 
   Definition subclause (cl1 cl2 : list _lit) :=
-    List.forallb (fun l1 => List.existsb (fun l2 => l1 == l2) cl2) cl1.
+    List.forallb (fun l1 =>
+                    (l1 == Lit._false) || (l1 == Lit.neg Lit._true) ||
+                    List.existsb (fun l2 => l1 == l2) cl2) cl1.
   
   Definition check_weaken (s:t) (cid:clause_id) (cl:list _lit) : C.t :=
     if subclause (get s cid) cl then cl else C._true.
@@ -698,13 +700,19 @@ Module S.
     apply existsb_exists.
     destruct Hs as (x, (Hi, Hax)).
     specialize (H x Hi).
-    apply existsb_exists in H.
-    destruct H as (x', (Hcl, Hxx')).
-    rewrite eqb_spec in Hxx'.
-    subst x'.
-    exists x. auto.
-  Qed.    
-
+    rewrite !orb_true_iff in H.
+    rewrite !eqb_spec in H.
+    destruct H as [[H | H] | H].
+    - contradict Hax. subst. apply Lit.interp_false; trivial.
+    - contradict Hax. subst. rewrite Lit.interp_neg.
+      rewrite not_true_iff_false, negb_false_iff, Lit.interp_true; trivial.
+    - apply existsb_exists in H.
+      destruct H as (x', (Hcl, Hxx')).
+      rewrite eqb_spec in Hxx'.
+      subst x'.
+      exists x. auto.
+  Qed.
+  
   Definition set_weaken (s:t) pos (cid:clause_id) (cl:list _lit) : t :=
       S.set_clause_keep s pos (check_weaken s cid cl).
 
