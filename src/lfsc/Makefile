@@ -9,4 +9,4 @@ prof:
 
 clean:
 	ocamlbuild -clean
-	rm *.cm*
+	rm *.cm* *.o *.ml*.d lfscLexer.ml lfscParser.mli lfscParser.ml

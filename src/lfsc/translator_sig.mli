@@ -127,9 +127,9 @@ module type S = sig
 
   (** Create an input unit clause. It is given an identifier that is not
       returned. *)
-  val mk_input : string -> term -> unit
+  val mk_input : Hstring.t -> term -> unit
 
-  val mk_admit_preproc : string -> term -> unit
+  val mk_admit_preproc : Hstring.t -> term -> unit
     
   (** [register_prop_abstr v p] register the term [v] as being a propositional
       abstraction of the term [p]. *)
@@ -140,14 +140,14 @@ module type S = sig
 
   (** Returns the identifier of a unit input clause given its name, as
       intoduced by the proprocessor of CVC4 in the LFSC proof. *)
-  val get_input_id : string -> int
+  val get_input_id : Hstring.t -> int
 
-  val register_decl : string -> term -> unit
+  val register_decl : Hstring.t -> term -> unit
 
-  val register_decl_id : string -> int -> unit
+  val register_decl_id : Hstring.t -> int -> unit
 
   (** register an alias name for a term *)
-  val register_alias : string -> term -> unit
+  val register_alias : Hstring.t -> term -> unit
 
   (* (\** register a term as an alias for another term *\) *)
   (* val register_termalias : term -> term -> unit *)

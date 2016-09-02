@@ -37,7 +37,7 @@ type clause = term list
 (*     let hash = List.fold_left (fun acc t -> Term.hash t + acc) 0  *)
 (*   end) *)
 
-module HS = Hashtbl
+module HS = Hstring.H
 
 module HT = struct
   module M = Map.Make (Term)
@@ -67,7 +67,7 @@ let clauses_ids = HCl.create 201
 let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let sharp_tbl = HT.create 13
-let inputs : (string, int) Hashtbl.t = HS.create 13
+let inputs : int HS.t = HS.create 13
 let alias_tbl = HS.create 17
 (* let termalias_tbl = HT.create 17 *)
 
@@ -150,21 +150,21 @@ let print_sharps () =
       printf "#%d --> %a@." id Ast.print_term_type t) sharp_tbl
 
 
-let smt2_of_lfsc = function
-  | "iff" -> "="
-  | "ifte" -> "ite"
-  | "flet" -> "let"
-  | "impl" -> "=>"
-  | ">_Int" -> ">"
-  | ">=_Int" -> ">="
-  | "<_Int" -> "<"
-  | "<=_Int" -> "<="
-  | "+_Int" -> "+"
-  | "-_Int" -> "-"
-  | "*_Int" -> "*"
-  | "/_Int" -> "/" (* Maybe div? *)
-  | "u-_Int" -> "-"
-  | t -> t
+let smt2_of_lfsc t =
+  if t == H.iff then "="
+  else if t == H.ifte_ then "ite"
+  else if t == H.flet then "let"
+  else if t == H.impl then "=>"
+  else if t == H.gt_Int then ">"
+  else if t == H.ge_Int then ">="
+  else if t == H.lt_Int then "<"
+  else if t == H.le_Int then "<="
+  else if t == H.plus_Int then "+"
+  else if t == H.minus_Int then "-"
+  else if t == H.times_Int then "*"
+  else if t == H.div_Int then "/" (* Maybe div? *)
+  else if t == H.uminus_Int then "-"
+  else Hstring.view t
 
 
 let new_sharp t =
@@ -174,28 +174,28 @@ let new_sharp t =
 
 
 let print_bit fmt b = match name b with
-  | Some "b0" -> fprintf fmt "0"
-  | Some "b1" -> fprintf fmt "1"
+  | Some b when b == H.b0 -> fprintf fmt "0"
+  | Some b when b == H.b1 -> fprintf fmt "1"
   | _ -> assert false
 
 let rec print_bv_const fmt t = match name t with
-  | Some "bvn" -> ()
+  | Some b when b == H.bvn  -> ()
   | _ -> match app_name t with
-    | Some ("bvc", [b; t]) ->
+    | Some (n, [b; t]) when n == H.bvc ->
       fprintf fmt "%a%a" print_bit b print_bv_const t
     | _ -> assert false
 
 let rec print_apply fmt t = match app_name t with
-  | Some ("apply", [_; _; f; a]) ->
+  | Some (n, [_; _; f; a]) when n == H.apply ->
     fprintf fmt "%a %a" print_apply f print_term a
   | _ -> print_term fmt t
   
 
 (* Endianness dependant: LFSC big endian -> SMTCoq little endian *)
 and print_bblt fmt t = match name t with
-  | Some "bbltn" -> ()
+  | Some n when n == H.bbltn -> ()
   | _ -> match app_name t with
-    | Some ("bbltc", [f; r]) ->
+    | Some (n, [f; r]) when n == H.bbltc ->
       fprintf fmt "%a %a" print_bblt r print_term f
     | _ -> assert false
 
@@ -215,7 +215,7 @@ and print_term fmt t =
       end
     | None -> match app_name t with
 
-      | Some ("=", [ty; a; b]) ->
+      | Some (n, [ty; a; b]) when n == H.eq ->
         let eqt = match value t with App (eqt, _ ) -> eqt | _ -> assert false in
         incr cpt;
         let eq_b_a = mk_app eqt [ty; b; a] in
@@ -224,52 +224,62 @@ and print_term fmt t =
         (* let a, b = if compare_term a b <= 0 then a, b else b, a in *)
         fprintf fmt "#%d:(= %a %a)" !cpt print_term a print_term b
 
-      | Some ("not", [a]) -> fprintf fmt "(not %a)" print_term a
-                               
-      | Some ("apply", _) ->
+      | Some (n, [a]) when n == H.not_ -> fprintf fmt "(not %a)" print_term a
+
+      | Some (n, _) when n == H.apply ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%a)" nb print_apply t
 
-      | Some ("p_app", [a]) -> print_term fmt a
+      | Some (n, [a]) when n == H.p_app -> print_term fmt a
 
-      | Some ("a_int", [{value = Int n}]) ->
+      | Some (a, [{value = Int n}]) when a == H.a_int ->
         fprintf fmt "%s" (Big_int.string_of_big_int n)
 
-      | Some ("a_var_bv", [_; a]) -> print_term fmt a
+      | Some (n, [_; a]) when n == H.a_var_bv -> print_term fmt a
 
-      | Some ("a_bv", [_; a]) -> print_term fmt a
+      | Some (n, [_; a]) when n == H.a_bv -> print_term fmt a
 
-      | Some ("bvc", _) -> fprintf fmt "#b%a" print_bv_const t
+      | Some (n, _) when n == H.bvc -> fprintf fmt "#b%a" print_bv_const t
 
-      | Some (("bvand"|"bvor"|"bvxor"|"bvadd"|"bvmul"|"bvult"|"bvslt"|"bvule"|"bvsle") as op,
-              [_; a; b]) ->
+      | Some (op,[_; a; b])
+        when op == H.bvand ||
+             op == H.bvor ||
+             op == H.bvxor ||
+             op == H.bvadd ||
+             op == H.bvmul ||
+             op == H.bvult ||
+             op == H.bvslt ||
+             op == H.bvule ||
+             op == H.bvsle ->
         let nb = new_sharp t in
-        fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
+        fprintf fmt "#%d:(%a %a %a)" nb
+          Hstring.print op print_term a print_term b
 
-      | Some (("bvnot"|"bvneg") as op, [_; a]) ->
+      | Some (op, [_; a]) when op == H.bvnot || op == H.bvneg ->
         let nb = new_sharp t in
-        fprintf fmt "#%d:(%s %a)" nb op print_term a
+        fprintf fmt "#%d:(%a %a)" nb Hstring.print op print_term a
 
-      | Some ("concat" as op, [_; _; _; a; b]) ->
+      | Some (op, [_; _; _; a; b]) when op == H.concat ->
         let nb = new_sharp t in
-        fprintf fmt "#%d:(%s %a %a)" nb op print_term a print_term b
+        fprintf fmt "#%d:(%a %a %a)" nb
+          Hstring.print op print_term a print_term b
 
-      | Some ("bitof", [a; {value = Int n}]) ->
+      | Some (op, [a; {value = Int n}]) when op == H.bitof ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(bitof %s %a)" nb
           (Big_int.string_of_big_int n) print_term a
 
-      | Some ("bbltc", _) -> fprintf fmt "[%a]" print_bblt t
+      | Some (n, _) when n == H.bbltc -> fprintf fmt "[%a]" print_bblt t
 
-      | Some ("bblast_term", [_; a; bb]) ->
+      | Some (n, [_; a; bb]) when n == H.bblast_term ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(bbT %a [%a])" nb print_term a print_bblt bb
 
-      | Some ("read", [_; _]) -> fprintf fmt "select"
-      | Some ("write", [_; _]) -> fprintf fmt "store"
-      | Some ("diff", [_; _]) -> fprintf fmt "diff"
+      | Some (n, [_; _]) when n == H.read -> fprintf fmt "select"
+      | Some (n, [_; _]) when n == H.write -> fprintf fmt "store"
+      | Some (n, [_; _]) when n == H.diff -> fprintf fmt "diff"
 
-      | Some ("ite", [_; c; a; b]) ->
+      | Some (n, [_; c; a; b]) when n == H.ite ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(ite %a %a %a)" nb
           print_term c print_term a print_term b
@@ -289,19 +299,19 @@ let print_term fmt t = print_term fmt t (* (get_real t) *)
 
 
 let rec print_clause elim_or fmt t = match name t with
-  | Some "cln" | Some "false" -> ()
+  | Some n when n == H.cln || n == H.tfalse -> ()
   | Some n -> pp_print_string fmt (smt2_of_lfsc n)
   | None ->
     match app_name t with
-    | Some ("pos", [v]) ->
+    | Some (n, [v]) when n == H.pos ->
       let t = try HT.find propvars (deref v) with Not_found -> assert false in
       fprintf fmt "%a" print_term t
-    | Some ("neg", [v]) ->
+    | Some (n, [v]) when n == H.neg ->
       let t = try HT.find propvars (deref v) with Not_found -> assert false in
       fprintf fmt "(not %a)" print_term t
-    | Some ("clc", [a; cl]) ->
+    | Some (n, [a; cl]) when n == H.clc ->
       fprintf fmt "%a %a" (print_clause elim_or) a (print_clause elim_or) cl
-    | Some ("or", [a; b]) when elim_or ->
+    | Some (n, [a; b]) when n == H.or_ && elim_or ->
       fprintf fmt "%a %a" (print_clause elim_or) a (print_clause elim_or) b
     | _ -> fprintf fmt "%a" print_term t
 
@@ -312,21 +322,21 @@ let print_clause fmt t = fprintf fmt "(%a)" (print_clause false) t
   
 
 let rec to_clause acc t = match name t with
-  | Some "cln" | Some "false" -> acc
+  | Some n when n == H.cln || n == H.tfalse -> acc
   | Some n -> t :: acc
   | None ->
     match app_name t with
-    | Some ("pos", [v]) ->
+    | Some (n, [v]) when n == H.pos ->
       let t = try HT.find propvars (deref v) with Not_found -> assert false in
       t :: acc
-    | Some ("neg", [v]) ->
+    | Some (n, [v]) when n == H.neg ->
       let t =
         try HT.find propvars (deref v) |> not_
         with Not_found -> assert false in
       t :: acc
-    | Some ("clc", [a; cl]) ->
+    | Some (n, [a; cl]) when n == H.clc ->
       to_clause (to_clause acc a) cl
-    | Some ("or", [a; b]) ->
+    | Some (n, [a; b]) when n == H.or_ ->
       to_clause (to_clause acc a) b
     | _ -> t :: acc
 
@@ -343,7 +353,7 @@ let print_clause fmt = fprintf fmt "(%a)" print_clause
 
 
 let th_res p = match app_name (deref p).ttype with
-  | Some ("th_holds", [r]) -> r
+  | Some (n, [r]) when n == H.th_holds -> r
   | _ -> assert false
 
 
@@ -352,7 +362,7 @@ type clause_res_id = NewCl of int | OldCl of int
 
 let clause_mod_eqsymm cl =
   List.fold_left (fun acc t -> match app_name t with
-      | Some ("=", [ty; a; b]) ->
+      | Some (n, [ty; a; b]) when n == H.eq ->
         let eqt = match value t with App (eqt, _ ) -> eqt | _ -> assert false in
         let eq_b_a = mk_app eqt [ty; b; a] in
         let acc2 = List.map (fun cl -> eq_b_a :: cl) acc in
@@ -364,7 +374,7 @@ let clause_mod_eqsymm cl =
 
       
 let rec normalize_eq_symm p = match app_name p with
-  | Some ("=", [ty; a; b]) when compare_term a b > 0 ->
+  | Some (n, [ty; a; b]) when n == H.eq && compare_term a b > 0 ->
     let eqt = match value p with App (eqt, _ ) -> eqt | _ -> assert false in
     mk_app eqt [ty; b; a]
   | _ -> match p.value with
@@ -466,7 +476,7 @@ let clear () =
   Hashtbl.clear ids_clauses;
   HT.clear propvars;
   HT.clear sharp_tbl;
-  Hashtbl.clear inputs;
+  HS.clear inputs;
   HS.clear alias_tbl;
   (* HT.clear termalias_tbl; *)
   cl_cpt := 0;
