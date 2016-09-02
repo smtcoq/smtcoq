@@ -185,54 +185,53 @@ Qed.
 
 Goal true.
   cvc4; verit.
-Admitted.
+Qed.
 
                                     
 Goal negb false.
   cvc4.
   simpl. auto.
-Admitted.
-
+Qed.
 
  
 Goal forall a, Bool.eqb a a.
 Proof.
   intros.
-  cvc4.
-Admitted.
+  cvc4; verit.
+Qed.
 
  
 Goal forall (a:bool), a = a.
   intros.
-  cvc4.
-Admitted.
+  cvc4; verit.
+Qed.
 
 
 (* (* Other connectors *) *)
 
-(* Goal (false || true) && false = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal (false || true) && false = false.
+Proof.
+  cvc4; verit.
+Qed.
 
 
-(* Goal negb true = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal negb true = false.
+Proof.
+  cvc4; verit.
+Qed.
 
 
-(* Goal false = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
+Goal false = false.
+Proof.
+  cvc4 ; verit.
+Qed.
 
 
-(* Goal forall x y, Bool.eqb (xorb x y) ((x && (negb y)) || ((negb x) && y)). *)
-(* Proof. *)
-(*   cvc4. *)
-(* Qed. *)
-(* *)
+Goal forall x y, Bool.eqb (xorb x y) ((x && (negb y)) || ((negb x) && y)).
+Proof.
+  cvc4.
+Qed.
+
 
 Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
 Proof.
