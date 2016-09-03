@@ -1104,20 +1104,20 @@ module Make (T : Translator_sig.S) = struct
            rop == H.bv_bbl_bvult ||
            rop == H.bv_bbl_bvslt
       ->
-      let bvop =
-        if rop == H.bv_bbl_bvand then bvand
-        else if rop == H.bv_bbl_bvor then bvor
-        else if rop == H.bv_bbl_bvxor then bvxor
-        else if rop == H.bv_bbl_bvadd then bvadd
-        else if rop == H.bv_bbl_bvmul then bvmul
-        else if rop == H.bv_bbl_bvult then bvult
-        else if rop == H.bv_bbl_bvslt then bvslt
+      let bvop, rule =
+        if rop == H.bv_bbl_bvand then bvand, Bbop
+        else if rop == H.bv_bbl_bvor then bvor, Bbop
+        else if rop == H.bv_bbl_bvxor then bvxor, Bbop
+        else if rop == H.bv_bbl_bvadd then bvadd, Bbadd
+        else if rop == H.bv_bbl_bvmul then bvmul, Bbmul
+        else if rop == H.bv_bbl_bvult then bvult, Bbult
+        else if rop == H.bv_bbl_bvslt then bvslt, Bbslt
         else assert false
       in
       let res = bblast_term n (bvop n x y) rb in
       (match bbt xbb, bbt ybb with
        | Some idx, Some idy ->
-         Some (mk_clause_cl Bbop [res] [idx; idy])
+         Some (mk_clause_cl rule [res] [idx; idy])
        | _ -> assert false
       )
       
