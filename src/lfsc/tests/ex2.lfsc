@@ -1,0 +1,690 @@
+(declare bool type)
+(declare tt bool)
+(declare ff bool)
+
+(declare var type)
+
+(declare lit type)
+(declare pos (! x var lit))
+(declare neg (! x var lit))
+
+(declare clause type)
+(declare cln clause)
+(declare clc (! x lit (! c clause clause)))
+
+; constructs for general clauses for R, Q, satlem
+
+(declare concat_cl (! c1 clause (! c2 clause clause)))
+(declare clr (! l lit (! c clause clause)))
+
+; code to check resolutions
+
+(program append ((c1 clause) (c2 clause)) clause
+  (match c1 (cln c2) ((clc l c1') (clc l (append c1' c2)))))
+
+; we use marks as follows:
+; -- mark 1 to record if we are supposed to remove a positive occurrence of the variable.
+; -- mark 2 to record if we are supposed to remove a negative occurrence of the variable.
+; -- mark 3 if we did indeed remove the variable positively
+; -- mark 4 if we did indeed remove the variable negatively
+(program simplify_clause ((c clause)) clause
+  (match c
+    (cln cln)
+    ((clc l c1)
+      (match l
+        ; Set mark 1 on v if it is not set, to indicate we should remove it.
+        ; After processing the rest of the clause, set mark 3 if we were already
+        ; supposed to remove v (so if mark 1 was set when we began).  Clear mark3
+        ; if we were not supposed to be removing v when we began this call.
+        ((pos v)
+          (let m (ifmarked v tt (do (markvar v) ff))
+          (let c' (simplify_clause c1)
+            (match m
+              (tt (do (ifmarked3 v v (markvar3 v)) c'))
+              (ff (do (ifmarked3 v (markvar3 v) v) (markvar v) (clc l c')))))))
+        ; the same as the code for tt, but using different marks.
+        ((neg v)
+          (let m (ifmarked2 v tt (do (markvar2 v) ff))
+          (let c' (simplify_clause c1)
+            (match m
+              (tt (do (ifmarked4 v v (markvar4 v)) c'))
+              (ff (do (ifmarked4 v (markvar4 v) v) (markvar2 v) (clc l c')))))))))
+    ((concat_cl c1 c2) (append (simplify_clause c1) (simplify_clause c2)))
+    ((clr l c1)
+      (match l
+        ; set mark 1 to indicate we should remove v, and fail if
+        ; mark 3 is not set after processing the rest of the clause
+        ; (we will set mark 3 if we remove a positive occurrence of v).
+        ((pos v)
+            (let m (ifmarked v tt (do (markvar v) ff))
+            (let m3 (ifmarked3 v (do (markvar3 v) tt) ff)
+            (let c' (simplify_clause c1)
+              (ifmarked3 v (do (match m3 (tt v) (ff (markvar3 v)))
+                                (match m (tt v) (ff (markvar v))) c')
+                          (fail clause))))))
+        ; same as the tt case, but with different marks.
+        ((neg v)
+            (let m2 (ifmarked2 v tt (do (markvar2 v) ff))
+            (let m4 (ifmarked4 v (do (markvar4 v) tt) ff)
+            (let c' (simplify_clause c1)
+              (ifmarked4 v (do (match m4 (tt v) (ff (markvar4 v)))
+                                (match m2 (tt v) (ff (markvar2 v))) c')
+                          (fail clause))))))
+   ))))
+
+
+; resolution proofs
+
+(declare holds (! c clause type))
+
+(declare R (! c1 clause (! c2 clause
+           (! u1 (holds c1)
+           (! u2 (holds c2)
+           (! n var
+            (holds (concat_cl (clr (pos n) c1)
+                     (clr (neg n) c2)))))))))
+
+(declare Q (! c1 clause (! c2 clause
+           (! u1 (holds c1)
+           (! u2 (holds c2)
+           (! n var
+            (holds (concat_cl (clr (neg n) c1)
+                     (clr (pos n) c2)))))))))
+
+(declare satlem_simplify
+                (! c1 clause
+                (! c2 clause
+                (! c3 clause
+                (! u1 (holds c1)
+                (! r (^ (simplify_clause c1) c2)
+                (! u2 (! x (holds c2) (holds c3))
+                   (holds c3))))))))
+
+(declare satlem
+  (! c clause
+  (! c2 clause
+  (! u (holds c)
+  (! u2 (! v (holds c) (holds c2))
+    (holds c2))))))
+
+; A little example to demonstrate simplify_clause.
+; It can handle nested clr's of both polarities,
+; and correctly cleans up marks when it leaves a
+; clr or clc scope.  Uncomment and run with
+; --show-runs to see it in action.
+;
+; (check
+;   (% v1 var
+;   (% u1 (holds (concat_cl (clr (neg v1) (clr (pos v1) (clc (pos v1) (clr (pos v1) (clc (pos v1) (clc (neg v1) cln))))))
+;                    (clc (pos v1) (clc (pos v1) cln))))
+;    (satlem _ _ _ u1 (\ x x))))))
+
+
+;(check
+;   (% v1 var
+;   (% u1 (holds (clr (neg v1) (concat_cl (clc (neg v1) cln)
+;                                      (clr (neg v1) (clc (neg v1) cln)))))
+;    (satlem _ _ _ u1 (\ x x))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; SMT syntax and semantics (not theory-specific)
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; depends on sat.plf
+
+(declare formula type)
+(declare th_holds (! f formula type))
+
+; standard logic definitions
+(declare true formula)
+(declare false formula)
+
+(define formula_op1
+	(! f formula
+	formula))
+
+(define formula_op2
+	(! f1 formula
+	(! f2 formula
+	   formula)))
+	
+(define formula_op3
+	(! f1 formula
+	(! f2 formula
+	(! f3 formula
+	   formula))))
+	   
+(declare not formula_op1)
+(declare and formula_op2)
+(declare or formula_op2)
+(declare impl formula_op2)
+(declare iff formula_op2)
+(declare xor formula_op2)
+(declare ifte formula_op3)
+
+; terms
+(declare sort type)
+(declare term (! t sort type))	; declared terms in formula
+
+; standard definitions for =, ite, let and flet
+(declare = (! s sort
+           (! x (term s)
+           (! y (term s)
+             formula))))
+(declare ite (! s sort
+             (! f formula
+             (! t1 (term s)
+             (! t2 (term s)
+               (term s))))))
+(declare let (! s sort
+             (! t (term s)
+             (! f (! v (term s) formula)
+               formula))))
+(declare flet (! f1 formula
+              (! f2 (! v formula formula)
+                formula)))
+
+; We view applications of predicates as terms of sort "Bool".
+; Such terms can be injected as atomic formulas using "p_app".
+(declare Bool sort)				; the special sort for predicates
+(declare p_app (! x (term Bool) formula))	; propositional application of term
+
+; boolean terms
+(declare t_true (term Bool))
+(declare t_false (term Bool))
+(declare t_t_neq_f
+ (th_holds (not (= Bool t_true t_false))))
+(declare pred_eq_t
+ (! x (term Bool)
+ (! u (th_holds (p_app x))
+   (th_holds (= Bool x t_true)))))
+(declare pred_eq_f
+ (! x (term Bool)
+ (! u (th_holds (not (p_app x)))
+   (th_holds (= Bool x t_false)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; CNF Clausification
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; binding between an LF var and an (atomic) formula
+
+(declare atom (! v var (! p formula type)))
+
+; binding between two LF vars
+(declare bvatom (! sat_v var (! bv_v var type)))
+
+(declare decl_atom
+  (! f formula
+  (! u (! v var
+       (! a (atom v f)
+         (holds cln)))
+    (holds cln))))
+
+;; declare atom enhanced with mapping
+;; between SAT prop variable and BVSAT prop variable
+(declare decl_bvatom
+  (! f formula
+  (! u (! v var
+       (! bv_v var
+       (! a (atom v f)
+       (! bva (atom bv_v f)
+       (! vbv (bvatom v bv_v)
+         (holds cln))))))
+    (holds cln))))
+    
+    
+; clausify a formula directly
+(declare clausify_form
+  (! f formula
+  (! v var
+  (! a (atom v f)
+  (! u (th_holds f)
+    (holds (clc (pos v) cln)))))))
+    
+(declare clausify_form_not
+  (! f formula
+  (! v var
+  (! a (atom v f)
+  (! u (th_holds (not f))
+    (holds (clc (neg v) cln)))))))
+    
+(declare clausify_false
+  (! u (th_holds false)
+    (holds cln)))
+
+(declare th_let_pf
+  (! f formula
+  (! u (th_holds f)
+  (! u2 (! v (th_holds f) (holds cln))
+    (holds cln)))))
+
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Natural deduction rules : used for CNF
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; for eager bit-blasting
+(declare iff_symm
+	(! f formula
+	   (th_holds (iff f f))))
+
+
+;; contradiction
+
+(declare contra
+  (! f formula
+  (! r1 (th_holds f)
+  (! r2 (th_holds (not f))
+    (th_holds false)))))
+
+; truth
+(declare truth (th_holds true))
+
+;; not not
+
+(declare not_not_intro
+  (! f formula
+  (! u (th_holds f)
+    (th_holds (not (not f))))))
+
+(declare not_not_elim
+  (! f formula
+  (! u (th_holds (not (not f)))
+    (th_holds f))))
+
+;; or elimination
+
+(declare or_elim_1
+  (! f1 formula
+  (! f2 formula
+  (! u1 (th_holds (not f1))
+  (! u2 (th_holds (or f1 f2))
+    (th_holds f2))))))
+
+(declare or_elim_2
+  (! f1 formula
+  (! f2 formula
+  (! u1 (th_holds (not f2))
+  (! u2 (th_holds (or f1 f2))
+    (th_holds f1))))))
+
+(declare not_or_elim
+  (! f1 formula
+  (! f2 formula
+  (! u2 (th_holds (not (or f1 f2)))
+    (th_holds (and (not f1) (not f2)))))))
+    
+;; and elimination
+
+(declare and_elim_1
+  (! f1 formula
+  (! f2 formula
+  (! u (th_holds (and f1 f2))
+    (th_holds f1)))))
+
+(declare and_elim_2
+  (! f1 formula
+  (! f2 formula
+  (! u (th_holds (and f1 f2))
+    (th_holds f2)))))
+
+(declare not_and_elim
+  (! f1 formula
+  (! f2 formula
+  (! u2 (th_holds (not (and f1 f2)))
+    (th_holds (or (not f1) (not f2)))))))
+    
+;; impl elimination
+
+(declare impl_intro (! f1 formula
+                    (! f2 formula
+                    (! i1 (! u (th_holds f1)
+                              (th_holds f2))
+                      (th_holds (impl f1 f2))))))
+
+(declare impl_elim
+  (! f1 formula
+  (! f2 formula
+  (! u2 (th_holds (impl f1 f2))
+    (th_holds (or (not f1) f2))))))
+
+(declare not_impl_elim
+  (! f1 formula
+  (! f2 formula
+  (! u (th_holds (not (impl f1 f2)))
+    (th_holds (and f1 (not f2)))))))
+    
+;; iff elimination
+
+(declare iff_elim_1
+  (! f1 formula
+  (! f2 formula
+  (! u1 (th_holds (iff f1 f2))
+    (th_holds (or (not f1) f2))))))
+
+(declare iff_elim_2
+  (! f1 formula
+  (! f2 formula
+  (! u1 (th_holds (iff f1 f2))
+    (th_holds (or f1 (not f2)))))))
+
+(declare not_iff_elim
+  (! f1 formula
+  (! f2 formula
+  (! u2 (th_holds (not (iff f1 f2)))
+    (th_holds (iff f1 (not f2)))))))
+
+; xor elimination
+
+(declare xor_elim_1
+  (! f1 formula
+  (! f2 formula
+  (! u1 (th_holds (xor f1 f2))
+    (th_holds (or (not f1) (not f2)))))))
+
+(declare xor_elim_2
+  (! f1 formula
+  (! f2 formula
+  (! u1 (th_holds (xor f1 f2))
+    (th_holds (or f1 f2))))))
+
+(declare not_xor_elim
+  (! f1 formula
+  (! f2 formula
+  (! u2 (th_holds (not (xor f1 f2)))
+    (th_holds (iff f1 f2))))))
+
+;; ite elimination
+
+(declare ite_elim_1
+  (! a formula
+  (! b formula
+  (! c formula
+  (! u2 (th_holds (ifte a b c))
+    (th_holds (or (not a) b)))))))
+
+(declare ite_elim_2
+  (! a formula
+  (! b formula
+  (! c formula
+  (! u2 (th_holds (ifte a b c))
+    (th_holds (or a c)))))))
+
+(declare ite_elim_3
+  (! a formula
+  (! b formula
+  (! c formula
+  (! u2 (th_holds (ifte a b c))
+    (th_holds (or b c)))))))
+
+(declare not_ite_elim_1
+  (! a formula
+  (! b formula
+  (! c formula
+  (! u2 (th_holds (not (ifte a b c)))
+    (th_holds (or (not a) (not b))))))))
+
+(declare not_ite_elim_2
+  (! a formula
+  (! b formula
+  (! c formula
+  (! u2 (th_holds (not (ifte a b c)))
+    (th_holds (or a (not c))))))))
+
+(declare not_ite_elim_3
+  (! a formula
+  (! b formula
+  (! c formula
+  (! u2 (th_holds (not (ifte a b c)))
+    (th_holds (or (not b) (not c))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; For theory lemmas
+; - make a series of assumptions and then derive a contradiction (or false)
+; - then the assumptions yield a formula like "v1 -> v2 -> ... -> vn -> false"
+; - In CNF, it becomes a clause: "~v1, ~v2, ..., ~vn"
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(declare ast
+  (! v var
+  (! f formula
+  (! C clause
+  (! r (atom v f)       ;this is specified
+  (! u (! o (th_holds f)
+         (holds C))
+    (holds (clc (neg v) C))))))))
+
+(declare asf
+  (! v var
+  (! f formula
+  (! C clause
+  (! r (atom v f)
+  (! u (! o (th_holds (not f))
+         (holds C))
+    (holds (clc (pos v) C))))))))
+
+;; Bitvector lemma constructors to assume
+;; the unit clause containing the assumptions
+;; it also requires the mapping between bv_v and v
+;; The resolution proof proving false will use bv_v as the definition clauses use bv_v
+;; but the Problem clauses in the main SAT solver will use v so the learned clause is in terms of v
+(declare bv_asf
+  (! v var
+  (! bv_v var
+  (! f formula
+  (! C clause
+  (! r (atom v f) ;; passed in
+  (! x (bvatom v bv_v) ; establishes the equivalence of v to bv_
+  (! u (! o (holds (clc (neg bv_v) cln)) ;; l binding to be used in proof
+         (holds C))
+    (holds (clc (pos v) C))))))))))
+    
+(declare bv_ast
+  (! v var
+  (! bv_v var	
+  (! f formula
+  (! C clause
+  (! r (atom v f)       ; this is specified
+  (! x (bvatom v bv_v) ; establishes the equivalence of v to bv_v
+  (! u (! o (holds (clc (pos bv_v) cln))
+         (holds C))
+    (holds (clc (neg v) C))))))))))
+
+
+;; Example:
+;;
+;; Given theory literals (F1....Fn), and an input formula A of the form (th_holds (or F1 (or F2 .... (or F{n-1} Fn))))).
+;;
+;; We introduce atoms (a1,...,an) to map boolean literals (v1,...,vn) top literals (F1,...,Fn).
+;; Do this at the beginning of the proof:
+;;
+;; (decl_atom F1 (\ v1 (\ a1
+;; (decl_atom F2 (\ v2 (\ a2
+;; ....
+;; (decl_atom Fn (\ vn (\ an
+;;
+;;  A is then clausified by the following proof:
+;;
+;;(satlem _ _
+;;(asf _ _ _ a1 (\ l1
+;;(asf _ _ _ a2 (\ l2
+;;...
+;;(asf _ _ _ an (\ ln
+;;(clausify_false
+;;
+;;   (contra _
+;;      (or_elim_1 _ _ l{n-1}
+;;	...
+;;      (or_elim_1 _ _ l2
+;; 	(or_elim_1 _ _ l1 A))))) ln)
+;;	
+;;))))))) (\ C
+;;
+;; We now have the free variable C, which should be the clause (v1 V ... V vn).
+;;
+;; Polarity of literals should be considered, say we have A of the form (th_holds (or (not F1) (or F2 (not F3)))).
+;; Where necessary, we use "ast" instead of "asf", introduce negations by "not_not_intro" for pattern matching, and flip
+;; the arguments of contra:
+;;
+;;(satlem _ _
+;;(ast _ _ _ a1 (\ l1
+;;(asf _ _ _ a2 (\ l2
+;;(ast _ _ _ a3 (\ l3
+;;(clausify_false
+;;
+;;   (contra _ l3
+;;      (or_elim_1 _ _ l2
+;; 	(or_elim_1 _ _ (not_not_intro l1) A))))
+;;	
+;;))))))) (\ C
+;;
+;; C should be the clause (~v1 V v2 V ~v3 )
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Theory of Equality and Congruence Closure
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; depends on : smt.plf
+
+; sorts :
+
+(declare arrow (! s1 sort (! s2 sort sort)))	; function constructor
+
+; functions :
+
+(declare apply (! s1 sort
+               (! s2 sort
+               (! t1 (term (arrow s1 s2))
+               (! t2 (term s1)
+                (term s2))))))
+
+
+; inference rules :
+
+(declare trust (th_holds false))	; temporary
+(declare trust_f (! f formula (th_holds f)))  ; temporary
+
+(declare refl
+  (! s sort
+  (! t (term s)
+    (th_holds (= s t t)))))
+
+(declare symm (! s sort
+              (! x (term s)
+              (! y (term s)
+              (! u (th_holds (= _ x y))
+                (th_holds (= _ y x)))))))
+
+(declare trans (! s sort
+               (! x (term s)
+               (! y (term s)
+               (! z (term s)
+               (! u (th_holds (= _ x y))
+               (! u (th_holds (= _ y z))
+                 (th_holds (= _ x z)))))))))
+
+(declare negsymm (! s sort
+              	 (! x (term s)
+              	 (! y (term s)
+              	 (! u (th_holds (not (= _ x y)))
+                   (th_holds (not (= _ y x))))))))
+
+(declare negtrans1 (! s sort
+                   (! x (term s)
+              	   (! y (term s)
+               	   (! z (term s)
+               	   (! u (th_holds (not (= _ x y)))
+               	   (! u (th_holds (= _ y z))
+                     (th_holds (not (= _ x z))))))))))
+
+(declare negtrans2 (! s sort
+                   (! x (term s)
+              	   (! y (term s)
+               	   (! z (term s)
+               	   (! u (th_holds (= _ x y))
+               	   (! u (th_holds (not (= _ y z)))
+                     (th_holds (not (= _ x z))))))))))
+
+(declare cong (! s1 sort
+              (! s2 sort
+              (! a1 (term (arrow s1 s2))
+              (! b1 (term (arrow s1 s2))
+              (! a2 (term s1)
+              (! b2 (term s1)
+              (! u1 (th_holds (= _ a1 b1))
+              (! u2 (th_holds (= _ a2 b2))
+                (th_holds (= _ (apply _ _ a1 a2) (apply _ _ b1 b2))))))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Examples
+
+; an example of "(p1 or p2(0)) and t1=t2(1)"
+;(! p1 (term Bool)
+;(! p2 (term (arrow Int Bool))
+;(! t1 (term Int)
+;(! t2 (term (arrow Int Int))
+;(! F (th_holds (and (or (p_app p1) (p_app (apply _ _ p2 0)))
+;                    (= _ t1 (apply _ _ t2 1))))
+;  ...
+
+; another example of "p3(a,b)"
+;(! a (term Int)
+;(! b (term Int)
+;(! p3 (term (arrow Int (arrow Int Bool)))	; arrow is right assoc.
+;(! F (th_holds (p_app (apply _ _ (apply _ _ p3 a) b))) ; apply is left assoc.
+;  ...
+
+
+
+(check
+ ;; Declarations
+(% c (term Bool)
+(% b (term Bool)
+(% a (term Bool)
+(% A0 (th_holds true)
+(% A1 (th_holds (@ let2 (p_app a)(@ let3 (p_app b)(@ let5 (p_app c)(not (impl (and (impl let2 let3) (impl let3 let5)) (impl let2 let5)))))))
+(: (holds cln)
+
+ ;; Printing deferred declarations 
+
+ ;; In the preprocessor we trust 
+(th_let_pf _ (trust_f (@ let11 (p_app a)(@ let12 (p_app b)(@ let14 (p_app c)(not (impl (and (impl let11 let12) (impl let12 let14)) (impl let11 let14))))))) (\ .PA215
+
+;; Printing mapping from preprocessed assertions into atoms 
+(decl_atom (p_app a) (\ .v2 (\ .a2
+(decl_atom (p_app b) (\ .v3 (\ .a3
+(decl_atom (p_app c) (\ .v4 (\ .a4
+(satlem _ _ (ast _ _ _ .a4 (\ .l9
+
+(clausify_false (contra _ .l9
+(and_elim_2 _ _ (not_impl_elim _ _ (and_elim_2 _ _ (not_impl_elim _ _ .PA215)))))))) (\ .pb7
+
+(satlem _ _
+(asf _ _ _ .a4 (\ .l8
+(ast _ _ _ .a3 (\ .l7
+(clausify_false
+(contra _ (or_elim_1 _ _ (not_not_intro _ .l7) (impl_elim _ _ (and_elim_2 _ _ (and_elim_1 _ _ (not_impl_elim _ _ .PA215))))) .l8)))))) (\ .pb5
+
+(satlem _ _ (asf _ _ _ .a3 (\ .l6 (ast _ _ _ .a2 (\ .l5 (clausify_false (contra _ (or_elim_1 _ _ (not_not_intro _ .l5) (impl_elim _ _ (and_elim_1 _ _ (and_elim_1 _ _ (not_impl_elim _ _ .PA215))))) .l6))))))
+
+(\ .pb4
+(satlem _ _ (asf _ _ _ .a2 (\ .l4 (clausify_false (contra _ (and_elim_1 _ _ (not_impl_elim _ _ (and_elim_2 _ _ (not_impl_elim _ _ .PA215)))) .l4)))) (\ .pb6
+ ;; Theory Lemmas 
+;; BB atom mapping
+;; Bit-blasting definitional clauses 
+;; Bit-blasting learned clauses 
+(satlem_simplify _ _ _ (Q _ _ .pb4 .pb6 .v2) (\ .cl8
+(satlem_simplify _ _ _ (Q _ _ .pb5 .cl8 .v3)(\ .cl9
+(satlem_simplify _ _ _ (Q _ _ .pb7 .cl9 .v4)(\ empty empty))))))))))))))))))))))))))))))))
+;;

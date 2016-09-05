@@ -61,6 +61,7 @@
         "qnt_simplify_ax", QNTS;
         "qnt_merge_ax", QNTM;
         "resolution", RESO;
+        "weaken", WEAK;
         "and", AND;
         "not_or", NOR;
         "or", OR;
@@ -96,11 +97,52 @@
         "tmp_qnt_simplify", TPQS;
         "tmp_skolemize", TPSK;
         "subproof", SUBP;
-        "hole", HOLE ]
+        "flatten", FLAT;
+        "hole", HOLE;
+        "bbvar", BBVA;
+        "bbconst", BBCONST;
+        "bbeq", BBEQ;
+        "bv_const_neq", BBDIS;
+        "bbop", BBOP;
+        "bbnot", BBNOT;
+        "bbneg", BBNEG;
+        "bbadd", BBADD;
+        "bbmul", BBMUL;
+        "bbult", BBULT;
+        "bbslt", BBSLT;
+        "bbconcat", BBCONC;
+        "bvand", BVAND;
+        "bvor", BVOR;
+        "bvxor", BVXOR;
+        "bvadd", BVADD;
+        "bvmul", BVMUL;
+        "bvult", BVULT;
+        "bvslt", BVSLT;
+        "bvule", BVULE;
+        "bvsle", BVSLE;
+        "not", NOT;
+        "xor", XOR;
+        "ite", ITE;
+        "let", LET;
+        "distinct", DIST;
+        "bbT", BBT;
+        "bitof", BITOF;
+        "bvnot", BVNOT;
+        "bvneg", BVNEG;
+        "concat", BVCONC;
+        "select", SELECT;
+        "diff", DIFF;
+        "store", STORE;
+        "row1", ROW1;
+        "row2", ROW2;
+        "ext", EXTE;
+      ]
 }
 
 
 let digit = [ '0'-'9' ]
+let bit = [ '0'-'1' ]
+let bitvector = '#' 'b' bit+
 let alpha = [ 'a'-'z' 'A' - 'Z' ]
 let blank = [' ' '\t']
 let newline = ['\n' '\r']
@@ -114,14 +156,14 @@ rule token = parse
   | newline +                  { EOL }
 
   | ":"                        { COLON }
-  | "#"                        { SHARP }
+  | "#" (int as i)             { SHARPINT (int_of_string i) }
 
   | "("                        { LPAR }
   | ")"                        { RPAR }
 
-  | "not"                      { NOT }
-  | "xor"                      { XOR }
-  | "ite"                      { ITE }
+  | "["                        { LBRACKET }
+  | "]"                        { RBRACKET }
+
   | "="                        { EQ }
   | "<"                        { LT }
   | "<="                       { LEQ }
@@ -132,19 +174,16 @@ rule token = parse
   | "~"                        { OPP }
   | "*"                        { MULT }
   | "=>"                       { IMP }
-  | "let"                      { LET }
-  | "distinct"                 { DIST }
 
   | "Formula is Satisfiable"   { SAT }
 
-  | int                        { try INT (int_of_string (Lexing.lexeme lexbuf))
+  | (int as i)                 { try INT (int_of_string i)
 	                         with _ -> 
-                                   BIGINT 
-                                     (Big_int.big_int_of_string 
-					(Lexing.lexeme lexbuf)) }
+                                   BIGINT (Big_int.big_int_of_string i) }
+  | bitvector as bv            { BITV bv }
   | var                        { let v = Lexing.lexeme lexbuf in
                                  try Hashtbl.find typ_table v with
                                    | Not_found -> VAR v }
-  | bindvar                    { BINDVAR (Lexing.lexeme lexbuf) }
+  | bindvar as v               { BINDVAR v }
 
   | eof                        { raise Eof }

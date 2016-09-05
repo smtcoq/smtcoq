@@ -13,7 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-
 open Entries
 open Coqlib
 
@@ -61,6 +60,7 @@ let mkArray : Term.types * Term.constr array -> Term.constr =
                             mklApp cset [|ty; acc; mkInt i; c|] in
                         (i+1,acc')
                        ) (0,mklApp cmake [|ty; mkInt l; a.(l)|]) a)
+
 
 
 (* Differences between the two versions of Coq *)

@@ -13,6 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open SmtMisc
 
 module type ATOM = 
   sig 
@@ -23,6 +24,9 @@ module type ATOM =
     val equal : t -> t -> bool
 
     val is_bool_type : t -> bool
+    val is_bv_type : t -> bool
+
+    val logic : t -> logic
 
   end 
 
@@ -42,6 +46,7 @@ type fop =
 type ('a,'f) gen_pform = 
   | Fatom of 'a
   | Fapp of fop * 'f array
+  | FbbT of 'a * 'f list
 
 module type FORM =
   sig 
@@ -64,6 +69,8 @@ module type FORM =
 
       val to_smt : (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
 
+      val logic : t -> logic
+
       (* Building formula from positive formula *)
       exception NotWellTyped of pform
       type reify 
@@ -76,6 +83,10 @@ module type FORM =
    
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
+
+      (** Turn n-ary [Fand] and [For] into their right-associative
+          counter-parts *)
+      val right_assoc : reify -> t -> t
 
       (** Producing Coq terms *) 
 

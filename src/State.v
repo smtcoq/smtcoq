@@ -3,11 +3,14 @@
 (*     SMTCoq                                                             *)
 (*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
+(*     Michaël  Armand   *                                                *)
+(*     Benjamin Grégoire *                                                *)
+(*     Chantal  Keller   *                                                *)
+(*     Alain    Mebsout  ♯                                                *)
+(*     Burak    Ekici    ♯                                                *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*    * Inria - École Polytechnique - Université Paris-Sud                *)
+(*    ♯ The University of Iowa                                            *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -466,7 +469,8 @@ Module S.
 
   Lemma valid_get : forall rho s, valid rho s ->
     forall id, C.valid rho (get s id).
-  Proof. auto. Qed.
+  Proof. intros rho s H id. unfold valid in H. unfold Valuation.t in rho. apply H. Qed.
+  (** Proof. auto. Qed. **)
 
 
   (* Specification of internal_set *)
@@ -504,12 +508,47 @@ Module S.
      end
    end.
 
+  Fixpoint insert_no_simpl l1 c :=
+   match c with
+   | nil => l1:: nil
+   | l2 :: c' =>
+     match l1 ?= l2 with
+     | Lt => l1 :: c
+     | Eq => c
+     | Gt => l2 :: insert_no_simpl l1 c'
+     end
+   end.
+
+  Fixpoint insert_keep l1 c :=
+   match c with
+   | nil => l1:: nil
+   | l2 :: c' =>
+     match l1 ?= l2 with
+     | Lt | Eq => l1 :: c
+     | Gt => l2 :: insert_keep l1 c'
+     end
+   end.
+
+  Fixpoint sort c :=
+    match c with
+    | nil => nil
+    | l1 :: c => insert_no_simpl l1 (sort c)
+    end.
+
+  
   Fixpoint sort_uniq c :=
     match c with
     | nil => nil
     | l1 :: c => insert l1 (sort_uniq c)
     end.
 
+  Fixpoint sort_keep c :=
+    match c with
+    | nil => nil
+    | l1 :: c => insert_keep l1 (sort_keep c)
+    end.
+
+  
   Lemma insert_correct : forall rho (Hwf:Valuation.wf rho) l1 c,
     C.interp rho (insert l1 c) = C.interp rho (l1 :: c).
   Proof.
@@ -525,6 +564,25 @@ Module S.
     simpl;rewrite orb_assoc,(orb_comm (Lit.interp rho l1)),<-orb_assoc,IHc;trivial.
   Qed.
 
+  
+  Lemma insert_no_simpl_correct : forall rho (Hwf:Valuation.wf rho) l1 c,
+    C.interp rho (insert_no_simpl l1 c) = C.interp rho (l1 :: c).
+  Proof.
+    intros rho Hwf l1;induction c;simpl;trivial.
+    generalize (compare_spec' l1 a);destruct (l1 ?= a);intros;subst;simpl;auto.
+    destruct (Lit.interp rho a);simpl in *;auto.
+    simpl;rewrite orb_assoc,(orb_comm (Lit.interp rho l1)),<-orb_assoc,IHc;trivial.
+  Qed.
+
+  Lemma insert_keep_correct : forall rho (Hwf:Valuation.wf rho) l1 c,
+      C.interp rho (insert_keep l1 c) = C.interp rho (l1 :: c).
+  Proof.
+    intros rho Hwf l1;induction c;simpl;trivial.
+    generalize (compare_spec' l1 a);destruct (l1 ?= a);intros;subst;simpl;auto.
+    destruct (Lit.interp rho a);simpl in *;auto. rewrite orb_true_r; auto.
+  Qed.
+
+    
   Lemma sort_uniq_correct : forall rho (Hwf:Valuation.wf rho) c,
     C.interp rho (sort_uniq c) = C.interp rho c.
   Proof.
@@ -532,33 +590,72 @@ Module S.
     rewrite insert_correct;trivial;simpl;rewrite IHc;trivial.
   Qed.
 
+      
+  Lemma sort_correct : forall rho (Hwf:Valuation.wf rho) c,
+    C.interp rho (sort c) = C.interp rho c.
+  Proof.
+    intros rho Hwf;induction c;simpl;trivial.
+    rewrite insert_no_simpl_correct;trivial;simpl;rewrite IHc;trivial.
+  Qed.
+
+        
+  Lemma sort_keep_correct : forall rho (Hwf:Valuation.wf rho) c,
+    C.interp rho (sort_keep c) = C.interp rho c.
+  Proof.
+    intros rho Hwf;induction c;simpl;trivial.
+    rewrite insert_keep_correct;trivial;simpl;rewrite IHc;trivial.
+  Qed.
+
+  
+  (* Definition set_clause (s:t) pos (c:C.t) : t := *)
+  (*   set s pos (sort_uniq c). *)
+  
+  (* Version that does not simplify ~a \/ a *)
   Definition set_clause (s:t) pos (c:C.t) : t :=
-    set s pos (sort_uniq c).
+    set s pos (sort c).
 
   Lemma valid_set_clause :
     forall rho s, Valuation.wf rho -> valid rho s -> forall pos c,
-      C.valid rho c -> valid rho (set_clause s pos c).
+                 C.valid rho c -> valid rho (set_clause s pos c).
   Proof.
     unfold valid, get, set_clause. intros rho s Hrho Hs pos c Hc id.
     destruct (Int63Properties.reflect_eqb pos id);subst.
     case_eq (id < length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
-    unfold C.valid;rewrite sort_uniq_correct;trivial.
+    unfold C.valid;rewrite sort_correct;trivial.
     generalize (Hs id);rewrite !PArray.get_outofbound, PArray.default_set;trivial.
     rewrite length_set;trivial.
     rewrite get_set_other;trivial.
   Qed.
 
+  Definition set_clause_keep (s:t) pos (c:C.t) : t :=
+    set s pos (sort_keep c).
+
+
+  Lemma valid_set_clause_keep :
+    forall rho s, Valuation.wf rho -> valid rho s -> forall pos c,
+                 C.valid rho c -> valid rho (set_clause_keep s pos c).
+  Proof.
+    unfold valid, get, set_clause_keep. intros rho s Hrho Hs pos c Hc id.
+    destruct (Int63Properties.reflect_eqb pos id);subst.
+    case_eq (id < length s); intro H.
+    unfold get;rewrite PArray.get_set_same; trivial.
+    unfold C.valid;rewrite sort_keep_correct;trivial.
+    generalize (Hs id);rewrite !PArray.get_outofbound, PArray.default_set;trivial.
+    rewrite length_set;trivial.
+    rewrite get_set_other;trivial.
+  Qed.
 
   (* Resolution *)
+
+  Open Scope int63_scope.
 
   Definition set_resolve (s:t) pos (r:resolution) : t :=
     let len := PArray.length r in
     if len == 0 then s
     else
-      let c := foldi (fun i c => C.resolve (get s (r.[i])) c) 1 (len - 1)
-         (get s (r.[0])) in
-      internal_set s pos c.
+      let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 (len - 1) (get s (r.[0])) in
+      (* S.set_clause *) internal_set s pos c.
 
   Lemma valid_set_resolve :
     forall rho s, Valuation.wf rho -> valid rho s ->
@@ -567,8 +664,68 @@ Module S.
     unfold set_resolve; intros rho s Hrho Hv pos r.
     destruct (Int63Properties.reflect_eqb (length r) 0);[trivial | ].
     apply valid_internal_set;trivial.
+    (* apply S.valid_set_clause; auto. *)
     apply foldi_ind;auto.
-    intros i c _ _ Hc;apply C.resolve_correct;auto;apply Hv.
+    intros i c _ _ Hc. apply C.resolve_correct;auto;apply Hv.
   Qed.
 
+
+  (* Weakening *)
+
+
+  Definition subclause (cl1 cl2 : list _lit) :=
+    List.forallb (fun l1 =>
+                    (l1 == Lit._false) || (l1 == Lit.neg Lit._true) ||
+                    List.existsb (fun l2 => l1 == l2) cl2) cl1.
+  
+  Definition check_weaken (s:t) (cid:clause_id) (cl:list _lit) : C.t :=
+    if subclause (get s cid) cl then cl else C._true.
+
+
+  Lemma check_weaken_valid : forall rho s (cid:clause_id) (cl:list _lit),
+      Valuation.wf rho ->
+      valid rho s ->
+      C.valid rho (check_weaken s cid cl).
+  Proof.
+    intros rho s cid cl Hw Hs.
+    unfold check_weaken, C.valid.
+    case_eq (subclause (get s cid) cl); try (intros; now apply C.interp_true).
+    specialize (Hs cid).
+    unfold C.valid, C.interp in Hs.
+    apply existsb_exists in Hs.
+    intro.
+    unfold subclause in H.
+    rewrite forallb_forall in H.
+    unfold C.valid, C.interp.
+    apply existsb_exists.
+    destruct Hs as (x, (Hi, Hax)).
+    specialize (H x Hi).
+    rewrite !orb_true_iff in H.
+    rewrite !eqb_spec in H.
+    destruct H as [[H | H] | H].
+    - contradict Hax. subst. apply Lit.interp_false; trivial.
+    - contradict Hax. subst. rewrite Lit.interp_neg.
+      rewrite not_true_iff_false, negb_false_iff, Lit.interp_true; trivial.
+    - apply existsb_exists in H.
+      destruct H as (x', (Hcl, Hxx')).
+      rewrite eqb_spec in Hxx'.
+      subst x'.
+      exists x. auto.
+  Qed.
+  
+  Definition set_weaken (s:t) pos (cid:clause_id) (cl:list _lit) : t :=
+      S.set_clause_keep s pos (check_weaken s cid cl).
+
+  
+      
+  Lemma valid_set_weaken :
+    forall rho s, Valuation.wf rho -> valid rho s ->
+      forall pos cid w, valid rho (set_weaken s pos cid w).
+  Proof.
+    intros.
+    apply S.valid_set_clause_keep; auto.
+    apply check_weaken_valid; auto.
+  Qed.
+
+  
 End S.

@@ -24,7 +24,8 @@ open SmtTrace
 
 exception Sat
 
-type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2 | Xorn1 | Xorn2 | Impp | Impn1 | Impn2 | Equp1 | Equp2 | Equn1 | Equn2 | Itep1 | Itep2 | Iten1 | Iten2 | Eqre | Eqtr | Eqco | Eqcp | Dlge | Lage | Lata | Dlde | Lade | Fins | Eins | Skea | Skaa | Qnts | Qntm | Reso | And | Nor | Or | Nand | Xor1 | Xor2 | Nxor1 | Nxor2 | Imp | Nimp1 | Nimp2 | Equ1 | Equ2 | Nequ1 | Nequ2 | Ite1 | Ite2 | Nite1 | Nite2 | Tpal | Tlap | Tple | Tpne | Tpde | Tpsa | Tpie | Tpma | Tpbr | Tpbe | Tpsc | Tppp | Tpqt | Tpqs | Tpsk | Subp | Hole
+type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2 | Xorn1 | Xorn2 | Impp | Impn1 | Impn2 | Equp1 | Equp2 | Equn1 | Equn2 | Itep1 | Itep2 | Iten1 | Iten2 | Eqre | Eqtr | Eqco | Eqcp | Dlge | Lage | Lata | Dlde | Lade | Fins | Eins | Skea | Skaa | Qnts | Qntm | Reso | Weak | And | Nor | Or | Nand | Xor1 | Xor2 | Nxor1 | Nxor2 | Imp | Nimp1 | Nimp2 | Equ1 | Equ2 | Nequ1 | Nequ2 | Ite1 | Ite2 | Nite1 | Nite2 | Tpal | Tlap | Tple | Tpne | Tpde | Tpsa | Tpie | Tpma | Tpbr | Tpbe | Tpsc | Tppp | Tpqt | Tpqs | Tpsk | Subp | Flat | Hole | Bbva | Bbconst | Bbeq | Bbdis | Bbop | Bbadd | Bbmul | Bbult | Bbslt | Bbnot | Bbneg | Bbconc | Row1 | Row2 | Exte
+ 
 
 
 (* About equality *)
@@ -55,14 +56,21 @@ let is_eq l =
 
 let rec process_trans a b prem res =
   try
-    let (l,(c,c')) = List.find (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
-    let prem = List.filter (fun (l',(d,d')) -> (not (Form.equal l' l)) || (not (Atom.equal d c)) || (not (Atom.equal d' c'))) prem in
-    let c = if Atom.equal c b then c' else c in
-    if Atom.equal a c
-    then List.rev (l::res)
-    else process_trans a c prem (l::res)
+    let cands = List.find_all (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
+    let process (l,(c,c')) =
+      let prem = List.filter (fun (l',(d,d')) -> (not (Form.equal l' l)) || (not (Atom.equal d c)) || (not (Atom.equal d' c'))) prem in
+      let c = if Atom.equal c b then c' else c in
+      if Atom.equal a c
+      then List.rev (l::res)
+      else process_trans a c prem (l::res)
+    in
+    let rec process_cands = function
+      | [] -> raise Not_found
+      | c :: r -> try process c with Exit -> process_cands r
+    in
+    process_cands cands
   with
-    |Not_found -> if Atom.equal a b then [] else assert false
+    |Not_found -> if Atom.equal a b then [] else raise Exit
 
 
 let mkTrans p =
@@ -84,8 +92,13 @@ let rec process_congr a_args b_args prem res =
       (* if a = b *)
       (* then process_congr a_args b_args prem (None::res) *)
       (* else *)
-        let (l,(a',b')) = List.find (fun (l,(a',b')) -> ((Atom.equal a a') && (Atom.equal b b'))||((Atom.equal a b') && (Atom.equal b a'))) prem in
-        process_congr a_args b_args prem ((Some l)::res)
+      (try
+         let (l,(a',b')) =
+           List.find (fun (l,(a',b')) ->
+               ((Atom.equal a a') && (Atom.equal b b'))||
+               ((Atom.equal a b') && (Atom.equal b a'))) prem in
+         process_congr a_args b_args prem ((Some l)::res)
+       with Not_found -> assert false)
     | [],[] -> List.rev res
     | _ -> failwith "VeritSyntax.process_congr: incorrect number of arguments in function application"
 
@@ -185,6 +198,23 @@ let mkDistinctElim old value =
   Other (SplDistinctElim (old,find_res l1 value))
 
 
+(* Clause difference (wrt to their sets of literals) *)
+
+let clause_diff c1 c2 =
+  let r =
+    List.filter (fun t1 -> not (List.exists (SmtAtom.Form.equal t1) c2)) c1
+  in
+  Format.eprintf "[";
+  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c1;
+  Format.eprintf "] -- [";
+  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c2;
+  Format.eprintf "] ==\n [";
+  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) r;
+  Format.eprintf "] @.";
+  r
+    
+
+
 (* Generating clauses *)
 
 let clauses : (int,Form.t clause) Hashtbl.t = Hashtbl.create 17
@@ -261,6 +291,18 @@ let mk_clause (id,typ,value,ids_params) =
             let res = {rc1 = get_clause cl1; rc2 = get_clause cl2; rtail = List.map get_clause q} in
             Res res
           | _ -> assert false)
+      (* Clause weakening *)
+      | Weak ->
+        (match ids_params with
+         | [id] -> (* Other (Weaken (get_clause id, value)) *)
+           let cid = get_clause id in
+           (match cid.value with
+           | None -> Other (Weaken (cid, value))
+           | Some c -> Other (Weaken (cid, value))
+            (* need to add c, otherwise dosen't terminate or returns false,
+               we would like instead: clause_diff value c *)
+           )
+          | _ -> assert false)
       (* Simplifications *)
       | Tpal ->
         (match ids_params with
@@ -278,9 +320,77 @@ let mk_clause (id,typ,value,ids_params) =
         (match ids_params with
           | id::_ -> mkSplArith (get_clause id) value
           | _ -> assert false)
+      | Flat ->
+        (match ids_params, value with
+         | id::_, f :: _ -> Other (ImmFlatten(get_clause id, f)) 
+         | _ -> assert false)
+      (* Bit blasting *)
+      | Bbva ->
+         (match value with
+           | [f] -> Other (BBVar f)
+           | _ -> assert false)
+      | Bbconst ->
+         (match value with
+           | [f] -> Other (BBConst f)
+           | _ -> assert false)
+      | Bbeq ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBEq (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbdis ->
+         (match value with
+           | [f] -> Other (BBDiseq f)
+           | __ -> assert false)
+      | Bbop ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBOp (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbadd ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBAdd (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbmul ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBMul (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbult ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBUlt (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbslt ->
+         (match ids_params, value with
+           | [id1;id2], [f] -> Other (BBSlt (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbconc ->
+         (match ids_params, value with
+           | [id1;id2], [f] ->
+             Other (BBConc (get_clause id1, get_clause id2, f))
+           | _, _ -> assert false)
+      | Bbnot ->
+         (match ids_params, value with
+           | [id], [f] -> Other (BBNot (get_clause id, f))
+           | _, _ -> assert false)
+      | Bbneg ->
+         (match ids_params, value with
+           | [id], [f] -> Other (BBNeg (get_clause id, f))
+           | _, _ -> assert false)
+
+      | Row1 ->
+         (match value with
+           | [f] -> Other (RowEq f)
+           | _ -> assert false)
+
+      | Exte ->
+         (match value with
+           | [f] -> Other (Ext f)
+           | _ -> assert false)
+
+      | Row2 -> Other (RowNeq value)
+
       (* Holes in proofs *)
       | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
-       (* Not implemented *)
+
+      (* Not implemented *)
       | Deep -> failwith "VeritSyntax.ml: rule deep_res not implemented yet"
       | Fins -> failwith "VeritSyntax.ml: rule forall_inst not implemented yet"
       | Eins -> failwith "VeritSyntax.ml: rule exists_inst not implemented yet"

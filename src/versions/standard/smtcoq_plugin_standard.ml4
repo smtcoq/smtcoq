@@ -48,6 +48,18 @@ VERNAC COMMAND EXTEND Vernac_verit
   ]
 END
 
+VERNAC COMMAND EXTEND Vernac_lfsc
+| [ "Parse_certif_lfsc"
+    ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
+  [
+    Lfsc.parse_certif t_i t_func t_atom t_form root used_roots trace fsmt fproof
+  ]
+| [ "Lfsc_Checker" string(fsmt) string(fproof) ] ->
+  [
+    Lfsc.checker fsmt fproof
+  ]
+END
+
 
 TACTIC EXTEND Tactic_zchaff
 | [ "zchaff" ] -> [ Structures.mk_sat_tactic Zchaff.tactic ]
@@ -55,4 +67,8 @@ END
 
 TACTIC EXTEND Tactic_verit
 | [ "verit" ] -> [ Structures.mk_smt_tactic Verit.tactic ]
+END
+
+TACTIC EXTEND Tactic_cvc4
+| [ "cvc4" ] -> [ Structures.mk_smt_tactic Lfsc.tactic ]
 END

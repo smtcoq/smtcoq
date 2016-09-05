@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+name=${1%.*}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "Running CVC4..."
+cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $name.tmp.lfsc
+
+echo "Writing LFSC proof..."
+cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $name.tmp.lfsc > $name.lfsc
+
+echo "Creating Coq file..."
+cat > ${name}_lfsc.v <<EOF
+Require Import SMTCoq Bool List.
+Import ListNotations BVList.BITVECTOR_LIST FArray.
+Local Open Scope list_scope.
+Local Open Scope farray_scope.
+Local Open Scope bv_scope.
+
+Section File.
+  Lfsc_Checker "$name.smt2" "$name.lfsc".
+End File.
+EOF
+
+# echo "Checking LFSC proof with Coq directly..."
+coqc -q -R $DIR/../.. SMTCoq ${name}_lfsc.v
+
+exit 0
+

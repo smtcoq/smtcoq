@@ -45,16 +45,22 @@ OCAMLLIBS?=-I versions/native\
   -I trace\
   -I smtlib2\
   -I lia\
+  -I lfsc\
   -I euf\
-  -I cnf
+  -I cnf\
+  -I array\
+  -I bva
 COQLIBS?=-I versions/native\
   -I zchaff\
   -I verit\
   -I trace\
   -I smtlib2\
   -I lia\
+  -I lfsc\
   -I euf\
-  -I cnf -R . SMTCoq
+  -I cnf\
+  -I array\
+  -I bva -R . SMTCoq
 COQDOCLIBS?=-R . SMTCoq
 
 ##########################
@@ -145,7 +151,11 @@ VFILES:=Trace.v\
   spl/Assumptions.v\
   lia/Lia.v\
   euf/Euf.v\
-  cnf/Cnf.v
+  cnf/Cnf.v\
+  array/FArray.v\
+  array/Array_checker.v\
+  bva/Bva_checker.v\
+  bva/BVList.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
@@ -168,6 +178,16 @@ MLFILES:=lia/lia.ml\
   zchaff/zchaff.ml\
   zchaff/satParser.ml\
   zchaff/cnfParser.ml\
+  lfsc/lfsc.ml\
+  lfsc/converter.ml\
+  lfsc/tosmtcoq.ml\
+  lfsc/builtin.ml\
+  lfsc/ast.ml\
+  lfsc/type.ml\
+  lfsc/lfscLexer.ml\
+  lfsc/lfscParser.ml\
+  lfsc/shashcons.ml\
+  lfsc/hstring.ml\
   verit/veritSyntax.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
@@ -191,7 +211,12 @@ MLFILES:=lia/lia.ml\
 -include $(addsuffix .d,$(MLFILES))
 .SECONDARY: $(addsuffix .d,$(MLFILES))
 
-MLIFILES:=verit/veritSyntax.mli\
+MLIFILES:=lfsc/tosmtcoq.mli\
+  lfsc/translator_sig.mli\
+  lfsc/ast.mli\
+  lfsc/shashcons.mli\
+  lfsc/hstring.mli\
+  verit/veritSyntax.mli\
   trace/smtForm.mli\
   trace/smtAtom.mli
 
@@ -262,10 +287,10 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx smtcoq_plugin.cmx
+$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
-ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
+ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
 
 
 %.ml %.mli: %.mly
@@ -273,6 +298,9 @@ ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/sm
 
 %.ml: %.mll
 	$(CAMLLEX) $<
+
+lfsctest: 
+	cd ../unit-tests; make lfsc
 
 vtest: 
 	cd ../unit-tests; make verit
@@ -349,10 +377,11 @@ clean:
 	- rm -rf $(CMXS)
 	- rm -rf $(CMXA)
 	- rm -rf ml
+	- rm -rf lfsctest
 	- rm -rf vtest
 	- rm -rf ztest
 	- rm -rf test
-	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
+	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a
 
 archclean:
 	rm -f *.cmx *.o

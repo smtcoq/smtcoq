@@ -28,6 +28,9 @@ module type ATOM =
     val equal : t -> t -> bool
 
     val is_bool_type : t -> bool
+    val is_bv_type : t -> bool
+
+    val logic : t -> logic
 
   end 
 
@@ -46,6 +49,7 @@ type fop =
 type ('a,'f) gen_pform = 
   | Fatom of 'a
   | Fapp of fop * 'f array
+  | FbbT of 'a * 'f list
 
 
 module type FORM =
@@ -69,6 +73,8 @@ module type FORM =
 
       val to_smt : (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
 
+      val logic : t -> logic
+        
       (* Building formula from positive formula *)
       exception NotWellTyped of pform
       type reify 
@@ -81,6 +87,10 @@ module type FORM =
    
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
+
+      (** Turn n-ary [Fand] and [For] into their right-associative
+          counter-parts *)
+      val right_assoc : reify -> t -> t
 
       (** Producing Coq terms *) 
 
@@ -157,6 +167,14 @@ module Make (Atom:ATOM) =
     and to_smt_pform atom_to_smt fmt = function
       | Fatom a -> atom_to_smt fmt a
       | Fapp (op,args) -> to_smt_op atom_to_smt fmt op args
+      (* This is an intermediate object of proofs, it correspond to nothing in SMT *)
+      | FbbT (a, l) ->
+        Format.fprintf fmt "(bbT %a [" atom_to_smt a;
+        let fi = ref true in
+        List.iter (fun f -> Format.fprintf fmt "%s%a"
+                      (if !fi then "" else "; ")
+                      (to_smt atom_to_smt) f; fi := false) l;
+        Format.fprintf fmt "])"
 
     and to_smt_op atom_to_smt fmt op args =
       let s = match op with
@@ -169,12 +187,24 @@ module Make (Atom:ATOM) =
         | Fiff -> "="
         | Fite -> "ite"
         | Fnot2 _ -> "" in
-      let (s1,s2) = if Array.length args = 0 then ("","") else ("(",")") in
+      let (s1,s2) = if Array.length args = 0 || s = "" then ("","") else ("(",")") in
       Format.fprintf fmt "%s%s" s1 s;
       Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
       Format.fprintf fmt "%s" s2
 
+    
+    let rec logic_pform = function
+      | Fatom a -> Atom.logic a
+      | Fapp (_, args) ->
+        Array.fold_left (fun l f ->
+            SL.union (logic f) l  
+          ) SL.empty args
+      | FbbT _ -> SL.singleton LBitvectors
 
+    and logic = function
+      | Pos hp | Neg hp -> logic_pform hp.hval
+
+    
     module HashedForm =
       struct 
 	
@@ -192,6 +222,11 @@ module Make (Atom:ATOM) =
 		done;
 		true
 	      with Not_found -> false)
+          | FbbT(ha1, l1), FbbT(ha2, l2) ->
+             (try
+                Atom.equal ha1 ha2 &&
+                  List.for_all2 (fun i j -> equal i j) l1 l2
+              with | Invalid_argument _ -> false)
 	  | _, _ -> false
 
 	let hash pf = 
@@ -207,7 +242,15 @@ module Make (Atom:ATOM) =
 		    (to_lit args.(2)) lsl 4 + (to_lit args.(1)) lsl 2 +
 		      to_lit args.(0) in
 	      (hash_args * 10 + Hashtbl.hash op) * 2 + 1
-		
+	  | FbbT(ha, l) ->
+	      let hash_args =
+		match l with
+		| [] -> 0
+		| [a0] -> to_lit a0
+		| [a0;a1] -> (to_lit a1) lsl 2 + to_lit a0
+		| a0::a1::a2::_ ->
+                   (to_lit a2) lsl 4 + (to_lit a1) lsl 2 + to_lit a0 in
+              (hash_args * 10 + Atom.index ha) * 2 + 1
       end
 
     module HashForm = Hashtbl.Make (HashedForm)
@@ -223,16 +266,17 @@ module Make (Atom:ATOM) =
       match pf with
       | Fatom ha ->  if not (Atom.is_bool_type ha) then raise (NotWellTyped pf)
       | Fapp (op, args) ->
-	  match op with
-	  | Ftrue | Ffalse -> 
-	      if Array.length args <> 0 then raise (NotWellTyped pf)
-	  | Fnot2 _ -> 
-	      if Array.length args <> 1 then raise (NotWellTyped pf)
-	  | Fand | For -> ()
-	  | Fxor | Fimp | Fiff ->
-	      if Array.length args <> 2 then raise (NotWellTyped pf)
-	  | Fite ->
-	      if Array.length args <> 3 then raise (NotWellTyped pf)
+	  (match op with
+	    | Ftrue | Ffalse ->
+	       if Array.length args <> 0 then raise (NotWellTyped pf)
+	    | Fnot2 _ ->
+	       if Array.length args <> 1 then raise (NotWellTyped pf)
+	    | Fand | For -> ()
+	    | Fxor | Fimp | Fiff ->
+	       if Array.length args <> 2 then raise (NotWellTyped pf)
+	    | Fite ->
+	       if Array.length args <> 3 then raise (NotWellTyped pf))
+      | FbbT (ha, l) -> if not (Atom.is_bv_type ha) then raise (NotWellTyped pf)
 
     let declare reify pf =
       check pf;
@@ -385,7 +429,7 @@ module Make (Atom:ATOM) =
 
     let rec flatten reify f = 
       match pform f with
-      | Fatom _ -> f
+      | Fatom _ | FbbT _ -> f
       | Fapp(Fnot2 _,args) -> set_sign f (flatten reify args.(0))
       | Fapp(Fand, args) -> set_sign f (flatten_and reify [] (Array.to_list args))
       | Fapp(For,args) -> set_sign f (flatten_or reify [] (Array.to_list args))
@@ -415,6 +459,22 @@ module Make (Atom:ATOM) =
 	      flatten_or reify acc args
 	  | _ -> flatten_or reify (flatten reify a :: acc) args
 
+
+    let rec right_assoc reify f = 
+      match pform f with
+      | Fapp(Fand, args) when Array.length args > 2 ->
+        let a = args.(0) in
+        let rargs = Array.sub args 1 (Array.length args - 1) in
+        let f' = right_assoc reify (get reify (Fapp (Fand, rargs))) in
+        set_sign f (get reify (Fapp (Fand, [|a; f'|])))
+      | Fapp(For, args) when Array.length args > 2 ->
+        let a = args.(0) in
+        let rargs = Array.sub args 1 (Array.length args - 1) in
+        let f' = right_assoc reify (get reify (Fapp (For, rargs))) in
+        set_sign f (get reify (Fapp (For, [|a; f'|])))
+      | _ -> f
+
+    
     (** Producing Coq terms *) 
 
     let to_coq hf = mkInt (to_lit hf)
@@ -427,16 +487,19 @@ module Make (Atom:ATOM) =
     let pf_to_coq = function
       | Fatom a -> mklApp cFatom [|mkInt (Atom.index a)|]	
       | Fapp(op,args) ->
-        match op with
-	| Ftrue -> Lazy.force cFtrue
-	| Ffalse -> Lazy.force cFfalse
-	| Fand -> mklApp cFand [| args_to_coq args|]
-	| For  -> mklApp cFor [| args_to_coq args|]
-	| Fimp -> mklApp cFimp [| args_to_coq args|]
-	| Fxor -> mklApp cFxor (Array.map to_coq args)
-	| Fiff -> mklApp cFiff (Array.map to_coq args)
-	| Fite -> mklApp cFite (Array.map to_coq args)
-	| Fnot2 i -> mklApp cFnot2 [|mkInt i; to_coq args.(0)|]
+         (match op with
+	   | Ftrue -> Lazy.force cFtrue
+	   | Ffalse -> Lazy.force cFfalse
+	   | Fand -> mklApp cFand [| args_to_coq args|]
+	   | For  -> mklApp cFor [| args_to_coq args|]
+	   | Fimp -> mklApp cFimp [| args_to_coq args|]
+	   | Fxor -> mklApp cFxor (Array.map to_coq args)
+	   | Fiff -> mklApp cFiff (Array.map to_coq args)
+	   | Fite -> mklApp cFite (Array.map to_coq args)
+	   | Fnot2 i -> mklApp cFnot2 [|mkInt i; to_coq args.(0)|])
+      | FbbT(a, l) -> mklApp cFbbT
+         [|mkInt (Atom.index a);
+           List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; to_coq f; l|]) l (mklApp cnil [|Lazy.force cint|])|]
 
     let pform_tbl reify =
       let t = Array.make reify.count pform_true in
@@ -479,26 +542,31 @@ module Make (Atom:ATOM) =
 	      match pform f with
 	      | Fatom a -> interp_atom a
 	      | Fapp(op, args) ->
-		  match op with
-		  | Ftrue -> Lazy.force ctrue
-		  | Ffalse -> Lazy.force cfalse
-		  | Fand -> interp_args candb args
-		  | For -> interp_args corb args
-		  | Fxor -> interp_args cxorb args
-		  | Fimp -> 
+		 (match op with
+		   | Ftrue -> Lazy.force ctrue
+		   | Ffalse -> Lazy.force cfalse
+		   | Fand -> interp_args candb args
+		   | For -> interp_args corb args
+		   | Fxor -> interp_args cxorb args
+		   | Fimp ->
 		      let r = ref (interp_form args.(Array.length args - 1)) in
 		      for i = Array.length args - 2 downto 0 do
 			r := mklApp cimplb [|interp_form args.(i); !r|]
 		      done;
 		      !r
-		  | Fiff -> interp_args ceqb args
-		  | Fite -> 
+		   | Fiff -> interp_args ceqb args
+		   | Fite ->
 		      (* TODO with if here *)
 		      mklApp cifb (Array.map interp_form args)
-		  | Fnot2 n -> 
+		   | Fnot2 n ->
 		      let r = ref (interp_form args.(0)) in
 		      for i = 1 to n do	r := mklApp cnegb [|!r|] done;
-		      !r in 
+		      !r)
+              | FbbT(a, l) ->
+                 mklApp cbv_eq
+                   [|interp_atom a;
+                     mklApp cof_bits [|List.fold_right (fun f l -> mklApp ccons [|Lazy.force cbool; interp_form f; l|]) l (mklApp cnil [|Lazy.force cbool|])|]|]
+            in
 	    Hashtbl.add form_tbl l pc;
 	    pc
       and interp_args op args =

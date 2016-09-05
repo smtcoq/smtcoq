@@ -16,8 +16,6 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-(* Add LoadPath ".." as SMTCoq. *)
-(* Add LoadPath "../lia" as SMTCoq.lia. *)
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
@@ -60,12 +58,14 @@ Section Arith.
 
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
 
     Let wf_rho : Valuation.wf rho.
-    Proof. destruct (Form.check_form_correct interp_form_hatom _ ch_form); auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto. Qed.
 
     Hint Immediate wf_rho.
 
