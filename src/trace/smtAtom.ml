@@ -460,8 +460,8 @@ module Op =
       | UO_Zneg -> Lazy.force cZneg
       | UO_Zopp -> Lazy.force copp
       | UO_BVbitOf (_,i) -> mklApp cbitOf [|mkNat i|]
-      | UO_BVnot _ -> Lazy.force cbv_not
-      | UO_BVneg _ -> Lazy.force cbv_neg
+      | UO_BVnot s -> mklApp cbv_not [|mkN s|]
+      | UO_BVneg s -> mklApp cbv_neg [|mkN s|]
 
     let eq_tbl = Hashtbl.create 17 
     let select_tbl = Hashtbl.create 17 
