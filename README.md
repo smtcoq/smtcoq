@@ -162,20 +162,18 @@ Compile and install `CVC4` as explained in the installation instructions.
 To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
 `name.smt2`:
 
-- Produce a CVC4 proof witness, run 1, 2 and 3 in a row:
+- Produce a CVC4 proof witness, run 1, 2 and 3 in a row (in `..smtcoq/src/lfsc/tests`):
 
 ```
-1. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $name.tmp.lfsc
-
-2. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $name.tmp.lfsc > $name.lfsc
-
-3. $DIR/../lfsctosmtcoq.native $name.lfsc | grep "^1:" -A 9999999 > $name.log
+1. export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+2. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic name.smt2 > name.tmp.lfsc
+3. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf name.tmp.lfsc > name.lfsc
 
 ```
 
 This set of commands produces a proof witness file named `name.log`.
 
-- In a Coq file `file.v`, put:
+- In a Coq file `name.v`, put:
 ```
 Require Import SMTCoq Bool List.
 Import ListNotations BVList.BITVECTOR_LIST FArray.
@@ -184,7 +182,7 @@ Local Open Scope farray_scope.
 Local Open Scope bv_scope.
 
 Section File.
-  Lfsc_Checker "$name.smt2" "$name.lfsc".
+  Lfsc_Checker "name.smt2" "name.lfsc".
 End File.
 ```
 Compile `file.v`: `coqc file.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
