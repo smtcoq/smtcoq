@@ -170,7 +170,7 @@ To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
 3. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf name.tmp.lfsc > name.lfsc
 ```
 
-This set of commands produces a proof witness file named `name.log`.
+This set of commands produces a proof witness file named `name.lfsc`.
 
 - In a Coq file `name.v`, put:
 ```
@@ -188,6 +188,8 @@ End File.
 - Compile `name.v`: `coqc name.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
 
 NB: Use `cvc4tocoq` script in `..smtcoq/src/lfsc/tests` to automatize above steps.
+
+- Ex: `./cvc4tocoq name.smt2`, similary if it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
 
 ##### CVC4 as a Coq decision procedure
 
