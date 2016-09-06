@@ -160,12 +160,12 @@ Compile and install `CVC4` as explained in the installation instructions.
 ##### Checking CVC4 answers of unsatisfiability and importing theorems
 
 To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
-`name.smt2`:
+`name.smt2` (in `..smtcoq/src/lfsc/tests` directory):
 
-- Produce a CVC4 proof witness, run 1, 2 and 3 in a row (in `..smtcoq/src/lfsc/tests`):
+- Produce a CVC4 proof witness; run 1, 2 and 3 in a row:
 
 ```
-1. export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+1. DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 2. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic name.smt2 > name.tmp.lfsc
 3. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf name.tmp.lfsc > name.lfsc
 ```
@@ -189,7 +189,7 @@ End File.
 
 NB: Use `cvc4tocoq` script in `..smtcoq/src/lfsc/tests` to automatize above steps.
 
-- Ex: `./cvc4tocoq name.smt2`, similary if it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
+- Ex: `./cvc4tocoq name.smt2`, similary returned `true` amounts to correct unsatisfiability proof of the problem by CVC4.
 
 ##### CVC4 as a Coq decision procedure
 
