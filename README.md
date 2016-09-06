@@ -5,7 +5,7 @@ SAT and SMT solvers.
 
 It relies on a certified checker for such witnesses. On top of it,
 vernacular commands and tactics to interface with the SAT solver zChaff
-and the SMT solver veriT are provided. It is designed in a modular way
+and the SMT solvers veriT and CVC4 are provided. It is designed in a modular way
 allowing to extend it easily to other solvers.
 
 SMTCoq also provides an extracted version of the checker, that can be
@@ -152,3 +152,56 @@ forall l, b1 = b2
 where `l` is a list of Booleans. Those Booleans can be any concrete
 terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL` and their combinations.
+
+#### CVC4
+
+Compile and install `CVC4` as explained in the installation instructions.
+
+##### Checking CVC4 answers of unsatisfiability and importing theorems
+
+To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
+`file.smt2`:
+
+- Produce a CVC4 proof witness, run 1, 2 and 3 in a row:
+
+```
+1. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $file.tmp.lfsc
+
+```
+
+```
+2. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $name.tmp.lfsc > $name.lfsc
+
+```
+
+```
+3. $DIR/../lfsctosmtcoq.native $name.lfsc | grep "^1:" -A 9999999 > $name.log
+
+```
+
+This set of commands produces a proof witness file named `file.tmp.log`.
+
+- In a Coq file `file.v`, put:
+```
+Require Import SMTCoq Bool List.
+Import ListNotations BVList.BITVECTOR_LIST FArray.
+Local Open Scope list_scope.
+Local Open Scope farray_scope.
+Local Open Scope bv_scope.
+
+Section File.
+  Lfsc_Checker "$name.smt2" "$name.lfsc".
+End File.
+```
+Compile `file.v`: `coqc file.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
+
+##### CVC4 as a Coq decision procedure
+
+The `cvc4` tactic can be used to solve any goal of the form:
+```
+forall l, b1 = b2
+```
+where `l` is a list of Booleans. Those Booleans can be any concrete
+terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
+`QF_IDL`, `QF_BV`, `QF_A` and their combinations.
+
