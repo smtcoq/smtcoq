@@ -31,7 +31,7 @@ type mpz = Big_int.big_int
 type mpq = Num.num
 
 
-type name = Name of string | S_Hole of int
+type name = Name of Hstring.t | S_Hole of int
 
 (** Type of symbols used in lambda/pi abstractions. *)
 type symbol = { sname : name; stype : term }
@@ -52,7 +52,7 @@ and dterm =
   | Ptr of term              (** Pointer to another term (used to fill holes
                                  and keep physical equality). Pointers can be
                                  removed with {!flatten}. *)
-  | SideCond of string * term list * term * term
+  | SideCond of Hstring.t * term list * term * term
   (** Side conditions. The last argument is the term
       to which the side-condition expression
       evaluates. *)
@@ -73,8 +73,8 @@ val hash_term : term -> int
 (** The type of LFSC top-level commands *)
 type command =
   | Check of term
-  | Define of string * term
-  | Declare of string * term
+  | Define of Hstring.t * term
+  | Declare of Hstring.t * term
 
 (** The type of LFSC proofs *)
 type proof = command list
@@ -155,11 +155,11 @@ val value : term -> dterm
 
 (** get dereferenced constant name (None if it's not a constant or it has no
     name) *)
-val name : term -> string option
+val name : term -> Hstring.t option
 
 (** get dereferenced application name and its arguments (None if it's not a
     function application or the function symbol has no name) *)
-val app_name : term -> (string * term list) option
+val app_name : term -> (Hstring.t * term list) option
 
 
 
@@ -231,7 +231,7 @@ val remove_definition : name -> unit
 (** {2 Side-conditions} *)
 
 (** Table for callback functions of side conditions. *)
-val callbacks_table : (string, term list -> term) Hashtbl.t
+val callbacks_table : (term list -> term) Hstring.H.t
 
 (** Add a side-condition to the callback table, and returns the continuation of
     the side condition in LFSC terms. See {!Builtin}. *)

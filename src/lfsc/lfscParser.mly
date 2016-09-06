@@ -260,7 +260,7 @@ declare_command:
   | LPAREN declare term RPAREN {
     mk_declare $2 $3;
     scope := [];
-    Declare ($2, $3)
+    Declare (Hstring.make $2, $3)
   }
 ;
 
@@ -269,7 +269,7 @@ define_command:
   | LPAREN define term RPAREN {
     mk_define $2 $3;
     scope := [];
-    Define ($2, $3) }
+    Define (Hstring.make $2, $3) }
 ;
 
 check_command:

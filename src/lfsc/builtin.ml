@@ -17,6 +17,236 @@
 open Ast
 open Format
 
+
+module H = struct
+  let mp_add = Hstring.make "mp_add"
+  let mp_mul = Hstring.make "mp_mul"
+  let mp_is_neg = Hstring.make "mp_is_neg"
+  let mp_is_zero = Hstring.make "mp_is_zero"
+
+  let uminus = Hstring.make "~"
+
+  let bool_lfsc = Hstring.make "bool_lfsc"
+  let tt = Hstring.make "tt"
+  let ff = Hstring.make "ff"
+
+  let var = Hstring.make "var"
+  let lit = Hstring.make "lit"
+  let clause = Hstring.make "clause"
+  let cln = Hstring.make "cln"
+
+  let okay = Hstring.make "okay"
+  let ok = Hstring.make "ok"
+
+  let pos = Hstring.make "pos"
+  let neg = Hstring.make "neg"
+  let clc = Hstring.make "clc"
+
+  let concat_cl = Hstring.make "concat_cl"
+
+  let clr = Hstring.make "clr"
+
+  let formula = Hstring.make "formula"
+
+
+  let not_ = Hstring.make "not"
+  let and_ = Hstring.make "and"
+  let or_ = Hstring.make "or"
+  let impl_ = Hstring.make "impl"
+  let iff_ = Hstring.make "iff"
+  let xor_ = Hstring.make "xor"
+  let ifte_ = Hstring.make "ifte"
+
+  let ite = Hstring.make "ite"
+  let iff = Hstring.make "iff"
+  let flet = Hstring.make "flet"
+  let impl = Hstring.make "impl"
+  let gt_Int = Hstring.make ">_Int"
+  let ge_Int = Hstring.make ">=_Int"
+  let lt_Int = Hstring.make "<_Int"
+  let le_Int = Hstring.make "<=_Int"
+  let plus_Int = Hstring.make "+_Int"
+  let minus_Int = Hstring.make "-_Int"
+  let times_Int = Hstring.make "*_Int"
+  let div_Int = Hstring.make "/_Int"
+  let uminus_Int = Hstring.make "u-_Int"
+
+  let sort = Hstring.make "sort"
+  let term = Hstring.make "term"
+  let tBool = Hstring.make "Bool"
+  let p_app = Hstring.make "p_app"
+  let arrow = Hstring.make "arrow"
+  let apply = Hstring.make "apply"
+
+  let bitVec = Hstring.make "BitVec"
+
+  let bit = Hstring.make "bit"
+  let b0 = Hstring.make "b0"
+  let b1 = Hstring.make "b1"
+
+  let bv = Hstring.make "bv"
+  let bvn = Hstring.make "bvn"
+  let bvc = Hstring.make "bvc"
+
+  let bblt = Hstring.make "bblt"
+  let bbltn = Hstring.make "bbltn"
+  let bbltc = Hstring.make "bbltc"
+
+  let var_bv = Hstring.make "var_bv"
+
+  let a_var_bv = Hstring.make "a_var_bv"
+  let a_bv = Hstring.make "a_bv"
+  let a_int = Hstring.make "a_int"
+
+
+  let bitof = Hstring.make "bitof"
+  let bblast_term = Hstring.make "bblast_term"
+
+  let eq = Hstring.make "="
+  let bvand = Hstring.make "bvand"
+  let bvor = Hstring.make "bvor"
+  let bvxor = Hstring.make "bvxor"
+  let bvnand = Hstring.make "bvnand"
+  let bvnor = Hstring.make "bvnor"
+  let bvxnor = Hstring.make "bvxnor"
+  let bvmul = Hstring.make "bvmul"
+  let bvadd = Hstring.make "bvadd"
+  let bvsub = Hstring.make "bvsub"
+  let bvudiv = Hstring.make "bvudiv"
+  let bvurem = Hstring.make "bvurem"
+  let bvsdiv = Hstring.make "bvsdiv"
+  let bvsrem = Hstring.make "bvsrem"
+  let bvsmod = Hstring.make "bvsmod"
+  let bvshl = Hstring.make "bvshl"
+  let bvlshr = Hstring.make "bvlshr"
+  let bvashr = Hstring.make "bvashr"
+
+
+  let bvnot = Hstring.make "bvnot"
+  let bvneg = Hstring.make "bvneg"
+  let bvult = Hstring.make "bvult"
+  let bvslt = Hstring.make "bvslt"
+  let bvule = Hstring.make "bvule"
+  let bvsle = Hstring.make "bvsle"
+  let concat = Hstring.make "concat"
+  let array = Hstring.make "Array"
+  let read = Hstring.make "read"
+  let write = Hstring.make "write"
+
+  let diff = Hstring.make "diff"
+
+  let append = Hstring.make "append"
+  let simplify_clause = Hstring.make "simplify_clause"
+  let bv_constants_are_disequal = Hstring.make "bv_constants_are_disequal"
+  let bblt_len = Hstring.make "bblt_len"
+  let bblast_const = Hstring.make "bblast_const"
+  let bblast_var = Hstring.make "bblast_var"      
+  let bblast_concat = Hstring.make "bblast_concat"
+  let bblast_extract = Hstring.make "bblast_extract"
+  let bblast_zextend = Hstring.make "bblast_zextend"
+  let bblast_sextend = Hstring.make "bblast_sextend"
+  let bblast_bvand = Hstring.make "bblast_bvand"
+  let bblast_bvnot = Hstring.make "bblast_bvnot"
+  let bblast_bvor = Hstring.make "bblast_bvor"
+  let bblast_bvxor = Hstring.make "bblast_bvxor"
+  let bblast_bvadd = Hstring.make "bblast_bvadd"
+  let bblast_zero = Hstring.make "bblast_zero"
+  let bblast_bvneg = Hstring.make "bblast_bvneg"
+  let bblast_bvmul = Hstring.make "bblast_bvmul"
+  let bblast_eq = Hstring.make "bblast_eq"
+  let bblast_bvult = Hstring.make "bblast_bvult"
+  let bblast_bvslt = Hstring.make "bblast_bvslt"
+
+  
+  let th_let_pf = Hstring.make "th_let_pf"
+  let th_holds = Hstring.make "th_holds"
+  let ttrue = Hstring.make "true"
+  let tfalse = Hstring.make "false"
+  let a_var_bv = Hstring.make "a_var_bv"
+  let eq = Hstring.make "="
+  let trust_f = Hstring.make "trust_f"
+  let ext = Hstring.make "ext"
+  let decl_atom = Hstring.make "decl_atom"
+  let asf = Hstring.make "asf"
+  let ast = Hstring.make "ast"
+  let cong = Hstring.make "cong"
+  let symm = Hstring.make "symm"
+  let negsymm = Hstring.make "negsymm"
+  let trans = Hstring.make "trans"
+  let negtrans = Hstring.make "negtrans"
+  let negtrans1 = Hstring.make "negtrans1"
+  let negtrans2 = Hstring.make "negtrans2"
+  let refl = Hstring.make "refl"
+  let or_elim_1 = Hstring.make "or_elim_1"
+  let or_elim_2 = Hstring.make "or_elim_2"
+  let iff_elim_1 = Hstring.make "iff_elim_1"
+  let iff_elim_2 = Hstring.make "iff_elim_2"
+  let impl_elim = Hstring.make "impl_elim"
+  let not_and_elim = Hstring.make "not_and_elim"
+  let xor_elim_1 = Hstring.make "xor_elim_1"
+  let xor_elim_2 = Hstring.make "xor_elim_2"
+  let ite_elim_1 = Hstring.make "ite_elim_1"
+  let ite_elim_2 = Hstring.make "ite_elim_2"
+  let ite_elim_3 = Hstring.make "ite_elim_3"
+  let not_ite_elim_1 = Hstring.make "not_ite_elim_1"
+  let not_ite_elim_2 = Hstring.make "not_ite_elim_2"
+  let not_ite_elim_3 = Hstring.make "not_ite_elim_3"
+  let not_iff_elim = Hstring.make "not_iff_elim"
+  let not_xor_elim = Hstring.make "not_xor_elim"
+  let iff_elim_2 = Hstring.make "iff_elim_2"
+  let and_elim_1 = Hstring.make "and_elim_1"
+  let not_impl_elim = Hstring.make "not_impl_elim"
+  let not_or_elim = Hstring.make "not_or_elim"
+  let and_elim_2 = Hstring.make "and_elim_2"
+  let not_not_elim = Hstring.make "not_not_elim"
+  let not_not_intro = Hstring.make "not_not_intro"
+  let pred_eq_t = Hstring.make "pred_eq_t"
+  let pred_eq_f = Hstring.make "pred_eq_f"
+  let trust_f = Hstring.make "trust_f"
+
+  let tInt = Hstring.make "Int"
+  let eq_transitive = Hstring.make "eq_transitive"
+  let row1 = Hstring.make "row1"
+  let row = Hstring.make "row"
+  let negativerow = Hstring.make "negativerow"
+  let bv_disequal_constants = Hstring.make "bv_disequal_constants"
+  let truth = Hstring.make "truth"
+  let holds = Hstring.make "holds"
+  let q = Hstring.make "Q"
+  let r = Hstring.make "R"
+  let satlem_simplify = Hstring.make "satlem_simplify"
+  let intro_assump_f = Hstring.make "intro_assump_f"
+  let intro_assump_t = Hstring.make "intro_assump_t"
+  let clausify_false = Hstring.make "clausify_false"
+  let trust = Hstring.make "trust"
+  let contra = Hstring.make "contra"
+  let bb_cl = Hstring.make "bb.cl"
+
+  let satlem = Hstring.make "satlem"
+
+  let bv_bbl_var = Hstring.make "bv_bbl_var"
+  let bv_bbl_const = Hstring.make "bv_bbl_const"
+  let bv_bbl_bvand = Hstring.make "bv_bbl_bvand"
+  let bv_bbl_bvor = Hstring.make "bv_bbl_bvor"
+  let bv_bbl_bvxor = Hstring.make "bv_bbl_bvxor"
+  let bv_bbl_bvnot = Hstring.make "bv_bbl_bvnot"
+  let bv_bbl_bvneg = Hstring.make "bv_bbl_bvneg"
+  let bv_bbl_bvadd = Hstring.make "bv_bbl_bvadd"
+  let bv_bbl_bvmul = Hstring.make "bv_bbl_bvmul"
+  let bv_bbl_bvult = Hstring.make "bv_bbl_bvult"
+  let bv_bbl_bvslt = Hstring.make "bv_bbl_bvslt"
+  let bv_bbl_concat = Hstring.make "bv_bbl_concat"
+      
+  let decl_bblast = Hstring.make "decl_bblast"
+  let decl_bblast_with_alias = Hstring.make "decl_bblast_with_alias"
+  let bv_bbl_eq = Hstring.make "bv_bbl_="
+  let bv_bbl_eq_swap = Hstring.make "bv_bbl_=_swap"
+  let bv_bbl_bvult = Hstring.make "bv_bbl_bvult"
+  let bv_bbl_bvslt = Hstring.make "bv_bbl_bvslt"
+      
+  
+end
+
 let scope = ref []
 
 
@@ -68,8 +298,8 @@ let mp_mul x y = match value x, value y with
 
 
 let rec eval_arg x = match app_name x with
-  | Some ("mp_add", [x; y]) -> mp_add (eval_arg x) (eval_arg y)
-  | Some ("mp_mul", [x; y]) -> mp_mul (eval_arg x) (eval_arg y)
+  | Some (n, [x; y]) when n == H.mp_add -> mp_add (eval_arg x) (eval_arg y)
+  | Some (n, [x; y]) when n == H.mp_mul -> mp_mul (eval_arg x) (eval_arg y)
   | _ -> x
 
 
@@ -567,15 +797,15 @@ let simplify_clause c =
 
 
 let () =
-  List.iter (fun (s, f) -> Hashtbl.add callbacks_table s f)
+  List.iter (fun (s, f) -> Hstring.H.add callbacks_table s f)
     [
 
-      "append",
+      H.append,
       (function
         | [c1; c2] -> append c1 c2
         | _ -> failwith "append: Wrong number of arguments");
 
-      "simplify_clause",
+      H.simplify_clause,
       (function
         | [c] -> simplify_clause c
         | _ -> failwith "simplify_clause: Wrong number of arguments");
@@ -940,110 +1170,110 @@ let rec mk_zero n =
 
 
 let () =
-  List.iter (fun (s, f) -> Hashtbl.add callbacks_table s f)
+  List.iter (fun (s, f) -> Hstring.H.add callbacks_table s f)
     [
 
-      "append",
+      H.append,
       (function
         | [c1; c2] -> append c1 c2
         | _ -> failwith "append: Wrong number of arguments");
 
-      "simplify_clause",
+      H.simplify_clause,
       (function
         | [c] -> simplify_clause c
         | _ -> failwith "simplify_clause: Wrong number of arguments");
 
-      "bv_constants_are_disequal",
+      H.bv_constants_are_disequal,
       (function
         | [x; y] -> bv_constants_are_disequal x y
         | _ -> failwith "bv_constants_are_disequal: Wrong number of arguments");
 
-      "bblt_len",
+      H.bblt_len,
       (function
         | [v] -> bblt_len v
         | _ -> failwith "bblt_len: Wrong number of arguments");
 
-      "bblast_const",
+      H.bblast_const,
       (function
         | [v; n] -> bblast_const v n
         | _ -> failwith "bblast_const: Wrong number of arguments");
 
-      "bblast_var",
+      H.bblast_var,
       (function
         | [v; n] -> bblast_var v n
         | _ -> failwith "bblast_var: Wrong number of arguments");
       
-      "bblast_concat",
+      H.bblast_concat,
       (function
         | [x; y] -> bblast_concat x y
         | _ -> failwith "bblast_concat: Wrong number of arguments");
 
-      "bblast_extract",
+      H.bblast_extract,
       (function
         | [x; i; j; n] -> bblast_extract x i j n
         | _ -> failwith "bblast_extract: Wrong number of arguments");
 
-      "bblast_zextend",
+      H.bblast_zextend,
       (function
         | [x; i] -> bblast_zextend x i
         | _ -> failwith "bblast_zextend: Wrong number of arguments");
 
-      "bblast_sextend",
+      H.bblast_sextend,
       (function
         | [x; i] -> bblast_sextend x i
         | _ -> failwith "bblast_sextend: Wrong number of arguments");
 
-      "bblast_bvand",
+      H.bblast_bvand,
       (function
         | [x; y] -> bblast_bvand x y
         | _ -> failwith "bblast_bvand: Wrong number of arguments");
 
-      "bblast_bvnot",
+      H.bblast_bvnot,
       (function
         | [x] -> bblast_bvnot x
         | _ -> failwith "bblast_bvnot: Wrong number of arguments");
 
-      "bblast_bvor",
+      H.bblast_bvor,
       (function
         | [x; y] -> bblast_bvor x y
         | _ -> failwith "bblast_bvor: Wrong number of arguments");
 
-      "bblast_bvxor",
+      H.bblast_bvxor,
       (function
         | [x; y] -> bblast_bvxor x y
         | _ -> failwith "bblast_bvxor: Wrong number of arguments");
 
-      "bblast_bvadd",
+      H.bblast_bvadd,
       (function
         | [x; y; c] -> bblast_bvadd x y c
         | _ -> failwith "bblast_bvadd: Wrong number of arguments");
 
-      "bblast_zero",
+      H.bblast_zero,
       (function
         | [n] -> bblast_zero n
         | _ -> failwith "bblast_zero: Wrong number of arguments");
 
-      "bblast_bvneg",
+      H.bblast_bvneg,
       (function
         | [v; n] -> bblast_bvneg v n
         | _ -> failwith "bblast_bvneg: Wrong number of arguments");
 
-      "bblast_bvmul",
+      H.bblast_bvmul,
       (function
         | [x; y; n] -> bblast_bvmul x y n
         | _ -> failwith "bblast_bvmul: Wrong number of arguments");
 
-      "bblast_eq",
+      H.bblast_eq,
       (function
         | [x; y] -> bblast_eq x y
         | _ -> failwith "bblast_eq: Wrong number of arguments");
 
-      "bblast_bvult",
+      H.bblast_bvult,
       (function
         | [x; y; n] -> bblast_bvult x y n
         | _ -> failwith "bblast_bvult: Wrong number of arguments");
 
-      "bblast_bvslt",
+      H.bblast_bvslt,
       (function
         | [x; y; n] -> bblast_bvslt x y n
         | _ -> failwith "bblast_bvslt: Wrong number of arguments");

@@ -26,9 +26,9 @@ let debug =
 
 type mpz = Big_int.big_int
 type mpq = Num.num
-             
 
-type name = Name of string | S_Hole of int
+
+type name = Name of Hstring.t | S_Hole of int
 type symbol = { sname : name; stype : term }
 
 and dterm =
@@ -44,24 +44,33 @@ and dterm =
   | Lambda of symbol * term
   | Hole of int
   | Ptr of term
-  | SideCond of string * term list * term * term
+  | SideCond of Hstring.t * term list * term * term
 
 and term = { mutable value: dterm; ttype: term }
 (* TODO: remove type annotations in terms *)
 
 type command =
   | Check of term
-  | Define of string * term
-  | Declare of string * term
+  | Define of Hstring.t * term
+  | Declare of Hstring.t * term
 
 
 type proof = command list
 
 
+module H = struct
+  let holds = Hstring.make "holds"
+  let th_holds = Hstring.make "th_holds"
+  let mp_add = Hstring.make "mp_add"
+  let mp_mul = Hstring.make "mp_mul"
+  let uminus = Hstring.make "~"
+  let eq = Hstring.make "="
+end
+
 
 let is_rule t =
   match t.ttype.value with
-  | App ({value=Const{sname=Name ("holds"|"th_holds")}}, _) -> true
+  | App ({value=Const{sname=Name n}}, _) -> n == H.holds || n == H.th_holds
   | _ -> false
 
 
@@ -94,7 +103,7 @@ let address_of (x:'a) : nativeint =
     invalid_arg "Can only find address of boxed values."
  
 let rec print_symbol fmt { sname } = match sname with
-  | Name n -> pp_print_string fmt n
+  | Name n -> Hstring.print fmt n
   | S_Hole i -> fprintf fmt "_s%d" i
 
 and print_tval pty fmt t = match t.value with
@@ -138,8 +147,8 @@ and print_tval pty fmt t = match t.value with
   | Ptr t -> print_term pty fmt t
     
   | SideCond (name, args, expected, t) ->
-    fprintf fmt "(! _ (^ (%s%a)@ %a)@ %a)"
-      name
+    fprintf fmt "(! _ (^ (%a%a)@ %a)@ %a)"
+      Hstring.print name
       (fun fmt -> List.iter (fprintf fmt "@ %a" (print_term pty))) args
       (print_term pty) expected
       (print_term pty) t
@@ -175,9 +184,9 @@ let print_command fmt = function
     fprintf fmt "(check@ (:@\n@\n %a@ @\n@\n%a))"
       print_term t.ttype print_term_type t
   | Define (s, t) ->
-    fprintf fmt "(define %s@ %a)" s print_term t
+    fprintf fmt "(define %a@ %a)" Hstring.print s print_term t
   | Declare (s, t) ->
-    fprintf fmt "(declare %s@ %a)" s print_term t
+    fprintf fmt "(declare %a@ %a)" Hstring.print s print_term t
 
 let print_proof fmt =
   List.iter (fprintf fmt "@[<1>%a@]@\n@." print_command) 
@@ -185,7 +194,7 @@ let print_proof fmt =
 
 
 let compare_symbol s1 s2 = match s1.sname, s2.sname with
-  | Name n1, Name n2 -> String.compare n1 n2
+  | Name n1, Name n2 -> Hstring.compare n1 n2
   | Name _, _ -> -1
   | _, Name _ -> 1
   | S_Hole i1, S_Hole i2 -> Pervasives.compare i1 i2
@@ -205,8 +214,9 @@ let rec compare_term ?(mod_eq=false) t1 t2 = match t1.value, t2.value with
   | Rat _, _ -> -1 | _, Rat _ -> 1
   | Const s1, Const s2 -> compare_symbol s1 s2
   | Const _, _ -> -1 | _, Const _ -> 1
-  | App ({value=Const{sname=Name "="}}, [ty1; a1; b1]),
-    App ({value=Const{sname=Name "="}}, [ty2; a2; b2]) when mod_eq ->
+  | App ({value=Const{sname=Name n1}}, [ty1; a1; b1]),
+    App ({value=Const{sname=Name n2}}, [ty2; a2; b2])
+    when n1 == H.eq && n2 == H.eq && mod_eq ->
     let c = compare_term ~mod_eq ty1 ty2 in
     if c <> 0 then c
     else
@@ -310,14 +320,27 @@ let check_term_integrity where t =
   check_holes_integrity (where ^ "term has != _") h h
     
 
-let symbols = Hashtbl.create 21
-let register_symbol s = Hashtbl.add symbols s.sname s.stype
-let remove_symbol s = Hashtbl.remove symbols s.sname
 
+let eq_name s1 s2 = match s1, s2 with
+  | S_Hole i1, S_Hole i2 -> i1 == i2
+  | Name n1, Name n2 -> n1 == n2
+  | _ -> false
 
-let definitions = Hashtbl.create 21
-let add_definition n t = Hashtbl.add definitions n t
-let remove_definition n = Hashtbl.remove definitions n
+module HN = Hashtbl.Make (struct
+    type t = name
+    let equal = eq_name
+    let hash = function
+      | S_Hole i -> i * 7
+      | Name n -> Hstring.hash n * 9
+  end)
+
+let symbols = HN.create 21
+let register_symbol s = HN.add symbols s.sname s.stype
+let remove_symbol s = HN.remove symbols s.sname
+
+let definitions = HN.create 21
+let add_definition n t = HN.add definitions n t
+let remove_definition n = HN.remove definitions n
 
 
 exception TypingError of term * term
@@ -343,8 +366,8 @@ let mpz_of_int n = { value = Int (Big_int.big_int_of_int n); ttype = mpz }
 let mk_mpq n = { value = Rat n; ttype = mpq }
 
 
-let mk_symbol n stype =
-  { sname = Name n ; stype }
+let mk_symbol s stype =
+  { sname = Name (Hstring.make s) ; stype }
   (* { sname = Name (String.concat "." (List.rev (n :: scope))) ; stype } *)
 
 let mk_symbol_hole =
@@ -375,7 +398,7 @@ let mk_hole_hole () =
 (* Side conditions callbacks *)
 (*****************************)
 
-let callbacks_table = Hashtbl.create 7
+let callbacks_table = Hstring.H.create 7
 
 
 let mp_add x y =
@@ -394,20 +417,20 @@ let uminus x = match value x with
 
 
 let rec eval_arg x = match app_name x with
-  | Some ("~", [x]) -> uminus (eval_arg x)
-  | Some ("mp_add", [x; y]) -> mp_add (eval_arg x) (eval_arg y)
-  | Some ("mp_mul", [x; y]) -> mp_mul (eval_arg x) (eval_arg y)
+  | Some (n, [x]) when n == H.uminus -> uminus (eval_arg x)
+  | Some (n, [x; y]) when n == H.mp_add -> mp_add (eval_arg x) (eval_arg y)
+  | Some (n, [x; y]) when n == H.mp_mul -> mp_mul (eval_arg x) (eval_arg y)
   | _ -> x
 
 
 let callback name l =
   try
-    let f = Hashtbl.find callbacks_table name in
+    let f = Hstring.H.find callbacks_table name in
     (* eprintf "apply %s ... @." name; *)
     let l = List.map eval_arg l in
     f l
   with Not_found ->
-    failwith ("No side condition for " ^ name)
+    failwith ("No side condition for " ^ Hstring.view name)
 
 
 
@@ -431,7 +454,13 @@ let sc_to_check = ref []
 (* Smart constructors for the AST *)
 (**********************************)
 
-let empty_subst = []
+module MSym = Map.Make (struct
+    type t = symbol
+    let compare = compare_symbol
+  end)
+
+
+let empty_subst = MSym.empty
 
 let fresh_alpha =
   let cpt = ref 0 in
@@ -441,11 +470,11 @@ let fresh_alpha =
 
 let get_t ?(gen=true) sigma s =
   try
-    let x = List.assoc s sigma in
+    let x = MSym.find s sigma in
     if not gen && is_hole x then raise Not_found;
     x
   with Not_found -> try
-      Hashtbl.find definitions s.sname
+      HN.find definitions s.sname
     with Not_found ->
       { value = Const s; ttype = s.stype }
 
@@ -455,7 +484,7 @@ type substres = T of term | V of dterm | Same
 
 let apply_subst_sym sigma s =
   try
-    let x = List.assoc s sigma in
+    let x = MSym.find s sigma in
     T x
   with Not_found -> Same
     (* try *)
@@ -465,7 +494,7 @@ let apply_subst_sym sigma s =
 
 let print_subst fmt sigma =
   fprintf fmt "@[<v 1>[";
-  List.iter (fun (s, t) ->
+  MSym.iter (fun s t ->
       fprintf fmt "@ %a -> %a;" print_symbol s print_term t) sigma;
   fprintf fmt " ]@]"
 
@@ -491,7 +520,7 @@ let rec apply_subst_val sigma tval = match tval with
       
   | Pi (s, x) ->
     let s = { s with stype = apply_subst sigma s.stype } in
-    let sigma = List.remove_assoc s sigma in
+    let sigma = MSym.remove s sigma in
     let newx = apply_subst sigma x in
     if x == newx then (* V tval *) Same
     else
@@ -499,7 +528,7 @@ let rec apply_subst_val sigma tval = match tval with
 
   | Lambda (s, x) ->
     let s = { s with stype = apply_subst sigma s.stype } in
-    let sigma = List.remove_assoc s sigma in
+    let sigma = MSym.remove s sigma in
     let newx = apply_subst sigma x in
     if x == newx then (* V tval *) Same
     else
@@ -526,7 +555,7 @@ and apply_subst sigma t =
 
 
 
-let get_real t = apply_subst [] t
+let get_real t = apply_subst MSym.empty t
 
 
 let rec flatten_term_value t = match t.value with
@@ -571,8 +600,7 @@ and has_ptr t =
   | _ -> has_ptr t.ttype
 
 
-let add_subst x v sigma =
-  (x, v) :: sigma
+let add_subst x v sigma = MSym.add x v sigma
   (* let sigma = List.rev_map (fun (y, w) -> y, apply_subst [x,v] w) sigma |> List.rev in *)
   (* (x, apply_subst sigma v) :: sigma *)
 
@@ -599,6 +627,8 @@ let rec occur_check subt t =
     occur_check subt t ||
     List.exists (occur_check subt) args
  
+
+
 
 let rec fill_hole sigma h t =
   match h.value with
@@ -645,7 +675,7 @@ and compat_with1 ?(apsub=true) sigma t1 t2 =
       let a1 = get_t ~gen:(not (is_hole a2)) sigma s1 in
       compat_with1 sigma ~apsub:false a1 a2
     else
-    if s1.sname <> s2.sname then raise Exit
+    if not (eq_name s1.sname s2.sname) then raise Exit
 
   | App (f1, args1), App (f2, args2) ->
     compat_with1 sigma f1 f2;
@@ -716,8 +746,8 @@ and term_equal t1 t2 =
 
 and check_side_condition name l expected =
   if debug then
-    eprintf "Adding side condition : (%s%a) =?= %a@."
-      name
+    eprintf "Adding side condition : (%a%a) =?= %a@."
+      Hstring.print name
       (fun fmt -> List.iter (fprintf fmt "@ %a" print_term)) l
       print_term expected;
   (* if not (term_equal (callback name l) expected) then *)
@@ -745,10 +775,10 @@ let rec ty_of_app sigma ty args = match ty.value, args with
 let mk_const x =
   if debug then eprintf "mk_const %s@." x;
   try
-    let stype = Hashtbl.find symbols (Name x) in
+    let stype = HN.find symbols (Name (Hstring.make x)) in
     let s = mk_symbol x stype in
     try
-      Hashtbl.find definitions s.sname
+      HN.find definitions s.sname
     with Not_found -> { value = Const s; ttype = stype }
   with Not_found -> failwith ("Symbol " ^ x ^ " is not declared.")
 
@@ -763,7 +793,7 @@ let rec mk_app ?(lookup=true) sigma f args =
 
   match f.value, args with
   | Lambda (x, r), a :: rargs ->
-    let sigma = List.remove_assoc x sigma in
+    let sigma = MSym.remove x sigma in
     mk_app (add_subst x a sigma) r rargs
       
   (* | Const {sname = Name "mp_add"}, [x; y] -> mp_add x y *)
@@ -839,8 +869,8 @@ let run_side_conditions () =
   List.iter (fun (name, l, expected) ->
       let res = callback name l in
       if not (term_equal res expected) then
-        failwith (asprintf "Side condition %s failed: Got %a, expected %a"
-                    name print_term res print_term expected);
+        failwith (asprintf "Side condition %a failed: Got %a, expected %a"
+                    Hstring.print name print_term res print_term expected);
     ) (sort_sc_checks !sc_to_check);
   sc_to_check := [];
   ()
@@ -867,7 +897,7 @@ let mk_ascr ty t =
 
 
 let add_sc name args expected t =
-  { value = SideCond (name, args, expected, t);
+  { value = SideCond (Hstring.make name, args, expected, t);
     ttype = t.ttype }
 
 
@@ -889,8 +919,9 @@ let mk_check t = run_side_conditions ()
 
 
 let rec hash_term_mod_eq p = match p.value with
-  | App ({value=Const{sname=Name "="}} as f, [ty; a; b])
-    when compare_term ~mod_eq:true a b > 0 ->
+  | App ({value=Const{sname=Name n}} as f, [ty; a; b])
+    when n == H.eq &&
+         compare_term ~mod_eq:true a b > 0 ->
     Term.hash (mk_app f [ty; b; a])
   | App (f, args) ->
     List.fold_left

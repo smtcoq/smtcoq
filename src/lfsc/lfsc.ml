@@ -328,14 +328,15 @@ let call_cvc4 rt ro rf root =
   let logfilename = bf ^ "_tmp.lfsc" in
   let prooffilename = bf ^ ".lfsc" in
 
-  let command =
+  let cvc4_cmd =
     "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
-    ^ filename ^ " | sed -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' > "
-    ^ logfilename ^ " ; ( exit ${PIPESTATUS[0]} )" in
-  eprintf "%s@." command;
+    ^ filename ^ " > " ^ logfilename in
+  let clean_cmd =
+    "sed -i -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' " ^ logfilename in
+  eprintf "%s@." cvc4_cmd;
   let t0 = Sys.time () in
-  let exit_code = Sys.command command in
+  let exit_code = Sys.command cvc4_cmd in
   
   let t1 = Sys.time () in
   eprintf "CVC4 = %.5f@." (t1-.t0);
@@ -343,6 +344,8 @@ let call_cvc4 rt ro rf root =
   if exit_code <> 0 then
     Structures.error ("CVC4 crashed: return code "^string_of_int exit_code);
 
+  ignore (Sys.command clean_cmd);
+    
   let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
   let signatures = [
     "sat.plf";
