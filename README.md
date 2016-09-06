@@ -160,14 +160,14 @@ Compile and install `CVC4` as explained in the installation instructions.
 ##### Checking CVC4 answers of unsatisfiability and importing theorems
 
 To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
-`file.smt2`:
+`name.smt2`:
 
 - Produce a CVC4 proof witness, run 1, 2 and 3 in a row:
 
 ```
-1. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $file.tmp.lfsc
+1. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $name.tmp.lfsc
 
-2. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $file.tmp.lfsc > $name.lfsc
+2. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $name.tmp.lfsc > $name.lfsc
 
 3. $DIR/../lfsctosmtcoq.native $name.lfsc | grep "^1:" -A 9999999 > $name.log
 
