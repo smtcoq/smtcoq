@@ -22,6 +22,7 @@ Local Open Scope list_scope.
 Local Open Scope N_scope.
 Local Open Scope bool_scope.
 
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
@@ -549,8 +550,10 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
     | ai :: a' , nil => ai :: mult_bool_step_k_h a' b c k
   end.
 
+Local Open Scope int63_scope.
+
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0)%int then nil
+  if (k == 0) then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
@@ -658,7 +661,7 @@ Proof.
     intro H. rewrite H, N.eqb_refl in Heq. discriminate.
 Qed.
 
-Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = n + m.
+Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = (n + m)%N.
 Proof.
   unfold bv_concat, size. intros H0 H1.
   rewrite app_length, Nat2N.inj_add, H0, H1; now rewrite N.add_comm.
@@ -1688,7 +1691,7 @@ Proof.
   right. apply Bool.eqb_prop in H. now subst.
   right. destruct H0, H0.
   apply Bool.eqb_prop in H0. now subst.
-  easy.
+  split; easy.
 Qed.  
   
 

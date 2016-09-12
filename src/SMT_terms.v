@@ -270,6 +270,16 @@ Record typ_eqb : Type := Typ_eqb {
 
 Section Typ_eqb_param.
 
+ (* for native compilation only *)
+ Definition sigT_of_sigT2 {A : Type} {P Q : A -> Type} (X : sigT2 P Q) : sigT P
+  := existT P
+            (let (a, _, _) := X in a)
+            (let (x, p, _) as s return (P (let (a, _, _) := s in a)) := X in p).
+
+
+  Definition projT3 {A : Type} {P Q : A -> Type}  (e : sigT2 P Q) :=
+    let (a, b, c) return Q (projT1 (sigT_of_sigT2 e)) := e in c.
+
   Variable A : Type.
   Variable d : A.
   Variable r : { eq : A -> A -> bool & forall x y, reflect (x = y) (eq x y) }.
@@ -481,13 +491,12 @@ Module Typ.
     Instance TI_dec i : DecType (t_i.[i]).(te_carrier) :=
       EqbToDecType _ (TI_eqbtype i).
 
-
     Instance FArray_eqbtype key elt
              `{key_ord: OrdType key}
              `{elt_ord: OrdType elt}
              `{elt_eqbtype: EqbType elt}
-             `{key_comp: Comparable key}
-             `{elt_comp: Comparable elt}
+             `{key_comp: @Comparable key key_ord}
+             `{elt_comp: @Comparable elt elt_ord}
              `{elt_inh: Inhabited elt}
       : EqbType (farray key elt).
     Proof.
@@ -504,8 +513,8 @@ Module Typ.
              `{key_ord: OrdType key}
              `{elt_ord: OrdType elt}
              `{elt_eqbtype: EqbType elt}
-             `{key_comp: Comparable key}
-             `{elt_comp: Comparable elt}
+             `{key_comp: @Comparable key key_ord}
+             `{elt_comp: @Comparable elt elt_ord}
              `{elt_inh: Inhabited elt}
       : DecType (farray key elt) :=
       EqbToDecType _ (FArray_eqbtype key elt).
@@ -709,8 +718,6 @@ Module Typ.
       Inh := TI_inh i
     |}.
 
-
-
     Definition compdec_typ_eqb t {ty:CompDec t} : typ_eqb.
       destruct ty.
       destruct Eqb0, Decidable0, Ordered0, Comp0, Inh0.
@@ -739,21 +746,33 @@ Module Typ.
       subst; apply lt_not_eq in l; auto.
       subst. apply (lt_trans _ _ _ l0) in l. apply lt_not_eq in l. auto.
     Defined.
-    
 
-
-    Instance FArray_compdec key elt
+   Program Instance FArray_compdec key elt
              `{key_compdec: CompDec key}
              `{elt_compdec: CompDec elt} :
       CompDec (farray key elt) :=
       {|
         Eqb := FArray_eqbtype key elt;
         Ordered := FArray_ord key elt;
-        Comp := FArray_comp key elt;
+      (*  Comp := FArray_comp key elt ; *)
         Inh := FArray_inh key elt
       |}.
+    Next Obligation.
+       constructor.
+       destruct key_compdec, elt_compdec.
+       simpl in *.
+       unfold lt_farray.
+       intros. simpl.
+       unfold EqbToDecType. simpl.
+       case_eq (compare x y); intros.
+       apply OrderedType.LT.
+       destruct (compare x y); try discriminate H; auto.
+       apply OrderedType.EQ.
+       destruct (compare x y); try discriminate H; auto.
+       apply OrderedType.GT.
+       destruct (compare y x); try discriminate H; auto; clear H.
+      Defined.
 
-    
     Hint Resolve bool_compdec : typeclass_instances.
     Hint Resolve Z_compdec : typeclass_instances.
     Hint Resolve Positive_compdec : typeclass_instances.
