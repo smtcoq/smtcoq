@@ -185,7 +185,7 @@ Section File.
 End File.
 ```
 
-- Compile `name.v`: `coqc name.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
+- Compile `name.v`: `coqc -R ../../ SMTCoq name.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
 
 NB: Use `cvc4tocoq` script in `..smtcoq/src/lfsc/tests` to automatize above steps.
 

@@ -308,7 +308,7 @@ Section certif.
         generalize dependent v_valb2.
 
         rewrite H6c. intros.
-        unfold interp_form_hatom, interp_hatom.
+        unfold Atom.interp_form_hatom, interp_hatom.
         rewrite !Atom.t_interp_wf; trivial.
         rewrite Heq3. simpl.
         rewrite !Atom.t_interp_wf; trivial.
@@ -614,7 +614,7 @@ Section certif.
           unfold Lit.interp in isif.
           rewrite Heq in isif. unfold Var.interp in isif.
           rewrite rho_interp in isif.
-          unfold interp_form_hatom, interp_hatom in isif.
+          unfold Atom.interp_form_hatom, interp_hatom in isif.
           rewrite Atom.t_interp_wf in isif; trivial.
           rewrite Heq5 in isif.
           simpl in isif.
@@ -685,14 +685,12 @@ Section certif.
                                      (store v_vale1 v_vale2 v_vale3) (v_vald1')).
           intro H25. specialize (H25 Htid1').
           
-          unfold interp_form_hatom, interp_hatom.
+          unfold Atom.interp_form_hatom, interp_hatom.
           rewrite !Atom.t_interp_wf; trivial.
           rewrite Heq6. simpl.
           rewrite !Atom.t_interp_wf; trivial.
           rewrite Heq7, Heq8. simpl.
           rewrite !Atom.t_interp_wf; trivial.
-
-          
 
           rewrite Htic1, Htic2, Htid1, Htid2.
           subst. intros. simpl.
@@ -769,7 +767,7 @@ Section certif.
           unfold Lit.interp in isif.
           rewrite Heq in isif. unfold Var.interp in isif.
           rewrite rho_interp in isif.
-          unfold interp_form_hatom, interp_hatom in isif.
+          unfold Atom.interp_form_hatom, interp_hatom in isif.
           rewrite Atom.t_interp_wf in isif; trivial.
           rewrite Heq5 in isif.
           simpl in isif.
@@ -841,14 +839,12 @@ Section certif.
                                      (store v_vale1 v_vale2 v_vale3) (v_valc1')).
           intro H25. specialize (H25 Htic1').
           
-          unfold interp_form_hatom, interp_hatom.
+          unfold Atom.interp_form_hatom, interp_hatom.
           rewrite !Atom.t_interp_wf; trivial.
           rewrite Heq6. simpl.
           rewrite !Atom.t_interp_wf; trivial.
           rewrite Heq7, Heq8. simpl.
           rewrite !Atom.t_interp_wf; trivial.
-
-          
 
           rewrite Htid1, Htic2, Htic1, Htid2.
           subst. intros. simpl.
@@ -974,9 +970,21 @@ Require Import Psatz.
       rewrite afold_left_or.
       unfold to_list.
       rewrite Int63Properties.eqb_spec in Heq3.
-      rewrite Heq3. simpl. rewrite orb_false_r.
+      rewrite Heq3.
+
+      (* for native-coq compatibility *)
+      assert (0 == 2 = false) as NCC.
+      { auto. } rewrite NCC.
+      (* simpl. *)
+      rewrite foldi_down_gt; auto.
+
+      (* simpl. *)
       assert (2 - 1 = 1). { auto. }
       rewrite H.
+      rewrite foldi_down_eq; auto. 
+      simpl. rewrite orb_false_r.
+      assert (1 - 1 = 0) as Has2. { auto. }
+      rewrite Has2.
 
       case_eq (Lit.interp rho (a .[ 0])). intro Hisa0.
       rewrite orb_true_l. easy. intro Hisa. rewrite orb_false_l.
@@ -1183,7 +1191,7 @@ Require Import Psatz.
 
      (* semantics *)
 
-      unfold interp_form_hatom, interp_hatom.
+      unfold Atom.interp_form_hatom, interp_hatom.
       rewrite !Atom.t_interp_wf; trivial.
       rewrite (*Heq7,*) Heq9. simpl.
       rewrite !Atom.t_interp_wf; trivial.
@@ -1194,7 +1202,7 @@ Require Import Psatz.
       rewrite !Atom.t_interp_wf; trivial.
       rewrite Htid1, Heq14, Htie1, Htie2.
       rewrite !Typ.cast_refl.
-      unfold interp_atom.
+      simpl. (* (* native-coq compatibility *) unfold interp_atom. *)
       rewrite !Atom.t_interp_wf; trivial.
       rewrite Htif1, Htif2. simpl.
       rewrite !Typ.cast_refl. simpl.
@@ -1247,7 +1255,7 @@ Require Import Psatz.
       rewrite H37.
 
       (* b1 <> b2 *)
-      unfold interp_form_hatom, interp_hatom in H0.
+      unfold Atom.interp_form_hatom, interp_hatom in H0.
       rewrite !Atom.t_interp_wf in H0; trivial.
       rewrite Heq7 in H0. simpl in H0.
       rewrite !Atom.t_interp_wf in H0; trivial.

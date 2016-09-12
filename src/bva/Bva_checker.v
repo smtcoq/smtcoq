@@ -936,7 +936,7 @@ Proof.
       unfold Lit.interp. rewrite Heq.
       unfold Var.interp.
       rewrite wf_interp_form; trivial. rewrite Heq2. simpl.
-      unfold interp_form_hatom, interp_hatom.
+      unfold Atom.interp_form_hatom, interp_hatom.
       rewrite Atom.t_interp_wf; trivial.
       rewrite Heq3. simpl.
       rewrite !Atom.t_interp_wf; trivial.
@@ -6581,6 +6581,16 @@ Lemma concat_nil: forall {A} (a: list A), a ++ [] = a.
 Proof. intros A a.
        case a; [ easy | intros; apply app_nil_r ].
 Qed.
+
+
+(* for native-coq compatibility *)
+Lemma concat_map : forall (A B : Set) (f : A -> B) (l0 l1 : list A),
+  map f (l0 ++ l1) = (map f l0) ++ (map f l1).
+Proof.
+  induction l0 as [ | xl0 xsl0 IHl0]; intros.
+  - now simpl.
+  - simpl. now rewrite IHl0.
+Qed. 
 
 Lemma check_concat_bvconcat: forall bs1 bs2 bsres , 
   check_concat bs1 bs2 bsres = true ->
