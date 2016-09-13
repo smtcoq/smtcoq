@@ -1,59 +1,33 @@
-Require Import SetoidList Bool OrderedType OrdersLists RelationPairs Orders.
-Require Import RelationClasses.
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     Michaël Armand                                                     *)
+(*     Benjamin Grégoire                                                  *)
+(*     Chantal Keller                                                     *)
+(*     Burak Ekici                                                        *)
+(*     Alain Mebsout                                                      *)
+(*                                                                        *)
+(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     The University of Iowa                                             *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+Require Import Bool OrderedType SMT_classes.
 Require Import ProofIrrelevance.
 
-Definition eqb_to_eq_dec : forall T (eqb : T -> T -> bool) (eqb_spec : forall x y, eqb x y = true <-> x = y)
-                      (x y : T), { x = y } + { x <> y }.
-  intros.
-  case_eq (eqb x y); intro.
-  left. apply eqb_spec; auto.
-  right. red. intro. apply eqb_spec in H0. rewrite H in H0. now contradict H0.
-  Defined.
-
-Class EqbType T := {
- eqb : T -> T -> bool;
- eqb_spec : forall x y, eqb x y = true <-> x = y
-}.
-
-Class DecType T := {
- eq_refl : forall x : T, x = x;
- eq_sym : forall x y : T, x = y -> y = x;
- eq_trans : forall x y z : T, x = y -> y = z -> x = z;
- eq_dec : forall x y : T, { x = y } + { x <> y }
-}.
-
-Instance EqbToDecType T `(EqbType T) : DecType T.
-Proof.
-  destruct H.
-  split; auto.
-  intros; subst; auto.
-  apply (eqb_to_eq_dec _ eqb0); auto.
-Defined.
-
-Hint Immediate eq_sym.
-Hint Resolve eq_refl eq_trans.
-
-Class OrdType T := {
-  lt: T -> T -> Prop;
-  lt_trans : forall x y z : T, lt x y -> lt y z -> lt x z;
-  lt_not_eq : forall x y : T, lt x y -> ~ eq x y
-  (* compare : forall x y : T, Compare lt eq x y *)
-}.
-
-Hint Resolve lt_not_eq lt_trans.
-
-(* Global Instance Comparable T `(OrdType T) : *)
-
-Class Comparable T {ot:OrdType T} := {
-  compare : forall x y : T, Compare lt eq x y
-}.
-
-Class Inhabited T := {
-    default_value : T
-  }.
+(** This file formalizes functional arrays with extensionality as specified in
+    SMT-LIB 2. It gives realization to axioms that define the SMT-LIB theory of
+    arrays. For this, it uses a formalization of maps with the same approach as
+    FMaplist excepted that constraints on keys and elements are expressed
+    through the use of typeclasses instead of functors. *)
 
 Set Implicit Arguments.
 
+(** Raw maps (see FMaplist) *)
 Module Raw.
 
   Section Array.
@@ -90,15 +64,6 @@ Module Raw.
 
   Hint Unfold ltk (* ltke *) eqk eqke.
   Hint Extern 2 (eqke ?a ?b) => split.
-
-  Global Instance StrictOrder_OrdType T `(OrdType T) :
-    StrictOrder (lt : T -> T -> Prop).
-  Proof.
-    split.
-    unfold Irreflexive, Reflexive, complement.
-    intros. apply lt_not_eq in H0; auto.
-    unfold Transitive. intros x y z. apply lt_trans.
-  Qed.
 
   Global Instance lt_key_strorder : StrictOrder (lt : key -> key -> Prop).
   Proof. apply StrictOrder_OrdType. Qed.
@@ -1048,6 +1013,9 @@ End Array.
 
 End Raw.
 
+
+(** * Functional Arrays *)
+
 Section FArray.
 
   Variable key : Type.
@@ -1078,7 +1046,7 @@ Section FArray.
     apply Raw.empty_1.
   Qed.
 
-  (* Boolean comparison over elements *)
+  (** Boolean comparison over elements *)
   Definition cmp (e e':elt) :=
     match compare e e' with EQ _ => true | _ => false end.
 

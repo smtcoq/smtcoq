@@ -17,7 +17,9 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray.
-Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators Assumptions BVList Bva_checker Array_checker.
+Require Import Misc State SMT_terms.
+Require Import Syntactic Arithmetic Operators Assumptions.
+Require Import Cnf Euf Lia BVList Bva_checker Array_checker.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -325,7 +327,7 @@ Module Euf_Checker.
 
   Section Checker.
 
-  Variable t_i : array typ_eqb.
+  Variable t_i : array  SMT_classes.typ_compdec.
   Variable t_func : array (Atom.tval t_i).
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.

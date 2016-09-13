@@ -31,7 +31,7 @@ Section CheckAtom.
 
   Import Atom.
 
-  Variable t_i : PArray.array typ_eqb.
+  Variable t_i : PArray.array SMT_classes.typ_compdec.
   Variable t_func : PArray.array (tval t_i).
   Variable t_atom : PArray.array atom.
 

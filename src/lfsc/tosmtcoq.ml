@@ -49,6 +49,7 @@ let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let inputs : int HS.t = HS.create 13
 let alias_tbl = HS.create 17
+let memo_terms = HT.create 31
 (* let termalias_tbl = HT.create 17 *)
 
 let cl_cpt = ref 0
@@ -360,10 +361,12 @@ let rec term_smtcoq_old t =
   | _ -> assert false
 
 
-and term_smtcoq =
-  let h = HT.create 17 in
-  fun t -> try HT.find h t with Not_found ->
-    let v = term_smtcoq_old t in HT.add h t v; v
+and term_smtcoq t =
+  try HT.find memo_terms t
+  with Not_found ->
+    let v = term_smtcoq_old t in
+    HT.add memo_terms t v;
+    v
 
 
 and term_smtcoq_atom a = match term_smtcoq a with
@@ -536,6 +539,7 @@ let clear () =
   HT.clear propvars;
   HS.clear inputs;
   HS.clear alias_tbl;
+  HT.clear memo_terms;
   (* HT.clear termalias_tbl; *)
   cl_cpt := 0
   
