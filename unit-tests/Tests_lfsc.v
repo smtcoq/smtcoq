@@ -1,5 +1,5 @@
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith.
+Require Import SMT_terms Bool PArray Int63 List ZArith.
 Import ListNotations.
 Local Open Scope list_scope.
 
@@ -82,8 +82,7 @@ Section Arrays.
     intros.
     cvc4.
     admit.
-    cvc4.
-    admit. admit.
+    cvc4; verit.
   Admitted.
 
 
@@ -586,10 +585,13 @@ Proof.
 Qed.
 
 Section Concret.
+
+ (* for native compilation only *)
+
   Theorem c1: forall i j,
     (i == j) && (negb (i == j)) = false.
   Proof.
-    cvc4.
+   (* cvc4. *)
   Admitted.
 
   
@@ -598,7 +600,8 @@ End Concret.
 Section Concret2.
   Lemma concret : forall i j, (i == j) || (negb (i == j)).
   Proof.
-    cvc4.
+  Admitted.
+  (*  cvc4.
     econstructor; eexact Int63Properties.reflect_eqb.
     apply 0.
     exists Int63Native.ltb.
@@ -621,6 +624,7 @@ Section Concret2.
       apply Z.compare_eq; trivial.
     - apply OrderedType.LT.
 Admitted.
+*)
   Check concret.
   Print Assumptions concret.
 End Concret2.

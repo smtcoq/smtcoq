@@ -724,7 +724,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
   end.
 
 
-  (** Checker for bitvector inequality *)
+  (** Checker for bitvector disequality *)
   Definition check_bbDiseq lres :=
   if negb (Lit.is_pos lres) then
       match get_form (Lit.blit lres) with
@@ -745,6 +745,53 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
           | _ => C._true
       end
     else C._true.
+
+
+  (** Checker for bitvector extraction *)
+  Fixpoint extract_lit (x: list _lit) (i j: nat) : list _lit :=
+    match x with
+      | []         => []
+      | bx :: x'   => 
+        match i with
+          | O      =>
+            match j with
+              | O    => []
+              | S j' => bx :: extract_lit x' i j'
+            end
+          | S i'   => 
+            match j with
+              | O    => []
+              | S j' => extract_lit x' i' j'
+            end
+        end
+   end.
+
+  Definition check_extract (bs bsres: list _lit) (i j: N) : bool :=
+    if (forallb2 eq_carry_lit (lit_to_carry (extract_lit bs (nat_of_N i) (nat_of_N j))) bsres)
+    then true else false.
+
+  Definition check_bbExtract pos lres :=
+    match S.get s pos with
+      | l1::nil =>
+        if (Lit.is_pos l1) && (Lit.is_pos lres) then
+          match get_form (Lit.blit l1), get_form (Lit.blit lres) with
+            | FbbT a1 bs, FbbT a bsres =>
+              match get_atom a with
+
+                | Auop (UO_BVextr n i j H0 H1) a1' =>
+                  if ((a1 == a1') (* || ((a1 == a2') && (a2 == a1')) *) )
+                       && (check_extract bs bsres i j)
+                       && (N.of_nat (length bs) =? n)%N
+                  then lres::nil
+                  else C._true
+
+                | _ => C._true
+              end
+            | _, _ => C._true
+          end
+        else C._true
+      | _ => C._true
+    end.
 
   Section Proof.
 
@@ -1158,6 +1205,7 @@ Proof. intros a bs.
          intro H3. rewrite H3 in H0. now contradict H0.
          intros n0 Hn. rewrite Hn in H0. now contradict H0.
          intros n0 Hn. rewrite Hn in H0. now contradict H0.
+         intros n0 i3 j H2 H3 Heq. rewrite Heq in H0. now contradict H0. 
          intros b0 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
          intros t i2 i3 i4 Heq. rewrite Heq in H0. now contradict H0.
          intros n0 l Heq. rewrite Heq in H0. now contradict H0.
@@ -5997,7 +6045,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | ] a1' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | | ] a1' Heq9; try now apply C.interp_true.
 
       case_eq ((a1 == a1') && check_neg bs1 bsres &&
       (N.of_nat (Datatypes.length bs1) =? n)%N); 
