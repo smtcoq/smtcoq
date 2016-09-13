@@ -780,13 +780,13 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
             match j, bsres with
             | O, nil => true
             | S j', b :: bsres' => (bx == b) && check_extract2 x' bsres' i j'
-            | _ => false
+            | _, _ => false
             end
           | S i'   => 
             match j, bsres with
               | O, nil => true
               | S j', _ => check_extract2 x' bsres i' j'
-              | _ => false
+              | _, _ => false
             end
         end
    end.

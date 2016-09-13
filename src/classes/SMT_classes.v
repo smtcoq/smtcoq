@@ -142,7 +142,7 @@ Hint Resolve
 
 Record typ_compdec : Type := Typ_compdec {
   te_carrier : Type;
-  te_compdec : CompDec te_carrier;
+  te_compdec : CompDec te_carrier
 }.
 
 Section CompDec_from.

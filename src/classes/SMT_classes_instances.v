@@ -378,12 +378,12 @@ Section Int63.
   
   Local Open Scope int63_scope.
 
-  Let int63_lt x y :=
+  Let int_lt x y :=
     if Int63Native.ltb x y == true then True else False.
   
   Instance int63_ord : OrdType int.
   Proof.
-    exists int63_lt; unfold int63_lt.
+    exists int_lt; unfold int_lt.
     - intros x y z. 
       case_eq (x < y); intro;
         case_eq (y < z); intro;
@@ -416,12 +416,14 @@ Section Int63.
       case_eq (x == y); intro; unfold lt in *; simpl.
     - rewrite Int63Properties.eqb_spec in H0.
       contradict H0.
-      assert (int63_lt x y). unfold int63_lt. rewrite H; simpl; trivial.
+      assert (int_lt x y). unfold int_lt. rewrite H; simpl.
+      rewrite eqb_refl; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
-    - apply LT. unfold int63_lt. rewrite H; simpl; trivial.
+    - apply LT. unfold int_lt. rewrite H; simpl.   
+      rewrite eqb_refl; trivial.
     - apply EQ. rewrite Int63Properties.eqb_spec in H0; trivial.
-    - apply GT. unfold int63_lt.
+    - apply GT. unfold int_lt.
       case_eq (y < x); intro; simpl; try easy.
       (* contradict H1. *)
       (* rewrite not_false_iff_true. *)
@@ -436,7 +438,7 @@ Section Int63.
   Defined.
 
 
-  Instance int63_inh : Inhabited int := {| default_value := 0%int |}.
+  Instance int63_inh : Inhabited int := {| default_value := 0 |}.
     
   Instance int63_compdec : CompDec int := {|
     Eqb := int63_eqbtype;                                    
