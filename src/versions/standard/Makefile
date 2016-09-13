@@ -459,21 +459,21 @@ uninstall: uninstall_me.sh
 
 .merlin:
 	@echo 'FLG -rectypes' > .merlin
-	@echo "B $(COQLIB) kernel" >> .merlin
-	@echo "B $(COQLIB) lib" >> .merlin
-	@echo "B $(COQLIB) library" >> .merlin
-	@echo "B $(COQLIB) parsing" >> .merlin
-	@echo "B $(COQLIB) pretyping" >> .merlin
-	@echo "B $(COQLIB) interp" >> .merlin
-	@echo "B $(COQLIB) printing" >> .merlin
-	@echo "B $(COQLIB) intf" >> .merlin
-	@echo "B $(COQLIB) proofs" >> .merlin
-	@echo "B $(COQLIB) tactics" >> .merlin
-	@echo "B $(COQLIB) tools" >> .merlin
-	@echo "B $(COQLIB) toplevel" >> .merlin
-	@echo "B $(COQLIB) stm" >> .merlin
-	@echo "B $(COQLIB) grammar" >> .merlin
-	@echo "B $(COQLIB) config" >> .merlin
+	@echo "B $(COQLIB)kernel" >> .merlin
+	@echo "B $(COQLIB)lib" >> .merlin
+	@echo "B $(COQLIB)library" >> .merlin
+	@echo "B $(COQLIB)parsing" >> .merlin
+	@echo "B $(COQLIB)pretyping" >> .merlin
+	@echo "B $(COQLIB)interp" >> .merlin
+	@echo "B $(COQLIB)printing" >> .merlin
+	@echo "B $(COQLIB)intf" >> .merlin
+	@echo "B $(COQLIB)proofs" >> .merlin
+	@echo "B $(COQLIB)tactics" >> .merlin
+	@echo "B $(COQLIB)tools" >> .merlin
+	@echo "B $(COQLIB)toplevel" >> .merlin
+	@echo "B $(COQLIB)stm" >> .merlin
+	@echo "B $(COQLIB)grammar" >> .merlin
+	@echo "B $(COQLIB)config" >> .merlin
 	@echo "B bva" >> .merlin
 	@echo "S bva" >> .merlin
 	@echo "B classes" >> .merlin
@@ -502,6 +502,13 @@ uninstall: uninstall_me.sh
 	@echo "S versions/standard/Int63" >> .merlin
 	@echo "B versions/standard/Array" >> .merlin
 	@echo "S versions/standard/Array" >> .merlin
+	@echo "REC" > trace/.merlin
+	@echo "REC" > smtlib2/.merlin
+	@echo "REC" > verit/.merlin
+	@echo "REC" > zchaff/.merlin
+	@echo "REC" > lfsc/.merlin
+	@echo "REC" > extraction/.merlin
+	@echo "REC" > versions/standard/.merlin
 
 clean::
 	rm -f $(ALLCMOFILES) $(CMIFILES) $(CMAFILES)
