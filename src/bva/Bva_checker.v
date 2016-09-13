@@ -7063,7 +7063,23 @@ Proof.
 
         assert (H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bsres))) = (j - i)%N).
         {
-          admit.
+           rewrite andb_true_iff in Heq8.
+           destruct Heq8 as (Heq8a, Heq8b).
+           rewrite map_length.
+           specialize (@extract_interp_main bs1 bsres n i j H0 H1).
+           intros.
+           apply H6 in Heq8a.
+           unfold RAWBITVECTOR_LIST.bv_extr in Heq8a.
+           assert (length (RAWBITVECTOR_LIST.extract (map (Lit.interp rho) bs1) (N.to_nat i)
+           (N.to_nat j)) = length (map (Lit.interp rho) bsres)).
+           { now rewrite Heq8a. }
+           rewrite RAWBITVECTOR_LIST.length_extract, map_length in H7.
+           apply (f_equal (N.of_nat)) in H7.
+           now rewrite N2Nat.id in H7.
+           
+           rewrite N.eqb_eq in Heq8b.
+           rewrite map_length, Heq8b.
+           easy. easy.
         }
 
         unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
@@ -7116,9 +7132,7 @@ Proof.
         rewrite andb_true_iff in Heq8.
         destruct Heq8 as (Heq8a, Heq8b).
         now apply extract_interp_main.
-Admitted.
-        
-        
+Qed.    
 
   End Proof.
 
