@@ -19,7 +19,7 @@
 
 (*Add Rec LoadPath "." as SMTCoq.*)
 
-Require Import Int63 Int63Properties PArray.
+Require Import Int63 Int63Properties PArray SMT_classes.
 
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity Nnat.
@@ -795,7 +795,7 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
   Section Proof.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)

@@ -49,6 +49,7 @@ OCAMLLIBS?=-I versions/native\
   -I euf\
   -I cnf\
   -I array\
+  -I classes\
   -I bva
 COQLIBS?=-I versions/native\
   -I zchaff\
@@ -60,6 +61,7 @@ COQLIBS?=-I versions/native\
   -I euf\
   -I cnf\
   -I array\
+  -I classes\
   -I bva -R . SMTCoq
 COQDOCLIBS?=-R . SMTCoq
 
@@ -152,6 +154,8 @@ VFILES:=Trace.v\
   lia/Lia.v\
   euf/Euf.v\
   cnf/Cnf.v\
+  classes/SMT_classes.v\
+  classes/SMT_classes_instances.v\
   array/FArray.v\
   array/Array_checker.v\
   bva/Bva_checker.v\

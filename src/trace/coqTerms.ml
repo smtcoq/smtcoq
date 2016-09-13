@@ -30,6 +30,8 @@ let cnat = gen_constant init_modules "nat"
 let cO = gen_constant init_modules "O"
 let cS = gen_constant init_modules "S"
 
+let ciff = gen_constant init_modules "iff"
+
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];
                         ["Coq";"PArith";"BinPosDef";"Pos"]]
@@ -177,12 +179,17 @@ let cinh_interp = gen_constant smt_modules "inh_interp"
 let cinterp_eqb = gen_constant smt_modules "i_eqb"
 let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb_eqb"
 
-let ctyp_eqb = gen_constant smt_modules "typ_eqb"
-let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
-let cte_carrier = gen_constant smt_modules "te_carrier"
-let cte_eqb = gen_constant smt_modules "te_eqb"
-let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
-let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
+let classes_modules = [["SMTCoq";"classes";"SMT_classes"];
+                       ["SMTCoq";"classes";"SMT_classes_instances"]]
+
+let ctyp_compdec = gen_constant classes_modules "typ_compdec"
+let cTyp_compdec = gen_constant classes_modules "Typ_compdec"
+let ctyp_compdec_from = gen_constant classes_modules "typ_compdec_from"
+let cunit_typ_compdec = gen_constant classes_modules "unit_typ_compdec"
+let cte_carrier = gen_constant classes_modules "te_carrier"
+let cte_compdec = gen_constant classes_modules "te_compdec"
+let ceqb_of_compdec = gen_constant classes_modules "eqb_of_compdec"
+let cCompDec = gen_constant classes_modules "CompDec"
 
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"

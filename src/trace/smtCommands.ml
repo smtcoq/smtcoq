@@ -188,7 +188,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
   let theorem_proof =
-   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -248,7 +248,7 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     Structures.mkArray (Lazy.force cint, res) in
 
   let tm =
-   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -285,7 +285,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
   let proof =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
     Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
     Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -318,7 +318,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
   let proof =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
     Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
     Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],

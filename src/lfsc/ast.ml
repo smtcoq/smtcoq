@@ -228,7 +228,9 @@ let rec compare_term ?(mod_eq=false) t1 t2 = match t1.value, t2.value with
       else if ca1b2 = 0 && cb1a2 = 0 then 0
       else if ca1a2 <> 0 then ca1a2 else cb1b2
   | App (f1, l1), App (f2, l2) ->
-    compare_term_list ~mod_eq (f1 :: l1) (f2 :: l2)
+    let c = compare_term ~mod_eq f1 f2 in
+    if c <> 0 then c else
+    compare_term_list ~mod_eq l1 l2
   | App _, _ -> -1 | _, App _ -> 1
     
   | Pi (s1, t1), Pi (s2, t2) ->
@@ -269,21 +271,27 @@ module Term = struct
   type t = term
   let compare = compare_term ~mod_eq:false
   let equal x y = compare_term x y = 0
-  let hash t = Hashtbl.hash_param 100 500 t.value (* hash_term *)
-  (* let hasht = Hashtbl.hash_param 100 500 *)
-  (* let rec hash t = *)
+  let hash t = Hashtbl.hash_param 10 100 t.value (* hash_term *)
+  (* let hasht = Hashtbl.hash *)
+  (* let rec hash = *)
+  (*   let cpt = ref 0 in *)
+  (*   fun hh t -> *)
+  (*   incr cpt; *)
+  (*   if !cpt > 10 then hh else *)
+  (*   hh + *)
   (*   let v = t.value in *)
-  (*   match t.value with *)
+  (*   match v with *)
   (*   | Hole _ | Type | Kind |  Mpz | Mpq | Int _ | Rat _ | Const _ -> hasht v *)
   (*   | SideCond (_, args, exp, t) -> *)
-  (*     List.fold_left (fun acc t -> hash t + 31*acc) (hash t) args *)
+  (*     List.fold_left (fun acc t -> hash hh t + 31*acc) (hash hh t) args *)
   (*   | App (f, args) -> *)
-  (*     List.fold_left (fun acc t -> hash t + 31*acc) (hash f) args *)
-  (*   | Pi (s, x) -> ((Hashtbl.hash s) + 31*(hash x)) * 7 *)
-  (*   | Lambda (s, x) -> ((Hashtbl.hash s) + 31*(hash x)) * 9 *)
-  (*   | Ptr t' -> *)
-  (*     t.value <- t'.value; *)
-  (*     hash (deref t') *)
+  (*     List.fold_left (fun acc t -> hash hh t + 31*acc) (hash hh f) args *)
+  (*   | Pi (s, x) -> ((Hashtbl.hash s) + 31*(hash hh x)) * 7 *)
+  (*   | Lambda (s, x) -> ((Hashtbl.hash s) + 31*(hash hh x)) * 9 *)
+  (*   | Ptr t' -> 0 *)
+  (*     (\* t.value <- t'.value; *\) *)
+  (*     (\* hash hh (deref t') *\) *)
+  (* let hash = hash 0 *)
 end
 
 

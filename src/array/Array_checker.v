@@ -16,7 +16,7 @@
 
 (*Add Rec LoadPath "." as SMTCoq.*)
 
-Require Import Bool List Int63 PArray.
+Require Import Bool List Int63 PArray SMT_classes.
 Require Import Misc State SMT_terms FArray.
 
 Import Form.
@@ -144,7 +144,7 @@ Section certif.
 
   Section Correct.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)

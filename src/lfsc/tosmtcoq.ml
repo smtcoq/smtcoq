@@ -49,6 +49,7 @@ let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let inputs : int HS.t = HS.create 13
 let alias_tbl = HS.create 17
+let memo_terms = HT.create 31
 (* let termalias_tbl = HT.create 17 *)
 
 let cl_cpt = ref 0
@@ -204,8 +205,7 @@ let const_bv t =
   Atom (Atom.mk_bvconst ra bv_list)
 
 
-let rec term_smtcoq t =
-  (* try HT.find termalias_tbl (deref t) |> term_smtcoq  with Not_found -> *)
+let rec term_smtcoq_old t =
   match value t with
   | Const {sname=Name n} when n == H.ttrue -> Form Form.pform_true
   | Const {sname=Name n} when n == H.tfalse -> Form Form.pform_false
@@ -361,6 +361,14 @@ let rec term_smtcoq t =
   | _ -> assert false
 
 
+and term_smtcoq t =
+  try HT.find memo_terms t
+  with Not_found ->
+    let v = term_smtcoq_old t in
+    HT.add memo_terms t v;
+    v
+
+
 and term_smtcoq_atom a = match term_smtcoq a with
   | Atom h -> h
   | _ ->  assert false
@@ -461,9 +469,9 @@ let new_clause_id ?(reuse=true) cl =
 let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
-    eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
-      print_clause cl
-    (fun fmt -> List.iter (fprintf fmt " %d")) args;
+    (* eprintf "%d:(%s %a %a)@." id (string_of_rule rule) *)
+    (*   print_clause cl *)
+    (* (fun fmt -> List.iter (fprintf fmt " %d")) args; *)
     VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
   | OldCl id ->
     (* Format.eprintf "old_clause %d@." id; *)
@@ -480,7 +488,7 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     eprintf "%d:input  %a@." id print_clause cl;
+     (* eprintf "%d:input  %a@." id print_clause cl; *)
      VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -491,7 +499,7 @@ let mk_admit_preproc name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     eprintf "%d:hole  %a@." id print_clause cl;
+     (* eprintf "%d:hole  %a@." id print_clause cl; *)
      VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -531,6 +539,7 @@ let clear () =
   HT.clear propvars;
   HS.clear inputs;
   HS.clear alias_tbl;
+  HT.clear memo_terms;
   (* HT.clear termalias_tbl; *)
   cl_cpt := 0
   

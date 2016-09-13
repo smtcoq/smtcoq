@@ -21,6 +21,7 @@
 -R . SMTCoq
 
 -I bva
+-I classes
 -I array
 -I cnf
 -I euf
@@ -53,6 +54,9 @@ CAMLYACC = $(CAMLBIN)ocamlyacc
 
 bva/BVList.v
 bva/Bva_checker.v
+
+classes/SMT_classes.v
+classes/SMT_classes_instances.v
 
 array/FArray.v
 array/Array_checker.v

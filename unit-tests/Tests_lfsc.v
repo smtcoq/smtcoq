@@ -600,33 +600,11 @@ End Concret.
 Section Concret2.
   Lemma concret : forall i j, (i == j) || (negb (i == j)).
   Proof.
-  Admitted.
-  (*  cvc4.
-    econstructor; eexact Int63Properties.reflect_eqb.
-    apply 0.
-    exists Int63Native.ltb.
-    intros x y z; rewrite !Int63Axioms.ltb_spec; apply Z.lt_trans.
-    intros x y; rewrite !Int63Axioms.ltb_spec, <- Int63Properties.to_Z_eq.
-    apply Z.lt_neq.
-    intros.
-    destruct eq0 as (eq0, r0), ltb0 as (ltb, ltb_trans, ltb_neq); simpl.
-    (* destruct (Typ.Z_comp). *)
-    (* unfold FArray.lt in compare. *)
-    (* destruct (Typ.Z_ord). *)
-    (* destruct (compare [|x|] [|y|]). *)
+    cvc4.
+    exact int63_compdec.
+  Qed.
 
-    case_eq (Int63Native.ltb x y); intro.
-    
-    case_eq (Int63Op.compare x y); rewrite Int63Properties.compare_spec; intro.
-    - apply OrderedType.EQ.
-      apply (reflect_iff _ _ (r0 x y)).
-      apply Int63Properties.to_Z_eq.
-      apply Z.compare_eq; trivial.
-    - apply OrderedType.LT.
-Admitted.
-*)
   Check concret.
-  Print Assumptions concret.
 End Concret2.
 Check concret.
 

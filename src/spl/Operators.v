@@ -256,7 +256,7 @@ intros. destruct H0; now contradict H0.
 
   Section Valid1.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array SMT_classes.typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
@@ -359,7 +359,7 @@ intros. destruct H0; now contradict H0.
         | _, _ => false
       end.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array SMT_classes.typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
@@ -492,7 +492,7 @@ intros. destruct H0; now contradict H0.
 
   Section Valid.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array SMT_classes.typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)

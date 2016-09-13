@@ -211,95 +211,14 @@ module Btype =
         Hashtbl.find reify.tbl t
       with | Not_found ->
         let n = string_of_int (List.length reify.cuts) in
-        let eq_name = Names.id_of_string ("eq"^n) in
-        let eq_var = Term.mkVar eq_name in
-        let eq_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
-        let eq = mkName "eq" in
 
-        let ltb_name = Names.id_of_string ("ltb"^n) in
-        let ltb_var = Term.mkVar ltb_name in
-        let ltb_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
-        let ltb = mkName "ltb" in
+        let compdec_name = Names.id_of_string ("CompDec"^n) in
+        let compdec_var = Term.mkVar compdec_name in
+        let compdec_type = mklApp cCompDec [| t |]in
 
-        let d_name = Names.id_of_string ("d"^n) in
-        let d_var = Term.mkVar d_name in
-        let d_ty = t in
-
-        let x = mkName "x" in
-        let y = mkName "y" in
-        let z = mkName "z" in
-        let v = Term.mkRel in
+        reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
         
-        let refl_ty =
-          Term.mkLambda (eq, eq_ty,
-            Term.mkProd (x, t,
-            Term.mkProd (y, t,
-              mklApp creflect [| 
-                mklApp ceq [|t; v 2(*x*); v 1(*y*)|];
-                Term.mkApp (v 3(*eq*), [|v 2(*x*); v 1(*y*)|])|]))) in
-        let eq_pair_r = mklApp csigT [|eq_ty; refl_ty|] in
-
-        let lt_trans =
-          Term.mkLambda (ltb, ltb_ty,
-          Term.mkProd (x, t,
-          Term.mkProd (y, t,
-          Term.mkProd (z, t,
-            Term.mkArrow
-             (mklApp ceq [|Lazy.force cbool;
-               Term.mkApp (v 4(*ltb*), [|v 3(*x*);v 2(*y*)|]); Lazy.force ctrue|])
-             (Term.mkArrow
-                (mklApp ceq [|Lazy.force cbool;
-                   Term.mkApp (v 5(*ltb*), [|v 3(*y*);v 2(*z*)|]); Lazy.force ctrue|])
-                (mklApp ceq [|Lazy.force cbool;
-                  Term.mkApp (v 6(*ltb*), [|v 5(*x*);v 3(*z*)|]); Lazy.force ctrue|]))))))
-        in
-
-        let lt_not_eq =
-          Term.mkLambda (ltb, ltb_ty,
-            Term.mkProd (x, t,
-            Term.mkProd (y, t,
-              Term.mkArrow
-                (mklApp ceq [|Lazy.force cbool;
-                   Term.mkApp (v 3(*ltb*), [|v 2(*x*);v 1(*y*)|]); Lazy.force ctrue|])
-                (mklApp cnot [|mklApp ceq [|t; v 3(*x*);v 2(*y*)|]|]))))
-        in
-        let lt_pair_l = mklApp csigT2 [|ltb_ty; lt_trans; lt_not_eq|] in
-
-        let compare_name = Names.id_of_string ("compare"^n) in
-        let compare_var = Term.mkVar compare_name in
-        let compare_ty =
-          Term.mkProd (x, t,
-          Term.mkProd (y, t,
-            mklApp cOrderedTypeCompare [|
-              t;
-              Term.mkLambda (x, t,
-              Term.mkLambda (y, t,
-                mklApp ceq [|Lazy.force cbool;
-                  Term.mkApp (
-                    mklApp cprojT1 [|ltb_ty; lt_trans;
-                      mklApp csigT_of_sigT2 [| ltb_ty; lt_trans; lt_not_eq; ltb_var |] |],
-                    [|v 2(*x*);v 1(*y*)|]);
-                  Lazy.force ctrue|]));
-              Term.mkLambda (x, t,
-              Term.mkLambda (y, t,
-                mklApp ceq [|Lazy.force cbool;
-                  Term.mkApp (
-                    mklApp cprojT1 [|eq_ty; refl_ty; eq_var |],
-                    [|v 2(*x*);v 1(*y*)|]);
-                  Lazy.force ctrue|]));
-              v 2(*x*); v 1(*y*)
-            |])) in
-
-        
-        reify.cuts <-
-          (eq_name, eq_pair_r) ::
-          (d_name, d_ty) ::
-          (ltb_name, lt_pair_l) ::
-          (compare_name, compare_ty) ::
-          reify.cuts;
-
-        let ce = mklApp ctyp_eqb_of_typ_eqb_param
-            [|t; d_var; eq_var; ltb_var; compare_var|] in
+        let ce = mklApp cTyp_compdec [|t; compdec_var|] in
         declare reify t ce
 
     
@@ -307,12 +226,12 @@ module Btype =
     
 
     let interp_tbl reify =
-      let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_eqb) in
+      let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_compdec) in
       let set _ = function
         | Tindex it -> t.(it.index) <- it.hval
         | _ -> () in
       Hashtbl.iter set reify.tbl;
-      Structures.mkArray (Lazy.force ctyp_eqb, t)
+      Structures.mkArray (Lazy.force ctyp_compdec, t)
 
 
     let to_list reify =
@@ -585,8 +504,7 @@ module Op =
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
       | TBV s -> mklApp cbv_eq [|mkN s|]
-      | Tindex i -> (* veval_t *) (mklApp cte_eqb [|i.hval|])
-      (* | (TFArray _) as t -> interp_ieq t_i t *)
+      | Tindex i -> mklApp ceqb_of_compdec [|mklApp cte_compdec [|i.hval|]|]
       | TFArray (ti, te) -> interp_eqarray t_i ti te
 
     
@@ -650,7 +568,7 @@ module Op =
 	          tbl : (Term.constr, indexed_op) Hashtbl.t
 	}
 
-    let create () = 
+    let create () =
       { count = 0;
 	tbl =  Hashtbl.create 17 }
 
@@ -1052,7 +970,7 @@ module Atom =
       res
 
     let get reify a =
-      try HashAtom.find reify.tbl a 
+      try HashAtom.find reify.tbl a
       with Not_found -> declare reify a
 
 

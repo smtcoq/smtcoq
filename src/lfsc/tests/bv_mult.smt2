@@ -1,13 +1,13 @@
 (set-logic QF_BV)
-(declare-fun a () (_ BitVec 12))
-(declare-fun b () (_ BitVec 12))
-(declare-fun c () (_ BitVec 12))
-(declare-fun d () (_ BitVec 12))
+(declare-fun a () (_ BitVec 4))
+(declare-fun b () (_ BitVec 4))
+(declare-fun c () (_ BitVec 4))
+(declare-fun d () (_ BitVec 4))
 
-(assert (= #b000000000010 a))
-(assert (= #b000000000110 b))
-(assert (= #b000000001000 c))
-(assert (= #b000000001100 d))
+(assert (= #b0010 a))
+(assert (= #b0110 b))
+(assert (= #b1000 c))
+(assert (= #b1100 d))
 
 (assert
  (not (= (bvmul a b) d)))
