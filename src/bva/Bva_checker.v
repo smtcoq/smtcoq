@@ -767,8 +767,30 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
    end.
 
   Definition check_extract (bs bsres: list _lit) (i j: N) : bool :=
-    if (forallb2 eq_carry_lit (lit_to_carry (extract_lit bs (nat_of_N i) (nat_of_N j))) bsres)
-    then true else false.
+    forallb2 (fun l1 l2 => l1 == l2) (extract_lit bs (nat_of_N i) (nat_of_N j)) bsres.
+
+
+  (** Checker for bitvector extraction *)
+  Fixpoint check_extract2 (x bsres: list _lit) (i j: nat) : bool :=
+    match x with
+      | [] => match bsres with [] => true | _ => false end
+      | bx :: x' => 
+        match i with
+          | O      =>
+            match j, bsres with
+            | O, nil => true
+            | S j', b :: bsres' => (bx == b) && check_extract2 x' bsres' i j'
+            | _ => false
+            end
+          | S i'   => 
+            match j, bsres with
+              | O, nil => true
+              | S j', _ => check_extract2 x' bsres i' j'
+              | _ => false
+            end
+        end
+   end.
+
 
   Definition check_bbExtract pos lres :=
     match S.get s pos with
