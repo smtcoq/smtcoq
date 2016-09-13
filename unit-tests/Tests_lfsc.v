@@ -1,5 +1,5 @@
 Require Import SMTCoq.
-Require Import SMT_terms Bool PArray Int63 List ZArith.
+Require Import Bool PArray Int63 List ZArith.
 Import ListNotations.
 Local Open Scope list_scope.
 
@@ -82,7 +82,8 @@ Section Arrays.
     intros.
     cvc4.
     admit.
-    cvc4; verit.
+    cvc4.
+    admit. admit.
   Admitted.
 
 
@@ -585,13 +586,10 @@ Proof.
 Qed.
 
 Section Concret.
-
- (* for native compilation only *)
-
   Theorem c1: forall i j,
     (i == j) && (negb (i == j)) = false.
   Proof.
-   (* cvc4. *)
+    cvc4.
   Admitted.
 
   
