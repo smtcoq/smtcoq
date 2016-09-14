@@ -124,13 +124,13 @@ Section CheckAtom.
       intros [op2|op2 i2|op2 i2 j2|op2 li2|op2 li2|f2 args2]; simpl; try discriminate; try (case op1; discriminate).
       case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [_ H]; rewrite (check_hatom_correct _ _ H); auto).
 
-      case_eq (get_atom i2); try discriminate; intros [ | | | | | | | | ] i Heq H; try discriminate; simpl;
+      case_eq (get_atom i2); try discriminate; intros [ | | | | | | | | n i0 j0 H0 H1] i Heq H; try discriminate; simpl;
       unfold apply_unop; rewrite (check_hatom_correct _ _ H); 
       unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i2), Heq; simpl; 
       unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; 
       destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
 
-      case_eq (get_atom i1); try discriminate; intros [ | | | | | | | | ] i Heq H; try discriminate; simpl; 
+      case_eq (get_atom i1); try discriminate; intros [ | | | | | | | | n i0 j0 H0 H1] i Heq H; try discriminate; simpl; 
       unfold apply_unop. rewrite <- (check_hatom_correct _ _ H); 
       unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i1), Heq; simpl; 
       unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; 

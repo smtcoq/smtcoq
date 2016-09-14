@@ -2294,7 +2294,7 @@ Qed.
         exists 0%Z; auto.
         exists (BITVECTOR_LIST._of_bits l n); auto.
         (* Unary operators *)
-        intros [ | | | | | | | | ] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
+        intros [ | | | | | | | | n i0 j0 H0 H1] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~0)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~1)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists (Zpos (k interp_t x)); auto.
