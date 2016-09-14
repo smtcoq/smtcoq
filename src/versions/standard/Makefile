@@ -248,6 +248,10 @@ MLFILES:=versions/standard/structures.ml\
   smtlib2/smtlib2_genConstr.ml\
   smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_util.ml\
+  smtlib2/SExpr.ml\
+  smtlib2/SExprParser.ml\
+  smtlib2/SExprLexer.ml\
+  smtlib2/smtlib2_solver.ml\
   verit/veritParser.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
@@ -281,6 +285,9 @@ endif
 MLIFILES:=trace/smtAtom.mli\
   trace/smtForm.mli\
   smtlib2/smtlib2_parse.mli\
+  smtlib2/SExpr.mli\
+  smtlib2/SExprParser.mli\
+  smtlib2/smtlib2_solver.mli\
   verit/veritParser.mli\
   verit/veritSyntax.mli\
   lfsc/shashcons.mli\
@@ -389,9 +396,9 @@ lfsctest:
 %.ml %.mli: %.mly
 	$(CAMLYACC) $<
 
-ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
+ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/SExprParser.ml smtlib2/SExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
 
-$(CMXA): versions/standard/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
+$(CMXA): versions/standard/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx smtlib2/SExpr.cmx smtlib2/SExprParser.cmx smtlib2/SExprLexer.cmx smtlib2/smtlib2_solver.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 $(CMXS): $(CMXA)
@@ -526,7 +533,7 @@ clean::
 	- rm -rf ml
 	- rm -rf $(CMXA)
 	- rm -rf $(CMXS)
-	- rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtcoq.a
+	- rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/SExprParser.mli smtlib2/SExprParser.ml smtlib2/SExprLexer.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtcoq.a
 
 cleanall:: clean
 	rm -f $(patsubst %.v,.%.aux,$(VFILES))

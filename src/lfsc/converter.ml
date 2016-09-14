@@ -1263,7 +1263,9 @@ module Make (T : Translator_sig.S) = struct
   
 
   (** Clean global environments *)
-  let clear () = T.clear ()
+  let clear () =
+    Ast.clear_sc ();
+    T.clear ()
 
 
 end

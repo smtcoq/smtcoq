@@ -1123,8 +1123,8 @@ let bblast_eq x y =
     (match value y with
      | App (ff, [by; y']) when term_equal ff bbltc_s ->
        bblast_eq_rec x' y' (iff_ bx by)
-     | _ -> failwith "bblast_eq")
-  | _ -> failwith "bblast_eq"
+     | _ -> failwith "sc1: bblast_eq")
+  | _ -> failwith "sc2: bblast_eq"
 
 
 let rec bblast_bvult x y n =
