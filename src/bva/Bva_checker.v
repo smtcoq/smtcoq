@@ -861,6 +861,48 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       | _ => C._true
     end.
 
+  (** Checker for signed bitvector extension *)
+
+
+  Fixpoint mk_list_lit_false (t: nat) : list _lit :=
+    match t with
+      | O    => []
+      | S t' => Lit._false :: (mk_list_lit_false t')
+    end.
+
+  Definition sextend_lit (x: list _lit) (i: nat): list _lit :=
+    match x with
+      | []       => mk_list_lit_false i
+      | xb :: x' => extend_lit x i xb
+    end.
+
+   Definition check_sextend (bs bsres: list _lit) (i: N) : bool :=
+     if (forallb2 eq_carry_lit (lit_to_carry (sextend_lit bs (nat_of_N i))) bsres)
+    then true else false.
+
+  Definition check_bbSextend pos lres :=
+    match S.get s pos with
+      | l1::nil =>
+        if (Lit.is_pos l1) && (Lit.is_pos lres) then
+          match get_form (Lit.blit l1), get_form (Lit.blit lres) with
+            | FbbT a1 bs, FbbT a bsres =>
+              match get_atom a with
+
+                | Auop (UO_BVsextn n i) a1' =>
+                  if ((a1 == a1') (* || ((a1 == a2') && (a2 == a1')) *) )
+                       && (check_sextend bs bsres i)
+                       && (N.of_nat (length bs) =? n)%N
+                  then lres::nil
+                  else C._true
+
+                | _ => C._true
+              end
+            | _, _ => C._true
+          end
+        else C._true
+      | _ => C._true
+    end.
+
   Section Proof.
 
     Variables (t_i : array typ_compdec)
@@ -1274,6 +1316,7 @@ Proof. intros a bs.
          intros n0 Hn. rewrite Hn in H0. now contradict H0.
          intros n0 Hn. rewrite Hn in H0. now contradict H0.
          intros n0 i3 j H2 H3 Heq. rewrite Heq in H0. now contradict H0.
+         intros n0 i3 Heq. rewrite Heq in H0. now contradict H0.
          intros n0 i3 Heq. rewrite Heq in H0. now contradict H0. 
          intros b0 i2 i3 Heq. rewrite Heq in H0. now contradict H0.
          intros t i2 i3 i4 Heq. rewrite Heq in H0. now contradict H0.
@@ -6114,7 +6157,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | | | ] a1' Heq9; try now apply C.interp_true.
+      intros [ | | | | | | | | | | ] a1' Heq9; try now apply C.interp_true.
 
       case_eq ((a1 == a1') && check_neg bs1 bsres &&
       (N.of_nat (Datatypes.length bs1) =? n)%N); 
@@ -7034,7 +7077,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq5.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | | | ]  a1'  Heq6; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | | | | ]  a1'  Heq6; try (intros; now apply C.interp_true).
       (* BVextract *)
     - case_eq ((a1 == a1')); simpl; intros Heq7; try (now apply C.interp_true).
         case_eq (
@@ -7281,7 +7324,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq5.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | | | ]  a1'  Heq6; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | | | | ]  a1'  Heq6; try (intros; now apply C.interp_true).
       (* BVzextend *)
     - case_eq ((a1 == a1')); simpl; intros Heq7; try (now apply C.interp_true).
         case_eq (
@@ -7424,6 +7467,10 @@ Proof.
         destruct Heq8 as (Heq8a, Heq8b).
         now apply zextend_interp_main.
 Qed.    
+
+
+Lemma valid_check_bbSextend pos lres : C.valid rho (check_bbSextend pos lres).
+Proof. Admitted.
 
   End Proof.
 

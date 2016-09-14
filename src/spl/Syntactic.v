@@ -124,21 +124,12 @@ Section CheckAtom.
       intros [op2|op2 i2|op2 i2 j2|op2 li2|op2 li2|f2 args2]; simpl; try discriminate; try (case op1; discriminate).
       case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [_ H]; rewrite (check_hatom_correct _ _ H); auto).
 
-<<<<<<< HEAD
-      case_eq (get_atom i2); try discriminate; intros [ | | | | | | | | | ] i Heq H; try discriminate; simpl;
-=======
-      case_eq (get_atom i2); try discriminate; intros [ | | | | | | | | n i0 j0 H0 H1] i Heq H; try discriminate; simpl;
->>>>>>> d3056e027cd83ae853ea6eada1d578098b0be9fd
+      case_eq (get_atom i2); try discriminate; intros [ | | | | | | | | | | ] i Heq H; try discriminate; simpl;
       unfold apply_unop; rewrite (check_hatom_correct _ _ H); 
       unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i2), Heq; simpl; 
       unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; 
       destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
-
-<<<<<<< HEAD
-      case_eq (get_atom i1); try discriminate; intros [ | | | | | | | | | ] i Heq H; try discriminate; simpl; 
-=======
-      case_eq (get_atom i1); try discriminate; intros [ | | | | | | | | n i0 j0 H0 H1] i Heq H; try discriminate; simpl; 
->>>>>>> d3056e027cd83ae853ea6eada1d578098b0be9fd
+      case_eq (get_atom i1); try discriminate; intros [ | | | | | | | | | | ] i Heq H; try discriminate; simpl; 
       unfold apply_unop. rewrite <- (check_hatom_correct _ _ H); 
       unfold interp_hatom; rewrite (t_interp_wf _ _ _ Hwf Hd i1), Heq; simpl; 
       unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; 
@@ -159,7 +150,7 @@ Section CheckAtom.
       rewrite (proof_irrelevance H0 H2).
       rewrite (proof_irrelevance H1 H3).
       rewrite (check_hatom_correct _ _ Hb); auto.
-      (* bv_uextn *)
+      (* bv_zextn *)
       intros n i n0 i0.
       unfold is_true. rewrite andb_true_iff.
       intros. destruct H as (Ha, Hb).
@@ -168,7 +159,17 @@ Section CheckAtom.
       destruct H0 as (H0a, H0b).
       rewrite N.eqb_eq in H0a, H0b.
       subst.
-      rewrite (check_hatom_correct _ _ Hb); auto.      
+      rewrite (check_hatom_correct _ _ Hb); auto.
+      (* bv_sextn *)
+      intros n i n0 i0.
+      unfold is_true. rewrite andb_true_iff.
+      intros. destruct H as (Ha, Hb).
+      inversion Ha.
+      rewrite !andb_true_iff in H0.
+      destruct H0 as (H0a, H0b).
+      rewrite N.eqb_eq in H0a, H0b.
+      subst.
+      rewrite (check_hatom_correct _ _ Hb); auto.     
             (* Binary operators *)
       - intros [op2|op2 i2|op2 i2 j2|op2 li2|op2 li2|f2 args2]; simpl; try discriminate; case op1; case op2; try discriminate; try (unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); auto).
       unfold is_true, interp_bop, apply_binop. rewrite orb_true_iff, !andb_true_iff. intros [[H1 H2]|[H1 H2]]; rewrite (check_hatom_correct _ _ H1), (check_hatom_correct _ _ H2); destruct (interp_hatom t_i t_func t_atom i2) as [A v1]; destruct (interp_hatom t_i t_func t_atom j2) as [B v2]; destruct (Typ.cast B Typ.TZ) as [k2| ]; destruct (Typ.cast A Typ.TZ) as [k1| ]; auto; rewrite Z.add_comm; reflexivity.
