@@ -55,6 +55,9 @@ let remove_rename = Hashtbl.remove renamings
 %start last_command
 %type <Ast.command option> last_command
 
+%start ignore_commands
+%type <unit> ignore_commands
+
 %start proof_print
 %type <unit> proof_print
 
@@ -296,7 +299,7 @@ command_ignore:
 ;
 
 one_command:
-  | command EOF { $1 }
+  | command { $1 }
 ;
 
 command_or_prog:
@@ -338,4 +341,10 @@ proof_ignore:
 last_command:
   | command_or_prog { $1 }
   | command_or_prog last_command { $2 }
+;
+
+
+ignore_commands:
+  | command_or_prog { () }
+  | command_or_prog ignore_commands { () }
 ;

@@ -923,6 +923,7 @@ let mk_define n t =
 let mk_check t = run_side_conditions ()
 
 
+let clear_sc () = sc_to_check := []
 
 
 

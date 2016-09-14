@@ -37,22 +37,49 @@ module C = Converter.Make (Tosmtcoq)
 
 exception No_proof
 
+(* Hard coded signatures *)
+let signatures =
+  let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
+  ["sat.plf";
+   "smt.plf";
+   "th_base.plf";
+   "th_int.plf";
+   "th_bv.plf";
+   "th_bv_bitblast.plf";
+   "th_bv_rewrites.plf";
+   "th_arrays.plf" ]
+  |> List.map (Filename.concat sigdir)
 
-let import_trace filename first =
+
+let process_signatures_once =
+  let don = ref false in
+  fun () ->
+    if !don then ()
+    else
+      try
+        (* don := true; *)
+        List.iter (fun f ->
+            let chan = open_in f in
+            let lexbuf = Lexing.from_channel chan in
+            LfscParser.ignore_commands LfscLexer.main lexbuf;
+            close_in chan
+          ) signatures
+      with
+      | Ast.TypingError (t1, t2) ->
+        Structures.error
+          (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+             Ast.print_term t1
+             Ast.print_term t2)
+
+
+let import_trace first lexbuf =
   Printexc.record_backtrace true;
-  (* What you have to do: parse the certificate, and produce the
-     corresponding veriT steps linearly, as you are currently doing: the
-     difference is that instead of pretty-printing, you should produce
-     something in the format of SmtCertif, and return the (last)
-     conflicting step *)
-  let chan = open_in filename in
-  let lexbuf = Lexing.from_channel chan in
   eprintf "Type-checking LFSC proof.@.";
+  process_signatures_once ();
   try
-    match LfscParser.last_command LfscLexer.main lexbuf with
+    match LfscParser.one_command LfscLexer.main lexbuf with
 
-    | Some (Ast.Check p) ->
-      close_in chan;
+    | Ast.Check p ->
       (* Ast.flatten_term p; *)
       let confl_num = C.convert p in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
@@ -82,16 +109,24 @@ let import_trace filename first =
 
   with
   | Ast.TypingError (t1, t2) ->
-    eprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
-      Ast.print_term t1
-      Ast.print_term t2;
-    exit 1
+    Structures.error
+      (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+         Ast.print_term t1
+         Ast.print_term t2)
 
   | e ->
     let backtrace = Printexc.get_backtrace () in
     eprintf "Fatal error: %s@." (Printexc.to_string e);
     eprintf "Backtrace:@\n%s@." backtrace;
     raise e
+
+
+let import_trace_from_file first filename =
+  let chan = open_in filename in
+  let lexbuf = Lexing.from_channel chan in
+  let p = import_trace first lexbuf in
+  close_in chan;
+  p
 
 
 
@@ -108,12 +143,13 @@ let import_all fsmt fproof =
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace fproof None in
+  let (max_id, confl) = import_trace_from_file None fproof in
   (rt, ro, ra, rf, roots, max_id, confl)
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
-  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace (import_all fsmt fproof)
+  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace
+    (import_all fsmt fproof)
 let theorem name fsmt fproof = SmtCommands.theorem name (import_all fsmt fproof)
 let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 
@@ -277,22 +313,73 @@ let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
 
 (* end *)
 
-let print_logic fmt ro f =
+let string_logic ro f =
   let l = SL.union (Op.logic_ro ro) (Form.logic f) in
-  fprintf fmt "(set-logic QF_";
-  if SL.is_empty l then fprintf fmt "SAT"
-  else begin 
-    if SL.mem LArrays l then fprintf fmt "A";
-    if SL.mem LUF l || SL.mem LLia l then fprintf fmt "UF";
-    if SL.mem LBitvectors l then fprintf fmt "BV";
-    if SL.mem LLia l then fprintf fmt "LIA"
-  end;
-  fprintf fmt ")@."
+  if SL.is_empty l then "QF_SAT"
+  else
+    sprintf "QF_%s%s%s%s"
+    (if SL.mem LArrays l then "A" else "")
+    (if SL.mem LUF l || SL.mem LLia l then "UF" else "")
+    (if SL.mem LBitvectors l then "BV" else "")
+    (if SL.mem LLia l then "LIA" else "")
+
+
+
+let call_cvc4 rt ro rf root =
+  let open Smtlib2_solver in
+  let fl = snd root in
+
+  let cvc4 = create [|
+      "cvc4";
+      "--lang"; "smt2";
+      "--proof";
+      "--no-simplification"; "--fewer-preprocessing-holes";
+      "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic" |] in
+
+  set_option cvc4 "print-success" true;
+  set_option cvc4 "produce-assignments" true;
+  set_option cvc4 "produce-proofs" true;
+  set_logic cvc4 (string_logic ro fl);
+
+  List.iter (fun (i,t) ->
+    let s = "Tindex_"^(string_of_int i) in
+    VeritSyntax.add_btype s (Tindex t);
+    declare_sort cvc4 s 0;
+  ) (Btype.to_list rt);
+  
+  List.iter (fun (i,cod,dom,op) ->
+    let s = "op_"^(string_of_int i) in
+    VeritSyntax.add_fun s op;
+    let args =
+      Array.fold_right
+        (fun t acc -> asprintf "%a" Btype.to_smt t :: acc) cod [] in
+    let ret = asprintf "%a" Btype.to_smt dom in
+    declare_fun cvc4 s args ret
+  ) (Op.to_list ro);
+
+  assume cvc4 (asprintf "%a" (Form.to_smt Atom.to_smt) fl);
+
+  let proof =
+    match check_sat cvc4 with
+    | Unsat ->
+      begin try get_proof cvc4 (import_trace (Some root)) with
+        | No_proof -> Structures.error "CVC4 did not generate a proof"
+        | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
+      end
+    | Sat ->
+      let smodel = get_model cvc4 in
+      Structures.error
+        (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel)
+  in
+
+  quit cvc4;
+  proof
+
 
 
 let export out_channel rt ro l =
   let fmt = formatter_of_out_channel out_channel in
-  print_logic fmt ro l;
+  fprintf fmt "(set-logic %s)@." (string_logic ro l);
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
@@ -314,26 +401,22 @@ let export out_channel rt ro l =
 
   fprintf fmt "(assert %a)@\n(check-sat)@\n(exit)@."
     (Form.to_smt Atom.to_smt) l
-  
 
 
-(* val call_cvc4 : Btype.reify_tbl -> Op.reify_tbl -> Form.t -> (Form.t clause * Form.t) -> (int * Form.t clause) *)
-let call_cvc4 rt ro rf root =
-  (* let fl = Form.right_assoc rf fl in *)
+
+let call_cvc4_file rt ro rf root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
   export outchan rt ro fl;
   close_out outchan;
   let bf = Filename.chop_extension filename in
-  let logfilename = bf ^ "_tmp.lfsc" in
   let prooffilename = bf ^ ".lfsc" in
 
   let cvc4_cmd =
-    "cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes \
+    "cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
-    ^ filename ^ " > " ^ logfilename in
-  let clean_cmd =
-    "sed -i -e '1d; s/\\\\\\([^ ]\\)/\\\\ \\1/g' " ^ logfilename in
+    ^ filename ^ " > " ^ prooffilename in
+  let clean_cmd = "sed -i -e '1d' " ^ prooffilename in
   eprintf "%s@." cvc4_cmd;
   let t0 = Sys.time () in
   let exit_code = Sys.command cvc4_cmd in
@@ -345,27 +428,8 @@ let call_cvc4 rt ro rf root =
     Structures.error ("CVC4 crashed: return code "^string_of_int exit_code);
 
   ignore (Sys.command clean_cmd);
-    
-  let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
-  let signatures = [
-    "sat.plf";
-    "smt.plf";
-    "th_base.plf";
-    "th_int.plf";
-    "th_bv.plf";
-    "th_bv_bitblast.plf";
-    "th_bv_rewrites.plf";
-    "th_arrays.plf";
-  ] in
-  let signatures_arg =
-    signatures
-    |> List.map (Filename.concat sigdir)
-    |> String.concat " "
-  in
-  Sys.command ("cat "^signatures_arg^" "^logfilename^" > "^prooffilename)
-  |> ignore;
 
-  try import_trace prooffilename (Some root)
+  try import_trace_from_file (Some root) prooffilename
   with
   | No_proof -> Structures.error "CVC4 did not generate a proof"
   | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
@@ -378,4 +442,4 @@ let tactic env sigma t =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t
+  SmtCommands.tactic call_cvc4_file rt ro ra rf env sigma t

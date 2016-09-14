@@ -236,3 +236,6 @@ val callbacks_table : (term list -> term) Hstring.H.t
 (** Add a side-condition to the callback table, and returns the continuation of
     the side condition in LFSC terms. See {!Builtin}. *)
 val add_sc : string -> term list -> term -> term -> term
+
+(** Remove pending side-conditions evaluations *)
+val clear_sc : unit -> unit

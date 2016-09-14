@@ -6,6 +6,10 @@ Local Open Scope list_scope.
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
 
+Goal forall (a:bool), a || negb a.
+  cvc4.
+Qed.
+
 Section Arrays.
   Import BVList.BITVECTOR_LIST.
   Import FArray.
@@ -35,6 +39,7 @@ Section Arrays.
   Proof.
     cvc4.
   Qed.
+
   
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
@@ -58,8 +63,12 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    (* cvc4. *)
+    try cvc4.
   Abort.
+
+  Goal forall (a:bool), a || negb a.
+    cvc4.
+  Qed.
 
   (* CVC4 bad LFSC proof *)
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
