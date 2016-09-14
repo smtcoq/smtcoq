@@ -416,18 +416,14 @@ Section Int63.
       case_eq (x == y); intro; unfold lt in *; simpl.
     - rewrite Int63Properties.eqb_spec in H0.
       contradict H0.
-      assert (int_lt x y). unfold int_lt. rewrite H; simpl.
-      rewrite eqb_refl; trivial.
+      assert (int_lt x y). unfold int_lt.
+      rewrite H,eqb_refl; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
-    - apply LT. unfold int_lt. rewrite H; simpl.   
-      rewrite eqb_refl; trivial.
+    - apply LT. unfold int_lt. rewrite H, eqb_refl; trivial.
     - apply EQ. rewrite Int63Properties.eqb_spec in H0; trivial.
     - apply GT. unfold int_lt.
       case_eq (y < x); intro; simpl; try easy.
-      (* contradict H1. *)
-      (* rewrite not_false_iff_true. *)
-      (* rewrite ltb_negb_geb. *)
       specialize (leb_ltb_eqb x y); intro.
       contradict H2.
       rewrite leb_negb_gtb. rewrite H1. simpl.
