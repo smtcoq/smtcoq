@@ -9,6 +9,7 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 (* Goal forall (a b:bool), a || negb b. *)
 (*   cvc4. *)
 (* Qed. *)
+
 (* Goal forall (a:Z), Z.eqb (a + 1) 4. *)
 (*   cvc4. *)
 (* Qed. *)

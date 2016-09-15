@@ -408,7 +408,15 @@ let export out_channel rt ro l =
 
 
 
-let call_cvc4_file _ rt ro ra rf root =
+let get_model_from_file filename =
+  let chan = open_in filename in
+  let lexbuf = Lexing.from_channel chan in
+  match SExprParser.sexps SExprLexer.main lexbuf with
+  | [SExpr.Atom "sat"; m] -> m
+  | _ -> Structures.error "CVC4 returned SAT but no model"
+
+
+let call_cvc4_file env rt ro ra rf root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
   export outchan rt ro fl;
@@ -416,8 +424,16 @@ let call_cvc4_file _ rt ro ra rf root =
   let bf = Filename.chop_extension filename in
   let prooffilename = bf ^ ".lfsc" in
 
+  (* let cvc4_cmd = *)
+  (*   "cvc4 --proof --dump-proof -m --dump-model \ *)
+  (*    --no-simplification --fewer-preprocessing-holes \ *)
+  (*    --no-bv-eq --no-bv-ineq --no-bv-algebraic " *)
+  (*   ^ filename ^ " > " ^ prooffilename in *)
+  (* CVC4 crashes when asking for both models and proofs *)
+  
   let cvc4_cmd =
-    "cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes \
+    "cvc4 --proof --dump-proof \
+     --no-simplification --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " > " ^ prooffilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
@@ -435,9 +451,13 @@ let call_cvc4_file _ rt ro ra rf root =
 
   try import_trace_from_file (Some root) prooffilename
   with
-  | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
   | No_proof -> Structures.error "CVC4 did not generate a proof"
   | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
+  | Ast.CVC4Sat ->
+    let smodel = get_model_from_file prooffilename in
+    Structures.error
+      ("CVC4 returned sat. Here is the model:\n\n" ^
+       SmtCommands.model_string env rt ro ra rf smodel)
 
 
 
