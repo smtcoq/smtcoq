@@ -963,7 +963,10 @@ module Atom =
       { count = 0;
 	tbl =  HashAtom.create 17 }
 
+    let op_coq_terms = Hashtbl.create 17
+
     let clear reify =
+      Hashtbl.clear op_coq_terms;
       reify.count <- 0;
       HashAtom.clear reify.tbl
 
@@ -1038,7 +1041,12 @@ module Atom =
 
     let op_tbl = lazy (op_tbl ())
 
+    
 
+
+    let get_coq_term_op =
+      Hashtbl.find op_coq_terms
+    
         
     let of_coq rt ro reify env sigma c =
       let op_tbl = Lazy.force op_tbl in
@@ -1218,6 +1226,7 @@ module Atom =
             let targs = Array.map type_of hargs in
             let tres = Btype.of_coq rt ty in
             Op.declare ro c targs tres in
+        Hashtbl.add op_coq_terms op.index c;
         get reify (Aapp (op,hargs)) in
 
        mk_hatom c

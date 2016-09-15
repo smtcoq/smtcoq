@@ -391,82 +391,127 @@ let tactic call_solver rt ro ra rf env sigma t =
 
 open SExpr
 open Smtlib2_genConstr
-open Smtlib2_ast
+open Format
+
+let get_rel_dec_name (n, _, _) = n  
+
+let vstring env cf =
+  if Term.isRel cf then
+    let dbi = Term.destRel cf in
+    Environ.lookup_rel dbi env
+    |> get_rel_dec_name
+    |> function
+    | Names.Name id -> Names.string_of_id id
+    | Names.Anonymous -> "?"
+  else string_coq_constr cf
+
+let smt2_id_to_coq_string env t_i ra rf name =
+  try
+    Scanf.sscanf name "op_%d" SmtAtom.Atom.get_coq_term_op
+    |> vstring env
+  with _ -> name
 
 
-let dloc = (Lexing.dummy_pos, Lexing.dummy_pos)
-
-let smt2_qid name = 
-  TermQualIdentifier
-    (dloc, QualIdentifierId (dloc, IdSymbol (dloc, Symbol (dloc, name))))
-
-
-let bound_vars rt l =
-  List.mapi (fun i -> function
-      | List [Atom n; expr] ->
-        let ls = Lexing.from_string (Format.asprintf "%a" SExpr.print expr) in
-        let s = Smtlib2_parse.sort Smtlib2_lex.token ls in
-        let ty = sort_of_sort s in
-        (n, (i+1, ty))
-      | _ -> assert false
-    ) (List.rev l)
-  |> List.rev
+let op_to_coq_string op = match op with
+  | "=" | "+" | "-" | "*" | "/" -> op
+  | "or" -> "||"
+  | "and" -> "&&"
+  | "xor" -> "xorb"
+  | "=>" -> "implb"
+  | _ -> op
 
 
-let temp_add_bvars l =
-  List.iter (fun (n, (dbi, ty)) ->
-      VeritSyntax.add_fun n (debruijn_indexed_op dbi ty)
-    ) l
-
-let remove_temp_bvars l =
-  List.iter (fun (n, _) -> VeritSyntax.remove_fun n) l
-
-
-let compose_lam_assum rc body =
-  List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body rc
-
-let finterp env t_i f =
-
-  Form.interp_to_coq
-    (Atom.interp_to_coq t_i
-       (Hashtbl.create 17)) (Hashtbl.create 17) f
-(* |> compose_lam_assum rc *)
-  (* |> Term.decompose_lam_assum *)
-  (* |> snd *)
+let coq_bv_string s =
+  let rec aux acc = function
+    | true :: r -> aux (acc ^ "|1") r 
+    | false :: r -> aux (acc ^ "|0") r 
+    | [] -> "#b" ^ acc ^ "|"
+  in
+  if String.length s < 3 ||
+     not (s.[0] = '#' && s.[1] = 'b') then failwith "not bv";
+  aux "" (parse_smt2bv s)
 
 
-(* let mk_model_eq env sigma t1 t2 = *)
-(*   let ty = Retyping.get_type_of env sigma t1 in *)
-(*   mklApp ceq [| ty; t1; t2|] *)
+let is_bvint bs = 
+  try Scanf.sscanf bs "bv%d" (fun _ -> true)
+  with _ -> false
 
+
+let rec smt2_sexpr_to_coq_string env t_i ra rf =
+  let open SExpr in function
+  | Atom "true" -> "true"
+  | Atom "false" -> "false"
+  | Atom s ->
+    (try ignore (int_of_string s); s
+     with Failure _ ->
+     try coq_bv_string s
+     with Failure _ ->
+     try smt2_id_to_coq_string env t_i ra rf s
+     with _ -> s)
+  | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env t_i ra rf s
+  | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
+    Scanf.sscanf bs "bv%d" (fun i ->
+        coq_bv_string (int_bv i (int_of_string s)))
+  | List [Atom "-"; Atom _ as s] ->
+    sprintf "-%s"
+      (smt2_sexpr_to_coq_string env t_i ra rf s)
+  | List [Atom "-"; s] ->
+    sprintf "(- %s)"
+      (smt2_sexpr_to_coq_string env t_i ra rf s)
+  | List [Atom (("+"|"-"|"*"|"/"|"or"|"and"|"=") as op); s1; s2] ->
+    sprintf "%s %s %s"
+      (smt2_sexpr_to_coq_string env t_i ra rf s1)
+      (op_to_coq_string op)
+      (smt2_sexpr_to_coq_string env t_i ra rf s2)
+  | List [Atom (("xor"|"=>"|"") as op); s1; s2] ->
+    sprintf "(%s %s %s)"
+      (op_to_coq_string op)
+      (smt2_sexpr_to_coq_string env t_i ra rf s1)
+      (smt2_sexpr_to_coq_string env t_i ra rf s2)
+  | List [Atom "select"; a; i] ->
+    sprintf "%s[%s]"
+      (smt2_sexpr_to_coq_string env t_i ra rf a)
+      (smt2_sexpr_to_coq_string env t_i ra rf i)
+  | List [Atom "store"; a; i; v] ->
+    sprintf "%s[%s <- %s]"
+      (smt2_sexpr_to_coq_string env t_i ra rf a)
+      (smt2_sexpr_to_coq_string env t_i ra rf i)
+      (smt2_sexpr_to_coq_string env t_i ra rf v)
+  | List [Atom "ite"; c; s1; s2] ->
+    sprintf "if %s then %s else %s"
+      (smt2_sexpr_to_coq_string env t_i ra rf c)
+      (smt2_sexpr_to_coq_string env t_i ra rf s1)
+      (smt2_sexpr_to_coq_string env t_i ra rf s2)
+  | List l ->
+    sprintf "(%s)"
+      (String.concat " " (List.map (smt2_sexpr_to_coq_string env t_i ra rf) l))
+
+
+let str_contains s1 s2 =
+  let re = Str.regexp_string s2 in
+  try ignore (Str.search_forward re s1 0); true
+  with Not_found -> false
+
+let lambda_to_coq_string l s =
+  Format.sprintf "fun %s => %s"
+    (String.concat " "
+       (List.map (function
+            | List [Atom v; _] ->
+              if str_contains s v then v else "_"
+            | _ -> assert false) l))
+    s
 
 let model_item env rt ro ra rf =
   let t_i = make_t_i rt in
   function
-  | List [Atom "define-fun"; Atom name; List []; _; expr] ->
-    let lb = Lexing.from_string name in
-    let id = Smtlib2_parse.term Smtlib2_lex.token lb in
-    let lv = Lexing.from_string (Format.asprintf "%a" SExpr.print expr) in
-    let v = Smtlib2_parse.term Smtlib2_lex.token lv in
-    (finterp env t_i (make_root ra rf id),
-     finterp env t_i (make_root ra rf v))
+  | List [Atom "define-fun"; n; List []; _; expr] ->
+    (smt2_sexpr_to_coq_string env t_i ra rf n,
+     smt2_sexpr_to_coq_string env t_i ra rf expr)
     
-  | List [Atom "define-fun"; Atom name; List l; _; expr] ->
-    let lb = Lexing.from_string name in
-    let id = Smtlib2_parse.term Smtlib2_lex.token lb in
-    let bvars = bound_vars rt l in
-    temp_add_bvars bvars;
-    let lv = Lexing.from_string (Format.asprintf "%a" SExpr.print expr) in
-    let v = Smtlib2_parse.term Smtlib2_lex.token lv in
-    let coqid = finterp env t_i (make_root ra rf id) in
-    let coqexpr = finterp env t_i (make_root ra rf v) in
-    let lambda =
-      List.fold_right (fun (n, (_, ty)) t ->
-          let coqTy = Btype.interp_to_coq rt ty in
-          Term.mkLambda (mkName n, coqTy, t)
-        ) bvars coqexpr in
-    remove_temp_bvars bvars;
-    (coqid, lambda)
+  | List [Atom "define-fun"; n; List l; _; expr] ->
+    (smt2_sexpr_to_coq_string env t_i ra rf n,
+     lambda_to_coq_string l
+       (smt2_sexpr_to_coq_string env t_i ra rf expr))
     
   | _ -> Structures.error ("Could not reconstruct model")
 
@@ -475,26 +520,9 @@ let model env rt ro ra rf = function
   | List (Atom "model" :: l) ->
     List.map (model_item env rt ro ra rf) l
   | _ -> Structures.error ("No model")
-
-
-let get_rel_dec_name (n, _, _) = n
-  
-
-let vstring env cf =
-  if Term.isRel cf then
-    let rc = Environ.rel_context env in
-    let dbi = Term.destRel cf in
-    Context.lookup_rel dbi rc
-    |> get_rel_dec_name
-    |> function
-    | Names.Name id -> Names.string_of_id id
-    | Names.Anonymous -> "?"
-  else string_coq_constr cf
     
 
 let model_string env rt ro ra rf s =
   String.concat "\n"
-    (List.map (fun (n, value) ->
-         Format.sprintf "%s := %s"
-           (vstring env n) (vstring env value))
-        (model env rt ro ra rf s))
+    (List.map (fun (x,v) -> Format.sprintf "%s := %s" x v)
+       (model env rt ro ra rf s))

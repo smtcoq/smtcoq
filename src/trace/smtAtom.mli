@@ -174,6 +174,8 @@ module Atom :
       val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl ->
         Environ.env -> Evd.evar_map -> Term.constr -> t
 
+      val get_coq_term_op : int -> Term.constr
+      
       val to_coq : hatom -> Term.constr
 
       val to_array : reify_tbl -> 'a -> (atom -> 'a) -> 'a array

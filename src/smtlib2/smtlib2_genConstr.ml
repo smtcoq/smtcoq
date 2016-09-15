@@ -127,7 +127,7 @@ let parse_smt2bv s =
     match s.[i] with
     | '0' -> l := false :: !l
     | '1' -> l := true :: !l
-    | _ -> assert false
+    | _ -> failwith "Not a bitvector"
   done;
   !l
 
