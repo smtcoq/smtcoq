@@ -467,4 +467,4 @@ let tactic env sigma t =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4_file rt ro ra rf env sigma t
+  SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t

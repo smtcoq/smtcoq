@@ -395,21 +395,23 @@ open Format
 
 let get_rel_dec_name (n, _, _) = n  
 
-let vstring env cf =
+let vstring_i env cf =
   if Term.isRel cf then
     let dbi = Term.destRel cf in
-    Environ.lookup_rel dbi env
-    |> get_rel_dec_name
-    |> function
-    | Names.Name id -> Names.string_of_id id
-    | Names.Anonymous -> "?"
-  else string_coq_constr cf
+    let s =
+      Environ.lookup_rel dbi env
+      |> get_rel_dec_name
+      |> function
+      | Names.Name id -> Names.string_of_id id
+      | Names.Anonymous -> "?" in
+    s, dbi
+  else string_coq_constr cf, 0
 
 let smt2_id_to_coq_string env t_i ra rf name =
   try
     Scanf.sscanf name "op_%d" SmtAtom.Atom.get_coq_term_op
-    |> vstring env
-  with _ -> name
+    |> vstring_i env
+  with _ -> name, 0
 
 
 let op_to_coq_string op = match op with
@@ -446,7 +448,7 @@ let rec smt2_sexpr_to_coq_string env t_i ra rf =
      with Failure _ ->
      try coq_bv_string s
      with Failure _ ->
-     try smt2_id_to_coq_string env t_i ra rf s
+     try fst (smt2_id_to_coq_string env t_i ra rf s)
      with _ -> s)
   | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env t_i ra rf s
   | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
@@ -504,12 +506,12 @@ let lambda_to_coq_string l s =
 let model_item env rt ro ra rf =
   let t_i = make_t_i rt in
   function
-  | List [Atom "define-fun"; n; List []; _; expr] ->
-    (smt2_sexpr_to_coq_string env t_i ra rf n,
+  | List [Atom "define-fun"; Atom n; List []; _; expr] ->
+    (smt2_id_to_coq_string env t_i ra rf n,
      smt2_sexpr_to_coq_string env t_i ra rf expr)
     
-  | List [Atom "define-fun"; n; List l; _; expr] ->
-    (smt2_sexpr_to_coq_string env t_i ra rf n,
+  | List [Atom "define-fun"; Atom n; List l; _; expr] ->
+    (smt2_id_to_coq_string env t_i ra rf n,
      lambda_to_coq_string l
        (smt2_sexpr_to_coq_string env t_i ra rf expr))
     
@@ -519,10 +521,11 @@ let model_item env rt ro ra rf =
 let model env rt ro ra rf = function
   | List (Atom "model" :: l) ->
     List.map (model_item env rt ro ra rf) l
+    |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
   | _ -> Structures.error ("No model")
     
 
 let model_string env rt ro ra rf s =
   String.concat "\n"
-    (List.map (fun (x,v) -> Format.sprintf "%s := %s" x v)
+    (List.map (fun ((x, _) ,v) -> Format.sprintf "%s := %s" x v)
        (model env rt ro ra rf s))
