@@ -7782,6 +7782,7 @@ Proof.
         now apply sextend_interp_main.
 Qed.
 
+
   End Proof.
 
 End Checker.
