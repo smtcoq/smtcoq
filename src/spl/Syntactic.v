@@ -139,16 +139,14 @@ Section CheckAtom.
       intros n m. simpl. unfold is_true. rewrite andb_true_iff, N.eqb_eq. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
       intros n m. simpl. unfold is_true. rewrite andb_true_iff, N.eqb_eq. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
       (* bv_extr *)
-      intros n i j H0 H1 n0 i0 j0 H2 H3.
+      intros i n0 n1 i0 n2 n3.
       unfold is_true. rewrite andb_true_iff.
       intros. destruct H as (Ha, Hb).
       inversion Ha.
-      rewrite !andb_true_iff in H4.
-      destruct H4 as ((H4a, H4b), H4c).
-      rewrite N.eqb_eq in H4a, H4b, H4c.
+      rewrite !andb_true_iff in H0.
+      destruct H0 as ((H0a, H0b), H0c).
+      rewrite N.eqb_eq in H0a, H0b, H0c.
       subst.
-      rewrite (proof_irrelevance H0 H2).
-      rewrite (proof_irrelevance H1 H3).
       rewrite (check_hatom_correct _ _ Hb); auto.
       (* bv_zextn *)
       intros n i n0 i0.

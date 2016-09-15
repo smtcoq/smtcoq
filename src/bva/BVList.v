@@ -74,7 +74,10 @@ Module Type BITVECTOR.
     (*unary operations*)
   Parameter bv_not    : forall n,     bitvector n -> bitvector n.
   Parameter bv_neg    : forall n,     bitvector n -> bitvector n.
-  Parameter bv_extr   : forall (n i j : N) {H0: n >= j} {H1: j >= i}, bitvector n -> bitvector (j - i).
+  Parameter bv_extr   : forall (i n0 n1 : N), bitvector n1 -> bitvector n0.
+
+ (* Parameter bv_extr   : forall (n i j : N) {H0: n >= j} {H1: j >= i}, bitvector n -> bitvector (j - i). *)
+
   Parameter bv_zextn  : forall (n i: N), bitvector n -> bitvector (i + n).
   Parameter bv_sextn  : forall (n i: N), bitvector n -> bitvector (i + n).
  (* Parameter bv_extr   : forall n i j : N, bitvector n -> n >= j -> j >= i -> bitvector (j - i). *)
@@ -125,7 +128,10 @@ Parameter bv_slt     : bitvector -> bitvector -> bool.
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
 Parameter bv_neg     : bitvector -> bitvector.
-Parameter bv_extr    : forall (n i j: N) {H0: n >= j} {H1: j >= i}, bitvector -> bitvector.
+Parameter bv_extr    : forall (i n0 n1: N), bitvector -> bitvector.
+
+(*Parameter bv_extr    : forall (n i j: N) {H0: n >= j} {H1: j >= i}, bitvector -> bitvector.*)
+
 Parameter bv_zextn   : forall (n i: N), bitvector -> bitvector.
 Parameter bv_sextn   : forall (n i: N), bitvector -> bitvector.
 
@@ -145,8 +151,13 @@ Axiom bv_mult_size   : forall n a b, size a = n -> size b = n -> size (bv_mult a
 Axiom bv_not_size    : forall n a, size a = n -> size (bv_not a) = n.
 Axiom bv_neg_size    : forall n a, size a = n -> size (bv_neg a) = n.
 
+Axiom bv_extr_size   : forall i n0 n1 a, size a = n1 -> size (@bv_extr i n0 n1 a) = n0.
+
+(*
 Axiom bv_extr_size   : forall n (i j: N) a (H0: n >= j) (H1: j >= i), 
   size a = n -> size (@bv_extr n i j H0 H1 a) = (j - i).
+*)
+
 Axiom bv_zextn_size  : forall (n i: N) a, 
   size a = n -> size (@bv_zextn n i a) = (i + n).
 Axiom bv_sextn_size  : forall (n i: N) a, 
@@ -231,8 +242,13 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Definition bv_concat n m (bv1:bitvector n) (bv2: bitvector m) : bitvector (n + m) :=
     @MkBitvector (n + m) (M.bv_concat bv1 bv2) (M.bv_concat_size (wf bv1) (wf bv2)).
 
+  Definition bv_extr (i n0 n1: N) (bv1: bitvector n1) : bitvector n0 :=
+    @MkBitvector n0 (@M.bv_extr i n0 n1 bv1) (@M.bv_extr_size i n0 n1 bv1 (wf bv1)).
+
+(*
   Definition bv_extr  n (i j: N) (H0: n >= j) (H1: j >= i) (bv1: bitvector n) : bitvector (j - i) :=
     @MkBitvector (j - i) (@M.bv_extr n i j H0 H1 bv1) (@M.bv_extr_size n i j bv1 H0 H1 (wf bv1)).
+*)
 
   Definition bv_zextn n (i: N)  (bv1: bitvector n) : bitvector (i + n) :=
     @MkBitvector (i + n) (@M.bv_zextn n i bv1) (@M.bv_zextn_size n i bv1 (wf bv1)).
@@ -2132,8 +2148,48 @@ Qed.
 Qed.
 
   (** bit-vector extraction *)
+  Definition bv_extr (i n0 n1: N) a : bitvector :=
+    if (N.ltb n1 (n0 + i)) then mk_list_false (nat_of_N n0)
+    else  extract a (nat_of_N i) (nat_of_N (n0 + i)).
+
+  Lemma not_ltb: forall (n0 n1 i: N), (n1 <? n0 + i)%N = false -> n1 >= n0 + i.
+  Proof. intro n0.
+         induction n0.
+         intros. simpl in *.
+         apply N.ltb_nlt in H.
+         apply N.nlt_ge in H. lia.
+         intros. simpl.
+         case_eq i.
+         intros. subst. simpl in H.
+         apply N.ltb_nlt in H.
+         apply N.nlt_ge in H. intros. simpl in H. lia.
+         intros. subst.
+         apply N.ltb_nlt in H.
+         apply N.nlt_ge in H. lia.
+  Qed.
+         
+  
+  Lemma bv_extr_size: forall (i n0 n1 : N) a, 
+                      size a = n1 -> size (@bv_extr i n0 n1 a) = n0%N.
+  Proof. 
+    intros. unfold bv_extr, size in *.
+    case_eq (n1 <? n0 + i).
+    intros. now rewrite length_mk_list_false, N2Nat.id.
+    intros.
+    specialize (@length_extract a i (n0 + i)). intros.
+    assert ((n0 + i - i) = n0)%N.
+    { lia. } rewrite H2 in H1.
+    rewrite H1.
+      now rewrite N2Nat.id.
+      rewrite H.
+      now apply not_ltb.
+      lia.
+  Qed.
+ 
+ (*
   Definition bv_extr (n i j: N) {H0: n >= j} {H1: j >= i} {a: bitvector} : bitvector :=
     extract a (nat_of_N i) (nat_of_N j).
+
 
   Lemma bv_extr_size: forall n (i j: N) a (H0: n >= j) (H1: j >= i), 
                       size a = n -> size (@bv_extr n i j H0 H1 a) = (j - i)%N.
@@ -2143,6 +2199,7 @@ Qed.
     rewrite <- H in H0. 
     specialize (@length_extract a i j H0 H1); intros; apply H2.
   Qed.
+ *)
 
   (** list extension *)
   Fixpoint extend (x: list bool) (i: nat) (b: bool) {struct i}: list bool :=
