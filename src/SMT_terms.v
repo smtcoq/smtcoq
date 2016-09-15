@@ -774,7 +774,6 @@ Module Atom.
    | UO_BVnot   (_: N)
    | UO_BVneg   (_: N)
    | UO_BVextr  (i: N) (n0: N) (n1: N)
- (*  | UO_BVextr  (n: N) (i: N) (j: N) (H0: (n >= j)%N) (H1: (j >= i)%N) *)
    | UO_BVzextn (n: N) (i: N)
    | UO_BVsextn (n: N) (i: N).
 
@@ -2362,7 +2361,8 @@ Qed.
         exists (BITVECTOR_LIST._of_bits l n); auto.
         (* Unary operators *)
 
-        intros [ | | | | | | | | | | ] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
+        intros [ | | | | | | | | i0 n0 n1| n i0| n i0] i H;
+          simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
 
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~0)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~1)%positive; auto.
