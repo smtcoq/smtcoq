@@ -128,7 +128,7 @@ let export out_channel rt ro l =
 
 
 (* val call_verit : Btype.reify_tbl -> Op.reify_tbl -> Form.t -> (Form.t clause * Form.t) -> (int * Form.t clause) *)
-let call_verit rt ro rf root =
+let call_verit _ rt ro ra rf root =
   let fl = Form.flatten rf (snd root) in
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro fl;

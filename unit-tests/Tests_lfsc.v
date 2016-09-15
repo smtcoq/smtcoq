@@ -6,9 +6,17 @@ Local Open Scope list_scope.
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
 
-Goal forall (a:bool), a || negb a.
-  cvc4.
-Qed.
+(* Goal forall (a b:bool), a || negb b. *)
+(*   cvc4. *)
+(* Qed. *)
+(* Goal forall (a:Z), Z.eqb (a + 1) 4. *)
+(*   cvc4. *)
+(* Qed. *)
+
+(* (* TODO *) *)
+(* Goal forall (f : Z -> Z) (a:Z), Z.eqb (f a) 1  -->  Z.eqb ((f a) + 1) 3. *)
+(*   cvc4. *)
+(* Qed. *)
 
 Section Arrays.
   Import BVList.BITVECTOR_LIST.

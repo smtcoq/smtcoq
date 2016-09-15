@@ -448,6 +448,7 @@ let get_fun id =
   try Hashtbl.find funs id
   with | Not_found -> failwith ("VeritSyntax.get_fun : function symbol \""^id^"\" not found\n")
 let add_fun id cl = Hashtbl.add funs id cl
+let remove_fun id = Hashtbl.remove funs id
 let clear_funs () = Hashtbl.clear funs
 
 

@@ -81,11 +81,16 @@ let interp_conseq_uf t_i (prem, concl) =
   interp prem
 
 
-let print_assm ty =
+let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in
-  let pr = fix Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
-  Printf.printf "WARNING: assuming the following hypothesis:\n%s\n\n" (Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr ty)));
-  flush stdout
+  let pr = fix
+      Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
+  Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
+
+  
+let print_assm ty =
+  Printf.printf "WARNING: assuming the following hypothesis:\n%s\n@."
+    (string_coq_constr ty)
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
@@ -339,9 +344,9 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver rt ro rf l =
+let make_proof call_solver env rt ro ra rf l =
   let root = SmtTrace.mkRootV [l] in
-  call_solver rt ro rf (root,l)
+  call_solver env rt ro ra rf (root,l)
 
 
 let tactic call_solver rt ro ra rf env sigma t =
@@ -354,13 +359,13 @@ let tactic call_solver rt ro ra rf env sigma t =
       let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
-      let max_id_confl = make_proof call_solver rt ro rf l' in
+      let max_id_confl = make_proof call_solver env rt ro ra rf l' in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
-      let max_id_confl = make_proof call_solver rt ro rf l in
+      let max_id_confl = make_proof call_solver env rt ro ra rf l in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl in
   let compose_lam_assum forall_let body =
@@ -381,4 +386,115 @@ let tactic call_solver rt ro ra rf env sigma t =
         (Structures.assert_before (Names.Name n) t)
         tac
     ) tac cuts
-                             
+
+
+
+open SExpr
+open Smtlib2_genConstr
+open Smtlib2_ast
+
+
+let dloc = (Lexing.dummy_pos, Lexing.dummy_pos)
+
+let smt2_qid name = 
+  TermQualIdentifier
+    (dloc, QualIdentifierId (dloc, IdSymbol (dloc, Symbol (dloc, name))))
+
+
+let bound_vars rt l =
+  List.mapi (fun i -> function
+      | List [Atom n; expr] ->
+        let ls = Lexing.from_string (Format.asprintf "%a" SExpr.print expr) in
+        let s = Smtlib2_parse.sort Smtlib2_lex.token ls in
+        let ty = sort_of_sort s in
+        (n, (i+1, ty))
+      | _ -> assert false
+    ) (List.rev l)
+  |> List.rev
+
+
+let temp_add_bvars l =
+  List.iter (fun (n, (dbi, ty)) ->
+      VeritSyntax.add_fun n (debruijn_indexed_op dbi ty)
+    ) l
+
+let remove_temp_bvars l =
+  List.iter (fun (n, _) -> VeritSyntax.remove_fun n) l
+
+
+let compose_lam_assum rc body =
+  List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body rc
+
+let finterp env t_i f =
+
+  Form.interp_to_coq
+    (Atom.interp_to_coq t_i
+       (Hashtbl.create 17)) (Hashtbl.create 17) f
+(* |> compose_lam_assum rc *)
+  (* |> Term.decompose_lam_assum *)
+  (* |> snd *)
+
+
+(* let mk_model_eq env sigma t1 t2 = *)
+(*   let ty = Retyping.get_type_of env sigma t1 in *)
+(*   mklApp ceq [| ty; t1; t2|] *)
+
+
+let model_item env rt ro ra rf =
+  let t_i = make_t_i rt in
+  function
+  | List [Atom "define-fun"; Atom name; List []; _; expr] ->
+    let lb = Lexing.from_string name in
+    let id = Smtlib2_parse.term Smtlib2_lex.token lb in
+    let lv = Lexing.from_string (Format.asprintf "%a" SExpr.print expr) in
+    let v = Smtlib2_parse.term Smtlib2_lex.token lv in
+    (finterp env t_i (make_root ra rf id),
+     finterp env t_i (make_root ra rf v))
+    
+  | List [Atom "define-fun"; Atom name; List l; _; expr] ->
+    let lb = Lexing.from_string name in
+    let id = Smtlib2_parse.term Smtlib2_lex.token lb in
+    let bvars = bound_vars rt l in
+    temp_add_bvars bvars;
+    let lv = Lexing.from_string (Format.asprintf "%a" SExpr.print expr) in
+    let v = Smtlib2_parse.term Smtlib2_lex.token lv in
+    let coqid = finterp env t_i (make_root ra rf id) in
+    let coqexpr = finterp env t_i (make_root ra rf v) in
+    let lambda =
+      List.fold_right (fun (n, (_, ty)) t ->
+          let coqTy = Btype.interp_to_coq rt ty in
+          Term.mkLambda (mkName n, coqTy, t)
+        ) bvars coqexpr in
+    remove_temp_bvars bvars;
+    (coqid, lambda)
+    
+  | _ -> Structures.error ("Could not reconstruct model")
+
+
+let model env rt ro ra rf = function
+  | List (Atom "model" :: l) ->
+    List.map (model_item env rt ro ra rf) l
+  | _ -> Structures.error ("No model")
+
+
+let get_rel_dec_name (n, _, _) = n
+  
+
+let vstring env cf =
+  if Term.isRel cf then
+    let rc = Environ.rel_context env in
+    let dbi = Term.destRel cf in
+    Context.lookup_rel dbi rc
+    |> get_rel_dec_name
+    |> function
+    | Names.Name id -> Names.string_of_id id
+    | Names.Anonymous -> "?"
+  else string_coq_constr cf
+    
+
+let model_string env rt ro ra rf s =
+  String.concat "\n"
+    (List.map (fun (n, value) ->
+         Format.sprintf "%s := %s"
+           (vstring env n) (vstring env value))
+        (model env rt ro ra rf s))

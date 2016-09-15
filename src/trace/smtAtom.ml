@@ -327,9 +327,14 @@ type op_def = {
 
 type indexed_op = op_def gen_hashed 
 
-let dummy_indexed_op i dom codom = {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
+let dummy_indexed_op i dom codom =
+  {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
+  
 let indexed_op_index op = op.index
 
+let debruijn_indexed_op i ty =
+  { index = i;
+    hval = {tparams = [||]; tres = ty; op_val = Term.mkRel i}}
 
 module Op =
   struct 

@@ -29,7 +29,7 @@ module type ATOM =
 
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
-
+    val to_smt : Format.formatter -> t -> unit
     val logic : t -> logic
 
   end 
@@ -261,22 +261,38 @@ module Make (Atom:ATOM) =
       }  
 
     exception NotWellTyped of pform
-   	
+
     let check pf = 
       match pf with
-      | Fatom ha ->  if not (Atom.is_bool_type ha) then raise (NotWellTyped pf)
+      | Fatom ha ->  if not (Atom.is_bool_type ha) then
+          raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+                 NotWellTyped pf)
       | Fapp (op, args) ->
-	  (match op with
-	    | Ftrue | Ffalse ->
-	       if Array.length args <> 0 then raise (NotWellTyped pf)
-	    | Fnot2 _ ->
-	       if Array.length args <> 1 then raise (NotWellTyped pf)
-	    | Fand | For -> ()
-	    | Fxor | Fimp | Fiff ->
-	       if Array.length args <> 2 then raise (NotWellTyped pf)
-	    | Fite ->
-	       if Array.length args <> 3 then raise (NotWellTyped pf))
-      | FbbT (ha, l) -> if not (Atom.is_bv_type ha) then raise (NotWellTyped pf)
+	(match op with
+	 | Ftrue | Ffalse ->
+           if Array.length args <> 0 then
+             raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+                    NotWellTyped pf)
+	 | Fnot2 _ ->
+           if Array.length args <> 1 then
+             raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+                    NotWellTyped pf)
+	 | Fand | For -> ()
+	 | Fxor | Fimp | Fiff ->
+           if Array.length args <> 2 then
+             raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+                    NotWellTyped pf)
+
+          | Fite ->
+            if Array.length args <> 3 then
+              raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+                     NotWellTyped pf)
+       )
+
+      | FbbT (ha, l) -> if not (Atom.is_bv_type ha) then
+          raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+                 NotWellTyped pf)
+
 
     let declare reify pf =
       check pf;

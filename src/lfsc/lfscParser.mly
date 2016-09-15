@@ -47,7 +47,7 @@ let remove_rename = Hashtbl.remove renamings
 %token LAMBDA PI BIGLAMBDA COLON
 %token CHECK DEFINE DECLARE
 %token MPQ MPZ HOLE TYPE KIND
-%token SC PROGRAM AT
+%token SC PROGRAM AT UNSAT SAT
 
 %start proof
 %type <Ast.proof> proof
@@ -65,7 +65,7 @@ let remove_rename = Hashtbl.remove renamings
 %type <unit> proof_ignore
 
 %start one_command
-%type <Ast.command> one_command
+%type <Ast.command option> one_command
 
 %start sexp
 %type <Type.t> sexp
@@ -298,12 +298,10 @@ command_ignore:
   | LPAREN PROGRAM STRING ignore_sexp_list RPAREN { () }
 ;
 
-one_command:
-  | command { $1 }
-;
-
-command_or_prog:
+command_or_prog_or_unsat:
   | command { Some $1 }
+  | SAT { raise CVC4Sat }
+  | UNSAT { None }
   | LPAREN PROGRAM STRING ignore_sexp_list RPAREN
     { None }
 ;
@@ -311,7 +309,7 @@ command_or_prog:
   
 command_list:
   | { [] }
-  | command_or_prog command_list
+  | command_or_prog_or_unsat command_list
     { match $1 with Some c -> c :: $2 | None -> $2 }
 ;
 
@@ -339,12 +337,15 @@ proof_ignore:
 
 
 last_command:
-  | command_or_prog { $1 }
-  | command_or_prog last_command { $2 }
+  | command_or_prog_or_unsat { $1 }
+  | command_or_prog_or_unsat last_command { $2 }
 ;
 
+one_command:
+  | command_or_prog_or_unsat { $1 }
+;
 
 ignore_commands:
-  | command_or_prog { () }
-  | command_or_prog ignore_commands { () }
+  | command_or_prog_or_unsat { () }
+  | command_or_prog_or_unsat ignore_commands { () }
 ;

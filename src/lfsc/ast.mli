@@ -19,7 +19,7 @@
     checking.
 *)
 
-
+exception CVC4Sat
 
 (** {2 Structures for LFSC proofs, terms and types } *)
 

@@ -16,6 +16,8 @@
 
 open Format
 
+exception CVC4Sat
+
 let debug =
   (* true *)
   false

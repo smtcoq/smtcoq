@@ -25,7 +25,7 @@ module type ATOM =
 
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
-
+    val to_smt : Format.formatter -> t -> unit
     val logic : t -> logic
 
   end 

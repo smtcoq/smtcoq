@@ -36,6 +36,7 @@ val add_btype : string -> SmtAtom.btype -> unit
 
 val get_fun : string -> SmtAtom.indexed_op
 val add_fun : string -> SmtAtom.indexed_op -> unit
+val remove_fun : string -> unit
 
 val ra : SmtAtom.Atom.reify_tbl
 val rf : SmtAtom.Form.reify

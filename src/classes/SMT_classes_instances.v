@@ -379,7 +379,7 @@ Section Int63.
   Local Open Scope int63_scope.
 
   Let int_lt x y :=
-    if Int63Native.ltb x y == true then True else False.
+    if Int63Native.ltb x y then True else False.
   
   Instance int63_ord : OrdType int.
   Proof.
@@ -417,10 +417,10 @@ Section Int63.
     - rewrite Int63Properties.eqb_spec in H0.
       contradict H0.
       assert (int_lt x y). unfold int_lt.
-      rewrite H,eqb_refl; trivial.
+      rewrite H; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
-    - apply LT. unfold int_lt. rewrite H, eqb_refl; trivial.
+    - apply LT. unfold int_lt. rewrite H; trivial.
     - apply EQ. rewrite Int63Properties.eqb_spec in H0; trivial.
     - apply GT. unfold int_lt.
       case_eq (y < x); intro; simpl; try easy.
@@ -455,4 +455,3 @@ Hint Resolve unit_compdec bool_compdec Z_compdec Positive_compdec BV_compdec FAr
 
 Hint Resolve int63_ord int63_inh int63_eqbtype int63_dec int63_comp int63_compdec
   : typeclass_instances.
-

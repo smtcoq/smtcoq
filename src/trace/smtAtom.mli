@@ -107,7 +107,8 @@ type indexed_op
 
 val dummy_indexed_op: int -> btype array -> btype -> indexed_op
 val indexed_op_index : indexed_op -> int
-
+val debruijn_indexed_op : int -> btype -> indexed_op
+  
 module Op :
   sig
 	  

@@ -72,14 +72,18 @@ let process_signatures_once =
              Ast.print_term t2)
 
 
-let import_trace first lexbuf =
+let lfsc_parse_last = LfscParser.last_command LfscLexer.main
+
+let lfsc_parse_one = LfscParser.one_command LfscLexer.main
+
+let import_trace first parse lexbuf =
   Printexc.record_backtrace true;
   eprintf "Type-checking LFSC proof.@.";
   process_signatures_once ();
   try
-    match LfscParser.one_command LfscLexer.main lexbuf with
+    match parse lexbuf with
 
-    | Ast.Check p ->
+    | Some (Ast.Check p) ->
       (* Ast.flatten_term p; *)
       let confl_num = C.convert p in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
@@ -114,17 +118,12 @@ let import_trace first lexbuf =
          Ast.print_term t1
          Ast.print_term t2)
 
-  | e ->
-    let backtrace = Printexc.get_backtrace () in
-    eprintf "Fatal error: %s@." (Printexc.to_string e);
-    eprintf "Backtrace:@\n%s@." backtrace;
-    raise e
 
 
 let import_trace_from_file first filename =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
-  let p = import_trace first lexbuf in
+  let p = import_trace first lfsc_parse_last lexbuf in
   close_in chan;
   p
 
@@ -325,7 +324,7 @@ let string_logic ro f =
 
 
 
-let call_cvc4 rt ro rf root =
+let call_cvc4 env rt ro ra rf root =
   let open Smtlib2_solver in
   let fl = snd root in
 
@@ -362,14 +361,19 @@ let call_cvc4 rt ro rf root =
   let proof =
     match check_sat cvc4 with
     | Unsat ->
-      begin try get_proof cvc4 (import_trace (Some root)) with
+      begin
+        try get_proof cvc4 (import_trace (Some root) lfsc_parse_one)
+        with
+        | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
         | No_proof -> Structures.error "CVC4 did not generate a proof"
         | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
       end
     | Sat ->
       let smodel = get_model cvc4 in
       Structures.error
-        (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel)
+        ("CVC4 returned sat. Here is the model:\n\n" ^
+         SmtCommands.model_string env rt ro ra rf smodel)
+        (* (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel) *)
   in
 
   quit cvc4;
@@ -404,7 +408,7 @@ let export out_channel rt ro l =
 
 
 
-let call_cvc4_file rt ro rf root =
+let call_cvc4_file _ rt ro ra rf root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
   export outchan rt ro fl;
@@ -416,7 +420,7 @@ let call_cvc4_file rt ro rf root =
     "cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " > " ^ prooffilename in
-  let clean_cmd = "sed -i -e '1d' " ^ prooffilename in
+  (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
   eprintf "%s@." cvc4_cmd;
   let t0 = Sys.time () in
   let exit_code = Sys.command cvc4_cmd in
@@ -427,10 +431,11 @@ let call_cvc4_file rt ro rf root =
   if exit_code <> 0 then
     Structures.error ("CVC4 crashed: return code "^string_of_int exit_code);
 
-  ignore (Sys.command clean_cmd);
+  (* ignore (Sys.command clean_cmd); *)
 
   try import_trace_from_file (Some root) prooffilename
   with
+  | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
   | No_proof -> Structures.error "CVC4 did not generate a proof"
   | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
 

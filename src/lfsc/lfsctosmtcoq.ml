@@ -136,7 +136,8 @@ let to_verit () =
       C.convert p |> ignore
     | _ -> eprintf "No proof@."; exit 1
 
-  with Ast.TypingError (t1, t2) as e ->
+  with
+  | Ast.TypingError (t1, t2) as e ->
     let backtrace = Printexc.get_backtrace () in
     eprintf "Fatal error: %s@." (Printexc.to_string e);
     eprintf "Backtrace:@\n%s@." backtrace;
@@ -144,6 +145,8 @@ let to_verit () =
     eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1
       Ast.print_term t2
+  | Ast.CVC4Sat ->
+    eprintf "CVC4 returned SAT@."; exit 1
 
 
 

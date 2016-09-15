@@ -115,6 +115,8 @@
     ("mpz", MPZ);
     ("mpq", MPQ);
     ("program", PROGRAM);
+    ("unsat", UNSAT);
+    ("sat", SAT);
   ]
 
   module Make (X : T) : sig
