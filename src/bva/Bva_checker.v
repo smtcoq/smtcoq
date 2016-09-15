@@ -7050,11 +7050,24 @@ Proof. intro bs1.
           intros. rewrite H3 in H. now contradict H.
           intros.
           case_eq bsres. intros.
-          admit (****).
+          apply (f_equal (N.of_nat)) in H1.
+          apply (f_equal (N.of_nat)) in H0.
+          rewrite N2Nat.id in H1, H0. rewrite H1, H0 in H.
+          simpl in H. now contradict H0.
           intros. rewrite H2 in H.
-          admit (****).
+          case ((0 <? n0 + i)%N) in H; now contradict H.
           intros.
-          admit (****).
+          case_eq (N.to_nat n0).
+          intros.
+          apply (f_equal (N.of_nat)) in H1.
+          apply (f_equal (N.of_nat)) in H0.
+          rewrite N2Nat.id in H1, H0. rewrite H1, H0 in H.
+          simpl in H. now contradict H0.
+          intros.
+          apply (f_equal (N.of_nat)) in H1.
+          apply (f_equal (N.of_nat)) in H0.
+          rewrite N2Nat.id in H1, H0. rewrite H1, H0 in H.
+          simpl in H. now contradict H0.
        - intros. unfold check_extract in H.
          case_eq ((N.of_nat (Datatypes.length (xbs1 :: xsbs1)) <? n0 + i)%N).
          intros. rewrite H0 in H. now contradict H.
@@ -7088,7 +7101,7 @@ Proof. intro bs1.
          now rewrite extract_interp_all.
          
          rewrite H1 in H. now contradict H.
-Admitted.
+Qed.
 
   Lemma Npos_dist: forall p p0: positive, (Npos (p + p0))%N = (Npos p + Npos p0)%N.
   Proof. intros. case p in *; case p0 in *; easy. Qed.
@@ -7275,7 +7288,7 @@ Proof.
         intros.
         rewrite map_length in H101.
         rewrite H101 in H5. now apply H5.
-Admitted.
+Qed.
 
 Lemma zextend_interp_zero: forall a, RAWBITVECTOR_LIST.zextend (map (Lit.interp rho) a) O =
 (map (Lit.interp rho) (zextend_lit a 0)).
