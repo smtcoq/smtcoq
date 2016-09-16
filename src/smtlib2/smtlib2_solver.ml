@@ -15,9 +15,6 @@
 (**************************************************************************)
 
 open Format
-module LL = SExprLexer
-module LP = SExprParser
-
   
 type result = Sat | Unsat
 
