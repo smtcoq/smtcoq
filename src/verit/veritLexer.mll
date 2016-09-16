@@ -111,6 +111,9 @@
         "bbult", BBULT;
         "bbslt", BBSLT;
         "bbconcat", BBCONC;
+        "bbextract", BBEXTR;
+        "bbzextend", BBZEXT;
+        "bbsextend", BBSEXT;
         "bvand", BVAND;
         "bvor", BVOR;
         "bvxor", BVXOR;
@@ -130,6 +133,9 @@
         "bvnot", BVNOT;
         "bvneg", BVNEG;
         "concat", BVCONC;
+        "extract", BVEXTR;
+        "zero_extend", BVZEXT;
+        "sign_extend", BVSEXT;
         "select", SELECT;
         "diff", DIFF;
         "store", STORE;

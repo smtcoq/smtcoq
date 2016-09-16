@@ -135,6 +135,9 @@ let get_rule = function
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
   | Bbconc -> "bbconcat"
+  | Bbextr -> "bbextract"
+  | Bbzext -> "bbzextend"
+  | Bbsext -> "bbsextend"
   | Row1 -> "row1"
   | Row2 -> "row2" 
   | Exte -> "ext" 
@@ -258,6 +261,17 @@ and print_term fmt t =
         let nb = new_sharp t in
         fprintf fmt "#%d:(%a %a %a)" nb
           Hstring.print op print_term a print_term b
+
+      | Some (op, [_; i; j; _; a]) when op == H.extract ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%a %a %a %a)" nb
+          Hstring.print op print_term i print_term j print_term a
+
+      | Some (op, [_; i; _; a])
+        when op == H.zero_extend || op == H.sign_extend ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%a %a %a)" nb
+          Hstring.print op print_term i print_term a
 
       | Some (op, [a; {value = Int n}]) when op == H.bitof ->
         let nb = new_sharp t in

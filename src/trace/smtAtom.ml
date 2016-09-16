@@ -291,6 +291,9 @@ type uop =
    | UO_BVbitOf of int * int
    | UO_BVnot of int
    | UO_BVneg of int
+   | UO_BVextr of int * int * int
+   | UO_BVzextn of int * int
+   | UO_BVsextn of int * int
 
 type bop = 
    | BO_Zplus
@@ -362,20 +365,26 @@ module Op =
       | UO_BVbitOf (s, i) -> mklApp cUO_BVbitOf [|mkN s; mkNat i|]
       | UO_BVnot s -> mklApp cUO_BVnot [|mkN s|]
       | UO_BVneg s -> mklApp cUO_BVneg [|mkN s|]
+      | UO_BVextr (i, n, s) -> mklApp cUO_BVextr [|mkN i; mkN n; mkN s|]
+      | UO_BVzextn (s, n) -> mklApp cUO_BVzextn [|mkN s; mkN n|]
+      | UO_BVsextn (s, n) -> mklApp cUO_BVsextn [|mkN s; mkN n|]
 
     let u_type_of = function 
       | UO_xO | UO_xI -> Tpositive
       | UO_Zpos | UO_Zneg | UO_Zopp -> TZ
       | UO_BVbitOf _ -> Tbool
-      | UO_BVnot s -> TBV s
-      | UO_BVneg s -> TBV s
-
+      | UO_BVnot s | UO_BVneg s -> TBV s
+      | UO_BVextr (_, n, _) -> TBV n
+      | UO_BVzextn (s, n) | UO_BVsextn (s, n) -> TBV (s + n)
+          
     let u_type_arg = function 
       | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
       | UO_Zopp -> TZ
       | UO_BVbitOf (s,_) -> TBV s
-      | UO_BVnot s -> TBV s
-      | UO_BVneg s -> TBV s
+      | UO_BVnot s | UO_BVneg s -> TBV s
+      | UO_BVextr (_, _, s) -> TBV s
+      | UO_BVzextn (s, _) | UO_BVsextn (s, _) -> TBV s
+      
 
     let interp_uop = function
       | UO_xO -> Lazy.force cxO
@@ -386,6 +395,9 @@ module Op =
       | UO_BVbitOf (_,i) -> mklApp cbitOf [|mkNat i|]
       | UO_BVnot s -> mklApp cbv_not [|mkN s|]
       | UO_BVneg s -> mklApp cbv_neg [|mkN s|]
+      | UO_BVextr (i, n, s) -> mklApp cbv_extr [|mkN i; mkN n; mkN s|]
+      | UO_BVzextn (s, n) -> mklApp cbv_zextn [|mkN s; mkN n|]
+      | UO_BVsextn (s, n) -> mklApp cbv_sextn [|mkN s; mkN n|]
 
     let eq_tbl = Hashtbl.create 17 
     let select_tbl = Hashtbl.create 17 
@@ -619,6 +631,10 @@ module Op =
       | UO_BVbitOf (s1,i1), UO_BVbitOf (s2,i2) -> s1 == s2 && i1 == i2
       | UO_BVnot s1, UO_BVnot s2 -> s1 == s2
       | UO_BVneg s1, UO_BVneg s2 -> s1 == s2
+      | UO_BVextr (i1, n1, s1) , UO_BVextr (i2, n2, s2) ->
+        i1 == i2 && n1 == n2 && s1 == s2
+      | UO_BVzextn (s1, n1), UO_BVzextn (s2, n2) -> s1 == s2 && n1 == n2
+      | UO_BVsextn (s1, n1), UO_BVsextn (s2, n2) -> s1 == s2 && n1 == n2
       | _ -> false
 
     let b_equal op1 op2 =
@@ -658,7 +674,8 @@ module Op =
     let logic_of_uop = function
       | UO_xO | UO_xI
       | UO_Zpos | UO_Zneg | UO_Zopp -> SL.singleton LLia
-      | UO_BVbitOf _ | UO_BVnot _ | UO_BVneg _ -> SL.singleton LBitvectors
+      | UO_BVbitOf _ | UO_BVnot _ | UO_BVneg _
+      | UO_BVextr _ | UO_BVzextn _ | UO_BVsextn _ -> SL.singleton LBitvectors
 
     let logic_of_bop = function
       | BO_Zplus
@@ -841,7 +858,8 @@ module Atom =
           | UO_Zpos -> compute_hint h
           | UO_Zneg -> - (compute_hint h)
           | UO_Zopp | UO_BVbitOf _
-          | UO_BVnot _ | UO_BVneg _ -> assert false)
+          | UO_BVnot _ | UO_BVneg _
+          | UO_BVextr _ | UO_BVzextn _ | UO_BVsextn _ -> assert false)
       | _ -> assert false
 
     and compute_hint h = compute_int (atom h)
@@ -868,12 +886,18 @@ module Atom =
         Format.fprintf fmt "(- ";
         to_smt fmt h;
         Format.fprintf fmt ")"
-      | Auop (UO_BVbitOf (s, i), h) ->
+      | Auop (UO_BVbitOf (_, i), h) ->
         Format.fprintf fmt "(bitof %d %a)" i to_smt h
-      | Auop (UO_BVnot s, h) ->
+      | Auop (UO_BVnot _, h) ->
         Format.fprintf fmt "(bvnot %a)" to_smt h
-      | Auop (UO_BVneg s, h) ->
+      | Auop (UO_BVneg _, h) ->
         Format.fprintf fmt "(bvneg %a)" to_smt h
+      | Auop (UO_BVextr (i, n, _), h) ->
+        Format.fprintf fmt "((_ extract %d %d) %a)" i (i+n) to_smt h
+      | Auop (UO_BVzextn (_, n), h) ->
+        Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
+      | Auop (UO_BVsextn (_, n), h) ->
+        Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
       | Auop _ as a -> to_smt_int fmt (compute_int a)
       | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
       | Atop (op,h1,h2,h3) -> to_smt_top fmt op h1 h2 h3
@@ -1010,6 +1034,9 @@ module Atom =
       | CCBVult
       | CCBVslt
       | CCBVconcat
+      | CCBVextr
+      | CCBVsextn
+      | CCBVzextn
       | CCeqb
       | CCeqbP
       | CCeqbZ
@@ -1026,7 +1053,8 @@ module Atom =
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
-          cbitOf, CCBVbitOf; cbv_not, CCBVnot; cbv_neg, CCBVneg; 
+          cbitOf, CCBVbitOf; cbv_not, CCBVnot; cbv_neg, CCBVneg;
+          cbv_extr, CCBVextr; cbv_zextn, CCBVzextn; cbv_sextn, CCBVsextn;
           cadd,CCZplus; csub,CCZminus; cmul,CCZmult; cltb,CCZlt;
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
           cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
@@ -1081,6 +1109,9 @@ module Atom =
           | CCBVult -> mk_bop_bvult args
           | CCBVslt -> mk_bop_bvslt args
           | CCBVconcat -> mk_bop_bvconcat args
+          | CCBVextr -> mk_bvextr args
+          | CCBVzextn -> mk_bvzextn args
+          | CCBVsextn -> mk_bvsextn args
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
@@ -1119,6 +1150,24 @@ module Atom =
         | [s;a] ->
           let h = mk_hatom a in
           get reify (Auop (UO_BVneg (mk_bvsize s), h))
+        | _ -> assert false
+
+      and mk_bvextr = function
+        | [i;n;s;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVextr (mk_N i, mk_N n, mk_bvsize s), h))
+        | _ -> assert false
+
+      and mk_bvzextn = function
+        | [s;n;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVzextn (mk_bvsize s, mk_N n), h))
+        | _ -> assert false
+
+      and mk_bvsextn = function
+        | [s;n;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVsextn (mk_bvsize s, mk_N n), h))
         | _ -> assert false
 
       and mk_bop op = function
@@ -1381,6 +1430,9 @@ module Atom =
     let mk_select reify ti te = mk_binop (BO_select (ti, te)) reify
     let mk_diffarray reify ti te = mk_binop (BO_diffarray (ti, te)) reify
     let mk_store reify ti te = mk_terop (TO_store (ti, te)) reify
+    let mk_bvextr reify ~i ~n ~s = mk_unop (UO_BVextr (i, n, s)) reify
+    let mk_bvzextn reify ~s ~n = mk_unop (UO_BVzextn (s, n)) reify
+    let mk_bvsextn reify ~s ~n = mk_unop (UO_BVsextn (s, n)) reify
 
 
     let rec logic_atom = function

@@ -773,7 +773,7 @@ Module Atom.
    | UO_BVbitOf (_: N) (_: nat)
    | UO_BVnot   (_: N)
    | UO_BVneg   (_: N)
-   | UO_BVextr  (i: N) (n0: N) (n1: N)
+   | UO_BVextr  (i: N) (n0: N) (n1: N) (* TODO n1 first arg *)
    | UO_BVzextn (n: N) (i: N)
    | UO_BVsextn (n: N) (i: N).
 

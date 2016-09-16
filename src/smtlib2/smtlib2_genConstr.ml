@@ -151,6 +151,8 @@ let make_root_specconstant ra = function
 
 type atom_form = | Atom of SmtAtom.Atom.t | Form of SmtAtom.Form.t
 
+let startwith prefix s =
+  try Scanf.sscanf s (prefix ^^ "%_s") true with _ -> false
 
 let make_root ra rf t =
 
@@ -350,10 +352,40 @@ let make_root ra rf t =
       | "ite", _ ->
         Form (Form.get rf (Fapp (Fite, Array.of_list (List.map make_root l))))
       | "not", [a] -> Form (Form.neg (make_root a))
+
+      | _, [a] when startwith "extract_" v ->
+        Scanf.sscanf v "extract_%d_%d" (fun i j ->
+            (match make_root_term a with
+             | Atom a' ->
+               (match Atom.type_of a' with
+                | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i) a')
+                | _ -> assert false)
+             | _ -> assert false)
+          )
+      | _, [a] when startwith "zero_extend_" v ->
+        Scanf.sscanf v "zero_extend_%d" (fun n ->
+            (match make_root_term a with
+             | Atom a' ->
+               (match Atom.type_of a' with
+                | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n a')
+                | _ -> assert false)
+             | _ -> assert false)
+          )
+      | _, [a] when startwith "sign_extend_" v ->
+        Scanf.sscanf v "sign_extend_%d" (fun n ->
+            (match make_root_term a with
+             | Atom a' ->
+               (match Atom.type_of a' with
+                | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n a')
+                | _ -> assert false)
+             | _ -> assert false)
+          )
+                
       | _, _ ->
         let op = VeritSyntax.get_fun v in
-        let l' = List.map (fun t -> match make_root_term t with
-          | Atom h -> h | Form _ -> assert false) l in
+        let l' = List.map (fun t ->
+            match make_root_term t with
+            | Atom h -> h | Form _ -> assert false) l in
         Atom (Atom.get ra (Aapp (op, Array.of_list l')))
 
   and make_root t =

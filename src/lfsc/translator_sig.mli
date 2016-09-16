@@ -87,6 +87,9 @@ type rule =
   | Bbnot
   | Bbneg
   | Bbconc
+  | Bbextr
+  | Bbzext
+  | Bbsext
   | Row1
   | Row2 
   | Exte

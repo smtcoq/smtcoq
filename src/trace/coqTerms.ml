@@ -134,6 +134,9 @@ let cbv_mult = gen_constant bv_modules "bv_mult"
 let cbv_ult = gen_constant bv_modules "bv_ult"
 let cbv_slt = gen_constant bv_modules "bv_slt"
 let cbv_concat = gen_constant bv_modules "bv_concat"
+let cbv_extr = gen_constant bv_modules "bv_extr"
+let cbv_zextn = gen_constant bv_modules "bv_zextn"
+let cbv_sextn = gen_constant bv_modules "bv_sextn"
 
 
 (* Arrays *)
@@ -206,6 +209,9 @@ let cUO_Zopp = gen_constant smt_modules "UO_Zopp"
 let cUO_BVbitOf = gen_constant smt_modules "UO_BVbitOf"
 let cUO_BVnot = gen_constant smt_modules "UO_BVnot"
 let cUO_BVneg = gen_constant smt_modules "UO_BVneg"
+let cUO_BVextr = gen_constant smt_modules "UO_BVextr"
+let cUO_BVzextn = gen_constant smt_modules "UO_BVzextn"
+let cUO_BVsextn = gen_constant smt_modules "UO_BVsextn"
 
 let cBO_Zplus = gen_constant smt_modules "BO_Zplus"
 let cBO_Zminus = gen_constant smt_modules "BO_Zminus"
@@ -273,6 +279,7 @@ let make_certif_ops modules args =
   gen_constant "BBDiseq",
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "BBUlt", gen_constant "BBSlt", gen_constant "BBConcat",
+  gen_constant "BBExtract", gen_constant "BBZextend", gen_constant "BBSextend",
   gen_constant "RowEq", gen_constant "RowNeq", gen_constant "Ext",
   gen_constant "Hole")
   

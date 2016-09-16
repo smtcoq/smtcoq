@@ -117,6 +117,9 @@ let get_rule = function
   | Bbnot -> VeritSyntax.Bbnot
   | Bbneg -> VeritSyntax.Bbneg
   | Bbconc -> VeritSyntax.Bbconc
+  | Bbextr -> VeritSyntax.Bbextr
+  | Bbzext -> VeritSyntax.Bbzext
+  | Bbsext -> VeritSyntax.Bbsext
   | Row1 -> VeritSyntax.Row1
   | Row2 -> VeritSyntax.Row2
   | Exte -> VeritSyntax.Exte
@@ -183,6 +186,9 @@ let string_of_rule = function
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
   | Bbconc -> "bbconcat"
+  | Bbextr -> "bbextract"
+  | Bbzext -> "bbzextend"
+  | Bbsext -> "bbsextend"
   | Row1 -> "row1"
   | Row2 -> "row2" 
   | Exte -> "ext" 
@@ -326,6 +332,29 @@ let rec term_smtcoq_old t =
           match Atom.type_of ha, Atom.type_of hb with
             | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
             | _ -> assert false)
+      | Some (n, [_; {value = Int bi}; {value = Int bj}; _; a])
+        when n == H.extract ->
+        (let ha = term_smtcoq_atom a in
+         let i = Big_int.int_of_big_int bi in
+         let j = Big_int.int_of_big_int bj in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i) ha)
+            | _ -> assert false)
+      | Some (n, [_; {value = Int bi}; _; a])
+        when n == H.zero_extend ->
+        (let ha = term_smtcoq_atom a in
+         let n = Big_int.int_of_big_int bi in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n ha)
+            | _ -> assert false)
+      | Some (n, [_; {value = Int bi}; _; a])
+        when n == H.sign_extend ->
+        (let ha = term_smtcoq_atom a in
+         let n = Big_int.int_of_big_int bi in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n ha)
+            | _ -> assert false)
+
       | Some (n, [a; b]) when n == H.lt_Int ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.le_Int ->

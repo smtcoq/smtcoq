@@ -1145,6 +1145,33 @@ module Make (T : Translator_sig.S) = struct
        | _ -> assert false
       )
         
+    | Some (c, [n; i; j; m; x; _; rb; xbb])
+      when c == H.bv_bbl_extract ->
+      let res = bblast_term n (extract n i j m x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbextr [res] [idx])
+       | _ -> assert false
+      )
+
+    | Some (c, [n; k; m; x; _; rb; xbb])
+      when c == H.bv_bbl_zero_extend ->
+      let res = bblast_term n (zero_extend n k m x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbzext [res] [idx])
+       | _ -> assert false
+      )
+
+    | Some (c, [n; k; m; x; _; rb; xbb])
+      when c == H.bv_bbl_sign_extend ->
+      let res = bblast_term n (sign_extend n k m x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbsext [res] [idx])
+       | _ -> assert false
+      )
+        
     | None ->
       begin match name p with
       | Some h -> (* should be an declared clause *)
