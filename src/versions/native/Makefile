@@ -196,9 +196,9 @@ MLFILES:=lia/lia.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
   verit/veritParser.ml\
-  smtlib2/smtlib2_solver.ml\
   smtlib2/SExprLexer.ml\
   smtlib2/SExprParser.ml\
+  smtlib2/smtlib2_solver.ml\
   smtlib2/SExpr.ml\
   smtlib2/smtlib2_util.ml\
   smtlib2/smtlib2_genConstr.ml\
