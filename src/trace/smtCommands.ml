@@ -89,7 +89,7 @@ let string_coq_constr t =
 
   
 let print_assm ty =
-  Printf.printf "WARNING: assuming the following hypothesis:\n%s\n@."
+  Format.printf "WARNING: assuming the following hypothesis:\n%s\n@."
     (string_coq_constr ty)
 
 
