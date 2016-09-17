@@ -1260,9 +1260,6 @@ module Make (T : Translator_sig.S) = struct
 
   (** Convert an LFSC proof (this is the entry point) *)
   let convert p =
-    eprintf "Converting LFSC proof to SMTCoq.@.";
-
-    let sp = 
     p
       
     (* |> ignore_all_decls *)
@@ -1282,11 +1279,16 @@ module Make (T : Translator_sig.S) = struct
     
     |> reso_of_satlem_simplify
 
-    in
+  
 
-    eprintf "Done.@.";
+  let convert_pt p =
+    eprintf "Converting LFSC proof to SMTCoq...@?";
+    let t0 = Sys.time () in
+    let r = convert p in
+    let t1 = Sys.time () in
+    eprintf " Done [%.3f s]@." (t1 -. t0);
+    r
 
-    sp
   
 
   (** Clean global environments *)

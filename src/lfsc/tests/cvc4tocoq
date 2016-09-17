@@ -4,12 +4,17 @@ set -e
 name=${1%.*}
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo "Running CVC4..."
+date="gdate"
+
+echo -n "Running CVC4... "
+T0=$($date +%s.%N)
 cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 > $name.lfsc
+T1=$($date +%s.%N)
+CVC4TIME=$(echo "$T1 - $T0" | bc)
+echo "Done [$CVC4TIME s]"
 
 # sed -i -e '1d' $name.lfsc
 
-echo "Creating Coq file..."
 cat > ${name}_lfsc.v <<EOF
 Require Import SMTCoq Bool List.
 Import ListNotations BVList.BITVECTOR_LIST FArray.
@@ -22,7 +27,7 @@ Section File.
 End File.
 EOF
 
-# echo "Checking LFSC proof with Coq directly..."
+echo "Checking LFSC proof with Coq directly."
 coqc -q -R $DIR/../.. SMTCoq ${name}_lfsc.v
 
 exit 0

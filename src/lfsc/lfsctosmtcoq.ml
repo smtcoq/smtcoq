@@ -104,7 +104,7 @@ let pretty_to_verit () =
     match List.rev proof with
     | Check p :: _ ->
       flatten_term p;
-      C.convert p |> ignore
+      C.convert_pt p |> ignore
     | _ -> eprintf "No proof@."; exit 1
     
 
@@ -133,7 +133,7 @@ let to_verit () =
       (* eprintf "Flattening pointer structures...@."; *)
       (* flatten_term p; *)
       (* eprintf "Done (flatten)@."; *)
-      C.convert p |> ignore
+      C.convert_pt p |> ignore
     | _ -> eprintf "No proof@."; exit 1
 
   with

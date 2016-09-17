@@ -72,20 +72,32 @@ let process_signatures_once =
              Ast.print_term t2)
 
 
-let lfsc_parse_last = LfscParser.last_command LfscLexer.main
+let lfsc_parse_last lb =
+  eprintf "Type-checking LFSC proof...@?";
+  let t0 = Sys.time () in
+  let r = LfscParser.last_command LfscLexer.main lb in
+  let t1 = Sys.time () in
+  eprintf " Done [%.3f s]@." (t1 -. t0);
+  r
 
-let lfsc_parse_one = LfscParser.one_command LfscLexer.main
+let lfsc_parse_one lb =
+  eprintf "Type-checking LFSC proof...@?";
+  let t0 = Sys.time () in
+  let r = LfscParser.one_command LfscLexer.main lb in
+  let t1 = Sys.time () in
+  eprintf " Done [%.3f s]@." (t1 -. t0);
+  r
+  
 
 let import_trace first parse lexbuf =
   Printexc.record_backtrace true;
-  eprintf "Type-checking LFSC proof.@.";
   process_signatures_once ();
   try
     match parse lexbuf with
 
     | Some (Ast.Check p) ->
       (* Ast.flatten_term p; *)
-      let confl_num = C.convert p in
+      let confl_num = C.convert_pt p in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)
       let first =
@@ -149,8 +161,22 @@ let import_all fsmt fproof =
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
   SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace
     (import_all fsmt fproof)
-let theorem name fsmt fproof = SmtCommands.theorem name (import_all fsmt fproof)
-let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
+    
+let theorem name fsmt fproof =
+  SmtCommands.theorem name (import_all fsmt fproof)
+
+let checker fsmt fproof =
+  SmtCommands.checker (import_all fsmt fproof)
+
+(* Same but print runtime *)
+let checker fsmt fproof =
+  let c = import_all fsmt fproof in
+  eprintf "Coq checker...@.";
+  let t0 = Sys.time () in
+  let r = SmtCommands.checker c in
+  let t1 = Sys.time () in
+  eprintf "Done (Coq) [%.3f s]@." (t1 -. t0);
+  r
 
 
 
