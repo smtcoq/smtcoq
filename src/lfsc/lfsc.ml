@@ -73,19 +73,19 @@ let process_signatures_once =
 
 
 let lfsc_parse_last lb =
-  eprintf "Type-checking LFSC proof...@?";
+  printf "Type-checking LFSC proof...@?";
   let t0 = Sys.time () in
   let r = LfscParser.last_command LfscLexer.main lb in
   let t1 = Sys.time () in
-  eprintf " Done [%.3f s]@." (t1 -. t0);
+  printf " Done [%.3f s]@." (t1 -. t0);
   r
 
 let lfsc_parse_one lb =
-  eprintf "Type-checking LFSC proof...@?";
+  printf "Type-checking LFSC proof...@?";
   let t0 = Sys.time () in
   let r = LfscParser.one_command LfscLexer.main lb in
   let t1 = Sys.time () in
-  eprintf " Done [%.3f s]@." (t1 -. t0);
+  printf " Done [%.3f s]@." (t1 -. t0);
   r
   
 
@@ -171,11 +171,11 @@ let checker fsmt fproof =
 (* Same but print runtime *)
 let checker fsmt fproof =
   let c = import_all fsmt fproof in
-  eprintf "Coq checker...@.";
+  printf "Coq checker...@.";
   let t0 = Sys.time () in
   let r = SmtCommands.checker c in
   let t1 = Sys.time () in
-  eprintf "Done (Coq) [%.3f s]@." (t1 -. t0);
+  printf "Done (Coq) [%.3f s]@." (t1 -. t0);
   r
 
 
