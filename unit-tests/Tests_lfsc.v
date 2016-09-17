@@ -27,27 +27,27 @@ Section Arrays.
   Local Open Scope bv_scope.
 
   
-  (* Goal forall (a b c d: farray Z Z), *)
-  (*     equal c b[0 <- 4]  --> *)
-  (*     equal d b[0 <- 4][1 <- 4]  --> *)
-  (*     equal a d[1 <- b[1]]  --> *)
-  (*     equal a c. *)
-  (* Proof. *)
-  (*   cvc4. *)
-  (* Qed. *)
+  Goal forall (a b c d: farray Z Z),
+      equal c b[0 <- 4]  -->
+      equal d b[0 <- 4][1 <- 4]  -->
+      equal a d[1 <- b[1]]  -->
+      equal a c.
+  Proof.
+    cvc4.
+  Qed.
 
 
-  (* Goal forall (bv1 bv2 : bitvector 4) *)
-  (*        (a b c d : farray (bitvector 4) Z), *)
-  (*     bv_eq #b|0|0|0|0| bv1  --> *)
-  (*     bv_eq #b|1|0|0|0| bv2  --> *)
-  (*     equal c b[bv1 <- 4]  --> *)
-  (*     equal d b[bv1 <- 4][bv2 <- 4]  --> *)
-  (*     equal a d[bv2 <- b[bv2]]  --> *)
-  (*     equal a c. *)
-  (* Proof. *)
-  (*   cvc4. *)
-  (* Qed. *)
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv_eq #b|0|0|0|0| bv1  -->
+      bv_eq #b|1|0|0|0| bv2  -->
+      equal c b[bv1 <- 4]  -->
+      equal d b[bv1 <- 4][bv2 <- 4]  -->
+      equal a d[bv2 <- b[bv2]]  -->
+      equal a c.
+  Proof.
+    cvc4.
+  Qed.
 
   
   Goal forall (a b: farray Z Z)
@@ -72,8 +72,8 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    try cvc4.
-  Abort.
+    cvc4.
+  Qed.
 
   Goal forall (a:bool), a || negb a.
     cvc4.
@@ -89,8 +89,8 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    (* cvc4. *)
-  Abort.
+    cvc4.
+  Qed.
 
 
     
