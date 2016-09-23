@@ -65,7 +65,7 @@ COQDOCLIBS?=-R . SMTCoq
 
 CAMLYACC=$(CAMLBIN)ocamlyacc
 CAMLLEX=$(CAMLBIN)ocamllex
-VCMXS=NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
+VCMXS=versions/native/NSMTCoq_versions_native_Structures.cmxs NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
 CMXS=smtcoq_plugin.cmxs
 CMXA=smtcoq.cmxa
 
@@ -145,7 +145,8 @@ VFILES:=Trace.v\
   spl/Assumptions.v\
   lia/Lia.v\
   euf/Euf.v\
-  cnf/Cnf.v
+  cnf/Cnf.v\
+  versions/native/Structures.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))

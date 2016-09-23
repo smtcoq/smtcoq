@@ -31,6 +31,7 @@ let mkInt : int -> Term.constr =
 
 let cint = gen_constant int63_modules "int"
 
+
 (* PArray *)
 let parray_modules = [["Coq";"Array";"PArray"]]
 
@@ -38,6 +39,33 @@ let max_array_size : int =
   Parray.trunc_size (Uint63.of_int 4194303)
 let mkArray : Term.types * Term.constr array -> Term.constr =
   Term.mkArray
+
+
+(* Traces *)
+(* WARNING: side effect on r! *)
+let mkTrace step_to_coq next carray _ _ _ _ size step def_step r =
+  let max = max_array_size - 1 in
+  let q,r1 = size / max, size mod max in
+  let trace =
+    let len = if r1 = 0 then q + 1 else q + 2 in
+    Array.make len (mkArray (step, [|def_step|])) in
+  for j = 0 to q - 1 do
+    let tracej = Array.make max_array_size def_step in
+    for i = 0 to max - 1 do
+      r := next !r;
+      tracej.(i) <- step_to_coq !r;
+    done;
+    trace.(j) <- mkArray (step, tracej)
+  done;
+  if r1 <> 0 then (
+    let traceq = Array.make (r1 + 1) def_step in
+    for i = 0 to r1-1 do
+    r := next !r;
+    traceq.(i) <- step_to_coq !r;
+    done;
+    trace.(q) <- mkArray (step, traceq)
+  );
+  mkArray (Term.mkApp (Lazy.force carray, [|step|]), trace)
 
 
 (* Differences between the two versions of Coq *)

@@ -43,6 +43,7 @@ let mkInt : int -> Term.constr = fun i ->
 
 let cint = gen_constant int31_module "int31"
 
+
 (* PArray *)
 let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
 
@@ -61,6 +62,20 @@ let mkArray : Term.types * Term.constr array -> Term.constr =
                             mklApp cset [|ty; acc; mkInt i; c|] in
                         (i+1,acc')
                        ) (0,mklApp cmake [|ty; mkInt l; a.(l)|]) a)
+
+
+(* Traces *)
+(* WARNING: side effect on r! *)
+let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
+  let rec mkTrace s =
+    if s = size then
+      mklApp cnil [|step|]
+    else (
+      r := next !r;
+      let st = step_to_coq !r in
+      mklApp ccons [|step; st; mkTrace (s+1)|]
+    ) in
+  mklApp cpair [|mklApp clist [|step|]; step; mkTrace 0; def_step|]
 
 
 (* Differences between the two versions of Coq *)
