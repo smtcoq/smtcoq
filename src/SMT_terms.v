@@ -795,10 +795,11 @@ Module Atom.
    | BO_BVult (_: N)
    | BO_BVslt (_: N)
    | BO_BVconcat (_: N) (_: N)
+   | BO_BVshl (_: N)
    | BO_select (_ : Typ.type) (_ : Typ.type)
    | BO_diffarray (_ : Typ.type) (_ : Typ.type)
   .
-  
+
   Inductive nop : Type :=
    | NO_distinct (_ : Typ.type).
 
@@ -862,6 +863,7 @@ Module Atom.
    | BO_BVult s1, BO_BVult s2 => N.eqb s1 s2
    | BO_BVslt s1, BO_BVslt s2 => N.eqb s1 s2
    | BO_BVconcat s1 s2, BO_BVconcat s3 s4 => N.eqb s1 s3 && N.eqb s2 s4
+   | BO_BVshl s1, BO_BVshl s2 => N.eqb s1 s2
    | BO_select ti te, BO_select ti' te'
    | BO_diffarray ti te, BO_diffarray ti' te' => Typ.eqb ti ti' && Typ.eqb te te'
    | _,_ => false
@@ -955,8 +957,8 @@ Module Atom.
 
   Lemma reflect_bop_eqb : forall o1 o2, reflect (o1 = o2) (bop_eqb o1 o2).
   Proof.
-    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 | I1 E1 ]
-           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | s2 | I2 E2 | I2 E2 ];
+    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 | I1 E1 ]
+           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | s2 | s2 |I2 E2 | I2 E2 ];
       simpl;try (constructor;trivial;discriminate).
    - preflect (Typ.reflect_eqb A1 A2).
      constructor;subst;trivial.
@@ -981,7 +983,10 @@ Module Atom.
      preflect (N.eqb_spec s1 s2).
      preflect (N.eqb_spec n n0).
      constructor;subst;trivial.
-     
+
+   - preflect (N.eqb_spec s1 s2).
+     constructor;subst;trivial.
+
    - preflect (Typ.reflect_eqb I1 I2).
      preflect (Typ.reflect_eqb E1 E2).
      constructor;subst;trivial.
@@ -1120,6 +1125,7 @@ Qed.
         | BO_BVult s   => ((Typ.TBV s,Typ.TBV s), Typ.Tbool)
         | BO_BVconcat s1 s2   => ((Typ.TBV s1,Typ.TBV s2), (Typ.TBV (s1 + s2)))
         | BO_BVslt s   => ((Typ.TBV s,Typ.TBV s), Typ.Tbool)
+        | BO_BVshl s   => ((Typ.TBV s,Typ.TBV s), Typ.TBV s)
         | BO_select ti te => ((Typ.TFArray ti te, ti), te)
         | BO_diffarray ti te => ((Typ.TFArray ti te, Typ.TFArray ti te), ti)
         end.
@@ -1396,6 +1402,12 @@ Qed.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
+        (*additional case for BO_BVshl*)
+        (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
+          left. exists (Typ.TBV n). now rewrite N.eqb_refl; easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
           
           
        (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
@@ -1538,7 +1550,9 @@ Qed.
          | BO_BVslt s =>
            apply_binop (Typ.TBV s) (Typ.TBV s) Typ.Tbool (@BITVECTOR_LIST.bv_slt s) 
          | BO_BVconcat s1 s2 =>
-           apply_binop (Typ.TBV s1) (Typ.TBV s2) (Typ.TBV (s1 + s2)) (@BITVECTOR_LIST.bv_concat s1 s2) 
+           apply_binop (Typ.TBV s1) (Typ.TBV s2) (Typ.TBV (s1 + s2)) (@BITVECTOR_LIST.bv_concat s1 s2)
+         | BO_BVshl s =>
+           apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_shl s)
          | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te FArray.select
          | BO_diffarray ti te =>
            apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti FArray.diff
@@ -1768,8 +1782,9 @@ Qed.
         rewrite Hb. intros.
         exists (@BITVECTOR_LIST.bv_sextn n i y); auto. rewrite Typ.cast_refl; auto.   
   (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | n m | ti te | ti te];
+        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | s9 | n m | ti te | ti te];
           [ intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
@@ -1936,6 +1951,20 @@ Qed.
         rewrite !Typ.cast_refl.
         rewrite <- Ha.
         exists (BITVECTOR_LIST.bv_concat y1 y2); auto.
+        (*BO_BVshl*)
+        simpl in s.
+        intros. rewrite !andb_true_iff in H. destruct H as ((Ha, Hb), Hc).
+        apply Typ.eqb_spec in Hb.
+        apply Typ.eqb_spec in Hc.
+        rewrite N.eqb_eq in Ha.
+        revert Hb Hc. rewrite Ha in *. intros.
+
+        destruct (check_aux_interp_hatom h1) as [x1 Hx1]. 
+        rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl.
+        revert x1 Hx1 x2 Hx2.
+        rewrite Hb, Hc. intros y1 Hy1 y2 Hy2.
+        rewrite Typ.cast_refl.
+        exists (BITVECTOR_LIST.bv_shl y1 y2); auto.
 
         (* BO_select *)
         intros t' H.
@@ -2164,7 +2193,16 @@ Qed.
           apply Typ.cast_diff in H. now rewrite H.
           apply Typ.cast_diff in H. rewrite H.
           case (Typ.cast (get_type h1) (Typ.TBV n)); auto.
-                  
+        (*BVshl*)
+        specialize (H (Typ.TBV n)). simpl in H.
+        apply andb_false_iff in H. destruct H.
+        specialize (@Typ.cast_diff (get_type h1) (Typ.TBV n)). intros. 
+        rewrite andb_false_iff in H. destruct H as [ H | H ].
+          rewrite N.eqb_refl in H. now contradict H.
+          apply Typ.cast_diff in H. now rewrite H.
+          apply Typ.cast_diff in H. rewrite H.
+          case (Typ.cast (get_type h1) (Typ.TBV n)); auto.
+
         (* BO_select *)
         specialize (H t0). simpl in H.
         rewrite !andb_false_iff in H. destruct H. destruct H.
@@ -2380,7 +2418,7 @@ Qed.
         simpl; [ | exists true; auto]. intro k. exists (BITVECTOR_LIST.bv_sextn i0 (k interp_t x)) ; auto.
 
        (* Binary operators *)
-        intros [ | | | | | | |A | | | | | | | | | | ti te| ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
+        intros [ | | | | | | |A | | | | | | | | | | | ti te| ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x - k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x * k2 interp_t y)%Z; auto.
@@ -2432,6 +2470,11 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV (n))); simpl; try (exists true; auto);
         intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV (n0))) as [k2| ];
         simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_concat (k1 interp_t x) (k2 interp_t y));
+        auto.
+        (*BO_BVshl*)
+        case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto);
+        intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ];
+        simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_shl (k1 interp_t x) (k2 interp_t y));
         auto.
         (* BO_select *)
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TFArray ti te) );

@@ -69,7 +69,8 @@ Module Type BITVECTOR.
   Parameter bv_subt   : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_ult    : forall n, bitvector n -> bitvector n -> bool.
-  Parameter bv_slt    : forall n, bitvector n -> bitvector n -> bool. 
+  Parameter bv_slt    : forall n, bitvector n -> bitvector n -> bool.
+  Parameter bv_shl   : forall n, bitvector n -> bitvector n -> bitvector n.
 
     (*unary operations*)
   Parameter bv_not    : forall n,     bitvector n -> bitvector n.
@@ -124,6 +125,7 @@ Parameter bv_mult    : bitvector -> bitvector -> bitvector.
 Parameter bv_subt    : bitvector -> bitvector -> bitvector.
 Parameter bv_ult     : bitvector -> bitvector -> bool.
 Parameter bv_slt     : bitvector -> bitvector -> bool.
+Parameter bv_shl    : bitvector -> bitvector -> bitvector.
 
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
@@ -150,6 +152,7 @@ Axiom bv_subt_size   : forall n a b, size a = n -> size b = n -> size (bv_subt a
 Axiom bv_mult_size   : forall n a b, size a = n -> size b = n -> size (bv_mult a b) = n.
 Axiom bv_not_size    : forall n a, size a = n -> size (bv_not a) = n.
 Axiom bv_neg_size    : forall n a, size a = n -> size (bv_neg a) = n.
+Axiom bv_shl_size    : forall n a b, size a = n -> size b = n -> size (bv_shl a b) = n.
 
 Axiom bv_extr_size   : forall i n0 n1 a, size a = n1 -> size (@bv_extr i n0 n1 a) = n0.
 
@@ -255,6 +258,9 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
 
   Definition bv_sextn n (i: N)  (bv1: bitvector n) : bitvector (i + n) :=
     @MkBitvector (i + n) (@M.bv_sextn n i bv1) (@M.bv_sextn_size n i bv1 (wf bv1)).
+
+  Definition bv_shl n (bv1 bv2:bitvector n) : bitvector n :=
+    @MkBitvector n (M.bv_shl bv1 bv2) (M.bv_shl_size (wf bv1) (wf bv2)).
 
   Lemma bits_size n (bv:bitvector n) : List.length (bits bv) = N.to_nat n.
   Proof. unfold bits. now rewrite M.bits_size, wf. Qed.
@@ -2312,6 +2318,87 @@ Qed.
     rewrite Nat2N.id.
     now rewrite <- H1.
   Qed.
+
+  (** shift left *)
+
+Fixpoint pow2 (n: nat): nat :=
+  match n with
+    | O => 1
+    | S n' => 2 * pow2 n'
+  end.
+
+Fixpoint _list2nat_be (a: list bool) (n i: nat) : nat :=
+  match a with
+    | [] => n
+    | xa :: xsa =>
+        if xa then _list2nat_be xsa (n + (pow2 i)) (i + 1)
+        else _list2nat_be xsa n (i + 1)
+  end.
+
+Definition list2nat_be (a: list bool) := _list2nat_be a 0 0.
+
+Definition _shl_be (a: list bool) : list bool :=
+   match a with
+     | [] => []
+     | _ => false :: removelast a 
+   end.
+
+Fixpoint nshl_be (a: list bool) (n: nat): list bool :=
+    match n with
+      | O => a
+      | S n' => nshl_be (_shl_be a) n'  
+    end.
+
+Definition shl_be (a b: list bool): list bool :=
+  nshl_be a (list2nat_be b).
+
+Lemma length__shl_be: forall a, length (_shl_be a) = length a.
+Proof. intro a.
+       induction a; intros.
+       - now simpl.
+       - simpl. rewrite <- IHa.
+         case_eq a0; easy.
+Qed.
+
+Lemma length_nshl_be: forall n a, length (nshl_be a n) = length a.
+Proof. intro n.
+       induction n; intros; simpl.
+       - reflexivity.
+       - now rewrite (IHn (_shl_be a)), length__shl_be.
+Qed.
+
+Lemma length_shl_be: forall a b n, n = (length a) -> n = (length b)%nat -> 
+                     n = (length (shl_be a b)).
+Proof.
+    intros.
+    unfold shl_be. now rewrite length_nshl_be.
+Qed.
+
+  (** bit-vector extension *)
+Definition bv_shl (a b : bitvector) : bitvector :=
+  if ((@size a) =? (@size b))
+  then shl_be a b
+  else zeros (@size a).
+
+Lemma bv_shl_size n a b : size a = n -> size b = n -> size (bv_shl a b) = n.
+Proof.
+  unfold bv_shl. intros H1 H2. rewrite H1, H2.
+  rewrite N.eqb_compare. rewrite N.compare_refl.
+  unfold size in *. rewrite <- (@length_shl_be a b (nat_of_N n)).
+  now rewrite N2Nat.id.
+  now apply (f_equal (N.to_nat)) in H1; rewrite Nat2N.id in H1.
+  now apply (f_equal (N.to_nat)) in H2; rewrite Nat2N.id in H2.
+Qed.
+
+
+(*
+Compute list2nat_be [true; false; true; true].
+
+Compute shl_be [false; false; true; false]
+              [false; false; true; false].
+
+             [false; false; false; false; true; true; true].
+*)
 
 End RAWBITVECTOR_LIST.
 
