@@ -73,7 +73,7 @@ COQDOCLIBS?=-R . SMTCoq
 
 CAMLYACC=$(CAMLBIN)ocamlyacc
 CAMLLEX=$(CAMLBIN)ocamllex
-VCMXS=NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
+VCMXS=versions/native/NSMTCoq_versions_native_Structures.cmxs NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
 CMXS=smtcoq_plugin.cmxs
 CMXA=smtcoq.cmxa
 
@@ -154,10 +154,11 @@ VFILES:=Trace.v\
   lia/Lia.v\
   euf/Euf.v\
   cnf/Cnf.v\
-  classes/SMT_classes.v\
-  classes/SMT_classes_instances.v\
-  array/FArray.v\
+  versions/native/Structures.v\
   array/Array_checker.v\
+  array/FArray.v\
+  classes/SMT_classes_instances.v\
+  classes/SMT_classes.v\
   bva/Bva_checker.v\
   bva/BVList.v
 
@@ -190,8 +191,8 @@ MLFILES:=lia/lia.ml\
   lfsc/type.ml\
   lfsc/lfscLexer.ml\
   lfsc/lfscParser.ml\
-  lfsc/shashcons.ml\
   lfsc/hstring.ml\
+  lfsc/shashcons.ml\
   verit/veritSyntax.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
@@ -222,14 +223,12 @@ MLFILES:=lia/lia.ml\
 MLIFILES:=lfsc/tosmtcoq.mli\
   lfsc/translator_sig.mli\
   lfsc/ast.mli\
-  lfsc/shashcons.mli\
   lfsc/hstring.mli\
+  lfsc/shashcons.mli\
   verit/veritSyntax.mli\
-  verit/veritParser.mli\
-  smtlib2/smtlib2_solver.mli\
   smtlib2/SExprParser.mli\
+  smtlib2/smtlib2_solver.mli\
   smtlib2/SExpr.mli\
-  smtlib2/smtlib2_parse.mli\
   trace/smtForm.mli\
   trace/smtAtom.mli
 
@@ -394,7 +393,7 @@ clean:
 	- rm -rf vtest
 	- rm -rf ztest
 	- rm -rf test
-	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/SExprParser.mli smtlib2/SExprParser.ml smtlib2/SExprLexer.ml  lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a
+	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a
 
 archclean:
 	rm -f *.cmx *.o

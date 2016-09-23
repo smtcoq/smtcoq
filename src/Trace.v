@@ -17,6 +17,7 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray.
+Require Structures.
 Require Import Misc State SMT_terms.
 Require Import Syntactic Arithmetic Operators Assumptions.
 Require Import Cnf Euf Lia BVList Bva_checker Array_checker.
@@ -39,8 +40,7 @@ Section trace.
 
   Variable rho : Valuation.t.
 
-  (* We use [array array step] to allow bigger trace *)
-  Definition _trace_ := array (array step).
+  Definition _trace_ := Structures.trace step.
 
   (* A checker for such a trace *)
 
@@ -57,7 +57,8 @@ Section trace.
 *)
 
   Definition _checker_ (s: S.t) (t: _trace_) (confl: clause_id) : bool :=
-    let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in
+    let s' := Structures.trace_fold check_step s t in
+    (* let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in *)
     is_false (S.get s' confl).
   (* Register _checker_ as PrimInline. *)
 
@@ -92,9 +93,10 @@ Section trace.
     intros s t' cid Hf Hv.
     apply (is_false_correct Hf).
     apply S.valid_get.
-    apply PArray.fold_left_ind; auto.
-    intros a i _ Ha;apply PArray.fold_left_ind;trivial.
-    intros a0 i0 _ H1;auto.
+    apply Structures.trace_fold_ind; auto.
+    (* apply PArray.fold_left_ind; auto. *)
+    (* intros a i _ Ha;apply PArray.fold_left_ind;trivial. *)
+    (* intros a0 i0 _ H1;auto. *)
   Qed.
  
 End trace.

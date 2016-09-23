@@ -48,7 +48,7 @@
 
 CMXA = smtcoq.cmxa
 CMXS = smtcoq_plugin.cmxs
-VCMXS = "NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi"
+VCMXS = "versions/native/NSMTCoq_versions_native_Structures.cmxs NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi"
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
 
@@ -61,6 +61,7 @@ classes/SMT_classes_instances.v
 array/FArray.v
 array/Array_checker.v
 
+versions/native/Structures.v
 versions/native/structures.ml
 
 trace/coqTerms.ml
