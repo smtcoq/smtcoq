@@ -185,6 +185,10 @@ type 'hform rule =
   (* Bit-blasting bitvector extensions
 
   *)
+  | BBShl of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector shift left *)
+  | BBShr of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector shift right *)
   | BBEq of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
@@ -253,7 +257,9 @@ let used_clauses r =
 
   | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
   | BBMul (c1,c2,_) | BBConc (c1,c2,_)
-  | BBUlt (c1,c2,_) | BBSlt (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
+  | BBUlt (c1,c2,_) | BBSlt (c1,c2,_)
+  | BBShl (c1,c2,_) | BBShr (c1,c2,_)
+  | BBEq (c1,c2,_) -> [c1;c2]
 
   | Hole (cs, _) -> cs
 

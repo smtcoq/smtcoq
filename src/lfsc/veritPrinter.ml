@@ -132,6 +132,8 @@ let get_rule = function
   | Bbmul -> "bbmul"
   | Bbult -> "bbult"
   | Bbslt -> "bbslt"
+  | Bbshl -> "bbshl"
+  | Bbshr -> "bbshr"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
   | Bbconc -> "bbconcat"
@@ -248,7 +250,9 @@ and print_term fmt t =
              op == H.bvult ||
              op == H.bvslt ||
              op == H.bvule ||
-             op == H.bvsle ->
+             op == H.bvsle ||
+             op == H.bvshl ||
+             op == H.bvlshr ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%a %a %a)" nb
           Hstring.print op print_term a print_term b

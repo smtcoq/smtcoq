@@ -114,6 +114,8 @@ let get_rule = function
   | Bbmul -> VeritSyntax.Bbmul
   | Bbult -> VeritSyntax.Bbult
   | Bbslt -> VeritSyntax.Bbslt
+  | Bbshl -> VeritSyntax.Bbshl
+  | Bbshr -> VeritSyntax.Bbshr
   | Bbnot -> VeritSyntax.Bbnot
   | Bbneg -> VeritSyntax.Bbneg
   | Bbconc -> VeritSyntax.Bbconc
@@ -183,6 +185,8 @@ let string_of_rule = function
   | Bbmul -> "bbmul"
   | Bbult -> "bbult"
   | Bbslt -> "bbslt"
+  | Bbshl -> "bbshl"
+  | Bbshr -> "bbshr"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
   | Bbconc -> "bbconcat"
@@ -332,13 +336,13 @@ let rec term_smtcoq_old t =
           match Atom.type_of ha, Atom.type_of hb with
             | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
             | _ -> assert false)
-      | Some (n, [_; {value = Int bi}; {value = Int bj}; _; a])
+      | Some (n, [_; {value = Int bj}; {value = Int bi}; _; a])
         when n == H.extract ->
         (let ha = term_smtcoq_atom a in
          let i = Big_int.int_of_big_int bi in
          let j = Big_int.int_of_big_int bj in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i) ha)
+            | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) ha)
             | _ -> assert false)
       | Some (n, [_; {value = Int bi}; _; a])
         when n == H.zero_extend ->
@@ -353,6 +357,18 @@ let rec term_smtcoq_old t =
          let n = Big_int.int_of_big_int bi in
           match Atom.type_of ha with
             | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n ha)
+            | _ -> assert false)
+      | Some (n, [_; a; b]) when n == H.bvshl ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvshl ra s ha hb)
+            | _ -> assert false)
+      | Some (n, [_; a; b]) when n == H.bvlshr ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvshr ra s ha hb)
             | _ -> assert false)
 
       | Some (n, [a; b]) when n == H.lt_Int ->

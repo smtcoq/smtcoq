@@ -282,7 +282,8 @@ let to_coq to_lit interp (cstep,
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
     cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBDiseq,
     cBBNeg, cBBAdd, cBBMul, cBBUlt, cBBSlt, cBBConc,
-    cBBExtr, cBBZextn, cBBSextn, 
+    cBBExtr, cBBZextn, cBBSextn,
+    cBBShl, cBBShr,
     cRowEq, cRowNeq, cExt,
     cHole) confl =
 
@@ -366,6 +367,10 @@ let to_coq to_lit interp (cstep,
           mklApp cBBZextn [|out_c c; out_c c1; out_f res|]
         | BBSextn (c1,res) ->
           mklApp cBBSextn [|out_c c; out_c c1; out_f res|]
+        | BBShl (c1,c2,res) ->
+          mklApp cBBShl [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBShr (c1,c2,res) ->
+          mklApp cBBShr [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBEq (c1,c2,res) ->
           mklApp cBBEq [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBDiseq (res) -> mklApp cBBDiseq [|out_c c; out_f res|]

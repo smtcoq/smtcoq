@@ -137,6 +137,8 @@ let cbv_concat = gen_constant bv_modules "bv_concat"
 let cbv_extr = gen_constant bv_modules "bv_extr"
 let cbv_zextn = gen_constant bv_modules "bv_zextn"
 let cbv_sextn = gen_constant bv_modules "bv_sextn"
+let cbv_shl = gen_constant bv_modules "bv_shl"
+let cbv_shr = gen_constant bv_modules "bv_shr"
 
 
 (* Arrays *)
@@ -229,6 +231,8 @@ let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
 let cBO_BVult = gen_constant smt_modules "BO_BVult"
 let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
 let cBO_BVconcat = gen_constant smt_modules "BO_BVconcat"
+let cBO_BVshl = gen_constant smt_modules "BO_BVshl"
+let cBO_BVshr = gen_constant smt_modules "BO_BVshr"
 let cBO_select = gen_constant smt_modules "BO_select"
 let cBO_diffarray = gen_constant smt_modules "BO_diffarray"
 
@@ -280,6 +284,7 @@ let make_certif_ops modules args =
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "BBUlt", gen_constant "BBSlt", gen_constant "BBConcat",
   gen_constant "BBExtract", gen_constant "BBZextend", gen_constant "BBSextend",
+  gen_constant "BBShl", gen_constant "BBShr",
   gen_constant "RowEq", gen_constant "RowNeq", gen_constant "Ext",
   gen_constant "Hole")
   

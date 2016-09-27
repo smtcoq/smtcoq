@@ -97,6 +97,8 @@ type bop =
    | BO_BVult of int
    | BO_BVslt of int
    | BO_BVconcat of int * int
+   | BO_BVshl of int
+   | BO_BVshr of int
    | BO_select of btype * btype
    | BO_diffarray of btype * btype
 
@@ -219,6 +221,8 @@ module Atom :
       val mk_bvextr : reify_tbl -> i:int -> n:int -> s:int -> hatom -> hatom
       val mk_bvzextn : reify_tbl -> s:int -> n:int -> hatom -> hatom
       val mk_bvsextn : reify_tbl -> s:int -> n:int -> hatom -> hatom
+      val mk_bvshl : reify_tbl -> int -> hatom -> hatom -> hatom
+      val mk_bvshr : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_select : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
       val mk_diffarray : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
       val mk_store :

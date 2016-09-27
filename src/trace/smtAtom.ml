@@ -312,6 +312,8 @@ type bop =
    | BO_BVult of int
    | BO_BVslt of int
    | BO_BVconcat of int * int
+   | BO_BVshl of int
+   | BO_BVshr of int
    | BO_select of btype * btype
    | BO_diffarray of btype * btype
 
@@ -449,6 +451,8 @@ module Op =
       | BO_BVult s -> mklApp cBO_BVult [|mkN s|]
       | BO_BVslt s -> mklApp cBO_BVslt [|mkN s|]
       | BO_BVconcat (s1, s2) -> mklApp cBO_BVconcat [|mkN s1; mkN s2|]
+      | BO_BVshl s -> mklApp cBO_BVshl [|mkN s|]
+      | BO_BVshr s -> mklApp cBO_BVshr [|mkN s|]
       | BO_select (ti, te) -> select_to_coq ti te
       | BO_diffarray (ti, te) -> diffarray_to_coq ti te
         
@@ -456,7 +460,8 @@ module Op =
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
       | BO_BVult _ | BO_BVslt _ -> Tbool
-      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
+      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
+      | BO_BVshl s | BO_BVshr s -> TBV s
       | BO_BVconcat (s1, s2) -> TBV (s1 + s2)
       | BO_select (_, te) -> te
       | BO_diffarray (ti, _) -> ti
@@ -466,7 +471,7 @@ module Op =
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
-      | BO_BVult s | BO_BVslt s ->
+      | BO_BVult s | BO_BVslt s | BO_BVshl s | BO_BVshr s ->
         (TBV s,TBV s)
       | BO_BVconcat (s1, s2) -> (TBV s1, TBV s2)
       | BO_select (ti, te) -> (TFArray (ti, te), ti)
@@ -543,6 +548,8 @@ module Op =
       | BO_BVult s -> mklApp cbv_ult [|mkN s|]
       | BO_BVslt s -> mklApp cbv_slt [|mkN s|]
       | BO_BVconcat (s1,s2) -> mklApp cbv_concat [|mkN s1; mkN s2|]
+      | BO_BVshl s -> mklApp cbv_shl [|mkN s|]
+      | BO_BVshr s -> mklApp cbv_shr [|mkN s|]
       | BO_select (ti, te) -> interp_select t_i ti te
       | BO_diffarray (ti, te) -> interp_diff t_i ti te
 
@@ -648,6 +655,8 @@ module Op =
         | BO_BVult n1, BO_BVult n2 -> n1 == n2
         | BO_BVslt n1, BO_BVslt n2 -> n1 == n2
         | BO_BVconcat (n1,m1), BO_BVconcat (n2,m2) -> n1 == n2 && m1 == m2
+        | BO_BVshl n1, BO_BVshl n2 -> n1 == n2
+        | BO_BVshr n1, BO_BVshr n2 -> n1 == n2
         | BO_select (ti1, te1), BO_select (ti2, te2)
         | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) ->
           Btype.equal ti1 ti2 && Btype.equal te1 te2
@@ -693,6 +702,8 @@ module Op =
       | BO_BVmult _
       | BO_BVult _
       | BO_BVslt _
+      | BO_BVshl _
+      | BO_BVshr _
       | BO_BVconcat _ -> SL.singleton LBitvectors
       | BO_select (ti, te)
       | BO_diffarray (ti, te) ->
@@ -929,6 +940,8 @@ module Atom =
         | BO_BVult _ -> "bvult"
         | BO_BVslt _ -> "bvslt"
         | BO_BVconcat _ -> "concat"
+        | BO_BVshl _ -> "bvshl"
+        | BO_BVshr _ -> "bvlshr"
         | BO_select _ -> "select"
         | BO_diffarray _ -> "diff" (* should not be used in goals *)
       in
@@ -1037,6 +1050,8 @@ module Atom =
       | CCBVextr
       | CCBVsextn
       | CCBVzextn
+      | CCBVshl
+      | CCBVshr
       | CCeqb
       | CCeqbP
       | CCeqbZ
@@ -1060,6 +1075,7 @@ module Atom =
           cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
+          cbv_shl, CCBVshl; cbv_shr, CCBVshr;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
           cselect, CCselect; cdiff, CCdiff;
           cstore, CCstore;
@@ -1112,6 +1128,8 @@ module Atom =
           | CCBVextr -> mk_bvextr args
           | CCBVzextn -> mk_bvzextn args
           | CCBVsextn -> mk_bvsextn args
+          | CCBVshl -> mk_bop_bvshl args
+          | CCBVshr -> mk_bop_bvshr args
           | CCeqb -> mk_bop (BO_eq Tbool) args
           | CCeqbP -> mk_bop (BO_eq Tpositive) args
           | CCeqbZ -> mk_bop (BO_eq TZ) args
@@ -1225,6 +1243,18 @@ module Atom =
         | [s;a1;a2] ->
            let s' = mk_bvsize s in
            mk_bop (BO_BVslt s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvshl = function
+        | [s;a1;a2] ->
+           let s' = mk_bvsize s in
+           mk_bop (BO_BVshl s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvshr = function
+        | [s;a1;a2] ->
+           let s' = mk_bvsize s in
+           mk_bop (BO_BVshr s') [a1;a2]
         | _ -> assert false
 
       and mk_bop_bvconcat = function
@@ -1433,6 +1463,8 @@ module Atom =
     let mk_bvextr reify ~i ~n ~s = mk_unop (UO_BVextr (i, n, s)) reify
     let mk_bvzextn reify ~s ~n = mk_unop (UO_BVzextn (s, n)) reify
     let mk_bvsextn reify ~s ~n = mk_unop (UO_BVsextn (s, n)) reify
+    let mk_bvshl reify s = mk_binop (BO_BVshl s) reify
+    let mk_bvshr reify s = mk_binop (BO_BVshr s) reify
 
 
     let rec logic_atom = function

@@ -2413,8 +2413,6 @@ Fixpoint nshr_be (a: list bool) (n: nat): list bool :=
 Definition shr_be (a b: list bool): list bool :=
 nshr_be a (list2nat_be b).
 
-Compute shr_be [false; true; true; true] [true; false].
-
 Lemma length__shr_be: forall a, length (_shr_be a) = length a.
 Proof. intro a.
        induction a; intros.

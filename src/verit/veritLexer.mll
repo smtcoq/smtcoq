@@ -114,6 +114,8 @@
         "bbextract", BBEXTR;
         "bbzextend", BBZEXT;
         "bbsextend", BBSEXT;
+        "bbshl", BBSHL;
+        "bbshr", BBSHR;
         "bvand", BVAND;
         "bvor", BVOR;
         "bvxor", BVXOR;
@@ -123,6 +125,8 @@
         "bvslt", BVSLT;
         "bvule", BVULE;
         "bvsle", BVSLE;
+        "bvshl", BVSHL;
+        "bvlshr", BVSHR;
         "not", NOT;
         "xor", XOR;
         "ite", ITE;

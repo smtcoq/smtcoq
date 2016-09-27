@@ -84,6 +84,8 @@ type rule =
   | Bbmul
   | Bbult
   | Bbslt
+  | Bbshl
+  | Bbshr
   | Bbnot
   | Bbneg
   | Bbconc

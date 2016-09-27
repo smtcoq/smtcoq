@@ -305,6 +305,20 @@ let make_root ra rf t =
             | _ -> assert false)
          | _,_ -> assert false
         )
+      | "bvshl", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvshl ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
+      | "bvlshr", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvshr ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
       | "concat", [a;b] ->
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' ->
@@ -358,7 +372,7 @@ let make_root ra rf t =
             (match make_root_term a with
              | Atom a' ->
                (match Atom.type_of a' with
-                | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i) a')
+                | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) a')
                 | _ -> assert false)
              | _ -> assert false)
           )
