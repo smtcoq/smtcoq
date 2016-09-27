@@ -209,9 +209,9 @@ Section certif.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a Heq2.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] a1 a2 Heq3; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] a1 a2 Heq3; try (intros; now apply C.interp_true).
       case_eq (t_atom .[ a1]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] b1 b2 Heq4; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] b1 b2 Heq4; try (intros; now apply C.interp_true).
       case_eq (t_atom .[ b1]); try (intros; now apply C.interp_true).
       intros [ ] c1 c2 c3 Heq5.
       (* roweq *)
@@ -420,13 +420,13 @@ Section certif.
         case_eq (t_form .[ Lit.blit j]); try (intros; now apply C.interp_true).
         intros b Heq4.
         case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] a1 a2 Heq5; try (intros; now apply C.interp_true).
+        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] a1 a2 Heq5; try (intros; now apply C.interp_true).
         case_eq (t_atom .[ b]); try (intros; now apply C.interp_true).
-        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] b1 b2 Heq6; try (intros; now apply C.interp_true).
+        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] b1 b2 Heq6; try (intros; now apply C.interp_true).
         case_eq (t_atom .[ b1]); try (intros; now apply C.interp_true).
-        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] c1 c2 Heq7; try (intros; now apply C.interp_true).
+        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] c1 c2 Heq7; try (intros; now apply C.interp_true).
         case_eq (t_atom .[ b2]); try (intros; now apply C.interp_true).
-        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] d1 d2 Heq8; try (intros; now apply C.interp_true).
+        intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] d1 d2 Heq8; try (intros; now apply C.interp_true).
         case_eq (Typ.eqb t t1 && Typ.eqb t t3 && Typ.eqb t0 t2 && Typ.eqb t0 t4); 
           try (intros; now apply C.interp_true). intros Heq9.
 
@@ -898,9 +898,6 @@ Section certif.
             apply read_over_other_write; now auto.
     Qed.
 
-
-    
-    
   Axiom afold_left_or : forall a,
     afold_left bool int false orb (Lit.interp rho) a =
     C.interp rho (to_list a).
@@ -920,20 +917,20 @@ Require Import Psatz.
       case_eq (t_form .[ Lit.blit (a .[1])]); try (intros; now apply C.interp_true).
       intros c Heq6.
       case_eq (t_atom .[ b]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] b1 b2 Heq7; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] b1 b2 Heq7; try (intros; now apply C.interp_true).
       case_eq t; try (intros; now apply C.interp_true). intros t0 t1 Heq8.
       case_eq (t_atom .[ c]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] c1 c2 Heq9; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] c1 c2 Heq9; try (intros; now apply C.interp_true).
       case_eq (Typ.eqb t1 t2); [ intros Heq10 | intros Heq10; now apply C.interp_true].
       case_eq (t_atom .[ c1]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] d1 d2 Heq11; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] d1 d2 Heq11; try (intros; now apply C.interp_true).
       case_eq (t_atom .[ c2]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] e1 e2 Heq12; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] e1 e2 Heq12; try (intros; now apply C.interp_true).
       case_eq (Typ.eqb t0 t3 && Typ.eqb t0 t5 && Typ.eqb t1 t4 && Typ.eqb t1 t6 && 
                   (b1 == d1) && (b2 == e1) && (d2 == e2)); 
                   [ intros Heq13 | intros Heq13; now apply C.interp_true].
       case_eq (t_atom .[ d2]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | ] f1 f2 Heq14; try (intros; now apply C.interp_true).
+      intros [ | | | | | | | |N|N|N|N|N|N|N|N|N| | | ] f1 f2 Heq14; try (intros; now apply C.interp_true).
 
       case_eq (Typ.eqb t0 t7 && Typ.eqb t1 t8 && (f1 == b1) && (f2 == b2)); 
                 [ intros Heq15 | intros Heq15; now apply C.interp_true].

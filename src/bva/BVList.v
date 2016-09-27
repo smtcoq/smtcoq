@@ -2350,7 +2350,7 @@ Fixpoint nshl_be (a: list bool) (n: nat): list bool :=
     end.
 
 Definition shl_be (a b: list bool): list bool :=
-  nshl_be a (list2nat_be b).
+nshl_be a (list2nat_be b).
 
 Lemma length__shl_be: forall a, length (_shl_be a) = length a.
 Proof. intro a.

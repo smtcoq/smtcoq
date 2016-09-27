@@ -367,6 +367,7 @@ Module Euf_Checker.
   | BBExtract (pos:int) (orig:clause_id) (res:_lit)
   | BBZextend (pos:int) (orig:clause_id) (res:_lit)
   | BBSextend (pos:int) (orig:clause_id) (res:_lit)
+  | BBShl (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | RowEq (pos:int) (res: _lit)
   | RowNeq (pos:int) (cl: C.t)
   | Ext (pos:int) (res: _lit)
@@ -415,6 +416,7 @@ Module Euf_Checker.
       | BBExtract pos orig res => S.set_clause s pos (check_bbExtract t_atom t_form s orig res)
       | BBZextend pos orig res => S.set_clause s pos (check_bbZextend t_atom t_form s orig res)
       | BBSextend pos orig res => S.set_clause s pos (check_bbSextend t_atom t_form s orig res)
+      | BBShl pos orig1 orig2 res => S.set_clause s pos (check_bbShl t_atom t_form s orig1 orig2 res)
       | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
       | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
       | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
@@ -433,9 +435,12 @@ Module Euf_Checker.
     set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
     intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1)
     as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as 
-    [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
-    |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res|pos orig1 orig2 res|pos orig1 orig2 res
-    |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res| pos cl | pos orig res |  pos orig res | pos orig res | pos res |pos res 
+    [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
+    |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
+    |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res
+    |pos orig1 orig2 res|pos orig1 orig2 res
+    |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res
+    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res |pos res|pos res 
     |pos res |pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
@@ -472,6 +477,7 @@ Module Euf_Checker.
     - apply valid_check_bbExtract; auto.
     - apply valid_check_bbZextend; auto.
     - apply valid_check_bbSextend; auto.
+    - apply valid_check_bbShl; auto.
     - apply valid_check_roweq; auto.
     - apply valid_check_rowneq; auto.
     - apply valid_check_ext; auto.
