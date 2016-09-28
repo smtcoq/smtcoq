@@ -370,12 +370,22 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-  Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-  Term.mkLetIn (nc, certif, Lazy.force ccertif, 
-  mklApp cchecker_b_correct 
-	 [|vtvar; vtform; l; b; vc; 
-	   vm_cast_true (mklApp cchecker_b [|vtform;l;b;vc|])|])))
+  let proof_cast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_b_correct
+	   [|vtvar; vtform; l; b; vc;
+	     vm_cast_true (mklApp cchecker_b [|vtform;l;b;vc|])|])))
+  in
+  let proof_nocast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_b_correct
+	   [|vtvar; vtform; l; b; vc|])))
+  in
+  (proof_cast, proof_nocast)
 
 
 let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
@@ -391,12 +401,22 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-  Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-  Term.mkLetIn (nc, certif, Lazy.force ccertif, 
-  mklApp cchecker_eq_correct 
-         [|vtvar; vtform; l1; l2; l; vc;
-	   vm_cast_true (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])|])))
+  let proof_cast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_eq_correct
+           [|vtvar; vtform; l1; l2; l; vc;
+	     vm_cast_true (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])|])))
+  in
+  let proof_nocast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_eq_correct
+           [|vtvar; vtform; l1; l2; l; vc|])))
+  in
+  (proof_cast, proof_nocast)
 
 let get_arguments concl = 
   let f, args = Term.decompose_app concl in
@@ -505,7 +525,7 @@ let tactic env sigma t =
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
-  let body = 
+  let (body_cast, body_nocast) =
     if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.get reify_atom) reify_form a in
       let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
@@ -523,7 +543,12 @@ let tactic env sigma t =
       build_body_eq reify_atom reify_form 
 	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
   in
+
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
-  let res = compose_lam_assum forall_let body in
-  Structures.vm_cast_no_check res
+  let res_cast = compose_lam_assum forall_let body_cast in
+  let res_nocast = compose_lam_assum forall_let body_nocast in
+
+  (Structures.tclTHEN
+     (Structures.set_evars_tac res_nocast)
+     (Structures.vm_cast_no_check res_cast))

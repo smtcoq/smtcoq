@@ -108,6 +108,7 @@ let pr_constr_env = Printer.pr_constr_env
 
 let lift = Term.lift
 
+let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
 let vm_cast_no_check = Tactics.vm_cast_no_check
@@ -116,6 +117,7 @@ let mk_tactic tac gl =
   let sigma = Tacmach.project gl in
   let t = Tacmach.pf_concl gl in
   tac env sigma t gl
+let set_evars_tac _ = Tacticals.tclIDTAC
 
 let ppconstr_lsimpleconstr = Ppconstr.lsimple
 let constrextern_extern_constr =

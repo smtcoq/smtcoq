@@ -304,7 +304,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
-  let proof =
+  let proof_cast =
     Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
     Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
@@ -314,8 +314,17 @@ let build_body rt ro ra rf l b (max_id, confl) =
       [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*);
 	vm_cast_true (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*)|])|])))))
   in
+  let proof_nocast =
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
+    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+    mklApp cchecker_b_correct
+      [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*)|])))))
+  in
 
-  (proof, cuts)
+  (proof, proof_nocast, cuts)
 
 
 let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
@@ -337,7 +346,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
-  let proof =
+  let proof_cast =
     Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
     Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
@@ -347,8 +356,17 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
       [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*);
 	vm_cast_true (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])|])))))
   in
+  let proof_nocast =
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
+    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+    mklApp cchecker_eq_correct
+      [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])))))
+  in
 
-  (proof, cuts)
+  (proof, proof_nocast, cuts)
 
 
 let get_arguments concl =
@@ -368,7 +386,7 @@ let tactic call_solver rt ro ra rf env sigma t =
   let (forall_let, concl) = Term.decompose_prod_assum t in
   let env = Environ.push_rel_context forall_let env in
   let a, b = get_arguments concl in
-  let (body, cuts) =
+  let (body_cast, body_nocast, cuts) =
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
         (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
@@ -383,17 +401,21 @@ let tactic call_solver rt ro ra rf env sigma t =
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl in
+
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
   let quantify_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in
-  let res = compose_lam_assum forall_let body in
+  let res_cast = compose_lam_assum forall_let body_cast in
+  let res_nocast = compose_lam_assum forall_let body_nocast in
   let tac =
     List.fold_right (fun (eqn, eqt) tac ->
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name eqn) eqt)
         tac
-    ) (Btype.get_cuts rt) (Structures.vm_cast_no_check res)
+    ) (Btype.get_cuts rt) (Structures.tclTHEN
+                             (Structures.set_evars_tac res_nocast)
+                             (Structures.vm_cast_no_check res_cast))
   in
   List.fold_left (fun tac (n, t) ->
     let t = quantify_assum forall_let t in

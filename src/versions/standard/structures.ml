@@ -132,6 +132,7 @@ let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
 let lift = Vars.lift
 
+let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
 let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t)
@@ -142,6 +143,11 @@ let mk_tactic tac =
     let t = Proofview.Goal.concl gl in
     tac env sigma t
   )
+let set_evars_tac noc =
+  mk_tactic (
+      fun env sigma _ ->
+      let sigma, _ = Typing.type_of env sigma noc in
+      Proofview.Unsafe.tclEVARS sigma)
 
 let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
 let constrextern_extern_constr =
