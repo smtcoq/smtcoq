@@ -194,7 +194,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
   let theorem_proof_cast =
     Term.mkCast (
-        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
         Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
         Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
         Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -209,7 +209,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
         theorem_concl)
   in
   let theorem_proof_nocast =
-        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
         Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
         Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
         Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -315,7 +315,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
 	vm_cast_true (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*)|])|])))))
   in
   let proof_nocast =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
     Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
     Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -324,7 +324,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
       [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*)|])))))
   in
 
-  (proof, proof_nocast, cuts)
+  (proof_cast, proof_nocast, cuts)
 
 
 let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
@@ -357,7 +357,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
 	vm_cast_true (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])|])))))
   in
   let proof_nocast =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
     Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
     Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
@@ -366,7 +366,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
       [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])))))
   in
 
-  (proof, proof_nocast, cuts)
+  (proof_cast, proof_nocast, cuts)
 
 
 let get_arguments concl =
