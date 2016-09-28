@@ -394,7 +394,7 @@ module Op =
       | UO_Zpos -> Lazy.force cZpos
       | UO_Zneg -> Lazy.force cZneg
       | UO_Zopp -> Lazy.force copp
-      | UO_BVbitOf (_,i) -> mklApp cbitOf [|mkNat i|]
+      | UO_BVbitOf (s,i) -> mklApp cbitOf [|mkN s; mkNat i|]
       | UO_BVnot s -> mklApp cbv_not [|mkN s|]
       | UO_BVneg s -> mklApp cbv_neg [|mkN s|]
       | UO_BVextr (i, n, s) -> mklApp cbv_extr [|mkN i; mkN n; mkN s|]
@@ -1455,7 +1455,6 @@ module Atom =
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
     let mk_bvnot reify s = mk_unop (UO_BVnot s) reify
     let mk_bvneg reify s = mk_unop (UO_BVneg s) reify
-    let mk_bitof reify s i = mk_unop (UO_BVbitOf (s,i)) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
     let mk_select reify ti te = mk_binop (BO_select (ti, te)) reify
     let mk_diffarray reify ti te = mk_binop (BO_diffarray (ti, te)) reify

@@ -216,7 +216,6 @@ module Atom :
       val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
       val mk_bvnot : reify_tbl -> int -> hatom -> hatom
       val mk_bvneg : reify_tbl -> int -> hatom -> hatom
-      val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
       val mk_bvconst : reify_tbl -> bool list -> hatom
       val mk_bvextr : reify_tbl -> i:int -> n:int -> s:int -> hatom -> hatom
       val mk_bvzextn : reify_tbl -> s:int -> n:int -> hatom -> hatom
