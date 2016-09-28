@@ -97,10 +97,10 @@ let mkUConst c =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let mkTConst c ty =
+let mkTConst c noc ty =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd c in
+  let evd, _ = Typing.type_of env evd noc in
   { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;

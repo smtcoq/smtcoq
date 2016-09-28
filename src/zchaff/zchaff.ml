@@ -233,16 +233,27 @@ let theorem name fdimacs ftrace =
   let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
   let theorem_type = 
     Term.mkProd (mkName "v", vtype, theorem_concl) in
-  let theorem_proof =
-   Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
-   Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
-   Term.mkLambda (mkName "v", vtype,
-   mklApp ctheorem_checker
+  let theorem_proof_cast =
+    Term.mkCast (
+        Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
+        Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
+        Term.mkLambda (mkName "v", vtype,
+        mklApp ctheorem_checker
                [| Term.mkRel 3(*d*); Term.mkRel 2(*c*);
-		  vm_cast_true 
+		  vm_cast_true
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
-                  Term.mkRel 1(*v*)|]))) in
-  let ce = Structures.mkTConst theorem_proof theorem_type in
+                  Term.mkRel 1(*v*)|]))),
+      Term.VMcast,
+      theorem_type)
+  in
+  let theorem_proof_nocast =
+    Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
+    Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
+    Term.mkLambda (mkName "v", vtype,
+    mklApp ctheorem_checker
+           [| Term.mkRel 3(*d*); Term.mkRel 2(*c*)|])))
+  in
+  let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_type in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 

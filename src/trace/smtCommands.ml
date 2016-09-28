@@ -192,20 +192,35 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
     Structures.mkArray (Lazy.force cint, res) in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
-  let theorem_proof =
-   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-   Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-   Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-   Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-   Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
-   mklApp cchecker_correct
-     [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
-	vm_cast_true
-	  (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))) in
+  let theorem_proof_cast =
+    Term.mkCast (
+        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+        Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+        Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+        Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+        Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+        Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+        Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+        mklApp cchecker_correct
+               [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
+	         vm_cast_true
+	           (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))),
+        Term.VMcast,
+        theorem_concl)
+  in
+  let theorem_proof_nocast =
+        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
+        Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+        Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+        Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+        Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+        Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+        Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+        mklApp cchecker_correct
+               [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])))))))
+  in
 
-  let ce = Structures.mkTConst theorem_proof theorem_concl in
+  let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_concl in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 
