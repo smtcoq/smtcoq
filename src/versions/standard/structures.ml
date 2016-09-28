@@ -132,11 +132,10 @@ let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
 let lift = Vars.lift
 
-let mk_sat_tactic = Proofview.V82.tactic
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
 let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t)
-let mk_smt_tactic tac =
+let mk_tactic tac =
   Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Proofview.Goal.sigma gl in

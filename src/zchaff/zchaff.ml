@@ -498,12 +498,8 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 
 (* The whole tactic *)
 
-let tactic gl =
+let tactic env sigma t =
   SmtTrace.clear ();
-
-  let env = Tacmach.pf_env gl in
-  (* let sigma = Tacmach.project gl in *)
-  let t = Tacmach.pf_concl gl in
 
   let (forall_let, concl) = Term.decompose_prod_assum t in
   let a, b = get_arguments concl in
@@ -530,4 +526,4 @@ let tactic gl =
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
   let res = compose_lam_assum forall_let body in
-  Tactics.exact_no_check res gl
+  Structures.vm_cast_no_check res

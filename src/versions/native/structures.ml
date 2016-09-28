@@ -108,11 +108,10 @@ let pr_constr_env = Printer.pr_constr_env
 
 let lift = Term.lift
 
-let mk_sat_tactic tac = tac
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
 let vm_cast_no_check = Tactics.vm_cast_no_check
-let mk_smt_tactic tac gl =
+let mk_tactic tac gl =
   let env = Tacmach.pf_env gl in
   let sigma = Tacmach.project gl in
   let t = Tacmach.pf_concl gl in
