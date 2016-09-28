@@ -4,6 +4,16 @@ Require Import Bool PArray Int63 List ZArith.
 Local Open Scope int63_scope.
 
 
+(* First a tactic, to test the universe computation in an empty
+   environment. *)
+
+Lemma check_univ (x1: bool):
+  (x1 && (negb x1)) = false.
+Proof.
+  zchaff.
+Qed.
+
+
 (* zChaff vernacular commands *)
 
 Time Zchaff_Checker "sat1.cnf" "sat1.zlog".
