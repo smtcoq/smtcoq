@@ -80,7 +80,7 @@ let mkUConst c =
     const_entry_opaque = false;
     const_entry_inline_code = false}
 
-let mkTConst c ty =
+let mkTConst c _ ty =
   { const_entry_body = c;
     const_entry_type = Some ty;
     const_entry_secctx = None;
