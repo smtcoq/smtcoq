@@ -20,7 +20,6 @@
 (** Naive software representation of Int63. To improve. Anyway, if you
     want efficiency, rather use native-coq. **)
 
-(* Require Export Cyclic31. *)
 Require Export Ring31.
 Require Export Int63Native.
 Require Export Int63Op.
