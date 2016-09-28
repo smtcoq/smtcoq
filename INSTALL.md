@@ -38,7 +38,7 @@ require very efficient computation (such as checking big certificates).
 
 1. Download the last stable version of Coq 8.5:
 ```
-wget https://coq.inria.fr/distrib/V8.5pl1/files/coq-8.5pl1.tar.gz
+wget https://coq.inria.fr/distrib/V8.5pl2/files/coq-8.5pl2.tar.gz
 ```
    and compile it by following the instructions available in the
    repository. We recommand that you do not install it, but only compile
@@ -51,7 +51,7 @@ make
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
 ```
-export COQBIN=/home/jdoe/woe-8.5pl1/bin/
+export COQBIN=/home/jdoe/coq-8.5pl2/bin/
 ```
    (the final slash is mandatory).
 
