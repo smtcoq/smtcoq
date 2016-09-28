@@ -153,6 +153,9 @@ val deref : term -> term
 (** derefenced value *)
 val value : term -> dterm
 
+(** derefenced type *)
+val ttype : term -> term
+
 (** get dereferenced constant name (None if it's not a constant or it has no
     name) *)
 val name : term -> Hstring.t option

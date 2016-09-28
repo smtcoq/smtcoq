@@ -1182,7 +1182,7 @@ module Make (T : Translator_sig.S) = struct
     | Some (rule, args) ->
       eprintf "Warning: Introducing hole for unsupported rule %a@."
         Hstring.print rule;
-      Some (mk_clause_cl Hole [th_res p] [])
+      Some (mk_clause_cl Hole [ttype p] [])
 
   
 

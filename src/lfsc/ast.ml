@@ -84,6 +84,9 @@ let rec deref t = match t.value with
 let value t = (deref t).value
 
 
+let ttype t = deref (deref t).ttype
+
+
 let rec name c = match value c with
   | Const {sname=Name n} -> Some n
   | _ -> None
