@@ -526,7 +526,9 @@ module Op =
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
       | TBV s -> mklApp cbv_eq [|mkN s|]
-      | Tindex i -> mklApp ceqb_of_compdec [|mklApp cte_compdec [|i.hval|]|]
+      | Tindex i ->
+        mklApp ceqb_of_compdec [|mklApp cte_carrier [|i.hval|];
+                                 mklApp cte_compdec [|i.hval|]|]
       | TFArray (ti, te) -> interp_eqarray t_i ti te
 
     
