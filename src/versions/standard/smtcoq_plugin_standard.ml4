@@ -62,13 +62,13 @@ END
 
 
 TACTIC EXTEND Tactic_zchaff
-| [ "zchaff" ] -> [ Structures.mk_sat_tactic Zchaff.tactic ]
+| [ "zchaff" ] -> [ Structures.mk_tactic Zchaff.tactic ]
 END
 
 TACTIC EXTEND Tactic_verit
-| [ "verit" ] -> [ Structures.mk_smt_tactic Verit.tactic ]
+| [ "verit" ] -> [ Structures.mk_tactic Verit.tactic ]
 END
 
 TACTIC EXTEND Tactic_cvc4
-| [ "cvc4" ] -> [ Structures.mk_smt_tactic Lfsc.tactic ]
+| [ "cvc4" ] -> [ Structures.mk_tactic Lfsc.tactic ]
 END

@@ -17,7 +17,6 @@
 (**************************************************************************)
 
 
-(* Add LoadPath "." as SMTCoq.Int63.standard.versions. *)
 Require Export DoubleType.
 Require Import Int31 Cyclic31 Ring31.
 Require Import ZArith.
@@ -39,69 +38,31 @@ Notation "3" := 3%int31 : int63_scope.
 
 (* Logical operations *)
 Definition lsl : int -> int -> int :=
-  fun i j => nshiftl i (N.to_nat (Z.to_N (phi j))).
+  fun i j => addmuldiv31 j i 0.
 Infix "<<" := lsl (at level 30, no associativity) : int63_scope.
 
 Definition lsr : int -> int -> int :=
-  fun i j => nshiftr i (N.to_nat (Z.to_N (phi j))).
+  fun i j => addmuldiv31 (31-j)%int31 0 i.
 Infix ">>" := lsr (at level 30, no associativity) : int63_scope.
 
-(* For the bitwise operations, I add a useless pattern matching to avoid
-   too much unfolding of their definitions at Qed (since Qed bypasses
-   the Opaque declaration) *)
-Definition land : int -> int -> int :=
-  fun i => match i with
-  | 0%int31 | _ => fun j =>
-    recrbis _ j (fun d _ acc =>
-                   let r := acc in
-                   let d' := firstl r in
-                   let dr := match d, d' with | D1, D1 => D1 | _, _ => D0 end in
-                   sneakl dr r
-                ) i
-           end.
+Definition land : int -> int -> int := land31.
 Global Arguments land i j : simpl never.
 Global Opaque land.
 Infix "land" := land (at level 40, left associativity) : int63_scope.
 
-Definition lor : int -> int -> int :=
-  fun i => match i with
-  | 0%int31 | _ => fun j =>
-    recrbis _ j (fun d _ acc =>
-                   let r := acc in
-                   let d' := firstl r in
-                   let dr := match d, d' with | D0, D0 => D0 | _, _ => D1 end in
-                   sneakl dr r
-                ) i
-           end.
+Definition lor : int -> int -> int := lor31.
 Global Arguments lor i j : simpl never.
 Global Opaque lor.
 Infix "lor" := lor (at level 40, left associativity) : int63_scope.
 
-Definition lxor : int -> int -> int :=
-  fun i => match i with
-  | 0%int31 | _ => fun j =>
-    recrbis _ j (fun d _ acc =>
-                   let r := acc in
-                   let d' := firstl r in
-                   let dr := match d, d' with | D0, D0 | D1, D1 => D0 | _, _ => D1 end in
-                   sneakl dr r
-                ) i
-           end.
+Definition lxor : int -> int -> int := lxor31.
 Global Arguments lxor i j : simpl never.
 Global Opaque lxor.
 Infix "lxor" := lxor (at level 40, left associativity) : int63_scope.
 
 (* Arithmetic modulo operations *)
-(* Definition add : int -> int -> int := add63. *)
-(* Notation "n + m" := (add n m) : int63_scope. *)
 Notation "n + m" := (add31 n m) : int63_scope.
-
-(* Definition sub : int -> int -> int := sub63. *)
-(* Notation "n - m" := (sub n m) : int63_scope. *)
 Notation "n - m" := (sub31 n m) : int63_scope.
-
-(* Definition mul : int -> int -> int := mul63. *)
-(* Notation "n * m" := (mul n m) : int63_scope. *)
 Notation "n * m" := (mul31 n m) : int63_scope.
 
 Definition mulc : int -> int -> int * int :=
@@ -137,6 +98,27 @@ Admitted.
 
 
 (* Iterators *)
+
+Definition firstr i := if ((i land 1) == 0)%int then D0 else D1.
+Fixpoint recr_aux (n:nat)(A:Type)(case0:A)(caserec:digits->int31->A->A)
+ (i:int31) : A :=
+  match n with
+  | O => case0
+  | S next =>
+          if (i == 0)%int then
+             case0
+          else
+             let si := (i >> 1)%int in
+             caserec (firstr i) si (recr_aux next A case0 caserec si)
+  end.
+Definition recr := recr_aux size.
+Definition iter_int31 i A f :=
+  recr (A->A) (fun x => x)
+   (fun b si rec => match b with
+      | D0 => fun x => rec (rec x)
+      | D1 => fun x => f (rec (rec x))
+    end)
+    i.
 
 Definition foldi_cont
      {A B     : Type}

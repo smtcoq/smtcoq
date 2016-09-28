@@ -4,6 +4,16 @@ Require Import Bool PArray Int63 List ZArith.
 Local Open Scope int63_scope.
 
 
+(* First a tactic, to test the universe computation in an empty
+   environment. *)
+
+Lemma check_univ (x1: bool):
+  (x1 && (negb x1)) = false.
+Proof.
+  verit.
+Qed.
+
+
 (* veriT vernacular commands *)
 
 Section Checker_Sat0.
@@ -938,3 +948,10 @@ Goal forall (P:Z -> Z -> bool) x y z,
 Proof.
   verit.
 Qed.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "../src" "SMTCoq"))
+   End: 
+*)

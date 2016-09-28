@@ -233,16 +233,27 @@ let theorem name fdimacs ftrace =
   let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
   let theorem_type = 
     Term.mkProd (mkName "v", vtype, theorem_concl) in
-  let theorem_proof =
-   Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
-   Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
-   Term.mkLambda (mkName "v", vtype,
-   mklApp ctheorem_checker
+  let theorem_proof_cast =
+    Term.mkCast (
+        Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
+        Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
+        Term.mkLambda (mkName "v", vtype,
+        mklApp ctheorem_checker
                [| Term.mkRel 3(*d*); Term.mkRel 2(*c*);
-		  vm_cast_true 
+		  vm_cast_true
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
-                  Term.mkRel 1(*v*)|]))) in
-  let ce = Structures.mkTConst theorem_proof theorem_type in
+                  Term.mkRel 1(*v*)|]))),
+      Term.VMcast,
+      theorem_type)
+  in
+  let theorem_proof_nocast =
+    Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
+    Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
+    Term.mkLambda (mkName "v", vtype,
+    mklApp ctheorem_checker
+           [| Term.mkRel 3(*d*); Term.mkRel 2(*c*)|])))
+  in
+  let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_type in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
 
@@ -359,12 +370,22 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-  Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-  Term.mkLetIn (nc, certif, Lazy.force ccertif, 
-  mklApp cchecker_b_correct 
-	 [|vtvar; vtform; l; b; vc; 
-	   vm_cast_true (mklApp cchecker_b [|vtform;l;b;vc|])|])))
+  let proof_cast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_b_correct
+	   [|vtvar; vtform; l; b; vc;
+	     vm_cast_true (mklApp cchecker_b [|vtform;l;b;vc|])|])))
+  in
+  let proof_nocast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_b_correct
+	   [|vtvar; vtform; l; b; vc|])))
+  in
+  (proof_cast, proof_nocast)
 
 
 let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
@@ -380,12 +401,22 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-  Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-  Term.mkLetIn (nc, certif, Lazy.force ccertif, 
-  mklApp cchecker_eq_correct 
-         [|vtvar; vtform; l1; l2; l; vc;
-	   vm_cast_true (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])|])))
+  let proof_cast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_eq_correct
+           [|vtvar; vtform; l1; l2; l; vc;
+	     vm_cast_true (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])|])))
+  in
+  let proof_nocast =
+    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    mklApp cchecker_eq_correct
+           [|vtvar; vtform; l1; l2; l; vc|])))
+  in
+  (proof_cast, proof_nocast)
 
 let get_arguments concl = 
   let f, args = Term.decompose_app concl in
@@ -487,18 +518,14 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 
 (* The whole tactic *)
 
-let tactic gl =
+let tactic env sigma t =
   SmtTrace.clear ();
-
-  let env = Tacmach.pf_env gl in
-  (* let sigma = Tacmach.project gl in *)
-  let t = Tacmach.pf_concl gl in
 
   let (forall_let, concl) = Term.decompose_prod_assum t in
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
-  let body = 
+  let (body_cast, body_nocast) =
     if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.get reify_atom) reify_form a in
       let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
@@ -516,7 +543,12 @@ let tactic gl =
       build_body_eq reify_atom reify_form 
 	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
   in
+
   let compose_lam_assum forall_let body =
     List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
-  let res = compose_lam_assum forall_let body in
-  Tactics.exact_no_check res gl
+  let res_cast = compose_lam_assum forall_let body_cast in
+  let res_nocast = compose_lam_assum forall_let body_nocast in
+
+  (Structures.tclTHEN
+     (Structures.set_evars_tac res_nocast)
+     (Structures.vm_cast_no_check res_cast))

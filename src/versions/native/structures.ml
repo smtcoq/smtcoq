@@ -31,6 +31,7 @@ let mkInt : int -> Term.constr =
 
 let cint = gen_constant int63_modules "int"
 
+
 (* PArray *)
 let parray_modules = [["Coq";"Array";"PArray"]]
 
@@ -38,6 +39,33 @@ let max_array_size : int =
   Parray.trunc_size (Uint63.of_int 4194303)
 let mkArray : Term.types * Term.constr array -> Term.constr =
   Term.mkArray
+
+
+(* Traces *)
+(* WARNING: side effect on r! *)
+let mkTrace step_to_coq next carray _ _ _ _ size step def_step r =
+  let max = max_array_size - 1 in
+  let q,r1 = size / max, size mod max in
+  let trace =
+    let len = if r1 = 0 then q + 1 else q + 2 in
+    Array.make len (mkArray (step, [|def_step|])) in
+  for j = 0 to q - 1 do
+    let tracej = Array.make max_array_size def_step in
+    for i = 0 to max - 1 do
+      r := next !r;
+      tracej.(i) <- step_to_coq !r;
+    done;
+    trace.(j) <- mkArray (step, tracej)
+  done;
+  if r1 <> 0 then (
+    let traceq = Array.make (r1 + 1) def_step in
+    for i = 0 to r1-1 do
+    r := next !r;
+    traceq.(i) <- step_to_coq !r;
+    done;
+    trace.(q) <- mkArray (step, traceq)
+  );
+  mkArray (Term.mkApp (Lazy.force carray, [|step|]), trace)
 
 
 (* Differences between the two versions of Coq *)
@@ -52,7 +80,7 @@ let mkUConst c =
     const_entry_opaque = false;
     const_entry_inline_code = false}
 
-let mkTConst c ty =
+let mkTConst c _ ty =
   { const_entry_body = c;
     const_entry_type = Some ty;
     const_entry_secctx = None;
@@ -80,15 +108,16 @@ let pr_constr_env = Printer.pr_constr_env
 
 let lift = Term.lift
 
-let mk_sat_tactic tac = tac
+let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
 let vm_cast_no_check = Tactics.vm_cast_no_check
-let mk_smt_tactic tac gl =
+let mk_tactic tac gl =
   let env = Tacmach.pf_env gl in
   let sigma = Tacmach.project gl in
   let t = Tacmach.pf_concl gl in
   tac env sigma t gl
+let set_evars_tac _ = Tacticals.tclIDTAC
 
 let ppconstr_lsimpleconstr = Ppconstr.lsimple
 let constrextern_extern_constr =

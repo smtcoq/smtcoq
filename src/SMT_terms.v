@@ -2647,26 +2647,6 @@ End Atom.
 Arguments Atom.Val {_} {_} _ _.
 
 
-(* These definitions are not used. This is just a hack, Coq refuses to
-   construct PArrays from OCaml if these are not here for some silly reason *)
-Section PredefinedArrays.
-  Variable t_i : PArray.array typ_compdec.
-
-  Definition mkarray_typ_compdec := @PArray.make typ_compdec.
-  Definition arrayset_typ_compdec := @PArray.set typ_compdec.
-  
-  Definition mkarray_func := @PArray.make (Atom.tval t_i).
-  Definition arrayset_func := @PArray.set (Atom.tval t_i).
-
-  Definition mkarray_form := @PArray.make Form.form.
-  Definition arrayset_form := @PArray.set Form.form.
-
-  Definition mkarray_atom := @PArray.make Atom.atom.
-  Definition arrayset_atom := @PArray.set Atom.atom.
-
-End PredefinedArrays.
-
-
 
 (* 
    Local Variables:
