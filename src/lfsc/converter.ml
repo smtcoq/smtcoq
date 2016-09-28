@@ -1179,7 +1179,10 @@ module Make (T : Translator_sig.S) = struct
       | None -> assert false
       end
       
-    | Some (r, _) -> failwith ("BV: Not implemented rule " ^ Hstring.view r)
+    | Some (rule, args) ->
+      eprintf "Warning: Introducing hole for unsupported rule %a@."
+        Hstring.print rule;
+      Some (mk_clause_cl Hole [ttype p] [])
 
   
 
