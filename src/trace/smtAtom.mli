@@ -44,11 +44,11 @@ module Btype :
 
       val declare : reify_tbl -> Term.constr -> Term.constr -> btype
 
-      val of_coq : reify_tbl -> Term.constr -> btype
+      val of_coq : reify_tbl -> logic -> Term.constr -> btype
 
       val interp_tbl : reify_tbl -> Term.constr
 
-      val to_list : reify_tbl -> (int * indexed_type) list
+      val to_list : reify_tbl ->  (int * indexed_type) list
 
       val interp_to_coq : reify_tbl -> btype -> Term.constr
 
@@ -56,7 +56,7 @@ module Btype :
 
       val logic : btype -> logic
 
-      val logic_of_coq : reify_tbl -> Term.constr -> logic
+      (* val logic_of_coq : reify_tbl -> Term.constr -> logic *)
 
     end
 
@@ -176,7 +176,7 @@ module Atom :
       val get : reify_tbl -> atom -> hatom
 
       (** Given a coq term, build the corresponding atom *)
-      val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl ->
+      val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl -> logic ->
         Environ.env -> Evd.evar_map -> Term.constr -> t
 
       val get_coq_term_op : int -> Term.constr

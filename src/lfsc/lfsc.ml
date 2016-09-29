@@ -486,6 +486,9 @@ let call_cvc4_file env rt ro ra rf root =
        SmtCommands.model_string env rt ro ra rf smodel)
 
 
+let cvc4_logic = 
+  SL.of_list [LUF; LLia; LBitvectors; LArrays]
+
 
 let tactic env sigma t =
   clear_all ();
@@ -493,4 +496,4 @@ let tactic env sigma t =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t
+  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf env sigma t

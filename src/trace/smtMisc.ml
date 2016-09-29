@@ -40,6 +40,13 @@ let mkName s =
   Names.Name id
 
 
+let string_coq_constr t =
+  let rec fix rf x = rf (fix rf) x in
+  let pr = fix
+      Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
+  Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
+
+
 (** Logics *)
 
 type logic_item =

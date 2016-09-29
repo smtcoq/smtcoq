@@ -93,15 +93,47 @@ Section Arrays.
   Qed.
 
 
+  Goal forall (a:farray Z Z), equal a a.
+  Proof.
+    verit.
+  Qed.
+
+  Goal forall (a b:bitvector 4), bv_eq a b  -->  bv_eq b a.
+  Proof.
+    verit.
+  Qed.
+
+
+  Definition lenb := @length bool.
     
+  Goal forall (l r: list bool), Nat.eqb (lenb l) (lenb r)  -->  Nat.eqb (lenb l) (lenb r).
+  Proof.
+    verit; admit.
+  Admitted.
+  
+  Goal forall (a:farray Z Z) i, Z.eqb (select a i) (select a i).
+  Proof.
+    verit.
+  Qed.
+  
+  Goal forall (a:farray Z Z) i, Z.eqb (select (store a i 1) i) (select (store a i 1) i).
+  Proof.
+    verit.
+  Qed.
+  
+  Goal forall (a:bitvector 4), bv_eq (bv_add a a) (bv_add a a).
+  Proof.
+    verit.
+  Qed.
+  
+
   Goal forall (a b: farray Z Z) i,
         (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
   Proof.
     intros.
     cvc4.
-    admit.
-    cvc4.
-    admit. admit.
+    verit.
+    try verit.
   Admitted.
 
 
@@ -156,9 +188,8 @@ Qed.
 
 
 Goal forall a , (xorb a a) || negb (xorb a a).
-  cvc4; verit.
-Admitted.
-
+  intros. cvc4; verit.
+Qed.
                                     
 Goal forall a, (a||negb a) || negb (a||negb a).
   cvc4.
@@ -605,10 +636,11 @@ Qed.
 
 Section Concret.
   Theorem c1: forall i j,
-    (i == j) && (negb (i == j)) = false.
+    (i + j == j) && (negb (i + j == j)) = false.
   Proof.
     cvc4.
-  Admitted.
+    exact int63_compdec.
+  Qed.
 
   
 End Concret.

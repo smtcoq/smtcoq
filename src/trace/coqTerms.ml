@@ -196,6 +196,12 @@ let cte_compdec = gen_constant classes_modules "te_compdec"
 let ceqb_of_compdec = gen_constant classes_modules "eqb_of_compdec"
 let cCompDec = gen_constant classes_modules "CompDec"
 
+let cbool_compdec = gen_constant classes_modules "bool_compdec"
+let cZ_compdec = gen_constant classes_modules "Z_compdec"
+let cPositive_compdec = gen_constant classes_modules "Positive_compdec"
+let cBV_compdec = gen_constant classes_modules "BV_compdec"
+let cFArray_compdec = gen_constant classes_modules "FArray_compdec"
+
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"
 

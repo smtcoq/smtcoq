@@ -81,13 +81,6 @@ let interp_conseq_uf t_i (prem, concl) =
   interp prem
 
 
-let string_coq_constr t =
-  let rec fix rf x = rf (fix rf) x in
-  let pr = fix
-      Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
-  Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
-
-  
 let print_assm ty =
   Format.printf "WARNING: assuming the following hypothesis:\n%s\n@."
     (string_coq_constr ty)
@@ -382,21 +375,21 @@ let make_proof call_solver env rt ro ra rf l =
   call_solver env rt ro ra rf (root,l)
 
 
-let tactic call_solver rt ro ra rf env sigma t =
+let tactic call_solver solver_logic rt ro ra rf env sigma t =
   let (forall_let, concl) = Term.decompose_prod_assum t in
   let env = Environ.push_rel_context forall_let env in
   let a, b = get_arguments concl in
   let (body_cast, body_nocast, cuts) =
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
         (Term.eq_constr b (Lazy.force cfalse))) then
-      let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
+      let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver env rt ro ra rf l' in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl
     else
-      let l1 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
-      let l2 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf b in
+      let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+      let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
