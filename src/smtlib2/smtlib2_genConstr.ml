@@ -368,33 +368,42 @@ let make_root ra rf t =
       | "not", [a] -> Form (Form.neg (make_root a))
 
       | _, [a] when startwith "extract_" v ->
-        Scanf.sscanf v "extract_%d_%d" (fun i j ->
+        (try
+          Scanf.sscanf v "extract_%s@_%d" (fun s i ->
+            let j = int_of_string s in
             (match make_root_term a with
              | Atom a' ->
                (match Atom.type_of a' with
                 | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) a')
                 | _ -> assert false)
              | _ -> assert false)
-          )
+             )
+         with _ -> assert false)
+        
       | _, [a] when startwith "zero_extend_" v ->
-        Scanf.sscanf v "zero_extend_%d" (fun n ->
-            (match make_root_term a with
-             | Atom a' ->
-               (match Atom.type_of a' with
-                | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n a')
+        (try
+           Scanf.sscanf v "zero_extend_%d" (fun n ->
+               (match make_root_term a with
+                | Atom a' ->
+                  (match Atom.type_of a' with
+                   | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n a')
+                   | _ -> assert false)
                 | _ -> assert false)
-             | _ -> assert false)
-          )
+             )
+         with _ -> assert false)
+        
       | _, [a] when startwith "sign_extend_" v ->
-        Scanf.sscanf v "sign_extend_%d" (fun n ->
-            (match make_root_term a with
-             | Atom a' ->
-               (match Atom.type_of a' with
-                | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n a')
+        (try
+           Scanf.sscanf v "sign_extend_%d" (fun n ->
+               (match make_root_term a with
+                | Atom a' ->
+                  (match Atom.type_of a' with
+                   | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n a')
+                   | _ -> assert false)
                 | _ -> assert false)
-             | _ -> assert false)
-          )
-                
+             )
+         with _ -> assert false)
+
       | _, _ ->
         let op = VeritSyntax.get_fun v in
         let l' = List.map (fun t ->
