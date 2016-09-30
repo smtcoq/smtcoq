@@ -480,6 +480,7 @@ let rec smt2_sexpr_to_coq_string env t_i ra rf =
      with Failure _ ->
      try fst (smt2_id_to_coq_string env t_i ra rf s)
      with _ -> s)
+  | List [Atom "as"; Atom "const"; _] -> "const_farray"
   | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env t_i ra rf s
   | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
     Scanf.sscanf bs "bv%d" (fun i ->
