@@ -6,6 +6,9 @@ Section Trace.
   (* We use [array array step] to allow bigger trace *)
   Definition trace (step:Type) := array (array step).
 
+  Definition trace_to_list {step:Type} (t:trace step) : list step :=
+    PArray.to_list t.
+  
   Definition trace_length {step:Type} (t:trace step) : int :=
     PArray.fold_left (fun l a => (l + (length a))%int63) 0%int63 t.
 

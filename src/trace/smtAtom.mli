@@ -238,3 +238,7 @@ end
 
 val make_t_i : Btype.reify_tbl -> Term.constr
 val make_t_func : Op.reify_tbl -> Term.constr -> Term.constr
+
+
+(* Misc Coq to OCaml functions *)
+val mk_bool : Term.constr -> bool

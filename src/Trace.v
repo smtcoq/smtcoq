@@ -541,6 +541,62 @@ Module Euf_Checker.
     euf_checker (* t_atom t_form *) C.is_false (add_roots (S.make nclauses) d used_roots) t confl.
   Implicit Arguments checker [].
 
+
+  Definition setup_checker_step_debug d used_roots (c:certif) :=
+    let (nclauses, t, confl) := c in
+    let s := add_roots (S.make nclauses) d used_roots in
+    (s, Structures.trace_to_list t).
+
+
+  Definition position_of_step (st:step) :=
+    match st with
+      | Res pos _ 
+      | Weaken pos _ _
+      | ImmFlatten pos _ _
+      | CTrue pos
+      | CFalse pos 
+      | BuildDef pos _
+      | BuildDef2 pos _
+      | BuildProj pos _ _ 
+      | ImmBuildDef pos _
+      | ImmBuildDef2 pos _
+      | ImmBuildProj pos _ _ 
+      | EqTr pos _ _ 
+      | EqCgr pos _ _ 
+      | EqCgrP pos _ _ _
+      | LiaMicromega pos _ _ 
+      | LiaDiseq pos _
+      | SplArith pos _ _ _
+      | SplDistinctElim pos _ _ 
+      | BBVar pos _
+      | BBConst pos _
+      | BBOp pos _ _ _
+      | BBNot pos _ _
+      | BBNeg pos _ _
+      | BBAdd pos _ _ _
+      | BBConcat pos _ _ _
+      | BBMul pos _ _ _
+      | BBUlt pos _ _ _
+      | BBSlt pos _ _ _
+      | BBEq pos _ _ _
+      | BBDiseq pos _
+      | BBExtract pos _ _
+      | BBZextend pos _ _
+      | BBSextend pos _ _
+      | BBShl pos _ _ _
+      | BBShr pos _ _ _
+      | RowEq pos _
+      | RowNeq pos _
+      | Ext pos _
+      | @Hole pos _ _ _ _ => pos
+    end.
+
+  
+  Definition checker_step_debug s step_t :=
+    let s := step_checker s step_t in
+    (s, C.has_true (S.get s (position_of_step step_t))).
+  
+  
   Lemma checker_correct : forall (* t_i t_func t_atom t_form *) d used_roots c,
     checker (* t_i t_func t_atom t_form *) d used_roots c = true ->
     ~ valid t_func t_atom t_form d.

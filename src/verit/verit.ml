@@ -91,9 +91,18 @@ let import_all fsmt fproof =
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
-  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace (import_all fsmt fproof)
-let theorem name fsmt fproof = SmtCommands.theorem name (import_all fsmt fproof)
-let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
+  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace
+    (import_all fsmt fproof)
+
+let checker_debug t_i t_func t_atom t_form root used_root trace fsmt fproof =
+  SmtCommands.checker_debug t_i t_func t_atom t_form root used_root trace
+    (import_all fsmt fproof)
+
+let theorem name fsmt fproof =
+  SmtCommands.theorem name (import_all fsmt fproof)
+    
+let checker fsmt fproof =
+  SmtCommands.checker (import_all fsmt fproof)
 
 
 

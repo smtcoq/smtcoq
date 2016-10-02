@@ -16,7 +16,8 @@
 
 open Coqlib
 
-let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+let gen_constant modules constant =
+  lazy (gen_constant_in_modules "SMT" modules constant)
 
 (* Int63 *)
 let cint = Structures.cint
@@ -102,6 +103,7 @@ let cNone = gen_constant init_modules "None"
 
 (* Pairs *)
 let cpair = gen_constant init_modules "pair"
+let cprod = gen_constant init_modules "prod"
 
 (* Dependent pairs *)
 let csigT = gen_constant init_modules "sigT"
@@ -163,6 +165,7 @@ let smt_modules = [ ["SMTCoq";"Misc"];
 		  ]
 
 let cState_C_t = gen_constant [["SMTCoq";"State";"C"]] "t"
+let cState_S_t = gen_constant [["SMTCoq";"State";"S"]] "t"
 
 let cdistinct = gen_constant smt_modules "distinct"
 
