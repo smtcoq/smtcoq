@@ -518,10 +518,9 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 
 (* The whole tactic *)
 
-let tactic env sigma t =
+let core_tactic env sigma concl =
   SmtTrace.clear ();
 
-  let (forall_let, concl) = Term.decompose_prod_assum t in
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
@@ -531,7 +530,7 @@ let tactic env sigma t =
       let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
-      let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
+      let max_id_confl = make_proof pform_tbl atom_tbl env reify_form l' in
       build_body reify_atom reify_form (Form.to_coq l) b max_id_confl 
     else
       let l1 = Form.of_coq (Atom.get reify_atom) reify_form a in
@@ -539,16 +538,14 @@ let tactic env sigma t =
       let l = Form.neg (Form.get reify_form (Fapp(Fiff,[|l1;l2|]))) in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
-      let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l in
+      let max_id_confl = make_proof pform_tbl atom_tbl env reify_form l in
       build_body_eq reify_atom reify_form 
 	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
   in
 
-  let compose_lam_assum forall_let body =
-    List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
-  let res_cast = compose_lam_assum forall_let body_cast in
-  let res_nocast = compose_lam_assum forall_let body_nocast in
-
   (Structures.tclTHEN
-     (Structures.set_evars_tac res_nocast)
-     (Structures.vm_cast_no_check res_cast))
+     (Structures.set_evars_tac body_nocast)
+     (Structures.vm_cast_no_check body_cast))
+
+
+let tactic () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic core_tactic)

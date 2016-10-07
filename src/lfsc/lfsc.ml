@@ -494,10 +494,10 @@ let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
-let tactic env sigma t =
+let tactic () =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf env sigma t
+  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf

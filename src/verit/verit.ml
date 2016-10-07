@@ -162,10 +162,10 @@ let call_verit _ rt ro ra rf root =
 let verit_logic =
   SL.of_list [LUF; LLia]
 
-let tactic env sigma t =
+let tactic () =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_verit verit_logic rt ro ra rf env sigma t
+  SmtCommands.tactic call_verit verit_logic rt ro ra rf

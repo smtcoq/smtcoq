@@ -491,9 +491,7 @@ let make_proof call_solver env rt ro ra rf l =
   call_solver env rt ro ra rf (root,l)
 
 
-let tactic call_solver solver_logic rt ro ra rf env sigma t =
-  let (forall_let, concl) = Term.decompose_prod_assum t in
-  let env = Environ.push_rel_context forall_let env in
+let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
   let a, b = get_arguments concl in
   let (body_cast, body_nocast, cuts) =
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
@@ -511,27 +509,26 @@ let tactic call_solver solver_logic rt ro ra rf env sigma t =
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl in
 
-  let compose_lam_assum forall_let body =
-    List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
-  let quantify_assum forall_let body =
-    List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in
-  let res_cast = compose_lam_assum forall_let body_cast in
-  let res_nocast = compose_lam_assum forall_let body_nocast in
   let tac =
     List.fold_right (fun (eqn, eqt) tac ->
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name eqn) eqt)
         tac
     ) (Btype.get_cuts rt) (Structures.tclTHEN
-                             (Structures.set_evars_tac res_nocast)
-                             (Structures.vm_cast_no_check res_cast))
+                             (Structures.set_evars_tac body_nocast)
+                             (Structures.vm_cast_no_check body_cast))
   in
   List.fold_left (fun tac (n, t) ->
-    let t = quantify_assum forall_let t in
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name n) t)
         tac
     ) tac cuts
+
+
+let tactic call_solver solver_logic rt ro ra rf =
+  Structures.tclTHEN
+    Tactics.intros
+    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf))
 
 
 

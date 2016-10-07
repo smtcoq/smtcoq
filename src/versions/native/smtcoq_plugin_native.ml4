@@ -73,13 +73,13 @@ VERNAC COMMAND EXTEND Vernac_lfsc
 END
 
 TACTIC EXTEND Tactic_zchaff
-| [ "zchaff" ] -> [ Structures.mk_tactic Zchaff.tactic ]
+| [ "zchaff" ] -> [ Zchaff.tactic () ]
 END
 
 TACTIC EXTEND Tactic_verit
-| [ "verit" ] -> [ Structures.mk_tactic Verit.tactic ]
+| [ "verit" ] -> [ Verit.tactic () ]
 END
 
 TACTIC EXTEND Tactic_cvc4
-| [ "cvc4" ] -> [ Structures.mk_tactic Lfsc.tactic ]
+| [ "cvc4" ] -> [ Lfsc.tactic () ]
 END
