@@ -514,7 +514,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 
 (* The whole tactic *)
 
-let tactic env sigma t =
+let core_tactic env sigma t =
   SmtTrace.clear ();
 
   let (forall_let, concl) = Term.decompose_prod_assum t in
@@ -548,3 +548,6 @@ let tactic env sigma t =
   (Structures.tclTHEN
      (Structures.set_evars_tac res_nocast)
      (Structures.vm_cast_no_check res_cast))
+
+
+let tactic () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic core_tactic)

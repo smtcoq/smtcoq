@@ -50,9 +50,9 @@ END
 
 
 TACTIC EXTEND Tactic_zchaff
-| [ "zchaff" ] -> [ Structures.mk_tactic Zchaff.tactic ]
+| [ "zchaff" ] -> [ Zchaff.tactic () ]
 END
 
 TACTIC EXTEND Tactic_verit
-| [ "verit" ] -> [ Structures.mk_tactic Verit.tactic ]
+| [ "verit" ] -> [ Verit.tactic () ]
 END
