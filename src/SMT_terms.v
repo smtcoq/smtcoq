@@ -2648,6 +2648,7 @@ Arguments Atom.Val {_} {_} _ _.
 
 (* These definitions are not used. This is just a hack, Coq refuses to
    construct PArrays from OCaml if these are not here for some silly reason *)
+(*
 Section PredefinedArrays.
   Variable t_i : PArray.array typ_compdec.
 
@@ -2664,6 +2665,7 @@ Section PredefinedArrays.
   Definition arrayset_atom := @PArray.set Atom.atom.
 
 End PredefinedArrays.
+*)
 
 
 (* 
