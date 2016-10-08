@@ -120,7 +120,10 @@ let declare_new_type t =
   Term.mkVar t
 
 let declare_new_variable v constr_t =
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
+  let env = Global.env () in
+  let evd = Evd.from_env env in
+  let evd, _ = Typing.type_of env evd constr_t in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
   Term.mkVar v
 
 let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty

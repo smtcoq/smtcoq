@@ -271,6 +271,12 @@ Module C.
       | _ => false
     end.
 
+  Fixpoint has_true (c:t) :=
+    match c with
+      | nil => false
+      | l :: c => (l == Lit._true) || has_true c
+    end.
+  
 
   Section OR.
 

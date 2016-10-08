@@ -91,9 +91,18 @@ let import_all fsmt fproof =
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
-  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace (import_all fsmt fproof)
-let theorem name fsmt fproof = SmtCommands.theorem name (import_all fsmt fproof)
-let checker fsmt fproof = SmtCommands.checker (import_all fsmt fproof)
+  SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace
+    (import_all fsmt fproof)
+
+let checker_debug t_i t_func t_atom t_form root used_root trace fsmt fproof =
+  SmtCommands.checker_debug t_i t_func t_atom t_form root used_root trace
+    (import_all fsmt fproof)
+
+let theorem name fsmt fproof =
+  SmtCommands.theorem name (import_all fsmt fproof)
+    
+let checker fsmt fproof =
+  SmtCommands.checker (import_all fsmt fproof)
 
 
 
@@ -150,10 +159,13 @@ let call_verit _ rt ro ra rf root =
     | VeritSyntax.Sat -> Structures.error "veriT can't prove this"
 
 
-let tactic env sigma t =
+let verit_logic =
+  SL.of_list [LUF; LLia]
+
+let tactic () =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_verit rt ro ra rf env sigma t
+  SmtCommands.tactic call_verit verit_logic rt ro ra rf

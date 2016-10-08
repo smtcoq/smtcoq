@@ -161,7 +161,11 @@ let import_all fsmt fproof =
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
   SmtCommands.parse_certif t_i t_func t_atom t_form root used_root trace
     (import_all fsmt fproof)
-    
+
+let checker_debug t_i t_func t_atom t_form root used_root trace fsmt fproof =
+  SmtCommands.checker_debug t_i t_func t_atom t_form root used_root trace
+    (import_all fsmt fproof)
+
 let theorem name fsmt fproof =
   SmtCommands.theorem name (import_all fsmt fproof)
 
@@ -486,11 +490,14 @@ let call_cvc4_file env rt ro ra rf root =
        SmtCommands.model_string env rt ro ra rf smodel)
 
 
+let cvc4_logic = 
+  SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
-let tactic env sigma t =
+
+let tactic () =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 rt ro ra rf env sigma t
+  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf

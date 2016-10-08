@@ -16,7 +16,8 @@
 
 open Coqlib
 
-let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+let gen_constant modules constant =
+  lazy (gen_constant_in_modules "SMT" modules constant)
 
 (* Int63 *)
 let cint = Structures.cint
@@ -102,6 +103,7 @@ let cNone = gen_constant init_modules "None"
 
 (* Pairs *)
 let cpair = gen_constant init_modules "pair"
+let cprod = gen_constant init_modules "prod"
 
 (* Dependent pairs *)
 let csigT = gen_constant init_modules "sigT"
@@ -163,6 +165,7 @@ let smt_modules = [ ["SMTCoq";"Misc"];
 		  ]
 
 let cState_C_t = gen_constant [["SMTCoq";"State";"C"]] "t"
+let cState_S_t = gen_constant [["SMTCoq";"State";"S"]] "t"
 
 let cdistinct = gen_constant smt_modules "distinct"
 
@@ -195,6 +198,12 @@ let cte_carrier = gen_constant classes_modules "te_carrier"
 let cte_compdec = gen_constant classes_modules "te_compdec"
 let ceqb_of_compdec = gen_constant classes_modules "eqb_of_compdec"
 let cCompDec = gen_constant classes_modules "CompDec"
+
+let cbool_compdec = gen_constant classes_modules "bool_compdec"
+let cZ_compdec = gen_constant classes_modules "Z_compdec"
+let cPositive_compdec = gen_constant classes_modules "Positive_compdec"
+let cBV_compdec = gen_constant classes_modules "BV_compdec"
+let cFArray_compdec = gen_constant classes_modules "FArray_compdec"
 
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"

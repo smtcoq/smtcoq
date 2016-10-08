@@ -38,6 +38,10 @@ let cchecker_b = gen_constant euf_checker_modules "checker_b"
 let cchecker_eq_correct =
   gen_constant euf_checker_modules "checker_eq_correct"
 let cchecker_eq = gen_constant euf_checker_modules "checker_eq"
+let csetup_checker_step_debug =
+  gen_constant euf_checker_modules "setup_checker_step_debug"
+let cchecker_step_debug = gen_constant euf_checker_modules "checker_step_debug"
+let cstep = gen_constant euf_checker_modules "step"
 
 
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
@@ -81,13 +85,6 @@ let interp_conseq_uf t_i (prem, concl) =
   interp prem
 
 
-let string_coq_constr t =
-  let rec fix rf x = rf (fix rf) x in
-  let pr = fix
-      Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
-  Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
-
-  
 let print_assm ty =
   Format.printf "WARNING: assuming the following hypothesis:\n%s\n@."
     (string_coq_constr ty)
@@ -282,6 +279,118 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     (if Term.eq_constr res (Lazy.force CoqTerms.ctrue) then
         "true" else "false")
 
+let rec of_coq_list cl =
+  match Term.decompose_app cl with
+  | c, _ when Term.eq_constr c (Lazy.force cnil) -> []
+  | c, [_; x; cr] when Term.eq_constr c (Lazy.force ccons) ->
+    x :: of_coq_list cr
+  | _ -> assert false
+
+
+let checker_debug t_i t_func t_atom t_form root used_root trace
+    (rt, ro, ra, rf, roots, max_id, confl) =
+
+  let t_i' = make_t_i rt in
+  let ce5 = Structures.mkUConst t_i' in
+  let ct_i = Term.mkConst (declare_constant t_i
+                             (DefinitionEntry ce5, IsDefinition Definition)) in
+
+  let t_func' = make_t_func ro ct_i in
+  let ce6 = Structures.mkUConst t_func' in
+  let ct_func =
+    Term.mkConst (declare_constant t_func
+                    (DefinitionEntry ce6, IsDefinition Definition)) in
+
+  let t_atom' = Atom.interp_tbl ra in
+  let ce1 = Structures.mkUConst t_atom' in
+  let ct_atom =
+    Term.mkConst (declare_constant t_atom
+                    (DefinitionEntry ce1, IsDefinition Definition)) in
+
+  let t_form' = snd (Form.interp_tbl rf) in
+  let ce2 = Structures.mkUConst t_form' in
+  let ct_form =
+    Term.mkConst (declare_constant t_form
+                    (DefinitionEntry ce2, IsDefinition Definition)) in
+
+  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
+      (interp_conseq_uf ct_i)
+      (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl in
+  List.iter (fun (v,ty) ->
+    let _ = Structures.declare_new_variable v ty in
+    print_assm ty
+  ) cuts;
+
+  let used_roots = compute_roots roots last_root in
+  let croots =
+    let res = Array.make (List.length roots + 1) (mkInt 0) in
+    let i = ref 0 in
+    List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
+    Structures.mkArray (Lazy.force cint, res) in
+  let cused_roots =
+    let l = List.length used_roots in
+    let res = Array.make (l + 1) (mkInt 0) in
+    let i = ref (l-1) in
+    List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
+    mklApp cSome [|mklApp carray [|Lazy.force cint|];
+                   Structures.mkArray (Lazy.force cint, res)|] in
+  let ce3 = Structures.mkUConst croots in
+  let _ = declare_constant root
+      (DefinitionEntry ce3, IsDefinition Definition) in
+  let ce3' = Structures.mkUConst cused_roots in
+  let _ = declare_constant used_root
+      (DefinitionEntry ce3', IsDefinition Definition) in
+
+  let certif =
+    mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1);
+                     tres;mkInt (get_pos confl)|] in
+  let ce4 = Structures.mkUConst certif in
+  let _ = declare_constant trace
+      (DefinitionEntry ce4, IsDefinition Definition) in
+
+  let setup =
+   mklApp csetup_checker_step_debug 
+     [| ct_i; ct_func; ct_atom; ct_form; croots; cused_roots; certif |] in
+
+  let setup = Vnorm.cbv_vm (Global.env ()) setup
+      (mklApp cprod
+         [|Lazy.force cState_S_t;
+           mklApp clist [|mklApp cstep
+                            [|ct_i; ct_func; ct_atom; ct_form|]|]|]) in
+ 
+  let s, steps = match Term.decompose_app setup with
+    | c, [_; _; s; csteps] when Term.eq_constr c (Lazy.force cpair) ->
+      s, of_coq_list csteps
+    | _ -> assert false
+  in
+
+  let cpt = ref (List.length roots) in
+  let debug_step s step =
+    incr cpt;
+    let tm =
+      mklApp cchecker_step_debug
+        [| ct_i; ct_func; ct_atom; ct_form; s; step |] in
+    
+    let res =
+      Vnorm.cbv_vm (Global.env ()) tm
+          (mklApp cprod [|Lazy.force cState_S_t; Lazy.force cbool|]) in
+
+    match Term.decompose_app res with
+    | c, [_; _; s; cbad] when Term.eq_constr c (Lazy.force cpair) ->
+      if not (mk_bool cbad) then s
+      else Structures.error ("Step number " ^ string_of_int !cpt ^
+                             " (" ^ string_coq_constr
+                               (fst (Term.decompose_app step)) ^ ")" ^
+                             " of the cerificate likely failed." )
+    | _ -> assert false
+  in
+
+  List.fold_left debug_step s steps |> ignore;
+  
+  Structures.error ("Debug checker is only meant to be used for certificates \
+                     that fail to be checked by SMTCoq.")
+  
+
 
 (* Tactic *)
 
@@ -382,47 +491,44 @@ let make_proof call_solver env rt ro ra rf l =
   call_solver env rt ro ra rf (root,l)
 
 
-let tactic call_solver rt ro ra rf env sigma t =
-  let (forall_let, concl) = Term.decompose_prod_assum t in
-  let env = Environ.push_rel_context forall_let env in
+let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
   let a, b = get_arguments concl in
   let (body_cast, body_nocast, cuts) =
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
         (Term.eq_constr b (Lazy.force cfalse))) then
-      let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
+      let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver env rt ro ra rf l' in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl
     else
-      let l1 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
-      let l2 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf b in
+      let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+      let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl in
 
-  let compose_lam_assum forall_let body =
-    List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
-  let quantify_assum forall_let body =
-    List.fold_left (fun t rd -> Term.mkProd_or_LetIn rd t) body forall_let in
-  let res_cast = compose_lam_assum forall_let body_cast in
-  let res_nocast = compose_lam_assum forall_let body_nocast in
   let tac =
     List.fold_right (fun (eqn, eqt) tac ->
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name eqn) eqt)
         tac
     ) (Btype.get_cuts rt) (Structures.tclTHEN
-                             (Structures.set_evars_tac res_nocast)
-                             (Structures.vm_cast_no_check res_cast))
+                             (Structures.set_evars_tac body_nocast)
+                             (Structures.vm_cast_no_check body_cast))
   in
   List.fold_left (fun tac (n, t) ->
-    let t = quantify_assum forall_let t in
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name n) t)
         tac
     ) tac cuts
+
+
+let tactic call_solver solver_logic rt ro ra rf =
+  Structures.tclTHEN
+    Tactics.intros
+    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf))
 
 
 
@@ -487,6 +593,7 @@ let rec smt2_sexpr_to_coq_string env t_i ra rf =
      with Failure _ ->
      try fst (smt2_id_to_coq_string env t_i ra rf s)
      with _ -> s)
+  | List [Atom "as"; Atom "const"; _] -> "const_farray"
   | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env t_i ra rf s
   | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
     Scanf.sscanf bs "bv%d" (fun i ->
