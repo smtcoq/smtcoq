@@ -226,9 +226,9 @@ let rec compare_term ?(mod_eq=false) t1 t2 = match t1.value, t2.value with
     if c <> 0 then c
     else
       let ca1a2 = compare_term ~mod_eq a1 a2 in
-      let ca1b2 = compare_term ~mod_eq a1 a2 in
-      let cb1b2 = compare_term ~mod_eq a1 a2 in
-      let cb1a2 = compare_term ~mod_eq a1 a2 in
+      let ca1b2 = compare_term ~mod_eq a1 b2 in
+      let cb1b2 = compare_term ~mod_eq b1 b2 in
+      let cb1a2 = compare_term ~mod_eq b1 a2 in
       if ca1a2 = 0 && cb1b2 = 0 then 0
       else if ca1b2 = 0 && cb1a2 = 0 then 0
       else if ca1a2 <> 0 then ca1a2 else cb1b2
