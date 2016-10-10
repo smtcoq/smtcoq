@@ -59,10 +59,10 @@ module Make (T : Translator_sig.S) = struct
   
   (** Ignore declarations but keep assumptions *)
   let rec ignore_decls p = match value p with
-    | Lambda (s, p) ->
+    | Lambda (s, pr) ->
       (match s.sname with
        | Name n when (Hstring.view n).[0] = 'A' -> p
-       | _ -> ignore_decls p
+       | _ -> ignore_decls pr
       )
     | _ -> p
 

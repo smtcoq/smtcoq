@@ -532,6 +532,11 @@ let tactic call_solver solver_logic rt ro ra rf =
 
 
 
+(**********************************************)
+(* Show solver models as Coq counter-examples *)
+(**********************************************)
+
+
 open SExpr
 open Smtlib2_genConstr
 open Format
