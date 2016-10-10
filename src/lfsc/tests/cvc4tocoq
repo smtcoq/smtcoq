@@ -14,7 +14,7 @@ gnudate() {
 
 echo -n "Running CVC4... "
 T0=$(gnudate +%s.%N)
-cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic --allow-empty-dependencies $1 > $name.lfsc
+cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 > $name.lfsc
 T1=$(gnudate +%s.%N)
 CVC4TIME=$(echo "$T1 - $T0" | bc)
 echo "Done [$CVC4TIME s]"
