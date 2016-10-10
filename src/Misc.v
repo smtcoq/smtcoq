@@ -387,7 +387,7 @@ Proof.
   intros;ring_simplify ([|i|] - 1 + 1)%Z;rewrite of_to_Z;auto.
   assert (i < length t - 1 = true).
     rewrite ltb_spec. rewrite leb_spec in H0. replace (length t - 2) with (length t - 1 - 1) in H0 by ring. rewrite to_Z_sub_1_diff in H0; [omega| ]. intro H4. assert (H5: [|length t - 1|] = 0%Z) by (rewrite H4; auto). assert (H6: 1 < length t = true) by (rewrite ltb_negb_geb, Heq; auto). rewrite ltb_spec in H6. change ([|1|]) with (1%Z) in H6. rewrite to_Z_sub_1_diff in H5; [omega| ]. intro H7. assert (H8: [|length t|] = 0%Z) by (rewrite H7; auto). omega.
-  apply H1;trivial.
+  apply H1; [trivial| ].
   rewrite <-(to_Z_add_1 _ _ H4), of_to_Z in H3;auto.
   symmetry. rewrite eqb_false_spec. intro H. rewrite H in Heq. discriminate.
 Qed.
@@ -1002,3 +1002,9 @@ End Forall2.
 
 Implicit Arguments forallb2 [A B].
 
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "." "SMTCoq"))
+   End: 
+*)

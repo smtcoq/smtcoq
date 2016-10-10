@@ -36,13 +36,29 @@ Notation "1" := 1%int31 : int63_scope.
 Notation "2" := 2%int31 : int63_scope.
 Notation "3" := 3%int31 : int63_scope.
 
+(* Comparisons *)
+Definition eqb := eqb31.
+Notation "m '==' n" := (eqb m n) (at level 70, no associativity) : int63_scope.
+
+Definition ltb : int -> int -> bool :=
+  fun i j => match compare31 i j with | Lt => true | _ => false end.
+Notation "m < n" := (ltb m n) : int63_scope.
+
+Definition leb : int -> int -> bool :=
+  fun i j => match compare31 i j with | Gt => false | _ => true end.
+Notation "m <= n" := (leb m n) : int63_scope.
+
+
+Lemma eqb_correct : forall i j, (i==j)%int = true -> i = j.
+Proof. exact eqb31_correct. Qed.
+
 (* Logical operations *)
 Definition lsl : int -> int -> int :=
   fun i j => addmuldiv31 j i 0.
 Infix "<<" := lsl (at level 30, no associativity) : int63_scope.
 
 Definition lsr : int -> int -> int :=
-  fun i j => addmuldiv31 (31-j)%int31 0 i.
+  fun i j => if (j < 31%int31)%int then addmuldiv31 (31-j)%int31 0 i else 0%int31.
 Infix ">>" := lsr (at level 30, no associativity) : int63_scope.
 
 Definition land : int -> int -> int := land31.
@@ -78,23 +94,6 @@ Notation "n / m" := (div n m) : int63_scope.
 Definition modulo : int -> int -> int :=
   fun i j => let (_,r) := div31 i j in r.
 Notation "n '\%' m" := (modulo n m) (at level 40, left associativity) : int63_scope.
-
-(* Comparisons *)
-Definition eqb := eqb31.
-Notation "m '==' n" := (eqb m n) (at level 70, no associativity) : int63_scope.
-
-Definition ltb : int -> int -> bool :=
-  fun i j => match compare31 i j with | Lt => true | _ => false end.
-Notation "m < n" := (ltb m n) : int63_scope.
-
-Definition leb : int -> int -> bool :=
-  fun i j => match compare31 i j with | Gt => false | _ => true end.
-Notation "m <= n" := (leb m n) : int63_scope.
-
-
-(* TODO: fill this proof (should be in the stdlib) *)
-Lemma eqb_correct : forall i j, (i==j)%int = true -> i = j.
-Admitted.
 
 
 (* Iterators *)
