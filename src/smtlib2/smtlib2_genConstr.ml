@@ -57,15 +57,19 @@ let sort_of_string s = string_type s
 let sort_of_symbol s = sort_of_string (string_of_symbol s)
 
 
-let rec int_binary_size acc i size =
-  match i, size with
-  | _, 0 -> "#b" ^ String.concat "" acc
-  | 0, _ -> int_binary_size ("0" :: acc) i (size - 1)
-  | _, _ ->
-    assert (i > 0 && size > 0);
-    int_binary_size (string_of_int (i land 1) :: acc) (i lsr 1) (size - 1)
+let rec bigint_binary_size acc i size =
+  let open Big_int in
+  if size = 0 then "#b" ^ String.concat "" acc
+  else
+  if eq_big_int i zero_big_int then
+    bigint_binary_size ("0" :: acc) i (size - 1)
+  else begin
+    assert (gt_big_int i zero_big_int && size > 0);
+    bigint_binary_size (string_of_big_int (and_big_int i unit_big_int) :: acc)
+      (shift_right_big_int i 1) (size - 1)
+  end
 
-let int_bv i size = int_binary_size [] i size
+let bigint_bv i size = bigint_binary_size [] i size
 
 
 exception DecimalBv of string
@@ -80,7 +84,8 @@ let string_of_identifier = function
      (* rewrite bitvectors decimal constants *)
      | true, [size] ->
        let sbv =
-         Scanf.sscanf s "bv%d" (fun n -> int_bv n (int_of_string size)) in
+         Scanf.sscanf s "bv%s" (fun n ->
+             bigint_bv (Big_int.big_int_of_string n) (int_of_string size)) in
        raise (DecimalBv sbv)
      | _ -> List.fold_left (fun c c' -> c^"_"^c') s l
     )
