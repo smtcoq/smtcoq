@@ -578,7 +578,9 @@ let coq_bv_string s =
 
 
 let is_bvint bs = 
-  try Scanf.sscanf bs "bv%d" (fun _ -> true)
+  try Scanf.sscanf bs "bv%s" (fun s ->
+      try ignore (Big_int.big_int_of_string s); true
+      with _ -> false)
   with _ -> false
 
 
@@ -596,8 +598,9 @@ let rec smt2_sexpr_to_coq_string env t_i ra rf =
   | List [Atom "as"; Atom "const"; _] -> "const_farray"
   | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env t_i ra rf s
   | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
-    Scanf.sscanf bs "bv%d" (fun i ->
-        coq_bv_string (int_bv i (int_of_string s)))
+    Scanf.sscanf bs "bv%s" (fun i ->
+        coq_bv_string (bigint_bv (Big_int.big_int_of_string i)
+                         (int_of_string s)))
   | List [Atom "-"; Atom _ as s] ->
     sprintf "-%s"
       (smt2_sexpr_to_coq_string env t_i ra rf s)

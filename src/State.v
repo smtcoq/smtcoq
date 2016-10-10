@@ -459,6 +459,7 @@ Module S.
   Definition valid rho s :=
     forall id, C.valid rho (get s id).
 
+
   (* Specification of make *)
 
   Lemma valid_make : forall rho nclauses,

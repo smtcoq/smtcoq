@@ -27,8 +27,18 @@ Section Arrays.
   Local Open Scope bv_scope.
 
   
+  Goal forall (a b: farray Z Z)
+         (v w x y: Z)
+         (g: farray Z Z -> Z)
+         (f: Z -> Z),
+         equal a[x <- v] b && equal a[y <- w] b  -->
+         Z.eqb (f x) (f y) || Z.eqb (g a) (g b).
+  Proof.
+    cvc4.
+  Qed.
+  
   Goal forall (a b c d: farray Z Z),
-      equal c b[0 <- 4]  -->
+      equal b[0 <- 4] c  -->
       equal d b[0 <- 4][1 <- 4]  -->
       equal a d[1 <- b[1]]  -->
       equal a c.
@@ -50,19 +60,8 @@ Section Arrays.
   Qed.
 
   
-  Goal forall (a b: farray Z Z)
-         (v w x y: Z)
-         (g: farray Z Z -> Z)
-         (f: Z -> Z),
-         equal a[x <- v] b && equal a[y <- w] b  -->
-         Z.eqb (f x) (f y) || Z.eqb (g a) (g b).
-  Proof.
-    cvc4.
-  Qed.
-  
     
 
-  (* CVC4 crash *)
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
       bv_eq #b|0|0|0|0| bv1  -->
@@ -79,7 +78,7 @@ Section Arrays.
     cvc4.
   Qed.
 
-  (* CVC4 bad LFSC proof *)
+
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
          (a b c d : farray (bitvector 4) Z),
       bv_eq #b|0|0|0|0| bv1  -->
@@ -149,6 +148,9 @@ Section BV.
                                  (bv_eq (bv_and (bv_and a c) b) c).
   Proof.
     cvc4.
+    destruct (bv_eq_reflect (bv_and a c) (bv_and c a)) as (R , _).
+    rewrite (R (bv_and_comm a c)).
+    verit.
   Qed.
 
 End BV.
@@ -188,7 +190,7 @@ Qed.
 
 
 Goal forall a , (xorb a a) || negb (xorb a a).
-  intros. cvc4; verit.
+  cvc4; verit.
 Qed.
                                     
 Goal forall a, (a||negb a) || negb (a||negb a).
@@ -245,13 +247,11 @@ Qed.
  
 Goal forall a, Bool.eqb a a.
 Proof.
-  intros.
   cvc4; verit.
 Qed.
 
  
 Goal forall (a:bool), a = a.
-  intros.
   cvc4; verit.
 Qed.
 
@@ -503,7 +503,6 @@ Qed.
 Theorem lia1: forall x y z, implb ((x <=? 3) && ((y <=? 7) || (z <=? 9)))
   ((x + y <=? 10) || (x + z <=? 12)) = true.
 Proof.
-  intros.
   cvc4.
   verit.
 Qed.
@@ -513,7 +512,6 @@ Qed.
 
 Theorem lia2: forall x, implb (Z.eqb (x - 3) 7) (x >=? 10) = true.
 Proof.
-  intros.
   cvc4.
   verit.
 Qed.
@@ -523,7 +521,6 @@ Qed.
 
 Theorem lia3: forall x y, implb (x >? y) (y + 1 <=? x) = true.
 Proof.
-  intros.
   cvc4.
   verit.
 Qed.
@@ -533,10 +530,8 @@ Qed.
 
 Theorem lia4: forall x y, Bool.eqb (x <? y) (x <=? y - 1) = true.
 Proof.
-  intros.
   cvc4; verit.
-(* Qed. *)
-Admitted.
+Qed.
 
 
 (* lia5.smt *)
@@ -554,7 +549,6 @@ Admitted.
 
 Theorem lia6: forall x, implb (andb ((x - 3) <=? 7) (7 <=? (x - 3))) (x >=? 10) = true.
 Proof.
-  intros.
   cvc4; verit.
 Qed.
 
@@ -562,7 +556,6 @@ Qed.
 
 Theorem lia7: forall x, implb (Z.eqb (x - 3) 7) (10 <=? x) = true.
 Proof.
-  intros.
   cvc4. verit.
 Qed.
 
@@ -589,9 +582,8 @@ Theorem lia8: forall b1 b2 x1 x2,
     (ifb b2 (Z.eqb (2*x1) (2*x2+1)) (Z.eqb (2*x1) (2*x2))))
   ((implb b1 b2) && (implb b2 b1) && (Z.eqb x1 x2)).
 Proof.
-  intros.
   cvc4; verit.
-Admitted.
+Qed.
 
 
 (* With let ... in ... *)
@@ -609,6 +601,7 @@ Goal forall b,
 Proof.
   cvc4.
 Qed.
+
 (* Does not work since the [is_true] coercion includes [let in] 
 Goal forall b,
   let a := b in
