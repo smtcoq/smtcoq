@@ -190,11 +190,11 @@ let make_root ra rf t =
     match (v,l) with
       | "=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' ->
-            (match Atom.type_of a' with
-              | Tbool -> Form (Form.get rf (Fapp (Fiff, [|Form.get rf (Fatom a'); Form.get rf (Fatom b')|])))
-              | ty -> Atom (Atom.mk_eq ra ty a' b'))
-          | _, _ -> assert false)
+         | Atom a', Atom b' when Atom.type_of a' <> Tbool ->
+           Atom (Atom.mk_eq ra (Atom.type_of a') a' b')
+         | _ ->
+           Form (Form.get rf (Fapp (For, [| make_root a; make_root b |])))
+        )
       | "<", [a;b] ->
         (match make_root_term a, make_root_term b with
           | Atom a', Atom b' -> Atom (Atom.mk_lt ra a' b')
