@@ -514,9 +514,9 @@ let new_clause_id ?(reuse=true) cl =
 let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
-    eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
-      print_clause cl
-    (fun fmt -> List.iter (fprintf fmt " %d")) args;
+    (* eprintf "%d:(%s %a %a)@." id (string_of_rule rule) *)
+    (*   print_clause cl *)
+    (* (fun fmt -> List.iter (fprintf fmt " %d")) args; *)
     VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
   | OldCl id ->
     (* Format.eprintf "old_clause %d@." id; *)
@@ -533,7 +533,7 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     eprintf "%d:input  %a@." id print_clause cl;
+     (* eprintf "%d:input  %a@." id print_clause cl; *)
      VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -544,7 +544,7 @@ let mk_admit_preproc name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     eprintf "%d:hole  %a@." id print_clause cl;
+     (* eprintf "%d:hole  %a@." id print_clause cl; *)
      VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -588,3 +588,4 @@ let clear () =
   (* HT.clear termalias_tbl; *)
   cl_cpt := 0
   
+
