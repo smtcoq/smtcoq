@@ -29,22 +29,34 @@ cat > ${name}_debug.v <<EOF
 Require Import SMTCoq Bool List.
 Import ListNotations BVList.BITVECTOR_LIST FArray.
 Local Open Scope list_scope.
-Local Open Scope bv_scope.
 Local Open Scope farray_scope.
+Local Open Scope bv_scope.
 
 Section File.
-  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace "$name.smt2" "$name.log".
-  Compute (
-      let (nclauses, t, confl) := trace in
-      let s := add_roots (S.make nclauses) root used_roots in
-      let s' := PArray.fold_left (fun s a =>
-                                   PArray.fold_left (@Euf_Checker.step_checker t_i t_func t_atom t_form) s a) s t in
-
-
-      let s'' := PArray.mapi (fun i c => (to_Z i, List.map to_Z c)) s' in
-      (PArray.to_list s'', to_Z confl)).
+  Verit_Checker_Debug t_i t_func t_atom t_form root used_roots trace "$name.smt2" "$name.log".
 End File.
 EOF
+
+
+# Require Import SMTCoq Bool List.
+# Import ListNotations BVList.BITVECTOR_LIST FArray.
+# Local Open Scope list_scope.
+# Local Open Scope bv_scope.
+# Local Open Scope farray_scope.
+
+# Section File.
+#   Parse_certif_verit t_i t_func t_atom t_form root used_roots trace "$name.smt2" "$name.log".
+#   Compute (
+#       let (nclauses, t, confl) := trace in
+#       let s := add_roots (S.make nclauses) root used_roots in
+#       let s' := PArray.fold_left (fun s a =>
+#                                    PArray.fold_left (@Euf_Checker.step_checker t_i t_func t_atom t_form) s a) s t in
+
+
+#       let s'' := PArray.mapi (fun i c => (to_Z i, List.map to_Z c)) s' in
+#       (PArray.to_list s'', to_Z confl)).
+# End File.
+# EOF
 
 cat > ${name}_debug.sh <<EOF
 #!/bin/sh
