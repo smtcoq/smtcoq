@@ -543,7 +543,8 @@ open Format
 
 let get_rel_dec_name (n, _, _) = n  
 
-let vstring_i env cf =
+let vstring_i env i =
+  let cf = SmtAtom.Atom.get_coq_term_op i in
   if Term.isRel cf then
     let dbi = Term.destRel cf in
     let s =
@@ -553,12 +554,21 @@ let vstring_i env cf =
       | Names.Name id -> Names.string_of_id id
       | Names.Anonymous -> "?" in
     s, dbi
-  else string_coq_constr cf, 0
+  else
+    try
+      let s = string_coq_constr cf in
+      let nc = Environ.named_context env in
+      let nd = Environ.lookup_named (Names.id_of_string s) env in
+      let cpt = ref 0 in
+      (try List.iter (fun n -> incr cpt; if n == nd then raise Exit) nc
+       with Exit -> ());
+      s, !cpt
+    with _ -> string_coq_constr cf, -i
+
 
 let smt2_id_to_coq_string env t_i ra rf name =
   try
-    Scanf.sscanf name "op_%d" SmtAtom.Atom.get_coq_term_op
-    |> vstring_i env
+    Scanf.sscanf name "op_%d" (vstring_i env)
   with _ -> name, 0
 
 
