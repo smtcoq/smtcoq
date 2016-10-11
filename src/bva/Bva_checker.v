@@ -83,6 +83,7 @@ Section Checker.
       end
     else C._true.
 
+
   (** * Bit-blasting a variable:
 
               x ∈ BV n
