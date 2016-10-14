@@ -42,6 +42,49 @@ let csetup_checker_step_debug =
   gen_constant euf_checker_modules "setup_checker_step_debug"
 let cchecker_step_debug = gen_constant euf_checker_modules "checker_step_debug"
 let cstep = gen_constant euf_checker_modules "step"
+let cchecker_debug = gen_constant euf_checker_modules "checker_debug"
+
+let cname_step = gen_constant euf_checker_modules "name_step"
+
+let cName_Res = gen_constant euf_checker_modules "Name_Res"
+let cName_Weaken= gen_constant euf_checker_modules "Name_Weaken"
+let cName_ImmFlatten= gen_constant euf_checker_modules "Name_ImmFlatten"
+let cName_CTrue= gen_constant euf_checker_modules "Name_CTrue"
+let cName_CFalse = gen_constant euf_checker_modules "Name_CFalse"
+let cName_BuildDef= gen_constant euf_checker_modules "Name_BuildDef"
+let cName_BuildDef2= gen_constant euf_checker_modules "Name_BuildDef2"
+let cName_BuildProj = gen_constant euf_checker_modules "Name_BuildProj"
+let cName_ImmBuildDef= gen_constant euf_checker_modules "Name_ImmBuildDef"
+let cName_ImmBuildDef2= gen_constant euf_checker_modules "Name_ImmBuildDef2"
+let cName_ImmBuildProj = gen_constant euf_checker_modules "Name_ImmBuildProj"
+let cName_EqTr = gen_constant euf_checker_modules "Name_EqTr"
+let cName_EqCgr = gen_constant euf_checker_modules "Name_EqCgr"
+let cName_EqCgrP= gen_constant euf_checker_modules "Name_EqCgrP"
+let cName_LiaMicromega = gen_constant euf_checker_modules "Name_LiaMicromega"
+let cName_LiaDiseq= gen_constant euf_checker_modules "Name_LiaDiseq"
+let cName_SplArith= gen_constant euf_checker_modules "Name_SplArith"
+let cName_SplDistinctElim = gen_constant euf_checker_modules "Name_SplDistinctElim"
+let cName_BBVar= gen_constant euf_checker_modules "Name_BBVar"
+let cName_BBConst= gen_constant euf_checker_modules "Name_BBConst"
+let cName_BBOp= gen_constant euf_checker_modules "Name_BBOp"
+let cName_BBNot= gen_constant euf_checker_modules "Name_BBNot"
+let cName_BBNeg= gen_constant euf_checker_modules "Name_BBNeg"
+let cName_BBAdd= gen_constant euf_checker_modules "Name_BBAdd"
+let cName_BBConcat= gen_constant euf_checker_modules "Name_BBConcat"
+let cName_BBMul= gen_constant euf_checker_modules "Name_BBMul"
+let cName_BBUlt= gen_constant euf_checker_modules "Name_BBUlt"
+let cName_BBSlt= gen_constant euf_checker_modules "Name_BBSlt"
+let cName_BBEq= gen_constant euf_checker_modules "Name_BBEq"
+let cName_BBDiseq= gen_constant euf_checker_modules "Name_BBDiseq"
+let cName_BBExtract= gen_constant euf_checker_modules "Name_BBExtract"
+let cName_BBZextend= gen_constant euf_checker_modules "Name_BBZextend"
+let cName_BBSextend= gen_constant euf_checker_modules "Name_BBSextend"
+let cName_BBShl= gen_constant euf_checker_modules "Name_BBShl"
+let cName_BBShr= gen_constant euf_checker_modules "Name_BBShr"
+let cName_RowEq= gen_constant euf_checker_modules "Name_RowEq"
+let cName_RowNeq= gen_constant euf_checker_modules "Name_RowNeq"
+let cName_Ext= gen_constant euf_checker_modules "Name_Ext"
+let cName_Hole= gen_constant euf_checker_modules "Name_Hole"
 
 
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
@@ -279,6 +322,128 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     (if Term.eq_constr res (Lazy.force CoqTerms.ctrue) then
         "true" else "false")
 
+
+let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
+  let nti = mkName "t_i" in
+  let ntfunc = mkName "t_func" in
+  let ntatom = mkName "t_atom" in
+  let ntform = mkName "t_form" in
+  let nc = mkName "c" in
+  let nused_roots = mkName "used_roots" in
+  let nd = mkName "d" in
+
+  let v = Term.mkRel in
+
+  let t_i = make_t_i rt in
+  let t_func = make_t_func ro (v 1 (*t_i*)) in
+  let t_atom = Atom.interp_tbl ra in
+  let t_form = snd (Form.interp_tbl rf) in
+
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
+      (interp_conseq_uf t_i)
+      (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*);
+                          v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  List.iter (fun (v,ty) ->
+    let _ = Structures.declare_new_variable v ty in
+    print_assm ty
+  ) cuts;
+
+  let certif =
+    mklApp cCertif [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *);
+                     mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+
+  let used_roots = compute_roots roots last_root in
+  let used_rootsCstr =
+    let l = List.length used_roots in
+    let res = Array.make (l + 1) (mkInt 0) in
+    let i = ref (l-1) in
+    List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
+    mklApp cSome [|mklApp carray [|Lazy.force cint|];
+                   Structures.mkArray (Lazy.force cint, res)|] in
+  let rootsCstr =
+    let res = Array.make (List.length roots + 1) (mkInt 0) in
+    let i = ref 0 in
+    List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
+    Structures.mkArray (Lazy.force cint, res) in
+
+  let tm =
+   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+   Term.mkLetIn (ntfunc, t_func,
+                 mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*);
+                                              v 2 (*t_atom*); v 1 (*t_form*)|],
+   Term.mkLetIn (nused_roots, used_rootsCstr,
+                 mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+   Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+   mklApp cchecker_debug [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*);
+       v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
+
+  let res = Vnorm.cbv_vm (Global.env ()) tm
+      (mklApp coption
+         [|mklApp cprod
+             [|Lazy.force cnat; Lazy.force cname_step|]|]) in
+
+  match Term.decompose_app res with
+  | c, _ when Term.eq_constr c (Lazy.force cNone) ->
+    Structures.error ("Debug checker is only meant to be used for certificates \
+                       that fail to be checked by SMTCoq.")
+  | c, [_; n] when Term.eq_constr c (Lazy.force cSome) ->
+    (match Term.decompose_app n with
+     | c, [_; _; cnb; cn] when Term.eq_constr c (Lazy.force cpair) ->
+       let n = fst (Term.decompose_app cn) in
+       let name =
+         if Term.eq_constr n (Lazy.force cName_Res ) then "Res"
+         else if Term.eq_constr n (Lazy.force cName_Weaken) then "Weaken"
+         else if Term.eq_constr n (Lazy.force cName_ImmFlatten) then "ImmFlatten"
+         else if Term.eq_constr n (Lazy.force cName_CTrue) then "CTrue"
+         else if Term.eq_constr n (Lazy.force cName_CFalse ) then "CFalse"
+         else if Term.eq_constr n (Lazy.force cName_BuildDef) then "BuildDef"
+         else if Term.eq_constr n (Lazy.force cName_BuildDef2) then "BuildDef2"
+         else if Term.eq_constr n (Lazy.force cName_BuildProj ) then "BuildProj"
+         else if Term.eq_constr n (Lazy.force cName_ImmBuildDef) then "ImmBuildDef"
+         else if Term.eq_constr n (Lazy.force cName_ImmBuildDef2) then "ImmBuildDef2"
+         else if Term.eq_constr n (Lazy.force cName_ImmBuildProj ) then "ImmBuildProj"
+         else if Term.eq_constr n (Lazy.force cName_EqTr ) then "EqTr"
+         else if Term.eq_constr n (Lazy.force cName_EqCgr ) then "EqCgr"
+         else if Term.eq_constr n (Lazy.force cName_EqCgrP) then "EqCgrP"
+         else if Term.eq_constr n (Lazy.force cName_LiaMicromega ) then "LiaMicromega"
+         else if Term.eq_constr n (Lazy.force cName_LiaDiseq) then "LiaDiseq"
+         else if Term.eq_constr n (Lazy.force cName_SplArith) then "SplArith"
+         else if Term.eq_constr n (Lazy.force cName_SplDistinctElim ) then "SplDistinctElim"
+         else if Term.eq_constr n (Lazy.force cName_BBVar) then "BBVar"
+         else if Term.eq_constr n (Lazy.force cName_BBConst) then "BBConst"
+         else if Term.eq_constr n (Lazy.force cName_BBOp) then "BBOp"
+         else if Term.eq_constr n (Lazy.force cName_BBNot) then "BBNot"
+         else if Term.eq_constr n (Lazy.force cName_BBNeg) then "BBNeg"
+         else if Term.eq_constr n (Lazy.force cName_BBAdd) then "BBAdd"
+         else if Term.eq_constr n (Lazy.force cName_BBConcat) then "BBConcat"
+         else if Term.eq_constr n (Lazy.force cName_BBMul) then "BBMul"
+         else if Term.eq_constr n (Lazy.force cName_BBUlt) then "BBUlt"
+         else if Term.eq_constr n (Lazy.force cName_BBSlt) then "BBSlt"
+         else if Term.eq_constr n (Lazy.force cName_BBEq) then "BBEq"
+         else if Term.eq_constr n (Lazy.force cName_BBDiseq) then "BBDiseq"
+         else if Term.eq_constr n (Lazy.force cName_BBExtract) then "BBExtract"
+         else if Term.eq_constr n (Lazy.force cName_BBZextend) then "BBZextend"
+         else if Term.eq_constr n (Lazy.force cName_BBSextend) then "BBSextend"
+         else if Term.eq_constr n (Lazy.force cName_BBShl) then "BBShl"
+         else if Term.eq_constr n (Lazy.force cName_BBShr) then "BBShr"
+         else if Term.eq_constr n (Lazy.force cName_RowEq) then "RowEq"
+         else if Term.eq_constr n (Lazy.force cName_RowNeq) then "RowNeq"
+         else if Term.eq_constr n (Lazy.force cName_Ext) then "Ext"
+         else if Term.eq_constr n (Lazy.force cName_Hole) then "Hole"
+         else string_coq_constr n
+       in
+       let nb = mk_nat cnb + List.length roots in
+       Structures.error ("Step number " ^ string_of_int nb ^
+                         " (" ^ name ^ ") of the cerificate likely failed.")
+     | _ -> assert false
+    )
+  | _ -> assert false
+
+
+
 let rec of_coq_list cl =
   match Term.decompose_app cl with
   | c, _ when Term.eq_constr c (Lazy.force cnil) -> []
@@ -287,7 +452,7 @@ let rec of_coq_list cl =
   | _ -> assert false
 
 
-let checker_debug t_i t_func t_atom t_form root used_root trace
+let checker_debug_step t_i t_func t_atom t_form root used_root trace
     (rt, ro, ra, rf, roots, max_id, confl) =
 
   let t_i' = make_t_i rt in
@@ -367,6 +532,7 @@ let checker_debug t_i t_func t_atom t_form root used_root trace
   let cpt = ref (List.length roots) in
   let debug_step s step =
     incr cpt;
+    Format.eprintf "%d@." !cpt;
     let tm =
       mklApp cchecker_step_debug
         [| ct_i; ct_func; ct_atom; ct_form; s; step |] in

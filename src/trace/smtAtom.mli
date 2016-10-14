@@ -242,3 +242,4 @@ val make_t_func : Op.reify_tbl -> Term.constr -> Term.constr
 
 (* Misc Coq to OCaml functions *)
 val mk_bool : Term.constr -> bool
+val mk_nat : Term.constr -> int

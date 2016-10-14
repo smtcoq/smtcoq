@@ -42,10 +42,9 @@ VERNAC COMMAND EXTEND Vernac_verit
   [
     Verit.checker fsmt fproof
   ]
-| [ "Verit_Checker_Debug"
-    ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
+| [ "Verit_Checker_Debug" string(fsmt) string(fproof) ] ->
   [
-    Verit.checker_debug t_i t_func t_atom t_form root used_roots trace fsmt fproof
+    Verit.checker_debug fsmt fproof
   ]
 | [ "Verit_Theorem" ident(name) string(fsmt) string(fproof) ] ->
   [
@@ -63,8 +62,7 @@ VERNAC COMMAND EXTEND Vernac_lfsc
   [
     Lfsc.checker fsmt fproof
   ]
-| [ "Lfsc_Checker_Debug"
-    ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
+| [ "Lfsc_Checker_Debug" string(fsmt) string(fproof) ] ->
   [
     Lfsc.checker_debug t_i t_func t_atom t_form root used_roots trace fsmt fproof
   ]

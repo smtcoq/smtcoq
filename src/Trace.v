@@ -595,6 +595,123 @@ Module Euf_Checker.
   Definition checker_step_debug s step_t :=
     let s := step_checker s step_t in
     (s, C.has_true (S.get s (position_of_step step_t))).
+
+
+  Definition ignore_true_step (st:step) :=
+    match st with
+    | CTrue _
+    | @Hole _ _ _ _ _ => true
+    | _ => false
+    end.
+
+  Inductive name_step :=
+  | Name_Res 
+  | Name_Weaken
+  | Name_ImmFlatten
+  | Name_CTrue
+  | Name_CFalse 
+  | Name_BuildDef
+  | Name_BuildDef2
+  | Name_BuildProj 
+  | Name_ImmBuildDef
+  | Name_ImmBuildDef2
+  | Name_ImmBuildProj 
+  | Name_EqTr 
+  | Name_EqCgr 
+  | Name_EqCgrP
+  | Name_LiaMicromega 
+  | Name_LiaDiseq
+  | Name_SplArith
+  | Name_SplDistinctElim 
+  | Name_BBVar
+  | Name_BBConst
+  | Name_BBOp
+  | Name_BBNot
+  | Name_BBNeg
+  | Name_BBAdd
+  | Name_BBConcat
+  | Name_BBMul
+  | Name_BBUlt
+  | Name_BBSlt
+  | Name_BBEq
+  | Name_BBDiseq
+  | Name_BBExtract
+  | Name_BBZextend
+  | Name_BBSextend
+  | Name_BBShl
+  | Name_BBShr
+  | Name_RowEq
+  | Name_RowNeq
+  | Name_Ext
+  | Name_Hole.
+  
+  Definition name_of_step (st:step) :=
+    match st with
+    | Res _ _ => Name_Res
+    | Weaken _ _ _ => Name_Weaken
+    | ImmFlatten _ _ _ => Name_ImmFlatten
+    | CTrue _ => Name_CTrue
+    | CFalse _ => Name_CFalse
+    | BuildDef _ _ => Name_BuildDef
+    | BuildDef2 _ _ => Name_BuildDef2
+    | BuildProj _ _ _ => Name_BuildProj
+    | ImmBuildDef _ _ => Name_ImmBuildDef
+    | ImmBuildDef2 _ _ => Name_ImmBuildDef2
+    | ImmBuildProj _ _ _ => Name_ImmBuildProj
+    | EqTr _ _ _ => Name_EqTr
+    | EqCgr _ _ _ => Name_EqCgr
+    | EqCgrP _ _ _ _ => Name_EqCgrP
+    | LiaMicromega _ _ _ => Name_LiaMicromega
+    | LiaDiseq _ _ => Name_LiaDiseq
+    | SplArith _ _ _ _ => Name_SplArith
+    | SplDistinctElim _ _ _ => Name_SplDistinctElim
+    | BBVar _ _ => Name_BBVar
+    | BBConst _ _ => Name_BBConst
+    | BBOp _ _ _ _ => Name_BBOp
+    | BBNot _ _ _ => Name_BBNot
+    | BBNeg _ _ _ => Name_BBNeg
+    | BBAdd _ _ _ _ => Name_BBAdd
+    | BBConcat _ _ _ _ => Name_BBConcat
+    | BBMul _ _ _ _ => Name_BBMul
+    | BBUlt _ _ _ _ => Name_BBUlt
+    | BBSlt _ _ _ _ => Name_BBSlt
+    | BBEq _ _ _ _ => Name_BBEq
+    | BBDiseq _ _ => Name_BBDiseq
+    | BBExtract _ _ _ => Name_BBExtract
+    | BBZextend _ _ _ => Name_BBZextend
+    | BBSextend _ _ _ => Name_BBSextend
+    | BBShl _ _ _ _ => Name_BBShl
+    | BBShr _ _ _ _ => Name_BBShr
+    | RowEq _ _ => Name_RowEq
+    | RowNeq _ _ => Name_RowNeq
+    | Ext _ _ => Name_Ext
+    | @Hole _ _ _ _ _ => Name_Hole
+    end.
+  
+  
+  Definition checker_debug d used_roots (c:certif) :=
+    let (nclauses, t, confl) := c in
+    let s := add_roots (S.make nclauses) d used_roots in
+    let '(_, nb, failure) :=
+        Structures.trace_fold
+          (fun acc step =>
+             match acc with
+             | (s, nb, None) =>
+               let nb := S nb in
+               let s := step_checker s step in
+               if negb (ignore_true_step step) &&
+                  C.has_true (S.get s (position_of_step step)) then
+                 (s, nb, Some step)
+               else (s, nb, None)
+             | _ => acc
+             end
+          ) (s, O, None) t
+    in
+    match failure with
+    | Some st => Some (nb, name_of_step st)
+    | None => None
+    end
+  .    
   
   
   Lemma checker_correct : forall (* t_i t_func t_atom t_form *) d used_roots c,
