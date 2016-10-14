@@ -737,6 +737,8 @@ module Make (T : Translator_sig.S) = struct
     (* | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2]) *)
     (* | Some ("negtrans2", [ty; y; x; z; p1; p2]) *)
 
+      (* if Term.equal x y || Term.equal x z || Term.equal y z then env *)
+      (* else  *)
       
       let neqs, env = trans [] env p in
       let x_z = eq ty x z in
@@ -759,6 +761,7 @@ module Make (T : Translator_sig.S) = struct
        let y_z = th_res p2 in
        let x_z = eq ty x z in
        let clauses = mk_clause_cl "eq_transitive" [not_ x_y; not_ y_z; x_z] [] :: clauses in
+
 
        (* let cl1 = [th_res p1] in *)
        (* let cl2 = [th_res p2] in *)

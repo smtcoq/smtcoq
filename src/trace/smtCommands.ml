@@ -322,6 +322,17 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     (if Term.eq_constr res (Lazy.force CoqTerms.ctrue) then
         "true" else "false")
 
+let count_used confl =
+  let cpt = ref 0 in
+  let rec count c =
+    incr cpt;
+    (* if c.used = 1 then incr cpt; *)
+    match c.prev with
+    | None -> !cpt
+    | Some c -> count c
+  in
+  count confl
+
 
 let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
   let nti = mkName "t_i" in
@@ -435,9 +446,9 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
          else if Term.eq_constr n (Lazy.force cName_Hole) then "Hole"
          else string_coq_constr n
        in
-       let nb = mk_nat cnb + List.length roots in
+       let nb = mk_nat cnb + List.length roots + (confl.id + 1 - count_used confl) in
        Structures.error ("Step number " ^ string_of_int nb ^
-                         " (" ^ name ^ ") of the cerificate likely failed.")
+                         " (" ^ name ^ ") of the certificate likely failed.")
      | _ -> assert false
     )
   | _ -> assert false
@@ -547,7 +558,7 @@ let checker_debug_step t_i t_func t_atom t_form root used_root trace
       else Structures.error ("Step number " ^ string_of_int !cpt ^
                              " (" ^ string_coq_constr
                                (fst (Term.decompose_app step)) ^ ")" ^
-                             " of the cerificate likely failed." )
+                             " of the certificate likely failed." )
     | _ -> assert false
   in
 

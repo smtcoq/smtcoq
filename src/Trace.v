@@ -600,6 +600,7 @@ Module Euf_Checker.
   Definition ignore_true_step (st:step) :=
     match st with
     | CTrue _
+    (* | Res _ _  *)
     | @Hole _ _ _ _ _ => true
     | _ => false
     end.
