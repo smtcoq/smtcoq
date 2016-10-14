@@ -42,18 +42,30 @@ Local Open Scope Z_scope.
 
 (* Bijection : int63 <-> Bvector size *)
 
-Lemma to_Z_inj : forall x y, [|x|] = [|y|] -> x = y.
+Theorem to_Z_inj : forall x y, [|x|] = [|y|] -> x = y.
 Proof Ring31.Int31_canonic.
 
-Lemma of_to_Z : forall x, of_Z ([|x|]) = x.
+Theorem of_to_Z : forall x, of_Z ([|x|]) = x.
 Proof. exact phi_inv_phi. Qed.
 
 (* Comparisons *)
-Axiom eqb_refl : forall x, (x == x)%int = true.
+Theorem eqb_refl x : (x == x)%int = true.
+Proof. now rewrite Ring31.eqb31_eq. Qed.
 
-Axiom ltb_spec : forall x y, (x < y)%int = true <-> [|x|] < [|y|].
+Theorem ltb_spec x y : (x < y)%int = true <-> [|x|] < [|y|].
+Proof.
+  unfold ltb. rewrite spec_compare, <- Z.compare_lt_iff.
+  change (phi x ?= phi y) with ([|x|] ?= [|y|]).
+  case ([|x|] ?= [|y|]); intuition; discriminate.
+Qed.
 
-Axiom leb_spec : forall x y, (x <= y)%int = true <-> [|x|] <= [|y|].
+Theorem leb_spec x y : (x <= y)%int = true <-> [|x|] <= [|y|].
+Proof.
+  unfold leb. rewrite spec_compare, <- Z.compare_le_iff.
+  change (phi x ?= phi y) with ([|x|] ?= [|y|]).
+  case ([|x|] ?= [|y|]); intuition; discriminate.
+Qed.
+
 
 (** Specification of logical operations *)
 Lemma lsl_spec_alt p :
@@ -69,13 +81,14 @@ Proof.
     * exact Z.le_0_1.
 Qed.
 
-Lemma lsl_spec x p : [| x << p |] = ([|x|] * 2^[|p|]) mod wB.
+Theorem lsl_spec x p : [| x << p |] = ([|x|] * 2^[|p|]) mod wB.
 Proof.
   unfold lsl.
   rewrite addmuldiv31_equiv, lsl_spec_alt, Nat2Z.inj_abs_nat, Z.abs_eq.
   - reflexivity.
   - now destruct (phi_bounded p).
 Qed.
+
 
 Lemma div_greater (p x:int) (H:Z.of_nat Int31.size <= [|p|]) : [|x|] / 2 ^ [|p|] = 0.
 Proof.
@@ -84,7 +97,7 @@ Proof.
   exact Z.lt_0_2.
 Qed.
 
-Lemma lsr_spec x p : [|x >> p|] = [|x|] / 2 ^ [|p|].
+Theorem lsr_spec x p : [|x >> p|] = [|x|] / 2 ^ [|p|].
 Proof.
   unfold lsr. case_eq (p < 31%int31)%int; intro Heq.
   - assert (H : [|31%int31 - p|] = 31 - [|p|]).
@@ -104,10 +117,93 @@ Proof.
 Qed.
 
 
+Lemma bit_testbit x i : bit x i = Z.testbit [|x|] [|i|].
+Admitted.
+(* Proof. *)
+(*   case_eq [|i|]. *)
+(*   - simpl. change 0 with [|0|]. intro Heq. apply Ring31.Int31_canonic in Heq. subst i. *)
+(*     unfold bit.  *)
 
 
+Lemma Z_pos_xO_pow i x (Hi:0 <= i) : Z.pos x < 2 ^ i <-> Z.pos x~0 < 2 ^ (i+1).
+Proof. rewrite Pos2Z.inj_xO, Z.pow_add_r; auto using Z.le_0_1; lia. Qed.
 
-Axiom land_spec: forall x y i , bit (x land y) i = bit x i && bit y i.
+Lemma Z_pos_xI_pow i x (Hi:0 <= i) : Z.pos x < 2 ^ i <-> Z.pos x~1 < 2 ^ (i+1).
+Proof. rewrite Pos2Z.inj_xI, Z.pow_add_r; auto using Z.le_0_1; lia. Qed.
+
+Lemma pow_nonneg i (Hi : 1 <= 2 ^ i) : 0 <= i.
+Proof.
+  destruct (Z.le_gt_cases 0 i); auto.
+  rewrite (Z.pow_neg_r _ _ H) in Hi. lia.
+Qed.
+
+Lemma pow_pos i (Hi : 1 < 2 ^ i) : 0 < i.
+Proof.
+  destruct (Z.lt_trichotomy 0 i) as [H|[H|H]]; auto.
+  - subst i. lia.
+  - rewrite (Z.pow_neg_r _ _ H) in Hi. lia.
+Qed.
+
+Lemma pos_land_bounded : forall x y i,
+  Z.pos x < 2 ^ i -> Z.pos y < 2 ^ i -> Z.of_N (Pos.land x y) < 2 ^ i.
+Proof.
+  induction x as [x IHx|x IHx| ]; intros [y|y| ] i; auto.
+  - simpl. intro H.
+    assert (H4:0 <= i - 1) by (assert (H4:0 < i); try lia; apply pow_pos; apply (Z.le_lt_trans _ (Z.pos x~1)); auto; lia).
+    generalize H. replace i with ((i-1)+1) at 1 2 by ring. rewrite <- !Z_pos_xI_pow; auto. intros H1 H2.
+    assert (H3:=IHx _ _ H1 H2).
+    unfold Pos.Nsucc_double. case_eq (Pos.land x y).
+    * intros _. eapply Z.le_lt_trans; [ |exact H]. clear. lia.
+    * intros p Hp. revert H3. rewrite Hp, N2Z.inj_pos, Z_pos_xI_pow; auto.
+      replace (i - 1 + 1) with i by ring. clear. lia.
+  - simpl. intro H.
+    assert (H4:0 <= i - 1) by (assert (H4:0 < i); try lia; apply pow_pos; apply (Z.le_lt_trans _ (Z.pos x~1)); auto; lia).
+    generalize H. replace i with ((i-1)+1) at 1 2 by ring. rewrite <- Z_pos_xI_pow, <- Z_pos_xO_pow; auto. intros H1 H2.
+    assert (H3:=IHx _ _ H1 H2).
+    unfold Pos.Ndouble. case_eq (Pos.land x y).
+    * intros _. eapply Z.le_lt_trans; [ |exact H]. clear. lia.
+    * intros p Hp. revert H3. rewrite Hp, N2Z.inj_pos, Z_pos_xO_pow; auto.
+      replace (i - 1 + 1) with i by ring. clear. lia.
+  - simpl. intro H.
+    assert (H4:0 <= i - 1) by (assert (H4:0 < i); try lia; apply pow_pos; apply (Z.le_lt_trans _ (Z.pos x~0)); auto; lia).
+    generalize H. replace i with ((i-1)+1) at 1 2 by ring. rewrite <- Z_pos_xI_pow, <- Z_pos_xO_pow; auto. intros H1 H2.
+    assert (H3:=IHx _ _ H1 H2).
+    unfold Pos.Ndouble. case_eq (Pos.land x y).
+    * intros _. eapply Z.le_lt_trans; [ |exact H]. clear. lia.
+    * intros p Hp. revert H3. rewrite Hp, N2Z.inj_pos, Z_pos_xO_pow; auto.
+      replace (i - 1 + 1) with i by ring. clear. lia.
+  - simpl. intro H.
+    assert (H4:0 <= i - 1) by (assert (H4:0 < i); try lia; apply pow_pos; apply (Z.le_lt_trans _ (Z.pos x~0)); auto; lia).
+    generalize H. replace i with ((i-1)+1) at 1 2 by ring. rewrite <- !Z_pos_xO_pow; auto. intros H1 H2.
+    assert (H3:=IHx _ _ H1 H2).
+    unfold Pos.Ndouble. case_eq (Pos.land x y).
+    * intros _. eapply Z.le_lt_trans; [ |exact H]. clear. lia.
+    * intros p Hp. revert H3. rewrite Hp, N2Z.inj_pos, Z_pos_xO_pow; auto.
+      replace (i - 1 + 1) with i by ring. clear. lia.
+  - simpl. intros H _. apply (Z.le_lt_trans _ (Z.pos x~0)); lia.
+  - simpl. intros H _. apply (Z.le_lt_trans _ 1); lia.
+Qed.
+
+
+Lemma Z_land_bounded i : forall x y,
+  0 <= x < 2 ^ i -> 0 <= y < 2 ^ i -> 0 <= Z.land x y < 2 ^ i.
+Proof.
+  intros [ |p|p] [ |q|q]; auto.
+  - intros [_ H1] [_ H2]. simpl. split.
+    * apply N2Z.is_nonneg.
+    * now apply pos_land_bounded.
+Admitted.
+
+Theorem land_spec x y i : bit (x land y) i = bit x i && bit y i.
+Proof.
+  rewrite !bit_testbit. change (x land y) with (land31 x y). unfold land31.
+  rewrite phi_phi_inv. rewrite Zmod_small.
+  - apply Z.land_spec.
+  - split.
+    * rewrite Z.land_nonneg. left. now destruct (phi_bounded x).
+    * now destruct (Z_land_bounded _ _ _ (phi_bounded x) (phi_bounded y)).
+Qed.
+
 
 Axiom lor_spec: forall x y i, bit (x lor y) i = bit x i || bit y i.
 
