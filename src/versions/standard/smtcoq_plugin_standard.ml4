@@ -64,7 +64,7 @@ VERNAC COMMAND EXTEND Vernac_lfsc
   ]
 | [ "Lfsc_Checker_Debug" string(fsmt) string(fproof) ] ->
   [
-    Lfsc.checker_debug t_i t_func t_atom t_form root used_roots trace fsmt fproof
+    Lfsc.checker_debug fsmt fproof
   ]
 | [ "Lfsc_Theorem" ident(name) string(fsmt) string(fproof) ] ->
   [
