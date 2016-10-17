@@ -59,6 +59,7 @@ Module Type BITVECTOR.
 
   (*equality*)
   Parameter bv_eq     : forall n, bitvector n -> bitvector n -> bool.
+  Parameter bv_eqP    : forall n, bitvector n -> bitvector n -> Prop.
 
   (*binary operations*)
   Parameter bv_concat : forall n m, bitvector n -> bitvector m -> bitvector (n + m).
@@ -70,8 +71,8 @@ Module Type BITVECTOR.
   Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_ult    : forall n, bitvector n -> bitvector n -> bool.
   Parameter bv_slt    : forall n, bitvector n -> bitvector n -> bool.
-  Parameter bv_shl   : forall n, bitvector n -> bitvector n -> bitvector n.
-  Parameter bv_shr   : forall n, bitvector n -> bitvector n -> bitvector n.
+  Parameter bv_shl    : forall n, bitvector n -> bitvector n -> bitvector n.
+  Parameter bv_shr    : forall n, bitvector n -> bitvector n -> bitvector n.
 
     (*unary operations*)
   Parameter bv_not    : forall n,     bitvector n -> bitvector n.
@@ -87,6 +88,8 @@ Module Type BITVECTOR.
   (* Specification *)
   Axiom bits_size     : forall n (bv:bitvector n), List.length (bits bv) = N.to_nat n.
   Axiom bv_eq_reflect : forall n (a b:bitvector n), bv_eq a b = true <-> a = b.
+  Axiom bv_eq_reflectP: forall n (a b:bitvector n), bv_eqP a b <-> a = b.
+  Axiom bv_eq_B2P     : forall n (a b:bitvector n), bv_eq a b = true <-> bv_eqP a b.
   Axiom bv_and_comm   : forall n (a b:bitvector n), bv_eq (bv_and a b) (bv_and b a) = true.
   Axiom bv_or_comm    : forall n (a b:bitvector n), bv_eq (bv_or a b) (bv_or b a) = true.
   Axiom bv_add_comm   : forall n (a b:bitvector n), bv_eq (bv_add a b) (bv_add b a) = true. 
@@ -97,7 +100,7 @@ Module Type BITVECTOR.
   Axiom bv_add_assoc  : forall n (a b c: bitvector n), bv_eq (bv_add a (bv_add b c)) (bv_add (bv_add a b) c) = true.
   Axiom bv_not_involutive: forall n (a: bitvector n), bv_eq (bv_not (bv_not a)) a = true.
 
-  Parameter _of_bits : forall (l: list bool) (s : N), bitvector s.
+  Parameter _of_bits  : forall (l: list bool) (s : N), bitvector s.
 
 End BITVECTOR.
 
@@ -115,6 +118,7 @@ Parameter zeros      : N -> bitvector.
 
 (*equality*)
 Parameter bv_eq      : bitvector -> bitvector -> bool.
+Parameter bv_eqP     : bitvector -> bitvector -> Prop.
 
 (*binary operations*)
 Parameter bv_concat  : bitvector -> bitvector -> bitvector.
@@ -126,8 +130,8 @@ Parameter bv_mult    : bitvector -> bitvector -> bitvector.
 Parameter bv_subt    : bitvector -> bitvector -> bitvector.
 Parameter bv_ult     : bitvector -> bitvector -> bool.
 Parameter bv_slt     : bitvector -> bitvector -> bool.
-Parameter bv_shl    : bitvector -> bitvector -> bitvector.
-Parameter bv_shr    : bitvector -> bitvector -> bitvector.
+Parameter bv_shl     : bitvector -> bitvector -> bitvector.
+Parameter bv_shr     : bitvector -> bitvector -> bitvector.
 
 (*unary operations*)
 Parameter bv_not     : bitvector -> bitvector.
@@ -171,18 +175,20 @@ Axiom bv_sextn_size  : forall (n i: N) a,
 
 (* Specification *)
 Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
+Axiom bv_eq_reflectP : forall a b, bv_eqP a b <-> a = b.
+Axiom bv_eq_B2P      : forall a b, bv_eq a b = true <-> bv_eqP a b.
 Axiom bv_and_comm    : forall n a b, size a = n -> size b = n -> bv_and a b = bv_and b a.
 Axiom bv_or_comm     : forall n a b, size a = n -> size b = n -> bv_or a b = bv_or b a.
 Axiom bv_add_comm    : forall n a b, size a = n -> size b = n -> bv_add a b = bv_add b a.
 
-Axiom bv_and_assoc  : forall n a b c, size a = n -> size b = n -> size c = n -> 
-                                   (bv_and a (bv_and b c)) = (bv_and (bv_and a b) c).
-Axiom bv_or_assoc   : forall n a b c, size a = n -> size b = n -> size c = n -> 
-                                   (bv_or a (bv_or b c)) = (bv_or (bv_or a b) c).
-Axiom bv_xor_assoc  : forall n a b c, size a = n -> size b = n -> size c = n -> 
-                                   (bv_xor a (bv_xor b c)) = (bv_xor (bv_xor a b) c).
-Axiom bv_add_assoc  : forall n a b c, size a = n -> size b = n -> size c = n -> 
-                                   (bv_add a (bv_add b c)) = (bv_add (bv_add a b) c).
+Axiom bv_and_assoc   : forall n a b c, size a = n -> size b = n -> size c = n -> 
+                                    (bv_and a (bv_and b c)) = (bv_and (bv_and a b) c).
+Axiom bv_or_assoc    : forall n a b c, size a = n -> size b = n -> size c = n -> 
+                                    (bv_or a (bv_or b c)) = (bv_or (bv_or a b) c).
+Axiom bv_xor_assoc   : forall n a b c, size a = n -> size b = n -> size c = n -> 
+                                    (bv_xor a (bv_xor b c)) = (bv_xor (bv_xor a b) c).
+Axiom bv_add_assoc   : forall n a b c, size a = n -> size b = n -> size c = n -> 
+                                    (bv_add a (bv_add b c)) = (bv_add (bv_add a b) c).
 Axiom bv_not_involutive: forall a, bv_not (bv_not a) = a.
 
 End RAWBITVECTOR.
@@ -216,6 +222,8 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
     @MkBitvector _ (M.zeros n) (M.zeros_size n).
 
   Definition bv_eq n (bv1 bv2:bitvector n) := M.bv_eq bv1 bv2.
+
+  Definition bv_eqP n (bv1 bv2:bitvector n) := M.bv_eqP bv1 bv2.
 
   Definition bv_and n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_and bv1 bv2) (M.bv_and_size (wf bv1) (wf bv2)).
@@ -279,6 +287,23 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
       rewrite (proof_irrelevance Ha Hb). reflexivity.
     - intros. case a in *. case b in *. simpl in *.
       now inversion H. (* now intros ->. *)
+  Qed.
+
+  Lemma bv_eq_reflectP n (a b: bitvector n) : bv_eqP a b <-> a = b.
+  Proof.
+    unfold bv_eqP. rewrite M.bv_eq_reflectP. split.
+    - revert a b. intros [a Ha] [b Hb]. simpl. intros ->.
+      rewrite (proof_irrelevance Ha Hb). reflexivity.
+    - intros. case a in *. case b in *. simpl in *.
+      now inversion H. (* now intros ->. *)
+  Qed.
+
+  Lemma bv_eq_B2P: forall n (a b: bitvector n), bv_eq a b = true <-> bv_eqP a b.
+  Proof.     
+      unfold bv_eqP, bv_eq. intros.
+      rewrite M.bv_eq_reflectP, M.bv_eq_reflect. split.
+    - revert a b. intros [a Ha] [b Hb]. simpl. intros ->. easy.
+    - intros. case a in *. case b in *. simpl in *. easy.
   Qed.
 
   Lemma bv_and_comm n (a b:bitvector n) : bv_eq (bv_and a b) (bv_and b a) = true.
@@ -356,6 +381,16 @@ Fixpoint beq_list (l m : list bool) {struct l} :=
 
 Definition bv_eq (a b: bitvector): bool:=
   if ((size a) =? (size b)) then beq_list (bits a) (bits b) else false.
+
+Fixpoint beq_listP (l m : list bool) {struct l} :=
+  match l, m with
+    | nil, nil => True
+    | x :: l', y :: m' => (x = y) /\ (beq_listP l' m')
+    | _, _ => False
+  end.
+
+Definition bv_eqP (a b: bitvector): Prop :=
+  if ((size a) =? (size b)) then beq_listP (bits a) (bits b) else False.
 
 Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
 Proof.
@@ -689,10 +724,27 @@ Proof.
       + apply IHl; reflexivity.
 Qed.
 
-Lemma List_eq_refl : forall (l m: list bool), beq_list l l = true.
+Lemma List_eqP : forall (l m: list bool), beq_listP l m  <-> l = m.
 Proof.
-    induction l; simpl; intro; try (reflexivity || discriminate).
-    - rewrite andb_true_iff. split. apply eqb_reflx. apply IHl. exact m.
+    induction l; destruct m; simpl; split; intro; try (reflexivity || discriminate); try now contradict H.
+    - destruct H. rewrite H.
+      apply f_equal. apply IHl. exact H0.
+    - inversion H. subst b. subst m. split.
+      + reflexivity.
+      + apply IHl; reflexivity.
+Qed.
+
+Lemma List_eq_refl : forall (l: list bool), beq_list l l = true.
+Proof.
+    induction l; simpl; try (reflexivity || discriminate).
+    - rewrite andb_true_iff. split. apply eqb_reflx. apply IHl.
+Qed.
+
+Lemma List_eqP_refl : forall (l: list bool), beq_listP l l  <-> l = l.
+Proof. intro l.
+       induction l as [ | xl xsl IHl ]; intros.
+       - easy.
+       - simpl. repeat split. now apply IHl.
 Qed.
 
 Lemma List_neq : forall (l m: list bool), beq_list l m = false -> l <> m.
@@ -717,12 +769,41 @@ Proof.
            now inversion H2.
 Qed.
 
+Lemma List_neqP : forall (l m: list bool), ~beq_listP l m -> l <> m.
+Proof. 
+       intro l.
+       induction l.
+       - intros. case m in *; simpl. now contradict H. easy.
+       - intros. unfold not in H. simpl in H.
+         case_eq m; intros. easy.
+         rewrite H0 in H.
+         unfold not. intros. apply H. inversion H1.
+         split; try easy.
+         now apply List_eqP_refl.
+Qed.
+
 Lemma bv_eq_reflect a b : bv_eq a b = true <-> a = b.
 Proof.
   unfold bv_eq. case_eq (size a =? size b); intro Heq; simpl.
   - apply List_eq.
   - split; try discriminate.
     intro H. rewrite H, N.eqb_refl in Heq. discriminate.
+Qed.
+
+Lemma bv_eq_reflectP a b : bv_eqP a b <-> a = b.
+Proof.
+  unfold bv_eqP. case_eq (size a =? size b); intro Heq; simpl.
+  - apply List_eqP.
+  - split. easy.
+    intro H. rewrite H, N.eqb_refl in Heq. discriminate.
+Qed.
+
+Lemma bv_eq_B2P a b : bv_eq a b = true <-> bv_eqP a b.
+Proof.
+  unfold bv_eq, bv_eqP. case_eq (size a =? size b); intro Heq; simpl.
+  - split; intros. apply List_eq in H; rewrite H. now apply List_eqP_refl.
+    apply List_eqP in H; rewrite H; now apply List_eq_refl.
+  - easy.
 Qed.
 
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = (n + m)%N.

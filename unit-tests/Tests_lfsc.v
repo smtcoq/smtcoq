@@ -1,10 +1,11 @@
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith.
+Require Import Bool PArray Int63 List ZArith BVList.
 Import ListNotations.
 Local Open Scope list_scope.
 
-Infix "-->" := implb (at level 60, right associativity) : bool_scope.
+Import BVList.BITVECTOR_LIST.
 
+Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
 (* Goal forall (a b:bool), a || negb b. *)
 (*   cvc4. *)
@@ -18,6 +19,45 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 (* Goal forall (f : Z -> Z) (a:Z), Z.eqb (f a) 1  -->  Z.eqb ((f a) + 1) 3. *)
 (*   cvc4. *)
 (* Qed. *)
+
+Section BV.
+
+  Import BVList.BITVECTOR_LIST.
+
+  Check bv_eqP.
+
+  Goal forall (a b c: bitvector 4),
+                                 (bv_eqP c (bv_and a b)) ->
+                                 (bv_eqP (bv_and (bv_and c a) b) c).
+  Proof.
+    intros a b c H. apply bv_eq_B2P. apply bv_eq_B2P in H.
+    revert H. 
+    apply
+     (reflect_iff (bv_eq (n:=4) c (bv_and (n:=4) a b) = true ->
+                   bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c = true) 
+                   (bv_eq (n:=4) c (bv_and (n:=4) a b) -->
+                   bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c) ).
+    apply implyP. 
+    cvc4.
+  Qed.
+
+  Goal forall (a b c: bitvector 4),
+                                 (bv_eq c (bv_and a b)) = true ->
+                                 (bv_eq (bv_and (bv_and c a) b) c) = true.
+  Proof.
+    intros a b c. 
+    apply
+     (reflect_iff (bv_eq (n:=4) c (bv_and (n:=4) a b) = true ->
+                   bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c = true) 
+                   (bv_eq (n:=4) c (bv_and (n:=4) a b) -->
+                   bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c) ).
+     apply implyP. 
+     cvc4.
+  Qed.
+
+End BV.
+
+
 
 Section Arrays.
   Import BVList.BITVECTOR_LIST.
@@ -58,9 +98,6 @@ Section Arrays.
   Proof.
     cvc4.
   Qed.
-
-  
-    
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
@@ -138,22 +175,6 @@ Section Arrays.
 
   
 End Arrays.
-
-Section BV.
-
-  Import BVList.BITVECTOR_LIST.
-
-  Goal forall (a b c: bitvector 4), implb
-                                 (bv_eq c (bv_and a b))
-                                 (bv_eq (bv_and (bv_and a c) b) c).
-  Proof.
-    cvc4.
-    destruct (bv_eq_reflect (bv_and a c) (bv_and c a)) as (R , _).
-    rewrite (R (bv_and_comm a c)).
-    verit.
-  Qed.
-
-End BV.
 
 
 Local Open Scope int63_scope.
