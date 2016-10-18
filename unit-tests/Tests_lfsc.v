@@ -156,7 +156,7 @@ Section Arrays.
   Proof.
     intro a.
     apply equal_B2P.
-    vercvc4.
+    cvc4; verit.
   Qed.
 
 
