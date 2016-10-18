@@ -2668,6 +2668,11 @@ Proof. intros; destruct H; [now left | now right]. Qed.
         case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
  Qed.
 
+ Lemma implyP2 : forall (b1 b2 b3: bool), reflect (b1 -> b2 -> b3) (b1 --> b2 --> b3).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
+ Qed.
+
  Lemma andP : forall (b1 b2: bool), reflect (b1 /\ b2) (b1 && b2).
  Proof. intros; apply iff_reflect; split;
         case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.

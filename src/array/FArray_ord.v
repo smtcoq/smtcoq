@@ -46,8 +46,6 @@ Module Raw.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
 
-
-  
   Definition eqb_key (x y : key) : bool := if eq_dec x y then true else false.
   Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
 
@@ -1060,7 +1058,6 @@ Section FArray.
 
 
 
-
   Fixpoint eq_list (m m' : list (key * elt)) : Prop :=
     match m, m' with
     | nil, nil => True
@@ -1185,7 +1182,6 @@ Section FArray.
 
   Definition lt_farray m m' := lt_list m.(this) m'.(this).
 
-  
   Lemma lt_farray_trans : forall m1 m2 m3 : farray,
       lt_farray m1 m2 -> lt_farray m2 m3 -> lt_farray m1 m3.
   Proof.
@@ -1431,7 +1427,8 @@ Section FArray.
   Require Import ProofIrrelevance.
   
   Lemma equal_eq : forall a b, equal a b = true -> a = b.
-  Proof. intros. apply eq_equal in H.
+  Proof. 
+    intros. apply eq_equal in H.
     destruct a as (a, asort), b as (b, bsort).
     unfold eq in H.
     revert b bsort H.
@@ -1450,7 +1447,46 @@ Section FArray.
     apply f_equal.  apply proof_irrelevance.
  Qed.
 
-  
+(** farray equal in Prop *)
+  Definition equalP (m m' : farray) : Prop :=
+    if equal m m' then True else False.
+
+  Lemma eq_list_refl: forall a, eq_list a a.
+  Proof.
+    intro a.
+    induction a; intros.
+    - now simpl.
+    - simpl. destruct a as (k, e).
+      case_eq (compare k k); intros.
+      + revert H. generalize l.
+        apply lt_not_eq in l. now contradict l.
+      + split; easy.
+      + revert H. generalize l.
+        apply lt_not_eq in l. now contradict l.
+  Qed.
+
+  Lemma equal_refl: forall a, equal a a = true.
+  Proof. intros; apply eq_equal; apply eq_list_refl. Qed.
+
+  Lemma equal_eqP : forall a b, equalP a b <-> a = b.
+  Proof. 
+     intros. split; intro H. unfold equalP in H.
+     case_eq (equal a b); intros; rewrite H0 in H.
+     now apply equal_eq. now contradict H.
+     rewrite H. unfold equalP.
+     now rewrite equal_refl.
+  Qed.
+
+ Lemma equal_B2P: forall (m m' : farray),
+                  equal m m' = true <-> equalP m m'.
+ Proof.
+     intros. split; intros.
+     apply equal_eq in H. rewrite H.
+     unfold equalP. now rewrite equal_refl.
+     apply equal_eqP in H.
+     now rewrite H, equal_refl.
+ Qed.
+
 End FArray.
 
 

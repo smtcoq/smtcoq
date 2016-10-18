@@ -25,12 +25,14 @@ Section BV.
   Import BVList.BITVECTOR_LIST.
 
   Check bv_eqP.
+  Local Open Scope bv_scope.
 
   Goal forall (a b c: bitvector 4),
                                  (bv_eqP c (bv_and a b)) ->
                                  (bv_eqP (bv_and (bv_and c a) b) c).
   Proof.
-    intros a b c H. apply bv_eq_B2P. apply bv_eq_B2P in H.
+    intros a b c H.
+    apply bv_eq_B2P. apply bv_eq_B2P in H.
     revert H. 
     apply
      (reflect_iff (bv_eq (n:=4) c (bv_and (n:=4) a b) = true ->
@@ -48,10 +50,33 @@ Section BV.
     intros a b c. 
     apply
      (reflect_iff (bv_eq (n:=4) c (bv_and (n:=4) a b) = true ->
-                   bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c = true) 
+                   bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c = true)
                    (bv_eq (n:=4) c (bv_and (n:=4) a b) -->
                    bv_eq (n:=4) (bv_and (n:=4) (bv_and (n:=4) c a) b) c) ).
      apply implyP. 
+     cvc4.
+  Qed.
+
+  Goal forall (bv1 bv2 : bitvector 4),
+      bv_eqP #b|0|0|0|0| bv1  ->
+      bv_eqP #b|1|0|0|0| bv2  ->
+      bv_ultP bv1 bv2.
+  Proof.
+     intros a b H0 H1.
+     apply bv_eq_B2P in H0. apply bv_eq_B2P in H1. apply bv_ult_B2P.
+     revert H0 H1.
+
+     apply 
+       (reflect_iff
+            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a = true ->
+             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b = true -> 
+             bv_ult (n:=4) a b = true)
+            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a -->
+             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
+             bv_ult (n:=4) a b)
+            ).
+     apply implyP2.
+
      cvc4.
   Qed.
 
