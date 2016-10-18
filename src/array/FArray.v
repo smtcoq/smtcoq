@@ -1862,6 +1862,7 @@ Arguments select {_} {_} {_} {_} {_} _ _.
 Arguments store {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
+Arguments equalP {_} {_} {_} {_} {_} {_} {_}  _ _.
 
 
 Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.

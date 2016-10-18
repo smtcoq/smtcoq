@@ -20,6 +20,68 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 (*   cvc4. *)
 (* Qed. *)
 
+Section LIA.
+
+  (** !!! cvc4 tactic crashes !!! *)
+  Goal forall a b, ltP_Z a b -> ltP_Z a (b + 10).
+  Proof.
+    intros a b H.
+    apply lt_Z_B2P. apply lt_Z_B2P in H.
+    
+    revert H.
+    apply ( reflect_iff 
+                  ((a <? b) = true -> (a <? b + 10) = true) 
+                  ((a <? b) --> (a <? b + 10))  ).
+    apply implyP.
+    verit. (* cvc4 tactic crashed *)
+  Qed.
+
+  Goal forall a b, eqP_Z a b -> eqP_Z b a.
+  Proof.
+    intros a b H.
+    apply eq_Z_B2P. apply eq_Z_B2P in H.
+    
+    revert H.
+    apply ( reflect_iff 
+                  ((a =? b) = true -> (b =? a) = true) 
+                  ((a =? b) --> (b =? a)) ).
+    apply implyP.
+    cvc4.
+    verit.
+  Qed.
+
+  Goal forall a b, eqP_Z a a /\ eqP_Z b b.
+  Proof.
+    intros a b. split.
+    apply eq_Z_B2P.
+
+    apply ( reflect_iff 
+                  ((a =? a) = true) 
+                  ((a =? a)) ).
+    remember eqP.
+    specialize (@eqP (a =? a) true); intros.
+    assert (Bool.eqb (a =? a) true = (a =? a)).
+    { case_eq a; intros; try (rewrite Z.eqb_refl; now simpl). }
+    rewrite H0 in H. apply H.
+
+    cvc4; verit.
+
+    apply eq_Z_B2P.
+    apply ( reflect_iff 
+                  ((b =? b) = true) 
+                  ((b =? b)) ).
+    remember eqP.
+    specialize (@eqP (b =? b) true); intros.
+    assert (Bool.eqb (b =? b) true = (b =? b)).
+    { case_eq a; intros; try (rewrite Z.eqb_refl; now simpl). }
+    rewrite H0 in H. apply H.
+
+    cvc4; verit.
+  Qed.
+
+End LIA.
+
+
 Section BV.
 
   Import BVList.BITVECTOR_LIST.
@@ -61,7 +123,7 @@ Section BV.
       bv_eqP #b|0|0|0|0| bv1  ->
       bv_eqP #b|1|0|0|0| bv2  ->
       bv_ultP bv1 bv2.
-  Proof.
+  Proof.  
      intros a b H0 H1.
      apply bv_eq_B2P in H0. apply bv_eq_B2P in H1. apply bv_ult_B2P.
      revert H0 H1.
@@ -83,7 +145,6 @@ Section BV.
 End BV.
 
 
-
 Section Arrays.
   Import BVList.BITVECTOR_LIST.
   Import FArray.
@@ -91,7 +152,14 @@ Section Arrays.
   Local Open Scope farray_scope.
   Local Open Scope bv_scope.
 
-  
+  Goal forall (a:farray Z Z), equalP a a.
+  Proof.
+    intro a.
+    apply equal_B2P.
+    vercvc4.
+  Qed.
+
+
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
          (g: farray Z Z -> Z)
