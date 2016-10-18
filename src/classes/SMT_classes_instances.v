@@ -190,6 +190,65 @@ Section Z.
 End Z.
 
 
+Section Nat.
+
+  Require Import OrderedTypeEx.
+
+  Instance Nat_ord : OrdType nat.
+  Proof.
+    
+    exists Nat_as_OT.lt.
+    exact Nat_as_OT.lt_trans.
+    exact Nat_as_OT.lt_not_eq.
+  Defined.
+
+  Instance Nat_eqbtype : EqbType nat :=
+    {| eqb := Nat.eqb; eqb_spec := Nat.eqb_eq |}.
+  
+  Instance Nat_dec : DecType nat :=
+    EqbToDecType _ Nat_eqbtype.
+
+  
+  Instance Nat_comp: Comparable nat.
+  Proof.
+    constructor.
+    apply Nat_as_OT.compare.
+  Defined.
+
+
+  Instance Nat_inh : Inhabited nat := {| default_value := O%nat |}.
+
+    
+  Instance Nat_compdec : CompDec nat := {|
+    Eqb := Nat_eqbtype;                                    
+    Ordered := Nat_ord;                                    
+    Comp := Nat_comp;
+    Inh := Nat_inh
+  |}.
+
+  (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
+  Definition eqP_Nat x y := if Nat.eqb x y then True else False.
+  Definition ltP_Nat x y := if Nat.ltb x y then True else False.
+
+  Lemma eq_Nat_B2P: forall x y, Nat.eqb x y = true <-> eqP_Nat x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_Nat; now rewrite H.
+         unfold eqP_Nat in H.
+         case_eq ((x =? y)%nat ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma lt_Nat_B2P: forall x y, Nat.ltb x y = true <-> ltP_Nat x y.
+  Proof. intros x y; split; intro H.
+         unfold ltP_Nat; now rewrite H.
+         unfold ltP_Nat in H.
+         case_eq ((x <? y)%nat ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+End Nat.
+
+
 Section Positive.
 
   

@@ -159,6 +159,19 @@ Section Arrays.
     cvc4; verit.
   Qed.
 
+  Goal forall (a b: farray Z Z), equalP a b -> equalP b a.
+  Proof.
+    intros a b H.
+    apply equal_B2P. apply equal_B2P in H.
+    revert H.
+    apply 
+      (reflect_iff 
+         (equal a b = true -> equal b a = true)
+         (equal a b --> equal b a)  ).
+    apply implyP.
+
+    cvc4; verit.
+  Qed.
 
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
@@ -201,7 +214,7 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    cvc4.
+    cvc4. verit.
   Qed.
 
   Goal forall (a:bool), a || negb a.
@@ -237,7 +250,7 @@ Section Arrays.
     
   Goal forall (l r: list bool), Nat.eqb (lenb l) (lenb r)  -->  Nat.eqb (lenb l) (lenb r).
   Proof.
-    verit; admit.
+    verit. apply Nat_compdec. admit.
   Admitted.
   
   Goal forall (a:farray Z Z) i, Z.eqb (select a i) (select a i).
@@ -260,8 +273,7 @@ Section Arrays.
         (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
   Proof.
     intros.
-    cvc4.
-    verit.
+    cvc4;
     try verit.
   Admitted.
 
