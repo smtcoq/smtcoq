@@ -2644,6 +2644,7 @@ End Atom.
 
 Arguments Atom.Val {_} {_} _ _.
 
+
 Section ReflectFacts.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
@@ -2697,6 +2698,7 @@ Proof. intros; destruct H; [now left | now right]. Qed.
  Qed.
 
 End ReflectFacts.
+
 
 (* These definitions are not used. This is just a hack, Coq refuses to
    construct PArrays from OCaml if these are not here for some silly reason *)
