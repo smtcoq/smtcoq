@@ -50,7 +50,7 @@ Ltac cvc4' :=
            | [ H: (ltP_Z _ _)  |- _ ]         => apply lt_Z_B2P in H; 
                                                  try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
                                                       apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
-           | [ |- _ : forall _ : ?T, _ ]      => intro
+           | [ |- _ : ?T ]                    => intro
         end;
  repeat match goal with
            | [ H: ?G0 = true |- ?G1 = true ]  => revert H; 
@@ -83,7 +83,7 @@ Section BV.
 
   Goal forall (bv1 bv2: bitvector 4),
       bv_eqP bv1 bv2 <-> bv_eqP bv2 bv1.
-  Proof. 
+  Proof.
      cvc4'.
   Qed.
 
@@ -110,6 +110,26 @@ Section BV.
       bv_eqP #b|1|0|0|0| bv2  /\
       bv_eqP #b|1|1|0|0| bv3  ->
       bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eqP #b|0|0|0|0| bv1  ->
+      bv_eqP #b|1|0|0|0| bv2  /\
+      bv_eqP #b|1|1|0|0| bv3  ->
+      bv_eqP #b|1|1|1|0| bv4  ->
+      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eqP #b|0|0|0|0| bv1  /\
+      bv_eqP #b|1|0|0|0| bv2  /\
+      bv_eqP #b|1|1|0|0| bv3  ->
+      bv_eqP #b|1|1|1|0| bv4  ->
+      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
   Proof. 
      cvc4'.
   Qed.
@@ -301,6 +321,24 @@ Section Arrays.
     cvc4'.
   Qed.
 
+  Goal forall (a b c d: farray Z Z),
+      equalP b[0 <- 4] c  ->
+      equalP d b[0 <- 4][1 <- 4]  /\
+      equalP a d[1 <- b[1]]  ->
+      equalP a c.
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall (a b c d: farray Z Z),
+      equalP b[0 <- 4] c  /\
+      equalP d b[0 <- 4][1 <- 4]  /\
+      equalP a d[1 <- b[1]]  ->
+      equalP a c.
+  Proof.
+    cvc4'.
+  Qed.
+
   
   Goal forall (a b c d: farray Z Z),
       equal b[0 <- 4] c  -->
@@ -330,6 +368,42 @@ Section Arrays.
       bv_eqP #b|1|0|0|0| bv2  ->
       equalP c b[bv1 <- 4]  ->
       equalP d b[bv1 <- 4][bv2 <- 4]  ->
+      equalP a d[bv2 <- b[bv2]]  ->
+      equalP a c.
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv_eqP #b|0|0|0|0| bv1  ->
+      bv_eqP #b|1|0|0|0| bv2  /\
+      equalP c b[bv1 <- 4]  ->
+      equalP d b[bv1 <- 4][bv2 <- 4]  ->
+      equalP a d[bv2 <- b[bv2]]  ->
+      equalP a c.
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv_eqP #b|0|0|0|0| bv1  /\
+      bv_eqP #b|1|0|0|0| bv2  /\
+      equalP c b[bv1 <- 4]  ->
+      equalP d b[bv1 <- 4][bv2 <- 4]  ->
+      equalP a d[bv2 <- b[bv2]]  ->
+      equalP a c.
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv_eqP #b|0|0|0|0| bv1  /\
+      bv_eqP #b|1|0|0|0| bv2  /\
+      equalP c b[bv1 <- 4]  /\
+      equalP d b[bv1 <- 4][bv2 <- 4]  /\
       equalP a d[bv2 <- b[bv2]]  ->
       equalP a c.
   Proof.
