@@ -27,17 +27,29 @@ Ltac cvc4' :=
            | [ |- _ <-> _ ]                   => split
            | [ |- _ \/ _ ]                    => try (left || right)
            | [ H: (bv_eqP _ _)  |- _ ]        => apply bv_eq_B2P in H; 
-                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || apply equal_B2P)
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ H: (bv_ultP _ _) |- _ ]        => apply bv_ult_B2P in H;
-                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || apply equal_B2P)
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ H: (bv_sltP _ _) |- _ ]        => apply bv_slt_B2P in H;
-                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || apply equal_B2P)
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ H: _ /\ _ |- _ ]               => destruct H;
-                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || apply equal_B2P)
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ H: _ \/ _ |- _ ]               => destruct H;
-                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || apply equal_B2P)
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ H: (equalP _ _)  |- _ ]        => apply equal_B2P in H; 
-                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || apply equal_B2P)
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
+           | [ H: (eqP_Z _ _)  |- _ ]         => apply eq_Z_B2P in H; 
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
+           | [ H: (ltP_Z _ _)  |- _ ]         => apply lt_Z_B2P in H; 
+                                                 try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
+                                                      apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ |- _ : forall _ : ?T, _ ]      => intro
         end;
  repeat match goal with
@@ -50,10 +62,10 @@ Ltac cvc4' :=
            | [ H: ?G0 = true |- ?G1 = true ]  => revert H; 
                                                  apply (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
                                                  try apply orP; try (cvc4; verit)
-           | [ |- equalP _ _ ]                => apply equal_B2P;
-                                                 try apply orP; try (cvc4; verit)
-           | [ |- bv_eqP _ _ ]                => apply bv_eq_B2P;
-                                                 try apply orP; try (cvc4; verit)
+           | [ |- equalP _ _ ]                => apply equal_B2P; try (cvc4; verit)
+           | [ |- bv_eqP _ _ ]                => apply bv_eq_B2P; try (cvc4; verit)
+           | [ |- eqP_Z _ _ ]                 => apply eq_Z_B2P; try (cvc4; verit)
+           | [ |- ltP_Z _ _ ]                 => apply lt_Z_B2P; try (cvc4; verit)
         end.
 
 Section BV.
@@ -274,6 +286,12 @@ Section Arrays.
     cvc4.
   Qed.
 
+
+  Goal forall (a:bitvector 4), bv_eqP (bv_add a a) (bv_add a a).
+  Proof.
+    cvc4'.
+  Qed.
+
   Goal forall (a b c d: farray Z Z),
       equalP b[0 <- 4] c  ->
       equalP d b[0 <- 4][1 <- 4]  ->
@@ -282,6 +300,7 @@ Section Arrays.
   Proof.
     cvc4'.
   Qed.
+
   
   Goal forall (a b c d: farray Z Z),
       equal b[0 <- 4] c  -->
@@ -407,17 +426,31 @@ Section Arrays.
   Proof.
     verit.
   Qed.
+
+  Goal forall (a:farray Z Z) i, eqP_Z (select a i) (select a i).
+  Proof.
+    cvc4'.
+  Qed.
   
   Goal forall (a:farray Z Z) i, Z.eqb (select (store a i 1) i) (select (store a i 1) i).
   Proof.
     verit.
   Qed.
   
+  Goal forall (a:farray Z Z) i, eqP_Z (select (store a i 1) i) (select (store a i 1) i).
+  Proof.
+    cvc4'.
+  Qed.
+
   Goal forall (a:bitvector 4), bv_eq (bv_add a a) (bv_add a a).
   Proof.
     verit.
   Qed.
-  
+
+  Goal forall (a:bitvector 4), bv_eqP (bv_add a a) (bv_add a a).
+  Proof.
+    cvc4'.
+  Qed.
 
   Goal forall (a b: farray Z Z) i,
         (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
@@ -427,8 +460,6 @@ Section Arrays.
     try verit.
   Admitted.
 
-
-  
 End Arrays.
 
 Section LIA.
@@ -464,6 +495,11 @@ Section LIA.
     verit.
   Qed.
 
+  Goal forall a b, eqP_Z a b <-> eqP_Z b a.
+  Proof.
+    cvc4'.
+  Qed.
+
   Goal forall a b, eqP_Z a a /\ eqP_Z b b.
   Proof.
     intros a b. split.
@@ -491,6 +527,11 @@ Section LIA.
     rewrite H0 in H. apply H.
 
     cvc4; verit.
+  Qed.
+
+  Goal forall a b, eqP_Z a a /\ eqP_Z b b.
+  Proof.
+    cvc4'.
   Qed.
 
 End LIA.
@@ -846,7 +887,6 @@ Proof.
   cvc4.
   verit.
 Qed.
-
 
 (* lia2.smt *)
 
