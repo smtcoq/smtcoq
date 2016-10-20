@@ -22,6 +22,7 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 (* Qed. *)
 
 Ltac cvc4' :=
+ solve [
  repeat match goal with
            | [ |- _ /\ _ ]                    => split
            | [ |- _ <-> _ ]                   => split
@@ -35,6 +36,12 @@ Ltac cvc4' :=
            | [ H: (bv_sltP _ _) |- _ ]        => apply bv_slt_B2P in H;
                                                  try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
                                                       apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
+
+          | [ H: ?G0 = true |- ?G1 = true ]  => revert H; 
+                                                apply (@reflect_iff (G0 = true -> G1 = true) (G0 --> G1));
+                                                try apply implyP; try (cvc4; verit)
+
+
            | [ H: _ /\ _ |- _ ]               => destruct H;
                                                  try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
                                                       apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
@@ -51,22 +58,26 @@ Ltac cvc4' :=
                                                  try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
                                                       apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P)
            | [ |- _ : ?T ]                    => intro
+
+
         end;
+
  repeat match goal with
+
            | [ H: ?G0 = true |- ?G1 = true ]  => revert H; 
                                                  apply (@reflect_iff (G0 = true -> G1 = true) (G0 --> G1));
                                                  try apply implyP; try (cvc4; verit)
-           | [ H: ?G0 = true |- ?G1 = true ]  => revert H; 
-                                                 apply (@reflect_iff (G0 = true /\ G1 = true) (andb G0 G1));
-                                                 try apply andP; try (cvc4; verit)
-           | [ H: ?G0 = true |- ?G1 = true ]  => revert H; 
-                                                 apply (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
-                                                 try apply orP; try (cvc4; verit)
+
            | [ |- equalP _ _ ]                => apply equal_B2P; try (cvc4; verit)
            | [ |- bv_eqP _ _ ]                => apply bv_eq_B2P; try (cvc4; verit)
+           | [ |- bv_ultP _ _ ]               => apply bv_ult_B2P; try (cvc4; verit)
            | [ |- eqP_Z _ _ ]                 => apply eq_Z_B2P; try (cvc4; verit)
            | [ |- ltP_Z _ _ ]                 => apply lt_Z_B2P; try (cvc4; verit)
-        end.
+           | [ |- _ : bool]                   => try (cvc4; verit)
+           | [ |- _ = false ]                 => try (cvc4; verit)
+
+        end ].
+
 
 Section BV.
 
@@ -74,6 +85,15 @@ Section BV.
 
   Check bv_eqP.
   Local Open Scope bv_scope.
+
+  Goal forall (bv1 bv2 bv3: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true  ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true.
+  Proof. 
+     cvc4'.
+  Qed.
 
 
   Goal forall (a: bitvector 32), bv_eqP a a.
@@ -87,14 +107,31 @@ Section BV.
      cvc4'.
   Qed.
 
+
+  Goal forall (bv1 bv2: bitvector 4),
+      bv_eq bv1 bv2 = true <-> bv_eq bv2 bv1 = true.
+  Proof.
+     cvc4'.
+  Qed.
+
   Goal forall (bv1 bv2 bv3: bitvector 4),
       bv_eqP #b|0|0|0|0| bv1  ->
       bv_eqP #b|1|0|0|0| bv2  /\
       bv_eqP #b|1|1|0|0| bv3  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 \/ bv_ultP bv2 bv1.
+      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true \/ bv_ultP bv2 bv1.
   Proof. 
      cvc4'.
   Qed.
+
+  Goal forall (bv1 bv2 bv3: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true  ->
+      bv_eq #b|1|0|0|0| bv2 = true /\
+      bv_eq #b|1|1|0|0| bv3 = true ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true \/ bv_ult bv2 bv1 = true.
+  Proof. 
+     cvc4'.
+  Qed.
+
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
       bv_eqP #b|0|0|0|0| bv1  /\
@@ -106,10 +143,19 @@ Section BV.
   Qed.
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1.
+      bv_eq #b|0|0|0|0| bv1 = true  /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true  /\
+      bv_eq #b|1|0|0|0| bv2 = true /\
+      bv_eq #b|1|1|0|0| bv3 = true ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true.
   Proof. 
      cvc4'.
   Qed.
@@ -119,13 +165,33 @@ Section BV.
       bv_eqP #b|1|0|0|0| bv2  /\
       bv_eqP #b|1|1|0|0| bv3  ->
       bv_eqP #b|1|1|1|0| bv4  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
+      (bv_ult bv1 bv2 = true \/ bv_ultP bv3 bv1) /\ bv_ultP bv3 bv4 \/ bv_ult bv1 bv4 = true /\ bv_ultP bv2 bv4.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true  ->
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true ->
+      bv_eq #b|1|1|1|0| bv4 = true ->
+      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true /\ bv_ult bv3 bv4 = true.
   Proof. 
      cvc4'.
   Qed.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
       bv_eqP #b|0|0|0|0| bv1  /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eqP #b|1|1|0|0| bv3  ->
+      bv_eqP #b|1|1|1|0| bv4  ->
+      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4 /\ bv_ult bv1 bv4 = true.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true  /\
       bv_eqP #b|1|0|0|0| bv2  /\
       bv_eqP #b|1|1|0|0| bv3  ->
       bv_eqP #b|1|1|1|0| bv4  ->
@@ -133,6 +199,17 @@ Section BV.
   Proof. 
      cvc4'.
   Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true  /\
+      bv_eqP #b|1|0|0|0| bv2  /\
+      bv_eq #b|1|1|0|0| bv3 = true  ->
+      bv_eqP #b|1|1|1|0| bv4  ->
+      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true /\ bv_ultP bv3 bv4.
+  Proof. 
+     cvc4'.
+  Qed.
+
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
       bv_eqP #b|0|0|0|0| bv1  /\
@@ -174,8 +251,6 @@ Section BV.
   Proof. 
      cvc4'.
   Qed.
-
-
 
 
   Goal forall (a b c: bitvector 4),
@@ -303,7 +378,7 @@ Section Arrays.
          equal a[x <- v] b && equal a[y <- w] b  -->
          Z.eqb (f x) (f y) || Z.eqb (g a) (g b).
   Proof.
-    cvc4.
+    cvc4'.
   Qed.
 
 
@@ -346,7 +421,7 @@ Section Arrays.
       equal a d[1 <- b[1]]  -->
       equal a c.
   Proof.
-    cvc4.
+    cvc4'.
   Qed.
 
 
@@ -359,7 +434,7 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    cvc4.
+    cvc4'.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
@@ -410,6 +485,18 @@ Section Arrays.
     cvc4'.
   Qed.
 
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv_eq #b|0|0|0|0| bv1 = true  /\
+      bv_eqP #b|1|0|0|0| bv2  /\
+      equalP c b[bv1 <- 4]  /\
+      equalP d b[bv1 <- 4][bv2 <- 4]  /\
+      equalP a d[bv2 <- b[bv2]]  ->
+      equal a c = true.
+  Proof.
+    cvc4'.
+  Qed.
+
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
       bv_eq #b|0|0|0|0| bv1  -->
@@ -420,6 +507,18 @@ Section Arrays.
       equal a c.
   Proof.
     Time cvc4. verit.
+  Time Qed.
+
+  Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
+         (a b c d : farray (bitvector 4) (bitvector 4)),
+      bv_eq #b|0|0|0|0| bv1  -->
+      bv_eq #b|1|0|0|0| bv2  -->
+      equal c b[bv1 <- x]  -->
+      equal d b[bv1 <- x][bv2 <- x]  -->
+      equal a d[bv2 <- b[bv2]]  -->
+      equal a c.
+  Proof.
+    Time cvc4'.
   Time Qed.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
@@ -435,7 +534,7 @@ Section Arrays.
   Time Qed.
 
   Goal forall (a:bool), a || negb a.
-    cvc4.
+    cvc4'.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
@@ -447,7 +546,7 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    cvc4.
+    cvc4'.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
@@ -529,8 +628,7 @@ Section Arrays.
   Goal forall (a b: farray Z Z) i,
         (Z.eqb (select (store (store (store a i 3) 1 (select (store b i 4) i)) 2 2) 1) 4).
   Proof.
-    intros.
-    cvc4;
+    cvc4'.
     try verit.
   Admitted.
 
@@ -620,36 +718,36 @@ Local Open Scope int63_scope.
 (* Simple connectors *)
 
 Goal forall (a:bool), a || negb a.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall a, negb (a || negb a) = false.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall a, (a && negb a) = false.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall a, negb (a && negb a).
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall a, implb a a.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall a, negb (implb a a) = false.
-  cvc4.
+  cvc4'.
 Qed.
 
 
 Goal forall a , (xorb a a) || negb (xorb a a).
-  cvc4; verit.
+  cvc4'.
 Qed.
                                     
 Goal forall a, (a||negb a) || negb (a||negb a).
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -658,13 +756,13 @@ Qed.
 
 Goal forall a b, andb (orb (negb (negb a)) b) (negb (orb a b)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
 Goal forall a b, andb (orb a b) (andb (negb a) (negb b)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -673,7 +771,7 @@ Qed.
 
 Goal forall a, orb a (negb (negb (negb a))) = true.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -683,31 +781,30 @@ Qed.
 Goal forall a b c,
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
  
 
 Goal true.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
                                     
 Goal negb false.
-  cvc4.
-  simpl. auto.
+  cvc4'.
 Qed.
 
  
 Goal forall a, Bool.eqb a a.
 Proof.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
  
 Goal forall (a:bool), a = a.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
 
@@ -715,37 +812,37 @@ Qed.
 
 Goal (false || true) && false = false.
 Proof.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
 
 Goal negb true = false.
 Proof.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
 
 Goal false = false.
 Proof.
-  cvc4 ; verit.
+  cvc4'.
 Qed.
 
 
 Goal forall x y, Bool.eqb (xorb x y) ((x && (negb y)) || ((negb x) && y)).
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
 Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
 Goal forall x y z, Bool.eqb (ifb x y z) ((x && y) || ((negb x) && z)).
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -754,7 +851,7 @@ Qed.
 
 Goal forall a b c, (((a && b) || (b && c)) && (negb b)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -763,7 +860,7 @@ Qed.
 
 Goal forall a, ((a || a) && (negb a)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -772,7 +869,7 @@ Qed.
 
 Goal forall a, (negb (a || (negb a))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -782,7 +879,7 @@ Qed.
 Goal forall a b c,
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -794,7 +891,7 @@ Goal forall i j k,
   let c := k == i in
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -803,7 +900,7 @@ Qed.
 
 Goal forall a b c d, ((a && b) && (c || d) && (negb (c || (a && b && d)))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -812,7 +909,7 @@ Qed.
 
 Goal forall a b c d, (a && b && c && ((negb a) || (negb b) || d) && ((negb d) || (negb c))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -906,7 +1003,7 @@ Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 
   (orb (orb (orb x14 x24) x34) x44) &&
   (orb (orb (orb x15 x25) x35) x45)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -914,7 +1011,7 @@ Qed.
 
 Goal forall a b c f p, ((Z.eqb a c) && (Z.eqb b c) && ((negb (Z.eqb (f a) (f b))) || ((p a) && (negb (p b))))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -922,7 +1019,7 @@ Qed.
 
 Goal forall a b c (p : Z -> bool), ((((p a) && (p b)) || ((p b) && (p c))) && (negb (p b))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -930,7 +1027,7 @@ Qed.
 
 Goal forall x y z f, ((Z.eqb x y) && (Z.eqb y z) && (negb (Z.eqb (f x) (f z)))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -938,7 +1035,7 @@ Qed.
 
 Goal forall x y z f, ((negb (Z.eqb (f x) (f y))) && (Z.eqb y z) && (Z.eqb (f x) (f (f z))) && (Z.eqb x y)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -946,7 +1043,7 @@ Qed.
 
 Goal forall a b c d e f, ((Z.eqb a b) && (Z.eqb b c) && (Z.eqb c d) && (Z.eqb c e) && (Z.eqb e f) && (negb (Z.eqb a f))) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -958,16 +1055,14 @@ Qed.
 Theorem lia1: forall x y z, implb ((x <=? 3) && ((y <=? 7) || (z <=? 9)))
   ((x + y <=? 10) || (x + z <=? 12)) = true.
 Proof.
-  cvc4.
-  verit.
+  cvc4'.
 Qed.
 
 (* lia2.smt *)
 
 Theorem lia2: forall x, implb (Z.eqb (x - 3) 7) (x >=? 10) = true.
 Proof.
-  cvc4.
-  verit.
+  cvc4'.
 Qed.
 
 
@@ -975,8 +1070,7 @@ Qed.
 
 Theorem lia3: forall x y, implb (x >? y) (y + 1 <=? x) = true.
 Proof.
-  cvc4.
-  verit.
+  cvc4'.
 Qed.
 
 
@@ -984,7 +1078,7 @@ Qed.
 
 Theorem lia4: forall x y, Bool.eqb (x <? y) (x <=? y - 1) = true.
 Proof.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
 
@@ -1003,14 +1097,14 @@ Qed.
 
 Theorem lia6: forall x, implb (andb ((x - 3) <=? 7) (7 <=? (x - 3))) (x >=? 10) = true.
 Proof.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
 (* lia7.smt *)
 
 Theorem lia7: forall x, implb (Z.eqb (x - 3) 7) (10 <=? x) = true.
 Proof.
-  cvc4. verit.
+  cvc4'.
 Qed.
 
 
@@ -1018,14 +1112,14 @@ Qed.
 
 Goal forall a b c, ((a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a)) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
 Goal forall (a b : Z) (P : Z -> bool) (f : Z -> Z),
   (negb (Z.eqb (f a) b)) || (negb (P (f a))) || (P b).
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 
@@ -1036,7 +1130,7 @@ Theorem lia8: forall b1 b2 x1 x2,
     (ifb b2 (Z.eqb (2*x1) (2*x2+1)) (Z.eqb (2*x1) (2*x2))))
   ((implb b1 b2) && (implb b2 b1) && (Z.eqb x1 x2)).
 Proof.
-  cvc4; verit.
+  cvc4'.
 Qed.
 
 
@@ -1046,14 +1140,14 @@ Goal forall b,
   let a := b in
   a && (negb a) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall b,
   let a := b in
   a || (negb a) = true.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 (* Does not work since the [is_true] coercion includes [let in] 
@@ -1071,20 +1165,20 @@ Goal forall i j,
   let a := i == j in
   a && (negb a) = false.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall i j,
   let a := i == j in
   a || (negb a) = true.
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 Section Concret.
   Theorem c1: forall i j,
     (i + j == j) && (negb (i + j == j)) = false.
-  Proof.
+  Proof. intros.
     cvc4.
     exact int63_compdec.
   Qed.
@@ -1104,18 +1198,17 @@ End Concret2.
 Check concret.
 
 
-
 (* Congruence in which some premices are REFL *)
 
 Goal forall (f:Z -> Z -> Z) x y z,
   implb (Z.eqb x y) (Z.eqb (f z x) (f z y)).
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
 Goal forall (P:Z -> Z -> bool) x y z,
   implb (Z.eqb x y) (implb (P z x) (P z y)).
 Proof.
-  cvc4.
+  cvc4'.
 Qed.
 
