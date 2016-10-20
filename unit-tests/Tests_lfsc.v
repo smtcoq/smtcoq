@@ -25,7 +25,30 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 (*   cvc4. *)
 (* Qed. *)
 
+
 Ltac cvc4' :=
+  repeat match goal with
+          | [ |- forall _ : bitvector _, _]            => intro
+          | [ |- forall _ : farray _ _, _]             => intro
+          | [ |- forall _ : Z, _]                      => intro
+          | [ |- context[ bv_ultP _ _ ] ]              => rewrite <- bv_ult_B2P
+          | [ |- context[ bv_sltP _ _ ] ]              => rewrite <- bv_slt_B2P
+          | [ |- context[ bv_eqP _ _ ] ]               => rewrite <- bv_eq_B2P
+          | [ |- context[ equalP _ _ ] ]               => rewrite <- equal_B2P
+          | [ |- context[ eqP_Z _ _ ] ]                => rewrite <- eq_Z_B2P
+          | [ |- context[ ltP_Z _ _ ] ]                => rewrite <- lt_Z_B2P
+          | [ |- context[?G0 = true \/ ?G1 = true ] ]  => rewrite (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
+                                                          try apply orP
+          | [ |- context[?G0 = true -> ?G1 = true ] ]  => rewrite (@reflect_iff (G0 = true -> G1 = true) (G0 --> G1)); 
+                                                          try apply implyP
+          | [ |- context[?G0 = true /\ ?G1 = true ] ]  => rewrite (@reflect_iff (G0 = true /\ G1 = true) (andb G0 G1)); 
+                                                          try apply andP
+          | [ |- context[?G0 = true <-> ?G1 = true ] ] => rewrite (@reflect_iff (G0 = true <-> G1 = true) (Bool.eqb G0 G1)); 
+                                                          try apply iffP 
+          | [ |- _ : bool]                             => try (cvc4; verit)
+         end.
+
+Ltac cvc4'' :=
   solve [ 
     repeat match goal with
              | [ |- _ /\ _ ]                    => split
@@ -98,11 +121,10 @@ Section BV.
       bv_eq #b|0|0|0|0| bv1 = true /\
       bv_eq #b|1|0|0|0| bv2 = true  /\
       bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true.
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3.
   Proof. 
      cvc4'.
   Qed.
-
 
   Goal forall (a: bitvector 32), bv_eqP a a.
   Proof.
@@ -122,14 +144,6 @@ Section BV.
      cvc4'.
   Qed.
 
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
-      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true \/ bv_ultP bv2 bv1.
-  Proof. 
-     cvc4'.
-  Qed.
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
       bv_eq #b|0|0|0|0| bv1 = true  ->
