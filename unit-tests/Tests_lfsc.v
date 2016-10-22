@@ -27,6 +27,7 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
 
 Ltac cvc4' :=
+solve [
   repeat match goal with
           | [ |- forall _ : bitvector _, _]            => intro
           | [ |- forall _ : farray _ _, _]             => intro
@@ -46,7 +47,8 @@ Ltac cvc4' :=
           | [ |- context[?G0 = true <-> ?G1 = true ] ] => rewrite (@reflect_iff (G0 = true <-> G1 = true) (Bool.eqb G0 G1)); 
                                                           try apply iffP 
           | [ |- _ : bool]                             => try (cvc4; verit)
-         end.
+         end 
+    ].
 
 Ltac cvc4'' :=
   solve [ 
@@ -122,6 +124,36 @@ Section BV.
       bv_eq #b|1|0|0|0| bv2 = true  /\
       bv_eq #b|1|1|0|0| bv3 = true  ->
       bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true  ->
+      bv_eq #b|1|1|1|0| bv4 = true  ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 \/ bv_ultP bv1 bv4.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true  ->
+      bv_eq #b|1|1|1|0| bv4 = true  ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 /\ bv_ultP bv1 bv4.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true  ->
+      bv_eq #b|1|1|1|0| bv4 = true  ->
+      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 -> bv_ultP bv1 bv4 \/ bv_ultP bv4 bv1.
   Proof. 
      cvc4'.
   Qed.
