@@ -38,7 +38,7 @@ End File.
 
 (*
 Section File2.
-  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace "./storecomm_t3_pp_nf_ai_00010_006_cvc.smt2" "./storecomm_t3_pp_nf_ai_00010_006_cvc.log".
+  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace "$name.smt2" "$name.log".
   Compute (
       let (nclauses, t, confl) := trace in
       let s := add_roots (S.make nclauses) root used_roots in
