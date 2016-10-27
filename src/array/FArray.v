@@ -1767,6 +1767,46 @@ Section FArray.
     intros; apply equal_eq; apply extensionnality_eqb; auto.
   Qed.
 
+(** farray equal in Prop *)
+  Definition equalP (m m' : farray) : Prop :=
+    if equal m m' then True else False.
+
+  Lemma eq_list_refl: forall a, eq_list a a.
+  Proof.
+    intro a.
+    induction a; intros.
+    - now simpl.
+    - simpl. destruct a as (k, e).
+      case_eq (compare k k); intros.
+      + revert H. generalize l.
+        apply lt_not_eq in l. now contradict l.
+      + split; easy.
+      + revert H. generalize l.
+        apply lt_not_eq in l. now contradict l.
+  Qed.
+
+  Lemma equal_refl: forall a, equal a a = true.
+  Proof. intros; apply eq_equal; apply eq_list_refl. Qed.
+
+  Lemma equal_eqP : forall a b, equalP a b <-> a = b.
+  Proof. 
+     intros. split; intro H. unfold equalP in H.
+     case_eq (equal a b); intros; rewrite H0 in H.
+     now apply equal_eq. now contradict H.
+     rewrite H. unfold equalP.
+     now rewrite equal_refl.
+  Qed.
+
+ Lemma equal_B2P: forall (m m' : farray),
+                  equal m m' = true <-> equalP m m'.
+ Proof.
+     intros. split; intros.
+     apply equal_eq in H. rewrite H.
+     unfold equalP. now rewrite equal_refl.
+     apply equal_eqP in H.
+     now rewrite H, equal_refl.
+ Qed.
+
   Section Classical_extensionnality.
 
     Require Import Classical_Pred_Type ClassicalEpsilon.
@@ -1822,6 +1862,7 @@ Arguments select {_} {_} {_} {_} {_} _ _.
 Arguments store {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
+Arguments equalP {_} {_} {_} {_} {_} {_} {_}  _ _.
 
 
 Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.
