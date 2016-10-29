@@ -174,6 +174,21 @@ type 'hform rule =
        -------------------------------------------------- bbConc
              bbT(concat a b, [a0; ...; an; b0; ...; bn])
    *)
+  | BBExtr of 'hform clause * 'hform
+  (* Bit-blasting bitvector extraction
+             bbT(a, [a0; ...; an])
+       ----------------------------------- bbExtr
+        bbT(extract i j a, [ai; ...; aj])
+   *)
+  | BBZextn of 'hform clause * 'hform
+  | BBSextn of 'hform clause * 'hform
+  (* Bit-blasting bitvector extensions
+
+  *)
+  | BBShl of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector shift left *)
+  | BBShr of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector shift right *)
   | BBEq of 'hform clause * 'hform clause * 'hform
   (* Bit-blasting equality
         bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
@@ -236,12 +251,18 @@ let used_clauses r =
   match r with
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
   | Weaken (c,_) | ImmFlatten (c,_)
-  | SplArith (c,_,_) | SplDistinctElim (c,_) -> [c]
-  | BBNot (c, _) | BBNeg (c, _) -> [c]
+  | SplArith (c,_,_) | SplDistinctElim (c,_)
+  | BBNot (c, _) | BBNeg (c, _) | BBExtr (c, _)
+  | BBZextn (c, _) | BBSextn (c, _) -> [c]
+
   | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
   | BBMul (c1,c2,_) | BBConc (c1,c2,_)
-  | BBUlt (c1,c2,_) | BBSlt (c1,c2,_) | BBEq (c1,c2,_) -> [c1;c2]
+  | BBUlt (c1,c2,_) | BBSlt (c1,c2,_)
+  | BBShl (c1,c2,_) | BBShr (c1,c2,_)
+  | BBEq (c1,c2,_) -> [c1;c2]
+
   | Hole (cs, _) -> cs
+
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _

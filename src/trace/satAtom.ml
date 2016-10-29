@@ -58,6 +58,8 @@ module Atom =
       Structures.mkArray (Lazy.force cbool, atom_tbl reify)
 
     let logic _ = SL.empty
+
+    let to_smt = Format.pp_print_int
     
   end
 

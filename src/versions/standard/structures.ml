@@ -42,6 +42,7 @@ let mkInt : int -> Term.constr = fun i ->
 
 let cint = gen_constant int31_module "int31"
 
+
 (* PArray *)
 let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
 
@@ -63,6 +64,20 @@ let mkArray : Term.types * Term.constr array -> Term.constr =
 
 
 
+(* Traces *)
+(* WARNING: side effect on r! *)
+let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
+  let rec mkTrace s =
+    if s = size then
+      mklApp cnil [|step|]
+    else (
+      r := next !r;
+      let st = step_to_coq !r in
+      mklApp ccons [|step; st; mkTrace (s+1)|]
+    ) in
+  mklApp cpair [|mklApp clist [|step|]; step; mkTrace 0; def_step|]
+
+
 (* Differences between the two versions of Coq *)
 type names_id_t = Names.Id.t
 
@@ -82,10 +97,10 @@ let mkUConst c =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let mkTConst c ty =
+let mkTConst c noc ty =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd c in
+  let evd, _ = Typing.type_of env evd noc in
   { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
@@ -105,7 +120,10 @@ let declare_new_type t =
   Term.mkVar t
 
 let declare_new_variable v constr_t =
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
+  let env = Global.env () in
+  let evd = Evd.from_env env in
+  let evd, _ = Typing.type_of env evd constr_t in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
   Term.mkVar v
 
 let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty
@@ -117,17 +135,22 @@ let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
 let lift = Vars.lift
 
-let mk_sat_tactic = Proofview.V82.tactic
+let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
 let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t)
-let mk_smt_tactic tac =
+let mk_tactic tac =
   Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Proofview.Goal.sigma gl in
     let t = Proofview.Goal.concl gl in
     tac env sigma t
   )
+let set_evars_tac noc =
+  mk_tactic (
+      fun env sigma _ ->
+      let sigma, _ = Typing.type_of env sigma noc in
+      Proofview.Unsafe.tclEVARS sigma)
 
 let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
 let constrextern_extern_constr =

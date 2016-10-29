@@ -17,7 +17,10 @@
 (**************************************************************************)
 
 Require Import Bool Int63 PArray.
-Require Import Misc State SMT_terms Cnf Euf Lia Syntactic Arithmetic Operators Assumptions BVList Bva_checker Array_checker.
+Require Structures.
+Require Import Misc State SMT_terms.
+Require Import Syntactic Arithmetic Operators Assumptions.
+Require Import Cnf Euf Lia BVList Bva_checker Array_checker.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -37,8 +40,7 @@ Section trace.
 
   Variable rho : Valuation.t.
 
-  (* We use [array array step] to allow bigger trace *)
-  Definition _trace_ := array (array step).
+  Definition _trace_ := Structures.trace step.
 
   (* A checker for such a trace *)
 
@@ -55,7 +57,8 @@ Section trace.
 *)
 
   Definition _checker_ (s: S.t) (t: _trace_) (confl: clause_id) : bool :=
-    let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in
+    let s' := Structures.trace_fold check_step s t in
+    (* let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in *)
     is_false (S.get s' confl).
   (* Register _checker_ as PrimInline. *)
 
@@ -90,9 +93,10 @@ Section trace.
     intros s t' cid Hf Hv.
     apply (is_false_correct Hf).
     apply S.valid_get.
-    apply PArray.fold_left_ind; auto.
-    intros a i _ Ha;apply PArray.fold_left_ind;trivial.
-    intros a0 i0 _ H1;auto.
+    apply Structures.trace_fold_ind; auto.
+    (* apply PArray.fold_left_ind; auto. *)
+    (* intros a i _ Ha;apply PArray.fold_left_ind;trivial. *)
+    (* intros a0 i0 _ H1;auto. *)
   Qed.
  
 End trace.
@@ -325,7 +329,7 @@ Module Euf_Checker.
 
   Section Checker.
 
-  Variable t_i : array typ_eqb.
+  Variable t_i : array  SMT_classes.typ_compdec.
   Variable t_func : array (Atom.tval t_i).
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.
@@ -362,6 +366,11 @@ Module Euf_Checker.
   | BBSlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBEq (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | BBDiseq (pos:int) (res:_lit)
+  | BBExtract (pos:int) (orig:clause_id) (res:_lit)
+  | BBZextend (pos:int) (orig:clause_id) (res:_lit)
+  | BBSextend (pos:int) (orig:clause_id) (res:_lit)
+  | BBShl (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBShr (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | RowEq (pos:int) (res: _lit)
   | RowNeq (pos:int) (cl: C.t)
   | Ext (pos:int) (res: _lit)
@@ -407,6 +416,11 @@ Module Euf_Checker.
       | BBSlt pos orig1 orig2 res => S.set_clause s pos (check_bbSlt t_atom t_form s orig1 orig2 res)
       | BBEq pos orig1 orig2 res => S.set_clause s pos (check_bbEq t_atom t_form s orig1 orig2 res)
       | BBDiseq pos res => S.set_clause s pos (check_bbDiseq t_atom t_form res)
+      | BBExtract pos orig res => S.set_clause s pos (check_bbExtract t_atom t_form s orig res)
+      | BBZextend pos orig res => S.set_clause s pos (check_bbZextend t_atom t_form s orig res)
+      | BBSextend pos orig res => S.set_clause s pos (check_bbSextend t_atom t_form s orig res)
+      | BBShl pos orig1 orig2 res => S.set_clause s pos (check_bbShl t_atom t_form s orig1 orig2 res)
+      | BBShr pos orig1 orig2 res => S.set_clause s pos (check_bbShr t_atom t_form s orig1 orig2 res)
       | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
       | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
       | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
@@ -423,7 +437,15 @@ Module Euf_Checker.
         forall st : step, S.valid rho (step_checker s st).
   Proof.
     set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
-    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid|pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l|pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res| pos cl|pos res |pos res |pos res |pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
+    intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1)
+    as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as 
+    [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
+    |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
+    |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res
+    |pos orig1 orig2 res|pos orig1 orig2 res
+    |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res
+    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res 
+    |pos res |pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
     - apply valid_check_flatten; auto; intros h1 h2 H.
@@ -456,6 +478,11 @@ Module Euf_Checker.
     - apply valid_check_bbSlt; auto.
     - apply valid_check_bbEq; auto.
     - apply valid_check_bbDiseq; auto.
+    - apply valid_check_bbExtract; auto.
+    - apply valid_check_bbZextend; auto.
+    - apply valid_check_bbSextend; auto.
+    - apply valid_check_bbShl; auto.
+    - apply valid_check_bbShr; auto.
     - apply valid_check_roweq; auto.
     - apply valid_check_rowneq; auto.
     - apply valid_check_ext; auto.
@@ -514,6 +541,180 @@ Module Euf_Checker.
     euf_checker (* t_atom t_form *) C.is_false (add_roots (S.make nclauses) d used_roots) t confl.
   Implicit Arguments checker [].
 
+
+  Definition setup_checker_step_debug d used_roots (c:certif) :=
+    let (nclauses, t, confl) := c in
+    let s := add_roots (S.make nclauses) d used_roots in
+    (s, Structures.trace_to_list t).
+
+
+  Definition position_of_step (st:step) :=
+    match st with
+      | Res pos _ 
+      | Weaken pos _ _
+      | ImmFlatten pos _ _
+      | CTrue pos
+      | CFalse pos 
+      | BuildDef pos _
+      | BuildDef2 pos _
+      | BuildProj pos _ _ 
+      | ImmBuildDef pos _
+      | ImmBuildDef2 pos _
+      | ImmBuildProj pos _ _ 
+      | EqTr pos _ _ 
+      | EqCgr pos _ _ 
+      | EqCgrP pos _ _ _
+      | LiaMicromega pos _ _ 
+      | LiaDiseq pos _
+      | SplArith pos _ _ _
+      | SplDistinctElim pos _ _ 
+      | BBVar pos _
+      | BBConst pos _
+      | BBOp pos _ _ _
+      | BBNot pos _ _
+      | BBNeg pos _ _
+      | BBAdd pos _ _ _
+      | BBConcat pos _ _ _
+      | BBMul pos _ _ _
+      | BBUlt pos _ _ _
+      | BBSlt pos _ _ _
+      | BBEq pos _ _ _
+      | BBDiseq pos _
+      | BBExtract pos _ _
+      | BBZextend pos _ _
+      | BBSextend pos _ _
+      | BBShl pos _ _ _
+      | BBShr pos _ _ _
+      | RowEq pos _
+      | RowNeq pos _
+      | Ext pos _
+      | @Hole pos _ _ _ _ => pos
+    end.
+
+  
+  Definition checker_step_debug s step_t :=
+    let s := step_checker s step_t in
+    (s, C.has_true (S.get s (position_of_step step_t))).
+
+
+  Definition ignore_true_step (st:step) :=
+    match st with
+    | CTrue _
+    (* | Res _ _  *)
+    | @Hole _ _ _ _ _ => true
+    | _ => false
+    end.
+
+  Inductive name_step :=
+  | Name_Res 
+  | Name_Weaken
+  | Name_ImmFlatten
+  | Name_CTrue
+  | Name_CFalse 
+  | Name_BuildDef
+  | Name_BuildDef2
+  | Name_BuildProj 
+  | Name_ImmBuildDef
+  | Name_ImmBuildDef2
+  | Name_ImmBuildProj 
+  | Name_EqTr 
+  | Name_EqCgr 
+  | Name_EqCgrP
+  | Name_LiaMicromega 
+  | Name_LiaDiseq
+  | Name_SplArith
+  | Name_SplDistinctElim 
+  | Name_BBVar
+  | Name_BBConst
+  | Name_BBOp
+  | Name_BBNot
+  | Name_BBNeg
+  | Name_BBAdd
+  | Name_BBConcat
+  | Name_BBMul
+  | Name_BBUlt
+  | Name_BBSlt
+  | Name_BBEq
+  | Name_BBDiseq
+  | Name_BBExtract
+  | Name_BBZextend
+  | Name_BBSextend
+  | Name_BBShl
+  | Name_BBShr
+  | Name_RowEq
+  | Name_RowNeq
+  | Name_Ext
+  | Name_Hole.
+  
+  Definition name_of_step (st:step) :=
+    match st with
+    | Res _ _ => Name_Res
+    | Weaken _ _ _ => Name_Weaken
+    | ImmFlatten _ _ _ => Name_ImmFlatten
+    | CTrue _ => Name_CTrue
+    | CFalse _ => Name_CFalse
+    | BuildDef _ _ => Name_BuildDef
+    | BuildDef2 _ _ => Name_BuildDef2
+    | BuildProj _ _ _ => Name_BuildProj
+    | ImmBuildDef _ _ => Name_ImmBuildDef
+    | ImmBuildDef2 _ _ => Name_ImmBuildDef2
+    | ImmBuildProj _ _ _ => Name_ImmBuildProj
+    | EqTr _ _ _ => Name_EqTr
+    | EqCgr _ _ _ => Name_EqCgr
+    | EqCgrP _ _ _ _ => Name_EqCgrP
+    | LiaMicromega _ _ _ => Name_LiaMicromega
+    | LiaDiseq _ _ => Name_LiaDiseq
+    | SplArith _ _ _ _ => Name_SplArith
+    | SplDistinctElim _ _ _ => Name_SplDistinctElim
+    | BBVar _ _ => Name_BBVar
+    | BBConst _ _ => Name_BBConst
+    | BBOp _ _ _ _ => Name_BBOp
+    | BBNot _ _ _ => Name_BBNot
+    | BBNeg _ _ _ => Name_BBNeg
+    | BBAdd _ _ _ _ => Name_BBAdd
+    | BBConcat _ _ _ _ => Name_BBConcat
+    | BBMul _ _ _ _ => Name_BBMul
+    | BBUlt _ _ _ _ => Name_BBUlt
+    | BBSlt _ _ _ _ => Name_BBSlt
+    | BBEq _ _ _ _ => Name_BBEq
+    | BBDiseq _ _ => Name_BBDiseq
+    | BBExtract _ _ _ => Name_BBExtract
+    | BBZextend _ _ _ => Name_BBZextend
+    | BBSextend _ _ _ => Name_BBSextend
+    | BBShl _ _ _ _ => Name_BBShl
+    | BBShr _ _ _ _ => Name_BBShr
+    | RowEq _ _ => Name_RowEq
+    | RowNeq _ _ => Name_RowNeq
+    | Ext _ _ => Name_Ext
+    | @Hole _ _ _ _ _ => Name_Hole
+    end.
+  
+  
+  Definition checker_debug d used_roots (c:certif) :=
+    let (nclauses, t, confl) := c in
+    let s := add_roots (S.make nclauses) d used_roots in
+    let '(_, nb, failure) :=
+        Structures.trace_fold
+          (fun acc step =>
+             match acc with
+             | (s, nb, None) =>
+               let nb := S nb in
+               let s := step_checker s step in
+               if negb (ignore_true_step step) &&
+                  C.has_true (S.get s (position_of_step step)) then
+                 (s, nb, Some step)
+               else (s, nb, None)
+             | _ => acc
+             end
+          ) (s, O, None) t
+    in
+    match failure with
+    | Some st => Some (nb, name_of_step st)
+    | None => None
+    end
+  .    
+  
+  
   Lemma checker_correct : forall (* t_i t_func t_atom t_form *) d used_roots c,
     checker (* t_i t_func t_atom t_form *) d used_roots c = true ->
     ~ valid t_func t_atom t_form d.

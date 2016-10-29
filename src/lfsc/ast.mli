@@ -19,7 +19,7 @@
     checking.
 *)
 
-
+exception CVC4Sat
 
 (** {2 Structures for LFSC proofs, terms and types } *)
 
@@ -153,6 +153,9 @@ val deref : term -> term
 (** derefenced value *)
 val value : term -> dterm
 
+(** derefenced type *)
+val ttype : term -> term
+
 (** get dereferenced constant name (None if it's not a constant or it has no
     name) *)
 val name : term -> Hstring.t option
@@ -236,3 +239,6 @@ val callbacks_table : (term list -> term) Hstring.H.t
 (** Add a side-condition to the callback table, and returns the continuation of
     the side condition in LFSC terms. See {!Builtin}. *)
 val add_sc : string -> term list -> term -> term -> term
+
+(** Remove pending side-conditions evaluations *)
+val clear_sc : unit -> unit

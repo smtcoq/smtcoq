@@ -44,11 +44,11 @@ module Btype :
 
       val declare : reify_tbl -> Term.constr -> Term.constr -> btype
 
-      val of_coq : reify_tbl -> Term.constr -> btype
+      val of_coq : reify_tbl -> logic -> Term.constr -> btype
 
       val interp_tbl : reify_tbl -> Term.constr
 
-      val to_list : reify_tbl -> (int * indexed_type) list
+      val to_list : reify_tbl ->  (int * indexed_type) list
 
       val interp_to_coq : reify_tbl -> btype -> Term.constr
 
@@ -56,7 +56,7 @@ module Btype :
 
       val logic : btype -> logic
 
-      val logic_of_coq : reify_tbl -> Term.constr -> logic
+      (* val logic_of_coq : reify_tbl -> Term.constr -> logic *)
 
     end
 
@@ -76,6 +76,9 @@ type uop =
    | UO_BVbitOf of int * int
    | UO_BVnot of int
    | UO_BVneg of int
+   | UO_BVextr of int * int * int
+   | UO_BVzextn of int * int
+   | UO_BVsextn of int * int
 
 type bop = 
    | BO_Zplus
@@ -94,6 +97,8 @@ type bop =
    | BO_BVult of int
    | BO_BVslt of int
    | BO_BVconcat of int * int
+   | BO_BVshl of int
+   | BO_BVshr of int
    | BO_select of btype * btype
    | BO_diffarray of btype * btype
 
@@ -107,7 +112,8 @@ type indexed_op
 
 val dummy_indexed_op: int -> btype array -> btype -> indexed_op
 val indexed_op_index : indexed_op -> int
-
+val debruijn_indexed_op : int -> btype -> indexed_op
+  
 module Op :
   sig
 	  
@@ -170,9 +176,11 @@ module Atom :
       val get : reify_tbl -> atom -> hatom
 
       (** Given a coq term, build the corresponding atom *)
-      val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl ->
+      val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl -> logic ->
         Environ.env -> Evd.evar_map -> Term.constr -> t
 
+      val get_coq_term_op : int -> Term.constr
+      
       val to_coq : hatom -> Term.constr
 
       val to_array : reify_tbl -> 'a -> (atom -> 'a) -> 'a array
@@ -208,8 +216,12 @@ module Atom :
       val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
       val mk_bvnot : reify_tbl -> int -> hatom -> hatom
       val mk_bvneg : reify_tbl -> int -> hatom -> hatom
-      val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
       val mk_bvconst : reify_tbl -> bool list -> hatom
+      val mk_bvextr : reify_tbl -> i:int -> n:int -> s:int -> hatom -> hatom
+      val mk_bvzextn : reify_tbl -> s:int -> n:int -> hatom -> hatom
+      val mk_bvsextn : reify_tbl -> s:int -> n:int -> hatom -> hatom
+      val mk_bvshl : reify_tbl -> int -> hatom -> hatom -> hatom
+      val mk_bvshr : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_select : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
       val mk_diffarray : reify_tbl -> btype -> btype -> hatom -> hatom -> hatom
       val mk_store :
@@ -226,3 +238,8 @@ end
 
 val make_t_i : Btype.reify_tbl -> Term.constr
 val make_t_func : Op.reify_tbl -> Term.constr -> Term.constr
+
+
+(* Misc Coq to OCaml functions *)
+val mk_bool : Term.constr -> bool
+val mk_nat : Term.constr -> int

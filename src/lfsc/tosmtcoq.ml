@@ -28,6 +28,10 @@ type lit = SmtAtom.Form.t
 
 type clause = lit list
 
+let show_veritproof =
+  try ignore (Sys.getenv "DONTSHOWVERIT"); false
+  with Not_found -> true
+
 
 module HS = Hstring.H
 (* module HT = Hashtbl.Make (Term) *)
@@ -49,6 +53,7 @@ let ids_clauses = Hashtbl.create 201
 let propvars = HT.create 201
 let inputs : int HS.t = HS.create 13
 let alias_tbl = HS.create 17
+let memo_terms = HT.create 31
 (* let termalias_tbl = HT.create 17 *)
 
 let cl_cpt = ref 0
@@ -113,9 +118,14 @@ let get_rule = function
   | Bbmul -> VeritSyntax.Bbmul
   | Bbult -> VeritSyntax.Bbult
   | Bbslt -> VeritSyntax.Bbslt
+  | Bbshl -> VeritSyntax.Bbshl
+  | Bbshr -> VeritSyntax.Bbshr
   | Bbnot -> VeritSyntax.Bbnot
   | Bbneg -> VeritSyntax.Bbneg
   | Bbconc -> VeritSyntax.Bbconc
+  | Bbextr -> VeritSyntax.Bbextr
+  | Bbzext -> VeritSyntax.Bbzext
+  | Bbsext -> VeritSyntax.Bbsext
   | Row1 -> VeritSyntax.Row1
   | Row2 -> VeritSyntax.Row2
   | Exte -> VeritSyntax.Exte
@@ -179,9 +189,14 @@ let string_of_rule = function
   | Bbmul -> "bbmul"
   | Bbult -> "bbult"
   | Bbslt -> "bbslt"
+  | Bbshl -> "bbshl"
+  | Bbshr -> "bbshr"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
   | Bbconc -> "bbconcat"
+  | Bbextr -> "bbextract"
+  | Bbzext -> "bbzextend"
+  | Bbsext -> "bbsextend"
   | Row1 -> "row1"
   | Row2 -> "row2" 
   | Exte -> "ext" 
@@ -204,8 +219,7 @@ let const_bv t =
   Atom (Atom.mk_bvconst ra bv_list)
 
 
-let rec term_smtcoq t =
-  (* try HT.find termalias_tbl (deref t) |> term_smtcoq  with Not_found -> *)
+let rec term_smtcoq_old t =
   match value t with
   | Const {sname=Name n} when n == H.ttrue -> Form Form.pform_true
   | Const {sname=Name n} when n == H.tfalse -> Form Form.pform_false
@@ -326,6 +340,41 @@ let rec term_smtcoq t =
           match Atom.type_of ha, Atom.type_of hb with
             | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
             | _ -> assert false)
+      | Some (n, [_; {value = Int bj}; {value = Int bi}; _; a])
+        when n == H.extract ->
+        (let ha = term_smtcoq_atom a in
+         let i = Big_int.int_of_big_int bi in
+         let j = Big_int.int_of_big_int bj in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) ha)
+            | _ -> assert false)
+      | Some (n, [_; {value = Int bi}; _; a])
+        when n == H.zero_extend ->
+        (let ha = term_smtcoq_atom a in
+         let n = Big_int.int_of_big_int bi in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n ha)
+            | _ -> assert false)
+      | Some (n, [_; {value = Int bi}; _; a])
+        when n == H.sign_extend ->
+        (let ha = term_smtcoq_atom a in
+         let n = Big_int.int_of_big_int bi in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n ha)
+            | _ -> assert false)
+      | Some (n, [_; a; b]) when n == H.bvshl ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvshl ra s ha hb)
+            | _ -> assert false)
+      | Some (n, [_; a; b]) when n == H.bvlshr ->
+         (let ha = term_smtcoq_atom a in
+          let hb = term_smtcoq_atom b in
+          match Atom.type_of ha with
+            | TBV s -> Atom (Atom.mk_bvshr ra s ha hb)
+            | _ -> assert false)
+
       | Some (n, [a; b]) when n == H.lt_Int ->
         Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.le_Int ->
@@ -359,6 +408,14 @@ let rec term_smtcoq t =
   | Ptr _ -> failwith ("LFSC Ptr not supported")
   | SideCond _ -> failwith ("LFSC side conditions not supported")
   | _ -> assert false
+
+
+and term_smtcoq t =
+  try HT.find memo_terms t
+  with Not_found ->
+    let v = term_smtcoq_old t in
+    HT.add memo_terms t v;
+    v
 
 
 and term_smtcoq_atom a = match term_smtcoq a with
@@ -461,9 +518,10 @@ let new_clause_id ?(reuse=true) cl =
 let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
-    eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
-      print_clause cl
-    (fun fmt -> List.iter (fprintf fmt " %d")) args;
+    if show_veritproof then
+      eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
+        print_clause cl
+        (fun fmt -> List.iter (fprintf fmt " %d")) args;
     VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
   | OldCl id ->
     (* Format.eprintf "old_clause %d@." id; *)
@@ -480,7 +538,7 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     eprintf "%d:input  %a@." id print_clause cl;
+     if show_veritproof then eprintf "%d:input  %a@." id print_clause cl;
      VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -491,7 +549,7 @@ let mk_admit_preproc name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     eprintf "%d:hole  %a@." id print_clause cl;
+     if show_veritproof then eprintf "%d:hole  %a@." id print_clause cl;
      VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -531,6 +589,8 @@ let clear () =
   HT.clear propvars;
   HS.clear inputs;
   HS.clear alias_tbl;
+  HT.clear memo_terms;
   (* HT.clear termalias_tbl; *)
   cl_cpt := 0
   
+

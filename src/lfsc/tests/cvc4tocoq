@@ -4,26 +4,36 @@ set -e
 name=${1%.*}
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo "Running CVC4..."
-cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic $1 | sed -e '1d; s/\\\([^ ]\)/\\ \1/g' > $name.tmp.lfsc
+gnudate() {
+    if hash gdate 2>/dev/null; then
+        gdate "$@"
+    else
+        date "$@"
+    fi
+}
 
-echo "Writing LFSC proof..."
-cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf $name.tmp.lfsc > $name.lfsc
+echo -n "Running CVC4... "
+T0=$(gnudate +%s.%N)
+cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic --allow-empty-dependencies $1 > $name.lfsc
+T1=$(gnudate +%s.%N)
+CVC4TIME=$(echo "$T1 - $T0" | bc)
+echo "Done [$CVC4TIME s]"
 
-echo "Creating Coq file..."
-cat > ${name}_lfsc.v <<EOF
-Require Import SMTCoq Bool List.
-Import ListNotations BVList.BITVECTOR_LIST FArray.
-Local Open Scope list_scope.
-Local Open Scope farray_scope.
-Local Open Scope bv_scope.
+# sed -i -e '1d' $name.lfsc
 
-Section File.
-  Lfsc_Checker "$name.smt2" "$name.lfsc".
-End File.
+ cat > ${name}_lfsc.v <<EOF
+ Require Import SMTCoq Bool List.
+ Import ListNotations BVList.BITVECTOR_LIST FArray.
+ Local Open Scope list_scope.
+ Local Open Scope farray_scope.
+ Local Open Scope bv_scope.
+
+ Section File.
+   Lfsc_Checker "$name.smt2" "$name.lfsc".
+ End File.
 EOF
 
-# echo "Checking LFSC proof with Coq directly..."
+echo "Checking LFSC proof with Coq directly."
 coqc -q -R $DIR/../.. SMTCoq ${name}_lfsc.v
 
 exit 0

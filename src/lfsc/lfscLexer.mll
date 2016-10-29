@@ -115,6 +115,8 @@
     ("mpz", MPZ);
     ("mpq", MPQ);
     ("program", PROGRAM);
+    ("unsat", UNSAT);
+    ("sat", SAT);
   ]
 
   module Make (X : T) : sig
@@ -128,7 +130,7 @@ let lf = '\010'
 let lf_cr = ['\010' '\013']
 let dos_newline = "\013\010"
 let blank = [' ' '\009' '\012']
-let unquoted = [^ ';' '(' ')' '"'] # blank # lf_cr
+let unquoted = [^ ';' '(' ')' '"' '\\' ':' '@' '!' ] # blank # lf_cr
 let digit = ['0'-'9']
 let hexdigit = digit | ['a'-'f' 'A'-'F']
 

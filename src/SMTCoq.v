@@ -15,7 +15,7 @@
 
 
 Require Export Int63 List PArray.
-Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace.
+Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
 Export Atom Form Sat_Checker Cnf_Checker Euf_Checker.
 
 Declare ML Module "smtcoq_plugin".

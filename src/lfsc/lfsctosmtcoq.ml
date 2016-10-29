@@ -54,8 +54,38 @@ let _ =
 module C = Converter.Make (VeritPrinter)
 
 
+(* Hard coded signatures *)
+let signatures =
+  let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
+  ["sat.plf";
+   "smt.plf";
+   "th_base.plf";
+   "th_int.plf";
+   "th_bv.plf";
+   "th_bv_bitblast.plf";
+   "th_bv_rewrites.plf";
+   "th_arrays.plf" ]
+  |> List.map (Filename.concat sigdir)
+
+
+let process_signatures () =
+  try
+    List.iter (fun f ->
+        let chan = open_in f in
+        let lexbuf = Lexing.from_channel chan in
+        LfscParser.ignore_commands LfscLexer.main lexbuf;
+        close_in chan
+      ) signatures
+  with
+  | Ast.TypingError (t1, t2) ->
+    eprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+      Ast.print_term t1
+      Ast.print_term t2
+
+
 (** Translate to veriT proof format and print pretty LFSC proof with colors *)
 let pretty_to_verit () =
+  process_signatures ();
   let chan =
     try
       let filename = Sys.argv.(1) in
@@ -74,7 +104,7 @@ let pretty_to_verit () =
     match List.rev proof with
     | Check p :: _ ->
       flatten_term p;
-      C.convert p |> ignore
+      C.convert_pt p |> ignore
     | _ -> eprintf "No proof@."; exit 1
     
 
@@ -86,6 +116,7 @@ let pretty_to_verit () =
 
 (** Translate to veriT proof format *)
 let to_verit () =
+  process_signatures ();
   let chan =
     try
       let filename = Sys.argv.(1) in
@@ -102,10 +133,11 @@ let to_verit () =
       (* eprintf "Flattening pointer structures...@."; *)
       (* flatten_term p; *)
       (* eprintf "Done (flatten)@."; *)
-      C.convert p |> ignore
+      C.convert_pt p |> ignore
     | _ -> eprintf "No proof@."; exit 1
 
-  with Ast.TypingError (t1, t2) as e ->
+  with
+  | Ast.TypingError (t1, t2) as e ->
     let backtrace = Printexc.get_backtrace () in
     eprintf "Fatal error: %s@." (Printexc.to_string e);
     eprintf "Backtrace:@\n%s@." backtrace;
@@ -113,6 +145,8 @@ let to_verit () =
     eprintf "@[<hov>Typing error: expected %a, got %a@]@."
       Ast.print_term t1
       Ast.print_term t2
+  | Ast.CVC4Sat ->
+    eprintf "CVC4 returned SAT@."; exit 1
 
 
 

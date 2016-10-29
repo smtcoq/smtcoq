@@ -41,8 +41,8 @@
 %token EOL SAT
 %token COLON
 %token LPAR RPAR LBRACKET RBRACKET
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVULE BVSLE BVCONC BVNOT BVNEG SELECT STORE DIFF
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEQ BBDIS BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVULE BVSLE BVCONC BVEXTR BVZEXT BVSEXT BVNOT BVNEG SELECT STORE DIFF BVSHL BVSHR
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEXTR BBZEXT BBSEXT BBEQ BBDIS BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE BBSHL BBSHR
 %token <int> INT SHARPINT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR BITV
@@ -150,6 +150,11 @@ typ:
   | BBNOT                                                  { Bbnot }
   | BBNEG                                                  { Bbneg }
   | BBCONC                                                 { Bbconc }
+  | BBEXTR                                                 { Bbextr }
+  | BBZEXT                                                 { Bbzext }
+  | BBSEXT                                                 { Bbsext }
+  | BBSHL                                                  { Bbshl }
+  | BBSHR                                                  { Bbshr }
   | ROW1                                                   { Row1  }
   | ROW2                                                   { Row2  }
   | EXTE                                                   { Exte  }
@@ -299,6 +304,20 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
         | _ -> assert false)
     | _,_ -> assert false
     }        
+  | BVSHL name_term name_term {
+    match $2,$3 with
+      | Atom h1, Atom h2 -> (match Atom.type_of h1 with
+                             | TBV s -> Atom (Atom.mk_bvshl ra s h1 h2)
+                             | _ -> assert false)
+      | _,_ -> assert false
+    }        
+  | BVSHR name_term name_term {
+    match $2,$3 with
+      | Atom h1, Atom h2 -> (match Atom.type_of h1 with
+                             | TBV s -> Atom (Atom.mk_bvshr ra s h1 h2)
+                             | _ -> assert false)
+      | _,_ -> assert false
+    }        
   | BVCONC name_term name_term {
     match $2,$3 with
     | Atom h1, Atom h2 ->
@@ -306,7 +325,28 @@ term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
         | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 h1 h2)
         | _ -> assert false)
     | _,_ -> assert false
-    }        
+    }
+  | BVEXTR INT INT name_term
+    { let j, i = $2, $3 in
+      match $4 with
+      | Atom h -> (match Atom.type_of h with
+                   | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) h)
+                   | _ -> assert false)
+      | _ -> assert false }
+  | BVZEXT INT name_term
+    { let n = $2 in
+      match $3 with
+      | Atom h -> (match Atom.type_of h with
+                   | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n h)
+                   | _ -> assert false)
+      | _ -> assert false }
+  | BVSEXT INT name_term
+    { let n = $2 in
+      match $3 with
+      | Atom h -> (match Atom.type_of h with
+                   | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n h)
+                   | _ -> assert false)
+      | _ -> assert false }
   | SELECT name_term name_term {
     match $2,$3 with
     | Atom h1, Atom h2 ->

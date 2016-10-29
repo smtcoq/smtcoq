@@ -17,12 +17,10 @@
 (**************************************************************************)
 
 
-(* Add LoadPath "." as SMTCoq.versions.standard.Int63. *)
 Require Import Zgcd_alt.
 Require Import Bvector.
 Require Import Int31 Cyclic31.
 Require Export Int63Axioms.
-(* Require Export SMTCoq.versions.standard.Int63.Int63Axioms. *)
 Require Import Eqdep_dec.
 Require Import Psatz.
 
@@ -1149,7 +1147,7 @@ Proof.
  assert (F1: [|n - 1|] = ([|n|] - 1)%Z).
  rewrite sub_spec, Zmod_small; rewrite to_Z_1; auto with zarith.
  generalize (add_le_r 1 (n - 1)); case leb; rewrite F1, to_Z_1; intros HH.
- replace (1 + (n -1))%int with n; auto.
+ replace (1 + (n -1))%int with n. change (bit i n = bit i n). reflexivity.
  apply to_Z_inj; rewrite add_spec, F1, Zmod_small; rewrite to_Z_1;
   auto with zarith.
  rewrite bit_M; auto; rewrite leb_spec.
@@ -2663,3 +2661,10 @@ Module IntOrderedType <: OrderedType.
   Defined.
 
 End IntOrderedType.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "../../.." "SMTCoq"))
+   End: 
+*)

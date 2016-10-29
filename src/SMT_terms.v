@@ -18,7 +18,7 @@
 
 (*Add Rec LoadPath "." as SMTCoq.*)
 
-Require Import Bool Int63 PArray BinPos Setoid SetoidClass.
+Require Import Bool Int63 PArray BinPos SMT_classes_instances.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
 Require List .
@@ -252,90 +252,6 @@ Module Form.
 
 End Form.
 
-(* TODO Move this *)
-Record typ_eqb : Type := Typ_eqb {
-  te_carrier : Type;
-  te_inhabitant : te_carrier;
-  te_eqb : te_carrier -> te_carrier -> bool;
-  te_reflect : forall x y, reflect (x = y) (te_eqb x y);
-  te_ltb : te_carrier -> te_carrier -> bool;
-  te_lt_trans : forall x y z, te_ltb x y -> te_ltb y z -> te_ltb x z;
-  te_lt_not_eq : forall x y, te_ltb x y -> ~ eq x y;
-  te_compare : forall x y, OrderedType.Compare
-                        (fun x y => te_ltb x y = true)
-                        (fun x y => te_eqb x y = true) x y
-}.
-
-
-
-Section Typ_eqb_param.
-
-  Variable A : Type.
-  Variable d : A.
-  Variable r : { eq : A -> A -> bool & forall x y, reflect (x = y) (eq x y) }.
-  Variable l : { ltb : A -> A -> bool
-                 & forall x y z, ltb x y -> ltb y z -> ltb x z
-                 & forall x y, ltb x y -> x <> y}.
-  Variable c : forall x y, OrderedType.Compare
-                        (fun x y => (projT1 (sigT_of_sigT2 l))  x y = true)
-                        (fun x y => (projT1 r) x y = true) x y.
-
-  Definition typ_eqb_of_typ_eqb_param : typ_eqb :=
-    Typ_eqb A d (projT1 r) (projT2 r) (projT1 (sigT_of_sigT2 l)) (projT2 (sigT_of_sigT2 l)) (projT3 l) c.
-
-End Typ_eqb_param.
-
-(* Common used types into which we interpret *)
-
-(* Unit *)
-
-Section Unit_typ_eqb.
-
-  Let carrier : Type := unit.
-  
-  Let eqb : carrier -> carrier -> bool :=
-    fun _ _ => true.
-
-  Let ltb : carrier -> carrier -> bool :=
-    fun _ _ => false.
-
-  Lemma unit_reflect :
-    forall x y, reflect (x = y) (eqb x y).
-  Proof.
-    unfold eqb; intros x y; case x; case y; simpl;
-      constructor; reflexivity.
-  Qed.
-
-  Lemma unit_lt_trans: forall x y z,
-      ltb x y = true -> ltb y z = true -> ltb x z = true.
-  Proof.
-    unfold ltb. easy.
-  Qed.    
-
-  Lemma unit_lt_not_eq: forall x y,
-      ltb x y = true -> x <> y.
-  Proof.
-    unfold ltb. easy.
-  Qed.
-
-  Definition unit_compare x y:
-    OrderedType.Compare (fun x y => ltb x y = true) (fun x y => eqb x y = true) x y.
-  Proof.
-    case_eq (ltb x y). intros.
-    apply OrderedType.LT. auto.
-    case_eq (eqb x y). intros.
-    apply OrderedType.EQ. auto.
-    intros.
-    apply OrderedType.GT.
-    unfold eqb, ltb in *; auto.
-Qed.    
-
-  Definition unit_typ_eqb :=
-    Typ_eqb carrier tt eqb unit_reflect ltb unit_lt_trans unit_lt_not_eq unit_compare.
-
-  
-End Unit_typ_eqb.
-(* End TODO *)
 
 Module Typ.
 
@@ -357,410 +273,7 @@ Module Typ.
 
     Require Import OrderedTypeEx.
     
-    Variable t_i : PArray.array typ_eqb.
-
-    Definition ltb_bool x y := negb x && y.
-
-    Definition lt_bool x y := ltb_bool x y = true.
-    
-    Instance bool_ord : OrdType bool.
-    Proof.
-      exists lt_bool.
-      intros x y z.
-      case x; case y; case z; intros; simpl; subst; auto. 
-      intros x y.
-      case x; case y; intros; simpl in H; easy. 
-    Defined.
-
-    Instance Z_ord : OrdType Z.
-    Proof.
-      exists Z_as_OT.lt.
-      exact Z_as_OT.lt_trans.
-      exact Z_as_OT.lt_not_eq.
-    Defined.
-
-
-    Instance Positive_ord : OrdType positive.
-    Proof.
-      exists Positive_as_OT.lt.
-      exact Positive_as_OT.lt_trans.
-      exact Positive_as_OT.lt_not_eq.
-    Defined.
-    
-
-    Instance BV_ord n : OrdType (@BITVECTOR_LIST.bitvector n).
-    Proof.
-      exists (fun a b => (BITVECTOR_LIST.bv_ult a b)).
-      unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult.
-      intros x y z; destruct x, y, z.
-      simpl. rewrite wf, wf0, wf1. rewrite N.eqb_refl. simpl.
-      apply RAWBITVECTOR_LIST.ult_list_trans.
-      intros x y; destruct x, y.
-      simpl.
-      intros. unfold not.
-      intros. rewrite H0 in H.
-      unfold BITVECTOR_LIST.bv_ult, BITVECTOR_LIST.bv in *.
-      unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size in H.
-      rewrite N.eqb_refl in H.
-      apply RAWBITVECTOR_LIST.ult_list_not_eq in H.
-      apply H. easy.
-    Defined.
-
-
-    Instance FArray_ord key elt
-             `{key_ord: OrdType key}
-             `{elt_ord: OrdType elt}
-             `{elt_dec: DecType elt}
-             `{elt_inh: Inhabited elt}
-             `{key_comp: @Comparable key key_ord} : OrdType (farray key elt).
-    Proof.
-      exists (@lt_farray key elt key_ord key_comp elt_ord elt_inh).
-      apply lt_farray_trans.
-      unfold not.
-      intros.
-      apply lt_farray_not_eq in H.
-      apply H.
-      rewrite H0.
-      apply eqfarray_refl. auto.
-    Defined.
-
-
-    Instance TI_ord i : OrdType (t_i.[i]).(te_carrier).
-    Proof.
-      exists (t_i.[i]).(te_ltb).
-      apply (t_i.[i]).(te_lt_trans).
-      apply (t_i.[i]).(te_lt_not_eq).
-    Defined.
-
-    Hint Resolve
-         bool_ord Z_ord Positive_ord
-         BV_ord FArray_ord TI_ord : typeclass_instances.
-
-    Section Eqb_Dec.
-
-      
-    Instance bool_eqbtype : EqbType bool :=
-      {| eqb := Bool.eqb; eqb_spec := eqb_true_iff |}.
-    
-    Instance bool_dec : DecType bool :=
-      EqbToDecType _ bool_eqbtype.
-
-
-    
-    Instance Z_eqbtype : EqbType Z :=
-      {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
-
-    (* Instance Z_eqbtype : EqbType Z := *)
-    (*   {| eqb := Zeq_bool; eqb_spec := fun x y => symmetry (Zeq_is_eq_bool x y) |}. *)
-    
-    Instance Z_dec : DecType Z :=
-      EqbToDecType _ Z_eqbtype.
-
-    Instance Positive_eqbtype : EqbType positive :=
-      {| eqb := Pos.eqb; eqb_spec := Pos.eqb_eq |}.
-    
-    Instance Positive_dec : DecType positive :=
-      EqbToDecType _ Positive_eqbtype.
-
-
-    Instance BV_eqbtype n : EqbType (BITVECTOR_LIST.bitvector n) :=
-      {| eqb := @BITVECTOR_LIST.bv_eq n;
-         eqb_spec := @BITVECTOR_LIST.bv_eq_reflect n |}.
-
-    Instance BV_dec n : DecType (BITVECTOR_LIST.bitvector n) :=
-      EqbToDecType _ (BV_eqbtype n).
-
-    Instance TI_eqbtype i : EqbType (t_i.[i]).(te_carrier).
-    Proof.
-      exists (t_i.[i].(te_eqb)).
-      intros.
-      symmetry.
-      apply (reflect_iff _ _ (t_i.[i].(te_reflect) x y)).
-    Defined.
-
-    Instance TI_dec i : DecType (t_i.[i]).(te_carrier) :=
-      EqbToDecType _ (TI_eqbtype i).
-
-
-    Instance FArray_eqbtype key elt
-             `{key_ord: OrdType key}
-             `{elt_ord: OrdType elt}
-             `{elt_eqbtype: EqbType elt}
-             `{key_comp: Comparable key}
-             `{elt_comp: Comparable elt}
-             `{elt_inh: Inhabited elt}
-      : EqbType (farray key elt).
-    Proof.
-      exists FArray.equal.
-      intros.
-      split.
-      apply FArray.equal_eq.
-      intros. subst. apply eq_equal. apply eqfarray_refl.
-      apply EqbToDecType. auto.
-    Defined.
-
-    
-    Instance FArray_dec key elt
-             `{key_ord: OrdType key}
-             `{elt_ord: OrdType elt}
-             `{elt_eqbtype: EqbType elt}
-             `{key_comp: Comparable key}
-             `{elt_comp: Comparable elt}
-             `{elt_inh: Inhabited elt}
-      : DecType (farray key elt) :=
-      EqbToDecType _ (FArray_eqbtype key elt).
-
-    Hint Resolve
-         bool_eqbtype Z_eqbtype Positive_eqbtype
-         BV_eqbtype FArray_eqbtype TI_eqbtype : typeclass_instances.
-
-    Hint Resolve
-         bool_dec Z_dec Positive_dec
-         BV_dec FArray_dec TI_dec : typeclass_instances.
-
-    End Eqb_Dec.
-
-    Instance bool_comp: Comparable bool.
-    Proof.
-      constructor.
-      intros x y.
-      case_eq (ltb_bool x y).
-      intros.
-      apply OrderedType.LT.
-      unfold lt, bool_ord, lt_bool. auto.
-      case_eq (Bool.eqb x y).
-      intros.
-      apply OrderedType.EQ.
-      apply Bool.eqb_prop. auto.
-      intros.
-      apply OrderedType.GT.
-      unfold lt, bool_ord, lt_bool. auto.
-      case x in *; case y in *; auto.
-    Defined.
-    
-
-    Instance Z_comp: Comparable Z.
-    Proof.
-      constructor.
-      apply Z_as_OT.compare.
-    Defined.
-
-    Instance Positive_comp: Comparable positive.
-    Proof.
-      constructor.
-      apply Positive_as_OT.compare.
-    Defined.
-
-    Instance BV_comp n: Comparable (BITVECTOR_LIST.bitvector n).
-    Proof.
-      constructor.
-      intros x y.
-      case_eq (BITVECTOR_LIST.bv_ult x y).
-      intros.
-      apply OrderedType.LT.
-      unfold lt, BV_ord. auto.
-      case_eq (BITVECTOR_LIST.bv_eq x y).
-      intros.
-      apply OrderedType.EQ.
-      apply BITVECTOR_LIST.bv_eq_reflect. auto.
-      intros.
-      apply OrderedType.GT.
-      unfold lt, BV_ord. auto.
-      destruct (BV_ord n).
-      unfold BITVECTOR_LIST.bv_ult.
-      unfold BITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.bv_eq,
-      RAWBITVECTOR_LIST.bits in H.
-      unfold BITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.bv_ult in H0.
-      unfold is_true.
-
-      unfold RAWBITVECTOR_LIST.bv_ult, RAWBITVECTOR_LIST.size.
-      destruct x, y. simpl in *.
-      unfold RAWBITVECTOR_LIST.size in *.
-      rewrite wf, wf0 in *.
-      rewrite N.eqb_refl in *.
-
-      apply RAWBITVECTOR_LIST.nlt_be_neq_gt.
-      rewrite !List.rev_length.
-      apply (f_equal (N.to_nat)) in wf.
-      apply (f_equal (N.to_nat)) in wf0.
-      rewrite Nnat.Nat2N.id in wf, wf0.
-      now rewrite wf, wf0.
-      unfold RAWBITVECTOR_LIST.ult_list in H0. easy.
-      now apply RAWBITVECTOR_LIST.rev_neq in H.
-    Defined.
-
-    
-    Instance TI_comp i : Comparable (t_i.[i]).(te_carrier).
-    constructor.
-    intros x y.
-    destruct ((t_i.[i]).(te_compare) x y);
-      [apply OrderedType.LT | apply OrderedType.EQ | apply OrderedType.GT].
-    unfold lt, TI_ord. auto.
-    specialize (t_i.[i].(te_reflect) x y); intros.
-    apply reflect_iff in H. apply H. auto.
-    unfold lt, TI_ord. auto.
-    Defined.
-
-
-    Instance FArray_comp key elt
-             `{key_ord: OrdType key}
-             `{elt_ord: OrdType elt}
-             `{elt_eqbtype: EqbType elt}
-             `{key_comp: @Comparable key key_ord}
-             `{elt_inh: Inhabited elt}
-             `{elt_comp: @Comparable elt elt_ord} : Comparable (farray key elt).
-    Proof.
-      constructor.
-      intros.
-      destruct (compare_farray key_comp (EqbToDecType _ elt_eqbtype) elt_comp x y).
-      - apply OrderedType.LT. auto.
-      - apply OrderedType.EQ.
-        specialize (@eq_equal key elt key_ord key_comp elt_ord elt_comp elt_inh x y).
-        intros.
-        apply H in e.
-        now apply equal_eq in e.
-      - apply OrderedType.GT. auto.
-    Defined.
-
-    Hint Resolve
-         bool_comp Z_comp Positive_comp
-         BV_comp FArray_comp TI_comp : typeclass_instances.
-
-
-    Instance bool_inh : Inhabited bool := {| default_value := false|}.
-    Instance Z_inh : Inhabited Z := {| default_value := 0%Z |}.
-    Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
-    Instance BV_inh n : Inhabited (BITVECTOR_LIST.bitvector n) :=
-      {| default_value := BITVECTOR_LIST.zeros n |}.
-    Instance TI_inh i: Inhabited (t_i.[i]).(te_carrier) :=
-      {| default_value := (t_i.[i]).(te_inhabitant) |}.
-    Instance FArray_inh key elt
-             `{key_ord: OrdType key}
-             `{elt_inh: Inhabited elt} : Inhabited (farray key elt) :=
-      {| default_value := FArray.empty key_ord elt_inh |}.
-
-    
-    Hint Resolve bool_inh Z_inh Positive_inh
-         BV_inh FArray_inh TI_inh : typeclass_instances.
-
-    
-    Class CompDec T := {
-      ty := T;
-      Eqb :> EqbType ty;
-      Decidable := EqbToDecType ty Eqb;
-      Ordered :> OrdType ty;       
-      Comp :> Comparable ty;
-      Inh :> Inhabited ty
-    }.
-
-
-    Instance ord_of_compdec t `{c: CompDec t} : (OrdType t) := 
-      let (_, _, _, ord, _, _) := c in ord.
-
-    Instance inh_of_compdec t `{c: CompDec t} : (Inhabited t) := 
-      let (_, _, _, _, _, inh) := c in inh.
-
-    Instance comp_of_compdec t `{c: CompDec t} : @Comparable t (ord_of_compdec t).
-      destruct c; trivial.
-    Defined.
-
-    Instance eqbtype_of_compdec t `{c: CompDec t} : EqbType t :=
-      let (_, eqbtype, _, _, _, inh) := c in eqbtype.
-
-    Instance dec_of_compdec t `{c: CompDec t} : DecType t :=
-      let (_, _, dec, _, _, inh) := c in dec.
-    
-
-    Definition type_compdec {ty:Type} (cd : CompDec ty) := ty.
-    
-    Instance bool_compdec : CompDec bool := {|
-      Eqb := bool_eqbtype;                                    
-      Ordered := bool_ord;                                    
-      Comp := bool_comp;
-      Inh := bool_inh
-    |}.
-    
-    Instance Z_compdec : CompDec Z := {|
-      Eqb := Z_eqbtype;                                    
-      Ordered := Z_ord;                                    
-      Comp := Z_comp;
-      Inh := Z_inh
-    |}.
-
-    Instance Positive_compdec : CompDec positive := {|
-      Eqb := Positive_eqbtype;                                    
-      Ordered := Positive_ord;                                    
-      Comp := Positive_comp;
-      Inh := Positive_inh
-    |}.
-
-    Instance BV_compdec n: CompDec (BITVECTOR_LIST.bitvector n) := {|
-      Eqb := BV_eqbtype n;                                    
-      Ordered := BV_ord n;                                    
-      Comp := BV_comp n;
-      Inh := BV_inh n
-    |}.
-
-
-    Instance TI_compdec i : CompDec ((t_i.[i]).(te_carrier)) := {|
-      Eqb := TI_eqbtype i;
-      Ordered := TI_ord i;
-      Comp := TI_comp i;
-      Inh := TI_inh i
-    |}.
-
-
-
-    Definition compdec_typ_eqb t {ty:CompDec t} : typ_eqb.
-      destruct ty.
-      destruct Eqb0, Decidable0, Ordered0, Comp0, Inh0.
-      set (ltb x y := match compare x y with OrderedType.LT _ => true | _ => false end).
-      refine (Typ_eqb ty0 default_value eqb _ ltb _ _ _).
-      intros. apply iff_reflect; symmetry; auto.
-      intros x y z.
-      unfold ltb.
-      destruct (compare x y);
-      destruct (compare y z);
-      destruct (compare x z); auto.
-      subst. apply (lt_trans _ _ _ l0) in l. apply lt_not_eq in l. auto.
-      apply (lt_trans _ _ _ (lt_trans _ _ _ l l0)) in l1. apply lt_not_eq in l. auto.
-      apply lt_not_eq in l1. auto.
-      intros x y.
-      unfold ltb. destruct (compare x y); intuition; subst; apply lt_not_eq in l; auto.
-      intros x y.
-      unfold ltb. case_eq (compare x y); intros.
-      apply OrderedType.LT.
-      destruct (compare x y); try discriminate H; auto.
-      apply OrderedType.EQ.
-      destruct (compare x y); try discriminate H; auto.
-      apply eqb_spec; auto.
-      apply OrderedType.GT.
-      destruct (compare y x); try discriminate H; auto; clear H.
-      subst; apply lt_not_eq in l; auto.
-      subst. apply (lt_trans _ _ _ l0) in l. apply lt_not_eq in l. auto.
-    Defined.
-    
-
-
-    Instance FArray_compdec key elt
-             `{key_compdec: CompDec key}
-             `{elt_compdec: CompDec elt} :
-      CompDec (farray key elt) :=
-      {|
-        Eqb := FArray_eqbtype key elt;
-        Ordered := FArray_ord key elt;
-        Comp := FArray_comp key elt;
-        Inh := FArray_inh key elt
-      |}.
-
-    
-    Hint Resolve bool_compdec : typeclass_instances.
-    Hint Resolve Z_compdec : typeclass_instances.
-    Hint Resolve Positive_compdec : typeclass_instances.
-    Hint Resolve BV_compdec : typeclass_instances.
-    Hint Resolve FArray_compdec : typeclass_instances.
-    Hint Resolve TI_compdec : typeclass_instances.
-
+    Variable t_i : PArray.array typ_compdec.
     
     Fixpoint interp_compdec_aux (t:type) : {ty: Type & CompDec ty} :=
       match t with
@@ -773,7 +286,9 @@ Module Typ.
                (FArray_compdec
                   (type_compdec (projT2 (interp_compdec_aux ti)))
                   (type_compdec (projT2 (interp_compdec_aux te))))
-      | Tindex i => existT (fun ty : Type => CompDec ty) (te_carrier (t_i .[ i])) (TI_compdec i)
+      | Tindex i =>
+        existT (fun ty : Type => CompDec ty)
+               (te_carrier (t_i .[ i])) (te_compdec (t_i .[ i]))
       | TZ => existT (fun ty : Type => CompDec ty) Z Z_compdec
       | Tbool => existT (fun ty : Type => CompDec ty) bool bool_compdec
       | Tpositive => existT (fun ty : Type => CompDec ty) positive Positive_compdec
@@ -787,33 +302,33 @@ Module Typ.
 
     
     Definition interp_ftype (t:ftype) :=
-      List.fold_right (fun dom codom =>interp dom -> codom)
+      List.fold_right (fun dom codom => interp dom -> codom)
       (interp (snd t)) (fst t).
 
 
     Definition dec_interp (t:type) : DecType (interp t).
       destruct (interp_compdec t).
-      subst ty0.
-      apply Decidable0.
+      subst ty.
+      apply Decidable.
     Defined.
 
     Instance comp_interp (t:type) : Comparable (interp t).
       destruct (interp_compdec t).
-      subst ty0.
-      apply Comp0.
+      subst ty.
+      apply Comp.
     Defined.
 
     Instance ord_interp (t:type) : OrdType (interp t).
       destruct (interp_compdec t).
-      subst ty0.
-      apply Ordered0.
+      subst ty.
+      apply Ordered.
     Defined.
 
     
     Definition inh_interp (t:type) : Inhabited (interp t).
       unfold interp.
       destruct (interp_compdec t).
-      apply Inh0.
+      apply Inh.
     Defined.
 
     Definition inhabitant_interp (t:type) : interp t := default_value.
@@ -828,39 +343,15 @@ Module Typ.
     Section Interp_Equality.
 
 
-      Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
-        match c with
-        | {| ty := ty; Eqb := {| eqb := eqb |} |} => eqb
-        end.
-
       Definition i_eqb (t:type) : interp t -> interp t -> bool :=
         eqb_of_compdec (interp_compdec t).
-      
-      
-      Definition i_equiv (t:type) : interp t -> interp t -> Prop :=
-        fun x y => if i_eqb t x y then True else False.
-
-        
-      Lemma pos_eqb_eq : forall p q, (p =? q)%positive = true -> p=q.
-      Proof. apply Pos.eqb_eq. Qed.
-
-      Lemma index_t_eqb_eq : forall (i:index) (x y: interp (Tindex i)), t_i.[i].(te_eqb) x y = true -> x = y.
-      Proof. intros.
-        specialize (te_reflect (t_i.[i]) x y); intro.
-        apply reflect_iff in H0.
-        now apply H0 in H.
-      Qed.
-      
-      Lemma bv_eqb_eq n : forall x y, (@BITVECTOR_LIST.bv_eq n x y = true) -> x = y.
-      Proof. apply BITVECTOR_LIST.bv_eq_reflect. Qed.
-
       
 
       Lemma eqb_compdec_spec {t} (c : CompDec t) : forall x y,
           eqb_of_compdec c x y = true <-> x = y.
         intros.
         destruct c.
-        destruct Eqb0.
+        destruct Eqb.
         simpl.
         auto.
       Qed.
@@ -869,7 +360,7 @@ Module Typ.
           eqb_of_compdec c x y = false <-> x <> y.
         intros.
         destruct c.
-        destruct Eqb0.
+        destruct Eqb.
         simpl.
         split. intros. 
         unfold not. intros.
@@ -900,7 +391,7 @@ Module Typ.
           reflect (x = y) (eqb_of_compdec c x y).
         intros.
         destruct c.
-        destruct Eqb0.
+        destruct Eqb.
         simpl in *.
         apply iff_reflect.
         symmetry; auto.
@@ -927,7 +418,7 @@ Module Typ.
 
       Definition i_eqb_eqb (t:type) : interp t -> interp t -> bool :=
         match t with
-        | Tindex i => (t_i.[i]).(te_eqb)
+        | Tindex i => eqb_of_compdec (t_i.[i]).(te_compdec)
         | TZ => Z.eqb (* Zeq_bool *)
         | Tbool => Bool.eqb
         | Tpositive => Peqb
@@ -940,7 +431,7 @@ Module Typ.
           eqb_of_compdec c x x = true.
         intros.
         destruct c.
-        destruct Eqb0.
+        destruct Eqb.
         simpl.
         apply eqb_spec. auto.
       Qed.
@@ -959,7 +450,7 @@ Module Typ.
           eqb_of_compdec c x z = true .
         intros.
         destruct c.
-        destruct Eqb0.
+        destruct Eqb.
         simpl in *.
         apply eqb_spec.
         apply eqb_spec in H.
@@ -981,30 +472,6 @@ Module Typ.
         unfold i_eqb_eqb.
         destruct t; simpl; auto; unfold i_eqb; simpl.
       Qed.
-      
-    Instance i_equiv_equiv (t:type) : Equivalence (i_equiv t).
-    Proof.
-      constructor.
-      unfold Reflexive.
-      unfold i_equiv. intro x.
-      rewrite i_eqb_refl. auto.
-      unfold Symmetric.
-      unfold i_equiv.
-      intros x y.
-      case_eq (i_eqb t x y); case_eq (i_eqb t y x); auto.
-      intros. rewrite i_eqb_sym in H0. rewrite H in H0. now contradict H.
-      unfold Transitive.
-      unfold i_equiv.
-      intros x y z.
-      case_eq (i_eqb t x y); case_eq (i_eqb t y z); case_eq (i_eqb t x z); auto.
-      intros.
-      rewrite (i_eqb_trans _ _ _ _ H1 H0) in H.
-      now contradict H.
-    Defined.
-    
-      
-
-    
       
     End Interp_Equality.
 
@@ -1174,9 +641,7 @@ Module Typ.
       apply cast_diff in H0.
       rewrite H in H0. inversion H0.
     Qed.
-        
-    
-    
+
     Lemma neq_cast : forall A B,
       cast A B = (if eqb A B then cast A B else NoCast).
     Proof.
@@ -1304,9 +769,11 @@ Module Atom.
    | UO_Zneg
    | UO_Zopp
    | UO_BVbitOf (_: N) (_: nat)
-   | UO_BVnot (_: N)
-   | UO_BVneg (_: N).
-
+   | UO_BVnot   (_: N)
+   | UO_BVneg   (_: N)
+   | UO_BVextr  (i: N) (n0: N) (n1: N) (* TODO n1 first arg *)
+   | UO_BVzextn (n: N) (i: N)
+   | UO_BVsextn (n: N) (i: N).
 
   Inductive binop : Type :=
    | BO_Zplus
@@ -1326,10 +793,12 @@ Module Atom.
    | BO_BVult (_: N)
    | BO_BVslt (_: N)
    | BO_BVconcat (_: N) (_: N)
+   | BO_BVshl (_: N)
+   | BO_BVshr (_: N)
    | BO_select (_ : Typ.type) (_ : Typ.type)
    | BO_diffarray (_ : Typ.type) (_ : Typ.type)
   .
-  
+
   Inductive nop : Type :=
    | NO_distinct (_ : Typ.type).
 
@@ -1368,6 +837,9 @@ Module Atom.
    | UO_BVbitOf s1 n, UO_BVbitOf s2 m => Nat_eqb n m && N.eqb s1 s2
    | UO_BVnot s1, UO_BVnot s2 => N.eqb s1 s2
    | UO_BVneg s1, UO_BVneg s2 => N.eqb s1 s2
+   | UO_BVextr i0 n00 n01, UO_BVextr i1 n10 n11 => N.eqb i0 i1 && N.eqb n00 n10 && N.eqb n01 n11
+   | UO_BVzextn s1 i1, UO_BVzextn s2 i2 => N.eqb s1 s2 && N.eqb i1 i2
+   | UO_BVsextn s1 i1, UO_BVsextn s2 i2 => N.eqb s1 s2 && N.eqb i1 i2
    | _,_ => false
    end.
 
@@ -1390,6 +862,8 @@ Module Atom.
    | BO_BVult s1, BO_BVult s2 => N.eqb s1 s2
    | BO_BVslt s1, BO_BVslt s2 => N.eqb s1 s2
    | BO_BVconcat s1 s2, BO_BVconcat s3 s4 => N.eqb s1 s3 && N.eqb s2 s4
+   | BO_BVshl s1, BO_BVshl s2 => N.eqb s1 s2
+   | BO_BVshr s1, BO_BVshr s2 => N.eqb s1 s2
    | BO_select ti te, BO_select ti' te'
    | BO_diffarray ti te, BO_diffarray ti' te' => Typ.eqb ti ti' && Typ.eqb te te'
    | _,_ => false
@@ -1436,7 +910,7 @@ Module Atom.
 
   Lemma reflect_uop_eqb : forall o1 o2, reflect (o1 = o2) (uop_eqb o1 o2).
   Proof.
-    intros [ | | | | | s1 n1 | s1 | s1 ] [ | | | | |s2 n2 | s2 | s2];simpl; try constructor;trivial; try discriminate.
+    intros [ | | | | | s1 n1 | s1 | s1 | s1 | s1 | s1 ] [ | | | | |s2 n2 | s2 | s2 | s2 | s2 | s2 ];simpl; try constructor;trivial; try discriminate.
     - apply iff_reflect. case_eq (Nat_eqb n1 n2).
       + case_eq ((s1 =? s2)%N).
         * rewrite N.eqb_eq, beq_nat_true_iff.
@@ -1454,13 +928,37 @@ Module Atom.
     - apply iff_reflect. rewrite N.eqb_eq. split; intro H.
       + now inversion H.
       + now rewrite H.
+    - intros. apply iff_reflect. split. intro H.
+      inversion H.
+      rewrite !andb_true_iff; split.
+      split; now rewrite N.eqb_eq.
+      now rewrite N.eqb_eq.
+      intros. rewrite !andb_true_iff in H.
+      destruct H as ((Ha, Hb), Hc).
+      rewrite N.eqb_eq in Ha, Hb, Hc.
+      subst.
+      reflexivity.
+    - intros. apply iff_reflect. split; intros.
+      + rewrite !andb_true_iff. inversion H.
+        split; try split; try now rewrite N.eqb_eq.
+      + rewrite !andb_true_iff in H.
+        destruct H as (Ha, Hb).
+        rewrite N.eqb_eq in Ha, Hb.
+        now subst.
+    - intros. apply iff_reflect. split; intros.
+      + rewrite !andb_true_iff. inversion H.
+        split; try split; try now rewrite N.eqb_eq.
+      + rewrite !andb_true_iff in H.
+        destruct H as (Ha, Hb).
+        rewrite N.eqb_eq in Ha, Hb.
+        now subst.
   Qed.
 
 
   Lemma reflect_bop_eqb : forall o1 o2, reflect (o1 = o2) (bop_eqb o1 o2).
   Proof.
-    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 | I1 E1 ]
-           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | s2 | I2 E2 | I2 E2 ];
+    intros [ | | | | | | | A1|s1|s1 |s1 | s1 | s1 | s1 | s1 | s1 | s1 | s1 | s1 | I1 E1 | I1 E1 ]
+           [ | | | | | | | A2|s2|s2| s2 | s2 | s2 | s2 | s2 | s2 | s2 | s2 | s2 |I2 E2 | I2 E2 ];
       simpl;try (constructor;trivial;discriminate).
    - preflect (Typ.reflect_eqb A1 A2).
      constructor;subst;trivial.
@@ -1479,13 +977,17 @@ Module Atom.
    - preflect (N.eqb_spec s1 s2).
      constructor;subst;trivial.
    - preflect (N.eqb_spec s1 s2).
-     constructor;subst;trivial.
-     
+     constructor;subst;trivial.   
    - intros.
      preflect (N.eqb_spec s1 s2).
      preflect (N.eqb_spec n n0).
      constructor;subst;trivial.
-     
+
+   - preflect (N.eqb_spec s1 s2).
+     constructor;subst;trivial.
+   - preflect (N.eqb_spec s1 s2).
+     constructor;subst;trivial.
+
    - preflect (Typ.reflect_eqb I1 I2).
      preflect (Typ.reflect_eqb E1 E2).
      constructor;subst;trivial.
@@ -1538,7 +1040,7 @@ Qed.
   
   Lemma eqb_spec : forall t1 t2, eqb t1 t2 <-> t1 = t2.
   Proof.
-    intros;symmetry;apply reflect_iff;apply reflect_eqb.
+    intros;symmetry; apply reflect_iff; apply reflect_eqb.
   Qed.
   
   (** Typing and interpretation *)
@@ -1549,7 +1051,7 @@ Qed.
   }.
 
   Section Typing_Interp.
-    Variable t_i : PArray.array typ_eqb.
+    Variable t_i : PArray.array typ_compdec.
 
     Local Notation interp_t := (Typ.interp t_i).
     Local Notation interp_ft := (Typ.interp_ftype t_i).
@@ -1600,6 +1102,9 @@ Qed.
         | UO_BVbitOf s _ => (Typ.TBV s, Typ.Tbool)
         | UO_BVnot s => (Typ.TBV s, Typ.TBV s)
         | UO_BVneg s => (Typ.TBV s, Typ.TBV s)
+        | UO_BVextr i n0 n1 => (Typ.TBV n1, Typ.TBV n0)
+        | UO_BVzextn s i => (Typ.TBV s, Typ.TBV (i + s))
+        | UO_BVsextn s i => (Typ.TBV s, Typ.TBV (i + s))
         end.
 
       Definition typ_bop o := 
@@ -1621,6 +1126,8 @@ Qed.
         | BO_BVult s   => ((Typ.TBV s,Typ.TBV s), Typ.Tbool)
         | BO_BVconcat s1 s2   => ((Typ.TBV s1,Typ.TBV s2), (Typ.TBV (s1 + s2)))
         | BO_BVslt s   => ((Typ.TBV s,Typ.TBV s), Typ.Tbool)
+        | BO_BVshl s   => ((Typ.TBV s,Typ.TBV s), Typ.TBV s)
+        | BO_BVshr s   => ((Typ.TBV s,Typ.TBV s), Typ.TBV s)
         | BO_select ti te => ((Typ.TFArray ti te, ti), te)
         | BO_diffarray ti te => ((Typ.TFArray ti te, Typ.TFArray ti te), ti)
         end.
@@ -1776,8 +1283,31 @@ Qed.
 
          (case (Typ.eqb (get_type h) (Typ.TBV n))).
            left. exists (Typ.TBV n). now rewrite N.eqb_refl; easy.
-           right. intros. rewrite andb_false_r. easy.        
-        
+           right. intros. rewrite andb_false_r. easy. 
+           
+         (case (Typ.eqb (get_type h) (Typ.TBV n1))).
+           left. exists (Typ.TBV n0). now rewrite N.eqb_refl; easy.
+           right. intros. rewrite andb_false_r. easy. 
+           
+         (case (Typ.eqb (get_type h) (Typ.TBV n1))).
+           left. exists (Typ.TBV n0). now rewrite N.eqb_refl; easy.
+           right. intros. rewrite andb_false_r. easy.
+
+         (case (Typ.eqb (get_type h) (Typ.TBV n))).
+           left. exists (Typ.TBV (i + n)). now rewrite N.eqb_refl; easy.
+           right. intros. rewrite andb_false_r. easy. 
+           
+         (case (Typ.eqb (get_type h) (Typ.TBV n))).
+           left. exists (Typ.TBV (i + n)). now rewrite N.eqb_refl; easy.
+           right. intros. rewrite andb_false_r. easy.
+
+         (case (Typ.eqb (get_type h) (Typ.TBV n))).
+           left. exists (Typ.TBV (i + n)). now rewrite N.eqb_refl; easy.
+           right. intros. rewrite andb_false_r. easy. 
+           
+         (case (Typ.eqb (get_type h) (Typ.TBV n))).
+           left. exists (Typ.TBV (i + n)). now rewrite N.eqb_refl; easy.
+           right. intros. rewrite andb_false_r. easy.
 
         (* Binary operators *)
         destruct op; simpl.
@@ -1871,6 +1401,18 @@ Qed.
         (*additional case for BO_BVconcat*)
         (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
           left. exists (Typ.TBV (n + n0)). rewrite N.eqb_refl. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+        (*additional case for BO_BVshl*)
+        (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
+          left. exists (Typ.TBV n). now rewrite N.eqb_refl; easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+          right. intros. rewrite andb_false_r. easy.
+        (*additional case for BO_BVshr*)
+        (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _)).
+          left. exists (Typ.TBV n). now rewrite N.eqb_refl; easy.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
           right. intros. rewrite andb_false_r. easy.
@@ -1970,8 +1512,6 @@ Qed.
         | CO_BV bv s => Bval (Typ.TBV s) (BITVECTOR_LIST._of_bits bv s)
         end.
 
-
-
       Definition interp_uop o :=
         match o with
         | UO_xO   => apply_unop Typ.Tpositive Typ.Tpositive xO
@@ -1982,8 +1522,13 @@ Qed.
         | UO_BVbitOf s n => apply_unop (Typ.TBV s) Typ.Tbool (BITVECTOR_LIST.bitOf n)
         | UO_BVnot s => apply_unop (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_not s)
         | UO_BVneg s => apply_unop (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_neg s)
+        | UO_BVextr i n0 n1 => 
+          apply_unop (Typ.TBV n1) (Typ.TBV n0) (@BITVECTOR_LIST.bv_extr i n0 n1)
+        | UO_BVzextn s i => 
+          apply_unop (Typ.TBV s) (Typ.TBV (i + s)) (@BITVECTOR_LIST.bv_zextn s i)
+        | UO_BVsextn s i => 
+          apply_unop (Typ.TBV s) (Typ.TBV (i + s)) (@BITVECTOR_LIST.bv_sextn s i)
         end.
-
 
 
       Definition interp_bop o :=
@@ -2013,7 +1558,11 @@ Qed.
          | BO_BVslt s =>
            apply_binop (Typ.TBV s) (Typ.TBV s) Typ.Tbool (@BITVECTOR_LIST.bv_slt s) 
          | BO_BVconcat s1 s2 =>
-           apply_binop (Typ.TBV s1) (Typ.TBV s2) (Typ.TBV (s1 + s2)) (@BITVECTOR_LIST.bv_concat s1 s2) 
+           apply_binop (Typ.TBV s1) (Typ.TBV s2) (Typ.TBV (s1 + s2)) (@BITVECTOR_LIST.bv_concat s1 s2)
+         | BO_BVshl s =>
+           apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_shl s)
+         | BO_BVshr s =>
+           apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_shr s)
          | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te FArray.select
          | BO_diffarray ti te =>
            apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti FArray.diff
@@ -2181,8 +1730,11 @@ Qed.
         exists 0%Z; auto.
         exists (BITVECTOR_LIST._of_bits l n0). unfold is_true in H. rewrite N.eqb_eq in H. now rewrite H.
         (* Unary operators *)
-        destruct op; intros [ | i| | | | ]; simpl; try discriminate; try rewrite Typ.eqb_spec; intro H1; destruct (check_aux_interp_hatom h) 
-        as [x Hx]; rewrite Hx; simpl; generalize x Hx; try rewrite H1; intros y Hy; try rewrite Typ.cast_refl.
+        destruct op; intros [ | ind| | | | ]; 
+        simpl; try discriminate; try rewrite Typ.eqb_spec; 
+        intros H1a; destruct (check_aux_interp_hatom h) 
+        as [x Hx]; rewrite Hx; simpl; generalize x Hx; 
+        try rewrite H1a; intros y Hy; try rewrite Typ.cast_refl.
         exists (y~0)%positive; auto.
         exists (y~1)%positive; auto.
         exists (Zpos y); auto.
@@ -2209,9 +1761,41 @@ Qed.
         revert x y Hx Hy.
         rewrite Hb. intros.
         exists (@BITVECTOR_LIST.bv_neg n y); auto. rewrite Typ.cast_refl; auto.
+        (* bv_extr *)
+        intros.
+        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        rewrite N.eqb_eq in Ha.
+        revert x y Hx Hy Hb.
+        rewrite <- Ha in *. intros.
+        apply Typ.eqb_spec in Hb.
+        revert x y Hx Hy.
+        rewrite Hb. intros.
+        exists (@BITVECTOR_LIST.bv_extr i n0 n1 y); auto. rewrite Typ.cast_refl; auto.
+        (* bv_zextn *)
+        intros.
+        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        rewrite N.eqb_eq in Ha.
+        revert x y Hx Hy Hb.
+        rewrite <- Ha in *. intros.
+        apply Typ.eqb_spec in Hb.
+        revert x y Hx Hy.
+        rewrite Hb. intros.
+        exists (@BITVECTOR_LIST.bv_zextn n i y); auto. rewrite Typ.cast_refl; auto.
+        (* bv_sextn *)
+        intros.
+        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        rewrite N.eqb_eq in Ha.
+        revert x y Hx Hy Hb.
+        rewrite <- Ha in *. intros.
+        apply Typ.eqb_spec in Hb.
+        revert x y Hx Hy.
+        rewrite Hb. intros.
+        exists (@BITVECTOR_LIST.bv_sextn n i y); auto. rewrite Typ.cast_refl; auto.   
   (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | n m | ti te | ti te];
+        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | s9 | s10 | n m | ti te | ti te];
           [ intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
+            intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
@@ -2378,6 +1962,34 @@ Qed.
         rewrite !Typ.cast_refl.
         rewrite <- Ha.
         exists (BITVECTOR_LIST.bv_concat y1 y2); auto.
+        (*BO_BVshl*)
+        simpl in s.
+        intros. rewrite !andb_true_iff in H. destruct H as ((Ha, Hb), Hc).
+        apply Typ.eqb_spec in Hb.
+        apply Typ.eqb_spec in Hc.
+        rewrite N.eqb_eq in Ha.
+        revert Hb Hc. rewrite Ha in *. intros.
+
+        destruct (check_aux_interp_hatom h1) as [x1 Hx1]. 
+        rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl.
+        revert x1 Hx1 x2 Hx2.
+        rewrite Hb, Hc. intros y1 Hy1 y2 Hy2.
+        rewrite Typ.cast_refl.
+        exists (BITVECTOR_LIST.bv_shl y1 y2); auto.
+        (*BO_BVshr*)
+        simpl in s.
+        intros. rewrite !andb_true_iff in H. destruct H as ((Ha, Hb), Hc).
+        apply Typ.eqb_spec in Hb.
+        apply Typ.eqb_spec in Hc.
+        rewrite N.eqb_eq in Ha.
+        revert Hb Hc. rewrite Ha in *. intros.
+
+        destruct (check_aux_interp_hatom h1) as [x1 Hx1]. 
+        rewrite Hx1; destruct (check_aux_interp_hatom h2) as [x2 Hx2]; rewrite Hx2; simpl.
+        revert x1 Hx1 x2 Hx2.
+        rewrite Hb, Hc. intros y1 Hy1 y2 Hy2.
+        rewrite Typ.cast_refl.
+        exists (BITVECTOR_LIST.bv_shr y1 y2); auto.
 
         (* BO_select *)
         intros t' H.
@@ -2482,7 +2094,22 @@ Qed.
             specialize (H (Typ.TBV n)). simpl in H. rewrite andb_false_iff in H.
             destruct H as [ H | H].
               rewrite N.eqb_refl in H. now contradict H.
-              now rewrite H.              
+              now rewrite H.
+            (* bv_extr *)
+            specialize (H (Typ.TBV n0)). simpl in H. rewrite andb_false_iff in H.
+            destruct H as [ H | H].
+              rewrite N.eqb_refl in H. now contradict H.
+              now rewrite H.
+            (* bv_zextn *)
+            specialize (H (Typ.TBV (i + n))). simpl in H. rewrite andb_false_iff in H.
+            destruct H as [ H | H].
+              rewrite N.eqb_refl in H. now contradict H.
+              now rewrite H.
+            (* bv_sextn *)
+            specialize (H (Typ.TBV (i + n))). simpl in H. rewrite andb_false_iff in H.
+            destruct H as [ H | H].
+              rewrite N.eqb_refl in H. now contradict H.
+              now rewrite H.  
         (* Binary operators *)
         destruct op; simpl; intro H; destruct (check_aux_interp_hatom h1) as [v1 Hv1]; 
         destruct (check_aux_interp_hatom h2) as [v2 Hv2]; rewrite Hv1, Hv2; simpl;
@@ -2591,7 +2218,25 @@ Qed.
           apply Typ.cast_diff in H. now rewrite H.
           apply Typ.cast_diff in H. rewrite H.
           case (Typ.cast (get_type h1) (Typ.TBV n)); auto.
-                  
+        (*BVshl*)
+        specialize (H (Typ.TBV n)). simpl in H.
+        apply andb_false_iff in H. destruct H.
+        specialize (@Typ.cast_diff (get_type h1) (Typ.TBV n)). intros. 
+        rewrite andb_false_iff in H. destruct H as [ H | H ].
+          rewrite N.eqb_refl in H. now contradict H.
+          apply Typ.cast_diff in H. now rewrite H.
+          apply Typ.cast_diff in H. rewrite H.
+          case (Typ.cast (get_type h1) (Typ.TBV n)); auto.
+        (*BVshr*)
+        specialize (H (Typ.TBV n)). simpl in H.
+        apply andb_false_iff in H. destruct H.
+        specialize (@Typ.cast_diff (get_type h1) (Typ.TBV n)). intros. 
+        rewrite andb_false_iff in H. destruct H as [ H | H ].
+          rewrite N.eqb_refl in H. now contradict H.
+          apply Typ.cast_diff in H. now rewrite H.
+          apply Typ.cast_diff in H. rewrite H.
+          case (Typ.cast (get_type h1) (Typ.TBV n)); auto.
+
         (* BO_select *)
         specialize (H t0). simpl in H.
         rewrite !andb_false_iff in H. destruct H. destruct H.
@@ -2787,7 +2432,10 @@ Qed.
         exists 0%Z; auto.
         exists (BITVECTOR_LIST._of_bits l n); auto.
         (* Unary operators *)
-        intros [ | | | | | | | ] i H; simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
+
+        intros [ | | | | | | | | i0 n0 n1| n i0| n i0] i H;
+          simpl; destruct (IH i H) as [x Hx]; rewrite Hx; simpl.
+
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~0)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists ((k interp_t x)~1)%positive; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) Typ.Tpositive); simpl; try (exists true; auto); intro k; exists (Zpos (k interp_t x)); auto.
@@ -2796,9 +2444,15 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bitOf n0 (k interp_t x)) ; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bv_not (k interp_t x)) ; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bv_neg (k interp_t x)) ; auto.
+        case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n1));
+        simpl; [ | exists true; auto]. intro k; exists (BITVECTOR_LIST.bv_extr i0 n0 (k interp_t x)) ; auto.
+        case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); 
+        simpl; [ | exists true; auto]. intro k. exists (BITVECTOR_LIST.bv_zextn i0 (k interp_t x)) ; auto.
+        case (Typ.cast (v_type Typ.type interp_t (a .[ i])) (Typ.TBV n)); 
+        simpl; [ | exists true; auto]. intro k. exists (BITVECTOR_LIST.bv_sextn i0 (k interp_t x)) ; auto.
 
        (* Binary operators *)
-        intros [ | | | | | | |A | | | | | | | | | | ti te| ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
+        intros [ | | | | | | |A | | | | | | | | | | | | ti te| ti te] h1 h2; simpl; rewrite andb_true_iff; intros [H1 H2]; destruct (IH h1 H1) as [x Hx]; destruct (IH h2 H2) as [y Hy]; rewrite Hx, Hy; simpl.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x + k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x - k2 interp_t y)%Z; auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ); simpl; try (exists true; auto); intro k2; exists (k1 interp_t x * k2 interp_t y)%Z; auto.
@@ -2807,6 +2461,7 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ) as [k2| ]; simpl; try (exists true; reflexivity); exists (k1 interp_t x >=? k2 interp_t y); auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) Typ.TZ); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) Typ.TZ) as [k2| ]; simpl; try (exists true; reflexivity); exists (k1 interp_t x >? k2 interp_t y); auto.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) A); simpl; try (exists true; auto); intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) A) as [k2| ]; simpl; try (exists true; reflexivity); exists (Typ.i_eqb t_i A (k1 interp_t x) (k2 interp_t y)); auto.
+
         (*BO_BVand*)
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto); 
         intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ];
@@ -2850,6 +2505,16 @@ Qed.
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV (n))); simpl; try (exists true; auto);
         intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV (n0))) as [k2| ];
         simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_concat (k1 interp_t x) (k2 interp_t y));
+        auto.
+        (*BO_BVshl*)
+        case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto);
+        intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ];
+        simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_shl (k1 interp_t x) (k2 interp_t y));
+        auto.
+        (*BO_BVshr*)
+        case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TBV n)); simpl; try (exists true; auto);
+        intro k1; case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TBV n)) as [k2| ];
+        simpl; try (exists true; reflexivity); exists (BITVECTOR_LIST.bv_shr (k1 interp_t x) (k2 interp_t y));
         auto.
         (* BO_select *)
         case (Typ.cast (v_type Typ.type interp_t (a .[ h1])) (Typ.TFArray ti te) );
@@ -2977,19 +2642,77 @@ Qed.
 
 End Atom.
 
-
-
-
 Arguments Atom.Val {_} {_} _ _.
+
+
+Section ReflectFacts.
+
+Infix "-->" := implb (at level 60, right associativity) : bool_scope.
+
+Lemma reflect_iff : forall P b, reflect P b -> (P<->b=true).
+Proof.
+ intros; destruct H; easy.
+Qed.
+
+Lemma iff_reflect : forall P b, (P<->b=true) -> reflect P b.
+Proof.
+ intros.
+ destr_bool; constructor; try now apply H.
+ unfold not. intros. apply H in H0. destruct H. easy.
+Qed.
+
+Lemma reflect_dec : forall P b, reflect P b -> {P} + {~P}.
+Proof. intros; destruct H; [now left | now right]. Qed.
+
+ Lemma implyP : forall (b1 b2: bool), reflect (b1 -> b2) (b1 --> b2).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
+ Qed.
+
+ Lemma iffP : forall (b1 b2: bool), reflect (b1 <-> b2) (eqb b1 b2).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
+ Qed.
+
+ Lemma implyP2 : forall (b1 b2 b3: bool), reflect (b1 -> b2 -> b3) (b1 --> b2 --> b3).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
+ Qed.
+
+ Lemma andP : forall (b1 b2: bool), reflect (b1 /\ b2) (b1 && b2).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
+ Qed.
+
+ Lemma orP : forall (b1 b2: bool), reflect (b1 \/ b2) (b1 || b2).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *.
+        destruct H1 as [H1a | H1b ]; easy. left. easy. left. easy.
+        right. easy.
+ Qed.
+
+ Lemma negP : forall (b: bool), reflect (~ b) (negb b).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b; intros; try easy; try compute in *.
+        contradict H0. easy.
+ Qed.
+
+ Lemma eqP : forall (b1 b2: bool), reflect (b1 = b2) (Bool.eqb b1 b2).
+ Proof. intros; apply iff_reflect; split;
+        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
+ Qed.
+
+End ReflectFacts.
 
 
 (* These definitions are not used. This is just a hack, Coq refuses to
    construct PArrays from OCaml if these are not here for some silly reason *)
+(*
 Section PredefinedArrays.
-  Variable t_i : PArray.array typ_eqb.
+  Variable t_i : PArray.array typ_compdec.
 
-  Definition mkarray_typ_eqb := @PArray.make typ_eqb.
-  Definition arrayset_typ_eqb := @PArray.set typ_eqb.
+  Definition mkarray_typ_compdec := @PArray.make typ_compdec.
+  Definition arrayset_typ_compdec := @PArray.set typ_compdec.
   
   Definition mkarray_func := @PArray.make (Atom.tval t_i).
   Definition arrayset_func := @PArray.set (Atom.tval t_i).
@@ -3001,17 +2724,8 @@ Section PredefinedArrays.
   Definition arrayset_atom := @PArray.set Atom.atom.
 
 End PredefinedArrays.
+*)
 
-
-(* Use these predefined instances for type checking when importing SMTCoq *)
-Import Typ.
-
-Hint Resolve bool_ord Z_ord Positive_ord BV_ord FArray_ord TI_ord : typeclass_instances.
-Hint Resolve bool_eqbtype Z_eqbtype Positive_eqbtype BV_eqbtype FArray_eqbtype TI_eqbtype : typeclass_instances.
-Hint Resolve bool_dec Z_dec Positive_dec BV_dec FArray_dec TI_dec : typeclass_instances.
-Hint Resolve bool_comp Z_comp Positive_comp BV_comp FArray_comp TI_comp : typeclass_instances.
-Hint Resolve bool_inh Z_inh Positive_inh BV_inh FArray_inh TI_inh : typeclass_instances.
-Hint Resolve bool_compdec Z_compdec Positive_compdec BV_compdec FArray_compdec TI_compdec : typeclass_instances.
 
 (* 
    Local Variables:

@@ -59,10 +59,10 @@ module Make (T : Translator_sig.S) = struct
   
   (** Ignore declarations but keep assumptions *)
   let rec ignore_decls p = match value p with
-    | Lambda (s, p) ->
+    | Lambda (s, pr) ->
       (match s.sname with
        | Name n when (Hstring.view n).[0] = 'A' -> p
-       | _ -> ignore_decls p
+       | _ -> ignore_decls pr
       )
     | _ -> p
 
@@ -737,6 +737,8 @@ module Make (T : Translator_sig.S) = struct
     (* | Some (("negtrans"|"negtrans1"), [ty; x; z; y; p1; p2]) *)
     (* | Some ("negtrans2", [ty; y; x; z; p1; p2]) *)
 
+      (* if Term.equal x y || Term.equal x z || Term.equal y z then env *)
+      (* else  *)
       
       let neqs, env = trans [] env p in
       let x_z = eq ty x z in
@@ -759,6 +761,7 @@ module Make (T : Translator_sig.S) = struct
        let y_z = th_res p2 in
        let x_z = eq ty x z in
        let clauses = mk_clause_cl "eq_transitive" [not_ x_y; not_ y_z; x_z] [] :: clauses in
+
 
        (* let cl1 = [th_res p1] in *)
        (* let cl2 = [th_res p2] in *)
@@ -1145,6 +1148,33 @@ module Make (T : Translator_sig.S) = struct
        | _ -> assert false
       )
         
+    | Some (c, [n; i; j; m; x; _; rb; xbb])
+      when c == H.bv_bbl_extract ->
+      let res = bblast_term n (extract n i j m x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbextr [res] [idx])
+       | _ -> assert false
+      )
+
+    | Some (c, [n; k; m; x; _; rb; xbb])
+      when c == H.bv_bbl_zero_extend ->
+      let res = bblast_term n (zero_extend n k m x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbzext [res] [idx])
+       | _ -> assert false
+      )
+
+    | Some (c, [n; k; m; x; _; rb; xbb])
+      when c == H.bv_bbl_sign_extend ->
+      let res = bblast_term n (sign_extend n k m x) rb in
+      (match bbt xbb with
+       | Some idx ->
+         Some (mk_clause_cl Bbsext [res] [idx])
+       | _ -> assert false
+      )
+        
     | None ->
       begin match name p with
       | Some h -> (* should be an declared clause *)
@@ -1152,7 +1182,10 @@ module Make (T : Translator_sig.S) = struct
       | None -> assert false
       end
       
-    | Some (r, _) -> failwith ("BV: Not implemented rule " ^ Hstring.view r)
+    | Some (rule, args) ->
+      eprintf "Warning: Introducing hole for unsupported rule %a@."
+        Hstring.print rule;
+      Some (mk_clause_cl Hole [ttype p] [])
 
   
 
@@ -1233,7 +1266,6 @@ module Make (T : Translator_sig.S) = struct
 
   (** Convert an LFSC proof (this is the entry point) *)
   let convert p =
-    eprintf "Converting LFSC proof to SMTCoq.@.";
     p
       
     (* |> ignore_all_decls *)
@@ -1253,9 +1285,22 @@ module Make (T : Translator_sig.S) = struct
     
     |> reso_of_satlem_simplify
 
+  
+
+  let convert_pt p =
+    eprintf "Converting LFSC proof to SMTCoq...@?";
+    let t0 = Sys.time () in
+    let r = convert p in
+    let t1 = Sys.time () in
+    eprintf " Done [%.3f s]@." (t1 -. t0);
+    r
+
+  
 
   (** Clean global environments *)
-  let clear () = T.clear ()
+  let clear () =
+    Ast.clear_sc ();
+    T.clear ()
 
 
 end

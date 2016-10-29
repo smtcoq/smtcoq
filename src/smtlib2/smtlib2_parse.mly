@@ -23,6 +23,8 @@
 %}
 
 %start main
+%start term
+%start sort
 
 /* general */
 %token EXCLIMATIONPT

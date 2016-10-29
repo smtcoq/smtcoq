@@ -25,17 +25,13 @@ type lit = term
 type clause = term list
 
 (* module HT = Hashtbl.Make (Term) *)
-(* module HT = struct *)
-(*   include Hashtbl.Make (Term) *)
-(*   let add h k v = flatten_term k; add h k v *)
-(*   let find h k = flatten_term k; find h k *)
-(* end *)
 
 (* module HCl = Hashtbl.Make (struct *)
 (*     type t = clause *)
 (*     let equal c1 c2 = compare_term_list c1 c2 = 0 *)
-(*     let hash = List.fold_left (fun acc t -> Term.hash t + acc) 0  *)
+(*     let hash = Hashtbl.hash (\* List.fold_left (fun acc t -> Term.hash t + 17*acc) 0 *\) *)
 (*   end) *)
+
 
 module HS = Hstring.H
 
@@ -136,9 +132,14 @@ let get_rule = function
   | Bbmul -> "bbmul"
   | Bbult -> "bbult"
   | Bbslt -> "bbslt"
+  | Bbshl -> "bbshl"
+  | Bbshr -> "bbshr"
   | Bbnot -> "bbnot"
   | Bbneg -> "bbneg"
   | Bbconc -> "bbconcat"
+  | Bbextr -> "bbextract"
+  | Bbzext -> "bbzextend"
+  | Bbsext -> "bbsextend"
   | Row1 -> "row1"
   | Row2 -> "row2" 
   | Exte -> "ext" 
@@ -202,7 +203,6 @@ and print_bblt fmt t = match name t with
 
 and print_term fmt t =
   try HT.find sharp_tbl t |> fprintf fmt "#%d" with Not_found ->
-  (* try HT.find termalias_tbl (deref t) |> print_term fmt with Not_found -> *)
     match value t with
     | Int n -> fprintf fmt "%s" (Big_int.string_of_big_int n)
     | _ ->
@@ -250,7 +250,9 @@ and print_term fmt t =
              op == H.bvult ||
              op == H.bvslt ||
              op == H.bvule ||
-             op == H.bvsle ->
+             op == H.bvsle ||
+             op == H.bvshl ||
+             op == H.bvlshr ->
         let nb = new_sharp t in
         fprintf fmt "#%d:(%a %a %a)" nb
           Hstring.print op print_term a print_term b
@@ -263,6 +265,17 @@ and print_term fmt t =
         let nb = new_sharp t in
         fprintf fmt "#%d:(%a %a %a)" nb
           Hstring.print op print_term a print_term b
+
+      | Some (op, [_; i; j; _; a]) when op == H.extract ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%a %a %a %a)" nb
+          Hstring.print op print_term i print_term j print_term a
+
+      | Some (op, [_; i; _; a])
+        when op == H.zero_extend || op == H.sign_extend ->
+        let nb = new_sharp t in
+        fprintf fmt "#%d:(%a %a %a)" nb
+          Hstring.print op print_term i print_term a
 
       | Some (op, [a; {value = Int n}]) when op == H.bitof ->
         let nb = new_sharp t in

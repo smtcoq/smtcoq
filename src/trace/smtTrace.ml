@@ -282,6 +282,8 @@ let to_coq to_lit interp (cstep,
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
     cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBDiseq,
     cBBNeg, cBBAdd, cBBMul, cBBUlt, cBBSlt, cBBConc,
+    cBBExtr, cBBZextn, cBBSextn,
+    cBBShl, cBBShr,
     cRowEq, cRowNeq, cExt,
     cHole) confl =
 
@@ -359,6 +361,16 @@ let to_coq to_lit interp (cstep,
           mklApp cBBSlt [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBConc (c1,c2,res) ->
           mklApp cBBConc [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBExtr (c1,res) ->
+          mklApp cBBExtr [|out_c c; out_c c1; out_f res|]
+        | BBZextn (c1,res) ->
+          mklApp cBBZextn [|out_c c; out_c c1; out_f res|]
+        | BBSextn (c1,res) ->
+          mklApp cBBSextn [|out_c c; out_c c1; out_f res|]
+        | BBShl (c1,c2,res) ->
+          mklApp cBBShl [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBShr (c1,c2,res) ->
+          mklApp cBBShr [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBEq (c1,c2,res) ->
           mklApp cBBEq [|out_c c; out_c c1; out_c c2; out_f res|]
         | BBDiseq (res) -> mklApp cBBDiseq [|out_c c; out_f res|]
@@ -390,31 +402,30 @@ let to_coq to_lit interp (cstep,
   let nc = ref 0 in
   while not (isRoot !r.kind) do r := prev !r; incr nc done;
   let last_root = !r in
-  let size = !nc in
-  let max = Structures.max_array_size - 1 in
-  let q,r1 = size / max, size mod max in
-
-  let trace = 
-    let len = if r1 = 0 then q + 1 else q + 2 in
-    Array.make len (Structures.mkArray (step, [|def_step|])) in
-  for j = 0 to q - 1 do
-    let tracej = Array.make Structures.max_array_size def_step in
-    for i = 0 to max - 1 do
-      r := next !r;
-      tracej.(i) <- step_to_coq !r; 
-    done;
-    trace.(j) <- Structures.mkArray (step, tracej)
-  done;
-  if r1 <> 0 then begin
-    let traceq = Array.make (r1 + 1) def_step in
-    for i = 0 to r1-1 do 
-    r := next !r; 
-    traceq.(i) <- step_to_coq !r; 
-    done;
-    trace.(q) <- Structures.mkArray (step, traceq)
-  end;
-
-  (Structures.mkArray (mklApp carray [|step|], trace), last_root, !cuts)
+  (* let size = !nc in *)
+  (* let max = Structures.max_array_size - 1 in *)
+  (* let q,r1 = size / max, size mod max in *)
+  (* let trace =  *)
+  (*   let len = if r1 = 0 then q + 1 else q + 2 in *)
+  (*   Array.make len (Structures.mkArray (step, [|def_step|])) in *)
+  (* for j = 0 to q - 1 do *)
+  (*   let tracej = Array.make Structures.max_array_size def_step in *)
+  (*   for i = 0 to max - 1 do *)
+  (*     r := next !r; *)
+  (*     tracej.(i) <- step_to_coq !r;  *)
+  (*   done; *)
+  (*   trace.(j) <- Structures.mkArray (step, tracej) *)
+  (* done; *)
+  (* if r1 <> 0 then begin *)
+  (*   let traceq = Array.make (r1 + 1) def_step in *)
+  (*   for i = 0 to r1-1 do  *)
+  (*   r := next !r;  *)
+  (*   traceq.(i) <- step_to_coq !r;  *)
+  (*   done; *)
+  (*   trace.(q) <- Structures.mkArray (step, traceq) *)
+  (* end; *)
+  (* (Structures.mkArray (mklApp carray [|step|], trace), last_root, !cuts) *)
+  (Structures.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r, last_root, !cuts)
 
 
 

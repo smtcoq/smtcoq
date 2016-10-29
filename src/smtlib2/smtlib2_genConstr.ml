@@ -57,15 +57,19 @@ let sort_of_string s = string_type s
 let sort_of_symbol s = sort_of_string (string_of_symbol s)
 
 
-let rec int_binary_size acc i size =
-  match i, size with
-  | _, 0 -> "#b" ^ String.concat "" acc
-  | 0, _ -> int_binary_size ("0" :: acc) i (size - 1)
-  | _, _ ->
-    assert (i > 0 && size > 0);
-    int_binary_size (string_of_int (i land 1) :: acc) (i lsr 1) (size - 1)
+let rec bigint_binary_size acc i size =
+  let open Big_int in
+  if size = 0 then "#b" ^ String.concat "" acc
+  else
+  if eq_big_int i zero_big_int then
+    bigint_binary_size ("0" :: acc) i (size - 1)
+  else begin
+    assert (gt_big_int i zero_big_int && size > 0);
+    bigint_binary_size (string_of_big_int (and_big_int i unit_big_int) :: acc)
+      (shift_right_big_int i 1) (size - 1)
+  end
 
-let int_bv i size = int_binary_size [] i size
+let bigint_bv i size = bigint_binary_size [] i size
 
 
 exception DecimalBv of string
@@ -80,7 +84,8 @@ let string_of_identifier = function
      (* rewrite bitvectors decimal constants *)
      | true, [size] ->
        let sbv =
-         Scanf.sscanf s "bv%d" (fun n -> int_bv n (int_of_string size)) in
+         Scanf.sscanf s "bv%s" (fun n ->
+             bigint_bv (Big_int.big_int_of_string n) (int_of_string size)) in
        raise (DecimalBv sbv)
      | _ -> List.fold_left (fun c c' -> c^"_"^c') s l
     )
@@ -98,70 +103,10 @@ let rec sort_of_sort = function
 let declare_sort rt sym =
   let s = string_of_symbol sym in
   let cons_t = declare_new_type (Names.id_of_string ("Smt_sort_"^s)) in
-  let inhabitant_t =
-    declare_new_variable (Names.id_of_string ("inhabitant_"^s)) cons_t in
-  let eq_t = declare_new_variable (Names.id_of_string ("eq_"^s))
-      (Term.mkArrow cons_t (Term.mkArrow cons_t (Lazy.force cbool))) in
-  let lt_t = declare_new_variable (Names.id_of_string ("lt_"^s))
-      (Term.mkArrow cons_t (Term.mkArrow cons_t (Lazy.force cbool))) in
-  let x = mkName "x" in
-  let y = mkName "y" in
-  let z = mkName "z" in
-  let v = Term.mkRel in
-  let eq_refl =
-    Term.mkProd (x,cons_t,
-    Term.mkProd (y,cons_t,
-      mklApp creflect [|mklApp ceq [|cons_t;v 2 (*x*);v 1 (*y*)|];
-                        mklApp (lazy eq_t) [|v 2 (*x*);v 1 (*y*)|]|])) in
-  let eq_refl_v =
-    declare_new_variable (Names.id_of_string ("eq_refl_"^s)) eq_refl in
-
-  let lt_trans =
-    Term.mkProd (x,cons_t,
-    Term.mkProd (y,cons_t,
-    Term.mkProd (z,cons_t,
-      Term.mkArrow
-       (mklApp ceq [|Lazy.force cbool;
-         mklApp (lazy lt_t) [|v 3(*x*);v 2(*y*)|]; Lazy.force ctrue|])
-       (Term.mkArrow
-          (mklApp ceq [|Lazy.force cbool;
-            mklApp (lazy lt_t) [|v 3(*y*);v 2(*z*)|]; Lazy.force ctrue|])
-          (mklApp ceq [|Lazy.force cbool;
-            mklApp (lazy lt_t) [|v 5(*x*);v 3(*z*)|]; Lazy.force ctrue|])))))
-  in
-  let lt_trans_v =
-    declare_new_variable (Names.id_of_string ("lt_trans_"^s)) lt_trans in
-
-  let lt_not_eq =
-    Term.mkProd (x,cons_t,
-    Term.mkProd (y,cons_t,
-      Term.mkArrow
-        (mklApp ceq [|Lazy.force cbool;
-          mklApp (lazy lt_t) [|v 2(*x*);v 1(*y*)|]; Lazy.force ctrue|])
-        (mklApp cnot [|mklApp ceq [|cons_t;v 3(*x*);v 2(*y*)|]|]))) in
-  let lt_not_eq_v =
-    declare_new_variable (Names.id_of_string ("lt_not_eq_"^s)) lt_not_eq in
-
-  let compare =
-    Term.mkProd (x,cons_t,
-    Term.mkProd (y,cons_t,
-      mklApp cOrderedTypeCompare [|
-        cons_t;
-        Term.mkLambda (x, cons_t,
-        Term.mkLambda (y, cons_t,
-          mklApp ceq [|Lazy.force cbool;
-            mklApp (lazy lt_t) [|v 2(*x*);v 1(*y*)|]; Lazy.force ctrue|]));
-        Term.mkLambda (x, cons_t,
-        Term.mkLambda (y, cons_t,
-          mklApp ceq [|Lazy.force cbool;
-            mklApp (lazy eq_t) [|v 2(*x*);v 1(*y*)|]; Lazy.force ctrue|]));
-        v 2(*x*); v 1(*y*)
-      |])) in
-  let compare_v =
-    declare_new_variable (Names.id_of_string ("compare_"^s)) compare in
-  
-  let ce = mklApp cTyp_eqb [|cons_t; inhabitant_t; eq_t; eq_refl_v;
-                             lt_t; lt_trans_v; lt_not_eq_v; compare_v|] in
+  let compdec_type = mklApp cCompDec [| cons_t |] in
+  let compdec_var =
+    declare_new_variable (Names.id_of_string ("CompDec_"^s)) compdec_type in
+  let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
   let res = Btype.declare rt cons_t ce in
   VeritSyntax.add_btype s res;
   res
@@ -187,7 +132,7 @@ let parse_smt2bv s =
     match s.[i] with
     | '0' -> l := false :: !l
     | '1' -> l := true :: !l
-    | _ -> assert false
+    | _ -> failwith "Not a bitvector"
   done;
   !l
 
@@ -211,6 +156,8 @@ let make_root_specconstant ra = function
 
 type atom_form = | Atom of SmtAtom.Atom.t | Form of SmtAtom.Form.t
 
+let startwith prefix s =
+  try Scanf.sscanf s (prefix ^^ "%_s") true with _ -> false
 
 let make_root ra rf t =
 
@@ -243,11 +190,11 @@ let make_root ra rf t =
     match (v,l) with
       | "=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' ->
-            (match Atom.type_of a' with
-              | Tbool -> Form (Form.get rf (Fapp (Fiff, [|Form.get rf (Fatom a'); Form.get rf (Fatom b')|])))
-              | ty -> Atom (Atom.mk_eq ra ty a' b'))
-          | _, _ -> assert false)
+         | Atom a', Atom b' when Atom.type_of a' <> Tbool ->
+           Atom (Atom.mk_eq ra (Atom.type_of a') a' b')
+         | _ ->
+           Form (Form.get rf (Fapp (For, [| make_root a; make_root b |])))
+        )
       | "<", [a;b] ->
         (match make_root_term a, make_root_term b with
           | Atom a', Atom b' -> Atom (Atom.mk_lt ra a' b')
@@ -363,6 +310,20 @@ let make_root ra rf t =
             | _ -> assert false)
          | _,_ -> assert false
         )
+      | "bvshl", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvshl ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
+      | "bvlshr", [a;b] ->
+        (match make_root_term a, make_root_term b with
+         | Atom a', Atom b' ->
+           (match Atom.type_of a' with
+            | TBV s -> Atom (Atom.mk_bvshr ra s a' b')
+            | _ -> assert false)
+         | _, _ -> assert false)
       | "concat", [a;b] ->
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' ->
@@ -410,10 +371,49 @@ let make_root ra rf t =
       | "ite", _ ->
         Form (Form.get rf (Fapp (Fite, Array.of_list (List.map make_root l))))
       | "not", [a] -> Form (Form.neg (make_root a))
+
+      | _, [a] when startwith "extract_" v ->
+        (try
+          Scanf.sscanf v "extract_%s@_%d" (fun s i ->
+            let j = int_of_string s in
+            (match make_root_term a with
+             | Atom a' ->
+               (match Atom.type_of a' with
+                | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) a')
+                | _ -> assert false)
+             | _ -> assert false)
+             )
+         with _ -> assert false)
+        
+      | _, [a] when startwith "zero_extend_" v ->
+        (try
+           Scanf.sscanf v "zero_extend_%d" (fun n ->
+               (match make_root_term a with
+                | Atom a' ->
+                  (match Atom.type_of a' with
+                   | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n a')
+                   | _ -> assert false)
+                | _ -> assert false)
+             )
+         with _ -> assert false)
+        
+      | _, [a] when startwith "sign_extend_" v ->
+        (try
+           Scanf.sscanf v "sign_extend_%d" (fun n ->
+               (match make_root_term a with
+                | Atom a' ->
+                  (match Atom.type_of a' with
+                   | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n a')
+                   | _ -> assert false)
+                | _ -> assert false)
+             )
+         with _ -> assert false)
+
       | _, _ ->
         let op = VeritSyntax.get_fun v in
-        let l' = List.map (fun t -> match make_root_term t with
-          | Atom h -> h | Form _ -> assert false) l in
+        let l' = List.map (fun t ->
+            match make_root_term t with
+            | Atom h -> h | Form _ -> assert false) l in
         Atom (Atom.get ra (Aapp (op, Array.of_list l')))
 
   and make_root t =

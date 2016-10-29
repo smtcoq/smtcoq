@@ -78,7 +78,7 @@ End Checker.
 
 Section Checker_correct.
 
-  Variable t_i : array typ_eqb.
+  Variable t_i : array SMT_classes.typ_compdec.
   Variable t_func : array (Atom.tval t_i).
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.

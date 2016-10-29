@@ -49,6 +49,7 @@ OCAMLLIBS?=-I versions/native\
   -I euf\
   -I cnf\
   -I array\
+  -I classes\
   -I bva
 COQLIBS?=-I versions/native\
   -I zchaff\
@@ -60,6 +61,7 @@ COQLIBS?=-I versions/native\
   -I euf\
   -I cnf\
   -I array\
+  -I classes\
   -I bva -R . SMTCoq
 COQDOCLIBS?=-R . SMTCoq
 
@@ -71,7 +73,7 @@ COQDOCLIBS?=-R . SMTCoq
 
 CAMLYACC=$(CAMLBIN)ocamlyacc
 CAMLLEX=$(CAMLBIN)ocamllex
-VCMXS=NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
+VCMXS=versions/native/NSMTCoq_versions_native_Structures.cmxs NSMTCoq_State.cmxs NSMTCoq_Misc.cmxs NSMTCoq_SMT_terms.cmxs cnf/NSMTCoq_cnf_Cnf.cmxs euf/NSMTCoq_euf_Euf.cmxs lia/NSMTCoq_lia_Lia.cmxs spl/NSMTCoq_spl_Syntactic.cmxs spl/NSMTCoq_spl_Assumptions.cmxs spl/NSMTCoq_spl_Arithmetic.cmxs spl/NSMTCoq_spl_Operators.cmxs NSMTCoq_Trace.cmxs NSMTCoq_SMTCoq.cmxs NSMTCoq_State.cmi NSMTCoq_Misc.cmi NSMTCoq_SMT_terms.cmi cnf/NSMTCoq_cnf_Cnf.cmi euf/NSMTCoq_euf_Euf.cmi lia/NSMTCoq_lia_Lia.cmi spl/NSMTCoq_spl_Syntactic.cmi spl/NSMTCoq_spl_Assumptions.cmi spl/NSMTCoq_spl_Arithmetic.cmi spl/NSMTCoq_spl_Operators.cmi NSMTCoq_Trace.cmi NSMTCoq_Trace.cmi NSMTCoq_SMTCoq.cmi
 CMXS=smtcoq_plugin.cmxs
 CMXA=smtcoq.cmxa
 
@@ -152,8 +154,11 @@ VFILES:=Trace.v\
   lia/Lia.v\
   euf/Euf.v\
   cnf/Cnf.v\
-  array/FArray.v\
+  versions/native/Structures.v\
   array/Array_checker.v\
+  array/FArray.v\
+  classes/SMT_classes_instances.v\
+  classes/SMT_classes.v\
   bva/Bva_checker.v\
   bva/BVList.v
 
@@ -186,12 +191,16 @@ MLFILES:=lia/lia.ml\
   lfsc/type.ml\
   lfsc/lfscLexer.ml\
   lfsc/lfscParser.ml\
-  lfsc/shashcons.ml\
   lfsc/hstring.ml\
+  lfsc/shashcons.ml\
   verit/veritSyntax.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
   verit/veritParser.ml\
+  smtlib2/SExprLexer.ml\
+  smtlib2/SExprParser.ml\
+  smtlib2/smtlib2_solver.ml\
+  smtlib2/SExpr.ml\
   smtlib2/smtlib2_util.ml\
   smtlib2/smtlib2_genConstr.ml\
   smtlib2/smtlib2_ast.ml\
@@ -214,9 +223,12 @@ MLFILES:=lia/lia.ml\
 MLIFILES:=lfsc/tosmtcoq.mli\
   lfsc/translator_sig.mli\
   lfsc/ast.mli\
-  lfsc/shashcons.mli\
   lfsc/hstring.mli\
+  lfsc/shashcons.mli\
   verit/veritSyntax.mli\
+  smtlib2/SExprParser.mli\
+  smtlib2/smtlib2_solver.mli\
+  smtlib2/SExpr.mli\
   trace/smtForm.mli\
   trace/smtAtom.mli
 
@@ -287,10 +299,10 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
+$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx smtlib2/SExpr.cmx smtlib2/SExprParser.cmx smtlib2/SExprLexer.cmx smtlib2/smtlib2_solver.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
-ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
+ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/SExprParser.ml smtlib2/SExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
 
 
 %.ml %.mli: %.mly

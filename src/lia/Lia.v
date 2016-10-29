@@ -358,7 +358,7 @@ Section certif.
 
   Section Proof.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array SMT_classes.typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
@@ -678,10 +678,10 @@ Opaque build_z_atom interp_aux.
      case a;simpl;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
 
-     intros u; destruct u; intros j vm vm' pe _H_ Hlt Ht;
+     intros u; destruct u; intros jind vm vm' pe _H_ Hlt Ht;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     generalize (Hb j vm vm').
-     destruct (build_pexpr vm j) as (vm0, pe0); intro W1.
+     generalize (Hb jind vm vm').
+     destruct (build_pexpr vm jind) as (vm0, pe0); intro W1.
      intros Heq Hwf;inversion Heq;clear Heq;subst.
      assert (W:= W1 pe0 Hlt Ht (refl_equal _) Hwf).
      decompose [and] W;clear W W1.
@@ -782,10 +782,10 @@ Transparent build_z_atom.
 Opaque build_z_atom interp_aux.
      case a;simpl;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     intro u; destruct u; intros i vm vm' pe Ht;
+     intro u; destruct u; intros ind vm vm' pe Ht;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     generalize (Hb i vm); clear Hb.
-     destruct (build_pexpr vm i) as (vm0,pe0); intro IH.
+     generalize (Hb ind vm); clear Hb.
+     destruct (build_pexpr vm ind) as (vm0,pe0); intro IH.
      intros Heq Hwf;inversion Heq;clear Heq;subst.
      assert (W:= IH vm' pe0 Ht (refl_equal _) Hwf).
      decompose [and] W;clear W IH.

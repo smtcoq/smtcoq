@@ -16,7 +16,8 @@
 
 open Coqlib
 
-let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+let gen_constant modules constant =
+  lazy (gen_constant_in_modules "SMT" modules constant)
 
 (* Int63 *)
 let cint = Structures.cint
@@ -29,6 +30,8 @@ let carray = gen_constant Structures.parray_modules "array"
 let cnat = gen_constant init_modules "nat"
 let cO = gen_constant init_modules "O"
 let cS = gen_constant init_modules "S"
+
+let ciff = gen_constant init_modules "iff"
 
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];
@@ -100,6 +103,7 @@ let cNone = gen_constant init_modules "None"
 
 (* Pairs *)
 let cpair = gen_constant init_modules "pair"
+let cprod = gen_constant init_modules "prod"
 
 (* Dependent pairs *)
 let csigT = gen_constant init_modules "sigT"
@@ -132,6 +136,11 @@ let cbv_mult = gen_constant bv_modules "bv_mult"
 let cbv_ult = gen_constant bv_modules "bv_ult"
 let cbv_slt = gen_constant bv_modules "bv_slt"
 let cbv_concat = gen_constant bv_modules "bv_concat"
+let cbv_extr = gen_constant bv_modules "bv_extr"
+let cbv_zextn = gen_constant bv_modules "bv_zextn"
+let cbv_sextn = gen_constant bv_modules "bv_sextn"
+let cbv_shl = gen_constant bv_modules "bv_shl"
+let cbv_shr = gen_constant bv_modules "bv_shr"
 
 
 (* Arrays *)
@@ -156,6 +165,7 @@ let smt_modules = [ ["SMTCoq";"Misc"];
 		  ]
 
 let cState_C_t = gen_constant [["SMTCoq";"State";"C"]] "t"
+let cState_S_t = gen_constant [["SMTCoq";"State";"S"]] "t"
 
 let cdistinct = gen_constant smt_modules "distinct"
 
@@ -177,12 +187,23 @@ let cinh_interp = gen_constant smt_modules "inh_interp"
 let cinterp_eqb = gen_constant smt_modules "i_eqb"
 let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb_eqb"
 
-let ctyp_eqb = gen_constant smt_modules "typ_eqb"
-let cTyp_eqb = gen_constant smt_modules "Typ_eqb"
-let cte_carrier = gen_constant smt_modules "te_carrier"
-let cte_eqb = gen_constant smt_modules "te_eqb"
-let ctyp_eqb_of_typ_eqb_param = gen_constant smt_modules "typ_eqb_of_typ_eqb_param"
-let cunit_typ_eqb = gen_constant smt_modules "unit_typ_eqb"
+let classes_modules = [["SMTCoq";"classes";"SMT_classes"];
+                       ["SMTCoq";"classes";"SMT_classes_instances"]]
+
+let ctyp_compdec = gen_constant classes_modules "typ_compdec"
+let cTyp_compdec = gen_constant classes_modules "Typ_compdec"
+let ctyp_compdec_from = gen_constant classes_modules "typ_compdec_from"
+let cunit_typ_compdec = gen_constant classes_modules "unit_typ_compdec"
+let cte_carrier = gen_constant classes_modules "te_carrier"
+let cte_compdec = gen_constant classes_modules "te_compdec"
+let ceqb_of_compdec = gen_constant classes_modules "eqb_of_compdec"
+let cCompDec = gen_constant classes_modules "CompDec"
+
+let cbool_compdec = gen_constant classes_modules "bool_compdec"
+let cZ_compdec = gen_constant classes_modules "Z_compdec"
+let cPositive_compdec = gen_constant classes_modules "Positive_compdec"
+let cBV_compdec = gen_constant classes_modules "BV_compdec"
+let cFArray_compdec = gen_constant classes_modules "FArray_compdec"
 
 let ctval =  gen_constant smt_modules "tval"
 let cTval =  gen_constant smt_modules "Tval"
@@ -199,6 +220,9 @@ let cUO_Zopp = gen_constant smt_modules "UO_Zopp"
 let cUO_BVbitOf = gen_constant smt_modules "UO_BVbitOf"
 let cUO_BVnot = gen_constant smt_modules "UO_BVnot"
 let cUO_BVneg = gen_constant smt_modules "UO_BVneg"
+let cUO_BVextr = gen_constant smt_modules "UO_BVextr"
+let cUO_BVzextn = gen_constant smt_modules "UO_BVzextn"
+let cUO_BVsextn = gen_constant smt_modules "UO_BVsextn"
 
 let cBO_Zplus = gen_constant smt_modules "BO_Zplus"
 let cBO_Zminus = gen_constant smt_modules "BO_Zminus"
@@ -216,6 +240,8 @@ let cBO_BVmult = gen_constant smt_modules "BO_BVmult"
 let cBO_BVult = gen_constant smt_modules "BO_BVult"
 let cBO_BVslt = gen_constant smt_modules "BO_BVslt"
 let cBO_BVconcat = gen_constant smt_modules "BO_BVconcat"
+let cBO_BVshl = gen_constant smt_modules "BO_BVshl"
+let cBO_BVshr = gen_constant smt_modules "BO_BVshr"
 let cBO_select = gen_constant smt_modules "BO_select"
 let cBO_diffarray = gen_constant smt_modules "BO_diffarray"
 
@@ -266,6 +292,8 @@ let make_certif_ops modules args =
   gen_constant "BBDiseq",
   gen_constant "BBNeg", gen_constant "BBAdd", gen_constant "BBMul",
   gen_constant "BBUlt", gen_constant "BBSlt", gen_constant "BBConcat",
+  gen_constant "BBExtract", gen_constant "BBZextend", gen_constant "BBSextend",
+  gen_constant "BBShl", gen_constant "BBShr",
   gen_constant "RowEq", gen_constant "RowNeq", gen_constant "Ext",
   gen_constant "Hole")
   

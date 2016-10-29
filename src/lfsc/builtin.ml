@@ -129,6 +129,9 @@ module H = struct
   let bvule = Hstring.make "bvule"
   let bvsle = Hstring.make "bvsle"
   let concat = Hstring.make "concat"
+  let extract = Hstring.make "extract"
+  let zero_extend = Hstring.make "zero_extend"
+  let sign_extend = Hstring.make "sign_extend"
   let array = Hstring.make "Array"
   let read = Hstring.make "read"
   let write = Hstring.make "write"
@@ -236,6 +239,9 @@ module H = struct
   let bv_bbl_bvult = Hstring.make "bv_bbl_bvult"
   let bv_bbl_bvslt = Hstring.make "bv_bbl_bvslt"
   let bv_bbl_concat = Hstring.make "bv_bbl_concat"
+  let bv_bbl_extract = Hstring.make "bv_bbl_extract"
+  let bv_bbl_zero_extend = Hstring.make "bv_bbl_zero_extend"
+  let bv_bbl_sign_extend = Hstring.make "bv_bbl_sign_extend"
       
   let decl_bblast = Hstring.make "decl_bblast"
   let decl_bblast_with_alias = Hstring.make "decl_bblast_with_alias"
@@ -526,6 +532,36 @@ let concat_s = declare_get "concat"
        (term (bitVec n))))))))))
 
 let concat n m m' a b = mk_app concat_s [n; m; m'; a; b]
+
+
+let extract_s = declare_get "extract"
+    (pi_d "n" mpz (fun n ->
+    (pi "i" mpz
+    (pi "j" mpz
+    (pi_d "m" mpz (fun m ->
+    (pi "t2" (term (bitVec m))
+       (term (bitVec n)))))))))
+
+let extract n i j m b = mk_app extract_s [n; i; j; m; b]
+
+
+let zero_extend_s = declare_get "zero_extend"
+    (pi_d "n" mpz (fun n ->
+    (pi "i" mpz
+    (pi_d "m" mpz (fun m ->
+    (pi "t2" (term (bitVec m))
+       (term (bitVec n))))))))
+
+let zero_extend n i m b = mk_app zero_extend_s [n; i; m; b]
+
+let sign_extend_s = declare_get "sign_extend"
+    (pi_d "n" mpz (fun n ->
+    (pi "i" mpz
+    (pi_d "m" mpz (fun m ->
+    (pi "t2" (term (bitVec m))
+       (term (bitVec n))))))))
+
+let sign_extend n i m b = mk_app sign_extend_s [n; i; m; b]
 
 
 (* arrays constructors and functions *)
@@ -1123,8 +1159,8 @@ let bblast_eq x y =
     (match value y with
      | App (ff, [by; y']) when term_equal ff bbltc_s ->
        bblast_eq_rec x' y' (iff_ bx by)
-     | _ -> failwith "bblast_eq")
-  | _ -> failwith "bblast_eq"
+     | _ -> failwith "sc1: bblast_eq")
+  | _ -> failwith "sc2: bblast_eq"
 
 
 let rec bblast_bvult x y n =

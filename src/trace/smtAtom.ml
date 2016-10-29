@@ -164,10 +164,11 @@ module Btype =
           
     (* reify table *)
     type reify_tbl = 
-        { mutable count : int;
-	          tbl : (Term.constr, btype) Hashtbl.t;
-          mutable cuts : (Structures.names_id_t * Term.types) list
-	}
+      { mutable count : int;
+	tbl : (Term.constr, btype) Hashtbl.t;
+        mutable cuts : (Structures.names_id_t * Term.types) list;
+        unsup_tbl : (btype, btype) Hashtbl.t;
+      }
 
     let create () = 
       let htbl = Hashtbl.create 17 in  
@@ -176,143 +177,20 @@ module Btype =
       (* Hashtbl.add htbl (Lazy.force cpositive) Tpositive; *)
       { count = 0;
 	tbl = htbl;
-        cuts = [] }
-
-    let get_cuts reify = reify.cuts
-
-    let declare reify t typ_eqb =
-      (* TODO: allows to have only typ_eqb *)
-      assert (not (Hashtbl.mem reify.tbl t));
-      let res = Tindex {index = reify.count; hval = typ_eqb} in
-      Hashtbl.add reify.tbl t res;
-      reify.count <- reify.count + 1;
-      res
-
-
-    let rec of_coq reify t =
-      let c, args = Term.decompose_app t in
-      if Term.eq_constr c (Lazy.force cbool) ||
-         Term.eq_constr c (Lazy.force cTbool) then Tbool
-      else if Term.eq_constr c (Lazy.force cZ) ||
-              Term.eq_constr c (Lazy.force cTZ) then TZ
-      else if Term.eq_constr c (Lazy.force cpositive) ||
-              Term.eq_constr c (Lazy.force cTpositive) then Tpositive
-      else if Term.eq_constr c (Lazy.force cbitvector) ||
-              Term.eq_constr c (Lazy.force cTBV) then
-        match args with
-        | [s] -> TBV (mk_bvsize s)
-        | _ -> assert false
-      else if Term.eq_constr c (Lazy.force cfarray) ||
-              Term.eq_constr c (Lazy.force cTFArray) then
-        match args with
-        | ti :: te :: _ -> TFArray (of_coq reify ti, of_coq reify te)
-        | _ -> assert false
-      else try
-        Hashtbl.find reify.tbl t
-      with | Not_found ->
-        let n = string_of_int (List.length reify.cuts) in
-        let eq_name = Names.id_of_string ("eq"^n) in
-        let eq_var = Term.mkVar eq_name in
-        let eq_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
-        let eq = mkName "eq" in
-
-        let ltb_name = Names.id_of_string ("ltb"^n) in
-        let ltb_var = Term.mkVar ltb_name in
-        let ltb_ty = Term.mkArrow t (Term.mkArrow t (Lazy.force cbool)) in
-        let ltb = mkName "ltb" in
-
-        let d_name = Names.id_of_string ("d"^n) in
-        let d_var = Term.mkVar d_name in
-        let d_ty = t in
-
-        let x = mkName "x" in
-        let y = mkName "y" in
-        let z = mkName "z" in
-        let v = Term.mkRel in
-        
-        let refl_ty =
-          Term.mkLambda (eq, eq_ty,
-            Term.mkProd (x, t,
-            Term.mkProd (y, t,
-              mklApp creflect [| 
-                mklApp ceq [|t; v 2(*x*); v 1(*y*)|];
-                Term.mkApp (v 3(*eq*), [|v 2(*x*); v 1(*y*)|])|]))) in
-        let eq_pair_r = mklApp csigT [|eq_ty; refl_ty|] in
-
-        let lt_trans =
-          Term.mkLambda (ltb, ltb_ty,
-          Term.mkProd (x, t,
-          Term.mkProd (y, t,
-          Term.mkProd (z, t,
-            Term.mkArrow
-             (mklApp ceq [|Lazy.force cbool;
-               Term.mkApp (v 4(*ltb*), [|v 3(*x*);v 2(*y*)|]); Lazy.force ctrue|])
-             (Term.mkArrow
-                (mklApp ceq [|Lazy.force cbool;
-                   Term.mkApp (v 5(*ltb*), [|v 3(*y*);v 2(*z*)|]); Lazy.force ctrue|])
-                (mklApp ceq [|Lazy.force cbool;
-                  Term.mkApp (v 6(*ltb*), [|v 5(*x*);v 3(*z*)|]); Lazy.force ctrue|]))))))
-        in
-
-        let lt_not_eq =
-          Term.mkLambda (ltb, ltb_ty,
-            Term.mkProd (x, t,
-            Term.mkProd (y, t,
-              Term.mkArrow
-                (mklApp ceq [|Lazy.force cbool;
-                   Term.mkApp (v 3(*ltb*), [|v 2(*x*);v 1(*y*)|]); Lazy.force ctrue|])
-                (mklApp cnot [|mklApp ceq [|t; v 3(*x*);v 2(*y*)|]|]))))
-        in
-        let lt_pair_l = mklApp csigT2 [|ltb_ty; lt_trans; lt_not_eq|] in
-
-        let compare_name = Names.id_of_string ("compare"^n) in
-        let compare_var = Term.mkVar compare_name in
-        let compare_ty =
-          Term.mkProd (x, t,
-          Term.mkProd (y, t,
-            mklApp cOrderedTypeCompare [|
-              t;
-              Term.mkLambda (x, t,
-              Term.mkLambda (y, t,
-                mklApp ceq [|Lazy.force cbool;
-                  Term.mkApp (
-                    mklApp cprojT1 [|ltb_ty; lt_trans;
-                      mklApp csigT_of_sigT2 [| ltb_ty; lt_trans; lt_not_eq; ltb_var |] |],
-                    [|v 2(*x*);v 1(*y*)|]);
-                  Lazy.force ctrue|]));
-              Term.mkLambda (x, t,
-              Term.mkLambda (y, t,
-                mklApp ceq [|Lazy.force cbool;
-                  Term.mkApp (
-                    mklApp cprojT1 [|eq_ty; refl_ty; eq_var |],
-                    [|v 2(*x*);v 1(*y*)|]);
-                  Lazy.force ctrue|]));
-              v 2(*x*); v 1(*y*)
-            |])) in
-
-        
-        reify.cuts <-
-          (eq_name, eq_pair_r) ::
-          (d_name, d_ty) ::
-          (ltb_name, lt_pair_l) ::
-          (compare_name, compare_ty) ::
-          reify.cuts;
-
-        let ce = mklApp ctyp_eqb_of_typ_eqb_param
-            [|t; d_var; eq_var; ltb_var; compare_var|] in
-        declare reify t ce
-
+        cuts = [];
+        unsup_tbl = Hashtbl.create 17;
+      }
     
-    let logic_of_coq reify t = logic (of_coq reify t)
+    (* let logic_of_coq reify t = logic (of_coq reify t) *)
     
 
     let interp_tbl reify =
-      let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_eqb) in
+      let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_compdec) in
       let set _ = function
         | Tindex it -> t.(it.index) <- it.hval
         | _ -> () in
       Hashtbl.iter set reify.tbl;
-      Structures.mkArray (Lazy.force ctyp_eqb, t)
+      Structures.mkArray (Lazy.force ctyp_compdec, t)
 
 
     let to_list reify =
@@ -353,6 +231,96 @@ module Btype =
     
     let interp_to_coq reify t = interp (make_t_i reify) t
 
+
+
+
+    let get_cuts reify = reify.cuts
+
+    let declare reify t typ_compdec =
+      (* TODO: allows to have only typ_compdec *)
+      assert (not (Hashtbl.mem reify.tbl t));
+      let res = Tindex {index = reify.count; hval = typ_compdec} in
+      Hashtbl.add reify.tbl t res;
+      reify.count <- reify.count + 1;
+      res
+
+
+    exception Unknown_type of btype
+    
+    let check_known ty known_logic =
+      let l = logic ty in
+      if not (SL.subset l known_logic) then raise (Unknown_type ty)
+      else ty
+
+    let rec compdec_btype reify = function
+      | Tbool -> Lazy.force cbool_compdec
+      | TZ -> Lazy.force cZ_compdec
+      | Tpositive -> Lazy.force cPositive_compdec
+      | TBV s -> mklApp cBV_compdec [|mkN s|]
+      | TFArray (ti, te) ->
+        mklApp cFArray_compdec
+          [|interp_to_coq reify ti; interp_to_coq reify te;
+            compdec_btype reify ti; compdec_btype reify te|]
+      | Tindex i ->
+        let c, args = Term.decompose_app i.hval in
+        if Term.eq_constr c (Lazy.force cTyp_compdec) then
+          match args with
+          | [_; tic] -> tic
+          | _ -> assert false
+        else assert false
+
+    
+    let declare_and_compdec reify t ty =
+      try Hashtbl.find reify.unsup_tbl ty
+      with Not_found ->
+        let res =
+          declare reify t (mklApp cTyp_compdec [|t; compdec_btype reify ty|])
+        in
+        Hashtbl.add reify.unsup_tbl ty res;
+        res
+    
+
+    let rec of_coq reify known_logic t =
+      try
+        let c, args = Term.decompose_app t in
+        if Term.eq_constr c (Lazy.force cbool) ||
+           Term.eq_constr c (Lazy.force cTbool) then Tbool
+        else if Term.eq_constr c (Lazy.force cZ) ||
+                Term.eq_constr c (Lazy.force cTZ) then
+          check_known TZ known_logic
+        else if Term.eq_constr c (Lazy.force cpositive) ||
+                Term.eq_constr c (Lazy.force cTpositive) then
+          check_known Tpositive known_logic
+        else if Term.eq_constr c (Lazy.force cbitvector) ||
+                Term.eq_constr c (Lazy.force cTBV) then
+           match args with
+           | [s] -> check_known (TBV (mk_bvsize s)) known_logic
+           | _ -> assert false
+        else if Term.eq_constr c (Lazy.force cfarray) ||
+                Term.eq_constr c (Lazy.force cTFArray) then
+           match args with
+           | ti :: te :: _ ->
+             let ty = TFArray (of_coq reify known_logic ti,
+                               of_coq reify known_logic te) in
+             check_known ty known_logic
+           | _ -> assert false
+        else
+          try Hashtbl.find reify.tbl t
+          with Not_found ->
+            let n = string_of_int (List.length reify.cuts) in
+            let compdec_name = Names.id_of_string ("CompDec"^n) in
+            let compdec_var = Term.mkVar compdec_name in
+            let compdec_type = mklApp cCompDec [| t |]in
+            reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
+            let ce = mklApp cTyp_compdec [|t; compdec_var|] in
+            declare reify t ce
+
+      with Unknown_type ty ->
+      try Hashtbl.find reify.tbl t
+      with Not_found -> declare_and_compdec reify t ty
+
+
+
     
   end
 
@@ -372,6 +340,9 @@ type uop =
    | UO_BVbitOf of int * int
    | UO_BVnot of int
    | UO_BVneg of int
+   | UO_BVextr of int * int * int
+   | UO_BVzextn of int * int
+   | UO_BVsextn of int * int
 
 type bop = 
    | BO_Zplus
@@ -390,6 +361,8 @@ type bop =
    | BO_BVult of int
    | BO_BVslt of int
    | BO_BVconcat of int * int
+   | BO_BVshl of int
+   | BO_BVshr of int
    | BO_select of btype * btype
    | BO_diffarray of btype * btype
 
@@ -408,9 +381,14 @@ type op_def = {
 
 type indexed_op = op_def gen_hashed 
 
-let dummy_indexed_op i dom codom = {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
+let dummy_indexed_op i dom codom =
+  {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
+  
 let indexed_op_index op = op.index
 
+let debruijn_indexed_op i ty =
+  { index = i;
+    hval = {tparams = [||]; tres = ty; op_val = Term.mkRel i}}
 
 module Op =
   struct 
@@ -438,20 +416,26 @@ module Op =
       | UO_BVbitOf (s, i) -> mklApp cUO_BVbitOf [|mkN s; mkNat i|]
       | UO_BVnot s -> mklApp cUO_BVnot [|mkN s|]
       | UO_BVneg s -> mklApp cUO_BVneg [|mkN s|]
+      | UO_BVextr (i, n, s) -> mklApp cUO_BVextr [|mkN i; mkN n; mkN s|]
+      | UO_BVzextn (s, n) -> mklApp cUO_BVzextn [|mkN s; mkN n|]
+      | UO_BVsextn (s, n) -> mklApp cUO_BVsextn [|mkN s; mkN n|]
 
     let u_type_of = function 
       | UO_xO | UO_xI -> Tpositive
       | UO_Zpos | UO_Zneg | UO_Zopp -> TZ
       | UO_BVbitOf _ -> Tbool
-      | UO_BVnot s -> TBV s
-      | UO_BVneg s -> TBV s
-
+      | UO_BVnot s | UO_BVneg s -> TBV s
+      | UO_BVextr (_, n, _) -> TBV n
+      | UO_BVzextn (s, n) | UO_BVsextn (s, n) -> TBV (s + n)
+          
     let u_type_arg = function 
       | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
       | UO_Zopp -> TZ
       | UO_BVbitOf (s,_) -> TBV s
-      | UO_BVnot s -> TBV s
-      | UO_BVneg s -> TBV s
+      | UO_BVnot s | UO_BVneg s -> TBV s
+      | UO_BVextr (_, _, s) -> TBV s
+      | UO_BVzextn (s, _) | UO_BVsextn (s, _) -> TBV s
+      
 
     let interp_uop = function
       | UO_xO -> Lazy.force cxO
@@ -459,9 +443,12 @@ module Op =
       | UO_Zpos -> Lazy.force cZpos
       | UO_Zneg -> Lazy.force cZneg
       | UO_Zopp -> Lazy.force copp
-      | UO_BVbitOf (_,i) -> mklApp cbitOf [|mkNat i|]
-      | UO_BVnot _ -> Lazy.force cbv_not
-      | UO_BVneg _ -> Lazy.force cbv_neg
+      | UO_BVbitOf (s,i) -> mklApp cbitOf [|mkN s; mkNat i|]
+      | UO_BVnot s -> mklApp cbv_not [|mkN s|]
+      | UO_BVneg s -> mklApp cbv_neg [|mkN s|]
+      | UO_BVextr (i, n, s) -> mklApp cbv_extr [|mkN i; mkN n; mkN s|]
+      | UO_BVzextn (s, n) -> mklApp cbv_zextn [|mkN s; mkN n|]
+      | UO_BVsextn (s, n) -> mklApp cbv_sextn [|mkN s; mkN n|]
 
     let eq_tbl = Hashtbl.create 17 
     let select_tbl = Hashtbl.create 17 
@@ -513,6 +500,8 @@ module Op =
       | BO_BVult s -> mklApp cBO_BVult [|mkN s|]
       | BO_BVslt s -> mklApp cBO_BVslt [|mkN s|]
       | BO_BVconcat (s1, s2) -> mklApp cBO_BVconcat [|mkN s1; mkN s2|]
+      | BO_BVshl s -> mklApp cBO_BVshl [|mkN s|]
+      | BO_BVshr s -> mklApp cBO_BVshr [|mkN s|]
       | BO_select (ti, te) -> select_to_coq ti te
       | BO_diffarray (ti, te) -> diffarray_to_coq ti te
         
@@ -520,7 +509,8 @@ module Op =
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
       | BO_BVult _ | BO_BVslt _ -> Tbool
-      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s -> TBV s
+      | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
+      | BO_BVshl s | BO_BVshr s -> TBV s
       | BO_BVconcat (s1, s2) -> TBV (s1 + s2)
       | BO_select (_, te) -> te
       | BO_diffarray (ti, _) -> ti
@@ -530,7 +520,7 @@ module Op =
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
-      | BO_BVult s | BO_BVslt s ->
+      | BO_BVult s | BO_BVslt s | BO_BVshl s | BO_BVshr s ->
         (TBV s,TBV s)
       | BO_BVconcat (s1, s2) -> (TBV s1, TBV s2)
       | BO_select (ti, te) -> (TFArray (ti, te), ti)
@@ -540,16 +530,17 @@ module Op =
     let interp_ieq t_i t =
       mklApp cinterp_eqb [|t_i ; Btype.to_coq t|]
 
-    let veval_t te =
+ (*   let veval_t te =
       let env = Global.env () in
       let evd = Evd.from_env env in
       let evd, ty = Typing.type_of env evd te in
       Vnorm.cbv_vm env te ty
+
     
     let interp_ieq_eval t_i t =
       let te = mklApp cinterp_eqb [|t_i ; Btype.to_coq t|] in
       veval_t te
-
+      *)
 
     let interp_eqarray t_i ti te =
       mklApp cequalarray
@@ -584,8 +575,9 @@ module Op =
       | Tbool -> Lazy.force ceqb
       | Tpositive -> Lazy.force ceqbP
       | TBV s -> mklApp cbv_eq [|mkN s|]
-      | Tindex i -> veval_t (mklApp cte_eqb [|i.hval|])
-      (* | (TFArray _) as t -> interp_ieq t_i t *)
+      | Tindex i ->
+        mklApp ceqb_of_compdec [|mklApp cte_carrier [|i.hval|];
+                                 mklApp cte_compdec [|i.hval|]|]
       | TFArray (ti, te) -> interp_eqarray t_i ti te
 
     
@@ -607,6 +599,8 @@ module Op =
       | BO_BVult s -> mklApp cbv_ult [|mkN s|]
       | BO_BVslt s -> mklApp cbv_slt [|mkN s|]
       | BO_BVconcat (s1,s2) -> mklApp cbv_concat [|mkN s1; mkN s2|]
+      | BO_BVshl s -> mklApp cbv_shl [|mkN s|]
+      | BO_BVshr s -> mklApp cbv_shr [|mkN s|]
       | BO_select (ti, te) -> interp_select t_i ti te
       | BO_diffarray (ti, te) -> interp_diff t_i ti te
 
@@ -649,7 +643,7 @@ module Op =
 	          tbl : (Term.constr, indexed_op) Hashtbl.t
 	}
 
-    let create () = 
+    let create () =
       { count = 0;
 	tbl =  Hashtbl.create 17 }
 
@@ -695,6 +689,10 @@ module Op =
       | UO_BVbitOf (s1,i1), UO_BVbitOf (s2,i2) -> s1 == s2 && i1 == i2
       | UO_BVnot s1, UO_BVnot s2 -> s1 == s2
       | UO_BVneg s1, UO_BVneg s2 -> s1 == s2
+      | UO_BVextr (i1, n1, s1) , UO_BVextr (i2, n2, s2) ->
+        i1 == i2 && n1 == n2 && s1 == s2
+      | UO_BVzextn (s1, n1), UO_BVzextn (s2, n2) -> s1 == s2 && n1 == n2
+      | UO_BVsextn (s1, n1), UO_BVsextn (s2, n2) -> s1 == s2 && n1 == n2
       | _ -> false
 
     let b_equal op1 op2 =
@@ -708,6 +706,8 @@ module Op =
         | BO_BVult n1, BO_BVult n2 -> n1 == n2
         | BO_BVslt n1, BO_BVslt n2 -> n1 == n2
         | BO_BVconcat (n1,m1), BO_BVconcat (n2,m2) -> n1 == n2 && m1 == m2
+        | BO_BVshl n1, BO_BVshl n2 -> n1 == n2
+        | BO_BVshr n1, BO_BVshr n2 -> n1 == n2
         | BO_select (ti1, te1), BO_select (ti2, te2)
         | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) ->
           Btype.equal ti1 ti2 && Btype.equal te1 te2
@@ -734,7 +734,8 @@ module Op =
     let logic_of_uop = function
       | UO_xO | UO_xI
       | UO_Zpos | UO_Zneg | UO_Zopp -> SL.singleton LLia
-      | UO_BVbitOf _ | UO_BVnot _ | UO_BVneg _ -> SL.singleton LBitvectors
+      | UO_BVbitOf _ | UO_BVnot _ | UO_BVneg _
+      | UO_BVextr _ | UO_BVzextn _ | UO_BVsextn _ -> SL.singleton LBitvectors
 
     let logic_of_bop = function
       | BO_Zplus
@@ -752,6 +753,8 @@ module Op =
       | BO_BVmult _
       | BO_BVult _
       | BO_BVslt _
+      | BO_BVshl _
+      | BO_BVshr _
       | BO_BVconcat _ -> SL.singleton LBitvectors
       | BO_select (ti, te)
       | BO_diffarray (ti, te) ->
@@ -917,7 +920,8 @@ module Atom =
           | UO_Zpos -> compute_hint h
           | UO_Zneg -> - (compute_hint h)
           | UO_Zopp | UO_BVbitOf _
-          | UO_BVnot _ | UO_BVneg _ -> assert false)
+          | UO_BVnot _ | UO_BVneg _
+          | UO_BVextr _ | UO_BVzextn _ | UO_BVsextn _ -> assert false)
       | _ -> assert false
 
     and compute_hint h = compute_int (atom h)
@@ -944,12 +948,18 @@ module Atom =
         Format.fprintf fmt "(- ";
         to_smt fmt h;
         Format.fprintf fmt ")"
-      | Auop (UO_BVbitOf (s, i), h) ->
+      | Auop (UO_BVbitOf (_, i), h) ->
         Format.fprintf fmt "(bitof %d %a)" i to_smt h
-      | Auop (UO_BVnot s, h) ->
+      | Auop (UO_BVnot _, h) ->
         Format.fprintf fmt "(bvnot %a)" to_smt h
-      | Auop (UO_BVneg s, h) ->
+      | Auop (UO_BVneg _, h) ->
         Format.fprintf fmt "(bvneg %a)" to_smt h
+      | Auop (UO_BVextr (i, n, _), h) ->
+        Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
+      | Auop (UO_BVzextn (_, n), h) ->
+        Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
+      | Auop (UO_BVsextn (_, n), h) ->
+        Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
       | Auop _ as a -> to_smt_int fmt (compute_int a)
       | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
       | Atop (op,h1,h2,h3) -> to_smt_top fmt op h1 h2 h3
@@ -981,6 +991,8 @@ module Atom =
         | BO_BVult _ -> "bvult"
         | BO_BVslt _ -> "bvslt"
         | BO_BVconcat _ -> "concat"
+        | BO_BVshl _ -> "bvshl"
+        | BO_BVshr _ -> "bvlshr"
         | BO_select _ -> "select"
         | BO_diffarray _ -> "diff" (* should not be used in goals *)
       in
@@ -1000,10 +1012,10 @@ module Atom =
       Format.fprintf fmt ")"
 
 
-
     exception NotWellTyped of atom
 
     let check a =
+      (* Format.eprintf "Checking %a @." to_smt_atom a; *)
       match a with
       | Acop _ -> ()
       | Auop(op,h) -> 
@@ -1012,7 +1024,10 @@ module Atom =
       | Abop(op,h1,h2) ->
 	let (t1,t2) = Op.b_type_args op in
  	if not (Btype.equal t1 (type_of h1) && Btype.equal t2 (type_of h2))
-	then raise (NotWellTyped a)
+        then (Format.eprintf "1. Wanted %a, got %a@.2. Wanted %a, got %a@."
+                Btype.to_smt t1 Btype.to_smt (type_of h1)
+                Btype.to_smt t2 Btype.to_smt (type_of h2);
+              raise (NotWellTyped a))
       | Atop(op,h1,h2,h3) ->
 	let (t1,t2,t3) = Op.t_type_args op in
         if not (Btype.equal t1 (type_of h1) &&
@@ -1028,7 +1043,9 @@ module Atom =
 	let tparams = Op.i_type_args op in
 	Array.iteri (fun i t -> 
 	    if not (Btype.equal t (type_of args.(i))) then
-	      raise (NotWellTyped a)) tparams
+	      (Format.eprintf "Wanted %a, got %a@."
+                Btype.to_smt t Btype.to_smt (type_of args.(i));
+                      raise (NotWellTyped a))) tparams
 
     type reify_tbl =
       { mutable count : int;
@@ -1039,22 +1056,53 @@ module Atom =
       { count = 0;
 	tbl =  HashAtom.create 17 }
 
+    let op_coq_terms = Hashtbl.create 17
+
     let clear reify =
+      Hashtbl.clear op_coq_terms;
       reify.count <- 0;
       HashAtom.clear reify.tbl
 
-    let declare reify a = 
-      check a;
+    (* let z_to_pos a = match atom a with *)
+    (*   | Auop (UO_Zpos, x) -> x *)
+    (*   | _ -> assert false *)
+
+
+    (* let coerce to_ty h = *)
+    (*   if Btype.equal to_ty Tpositive && Btype.equal (type_of h) TZ then *)
+    (*     z_to_pos h *)
+    (*   else h *)
+
+
+    (* let z_to_pos_coerction a = match a with *)
+    (*   | Acop _ | Auop _ -> a *)
+    (*   | Abop (op, h1, h2) -> *)
+    (*     let t1, t2 = Op.b_type_args op in *)
+    (*     Abop (op, coerce t1 h1, coerce t2 h2) *)
+    (*   | Atop(op,h1,h2,h3) -> *)
+    (*     let (t1,t2,t3) = Op.t_type_args op in *)
+    (*     Atop (op, coerce t1 h1, coerce t2 h2, coerce t3 h3) *)
+    (*   | Anop(op,ha) -> *)
+    (*     let ty = Op.n_type_args op in *)
+    (*     Anop(op, Array.map (coerce ty) ha) *)
+    (*   | Aapp(op,args) -> *)
+    (*     let tparams = Op.i_type_args op in *)
+    (*     Aapp(op, Array.mapi (fun i -> coerce tparams.(i)) args) *)
+
+
+    let declare reify a =
+      (* check a; *)
       let res = {index = reify.count; hval = a} in
       HashAtom.add reify.tbl a res;
       reify.count <- reify.count + 1;
       res
 
+
     let get reify a =
-      try HashAtom.find reify.tbl a 
+      try HashAtom.find reify.tbl a
       with Not_found -> declare reify a
 
-
+    
     (** Given a coq term, build the corresponding atom *)
     type coq_cst =
       | CCxH
@@ -1083,6 +1131,11 @@ module Atom =
       | CCBVult
       | CCBVslt
       | CCBVconcat
+      | CCBVextr
+      | CCBVsextn
+      | CCBVzextn
+      | CCBVshl
+      | CCBVshr
       | CCeqb
       | CCeqbP
       | CCeqbZ
@@ -1092,6 +1145,81 @@ module Atom =
       | CCdiff
       | CCstore
       | CCunknown
+      | CCunknown_deps of int
+
+
+    let logic_coq_cst = function
+      | CCxH
+      | CCZ0
+      | CCxO
+      | CCxI
+      | CCZpos
+      | CCZneg
+      | CCZopp
+      | CCZplus
+      | CCZminus
+      | CCZmult
+      | CCZlt
+      | CCZle
+      | CCZge
+      | CCZgt -> SL.singleton LLia
+
+      | CCBV
+      | CCBVbitOf
+      | CCBVnot
+      | CCBVneg
+      | CCBVand
+      | CCBVor
+      | CCBVxor
+      | CCBVadd
+      | CCBVmult
+      | CCBVult
+      | CCBVslt
+      | CCBVconcat
+      | CCBVextr
+      | CCBVsextn
+      | CCBVzextn
+      | CCBVshl
+      | CCBVshr -> SL.singleton LBitvectors
+        
+      | CCselect | CCdiff | CCstore -> SL.singleton LArrays
+                                                  
+      | CCeqb -> SL.empty
+
+      (* | CCeqbP | CCeqbZ -> SL.singleton LLia *)
+      (* | CCeqbBV -> SL.singleton LBitvectors *)
+      (* | CCeqbA -> SL.singleton LArrays *)
+        
+      | CCeqbP | CCeqbZ | CCeqbBV | CCeqbA
+      | CCunknown | CCunknown_deps _  -> SL.singleton LUF
+
+
+    let gobble_of_coq_cst = function
+      | CCBV
+      | CCBVbitOf
+      | CCBVnot
+      | CCBVneg
+      | CCBVand
+      | CCBVor
+      | CCBVxor
+      | CCBVadd
+      | CCBVmult
+      | CCBVult
+      | CCBVslt
+      | CCBVsextn
+      | CCBVzextn
+      | CCBVshl
+      | CCBVshr -> 1
+
+      | CCBVconcat -> 2
+      | CCBVextr -> 3
+
+      | CCselect -> 5
+      | CCdiff -> 10
+      | CCstore -> 8
+        
+      | _ -> 0
+    
 
     let op_tbl () =
       let tbl = Hashtbl.create 29 in
@@ -1099,12 +1227,14 @@ module Atom =
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
-          cbitOf, CCBVbitOf; cbv_not, CCBVnot; cbv_neg, CCBVneg; 
+          cbitOf, CCBVbitOf; cbv_not, CCBVnot; cbv_neg, CCBVneg;
+          cbv_extr, CCBVextr; cbv_zextn, CCBVzextn; cbv_sextn, CCBVsextn;
           cadd,CCZplus; csub,CCZminus; cmul,CCZmult; cltb,CCZlt;
           cleb,CCZle; cgeb,CCZge; cgtb,CCZgt;
           cbv_and, CCBVand; cbv_or, CCBVor; cbv_xor, CCBVxor;
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
+          cbv_shl, CCBVshl; cbv_shr, CCBVshr;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
           cselect, CCselect; cdiff, CCdiff;
           cstore, CCstore;
@@ -1115,49 +1245,73 @@ module Atom =
     let op_tbl = lazy (op_tbl ())
 
 
+    let split_list_at n l =
+      let rec aux acc n l = match n, l with
+        | 0, _ -> List.rev acc, l
+        | _, [] -> assert false
+        | _, x :: l -> aux (x :: acc) (n-1) l
+      in
+      aux [] n l
+
+
+    let get_coq_term_op =
+      Hashtbl.find op_coq_terms
+    
         
-    let of_coq rt ro reify env sigma c =
+    let of_coq rt ro reify known_logic env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
-	try Hashtbl.find op_tbl c with Not_found -> CCunknown in
+	try
+          let cc = Hashtbl.find op_tbl c in
+          if SL.subset (logic_coq_cst cc) known_logic then cc
+          else CCunknown_deps (gobble_of_coq_cst cc)
+        with Not_found -> CCunknown
+      in
       let rec mk_hatom h =
 	let c, args = Term.decompose_app h in
 	match get_cst c with
-          | CCxH -> mk_cop CCxH args
-          | CCZ0 -> mk_cop CCZ0 args
-          | CCBV -> mk_cop CCBV args
-          | CCxO -> mk_uop UO_xO args
-          | CCxI -> mk_uop UO_xI args
-          | CCZpos -> mk_uop UO_Zpos args
-          | CCZneg -> mk_uop UO_Zneg args
-          | CCZopp -> mk_uop UO_Zopp args
-          | CCBVbitOf -> mk_bvbitof args
-          | CCBVnot -> mk_bvnot args
-          | CCBVneg -> mk_bvneg args
-          | CCZplus -> mk_bop BO_Zplus args
-          | CCZminus -> mk_bop BO_Zminus args
-          | CCZmult -> mk_bop BO_Zmult args
-          | CCZlt -> mk_bop BO_Zlt args
-          | CCZle -> mk_bop BO_Zle args
-          | CCZge -> mk_bop BO_Zge args
-          | CCZgt -> mk_bop BO_Zgt args
-          | CCBVand -> mk_bop_bvand args
-          | CCBVor -> mk_bop_bvor args
-          | CCBVxor -> mk_bop_bvxor args
-          | CCBVadd -> mk_bop_bvadd args
-          | CCBVmult -> mk_bop_bvmult args
-          | CCBVult -> mk_bop_bvult args
-          | CCBVslt -> mk_bop_bvslt args
-          | CCBVconcat -> mk_bop_bvconcat args
-          | CCeqb -> mk_bop (BO_eq Tbool) args
-          | CCeqbP -> mk_bop (BO_eq Tpositive) args
-          | CCeqbZ -> mk_bop (BO_eq TZ) args
-          | CCeqbA -> mk_bop_farray_equal args
-          | CCeqbBV -> mk_bop_bveq args
-          | CCselect -> mk_bop_select args
-          | CCdiff -> mk_bop_diff args
-          | CCstore -> mk_top_store args
-	  | CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
+        | CCxH -> mk_cop CCxH args
+        | CCZ0 -> mk_cop CCZ0 args
+        | CCBV -> mk_cop CCBV args
+        | CCxO -> mk_uop UO_xO args
+        | CCxI -> mk_uop UO_xI args
+        | CCZpos -> mk_uop UO_Zpos args
+        | CCZneg -> mk_uop UO_Zneg args
+        | CCZopp -> mk_uop UO_Zopp args
+        | CCBVbitOf -> mk_bvbitof args
+        | CCBVnot -> mk_bvnot args
+        | CCBVneg -> mk_bvneg args
+        | CCZplus -> mk_bop BO_Zplus args
+        | CCZminus -> mk_bop BO_Zminus args
+        | CCZmult -> mk_bop BO_Zmult args
+        | CCZlt -> mk_bop BO_Zlt args
+        | CCZle -> mk_bop BO_Zle args
+        | CCZge -> mk_bop BO_Zge args
+        | CCZgt -> mk_bop BO_Zgt args
+        | CCBVand -> mk_bop_bvand args
+        | CCBVor -> mk_bop_bvor args
+        | CCBVxor -> mk_bop_bvxor args
+        | CCBVadd -> mk_bop_bvadd args
+        | CCBVmult -> mk_bop_bvmult args
+        | CCBVult -> mk_bop_bvult args
+        | CCBVslt -> mk_bop_bvslt args
+        | CCBVconcat -> mk_bop_bvconcat args
+        | CCBVextr -> mk_bvextr args
+        | CCBVzextn -> mk_bvzextn args
+        | CCBVsextn -> mk_bvsextn args
+        | CCBVshl -> mk_bop_bvshl args
+        | CCBVshr -> mk_bop_bvshr args
+        | CCeqb -> mk_bop (BO_eq Tbool) args
+        | CCeqbP -> mk_bop (BO_eq Tpositive) args
+        | CCeqbZ -> mk_bop (BO_eq TZ) args
+        | CCeqbA -> mk_bop_farray_equal args
+        | CCeqbBV -> mk_bop_bveq args
+        | CCselect -> mk_bop_select args
+        | CCdiff -> mk_bop_diff args
+        | CCstore -> mk_top_store args
+	| CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
+        | CCunknown_deps gobble ->
+          mk_unknown_deps c args (Retyping.get_type_of env sigma h) gobble
 
     
       and mk_cop op args = match op, args with
@@ -1168,7 +1322,8 @@ module Atom =
           
     
       and mk_uop op = function
-        | [a] -> let h = mk_hatom a in get reify (Auop (op,h))
+        | [a] -> let h = mk_hatom a in
+          get reify (Auop (op,h))
         | _ -> assert false
 
       and mk_bvbitof = function
@@ -1187,6 +1342,24 @@ module Atom =
         | [s;a] ->
           let h = mk_hatom a in
           get reify (Auop (UO_BVneg (mk_bvsize s), h))
+        | _ -> assert false
+
+      and mk_bvextr = function
+        | [i;n;s;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVextr (mk_N i, mk_N n, mk_bvsize s), h))
+        | _ -> assert false
+
+      and mk_bvzextn = function
+        | [s;n;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVzextn (mk_bvsize s, mk_N n), h))
+        | _ -> assert false
+
+      and mk_bvsextn = function
+        | [s;n;a] ->
+          let h = mk_hatom a in
+          get reify (Auop (UO_BVsextn (mk_bvsize s, mk_N n), h))
         | _ -> assert false
 
       and mk_bop op = function
@@ -1246,57 +1419,89 @@ module Atom =
            mk_bop (BO_BVslt s') [a1;a2]
         | _ -> assert false
 
+      and mk_bop_bvshl = function
+        | [s;a1;a2] ->
+           let s' = mk_bvsize s in
+           mk_bop (BO_BVshl s') [a1;a2]
+        | _ -> assert false
+
+      and mk_bop_bvshr = function
+        | [s;a1;a2] ->
+           let s' = mk_bvsize s in
+           mk_bop (BO_BVshr s') [a1;a2]
+        | _ -> assert false
+
       and mk_bop_bvconcat = function
         | [s1;s2;a1;a2] ->
            mk_bop (BO_BVconcat (mk_bvsize s1, mk_bvsize s2)) [a1;a2]
         | _ -> assert false
 
       and mk_bop_bveq = function
-        | [s;a1;a2] ->
+        | [s;a1;a2] when SL.mem LBitvectors known_logic ->
           let s' = mk_bvsize s in
           mk_bop (BO_eq (TBV s')) [a1;a2]
+        (* We still want to interpret bv equality as uninterpreted
+           smtlib2 equality if the solver doesn't support bitvectors *)
+        | [s;a1;a2] ->
+          let ty = Btype.of_coq rt known_logic (mklApp cbitvector [|s|]) in
+          mk_bop (BO_eq ty) [a1;a2]
         | _ -> assert false
 
       and mk_bop_select = function
         | [ti;te;_;_;_;a;i] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
+          let ti' = Btype.of_coq rt known_logic ti in
+          let te' = Btype.of_coq rt known_logic te in
           mk_bop (BO_select (ti', te')) [a; i]
         | _ -> assert false
 
       and mk_bop_diff = function
         | [ti;te;_;_;_;_;_;_;_;_;a;b] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
+          let ti' = Btype.of_coq rt known_logic ti in
+          let te' = Btype.of_coq rt known_logic te in
           mk_bop (BO_diffarray (ti', te')) [a; b]
         | _ -> assert false
 
       and mk_top_store = function
         | [ti;te;_;_;_;_;_;_;a;i;e] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
+          let ti' = Btype.of_coq rt known_logic ti in
+          let te' = Btype.of_coq rt known_logic te in
           mk_top (TO_store (ti', te')) [a; i; e]
         | _ -> assert false
 
       and mk_bop_farray_equal = function
-        | [ti;te;_;_;_;_;_;a;b] ->
-          let ti' = Btype.of_coq rt ti in
-          let te' = Btype.of_coq rt te in
+        | [ti;te;_;_;_;_;_;a;b] when SL.mem LArrays known_logic ->
+          let ti' = Btype.of_coq rt known_logic ti in
+          let te' = Btype.of_coq rt known_logic te in
           mk_bop (BO_eq (TFArray (ti', te'))) [a; b]
+        (* We still want to interpret array equality as uninterpreted
+           smtlib2 equality if the solver doesn't support arrays *)
+        | [ti;te;ord_ti;_;_;_;inh_te;a;b] ->
+          let ty = Btype.of_coq rt known_logic
+              (mklApp cfarray [|ti; te; ord_ti; inh_te|]) in
+          mk_bop (BO_eq ty) [a;b]
         | _ -> assert false
 
-    
       and mk_unknown c args ty =
         let hargs = Array.of_list (List.map mk_hatom args) in
         let op =
           try Op.of_coq ro c
           with | Not_found ->
             let targs = Array.map type_of hargs in
-            let tres = Btype.of_coq rt ty in
+            let tres = Btype.of_coq rt known_logic ty in
             Op.declare ro c targs tres in
-        get reify (Aapp (op,hargs)) in
+        Hashtbl.add op_coq_terms op.index c;
+        get reify (Aapp (op,hargs))
 
-       mk_hatom c
+      (* create an uninterpreted symbol for an unsupported symbol but fisrt do
+         partial application to its dependent arguments whose number is given by
+         [gobble] *)
+      and mk_unknown_deps c args ty gobble =
+        let deps, args = split_list_at gobble args in
+        let c = Term.mkApp (c, Array.of_list deps) in
+        mk_unknown c args ty
+    
+      in
+      mk_hatom c
 
 
     let to_coq h = mkInt h.index
@@ -1443,11 +1648,15 @@ module Atom =
     let mk_bitof reify s i = mk_unop (UO_BVbitOf (s, i)) reify
     let mk_bvnot reify s = mk_unop (UO_BVnot s) reify
     let mk_bvneg reify s = mk_unop (UO_BVneg s) reify
-    let mk_bitof reify s i = mk_unop (UO_BVbitOf (s,i)) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
     let mk_select reify ti te = mk_binop (BO_select (ti, te)) reify
     let mk_diffarray reify ti te = mk_binop (BO_diffarray (ti, te)) reify
     let mk_store reify ti te = mk_terop (TO_store (ti, te)) reify
+    let mk_bvextr reify ~i ~n ~s = mk_unop (UO_BVextr (i, n, s)) reify
+    let mk_bvzextn reify ~s ~n = mk_unop (UO_BVzextn (s, n)) reify
+    let mk_bvsextn reify ~s ~n = mk_unop (UO_BVsextn (s, n)) reify
+    let mk_bvshl reify s = mk_binop (BO_BVshl s) reify
+    let mk_bvshr reify s = mk_binop (BO_BVshr s) reify
 
 
     let rec logic_atom = function
