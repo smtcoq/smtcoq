@@ -99,12 +99,12 @@ make install
 To use SMTCoq, you need one or more solvers supported by SMTCoq.
 Currently, these solvers are:
 
-- [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
+- [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 
 - [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
 
 Please download the solvers you would like to use via the above links
-(since SMTCoq might not support later versions), and follow the
+(since SMTCoq might not support other versions), and follow the
 instructions available for each solver in order to compile them **in a
 proof production mode**, as detailed below.
 
@@ -112,10 +112,18 @@ proof production mode**, as detailed below.
 ### veriT
 
 The
-[above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
+[above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 points to a snapshot of veriT which is known to be compatible with
-SMTCoq, and is already in proof production mode. If you encounter
-problems to compile it, please report an issue.
+SMTCoq, and is already in proof production mode. To compile it, unpack
+the archive and use the following commands:
+```
+autoconf
+./configure
+make
+```
+This will produce an executable called `veriT` that you should add to
+your path. If you encounter problems to compile it, please report an
+issue.
 
 
 ### zChaff
