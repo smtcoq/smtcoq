@@ -53,16 +53,23 @@ let is_eq l =
 
 (* Transitivity *)
 
+let rec list_find_remove p l =
+  match l with
+    | [] -> raise Not_found
+    | t::q -> if p t then (t,q) else let (a,l) = list_find_remove p q in (a,t::l)
+
 let rec process_trans a b prem res =
-  try
-    let (l,(c,c')) = List.find (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
-    let prem = List.filter (fun (l',(d,d')) -> (not (Form.equal l' l)) || (not (Atom.equal d c)) || (not (Atom.equal d' c'))) prem in
+  if List.length prem = 0 then (
+    assert (Atom.equal a b);
+    List.rev res
+  ) else
+    let ((l,(c,c')),prem) =
+      (* Search if there is a trivial reflexivity premice *)
+      try list_find_remove (fun (l,(a',b')) -> ((Atom.equal a' b) && (Atom.equal b' b))) prem
+      (* If not, search for the equality [l:c = c'] s.t. [c = b] or [c' = b] *)
+      with | Not_found -> list_find_remove (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
     let c = if Atom.equal c b then c' else c in
-    if Atom.equal a c
-    then List.rev (l::res)
-    else process_trans a c prem (l::res)
-  with
-    |Not_found -> if Atom.equal a b then [] else assert false
+    process_trans a c prem (l::res)
 
 
 let mkTrans p =
