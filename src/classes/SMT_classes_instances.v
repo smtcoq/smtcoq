@@ -61,6 +61,12 @@ Section Unit.
          now case x; case y; intros; compute.
   Qed.
 
+  Lemma leibniz_eq_unit_B2P: forall x y, eqP_unit x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_unit in H. now destruct x, y.
+         rewrite H. now unfold eqP_unit.
+  Qed.
+
 End Unit.
 
 
@@ -126,6 +132,13 @@ Section Bool.
          case_eq x; case_eq y; intros; subst; compute in *; easy.
   Qed.
 
+  Lemma leibniz_eq_bool_B2P: forall x y, eqP_bool x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_bool in H. case_eq (Bool.eqb x y); intros.
+         now apply Bool.eqb_prop in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold eqP_bool. now rewrite Bool.eqb_reflx.
+  Qed.
+
 End Bool.
 
 
@@ -187,6 +200,13 @@ Section Z.
          rewrite H0 in H. now contradict H.
   Qed.
 
+  Lemma leibniz_eq_Z_B2P: forall x y, eqP_Z x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_Z in H. case_eq ((x =? y)%Z); intros.
+         now apply Z.eqb_eq in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold eqP_Z. now rewrite Z.eqb_refl.
+  Qed.
+
 End Z.
 
 
@@ -246,6 +266,13 @@ Section Nat.
          rewrite H0 in H. now contradict H.
   Qed.
 
+  Lemma leibniz_eq_Nat_B2P: forall x y, eqP_Nat x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_Nat in H. case_eq ((x =? y)%nat); intros.
+         now apply Nat.eqb_eq in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold eqP_Nat. now rewrite Nat.eqb_refl.
+  Qed.
+
 End Nat.
 
 
@@ -301,6 +328,14 @@ Section Positive.
          case_eq ((x <? y)%positive ); intros; try now subst.
          rewrite H0 in H. now contradict H.
   Qed.
+
+  Lemma leibniz_eq_Pos_B2P: forall x y, eqP_Pos x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_Pos in H. case_eq ((x =? y)%positive); intros.
+         now apply Pos.eqb_eq in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold eqP_Pos. now rewrite Pos.eqb_refl.
+  Qed.
+
 
 End Positive.
 
@@ -574,6 +609,17 @@ Section Int63.
          case_eq ((x == y) ); intros; try now subst.
          rewrite H0 in H. now contradict H.
   Qed.
+
+
+  Lemma leibniz_eq_int63_B2P: forall x y, eqP_int63 x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_int63 in H. case_eq (x == y); intros.
+         now apply Int63Properties.eqb_spec in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold eqP_int63. simpl.
+         case_eq (y==y); intros.  now apply Int63Properties.eqb_spec in H0.
+         apply eqb_false_spec in H0. now contradict H0.
+  Qed. 
+         
 
 End Int63.
 
