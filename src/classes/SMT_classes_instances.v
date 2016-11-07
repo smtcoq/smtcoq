@@ -200,6 +200,15 @@ Section Z.
          rewrite H0 in H. now contradict H.
   Qed.
 
+  Lemma lt_Z_B2P': forall x y, ltP_Z x y <-> Z.lt x y.
+  Proof. intros x y; split; intro H.
+         unfold ltP_Z in H. 
+         case_eq ((x <? y)%Z ); intros; rewrite H0 in H; try easy.
+         now apply Z.ltb_lt in H0.
+         apply lt_Z_B2P.
+         now apply Z.ltb_lt.
+  Qed.
+
   Lemma leibniz_eq_Z_B2P: forall x y, eqP_Z x y <-> Logic.eq x y.
   Proof. intros x y; split; intro H.
          unfold eqP_Z in H. case_eq ((x =? y)%Z); intros.
