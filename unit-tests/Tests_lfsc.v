@@ -11,6 +11,8 @@ Require Import FArray.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
+SearchAbout Z.le.
+
 Ltac cvc4' :=
   repeat match goal with
           | [ |- forall _ : bitvector _, _]                => intro
@@ -20,6 +22,9 @@ Ltac cvc4' :=
           | [ |- context[ bv_ultP _ _ ] ]                  => rewrite <- bv_ult_B2P
           | [ |- context[ bv_sltP _ _ ] ]                  => rewrite <- bv_slt_B2P
           | [ |- context[ Z.lt _ _ ] ]                     => rewrite <- lt_Z_B2P'; rewrite <- lt_Z_B2P
+          | [ |- context[ Z.gt _ _ ] ]                     => rewrite <- gt_Z_B2P'; rewrite <- gt_Z_B2P
+          | [ |- context[ Z.le _ _ ] ]                     => rewrite <- le_Z_B2P'; rewrite <- le_Z_B2P
+          | [ |- context[ Z.ge _ _ ] ]                     => rewrite <- ge_Z_B2P'; rewrite <- ge_Z_B2P
 
           | [ |- context[ @Logic.eq (bitvector _) _ _ ] ]  => rewrite <- leibniz_bv_eq_B2P; rewrite <- bv_eq_B2P
           | [ |- context[ @Logic.eq (farray _ _) _ _ ] ]   => rewrite <- leibniz_equal_B2P; rewrite <- equal_B2P
@@ -38,7 +43,11 @@ Ltac cvc4' :=
 
          end.
 
-Goal forall (f : Z -> Z) (a:Z), ((f a) = 1) ->  ((f a) + 1) = 2.
+
+Theorem lia1P: forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
+Proof. cvc4'. Qed.
+
+Goal forall (f : Z -> Z) (a:Z), ((f a) > 1) ->  ((f a) + 1) >= 2 \/((f a) = 30) .
  Proof.
   cvc4'.
  Qed.
@@ -313,60 +322,11 @@ Section BV.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
+      #b|0|0|0|0| = bv1  ->
+      #b|1|0|0|0| = bv2  ->
       bv_ultP bv1 bv2.
   Proof.
-     intros a b H0 H1.
-     apply bv_eq_B2P in H0. apply bv_eq_B2P in H1. apply bv_ult_B2P.
-     revert H1.
-
-     apply 
-       (reflect_iff
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b = true -> 
-             bv_ult (n:=4) a b = true)
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
-             bv_ult (n:=4) a b)
-            ).
-     apply implyP.
-  
-     revert H0.
-     apply 
-       (reflect_iff
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a = true ->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
-             bv_ult (n:=4) a b = true)
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a -->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b -->
-             bv_ult (n:=4) a b)
-            ).
-
-      apply implyP.
-
-     cvc4.
-  Qed.
-
-  Goal forall (bv1 bv2 : bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
-      bv_ultP bv1 bv2.
-  Proof.  
-     intros a b H0 H1.
-     apply bv_eq_B2P in H0. apply bv_eq_B2P in H1. apply bv_ult_B2P.
-     revert H0 H1.
-
-     apply 
-       (reflect_iff
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a = true ->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b = true -> 
-             bv_ult (n:=4) a b = true)
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a -->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
-             bv_ult (n:=4) a b)
-            ).
-     apply implyP2.
-
-     cvc4.
+     cvc4'.
   Qed.
 
 End BV.
@@ -378,27 +338,6 @@ Section Arrays.
 
   Local Open Scope farray_scope.
   Local Open Scope bv_scope.
-
-  Goal forall (a:farray Z Z), equalP a a.
-  Proof.
-    intro a.
-    apply equal_B2P.
-    cvc4; verit.
-  Qed.
-
-  Goal forall (a b: farray Z Z), equalP a b -> equalP b a.
-  Proof.
-    intros a b H.
-    apply equal_B2P. apply equal_B2P in H.
-    revert H.
-    apply 
-      (reflect_iff 
-         (equal a b = true -> equal b a = true)
-         (equal a b --> equal b a)  ).
-    apply implyP.
-
-    cvc4; verit.
-  Qed.
 
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
@@ -1204,12 +1143,12 @@ Qed.
 
 
 (* lia5.smt *)
-(* cvc4 crashes *)
-(* Theorem lia5: forall x y, ((x + y <=? - (3)) && (y >=? 0) *)
-(*         || (x <=? - (3))) && (x >=? 0) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Admitted. *)
+
+Theorem lia5: forall x y, ((x + y <=? - (3)) && (y >=? 0) 
+        || (x <=? - (3))) && (x >=? 0) = false. 
+ Proof. 
+   cvc4'.
+ Qed. 
 
 (* Print Assumptions lia5. *)
 

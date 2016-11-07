@@ -183,6 +183,9 @@ Section Z.
   (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
   Definition eqP_Z x y := if Z.eqb x y then True else False.
   Definition ltP_Z x y := if Z.ltb x y then True else False.
+  Definition leP_Z x y := if Z.leb x y then True else False.
+  Definition gtP_Z x y := if Z.gtb x y then True else False.
+  Definition geP_Z x y := if Z.geb x y then True else False.
 
   Lemma eq_Z_B2P: forall x y, Z.eqb x y = true <-> eqP_Z x y.
   Proof. intros x y; split; intro H.
@@ -200,6 +203,30 @@ Section Z.
          rewrite H0 in H. now contradict H.
   Qed.
 
+  Lemma le_Z_B2P: forall x y, Z.leb x y = true <-> leP_Z x y.
+  Proof. intros x y; split; intro H.
+         unfold leP_Z; now rewrite H.
+         unfold leP_Z in H.
+         case_eq ((x <=? y)%Z ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma gt_Z_B2P: forall x y, Z.gtb x y = true <-> gtP_Z x y.
+  Proof. intros x y; split; intro H.
+         unfold gtP_Z; now rewrite H.
+         unfold gtP_Z in H.
+         case_eq ((x >? y)%Z ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma ge_Z_B2P: forall x y, Z.geb x y = true <-> geP_Z x y.
+  Proof. intros x y; split; intro H.
+         unfold geP_Z; now rewrite H.
+         unfold geP_Z in H.
+         case_eq ((x >=? y)%Z ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
   Lemma lt_Z_B2P': forall x y, ltP_Z x y <-> Z.lt x y.
   Proof. intros x y; split; intro H.
          unfold ltP_Z in H. 
@@ -207,6 +234,35 @@ Section Z.
          now apply Z.ltb_lt in H0.
          apply lt_Z_B2P.
          now apply Z.ltb_lt.
+  Qed.
+
+  Lemma le_Z_B2P': forall x y, leP_Z x y <-> Z.le x y.
+  Proof. intros x y; split; intro H.
+         unfold leP_Z in H. 
+         case_eq ((x <=? y)%Z ); intros; rewrite H0 in H; try easy.
+         now apply Z.leb_le in H0.
+         apply le_Z_B2P.
+         now apply Z.leb_le.
+  Qed.
+
+  Lemma gt_Z_B2P': forall x y, gtP_Z x y <-> Z.gt x y.
+  Proof. intros x y; split; intro H.
+         unfold gtP_Z in H. 
+         case_eq ((x >? y)%Z ); intros; rewrite H0 in H; try easy.
+         now apply Zgt_is_gt_bool in H0.
+         apply gt_Z_B2P.
+         now apply Zgt_is_gt_bool.
+  Qed.
+
+  Lemma ge_Z_B2P': forall x y, geP_Z x y <-> Z.ge x y.
+  Proof. intros x y; split; intro H.
+         unfold geP_Z in H. 
+         case_eq ((x >=? y)%Z ); intros; rewrite H0 in H; try easy.
+         rewrite Z.geb_leb in H0. rewrite le_Z_B2P in H0.
+         apply le_Z_B2P' in H0. now apply Z.ge_le_iff.
+         apply ge_Z_B2P.
+         rewrite Z.geb_leb. rewrite le_Z_B2P.
+         apply le_Z_B2P'. now apply Z.ge_le_iff.
   Qed.
 
   Lemma leibniz_eq_Z_B2P: forall x y, eqP_Z x y <-> Logic.eq x y.
