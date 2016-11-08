@@ -1807,6 +1807,13 @@ Section FArray.
      now rewrite H, equal_refl.
  Qed.
 
+  Lemma leibniz_equal_B2P: forall x y, equalP x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold equalP in H. case_eq (equal x y); intros.
+         now apply equal_eq in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold equalP. now rewrite equal_refl.
+  Qed.
+
   Section Classical_extensionnality.
 
     Require Import Classical_Pred_Type ClassicalEpsilon.

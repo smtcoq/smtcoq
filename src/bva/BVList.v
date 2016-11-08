@@ -96,6 +96,7 @@ Module Type BITVECTOR.
   Axiom bv_eq_reflectP: forall n (a b:bitvector n), bv_eqP a b <-> a = b.
 
   Axiom bv_eq_B2P     : forall n (a b:bitvector n), bv_eq a b = true <-> bv_eqP a b.
+  Axiom leibniz_bv_eq_B2P: forall  n (a b: bitvector n), bv_eqP a b <-> Logic.eq a b.
 
   Axiom bv_ult_B2P    : forall n (a b:bitvector n), bv_ult a b = true <-> bv_ultP a b.
   Axiom bv_slt_B2P    : forall n (a b:bitvector n), bv_slt a b = true <-> bv_sltP a b.
@@ -195,6 +196,7 @@ Axiom bv_sextn_size  : forall (n i: N) a,
 Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
 Axiom bv_eq_reflectP : forall a b, bv_eqP a b <-> a = b.
 Axiom bv_eq_B2P      : forall a b, bv_eq a b = true <-> bv_eqP a b.
+Axiom leibniz_bv_eq_B2P: forall  a b, bv_eqP a b <-> Logic.eq a b.
 Axiom bv_eq_refl     : forall a, bv_eq a a = true.
 
 
@@ -343,6 +345,9 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
     - revert a b. intros [a Ha] [b Hb]. simpl. intros ->. easy.
     - intros. case a in *. case b in *. simpl in *. easy.
   Qed.
+
+  Lemma leibniz_bv_eq_B2P: forall  n (a b: bitvector n), bv_eqP a b <-> Logic.eq a b.
+  Proof. intros. rewrite <- bv_eq_B2P, <- bv_eq_reflect. easy. Qed.
 
   Lemma bv_ult_not_eqP: forall n (a b: bitvector n), bv_ultP a b -> a <> b.
   Proof. 
@@ -899,6 +904,16 @@ Proof.
   - split; intros. apply List_eq in H; rewrite H. now apply List_eqP_refl.
     apply List_eqP in H; rewrite H; now apply List_eq_refl.
   - easy.
+Qed.
+
+Lemma leibniz_bv_eq_B2P a b: bv_eqP a b <-> Logic.eq a b.
+Proof. unfold bv_eqP.
+       case_eq (size a =? size b); intro Heq; simpl.
+       unfold bits.
+       now rewrite List_eqP.
+       split. easy. intros. subst.
+       unfold size in Heq. rewrite N.eqb_refl in Heq.
+       now contradict Heq.
 Qed.
 
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = (n + m)%N.

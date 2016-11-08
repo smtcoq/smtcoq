@@ -1,5 +1,5 @@
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList.
+Require Import Bool PArray Int63 List ZArith BVList Logic.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope int63_scope.
@@ -11,106 +11,70 @@ Require Import FArray.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
-
-(* Goal forall (a b:bool), a || negb b. *)
-(*   cvc4. *)
-(* Qed. *)
-
-(* Goal forall (a:Z), Z.eqb (a + 1) 4. *)
-(*   cvc4. *)
-(* Qed. *)
-
-(* (* TODO *) *)
-(* Goal forall (f : Z -> Z) (a:Z), Z.eqb (f a) 1  -->  Z.eqb ((f a) + 1) 3. *)
-(*   cvc4. *)
-(* Qed. *)
-
+SearchAbout Z.le.
 
 Ltac cvc4' :=
-solve [
   repeat match goal with
-          | [ |- forall _ : bitvector _, _]            => intro
-          | [ |- forall _ : farray _ _, _]             => intro
-          | [ |- forall _ : Z, _]                      => intro
-          | [ |- context[ bv_ultP _ _ ] ]              => rewrite <- bv_ult_B2P
-          | [ |- context[ bv_sltP _ _ ] ]              => rewrite <- bv_slt_B2P
-          | [ |- context[ bv_eqP _ _ ] ]               => rewrite <- bv_eq_B2P
-          | [ |- context[ equalP _ _ ] ]               => rewrite <- equal_B2P
-          | [ |- context[ eqP_Z _ _ ] ]                => rewrite <- eq_Z_B2P
-          | [ |- context[ ltP_Z _ _ ] ]                => rewrite <- lt_Z_B2P
-          | [ |- context[?G0 = true \/ ?G1 = true ] ]  => rewrite (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
-                                                          try apply orP
-          | [ |- context[?G0 = true -> ?G1 = true ] ]  => rewrite (@reflect_iff (G0 = true -> G1 = true) (G0 --> G1)); 
-                                                          try apply implyP
-          | [ |- context[?G0 = true /\ ?G1 = true ] ]  => rewrite (@reflect_iff (G0 = true /\ G1 = true) (andb G0 G1)); 
-                                                          try apply andP
-          | [ |- context[?G0 = true <-> ?G1 = true ] ] => rewrite (@reflect_iff (G0 = true <-> G1 = true) (Bool.eqb G0 G1)); 
-                                                          try apply iffP 
-          | [ |- _ : bool]                             => try (cvc4; verit)
-         end 
-    ].
+          | [ |- forall _ : bitvector _, _]                => intro
+          | [ |- forall _ : farray _ _, _]                 => intro
+          | [ |- forall _ : _ -> _, _]                     => intro
+          | [ |- forall _ : Z, _]                          => intro
+          | [ |- context[ bv_ultP _ _ ] ]                  => rewrite <- bv_ult_B2P
+          | [ |- context[ bv_sltP _ _ ] ]                  => rewrite <- bv_slt_B2P
+          | [ |- context[ Z.lt _ _ ] ]                     => rewrite <- lt_Z_B2P'; rewrite <- lt_Z_B2P
+          | [ |- context[ Z.gt _ _ ] ]                     => rewrite <- gt_Z_B2P'; rewrite <- gt_Z_B2P
+          | [ |- context[ Z.le _ _ ] ]                     => rewrite <- le_Z_B2P'; rewrite <- le_Z_B2P
+          | [ |- context[ Z.ge _ _ ] ]                     => rewrite <- ge_Z_B2P'; rewrite <- ge_Z_B2P
 
-Ltac cvc4'' :=
-  solve [ 
-    repeat match goal with
-             | [ |- _ /\ _ ]                    => split
-             | [ |- _ <-> _ ]                   => split
-             | [ |- _ \/ _ ]                    => try (left || right)
-             | [ |- _ : ?T ]                    => intros
-           end;
+          | [ |- context[ @Logic.eq (bitvector _) _ _ ] ]  => rewrite <- leibniz_bv_eq_B2P; rewrite <- bv_eq_B2P
+          | [ |- context[ @Logic.eq (farray _ _) _ _ ] ]   => rewrite <- leibniz_equal_B2P; rewrite <- equal_B2P
+          | [ |- context[ @Logic.eq Z _ _ ] ]              => rewrite <- leibniz_eq_Z_B2P; rewrite <- eq_Z_B2P
 
-    repeat match goal with
-             | [ H: (bv_eqP _ _)  |- _ ]        => apply bv_eq_B2P in H; 
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
+          | [ |- context[?G0 = true \/ ?G1 = true ] ]      => rewrite (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
+                                                              try apply orP
+          | [ |- context[?G0 = true -> ?G1 = true ] ]      => rewrite (@reflect_iff (G0 = true -> G1 = true) (G0 --> G1)); 
+                                                              try apply implyP
+          | [ |- context[?G0 = true /\ ?G1 = true ] ]      => rewrite (@reflect_iff (G0 = true /\ G1 = true) (andb G0 G1)); 
+                                                              try apply andP
+          | [ |- context[?G0 = true <-> ?G1 = true ] ]     => rewrite (@reflect_iff (G0 = true <-> G1 = true) (Bool.eqb G0 G1)); 
+                                                              try apply iffP 
+          | [ |- _ : bool]                                 => verit
+          | [ |- _ : bool]                                 => (cvc4; verit)
 
-             | [ H: (bv_ultP _ _) |- _ ]        => apply bv_ult_B2P in H;
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
+         end.
 
-             | [ H: (bv_sltP _ _) |- _ ]        => apply bv_slt_B2P in H;
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
 
-             | [ H: (eqP_int63 _ _)  |- _ ]     => apply eq_int63_B2P in H; 
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
+Theorem lia1P: forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
+Proof. cvc4'. Qed.
 
-             | [ H: ?G0 = true |- ?G1 = true ]  => revert H;
-                                                   apply (@reflect_iff (G0 = true -> G1 = true) (G0 --> G1));
-                                                   try apply implyP; try (cvc4; verit)
+Goal forall (f : Z -> Z) (a:Z), ((f a) > 1) ->  ((f a) + 1) >= 2 \/((f a) = 30) .
+ Proof.
+  cvc4'.
+ Qed.
 
-             | [ H: _ /\ _ |- _ ]               => destruct H;
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
+  Goal forall (a b: Z), a < b -> a < (b + 1).
+  Proof.
+    cvc4'.
+  Qed.
 
-             | [ H: _ \/ _ |- _ ]               => destruct H;
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
+  Goal forall (a b: Z), (a < b) -> (a + 2) < (b + 3).
+  Proof. 
+    cvc4'.
+  Qed.
 
-             | [ H: (equalP _ _)  |- _ ]        => apply equal_B2P in H; 
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
+  Goal forall (a b: Z), a = b -> a < (b + 1).
+  Proof.
+    cvc4'.
+  Qed.
 
-             | [ H: (eqP_Z _ _)  |- _ ]         => apply eq_Z_B2P in H; 
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
-
-             | [ H: (ltP_Z _ _)  |- _ ]         => apply lt_Z_B2P in H; 
-                                                   try (apply bv_eq_B2P || apply bv_slt_B2P || apply bv_ult_B2P || 
-                                                        apply equal_B2P || apply eq_Z_B2P || apply lt_Z_B2P || apply eq_int63_B2P)
-
-             | [ |- equalP _ _ ]                => apply equal_B2P; try (cvc4; verit)
-             | [ |- bv_eqP _ _ ]                => apply bv_eq_B2P; try (cvc4; verit)
-             | [ |- bv_ultP _ _ ]               => apply bv_ult_B2P; try (cvc4; verit)
-             | [ |- bv_sltP _ _ ]               => apply bv_slt_B2P; try (cvc4; verit)
-             | [ |- eqP_Z _ _ ]                 => apply eq_Z_B2P; try (cvc4; verit)
-             | [ |- ltP_Z _ _ ]                 => apply lt_Z_B2P; try (cvc4; verit)
-             | [ |- _ : bool]                   => try (cvc4; verit)
-
-         end 
-        ].
-
+Goal forall (a b: farray Z Z) i,
+      (select (store (store (store a i 3%Z) 1%Z (select (store b i 4) i)) 2%Z 2%Z) 1%Z) =  4.
+Proof.
+    cvc4'.
+    rewrite read_over_other_write; try easy.
+    rewrite read_over_same_write; try easy; try apply Z_compdec.
+    rewrite read_over_same_write; try easy; try apply Z_compdec.
+Qed.
 
 Section BV.
 
@@ -120,9 +84,9 @@ Section BV.
   Local Open Scope bv_scope.
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true  ->
+      Logic.eq #b|0|0|0|0| bv1 /\
+      Logic.eq #b|1|0|0|0| bv2  /\
+      Logic.eq #b|1|1|0|0| bv3  ->
       bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3.
   Proof. 
      cvc4'.
@@ -153,18 +117,38 @@ Section BV.
       bv_eq #b|1|0|0|0| bv2 = true  /\
       bv_eq #b|1|1|0|0| bv3 = true  ->
       bv_eq #b|1|1|1|0| bv4 = true  ->
+      bv_ult bv1 bv2 = true \/ bv_ultP bv3 bv1 -> bv_ultP bv1 bv3 /\ bv_ultP bv1 bv4.
+  Proof. 
+     cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      Logic.eq #b|0|0|0|0| bv1 /\
+      Logic.eq #b|1|0|0|0| bv2  /\
+      Logic.eq #b|1|1|0|0| bv3  ->
+      Logic.eq #b|1|1|1|0| bv4  ->
+      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 -> bv_ultP bv1 bv3 /\ bv_ultP bv1 bv4.
+  Proof. 
+     Time cvc4'.
+  Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+      bv_eq #b|0|0|0|0| bv1 = true /\
+      bv_eq #b|1|0|0|0| bv2 = true  /\
+      bv_eq #b|1|1|0|0| bv3 = true  ->
+      bv_eq #b|1|1|1|0| bv4 = true  ->
       bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 -> bv_ultP bv1 bv4 \/ bv_ultP bv4 bv1.
   Proof. 
      cvc4'.
   Qed.
 
-  Goal forall (a: bitvector 32), bv_eqP a a.
+  Goal forall (a: bitvector 32), a = a.
   Proof.
     cvc4'.
   Qed.
 
   Goal forall (bv1 bv2: bitvector 4),
-      bv_eqP bv1 bv2 <-> bv_eqP bv2 bv1.
+       bv1 = bv2 <-> bv2 = bv1.
   Proof.
      cvc4'.
   Qed.
@@ -188,9 +172,9 @@ Section BV.
 
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      bv3 = #b|1|1|0|0|  ->
       bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1.
   Proof. 
      cvc4'.
@@ -215,10 +199,10 @@ Section BV.
   Qed.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
-      bv_eqP #b|1|1|1|0| bv4  ->
+      bv1 = #b|0|0|0|0|  ->
+      bv2 = #b|1|0|0|0|  /\
+      bv3 = #b|1|1|0|0|  ->
+      bv4 = #b|1|1|1|0|  ->
       (bv_ult bv1 bv2 = true \/ bv_ultP bv3 bv1) /\ bv_ultP bv3 bv4 \/ bv_ult bv1 bv4 = true /\ bv_ultP bv2 bv4.
   Proof. 
      cvc4'.
@@ -235,10 +219,10 @@ Section BV.
   Qed.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  /\
+      bv1 = #b|0|0|0|0|  /\
       bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
-      bv_eqP #b|1|1|1|0| bv4  ->
+      bv3 = #b|1|1|0|0|  ->
+      bv4 = #b|1|1|1|0|  ->
       bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4 /\ bv_ult bv1 bv4 = true.
   Proof. 
      cvc4'.
@@ -246,9 +230,9 @@ Section BV.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
       bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
-      bv_eqP #b|1|1|1|0| bv4  ->
+      bv2 = #b|1|0|0|0|  /\
+      bv3 = #b|1|1|0|0|  ->
+      bv4 = #b|1|1|1|0|  ->
       bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
   Proof. 
      cvc4'.
@@ -256,9 +240,9 @@ Section BV.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
       bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
+      bv2 = #b|1|0|0|0|  /\
       bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv_eqP #b|1|1|1|0| bv4  ->
+      bv4 = #b|1|1|1|0| ->
       bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true /\ bv_ultP bv3 bv4.
   Proof. 
      cvc4'.
@@ -266,41 +250,41 @@ Section BV.
 
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      bv3 = #b|1|1|0|0|  ->
       bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
   Proof. 
      cvc4'.
   Qed.
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      bv_eqP #b|1|1|0|0| bv3  ->
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      bv3 = #b|1|1|0|0|  ->
       bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3 /\ bv_ultP bv1 bv3.
   Proof. 
      cvc4'.
   Qed.
 
   Goal forall (bv1 bv2: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  ->
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  ->
       bv_ultP bv1 bv2.
   Proof. 
      cvc4'.
   Qed.
 
   Goal forall (a b c: bitvector 4),
-                                 (bv_eqP c (bv_and a b)) ->
-                                 (bv_eqP (bv_and (bv_and c a) b) c).
+                                 (c = (bv_and a b)) ->
+                                 ((bv_and (bv_and c a) b) = c).
   Proof.
     cvc4'.
   Qed.
 
   Goal forall (bv1 bv2: bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
+      bv1 = #b|0|0|0|0|  ->
+      bv2 = #b|1|0|0|0|  ->
       bv_ultP bv1 bv2.
   Proof. 
      cvc4'.
@@ -338,60 +322,11 @@ Section BV.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
+      #b|0|0|0|0| = bv1  ->
+      #b|1|0|0|0| = bv2  ->
       bv_ultP bv1 bv2.
   Proof.
-     intros a b H0 H1.
-     apply bv_eq_B2P in H0. apply bv_eq_B2P in H1. apply bv_ult_B2P.
-     revert H1.
-
-     apply 
-       (reflect_iff
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b = true -> 
-             bv_ult (n:=4) a b = true)
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
-             bv_ult (n:=4) a b)
-            ).
-     apply implyP.
-  
-     revert H0.
-     apply 
-       (reflect_iff
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a = true ->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
-             bv_ult (n:=4) a b = true)
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a -->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b -->
-             bv_ult (n:=4) a b)
-            ).
-
-      apply implyP.
-
-     cvc4.
-  Qed.
-
-  Goal forall (bv1 bv2 : bitvector 4),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
-      bv_ultP bv1 bv2.
-  Proof.  
-     intros a b H0 H1.
-     apply bv_eq_B2P in H0. apply bv_eq_B2P in H1. apply bv_ult_B2P.
-     revert H0 H1.
-
-     apply 
-       (reflect_iff
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a = true ->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b = true -> 
-             bv_ult (n:=4) a b = true)
-            (bv_eq (n:=N.of_nat (Datatypes.length (b|0|0|0|0))) #b|0|0|0|0| a -->
-             bv_eq (n:=N.of_nat (Datatypes.length (b|1|0|0|0))) #b|1|0|0|0| b --> 
-             bv_ult (n:=4) a b)
-            ).
-     apply implyP2.
-
-     cvc4.
+     cvc4'.
   Qed.
 
 End BV.
@@ -404,27 +339,6 @@ Section Arrays.
   Local Open Scope farray_scope.
   Local Open Scope bv_scope.
 
-  Goal forall (a:farray Z Z), equalP a a.
-  Proof.
-    intro a.
-    apply equal_B2P.
-    cvc4; verit.
-  Qed.
-
-  Goal forall (a b: farray Z Z), equalP a b -> equalP b a.
-  Proof.
-    intros a b H.
-    apply equal_B2P. apply equal_B2P in H.
-    revert H.
-    apply 
-      (reflect_iff 
-         (equal a b = true -> equal b a = true)
-         (equal a b --> equal b a)  ).
-    apply implyP.
-
-    cvc4; verit.
-  Qed.
-
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
          (g: farray Z Z -> Z)
@@ -435,40 +349,118 @@ Section Arrays.
     cvc4'.
   Qed.
 
+  Goal forall (a b: farray Z Z)
+         (v w x y: Z)
+         (g: farray Z Z -> Z)
+         (f: Z -> Z),
+         (a[x <- v] = b) /\ a[y <- w] = b  ->
+         (f x) = (f y) \/  (g a) = (g b).
+  Proof.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+  Qed.
 
-  Goal forall (a:bitvector 4), bv_eqP (bv_add a a) (bv_add a a).
+  Goal forall
+         (x y: Z)
+         (f: Z -> Z),
+         y = x -> (f x) = (f y).
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall
+         (x y: Z)
+         (f: Z -> Z),
+         (f x) = (f y) -> (f y) = (f x).
+  Proof.
+    cvc4'.
+  Qed.
+
+
+  Goal forall
+         (x y: Z)
+         (f: Z -> Z),
+         x + 1 = (y + 1) -> (f y) = (f x).
+  Proof.
+    cvc4'.
+  Qed.
+
+
+  Goal forall
+         (x y: Z)
+         (f: Z -> Z),
+         x = (y + 1) -> (f y) = (f (x - 1)).
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall
+         (x y: Z)
+         (f: Z -> Z),
+         x = (y + 1) -> (f (y + 1)) = (f x).
+  Proof.
+    cvc4'.
+  Qed.
+
+  Goal forall (a:bitvector 4), (bv_add a a) = (bv_add a a).
   Proof.
     cvc4'.
   Qed.
 
   Goal forall (a b c d: farray Z Z),
-      equalP b[0%Z <- 4] c  ->
-      equalP d b[0%Z <- 4][1%Z <- 4]  ->
-      equalP a d[1%Z <- b[1%Z]]  ->
-      equalP a c.
+      b[0%Z <- 4] = c  ->
+      d = b[0%Z <- 4][1%Z <- 4]  ->
+      a = d[1%Z <- b[1%Z]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables. 
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
   Qed.
 
   Goal forall (a b c d: farray Z Z),
-      equalP b[0%Z <- 4%Z] c  ->
-      equalP d b[0%Z <- 4%Z][1%Z <- 4%Z]  /\
-      equalP a d[1%Z <- b[1%Z]]  ->
-      equalP a c.
+      b[0%Z <- 4%Z] = c  ->
+      d = b[0%Z <- 4%Z][1%Z <- 4%Z]  /\
+      a = d[1%Z <- b[1%Z]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables. 
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
   Qed.
 
   Goal forall (a b c d: farray Z Z),
-      equalP b[0 <- 4] c  /\
-      equalP d b[0 <- 4][1 <- 4]  /\
-      equalP a d[1 <- b[1]]  ->
-      equalP a c.
+      b[0 <- 4] = c  /\
+      d = b[0 <- 4][1 <- 4]  /\
+      a = d[1 <- b[1]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables. 
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
   Qed.
 
-  
   Goal forall (a b c d: farray Z Z),
       equal b[0 <- 4] c  -->
       equal d b[0 <- 4][1 <- 4]  -->
@@ -493,62 +485,102 @@ Section Arrays.
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
-      equalP c b[bv1 <- 4]  ->
-      equalP d b[bv1 <- 4][bv2 <- 4]  ->
-      equalP a d[bv2 <- b[bv2]]  ->
-      equalP a c.
+      bv1 = #b|0|0|0|0|  ->
+      bv2 = #b|1|0|0|0|  ->
+      c = b[bv1 <- 4]  ->
+      d = b[bv1 <- 4][bv2 <- 4]  ->
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  /\
-      equalP c b[bv1 <- 4]  ->
-      equalP d b[bv1 <- 4][bv2 <- 4]  ->
-      equalP a d[bv2 <- b[bv2]]  ->
-      equalP a c.
+      bv1 = #b|0|0|0|0|  ->
+      bv2 = #b|1|0|0|0|  /\
+      c = b[bv1 <- 4]  ->
+      d = b[bv1 <- 4][bv2 <- 4]  ->
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      equalP c b[bv1 <- 4]  ->
-      equalP d b[bv1 <- 4][bv2 <- 4]  ->
-      equalP a d[bv2 <- b[bv2]]  ->
-      equalP a c.
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      c = b[bv1 <- 4]  ->
+      d = b[bv1 <- 4][bv2 <- 4]  ->
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
-      bv_eqP #b|0|0|0|0| bv1  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      equalP c b[bv1 <- 4]  /\
-      equalP d b[bv1 <- 4][bv2 <- 4]  /\
-      equalP a d[bv2 <- b[bv2]]  ->
-      equalP a c.
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      c = b[bv1 <- 4]  /\
+      d = b[bv1 <- 4][bv2 <- 4]  /\
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
-      bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv_eqP #b|1|0|0|0| bv2  /\
-      equalP c b[bv1 <- 4]  /\
-      equalP d b[bv1 <- 4][bv2 <- 4]  /\
-      equalP a d[bv2 <- b[bv2]]  ->
-      equal a c = true.
+      bv1 = #b|0|0|0|0| /\
+      bv2 = #b|1|0|0|0|  /\
+      c = b[bv1 <- 4]  /\
+      d = b[bv1 <- 4][bv2 <- 4]  /\
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
@@ -577,14 +609,22 @@ Section Arrays.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
-      bv_eq #b|0|0|0|0| bv1 = true  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
-      equalP c b[bv1 <- x]  ->
-      equalP d b[bv1 <- x][bv2 <- x]  ->
-      equal a d[bv2 <- b[bv2]] = true  ->
-      equalP a c.
+      bv1 = #b|0|0|0|0|  ->
+      bv2 = #b|1|0|0|0|  ->
+      c = b[bv1 <- x]  ->
+      d = b[bv1 <- x][bv2 <- x]  ->
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    Time cvc4'.
+    Time cvc4'. Grab Existential Variables.
+    apply BV_comp.
+    apply BV_comp.
+    apply BV_comp.
+    apply BV_comp.
+    apply BV_comp.
+    apply BV_comp.
+    apply BV_comp.
+    apply BV_comp.
   Time Qed.
 
   Goal forall (a:bool), a || negb a.
@@ -605,30 +645,43 @@ Section Arrays.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
          (a b c d : farray (bitvector 4) Z),
-      bv_eqP #b|0|0|0|0| bv1  ->
-      bv_eqP #b|1|0|0|0| bv2  ->
-      equalP c b[bv1 <- x]  ->
-      equalP d b[bv1 <- x][bv2 <- x]  ->
-      equalP a d[bv2 <- b[bv2]]  ->
-      equalP a c.
+      bv1 = #b|0|0|0|0| ->
+      bv2 = #b|1|0|0|0| ->
+      c = b[bv1 <- x]  ->
+      d = b[bv1 <- x][bv2 <- x]  ->
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
+    apply Z_comp.
+    apply BV_comp.
   Qed.
-
 
   Goal forall (a:farray Z Z), equal a a.
   Proof.
     verit.
   Qed.
 
-  Goal forall (a b: farray Z Z), equalP a b <-> equalP b a.
+  Goal forall (a b: farray Z Z), a = b <->  b = a.
   Proof. 
-    cvc4'.
+    cvc4'. Grab Existential Variables. 
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
+    apply Z_comp.
   Qed.
 
-  Goal forall (a:farray Z Z), equalP a a.
+  Goal forall (a:farray Z Z), a = a.
   Proof.
-    cvc4'.
+    cvc4'. Grab Existential Variables. 
+    apply Z_comp.
+    apply Z_comp.
   Qed.
 
   Goal forall (a b:bitvector 4), bv_eq a b  -->  bv_eq b a.
@@ -636,7 +689,7 @@ Section Arrays.
     verit.
   Qed.
 
-  Goal forall (a b:bitvector 4), bv_eqP a b  ->  bv_eqP b a.
+  Goal forall (a b:bitvector 4), a = b  ->  b = a.
   Proof.
     cvc4'.
   Qed.
@@ -654,7 +707,7 @@ Section Arrays.
     verit.
   Qed.
 
-  Goal forall (a:farray Z Z) i, eqP_Z (select a i) (select a i).
+  Goal forall (a:farray Z Z) i, (select a i) = (select a i).
   Proof.
     cvc4'.
   Qed.
@@ -664,7 +717,7 @@ Section Arrays.
     verit.
   Qed.
   
-  Goal forall (a:farray Z Z) i, eqP_Z (select (store a i 1) i) (select (store a i 1) i).
+  Goal forall (a:farray Z Z) i, (select (store a i 1) i) = (select (store a i 1) i).
   Proof.
     cvc4'.
   Qed.
@@ -674,7 +727,7 @@ Section Arrays.
     verit.
   Qed.
 
-  Goal forall (a:bitvector 4), bv_eqP (bv_add a a) (bv_add a a).
+  Goal forall (a:bitvector 4), (bv_add a a) = (bv_add a a).
   Proof.
     cvc4'.
   Qed.
@@ -684,72 +737,28 @@ End Arrays.
 
 Section LIA.
 
-  (** !!! cvc4 tactic crashes !!! *)
-  Goal forall a b, ltP_Z a b -> ltP_Z a (b + 10).
-  Proof.
-    intros a b H.
-    apply lt_Z_B2P. apply lt_Z_B2P in H.
-    
-    revert H.
-    apply ( reflect_iff 
-                  ((a <? b) = true -> (a <? b + 10) = true) 
-                  ((a <? b) --> (a <? b + 10))  ).
-    apply implyP.
-    verit. (* cvc4 tactic crashed *)
+  (** !!! cvc4 tactic crashes !!! => solved by verit *)
+  Goal forall a b, a < b -> a < (b + 10).
+  Proof. 
+    cvc4'.
   Qed.
 
-  Goal forall a b, eqP_Z a b -> eqP_Z b a.
+  Goal forall (a b: Z), a = b -> b = a.
   Proof.
-    intros a b H.
-    rewrite <- eq_Z_B2P. rewrite <- eq_Z_B2P in H.
-
-    revert H.
-    specialize ( reflect_iff 
-                  ((a =? b) = true -> (b =? a) = true) 
-                  ((a =? b) --> (b =? a)) ); intros.
-    specialize (implyP (a =? b) (b =? a)); intros.
-    apply H in H1.
-    apply H1; try easy.
-
-    cvc4.
-    verit.
+     cvc4'.
   Qed.
 
-  Goal forall a b, eqP_Z a b <-> eqP_Z b a.
+  Goal forall (a b: Z), a = b <-> b = a.
   Proof.
     cvc4'.
   Qed.
 
-  Goal forall a b, eqP_Z a a /\ eqP_Z b b.
+  Goal forall (a b: Z), a = a /\ b = b.
   Proof.
-    intros a b. split.
-    apply eq_Z_B2P.
-
-    apply ( reflect_iff 
-                  ((a =? a) = true) 
-                  ((a =? a)) ).
-    remember eqP.
-    specialize (@eqP (a =? a) true); intros.
-    assert (Bool.eqb (a =? a) true = (a =? a)).
-    { case_eq a; intros; try (rewrite Z.eqb_refl; now simpl). }
-    rewrite H0 in H. apply H.
-
-    cvc4; verit.
-
-    apply eq_Z_B2P.
-    apply ( reflect_iff 
-                  ((b =? b) = true) 
-                  ((b =? b)) ).
-    remember eqP.
-    specialize (@eqP (b =? b) true); intros.
-    assert (Bool.eqb (b =? b) true = (b =? b)).
-    { case_eq a; intros; try (rewrite Z.eqb_refl; now simpl). }
-    rewrite H0 in H. apply H.
-
-    cvc4; verit.
+    cvc4'.
   Qed.
 
-  Goal forall a b, eqP_Z a a /\ eqP_Z b b.
+  Goal forall (a b: Z), a = a /\ b = b.
   Proof.
     cvc4'.
   Qed.
@@ -831,11 +840,13 @@ Proof.
 Qed.
 
 Goal forall (a b: farray Z Z) i,
-      (Z.eqb (select (store (store (store a i 3%Z) 1%Z (select (store b i 4) i)) 2%Z 2%Z) 1%Z) 4).
+      (select (store (store (store a i 3%Z) 1%Z (select (store b i 4) i)) 2%Z 2%Z) 1%Z) =  4.
 Proof.
-  cvc4. (** since cvc4 fails to close the goal cvc4' will fail eventually *)
-  try verit.
-Admitted.
+    cvc4'.
+    rewrite read_over_other_write; try easy.
+    rewrite read_over_same_write; try easy; try apply Z_compdec.
+    rewrite read_over_same_write; try easy; try apply Z_compdec.
+Qed.
 
 Goal true.
   cvc4'.
@@ -1132,12 +1143,12 @@ Qed.
 
 
 (* lia5.smt *)
-(* cvc4 crashes *)
-(* Theorem lia5: forall x y, ((x + y <=? - (3)) && (y >=? 0) *)
-(*         || (x <=? - (3))) && (x >=? 0) = false. *)
-(* Proof. *)
-(*   cvc4. *)
-(* Admitted. *)
+
+Theorem lia5: forall x y, ((x + y <=? - (3)) && (y >=? 0) 
+        || (x <=? - (3))) && (x >=? 0) = false. 
+ Proof. 
+   cvc4'.
+ Qed. 
 
 (* Print Assumptions lia5. *)
 
@@ -1231,7 +1242,7 @@ Section Concret.
   Proof. intros.
     cvc4.
     exact int63_compdec.
-  Qed.
+  Qed.  
 
 End Concret.
 
@@ -1255,9 +1266,18 @@ Proof.
   cvc4'.
 Qed.
 
+
+Goal forall (f:Z -> Z -> Z) x y z,
+  (x = y) -> (f z x) = (f z y).
+Proof.
+  cvc4'.
+Qed.
+
 Goal forall (P:Z -> Z -> bool) x y z,
   implb (Z.eqb x y) (implb (P z x) (P z y)).
 Proof.
   cvc4'.
 Qed.
+
+
 
