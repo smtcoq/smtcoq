@@ -131,6 +131,26 @@ Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
   | {| ty := ty; Eqb := {| eqb := eqb |} |} => eqb
   end.
 
+Definition eqP_t {t: Type} (p: CompDec t) (x y: t) := if (eqb_of_compdec p x y) then True else False.
+
+Theorem lcompdec: forall (t: Type) (p: CompDec t) (x y: t),
+ eqb_of_compdec p x y = true <-> eqP_t p x y.
+Proof. intros. split. intros.
+       unfold eqP_t. now rewrite H.
+       intros. unfold eqP_t in H.
+       case_eq (eqb_of_compdec p x y); intros.
+       easy. rewrite H0 in H. now contradict H.
+Qed.
+
+Theorem leibniz_lcompdec: forall (t: Type) (p: CompDec t) (x y: t),
+ eqP_t p x y <-> x = y.
+Proof. intros. split. intros.
+       unfold eqP_t in H. destruct p.
+       destruct Eqb0. apply eqb_spec0. simpl in H.
+       case_eq (eqb0 x y); intros. easy. now rewrite H0 in H.
+       intros. unfold eqP_t. destruct p. destruct Eqb0. simpl.
+       apply eqb_spec0 in H. now rewrite H.
+Qed.
 
 Hint Resolve
      ord_of_compdec
