@@ -30,7 +30,7 @@ Ltac cvc4' :=
           | [ |- context[ Z.le _ _ ] ]                     => rewrite <- le_Z_B2P'; rewrite <- le_Z_B2P
           | [ |- context[ Z.ge _ _ ] ]                     => rewrite <- ge_Z_B2P'; rewrite <- ge_Z_B2P
 
-          | [ p   : (CompDec ?t)
+          | [ p: (CompDec ?t)
               |- context[ @Logic.eq ?t _ _ ] ]             => pose proof p as p0; rewrite <- !(leibniz_lcompdec _ p); rewrite <- !(@lcompdec _ p); destruct p
 
           | [ Eqb : (EqbType ?ty)  |- _ ]                  => destruct Eqb; simpl
@@ -54,10 +54,10 @@ Ltac cvc4' :=
 
          end.
 
-  Theorem lia1P: forall (t: Type) (p: CompDec t) (x y: t), (x = y) -> (y = x).
+  Theorem lia1P: forall (t: Type) (k: CompDec t) (x y: t), (x = y) -> (y = x).
   Proof. cvc4'. Admitted.
 
-  Theorem lia1P': forall (t: Type) (p: CompDec t) (x y: t), (x = y) <-> (x = y).
+  Theorem lia1P': forall (t: Type) (R: CompDec t) (x y: t), (x = y) <-> (x = y).
   Proof. cvc4'. Qed.
 
   Theorem lia1P'': forall (t: Type) (p: CompDec t) (x y: t) (f: t -> t), (x = y) -> (f x) = (f y).
