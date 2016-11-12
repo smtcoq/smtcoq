@@ -81,18 +81,12 @@ Section BV.
      cvc4'.
   Qed.
 
-  Goal forall (bv1 bv2: bitvector 4),
-      bv1 = bv2 <-> bv2 = bv1.
-  Proof.
-     cvc4'.
-  Qed.
-
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
       bv1 = #b|0|0|0|0| /\
       bv2 = #b|1|0|0|0| /\
       bv3 = #b|1|1|0|0| ->
       bv4 = #b|1|1|1|0| ->
-      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true /\ bv_ultP bv3 bv4.
+      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
   Proof.
      cvc4'.
   Qed.
@@ -104,12 +98,6 @@ Section BV.
      cvc4'.
   Qed.
 
-  Goal forall (a b c: bitvector 4),
-                                 (bv_eq c (bv_and a b)) = true ->
-                                 (bv_eq (bv_and (bv_and c a) b) c) = true.
-  Proof.
-     cvc4'.
-  Qed.
 
 End BV.
 
@@ -237,19 +225,6 @@ Section UF.
          (x y: Z)
          (f: Z -> Z),
          x = (y + 1) -> (f y) = (f (x - 1)).
-  Proof.
-    cvc4'.
-  Qed.
-
-  Goal forall
-         (x y: Z)
-         (f: Z -> Z),
-         x = (y + 1) -> (f (y + 1)) = (f x).
-  Proof.
-    cvc4'.
-  Qed.
-
-  Goal forall (f : Z -> Z) (a:Z), ((f a) > 1) ->  ((f a) + 1) >= 2 \/ ((f a) = 30) .
   Proof.
     cvc4'.
   Qed.
