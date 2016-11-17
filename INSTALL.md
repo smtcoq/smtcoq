@@ -31,11 +31,11 @@ way to install these two pieces of software is through opam.
 ## Installation via opam (*only for base branch of main fork*)
 
 Simply add the coq-extra-dev repo to opam:
-```
+```bash
 opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
 ```
 and install smtcoq:
-```
+```bash
 opam install coq-smtcoq
 ```
 -->
@@ -121,20 +121,20 @@ in the src directory.
 ### Installation with official Coq 8.5 release
 
 1. Download the last stable version of Coq 8.5:
-```
+```bash
 wget https://coq.inria.fr/distrib/V8.5pl2/files/coq-8.5pl2.tar.gz
 ```
    and compile it by following the instructions available in the
    repository (make sure you use OCaml 4.03.0 for that). We recommand
    that you do not install it, but only compile it in local:
-```
+```bash
 ./configure -local
 make
 ```
 
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
-```
+```bash
 export COQBIN=/home/jdoe/coq-8.5pl2/bin/
 ```
    (the final slash is mandatory).
@@ -164,13 +164,13 @@ make
 
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
-```
+```bash
 export COQBIN=/home/jdoe/native-coq/bin/
 ```
    (the final slash is mandatory).
 
 3. Compile and install SMTCoq by using the commands:
-```
+```bash
 ./configure.sh -native
 make
 make install
@@ -253,7 +253,7 @@ If you want to use SMTCoq without installing it your Coq installation, you can
 tell Coq where to find SMTCoq by adding the following line in the file
 `~/.config/coqrc`:
 
-```Coq
+```coq
 Add Rec LoadPath "~/path/to/smtcoq/src" as SMTCoq.
 ```
 
