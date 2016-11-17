@@ -145,6 +145,8 @@ endif
 VFILES:=Trace.v\
   State.v\
   SMT_terms.v\
+  Tactics.v\
+  PropToBool.v\
   SMTCoq.v\
   Misc.v\
   spl/Operators.v\

@@ -16,8 +16,10 @@
 (*                                                                        *)
 (**************************************************************************)
 
+Require Import PropToBool.
 
-Require Export Int63 List PArray.
-Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
-Require Export PropToBool Tactics.
-Export Atom Form Sat_Checker Cnf_Checker Euf_Checker.
+Declare ML Module "smtcoq_plugin".
+
+Ltac zchaff := (prop2bool; zchaff_bool). 
+Ltac verit := (prop2bool; verit_bool). 
+Ltac cvc4 := (prop2bool; cvc4_bool). 

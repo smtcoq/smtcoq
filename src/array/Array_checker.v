@@ -405,7 +405,6 @@ Section certif.
         apply Typ.i_eqb_spec.
 
         apply read_over_write.
-        exact (Typ.dec_interp _ _).
     Qed.
 
 

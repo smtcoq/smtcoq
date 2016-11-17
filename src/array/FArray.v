@@ -1767,9 +1767,6 @@ Section FArray.
     intros; apply equal_eq; apply extensionnality_eqb; auto.
   Qed.
 
-(** farray equal in Prop *)
-  Definition equalP (m m' : farray) : Prop :=
-    if equal m m' then True else False.
 
   Lemma eq_list_refl: forall a, eq_list a a.
   Proof.
@@ -1788,30 +1785,12 @@ Section FArray.
   Lemma equal_refl: forall a, equal a a = true.
   Proof. intros; apply eq_equal; apply eq_list_refl. Qed.
 
-  Lemma equal_eqP : forall a b, equalP a b <-> a = b.
-  Proof. 
-     intros. split; intro H. unfold equalP in H.
-     case_eq (equal a b); intros; rewrite H0 in H.
-     now apply equal_eq. now contradict H.
-     rewrite H. unfold equalP.
-     now rewrite equal_refl.
-  Qed.
-
- Lemma equal_B2P: forall (m m' : farray),
-                  equal m m' = true <-> equalP m m'.
- Proof.
-     intros. split; intros.
-     apply equal_eq in H. rewrite H.
-     unfold equalP. now rewrite equal_refl.
-     apply equal_eqP in H.
-     now rewrite H, equal_refl.
- Qed.
-
-  Lemma leibniz_equal_B2P: forall x y, equalP x y <-> Logic.eq x y.
-  Proof. intros x y; split; intro H.
-         unfold equalP in H. case_eq (equal x y); intros.
-         now apply equal_eq in H0. rewrite H0 in H. now contradict H.
-         rewrite H. unfold equalP. now rewrite equal_refl.
+  Lemma equal_iff_eq : forall a b, equal a b = true <-> a = b.
+  Proof.
+    intros a b.
+    split.
+    - apply equal_eq.
+    - intro; subst. apply equal_refl.
   Qed.
 
   Section Classical_extensionnality.
@@ -1869,7 +1848,13 @@ Arguments select {_} {_} {_} {_} {_} _ _.
 Arguments store {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
-Arguments equalP {_} {_} {_} {_} {_} {_} {_}  _ _.
+Arguments equal_iff_eq {_} {_} {_} {_} {_} {_} {_} _ _.
+Arguments read_over_same_write {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.
+Arguments read_over_write {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments read_over_other_write {_} {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.
+Arguments extensionnality {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments extensionnality2 {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments select_at_diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 
 
 Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.

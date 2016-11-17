@@ -198,6 +198,8 @@ VFILES:=versions/standard/Int63/Int63.v\
   spl/Operators.v\
   Misc.v\
   SMTCoq.v\
+  PropToBool.v\
+  Tactics.v\
   SMT_terms.v\
   State.v\
   Trace.v
