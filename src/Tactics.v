@@ -36,7 +36,7 @@ Ltac smt := try prop2bool;
             repeat 
               match goal with
                 | [ |- context[ CompDec ?t ] ] => try assumption
-                | [ |- _ : bool] => verit
+                | [ |- _ : bool] => verit_bool
                 | [ |- _ : bool] => try (cvc4_bool; verit_bool)
               end;
             try bool2prop.
