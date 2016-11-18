@@ -27,9 +27,9 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 
-Ltac zchaff := zchaff_bool.
-Ltac verit  := verit_bool.
-Ltac cvc4   := cvc4_bool.
+Ltac zchaff := prop2bool; zchaff_bool.
+Ltac verit  := prop2bool; verit_bool.
+Ltac cvc4   := prop2bool; cvc4_bool.
 
 
 Ltac smt := try prop2bool; 
@@ -37,7 +37,7 @@ Ltac smt := try prop2bool;
               match goal with
                 | [ |- context[ CompDec ?t ] ] => try assumption
                 | [ |- _ : bool] => verit
-                | [ |- _ : bool] => try (cvc4; verit)
+                | [ |- _ : bool] => try (cvc4_bool; verit_bool)
               end;
             try bool2prop.
 
