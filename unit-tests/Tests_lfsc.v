@@ -7,7 +7,6 @@ Local Open Scope Z_scope.
 Local Open Scope bv_scope.
 
 Import BVList.BITVECTOR_LIST. 
-Require Import BoolToProp.
 Require Import FArray.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.

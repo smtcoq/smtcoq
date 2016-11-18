@@ -1033,12 +1033,11 @@ Section FArray.
 
   Definition NoDefault l := forall k:key, ~ Raw.MapsTo k default_value l.
 
-  Record slist :=
+  Record farray :=
     {this :> Raw.farray key elt;
      sorted : sort (Raw.ltk key_ord) this;
      nodefault : NoDefault this
     }.
-  Definition farray := slist.
 
   Lemma empty_nodefault : NoDefault (Raw.empty key elt).
     unfold NoDefault.
@@ -1115,18 +1114,18 @@ Section FArray.
   Qed.
 
   Definition empty : farray :=
-    Build_slist (Raw.empty_sorted elt key_ord) empty_nodefault.
+    Build_farray (Raw.empty_sorted elt key_ord) empty_nodefault.
 
   Definition is_empty m : bool := Raw.is_empty m.(this).
 
   Definition add x e m : farray :=
-    Build_slist (add_sorted m.(sorted) x e)
+    Build_farray (add_sorted m.(sorted) x e)
                 (add_nodefault m.(nodefault) m.(sorted) x e).
 
   Definition find x m : option elt := Raw.find key_comp x m.(this).
 
   Definition remove x m : farray :=
-    Build_slist (Raw.remove_sorted key_comp m.(sorted) x) (remove_nodefault m.(nodefault) m.(sorted) x).
+    Build_farray (Raw.remove_sorted key_comp m.(sorted) x) (remove_nodefault m.(nodefault) m.(sorted) x).
 
   Definition mem x m : bool := Raw.mem key_comp x m.(this).
   Definition elements m : list (key*elt) := Raw.elements m.(this).
@@ -1295,7 +1294,7 @@ Section FArray.
     inversion_clear Hl'.
     apply nodefault_tail in Hd.
     apply nodefault_tail in Hd'.
-    destruct (IHl H Hd (Build_slist H2 Hd')).
+    destruct (IHl H Hd (Build_farray H2 Hd')).
     unfold equal, eq in H5; simpl in H5; auto.
     destruct (andb_prop _ _ H); clear H.
     generalize H0; unfold cmp.
@@ -1307,7 +1306,7 @@ Section FArray.
     inversion_clear Hl'.
     apply nodefault_tail in Hd.
     apply nodefault_tail in Hd'.
-    destruct (IHl H Hd (Build_slist H3 Hd')).
+    destruct (IHl H Hd (Build_farray H3 Hd')).
     unfold equal, eq in H6; simpl in H6; auto.
   Qed.
 
@@ -1354,7 +1353,7 @@ Section FArray.
     case (compare x' x');
     subst; intro HH; try (apply lt_not_eq in HH; now contradict HH).
     split; auto.
-    apply (IHm H Hd (Build_slist H1 Hd')); auto.
+    apply (IHm H Hd (Build_farray H1 Hd')); auto.
   Qed.
 
   Lemma eqfarray_trans : forall m1 m2 m3 : farray, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
@@ -1375,7 +1374,7 @@ Section FArray.
     apply nodefault_tail in Hd1.
     apply nodefault_tail in Hd2.
     apply nodefault_tail in Hd3.
-    apply (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)); intuition.
+    apply (IHm1 H Hd1 (Build_farray H3 Hd2) (Build_farray H5 Hd3)); intuition.
   Qed.
 
   Fixpoint lt_list (m m' : list (key * elt)) : Prop :=
@@ -1426,7 +1425,7 @@ Section FArray.
     apply nodefault_tail in Hd1.
     apply nodefault_tail in Hd2.
     apply nodefault_tail in Hd3.
-    apply (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)); intuition.
+    apply (IHm1 H Hd1 (Build_farray H3 Hd2) (Build_farray H5 Hd3)); intuition.
     apply lt_not_eq in Hlt''. now contradict Hlt''.
   Qed.
 
@@ -1442,7 +1441,7 @@ Section FArray.
     specialize (nodefault_tail Hd2).
     specialize (nodefault_tail Hd1). intros.
     subst.
-    apply (IHm1 H0 H6 (Build_slist H4 H7)); intuition.
+    apply (IHm1 H0 H6 (Build_farray H4 H7)); intuition.
     unfold lt_farray in *.
     simpl in H.
     case (compare x' x') in *.
@@ -1481,7 +1480,7 @@ Section FArray.
     inversion_clear Hm2; auto.
     specialize (nodefault_tail Hd2). specialize (nodefault_tail Hd1).
     intros Hd11 Hd22.
-    destruct (IHm1 Hm11 Hd11 (Build_slist Hm22 Hd22));
+    destruct (IHm1 Hm11 Hd11 (Build_farray Hm22 Hd22));
       [ apply LT | apply EQ | apply GT ].
     unfold lt_farray in *. simpl.
     destruct (compare x x'); auto; try (subst; apply lt_not_eq in l0; now contradict l0).

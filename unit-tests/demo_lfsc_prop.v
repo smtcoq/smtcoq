@@ -117,7 +117,7 @@ Section Arrays.
     verit.
     rewrite read_over_other_write; [ | easy].
     rewrite read_over_write.
-    rewrite read_over_write; easy.
+    rewrite read_over_write. red; auto.
 Qed.
 
 End Arrays.
@@ -163,7 +163,7 @@ Section UF.
 
   Goal forall (t: Type) (p: CompDec t) (x y: t), (x = y) <-> (x = y).
   Proof.
-    cvc4; [ verit | verit ; assumption | assumption  ].
+    cvc4; verit.
   Qed.
 
 End UF.
