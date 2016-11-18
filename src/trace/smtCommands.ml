@@ -243,7 +243,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
         Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
-	         vm_cast_true
+	         vm_cast_true (Global.env ())
 	           (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))),
         Term.VMcast,
         theorem_concl)
@@ -571,7 +571,7 @@ let checker_debug_step t_i t_func t_atom t_form root used_root trace
 
 (* Tactic *)
 
-let build_body rt ro ra rf l b (max_id, confl) =
+let build_body env rt ro ra rf l b (max_id, confl) =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -586,34 +586,47 @@ let build_body rt ro ra rf l b (max_id, confl) =
   let t_form = snd (Form.interp_tbl rf) in
   let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq
       (interp_conseq_uf t_i)
-      (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
+      (certif_ops
+         (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|]))
+      confl
+  in
   let certif =
-    mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+    mklApp cCertif
+      [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*);
+        mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+
+  let add_lets t =
+    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
+    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    Term.mkLetIn (nc, certif, mklApp ccertif
+             [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+    t))))) in
+  
+  let cbc =
+    add_lets
+      (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
+                           v 2 (*t_form*); l; b; v 1 (*certif*)|])
+    |> vm_cast_true env
+  in
 
   let proof_cast =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
-    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-    mklApp cchecker_b_correct
-      [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*);
-	vm_cast_true (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*)|])|])))))
-  in
+    add_lets
+      (mklApp cchecker_b_correct
+         [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
+           l; b; v 1 (*certif*); cbc |]) in
+  
   let proof_nocast =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
-    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-    mklApp cchecker_b_correct
-      [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l; b; v 1 (*certif*)|])))))
-  in
+    add_lets
+      (mklApp cchecker_b_correct
+         [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
+           l; b; v 1 (*certif*)|]) in
 
   (proof_cast, proof_nocast, cuts)
 
 
-let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
+let build_body_eq env rt ro ra rf l1 l2 l (max_id, confl) =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -632,26 +645,35 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
-  let proof_cast =
+  let add_lets t =
     Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
+    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
     Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
     Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-    mklApp cchecker_eq_correct
-      [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*);
-	vm_cast_true (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])|])))))
-  in
-  let proof_nocast =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1 (*t_i*)|]|],
-    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-    mklApp cchecker_eq_correct
-      [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])))))
+    Term.mkLetIn (nc, certif, mklApp ccertif
+             [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+    t))))) in
+
+  let ceqc =
+    add_lets
+      (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
+                            v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])
+      |> vm_cast_true env
   in
 
+  let proof_cast =
+    add_lets
+      (mklApp cchecker_eq_correct
+         [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
+           l1; l2; l; v 1 (*certif*); ceqc |])
+  in
+  let proof_nocast =
+    add_lets
+      (mklApp cchecker_eq_correct
+         [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
+           l1; l2; l; v 1 (*certif*)|])
+  in
+  
   (proof_cast, proof_nocast, cuts)
 
 
@@ -677,13 +699,13 @@ let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver env rt ro ra rf l' in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl
+      build_body env rt ro ra rf (Form.to_coq l) b max_id_confl
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+      build_body_eq env rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl in
 
   let tac =

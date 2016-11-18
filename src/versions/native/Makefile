@@ -147,7 +147,6 @@ VFILES:=Trace.v\
   SMT_terms.v\
   Tactics.v\
   PropToBool.v\
-  BoolToProp.v\
   SMTCoq.v\
   Misc.v\
   spl/Operators.v\

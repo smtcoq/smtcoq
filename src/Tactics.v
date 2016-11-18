@@ -20,6 +20,8 @@ Require Import PropToBool.
 
 Declare ML Module "smtcoq_plugin".
 
-Ltac zchaff := (prop2bool; zchaff_bool). 
-Ltac verit := (prop2bool; verit_bool). 
-Ltac cvc4 := (prop2bool; cvc4_bool). 
+Ltac zchaff := (prop2bool; zchaff_bool; bool2prop).
+Ltac verit := (prop2bool; verit_bool; bool2prop).
+Ltac cvc4 := (prop2bool; cvc4_bool; bool2prop).
+
+Ltac smt := (prop2bool; try verit; cvc4_bool; try verit_bool; bool2prop).

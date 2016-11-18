@@ -2644,67 +2644,6 @@ End Atom.
 
 Arguments Atom.Val {_} {_} _ _.
 
-
-Section ReflectFacts.
-
-Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-
-Lemma reflect_iff : forall P b, reflect P b -> (P<->b=true).
-Proof.
- intros; destruct H; easy.
-Qed.
-
-Lemma iff_reflect : forall P b, (P<->b=true) -> reflect P b.
-Proof.
- intros.
- destr_bool; constructor; try now apply H.
- unfold not. intros. apply H in H0. destruct H. easy.
-Qed.
-
-Lemma reflect_dec : forall P b, reflect P b -> {P} + {~P}.
-Proof. intros; destruct H; [now left | now right]. Qed.
-
- Lemma implyP : forall (b1 b2: bool), reflect (b1 -> b2) (b1 --> b2).
- Proof. intros; apply iff_reflect; split;
-        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
- Qed.
-
- Lemma iffP : forall (b1 b2: bool), reflect (b1 <-> b2) (eqb b1 b2).
- Proof. intros; apply iff_reflect; split;
-        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
- Qed.
-
- Lemma implyP2 : forall (b1 b2 b3: bool), reflect (b1 -> b2 -> b3) (b1 --> b2 --> b3).
- Proof. intros; apply iff_reflect; split;
-        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
- Qed.
-
- Lemma andP : forall (b1 b2: bool), reflect (b1 /\ b2) (b1 && b2).
- Proof. intros; apply iff_reflect; split;
-        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
- Qed.
-
- Lemma orP : forall (b1 b2: bool), reflect (b1 \/ b2) (b1 || b2).
- Proof. intros; apply iff_reflect; split;
-        case_eq b1; case_eq b2; intros; try easy; try compute in *.
-        destruct H1 as [H1a | H1b ]; easy. left. easy. left. easy.
-        right. easy.
- Qed.
-
- Lemma negP : forall (b: bool), reflect (~ b) (negb b).
- Proof. intros; apply iff_reflect; split;
-        case_eq b; intros; try easy; try compute in *.
-        contradict H0. easy.
- Qed.
-
- Lemma eqP : forall (b1 b2: bool), reflect (b1 = b2) (Bool.eqb b1 b2).
- Proof. intros; apply iff_reflect; split;
-        case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
- Qed.
-
-End ReflectFacts.
-
-
 (* These definitions are not used. This is just a hack, Coq refuses to
    construct PArrays from OCaml if these are not here for some silly reason *)
 (*

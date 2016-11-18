@@ -130,7 +130,7 @@ Section Arrays.
     smt.
     rewrite read_over_other_write; [ | easy].
     rewrite read_over_write.
-    rewrite read_over_write; easy.
+    rewrite read_over_write. red; auto.
 Qed.
 
 End Arrays.
