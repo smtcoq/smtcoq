@@ -305,10 +305,23 @@ let ceq_refl_true =
 
 let eq_refl_true () = Lazy.force ceq_refl_true
 
-let vm_cast_true t = 
+let vm_cast_true_delay t =
   Term.mkCast(eq_refl_true (),
-	      Term.VMcast, 
-	      SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+              Term.VMcast,
+              SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+
+(* This version checks convertibility right away instead of delaying it at
+   Qed. This allows to report issues to the user as soon as he/she runs one of
+   SMTCoq's tactics. *)
+let vm_cast_true env t =
+  try
+    Vconv.vm_conv Reduction.CUMUL env
+      (SmtMisc.mklApp ceq
+         [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
+      (SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
+    eq_refl_true ()
+  with Reduction.NotConvertible ->
+    Structures.error ("SMTCoq was not able to check the proof certificate.")
 
 (* Compute a nat *)
 let rec mkNat = function

@@ -240,7 +240,7 @@ let theorem name fdimacs ftrace =
         Term.mkLambda (mkName "v", vtype,
         mklApp ctheorem_checker
                [| Term.mkRel 3(*d*); Term.mkRel 2(*c*);
-		  vm_cast_true
+		  vm_cast_true (Global.env ())
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
                   Term.mkRel 1(*v*)|]))),
       Term.VMcast,
@@ -357,7 +357,7 @@ let cchecker_eq_correct =
   gen_constant cnf_checker_modules "checker_eq_correct" 
 let cchecker_eq = gen_constant cnf_checker_modules "checker_eq" 
 
-let build_body reify_atom reify_form l b (max_id, confl) = 
+let build_body env reify_atom reify_form l b (max_id, confl) = 
   let ntvar = mkName "t_var" in
   let ntform = mkName "t_form" in
   let nc = mkName "c" in
@@ -370,25 +370,27 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  let proof_cast =
+  let add_lets t =
     Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
     Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
     Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_b_correct
-	   [|vtvar; vtform; l; b; vc;
-	     vm_cast_true (mklApp cchecker_b [|vtform;l;b;vc|])|])))
+    t)))
+  in
+  let cbc =
+    add_lets
+      (mklApp cchecker_b [|vtform;l;b;vc|]) |> vm_cast_true env in
+  let proof_cast =
+    add_lets
+      (mklApp cchecker_b_correct [|vtvar; vtform; l; b; vc; cbc |])
   in
   let proof_nocast =
-    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_b_correct
-	   [|vtvar; vtform; l; b; vc|])))
+    add_lets
+      (mklApp cchecker_b_correct [|vtvar; vtform; l; b; vc|])
   in
   (proof_cast, proof_nocast)
 
 
-let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
+let build_body_eq env reify_atom reify_form l1 l2 l (max_id, confl) =
   let ntvar = mkName "t_var" in
   let ntform = mkName "t_form" in
   let nc = mkName "c" in
@@ -401,20 +403,20 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  let proof_cast =
+  let add_lets t =
     Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
     Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
     Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_eq_correct
-           [|vtvar; vtform; l1; l2; l; vc;
-	     vm_cast_true (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])|])))
+    t)))
+  in
+  let ceqc = add_lets (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])
+             |> vm_cast_true env in
+  let proof_cast =
+    add_lets
+      (mklApp cchecker_eq_correct [|vtvar; vtform; l1; l2; l; vc; ceqc|])
   in
   let proof_nocast =
-    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_eq_correct
-           [|vtvar; vtform; l1; l2; l; vc|])))
+    add_lets (mklApp cchecker_eq_correct [|vtvar; vtform; l1; l2; l; vc|])
   in
   (proof_cast, proof_nocast)
 
@@ -531,7 +533,7 @@ let core_tactic env sigma concl =
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl env reify_form l' in
-      build_body reify_atom reify_form (Form.to_coq l) b max_id_confl 
+      build_body env reify_atom reify_form (Form.to_coq l) b max_id_confl 
     else
       let l1 = Form.of_coq (Atom.get reify_atom) reify_form a in
       let l2 = Form.of_coq (Atom.get reify_atom) reify_form b in
@@ -539,7 +541,7 @@ let core_tactic env sigma concl =
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl env reify_form l in
-      build_body_eq reify_atom reify_form 
+      build_body_eq env reify_atom reify_form 
 	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
   in
 
