@@ -17,7 +17,7 @@ Require Import
         SMT_classes SMT_classes_instances SMT_terms.
 Import BVList.BITVECTOR_LIST. 
 
-Coercion is_true : bool >-> Sortclass.
+Local Coercion is_true : bool >-> Sortclass.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.

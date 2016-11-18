@@ -13,7 +13,7 @@
 (**************************************************************************)
 
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList Logic Tactics.
+Require Import Bool PArray Int63 List ZArith BVList Logic.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope int63_scope.

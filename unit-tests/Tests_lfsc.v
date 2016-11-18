@@ -13,7 +13,7 @@
 (**************************************************************************)
 
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList Logic Tactics.
+Require Import Bool PArray Int63 List ZArith BVList Logic.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope int63_scope.
@@ -22,6 +22,8 @@ Local Open Scope bv_scope.
 
 Import BVList.BITVECTOR_LIST. 
 Require Import FArray.
+
+Unset Coercions.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
@@ -38,12 +40,9 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
   Theorem lia2P: forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
   Proof. smt. Qed.
 
-(*
-  Theorem lia1B: forall (x y: Z), (x >=? y) --> (y <? x) || (x =? y).
-  Proof.  cvc4_bool.
 
- smt. Qed.
-*)
+  Theorem lia1B: forall (x y: Z), (x >=? y) --> (y <? x) || (x =? y).
+  Proof. smt. Qed.
 
   Goal forall (f : Z -> Z) (a:Z), ((f a) > 1) ->  ((f a) + 1) >= 2 \/((f a) = 30) .
   Proof.
@@ -68,12 +67,10 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
     smt.
   Qed.
 
-(*
   Goal forall x: Z, negb (x <? 0%Z) --> Z.geb x 0.
-  Proof. intros. verit.
+  Proof. 
     smt. 
   Qed.
-*)
 
   Goal forall (a b: Z), a = b -> a < (b + 1).
   Proof.
@@ -335,17 +332,16 @@ Section Arrays.
   Local Open Scope farray_scope.
   Local Open Scope bv_scope.
 
-(*
+
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
          (g: farray Z Z -> Z)
          (f: Z -> Z),
          equal a[x <- v] b && equal a[y <- w] b  -->
          Z.eqb (f x) (f y) || Z.eqb (g a) (g b).
-  Proof. intros.
+  Proof.
     smt.
   Qed.
-*)
 
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
@@ -431,7 +427,7 @@ Section Arrays.
     smt.
   Qed.
 
-(*
+
   Goal forall (a b c d: farray Z Z),
       equal b[0 <- 4] c  -->
       equal d b[0 <- 4][1 <- 4]  -->
@@ -440,7 +436,6 @@ Section Arrays.
   Proof.
     smt.
   Qed.
-
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
@@ -453,7 +448,6 @@ Section Arrays.
   Proof.
     smt.
   Qed.
-*)
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
@@ -516,7 +510,6 @@ Section Arrays.
     smt.
   Qed.
 
-(*
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
       bv_eq #b|0|0|0|0| bv1  -->
@@ -540,7 +533,7 @@ Section Arrays.
   Proof.
     Time smt.
   Time Qed.
-*)
+
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
@@ -554,7 +547,7 @@ Section Arrays.
     Time smt.
   Time Qed.
 
-(*
+
   Goal forall (a:bool), a || negb a.
     smt.
   Qed.
@@ -570,7 +563,7 @@ Section Arrays.
   Proof.
     smt.
   Qed.
-*)
+
 
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
          (a b c d : farray (bitvector 4) Z),
@@ -584,12 +577,11 @@ Section Arrays.
     smt.
   Qed.
 
-(*
   Goal forall (a:farray Z Z), equal a a.
   Proof.
     smt.
   Qed.
-*)
+
 
   Goal forall (a b: farray Z Z), a = b <->  b = a.
   Proof. 
@@ -601,20 +593,16 @@ Section Arrays.
     smt.
   Qed.
 
-(*
   Goal forall (a b:bitvector 4), bv_eq a b  -->  bv_eq b a.
   Proof.
     verit.
   Qed.
-*)
 
   Goal forall (a b:bitvector 4), a = b  ->  b = a.
   Proof.
     smt.
   Qed.
 
-
-(*
   Definition lenb := @length bool.
     
   Goal forall (l r: list bool), Nat.eqb (lenb l) (lenb r)  -->  Nat.eqb (lenb l) (lenb r).
@@ -626,18 +614,17 @@ Section Arrays.
   Proof.
     verit.
   Qed.
-*)
+
   Goal forall (a:farray Z Z) i, (select a i) = (select a i).
   Proof.
     smt.
   Qed.
- 
-(*
+
   Goal forall (a:farray Z Z) i, Z.eqb (select (store a i 1) i) (select (store a i 1) i).
   Proof.
     verit.
   Qed.
-*)
+
 
   Goal forall (a:farray Z Z) i, (select (store a i 1) i) = (select (store a i 1) i).
   Proof.
