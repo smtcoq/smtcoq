@@ -200,7 +200,6 @@ VFILES:=versions/standard/Int63/Int63.v\
   SMTCoq.v\
   PropToBool.v\
   BoolToProp.v\
-  Smt.v\
   Tactics.v\  
   SMT_terms.v\
   State.v\

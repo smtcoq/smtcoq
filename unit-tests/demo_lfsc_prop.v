@@ -13,7 +13,7 @@
 (**************************************************************************)
 
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList Logic Smt.
+Require Import Bool PArray Int63 List ZArith BVList Logic Tactics.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope int63_scope.
@@ -130,7 +130,7 @@ Section Arrays.
     smt.
     rewrite read_over_other_write; [ | easy].
     rewrite read_over_write.
-    rewrite read_over_write. red; auto.
+    rewrite read_over_write; auto.
 Qed.
 
 End Arrays.

@@ -1,4 +1,4 @@
-Require Import SMTCoq.
+Require Import SMTCoq Smt.
 
 (* For Notations *)
 Import Bool PArray Int63 List ZArith FArray BVList.BITVECTOR_LIST.
@@ -84,5 +84,5 @@ Goal forall
 
     ((select (store (store (store (store (store (store (store (store (store (store a1 i1 e1) i2 e2) i3 e3) i4 e4) i5 e5) i6 e6) i7 e7) i8 e8) i9 e9) i10 e10) (sk (store (store (store (store (store (store (store (store (store (store a1 i1 e1) i2 e2) i3 e3) i4 e4) i5 e5) i6 e6) i7 e7) i8 e8) i9 e9) i10 e10) (store (store (store (store (store (store (store (store (store (store a1 i9 e9) i3 e3) i5 e5) i4 e4) i6 e6) i1 e1) i10 e10) i2 e2) i8 e8) i7 e7))) =? (select (store (store (store (store (store (store (store (store (store (store a1 i9 e9) i3 e3) i5 e5) i4 e4) i6 e6) i1 e1) i10 e10) i2 e2) i8 e8) i7 e7) (sk (store (store (store (store (store (store (store (store (store (store a1 i1 e1) i2 e2) i3 e3) i4 e4) i5 e5) i6 e6) i7 e7) i8 e8) i9 e9) i10 e10) (store (store (store (store (store (store (store (store (store (store a1 i9 e9) i3 e3) i5 e5) i4 e4) i6 e6) i1 e1) i10 e10) i2 e2) i8 e8) i7 e7)))).
 Proof.
-  Time cvc4.
+  Time smt.
 Qed.
