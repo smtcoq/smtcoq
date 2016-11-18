@@ -1,5 +1,19 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     * Alain Mebsout                                                    *)
+(*     * Burak Ekici                                                      *)
+(*                                                                        *)
+(*     * The University of Iowa                                           *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList Logic.
+Require Import Bool PArray Int63 List ZArith BVList Logic Smt.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope int63_scope.
@@ -23,18 +37,18 @@ Section BV.
       #b|1|1|1|0| = bv4 ->
       bv_ultP bv1 bv2  \/ bv_ultP bv3 bv1 -> bv_ultP bv1 bv3 -> bv_ultP bv1 bv4 \/ bv_ultP bv4 bv1.
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (a: bitvector 32), a = a.
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (bv1 bv2: bitvector 4),
        bv1 = bv2 <-> bv2 = bv1.
   Proof.
-     cvc4; verit.
+     smt.
   Qed.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
@@ -44,14 +58,14 @@ Section BV.
       bv4 = #b|1|1|1|0| ->
       bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
   Proof.
-     cvc4.
+     smt.
   Qed.
 
   Goal forall (a b c: bitvector 4),
                                  (c = (bv_and a b)) ->
                                  ((bv_and (bv_and c a) b) = c).
   Proof.
-     cvc4.
+     smt.
   Qed.
 
 
@@ -66,17 +80,17 @@ Section Arrays.
 
   Goal forall (a:farray Z Z), a = a.
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b: farray Z Z), a = b <->  b = a.
   Proof. 
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b: farray (bitvector 8) (bitvector 8)), a = b <->  b = a.
   Proof. 
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b c d: farray Z Z),
@@ -85,7 +99,7 @@ Section Arrays.
       a = d[1 <- b[1]]  ->
       a = c.
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
@@ -97,7 +111,7 @@ Section Arrays.
       a = d[bv2 <- b[bv2]]  ->
       a = c.
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (a b: farray Z Z)
@@ -107,14 +121,13 @@ Section Arrays.
          (a[x <- v] = b) /\ a[y <- w] = b  ->
          (f x) = (f y) \/  (g a) = (g b).
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (a b: farray Z Z) i,
       a[i <- 3][1 <- b[i <- 4][i]][2 <- 2][1] = 4.
   Proof.
-    cvc4.
-    verit.
+    smt.
     rewrite read_over_other_write; [ | easy].
     rewrite read_over_write.
     rewrite read_over_write; easy.
@@ -129,7 +142,7 @@ Section UF.
          (f: Z -> Z),
          y = x -> (f x) = (f y).
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall
@@ -137,7 +150,7 @@ Section UF.
          (f: Z -> Z),
          (f x) = (f y) -> (f y) = (f x).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall
@@ -145,7 +158,7 @@ Section UF.
          (f: Z -> Z),
          x + 1 = (y + 1) -> (f y) = (f x).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall
@@ -153,17 +166,17 @@ Section UF.
          (f: Z -> Z),
          x = (y + 1) -> (f y) = (f (x - 1)).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (f:Z -> Z -> Z) x y z, (x = y) -> (f z x) = (f z y).
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (t: Type) (p: CompDec t) (x y: t), (x = y) <-> (x = y).
   Proof.
-    cvc4; [ verit | verit ; assumption | assumption  ].
+    smt.
   Qed.
 
 End UF.
@@ -171,32 +184,29 @@ End UF.
 
 Section LIA.
 
-  (* Crash *)
-  (* Goal forall a b, a < b -> a < (b + 10). *)
-  (* Proof. *)
-  (*   cvc4.  *)
-  (* Qed. *)
+   Goal forall a b, a < b -> a < (b + 10).
+   Proof. 
+     smt.
+   Qed.
 
   Goal forall (a b: Z), a = b <-> b = a.
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b: Z), a = a /\ b = b.
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
-  (* Crash *)
-  (* Goal forall (a b: Z), a < b -> a < (b + 1). *)
-  (* Proof. *)
-  (*   cvc4. *)
-  (* Qed. *)
+  Goal forall (a b: Z), a < b -> a < (b + 1).
+  Proof.
+    smt.
+  Qed.
 
-  (* Crash *)
-  (* Goal forall (a b: Z), (a < b) -> (a + 2 < b + 3). *)
-  (* Proof. *)
-  (*   cvc4. *)
-  (* Qed. *)
+  Goal forall (a b: Z), (a < b) -> (a + 2 < b + 3).
+  Proof.
+    smt.
+  Qed.
 
 End LIA.

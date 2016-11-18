@@ -72,8 +72,14 @@ Ltac prop2bool :=
     | [ |- context[?G0 = true <-> ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true <-> G1 = true) (Bool.eqb G0 G1));
       try apply iffP
+
+    | [ |- context[?G0 <> true] ] =>
+      rewrite (@reflect_iff (G0 <> true) (negb G0));
+      try apply negP
           
     (* | [ |- _ : bool] => verit *)
     (* | [ |- _ : bool] => try (cvc4; verit) *)
     (* | [ |- _ : (CompDec _ )] => try easy *)
     end.
+
+

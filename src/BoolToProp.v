@@ -61,6 +61,10 @@ Ltac bool2prop :=
       unfold is_true; rewrite <- (@reflect_iff (G0 = true <-> G1 = true) (G0 <--> G1)); 
       try apply iffP; try rewrite !equal_iff_eq
 
+    | [ |- context[ negb ?G0 ] ] =>
+      unfold is_true; rewrite <- (@reflect_iff ((G0 <> true)) (negb G0)); 
+      try apply negP; try rewrite !equal_iff_eq
+
     | [ 
         R : CompDec ?t
         |- context[ _ : bool ] ] => destruct R

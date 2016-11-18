@@ -1,5 +1,19 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     * Alain Mebsout                                                    *)
+(*     * Burak Ekici                                                      *)
+(*                                                                        *)
+(*     * The University of Iowa                                           *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList Logic.
+Require Import Bool PArray Int63 List ZArith BVList Logic Smt.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope int63_scope.
@@ -11,15 +25,6 @@ Require Import BoolToProp.
 Require Import FArray.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-
-Ltac smt := prop2bool; 
-            repeat 
-              match goal with
-                | [ |- context[ CompDec ?t ] ] => try assumption
-                | [ |- _ : bool] => verit
-                | [ |- _ : bool] => try (cvc4; verit)
-              end;
-            try bool2prop.
 
   Theorem lia1P: forall (t: Type) (k: CompDec t) (x y: t), (x = y) -> (y = x).
   Proof. smt. Admitted.
@@ -46,6 +51,9 @@ Ltac smt := prop2bool;
     smt.
    Qed.
 
+  Goal forall x: Z, ~ (x < 0%Z) -> (8 >= 0).
+  Proof. smt. Qed.
+
   Goal forall (a b: Z), a < b -> a < (b + 1).
   Proof.
     smt.
@@ -54,6 +62,11 @@ Ltac smt := prop2bool;
   Goal forall (a b: Z), (a < b) -> (a + 2) < (b + 3).
   Proof. 
     smt.
+  Qed.
+
+  Goal forall x: Z, negb (x <? 0%Z) --> Z.geb x 0.
+  Proof. 
+    smt. 
   Qed.
 
   Goal forall (a b: Z), a = b -> a < (b + 1).
@@ -1129,7 +1142,7 @@ Section Concret.
   Proof. intros.
     cvc4.
     exact int63_compdec.
-  Qed.  
+  Qed.
 
 End Concret.
 
@@ -1145,7 +1158,7 @@ End Concret2.
 Check concret.
 
 
-(* Congruence in which some premices are REFL *)
+(* Congruence in which some premises are REFL *)
 
 Goal forall (f:Z -> Z -> Z) x y z,
   implb (Z.eqb x y) (Z.eqb (f z x) (f z y)).
