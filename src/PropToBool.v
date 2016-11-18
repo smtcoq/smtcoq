@@ -77,3 +77,16 @@ Ltac prop2bool :=
     (* | [ |- _ : bool] => try (cvc4; verit) *)
     (* | [ |- _ : (CompDec _ )] => try easy *)
     end.
+
+
+  Theorem lia1P': forall (t: Type) (p: CompDec t) (x y: t), (x = y) <-> (x = y).
+  Proof. prop2bool.
+   rewrite <- (@reflect_iff ((eqb x y = true) <-> (eqb x y = true) ) (Bool.eqb (eqb x y) (eqb x y)));
+   try rewrite !eqb_spec; try apply iffP.
+
+rewrite <- (@compdec_eq_eqb _ _).
+
+ Qed.
+
+
+
