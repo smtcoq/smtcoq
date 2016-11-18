@@ -18,15 +18,14 @@ Ltac smt := prop2bool;
                 | [ |- context[ CompDec ?t ] ] => try assumption
                 | [ |- _ : bool] => verit
                 | [ |- _ : bool] => try (cvc4; verit)
-              end.
+              end;
+            try bool2prop.
 
-(*
   Theorem lia1P: forall (t: Type) (k: CompDec t) (x y: t), (x = y) -> (y = x).
   Proof. smt. Admitted.
 
   Theorem lia1P': forall (t: Type) (R: CompDec t) (x y: t), (x = y) <-> (x = y).
-  Proof. smt. prop2bool; try cvc4. prop2bool. cvc4. verit; easy. verit. easy). smt. prop2bool. smt. cvc4. unfold is_true. rewrite eqb_spec0. prop2bool. cvc4. verit. smt. Qed.
-*)
+  Proof. smt. Qed.
 
   Theorem lia1P'': forall (t: Type) (p: CompDec t) (x y: t) (f: t -> t), (x = y) -> (f x) = (f y).
   Proof. smt. Admitted.
@@ -1137,7 +1136,7 @@ End Concret.
 Section Concret2.
   Lemma concret : forall i j, (i == j) || (negb (i == j)).
   Proof.
-    cvc4.
+    smt.
     exact int63_compdec.
   Qed.
 
