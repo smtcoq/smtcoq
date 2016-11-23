@@ -16,9 +16,30 @@
 (*                                                                        *)
 (**************************************************************************)
 
+Require Import
+        Bool ZArith BVList Logic BVList FArray
+        SMT_classes SMT_classes_instances SMT_terms PropToBool BoolToProp.
+Import BVList.BITVECTOR_LIST. 
 
-Require Export PropToBool BoolToProp.  (* Before SMTCoq.State *)
-Require Export Int63 List PArray.
-Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
-Require Export Tactics.
-Export Atom Form Sat_Checker Cnf_Checker Euf_Checker.
+Declare ML Module "smtcoq_plugin".
+
+Infix "-->" := implb (at level 60, right associativity) : bool_scope.
+Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.
+
+
+Ltac zchaff := prop2bool; zchaff_bool.
+Ltac verit  := prop2bool; verit_bool.
+Ltac cvc4   := prop2bool; cvc4_bool.
+
+
+Ltac smt := try prop2bool; 
+            repeat 
+              match goal with
+                | [ |- context[ CompDec ?t ] ] => try assumption
+                | [ |- _ : bool] => verit_bool
+                | [ |- _ : bool] => try (cvc4_bool; verit_bool)
+              end;
+            try bool2prop.
+
+
+(*Ltac smt := (prop2bool; try verit; cvc4_bool; try verit_bool; bool2prop).*)

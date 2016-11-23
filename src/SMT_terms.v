@@ -2702,8 +2702,13 @@ Proof. intros; destruct H; [now left | now right]. Qed.
         case_eq b1; case_eq b2; intros; try easy; try compute in *; now apply H1.
  Qed.
 
-End ReflectFacts.
+ Lemma FalseB : (false = true) <-> False.
+ Proof. split; auto. discriminate. Qed.
 
+ Lemma TrueB : (true = true) <-> True.
+ Proof. split; auto. Qed.
+
+End ReflectFacts.
 
 (* These definitions are not used. This is just a hack, Coq refuses to
    construct PArrays from OCaml if these are not here for some silly reason *)

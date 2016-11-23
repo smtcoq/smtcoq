@@ -51,16 +51,15 @@ Section Unit.
     Inh := unit_inh
   |}.
 
+
+  
   Definition unit_typ_compdec := Typ_compdec unit unit_compdec.
 
-  (** eq predicate in Prop and its equivalence with the one in bool *)
-  Definition eqP_unit: unit -> unit -> Prop := fun _ _ => True.
 
-  Lemma eq_unit_B2P: forall x y, eqb x y = true <-> eqP_unit x y.
-  Proof. intros x y; split; intro H;
-         now case x; case y; intros; compute.
+  Lemma eqb_eq_unit : forall x y, eqb x y <-> x = y.
+  Proof. intros. split; case x; case y; unfold eqb; intros; now auto.
   Qed.
-
+  
 End Unit.
 
 
@@ -112,16 +111,8 @@ Section Bool.
     Inh := bool_inh
   |}.
 
-  (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
-  Definition eqP_bool x y := if Bool.eqb x y then True else False.
-  Definition ltP_bool x y := if ltb_bool x y then True else False.
 
-  Lemma eq_bool_B2P: forall x y, Bool.eqb x y = true <-> eqP_bool x y.
-  Proof. intros x y; split; intro H;
-         case_eq x; case_eq y; intros; subst; compute in *; easy.
-  Qed.
-
-  Lemma lt_bool_B2P: forall x y, ltb_bool x y = true <-> ltP_bool x y.
+  Lemma ltb_bool_iff_lt: forall x y, ltb_bool x y = true <-> lt_bool x y.
   Proof. intros x y; split; intro H;
          case_eq x; case_eq y; intros; subst; compute in *; easy.
   Qed.
@@ -170,6 +161,9 @@ Section Z.
   (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
   Definition eqP_Z x y := if Z.eqb x y then True else False.
   Definition ltP_Z x y := if Z.ltb x y then True else False.
+  Definition leP_Z x y := if Z.leb x y then True else False.
+  Definition gtP_Z x y := if Z.gtb x y then True else False.
+  Definition geP_Z x y := if Z.geb x y then True else False.
 
   Lemma eq_Z_B2P: forall x y, Z.eqb x y = true <-> eqP_Z x y.
   Proof. intros x y; split; intro H.
@@ -185,6 +179,75 @@ Section Z.
          unfold ltP_Z in H.
          case_eq ((x <? y)%Z ); intros; try now subst.
          rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma le_Z_B2P: forall x y, Z.leb x y = true <-> leP_Z x y.
+  Proof. intros x y; split; intro H.
+         unfold leP_Z; now rewrite H.
+         unfold leP_Z in H.
+         case_eq ((x <=? y)%Z ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma gt_Z_B2P: forall x y, Z.gtb x y = true <-> gtP_Z x y.
+  Proof. intros x y; split; intro H.
+         unfold gtP_Z; now rewrite H.
+         unfold gtP_Z in H.
+         case_eq ((x >? y)%Z ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma ge_Z_B2P: forall x y, Z.geb x y = true <-> geP_Z x y.
+  Proof. intros x y; split; intro H.
+         unfold geP_Z; now rewrite H.
+         unfold geP_Z in H.
+         case_eq ((x >=? y)%Z ); intros; try now subst.
+         rewrite H0 in H. now contradict H.
+  Qed.
+
+  Lemma lt_Z_B2P': forall x y, ltP_Z x y <-> Z.lt x y.
+  Proof. intros x y; split; intro H.
+         unfold ltP_Z in H. 
+         case_eq ((x <? y)%Z ); intros; rewrite H0 in H; try easy.
+         now apply Z.ltb_lt in H0.
+         apply lt_Z_B2P.
+         now apply Z.ltb_lt.
+  Qed.
+
+  Lemma le_Z_B2P': forall x y, leP_Z x y <-> Z.le x y.
+  Proof. intros x y; split; intro H.
+         unfold leP_Z in H. 
+         case_eq ((x <=? y)%Z ); intros; rewrite H0 in H; try easy.
+         now apply Z.leb_le in H0.
+         apply le_Z_B2P.
+         now apply Z.leb_le.
+  Qed.
+
+  Lemma gt_Z_B2P': forall x y, gtP_Z x y <-> Z.gt x y.
+  Proof. intros x y; split; intro H.
+         unfold gtP_Z in H. 
+         case_eq ((x >? y)%Z ); intros; rewrite H0 in H; try easy.
+         now apply Zgt_is_gt_bool in H0.
+         apply gt_Z_B2P.
+         now apply Zgt_is_gt_bool.
+  Qed.
+
+  Lemma ge_Z_B2P': forall x y, geP_Z x y <-> Z.ge x y.
+  Proof. intros x y; split; intro H.
+         unfold geP_Z in H. 
+         case_eq ((x >=? y)%Z ); intros; rewrite H0 in H; try easy.
+         rewrite Z.geb_leb in H0. rewrite le_Z_B2P in H0.
+         apply le_Z_B2P' in H0. now apply Z.ge_le_iff.
+         apply ge_Z_B2P.
+         rewrite Z.geb_leb. rewrite le_Z_B2P.
+         apply le_Z_B2P'. now apply Z.ge_le_iff.
+  Qed.
+
+  Lemma leibniz_eq_Z_B2P: forall x y, eqP_Z x y <-> Logic.eq x y.
+  Proof. intros x y; split; intro H.
+         unfold eqP_Z in H. case_eq ((x =? y)%Z); intros.
+         now apply Z.eqb_eq in H0. rewrite H0 in H. now contradict H.
+         rewrite H. unfold eqP_Z. now rewrite Z.eqb_refl.
   Qed.
 
 End Z.
@@ -226,26 +289,6 @@ Section Nat.
     Inh := Nat_inh
   |}.
 
-  (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
-  Definition eqP_Nat x y := if Nat.eqb x y then True else False.
-  Definition ltP_Nat x y := if Nat.ltb x y then True else False.
-
-  Lemma eq_Nat_B2P: forall x y, Nat.eqb x y = true <-> eqP_Nat x y.
-  Proof. intros x y; split; intro H.
-         unfold eqP_Nat; now rewrite H.
-         unfold eqP_Nat in H.
-         case_eq ((x =? y)%nat ); intros; try now subst.
-         rewrite H0 in H. now contradict H.
-  Qed.
-
-  Lemma lt_Nat_B2P: forall x y, Nat.ltb x y = true <-> ltP_Nat x y.
-  Proof. intros x y; split; intro H.
-         unfold ltP_Nat; now rewrite H.
-         unfold ltP_Nat in H.
-         case_eq ((x <? y)%nat ); intros; try now subst.
-         rewrite H0 in H. now contradict H.
-  Qed.
-
 End Nat.
 
 
@@ -282,25 +325,6 @@ Section Positive.
     Inh := Positive_inh
   |}.
 
-  (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
-  Definition eqP_Pos x y := if Pos.eqb x y then True else False.
-  Definition ltP_Pos x y := if Pos.ltb x y then True else False.
-
-  Lemma eq_Pos_B2P: forall x y, Pos.eqb x y = true <-> eqP_Pos x y.
-  Proof. intros x y; split; intro H.
-         unfold eqP_Pos; now rewrite H.
-         unfold eqP_Pos in H.
-         case_eq ((x =? y)%positive ); intros; try now subst.
-         rewrite H0 in H. now contradict H.
-  Qed.
-
-  Lemma lt_Pos_B2P: forall x y, Pos.ltb x y = true <-> ltP_Pos x y.
-  Proof. intros x y; split; intro H.
-         unfold ltP_Pos; now rewrite H.
-         unfold ltP_Pos in H.
-         case_eq ((x <? y)%positive ); intros; try now subst.
-         rewrite H0 in H. now contradict H.
-  Qed.
 
 End Positive.
 
@@ -563,17 +587,7 @@ Section Int63.
     Comp := int63_comp;
     Inh := int63_inh
   |}.
-
-  (** lt and eq predicates in Prop and their equivalences with the ones in bool *)
-  Definition eqP_int63 x y := if Int63Native.eqb x y then True else False.
-
-  Lemma eq_int63_B2P: forall x y, Int63Native.eqb x y = true <-> eqP_int63 x y.
-  Proof. intros x y; split; intro H.
-         unfold eqP_int63; now rewrite H.
-         unfold eqP_int63 in H.
-         case_eq ((x == y) ); intros; try now subst.
-         rewrite H0 in H. now contradict H.
-  Qed.
+         
 
 End Int63.
 

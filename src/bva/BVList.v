@@ -59,7 +59,6 @@ Module Type BITVECTOR.
 
   (*equality*)
   Parameter bv_eq     : forall n, bitvector n -> bitvector n -> bool.
-  Parameter bv_eqP    : forall n, bitvector n -> bitvector n -> Prop.
 
   (*binary operations*)
   Parameter bv_concat : forall n m, bitvector n -> bitvector m -> bitvector (n + m).
@@ -93,9 +92,6 @@ Module Type BITVECTOR.
   Axiom bits_size     : forall n (bv:bitvector n), List.length (bits bv) = N.to_nat n.
   Axiom bv_eq_reflect : forall n (a b:bitvector n), bv_eq a b = true <-> a = b.
   Axiom bv_eq_refl    : forall n (a:bitvector n), bv_eq a a = true.
-  Axiom bv_eq_reflectP: forall n (a b:bitvector n), bv_eqP a b <-> a = b.
-
-  Axiom bv_eq_B2P     : forall n (a b:bitvector n), bv_eq a b = true <-> bv_eqP a b.
 
   Axiom bv_ult_B2P    : forall n (a b:bitvector n), bv_ult a b = true <-> bv_ultP a b.
   Axiom bv_slt_B2P    : forall n (a b:bitvector n), bv_slt a b = true <-> bv_sltP a b.
@@ -132,7 +128,6 @@ Parameter zeros      : N -> bitvector.
 
 (*equality*)
 Parameter bv_eq      : bitvector -> bitvector -> bool.
-Parameter bv_eqP     : bitvector -> bitvector -> Prop.
 
 (*binary operations*)
 Parameter bv_concat  : bitvector -> bitvector -> bitvector.
@@ -193,8 +188,6 @@ Axiom bv_sextn_size  : forall (n i: N) a,
 
 (* Specification *)
 Axiom bv_eq_reflect  : forall a b, bv_eq a b = true <-> a = b.
-Axiom bv_eq_reflectP : forall a b, bv_eqP a b <-> a = b.
-Axiom bv_eq_B2P      : forall a b, bv_eq a b = true <-> bv_eqP a b.
 Axiom bv_eq_refl     : forall a, bv_eq a a = true.
 
 
@@ -251,8 +244,6 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
     @MkBitvector _ (M.zeros n) (M.zeros_size n).
 
   Definition bv_eq n (bv1 bv2:bitvector n) := M.bv_eq bv1 bv2.
-
-  Definition bv_eqP n (bv1 bv2:bitvector n) := M.bv_eqP bv1 bv2.
 
   Definition bv_ultP n (bv1 bv2:bitvector n) := M.bv_ultP bv1 bv2.
 
@@ -325,23 +316,6 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Lemma bv_eq_refl n (a : bitvector n) : bv_eq a a = true.
   Proof.
     unfold bv_eq. now rewrite M.bv_eq_reflect.
-  Qed.
-
-  Lemma bv_eq_reflectP n (a b: bitvector n): bv_eqP a b <-> a = b.
-  Proof.
-    unfold bv_eqP. rewrite M.bv_eq_reflectP. split.
-    - revert a b. intros [a Ha] [b Hb]. simpl. intros ->.
-      rewrite (proof_irrelevance Ha Hb). reflexivity.
-    - intros. case a in *. case b in *. simpl in *.
-      now inversion H. (* now intros ->. *)
-  Qed.
-
-  Lemma bv_eq_B2P: forall n (a b: bitvector n), bv_eq a b = true <-> bv_eqP a b.
-  Proof.     
-      unfold bv_eqP, bv_eq. intros.
-      rewrite M.bv_eq_reflectP, M.bv_eq_reflect. split.
-    - revert a b. intros [a Ha] [b Hb]. simpl. intros ->. easy.
-    - intros. case a in *. case b in *. simpl in *. easy.
   Qed.
 
   Lemma bv_ult_not_eqP: forall n (a b: bitvector n), bv_ultP a b -> a <> b.
@@ -466,9 +440,6 @@ Fixpoint beq_listP (l m : list bool) {struct l} :=
     | x :: l', y :: m' => (x = y) /\ (beq_listP l' m')
     | _, _ => False
   end.
-
-Definition bv_eqP (a b: bitvector): Prop :=
-  if ((size a) =? (size b)) then beq_listP (bits a) (bits b) else False.
 
 Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
 Proof.
@@ -883,22 +854,6 @@ Qed.
 Lemma bv_eq_refl a: bv_eq a a = true.
 Proof.
   unfold bv_eq. rewrite N.eqb_refl. now apply List_eq. 
-Qed.
-
-Lemma bv_eq_reflectP a b : bv_eqP a b <-> a = b.
-Proof.
-  unfold bv_eqP. case_eq (size a =? size b); intro Heq; simpl.
-  - apply List_eqP.
-  - split. easy.
-    intro H. rewrite H, N.eqb_refl in Heq. discriminate.
-Qed.
-
-Lemma bv_eq_B2P a b : bv_eq a b = true <-> bv_eqP a b.
-Proof.
-  unfold bv_eq, bv_eqP. case_eq (size a =? size b); intro Heq; simpl.
-  - split; intros. apply List_eq in H; rewrite H. now apply List_eqP_refl.
-    apply List_eqP in H; rewrite H; now apply List_eq_refl.
-  - easy.
 Qed.
 
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = (n + m)%N.

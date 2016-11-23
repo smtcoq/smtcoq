@@ -1026,20 +1026,22 @@ Section FArray.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
   Variable elt_comp : Comparable elt.
-  Variable key_inh :  Inhabited key.
-  Variable elt_inh :  Inhabited elt.
+  (* Variable key_inh :  Inhabited key. *)
+  (* Variable elt_inh :  Inhabited elt. *)
 
   Set Implicit Arguments.
 
-  Definition NoDefault l := forall k:key, ~ Raw.MapsTo k default_value l.
+  Definition NoDefault l (d:elt) := forall k:key, ~ Raw.MapsTo k d l.
 
-  Record farray :=
+  Record slist :=
     {this :> Raw.farray key elt;
      sorted : sort (Raw.ltk key_ord) this;
-     nodefault : NoDefault this
+     default : elt;
+     nodefault : NoDefault this default;
     }.
+  Definition farray := slist.
 
-  Lemma empty_nodefault : NoDefault (Raw.empty key elt).
+  Lemma empty_nodefault : forall d, NoDefault (Raw.empty key elt) d.
     unfold NoDefault.
     intros.
     apply Raw.empty_1.
@@ -1057,8 +1059,8 @@ Section FArray.
       apply lt_not_eq in l; now contradict l.
   Qed.
 
-  Lemma remove_nodefault : forall l (Hd:NoDefault l) (Hs:Sorted (Raw.ltk key_ord) l) x ,
-      NoDefault (Raw.remove key_comp x l).
+  Lemma remove_nodefault : forall l d (Hd:NoDefault l d) (Hs:Sorted (Raw.ltk key_ord) l) x ,
+      NoDefault (Raw.remove key_comp x l) d.
   Proof.
     intros.
     unfold NoDefault. intros.
@@ -1067,36 +1069,36 @@ Section FArray.
     now apply Hd in H.
   Qed.
 
-  Definition raw_add_nodefault (k:key) (x:elt) (l:Raw.farray key elt) :=
-    if cmp x default_value then
+  Definition raw_add_nodefault (k:key) (x:elt) (default:elt) (l:Raw.farray key elt) :=
+    if cmp x default then
       if Raw.mem key_comp k l then Raw.remove key_comp k l
       else l
     else Raw.add key_comp k x l.
 
 
-  Lemma add_sorted : forall l (Hs:Sorted (Raw.ltk key_ord) l) x e,
-      Sorted (Raw.ltk key_ord) (raw_add_nodefault x e l).
+  Lemma add_sorted : forall l d (Hs:Sorted (Raw.ltk key_ord) l) x e,
+      Sorted (Raw.ltk key_ord) (raw_add_nodefault x e d l).
   Proof.
     intros.
     unfold raw_add_nodefault.
-    case (cmp e default_value); auto.
+    case (cmp e d); auto.
     case (Raw.mem key_comp x l); auto.
     apply Raw.remove_sorted; auto.
     apply Raw.add_sorted; auto.
   Qed.
 
-  Lemma add_nodefault : forall l (Hd:NoDefault l) (Hs:Sorted (Raw.ltk key_ord) l) x e,
-      NoDefault (raw_add_nodefault x e l).
+  Lemma add_nodefault : forall l d (Hd:NoDefault l d) (Hs:Sorted (Raw.ltk key_ord) l) x e,
+      NoDefault (raw_add_nodefault x e d l) d.
   Proof.
     intros.
     unfold raw_add_nodefault.
-    case_eq (cmp e default_value); intro; auto.
+    case_eq (cmp e d); intro; auto.
     case_eq (Raw.mem key_comp x l); intro; auto.
     apply remove_nodefault; auto.
     unfold NoDefault; intros.
-    assert (e <> default_value).
+    assert (e <> d).
       unfold cmp in H.
-      case (compare e default_value) in H; try now contradict H.
+      case (compare e d) in H; try now contradict H.
       apply lt_not_eq in l0; auto.
       apply lt_not_eq in l0; now auto.
     destruct (eq_dec k x).
@@ -1113,36 +1115,53 @@ Section FArray.
       intro. now apply Hd in H3.
   Qed.
 
-  Definition empty : farray :=
-    Build_farray (Raw.empty_sorted elt key_ord) empty_nodefault.
+  (* Definition empty : farray := *)
+  (*   Build_slist (Raw.empty_sorted elt key_ord) empty_nodefault. *)
 
-  Definition is_empty m : bool := Raw.is_empty m.(this).
+  Definition const_array (default:elt) : farray :=
+    Build_slist
+      (Raw.empty_sorted elt key_ord)
+      (@empty_nodefault default).
+
+  Definition is_const_default m : bool := Raw.is_empty m.(this).
 
   Definition add x e m : farray :=
-    Build_farray (add_sorted m.(sorted) x e)
+    Build_slist (add_sorted m.(default) m.(sorted) x e)
                 (add_nodefault m.(nodefault) m.(sorted) x e).
 
   Definition find x m : option elt := Raw.find key_comp x m.(this).
 
   Definition remove x m : farray :=
-    Build_farray (Raw.remove_sorted key_comp m.(sorted) x) (remove_nodefault m.(nodefault) m.(sorted) x).
+    Build_slist
+      (Raw.remove_sorted key_comp m.(sorted) x)
+      (remove_nodefault m.(nodefault) m.(sorted) x).
 
   Definition mem x m : bool := Raw.mem key_comp x m.(this).
   Definition elements m : list (key*elt) := Raw.elements m.(this).
   Definition cardinal m := length m.(this).
   Definition fold (A:Type)(f:key->elt->A->A) m (i:A) : A :=
     Raw.fold f m.(this) i.
-  Definition equal m m' : bool := Raw.equal key_comp cmp m.(this) m'.(this).
+  Definition equal m m' : bool :=
+    if eq_dec m.(default) m'.(default) then
+       Raw.equal key_comp cmp m.(this) m'.(this)
+    else false.
 
   Definition MapsTo x e m : Prop := Raw.MapsTo x e m.(this).
   Definition In x m : Prop := Raw.In x m.(this).
   Definition Empty m : Prop := Raw.Empty m.(this).
 
-  Definition Equal m m' := forall y, find y m = find y m'.
+  Definition Equal m m' :=
+    m.(default) = m'.(default) /\
+    forall y, find y m = find y m'.
+  
   Definition Equiv m m' :=
+    m.(default) = m'.(default) /\
     (forall k, In k m <-> In k m') /\
     (forall k e e', MapsTo k e m -> MapsTo k e' m' -> e = e').
-  Definition Equivb m m' : Prop := Raw.Equivb cmp m.(this) m'.(this).
+  
+  Definition Equivb m m' : Prop :=
+    m.(default) = m'.(default) /\
+    Raw.Equivb cmp m.(this) m'.(this).
 
   Definition eq_key : (key*elt) -> (key*elt) -> Prop := @Raw.eqk key elt.
   Definition eq_key_elt : (key*elt) -> (key*elt) -> Prop:= @Raw.eqke key elt.
@@ -1157,20 +1176,13 @@ Section FArray.
   Lemma mem_2 : forall m x, mem x m = true -> In x m.
   Proof. intros m; apply (Raw.mem_2); auto. apply m.(sorted). Qed.
 
-  Lemma empty_1 : Empty empty.
-  Proof. apply Raw.empty_1. Qed.
-
-  Lemma is_empty_1 : forall m, Empty m -> is_empty m = true.
-  Proof. intros m; apply Raw.is_empty_1. Qed.
-  Lemma is_empty_2 :  forall m, is_empty m = true -> Empty m.
-  Proof. intros m; apply Raw.is_empty_2. Qed.
-
-  Lemma add_1 : forall m x y e, e <> default_value -> eq x y -> MapsTo y e (add x e m).
+  
+  Lemma add_1 : forall m x y e, e <> m.(default) -> eq x y -> MapsTo y e (add x e m).
   Proof. intros.
     unfold add, raw_add_nodefault.
     unfold MapsTo. simpl.
-    case_eq (cmp e default_value); intro; auto.
-    unfold cmp in H1. destruct (compare e default_value); try now contradict H1.
+    case_eq (cmp e m.(default)); intro; auto.
+    unfold cmp in H1. destruct (compare e m.(default)); try now contradict H1.
     apply Raw.add_1; auto.
   Qed.
 
@@ -1178,7 +1190,7 @@ Section FArray.
   Proof.
     intros.
     unfold add, raw_add_nodefault, MapsTo. simpl.
-    case_eq (cmp e' default_value); intro; auto.
+    case_eq (cmp e' m.(default)); intro; auto.
     case_eq (Raw.mem key_comp x m); intro; auto.
     apply (Raw.remove_2 _ m.(sorted)); auto.
     apply Raw.add_2; auto.
@@ -1188,7 +1200,7 @@ Section FArray.
   Proof.
     unfold add, raw_add_nodefault, MapsTo. simpl.
     intros m x y e e'.
-    case_eq (cmp e' default_value); intro; auto.
+    case_eq (cmp e' m.(default)); intro; auto.
     case_eq (Raw.mem key_comp x m); intro; auto.
     intro. apply (Raw.remove_3 _ m.(sorted)); auto.
     apply Raw.add_3; auto.
@@ -1229,10 +1241,21 @@ Section FArray.
   Proof. intros m; apply Raw.fold_1. Qed.
 
   Lemma equal_1 : forall m m', Equivb m m' -> equal m m' = true.
-  Proof. intros m m'; apply Raw.equal_1; auto. apply m.(sorted). apply  m'.(sorted). Qed.
+  Proof. intros m m'; unfold Equivb, equal.
+    case (eq_dec (default m) (default m')); intro H.
+    - intro H0. destruct H0.
+      apply Raw.equal_1; auto. apply m.(sorted). apply  m'.(sorted).
+    - intro H0. destruct H0. now contradict H.
+  Qed.
 
+  
   Lemma equal_2 : forall m m', equal m m' = true -> Equivb m m'.
-  Proof. intros m m'; apply Raw.equal_2; auto. apply m.(sorted). apply  m'.(sorted). Qed.
+  Proof. intros m m'; unfold Equivb, equal.
+    case (eq_dec (default m) (default m')); intros.
+    - split; auto. 
+      apply Raw.equal_2 in H; auto. apply m.(sorted). apply m'.(sorted).
+    - now contradict H.
+  Qed.
 
   Fixpoint eq_list (m m' : list (key * elt)) : Prop :=
     match m, m' with
@@ -1245,9 +1268,13 @@ Section FArray.
     | _, _ => False
     end.
 
-  Definition eq m m' := eq_list m.(this) m'.(this).
+  Definition eq m m' :=
+    if eq_dec m.(default) m'.(default) then
+      eq_list m.(this) m'.(this)
+    else False.
 
-  Lemma nodefault_tail : forall x m, NoDefault (x :: m) -> NoDefault m.
+  
+  Lemma nodefault_tail : forall x m d, NoDefault (x :: m) d -> NoDefault m d.
     unfold NoDefault. unfold not in *. intros.
     apply (H k). unfold Raw.MapsTo. apply InA_cons_tl. apply H0.
   Qed.
@@ -1276,10 +1303,11 @@ Section FArray.
 
   Lemma eq_equal : forall m m', eq m m' <-> equal m m' = true.
   Proof.
-    intros (l,Hl,Hd); induction l.
-    intros (l',Hl',Hd'); unfold eq; simpl.
-    destruct l'; unfold equal; simpl; intuition.
-    intros (l',Hl',Hd'); unfold eq.
+    intros (l,Hl,d,Hd); induction l.
+    intros (l',Hl',d',Hd'); unfold eq, equal; simpl; case (eq_dec d d'); intro;
+      destruct l'; simpl; intuition.
+    intros (l',Hl',d',Hd'); unfold eq. simpl.
+    unfold equal; simpl; case (eq_dec d d'); intro He; simpl; [ | now intuition].
     destruct l'.
     destruct a; unfold equal; simpl; intuition.
     destruct a as (x,e).
@@ -1288,14 +1316,15 @@ Section FArray.
     destruct (compare x x') as [Hlt|Heq|Hlt]; simpl; intuition.
     unfold cmp at 1.
     case (compare e e');
-    subst; intro HH; try (apply lt_not_eq in HH; now contradict HH);
+    subst x' e'; intro HH; try (apply lt_not_eq in HH; now contradict HH);
     clear HH; simpl.
     inversion_clear Hl.
     inversion_clear Hl'.
     apply nodefault_tail in Hd.
     apply nodefault_tail in Hd'.
-    destruct (IHl H Hd (Build_farray H2 Hd')).
-    unfold equal, eq in H5; simpl in H5; auto.
+    destruct (IHl H Hd (Build_slist H2 Hd')).
+    unfold equal, eq in H5, H4; simpl in H5, H4; subst d'.
+    destruct (eq_dec d d); auto.
     destruct (andb_prop _ _ H); clear H.
     generalize H0; unfold cmp.
     case (compare e e');
@@ -1306,8 +1335,9 @@ Section FArray.
     inversion_clear Hl'.
     apply nodefault_tail in Hd.
     apply nodefault_tail in Hd'.
-    destruct (IHl H Hd (Build_farray H3 Hd')).
-    unfold equal, eq in H6; simpl in H6; auto.
+    destruct (IHl H Hd (Build_slist H3 Hd')).
+    unfold equal, eq in H5, H6; simpl in H5, H6; subst d'.
+    destruct (eq_dec d d); auto. now contradict n.
   Qed.
 
   Lemma eq_1 : forall m m', Equivb m m' -> eq m m'.
@@ -1328,7 +1358,9 @@ Section FArray.
 
   Lemma eqfarray_refl : forall m : farray, eq m m.
   Proof.
-    intros (m,Hm,Hd); induction m; unfold eq; simpl; auto.
+    intros (m,Hm,d,Hd). unfold eq. simpl.
+    destruct (eq_dec d d); auto.
+    induction m; simpl; auto.
     destruct a.
     destruct (compare k k) as [Hlt|Heq|Hlt]; auto.
     apply lt_not_eq in Hlt. auto.
@@ -1342,25 +1374,33 @@ Section FArray.
 
   Lemma eqfarray_sym : forall m1 m2 : farray, eq m1 m2 -> eq m2 m1.
   Proof.
-    intros (m,Hm,Hd); induction m;
-      intros (m',Hm',Hd'); destruct m'; unfold eq; simpl;
-        try destruct a as (x,e); try destruct p as (x',e'); auto.
+    unfold eq.
+    intros (m,Hm,d,Hd); induction m;
+      intros (m',Hm',d',Hd'); destruct m'; unfold eq; simpl;
+        destruct (eq_dec d d'); auto; intuition;
+        subst d'; destruct (eq_dec d d) as [He | He]; auto;
+          try destruct a as (x,e); try destruct p as (x',e'); auto; intuition.
     destruct (compare x x')  as [Hlt|Heq|Hlt]; try easy.
-    inversion_clear Hm; inversion_clear Hm'.
+    inversion_clear Hm; inversion_clear Hm'. destruct H.
     apply nodefault_tail in Hd. apply nodefault_tail in Hd'.
-    intro. destruct H3.
+    (* intro. destruct H3. *)
     subst.
     case (compare x' x');
     subst; intro HH; try (apply lt_not_eq in HH; now contradict HH).
     split; auto.
-    apply (IHm H Hd (Build_farray H1 Hd')); auto.
+    specialize (IHm H0 Hd (Build_slist H2 Hd')).
+    simpl in IHm. case (eq_dec d d) in IHm; intuition.
   Qed.
 
   Lemma eqfarray_trans : forall m1 m2 m3 : farray, eq m1 m2 -> eq m2 m3 -> eq m1 m3.
   Proof.
-    intros (m1,Hm1,Hd1); induction m1;
-      intros (m2,Hm2,Hd2); destruct m2;
-        intros (m3,Hm3,Hd3); destruct m3; unfold eq; simpl;
+    unfold eq.
+    intros (m1,Hm1,d1,Hd1); induction m1;
+      intros (m2,Hm2,d2,Hd2); destruct m2;
+        intros (m3,Hm3,d3,Hd3); destruct m3; unfold eq; simpl;
+          destruct (eq_dec d1 d2);
+          destruct (eq_dec d2 d3);
+          destruct (eq_dec d1 d3); simpl in *; subst; intuition;
           try destruct a as (x,e);
           try destruct p as (x',e');
           try destruct p0 as (x'',e''); try contradiction; auto.
@@ -1374,7 +1414,9 @@ Section FArray.
     apply nodefault_tail in Hd1.
     apply nodefault_tail in Hd2.
     apply nodefault_tail in Hd3.
-    apply (IHm1 H Hd1 (Build_farray H3 Hd2) (Build_farray H5 Hd3)); intuition.
+    specialize (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)).
+    simpl in IHm1.
+    case (eq_dec d3 d3) in IHm1; intuition.
   Qed.
 
   Fixpoint lt_list (m m' : list (key * elt)) : Prop :=
@@ -1390,17 +1432,24 @@ Section FArray.
       end
     end.
 
-  Definition lt_farray m m' := lt_list m.(this) m'.(this).
+  Definition lt_farray m m' :=
+    lt m.(default) m'.(default) \/
+    (m.(default) = m'.(default) /\
+     lt_list m.(this) m'.(this)).
 
   Lemma lt_farray_trans : forall m1 m2 m3 : farray,
       lt_farray m1 m2 -> lt_farray m2 m3 -> lt_farray m1 m3.
   Proof.
-    intros (m1,Hm1,Hd1); induction m1;
-      intros (m2,Hm2,Hd2); destruct m2;
-        intros (m3,Hm3,Hd3); destruct m3; unfold lt_farray; simpl;
+    intros (m1,Hm1,d1,Hd1); induction m1;
+      intros (m2,Hm2,d2,Hd2); destruct m2;
+        intros (m3,Hm3,d3,Hd3); destruct m3; unfold lt_farray; simpl;
           try destruct a as (x,e);
           try destruct p as (x',e');
-          try destruct p0 as (x'',e''); try contradiction; auto.
+          try destruct p0 as (x'',e''); try contradiction; intuition; auto;
+            try (left; apply (lt_trans d1 d2 d3); now auto);
+            try (left; subst; now auto);
+            try (right; subst; auto).
+    split; auto.
     destruct (compare x x') as [Hlt|Heq|Hlt];
       destruct (compare x' x'') as [Hlt'|Heq'|Hlt'];
       destruct (compare x x'') as [Hlt''|Heq''|Hlt'']; intros; subst; auto; try easy.
@@ -1416,7 +1465,7 @@ Section FArray.
     apply lt_not_eq in Hlt'. now contradict Hlt'.
     apply (lt_trans x'') in Hlt'; apply lt_not_eq in Hlt'.
     now contradict Hlt'. auto.
-    destruct H, H0.
+    destruct H2, H3.
     left; apply lt_trans with e'; auto.
     left. destruct H0. subst; auto.
     left. destruct H. subst; auto.
@@ -1425,74 +1474,93 @@ Section FArray.
     apply nodefault_tail in Hd1.
     apply nodefault_tail in Hd2.
     apply nodefault_tail in Hd3.
-    apply (IHm1 H Hd1 (Build_farray H3 Hd2) (Build_farray H5 Hd3)); intuition.
+    specialize (IHm1 H Hd1 (Build_slist H3 Hd2) (Build_slist H5 Hd3)).
+    unfold lt_farray in IHm1. simpl in IHm1. destruct IHm1; auto.
+    apply lt_not_eq in H7. now contradict H7.
+    destruct H7; auto.
     apply lt_not_eq in Hlt''. now contradict Hlt''.
   Qed.
 
   Lemma lt_farray_not_eq : forall m1 m2 : farray, lt_farray m1 m2 -> ~ eq m1 m2.
   Proof.
-    intros (m1,Hm1,Hd1); induction m1;
-      intros (m2,Hm2,Hd2); destruct m2; unfold eq, lt; simpl;
+    intros (m1,Hm1,d1,Hd1); induction m1;
+      intros (m2,Hm2,d2,Hd2); destruct m2; unfold eq, lt, lt_farray; simpl;
         try destruct a as (x,e);
-        try destruct p as (x',e'); try contradiction; auto.
+        try destruct p as (x',e'); try contradiction; auto; intuition;
+          destruct (eq_dec d1 d2); intuition.
+    apply lt_not_eq in H1. now contradict H1.
+    apply lt_not_eq in H1. now contradict H1.
     destruct (compare x x') as [Hlt|Heq|Hlt]; auto.
-    intuition.
+    (* intuition. *)
     inversion_clear Hm1; inversion_clear Hm2.
     specialize (nodefault_tail Hd2).
     specialize (nodefault_tail Hd1). intros.
     subst.
-    apply (IHm1 H0 H6 (Build_farray H4 H7)); intuition.
-    unfold lt_farray in *.
-    simpl in H.
-    case (compare x' x') in *.
-    apply lt_not_eq in l. now contradict l.
-    destruct H.
-    apply lt_not_eq in H. now contradict H.
-    destruct H.
-    auto.
-    apply lt_not_eq in l. now contradict l.
+    apply (IHm1 H1 H6 (Build_slist H4 H7)); intuition;
+      unfold lt_farray in *; simpl in *;
+        try (apply lt_not_eq in H0; now contradict H0).
+    right; split; auto.
+    unfold eq. simpl.
+    destruct (eq_dec d2 d2); intuition.
   Qed.
 
   Definition compare_farray : forall m1 m2, Compare lt_farray eq m1 m2.
   Proof.
-    intros (m1,Hm1,Hd1); induction m1;
-      intros (m2,Hm2,Hd2); destruct m2;
+    intros m1 m2.
+    destruct (compare m1.(default) m2.(default)).
+    - apply LT.
+      unfold lt_farray. simpl; auto.
+    - revert m1 m2 e.
+      intros (m1,Hm1,d1,Hd1); induction m1;
+      intros (m2,Hm2,d2,Hd2); destruct m2; simpl; intro He; subst;
         [ apply EQ | apply LT | apply GT | ]; auto.
     (* cmp_solve. *)
-    unfold eq. simpl; auto.
-    unfold lt_farray. simpl; auto.
-    unfold lt_farray. simpl; auto.
-    destruct a as (x,e); destruct p as (x',e').
-    destruct (compare x x');
-      [ apply LT | | apply GT ].
-    unfold lt_farray. simpl.
-    destruct (compare x x'); auto.
-    subst. apply lt_not_eq in l; now contradict l.
-    apply (lt_trans x') in l; auto. subst. apply lt_not_eq in l; now contradict l.
-    (* subst. *)
-    destruct (compare e e');
-      [ apply LT | | apply GT ].
-    unfold lt_farray. simpl.
-    destruct (compare x x'); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
-    assert (Hm11 : sort (Raw.ltk key_ord) m1).
-    inversion_clear Hm1; auto.
-    assert (Hm22 : sort (Raw.ltk key_ord) m2).
-    inversion_clear Hm2; auto.
-    specialize (nodefault_tail Hd2). specialize (nodefault_tail Hd1).
-    intros Hd11 Hd22.
-    destruct (IHm1 Hm11 Hd11 (Build_farray Hm22 Hd22));
-      [ apply LT | apply EQ | apply GT ].
-    unfold lt_farray in *. simpl.
-    destruct (compare x x'); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
-    unfold eq in *. simpl.
-    destruct (compare x x'); auto; try (subst; apply lt_not_eq in l; now contradict l).
-    unfold lt_farray in *. simpl.
-    destruct (compare x' x); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
-    unfold lt_farray in *. simpl.
-    destruct (compare x' x); auto; try (subst; apply lt_not_eq in l0; now contradict l0).
-    unfold lt_farray in *. simpl.
-    destruct (compare x' x); auto; try (subst; apply lt_not_eq in l; now contradict l).
-    apply (lt_trans x) in l; auto. subst. apply lt_not_eq in l; now contradict l.
+      + unfold eq. simpl. destruct (eq_dec d2 d2); auto.
+      + unfold lt_farray. simpl. right; auto.
+      + unfold lt_farray. simpl. right; auto.
+      + destruct a as (x,e); destruct p as (x',e').
+        destruct (compare x x');
+          [ apply LT | | apply GT ].
+        unfold lt_farray. simpl.
+        destruct (compare x x'); auto.
+        subst. apply lt_not_eq in l; now contradict l.
+        apply (lt_trans x') in l; auto. subst. apply lt_not_eq in l; now contradict l.
+        (* subst. *)
+        destruct (compare e e');
+          [ apply LT | | apply GT ].
+         * unfold lt_farray. simpl.
+           destruct (compare x x'); auto;
+             try (subst; apply lt_not_eq in l0; now contradict l0).
+         * assert (Hm11 : sort (Raw.ltk key_ord) m1).
+           inversion_clear Hm1; auto.
+           assert (Hm22 : sort (Raw.ltk key_ord) m2).
+           inversion_clear Hm2; auto.
+           specialize (nodefault_tail Hd2). specialize (nodefault_tail Hd1).
+           intros Hd11 Hd22.
+           destruct (IHm1 Hm11 Hd11 (Build_slist Hm22 Hd22));
+             [ simpl; auto | apply LT | apply EQ | apply GT ].
+           -- unfold lt_farray in *. simpl in *.
+              destruct (compare x x'); auto;
+                try (subst; apply lt_not_eq in l0; now contradict l0).
+              intuition.
+           -- unfold eq in *. simpl in *.
+              destruct (compare x x'); auto;
+                try (subst; apply lt_not_eq in l; now contradict l).
+              destruct (eq_dec d2 d2); intuition.
+           -- unfold lt_farray in *. simpl in *.
+              destruct (compare x' x); auto;
+                try (subst; apply lt_not_eq in l0; now contradict l0).
+              intuition.
+         * unfold lt_farray in *. simpl.
+           destruct (compare x' x); auto;
+             try (subst; apply lt_not_eq in l0; now contradict l0).
+         * unfold lt_farray in *. simpl.
+           destruct (compare x' x); auto;
+             try (subst; apply lt_not_eq in l; now contradict l).
+           apply (lt_trans x) in l; auto.
+           apply lt_not_eq in l; now contradict l.
+    - apply GT.
+      unfold lt_farray. simpl; auto.
   Qed.
 
   Lemma eq_option_alt : forall (elt:Type)(o o':option elt),
@@ -1517,14 +1585,14 @@ Section FArray.
 
 
   Lemma add_eq_o : forall m x y e,
-      x = y -> e <> default_value -> find y (add x e m) = Some e.
+      x = y -> e <> m.(default) -> find y (add x e m) = Some e.
   Proof. intros.
     apply find_1.
     apply add_1; auto.
   Qed.
 
-  Lemma raw_add_d_rem : forall m (Hm: Sorted (Raw.ltk key_ord) m) x,
-      raw_add_nodefault x default_value m = Raw.remove key_comp x m.
+  Lemma raw_add_d_rem : forall m (Hm: Sorted (Raw.ltk key_ord) m) x d,
+      raw_add_nodefault x d d m = Raw.remove key_comp x m.
     intros.
     unfold raw_add_nodefault.
     rewrite cmp_refl.
@@ -1558,12 +1626,12 @@ Section FArray.
     intro. subst. apply cmp_refl.
   Qed.
 
-  Lemma add_d_rem : forall m x, add x default_value m = remove x m.
+  Lemma add_d_rem : forall m x, add x m.(default) m = remove x m.
     intros.
     unfold add, remove.
     specialize (raw_add_d_rem m.(sorted) x). intro.
-    generalize (add_sorted m.(sorted) x default_value).
-    generalize (add_nodefault (nodefault m) (sorted m) x default_value).
+    generalize (add_sorted m.(default) m.(sorted) x m.(default)).
+    generalize (add_nodefault (nodefault m) (sorted m) x m.(default)).
     generalize (Raw.remove_sorted key_comp (sorted m) x).
     generalize (remove_nodefault (nodefault m) (sorted m) x).
     rewrite H.
@@ -1573,7 +1641,7 @@ Section FArray.
   Qed.
 
   Lemma add_eq_d : forall m x y,
-      x = y -> find y (add x default_value m) = None.
+      x = y -> find y (add x m.(default) m) = None.
   Proof.
     intros.
     simpl.
@@ -1609,10 +1677,17 @@ Section FArray.
   (** Another characterisation of [Equal] *)
 
   Lemma Equal_mapsto_iff : forall m1 m2 : farray,
-      Equal m1 m2 <-> (forall k e, MapsTo k e m1 <-> MapsTo k e m2).
+      Equal m1 m2 <->
+      (m1.(default) = m2.(default) /\ forall k e, MapsTo k e m1 <-> MapsTo k e m2).
   Proof.
-    intros m1 m2. split; [intros Heq k e|intros Hiff].
+    intros m1 m2. split.
+    intros Heq.
+    unfold Equal in Heq. destruct Heq as (Hd, Heq).
+    split; auto.
+    intros k e.
     rewrite 2 find_mapsto_iff, Heq. split; auto.
+    intros (Hd, Hiff).
+    unfold Equal. split; auto.
     intro k. rewrite eq_option_alt. intro e.
     rewrite <- 2 find_mapsto_iff; auto.
   Qed.
@@ -1625,25 +1700,30 @@ Section FArray.
       Equal m m' <-> Equiv m m'.
   Proof.
     intros. rewrite Equal_mapsto_iff. split; intros.
-    split.
-    split; intros (e,Hin); exists e; unfold MapsTo in H; [rewrite <- H|rewrite H]; auto.
+    destruct H as (Hd, H).
+    split; auto.
+    split. intro k.
+    unfold In, Raw.In.
+    split; intros H0; destruct H0 as (e, H0);
+    exists e; unfold MapsTo in H; [rewrite <- H|rewrite H]; auto.
     intros; apply MapsTo_fun with m k; auto; rewrite H; auto.
-    split; intros H'.
-    destruct H.
-    assert (Hin : In k m') by (rewrite <- H; exists e; auto).
+    unfold Equiv in H. destruct H as (Hd, (Hi, Hm)).
+    split; auto. intros k e. split; intro H.
+    assert (Hin : In k m') by (rewrite <- Hi; exists e; auto).
     destruct Hin as (e',He').
-    rewrite (H0 k e e'); auto.
-    destruct H.
-    assert (Hin : In k m) by (rewrite H; exists e; auto).
+    rewrite (Hm k e e'); auto.
+    assert (Hin : In k m) by (rewrite Hi; exists e; auto).
     destruct Hin as (e',He').
-    rewrite <- (H0 k e' e); auto.
+    rewrite <- (Hm k e' e); auto.
   Qed.
 
   Lemma Equiv_Equivb : forall m m', Equiv m m' <-> Equivb m m'.
   Proof.
-    unfold Equiv, Equivb, Raw.Equivb, cmp; intuition; specialize (H1 k e e' H H2).
+    unfold Equiv, Equivb, Raw.Equivb, cmp; intuition.
+    specialize (H2 k e e' H1 H3).
     destruct (compare e e'); auto; apply lt_not_eq in l; auto.
-    destruct (compare e e'); auto; now contradict H1.
+    specialize (H2 k e e' H1 H3).
+    destruct (compare e e'); auto; now contradict H2.
   Qed.
 
   (** Composition of the two last results: relation between [Equal]
@@ -1660,7 +1740,7 @@ Section FArray.
   Definition select (a: farray) (i: key) : elt :=
     match find i a with
     | Some v => v
-    | None => default_value
+    | None => a.(default)
     end.
 
   Definition store (a: farray) (i: key) (v: elt) : farray := add i v a.
@@ -1669,14 +1749,14 @@ Section FArray.
   Proof.
     intros a i j v Heq.
     unfold select, store.
-    case_eq (cmp v default_value); intro; auto.
+    case_eq (cmp v a.(default)); intro; auto.
     unfold cmp in H.
-    case (compare v default_value) in H; auto; try now contradict H.
+    case (compare v a.(default)) in H; auto; try now contradict H.
     rewrite e.
     rewrite add_eq_d; auto.
-    assert (v <> default_value).
+    assert (v <> a.(default)).
     unfold cmp in H.
-    case (compare v default_value) in H; auto; try now contradict H.
+    case (compare v a.(default)) in H; auto; try now contradict H.
     apply lt_not_eq in l. auto.
     apply lt_not_eq in l. auto.
     rewrite (add_eq_o a Heq H0). auto.
@@ -1704,26 +1784,48 @@ Section FArray.
     exact H.
   Qed.
 
+  (** Provable only if [elt] is an infinite type *)
   Lemma extensionnality_eqb : forall a b,
       (forall i, select a i = select b i) -> equal a b = true.
   Proof.
     intros.
     unfold select in H.
+    (* assert ((exists i : key, find i a = None) -> a.(default) = b.(default)). *)
+    (* { *)
+    (*   intros. destruct H0. *)
+    (*   specialize (H x). *)
+    (*   rewrite H0 in H. *)
+    (*   i. specialize (H i). *)
+      
+    (*   case_eq (find i a); *)
+    (*     case_eq (find i b). *)
+    (*     intros. rewrite H0 in *; rewrite H1 in *. subst; auto. *)
+
+    (* } *)
+    
+    cut (a.(default) = b.(default)). intro Hd.
     assert (forall i, find i a = find i b).
-    - intro i. specialize (H i).
-      case_eq (find i a);
-        case_eq (find i b);
+    {
+      intro i. specialize (H i).
+      case_eq (find i a); case_eq (find i b);
         intros; rewrite H0 in *; rewrite H1 in *; subst; auto.
       + apply find_2 in H1.
         contradict H1.
         unfold MapsTo.
+        rewrite <- Hd.
         apply a.(nodefault).
       + apply find_2 in H0.
         contradict H0.
         unfold MapsTo.
+        rewrite Hd.
         apply b.(nodefault).
-    - apply find_ext_dec in H0.
-      exact H0.
+    }
+    apply find_ext_dec. split; auto.
+    cut (exists k, find k a = None /\ find k b = None). intro.
+    destruct H0 as (k, (Ha, Hb)). specialize (H k).
+    rewrite Ha, Hb in H. auto.
+    destruct a, b; simpl in *.
+    (* No *)
   Qed.
 
   Lemma equal_eq : forall a b, equal a b = true -> a = b.
@@ -1766,6 +1868,9 @@ Section FArray.
     intros; apply equal_eq; apply extensionnality_eqb; auto.
   Qed.
 
+(** farray equal in Prop *)
+  Definition equalP (m m' : farray) : Prop :=
+    if equal m m' then True else False.
 
   Lemma eq_list_refl: forall a, eq_list a a.
   Proof.
@@ -1784,13 +1889,24 @@ Section FArray.
   Lemma equal_refl: forall a, equal a a = true.
   Proof. intros; apply eq_equal; apply eq_list_refl. Qed.
 
-  Lemma equal_iff_eq : forall a b, equal a b = true <-> a = b.
-  Proof.
-    intros a b.
-    split.
-    - apply equal_eq.
-    - intro; subst. apply equal_refl.
+  Lemma equal_eqP : forall a b, equalP a b <-> a = b.
+  Proof. 
+     intros. split; intro H. unfold equalP in H.
+     case_eq (equal a b); intros; rewrite H0 in H.
+     now apply equal_eq. now contradict H.
+     rewrite H. unfold equalP.
+     now rewrite equal_refl.
   Qed.
+
+ Lemma equal_B2P: forall (m m' : farray),
+                  equal m m' = true <-> equalP m m'.
+ Proof.
+     intros. split; intros.
+     apply equal_eq in H. rewrite H.
+     unfold equalP. now rewrite equal_refl.
+     apply equal_eqP in H.
+     now rewrite H, equal_refl.
+ Qed.
 
   Section Classical_extensionnality.
 
@@ -1847,13 +1963,7 @@ Arguments select {_} {_} {_} {_} {_} _ _.
 Arguments store {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
-Arguments equal_iff_eq {_} {_} {_} {_} {_} {_} {_} _ _.
-Arguments read_over_same_write {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.
-Arguments read_over_write {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
-Arguments read_over_other_write {_} {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.
-Arguments extensionnality {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
-Arguments extensionnality2 {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
-Arguments select_at_diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments equalP {_} {_} {_} {_} {_} {_} {_}  _ _.
 
 
 Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.

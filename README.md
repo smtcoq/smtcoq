@@ -72,7 +72,7 @@ To check the result given by zChaff on an unsatisfiable dimacs file
   produces a proof witness file named `resolve_trace`.
 
 - In a Coq file `file.v`, put:
-```
+```coq
 Require Import SMTCoq.
 Zchaff_Checker "file.cnf" "resolve_trace".
 ```
@@ -82,7 +82,7 @@ Zchaff_Checker "file.cnf" "resolve_trace".
 
 - You can also produce Coq theorems from zChaff proof witnesses: the
   commands
-```
+```coq
 Require Import SMTCoq.
 Zchaff_Theorem theo "file.cnf" "resolve_trace".
 ```
@@ -93,7 +93,7 @@ will produce a Coq term `theo` whose type is the theorem stated in
 ##### zChaff as a Coq decision procedure
 
 The `zchaff` tactic can be used to solve any goal of the form:
-```
+```coq
 forall l, b1 = b2
 ```
 where `l` is a list of Booleans (that can be concrete terms).
@@ -112,13 +112,13 @@ To check the result given by veriT on an unsatisfiable SMT-LIB2 file
 `file.smt2`:
 
 - Produce a veriT proof witness:
-```
+```coq
 veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-e --disable-ackermann --input=smtlib2 --proof=file.log file.smt2
 ```
 This command produces a proof witness file named `file.log`.
 
 - In a Coq file `file.v`, put:
-```
+```coq
 Require Import SMTCoq.
 Section File.
   Verit_Checker "file.smt2" "file.log".
@@ -130,7 +130,7 @@ End File.
 
 - You can also produce Coq theorems from zChaff proof witnesses: the
   commands
-```
+```coq
 Require Import SMTCoq.
 Section File.
   Verit_Theorem theo "file.smt2" "file.log".
@@ -146,7 +146,7 @@ The theories that are currently supported are `QF_UF`, `QF_LIA`,
 ##### veriT as a Coq decision procedure
 
 The `verit` tactic can be used to solve any goal of the form:
-```
+```coq
 forall l, b1 = b2
 ```
 where `l` is a list of Booleans. Those Booleans can be any concrete
@@ -162,18 +162,16 @@ Compile and install `CVC4` as explained in the installation instructions.
 To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
 `name.smt2` (in `..smtcoq/src/lfsc/tests` directory):
 
-- Produce a CVC4 proof witness; run 1, 2 and 3 in a row:
+- Produce a CVC4 proof witness; run:
 
-```
-1. DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-2. cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic name.smt2 > name.tmp.lfsc
-3. cat $DIR/signatures/{sat,smt,th_base,th_int,th_bv,th_bv_bitblast,th_bv_rewrites,th_arrays}.plf name.tmp.lfsc > name.lfsc
+```bash
+cvc4 --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic name.smt2 > name.lfsc
 ```
 
 This set of commands produces a proof witness file named `name.lfsc`.
 
 - In a Coq file `name.v`, put:
-```
+```coq
 Require Import SMTCoq Bool List.
 Import ListNotations BVList.BITVECTOR_LIST FArray.
 Local Open Scope list_scope.
@@ -187,14 +185,14 @@ End File.
 
 - Compile `name.v`: `coqc -R ../../ SMTCoq name.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
 
-NB: Use `cvc4tocoq` script in `..smtcoq/src/lfsc/tests` to automatize above steps.
+NB: Use `cvc4tocoq` script in `src/lfsc/tests` to automatize above steps.
 
 - Ex: `./cvc4tocoq name.smt2`, similary returned `true` amounts to correct unsatisfiability proof of the problem by CVC4.
 
 ##### CVC4 as a Coq decision procedure
 
 The `cvc4` tactic can be used to solve any goal of the form:
-```
+```coq
 forall l, b1 = b2
 ```
 where `l` is a list of Booleans. Those Booleans can be any concrete

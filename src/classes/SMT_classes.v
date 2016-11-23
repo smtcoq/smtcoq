@@ -132,6 +132,13 @@ Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
   end.
 
 
+Lemma compdec_eq_eqb {T:Type} {c : CompDec T} : forall x y : T,
+    x = y <-> eqb_of_compdec c x y = true.
+Proof.
+  destruct c. destruct Eqb0.
+  simpl. intros. rewrite eqb_spec0. reflexivity.
+Qed.
+
 Hint Resolve
      ord_of_compdec
      inh_of_compdec

@@ -71,13 +71,13 @@ VERNAC COMMAND EXTEND Vernac_lfsc
 END
 
 TACTIC EXTEND Tactic_zchaff
-| [ "zchaff" ] -> [ Zchaff.tactic () ]
+| [ "zchaff_bool" ] -> [ Zchaff.tactic () ]
 END
 
 TACTIC EXTEND Tactic_verit
-| [ "verit" ] -> [ Verit.tactic () ]
+| [ "verit_bool" ] -> [ Verit.tactic () ]
 END
 
 TACTIC EXTEND Tactic_cvc4
-| [ "cvc4" ] -> [ Lfsc.tactic () ]
+| [ "cvc4_bool" ] -> [ Lfsc.tactic () ]
 END
