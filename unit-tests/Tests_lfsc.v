@@ -50,7 +50,7 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
   Qed.
  
   Goal forall x: Z, (x = 0%Z) -> (8 >= 0).
-  Proof. 
+  Proof.
     smt.
    Qed.
 
