@@ -23,7 +23,6 @@ Local Open Scope bv_scope.
 Import BVList.BITVECTOR_LIST. 
 Require Import FArray.
 
-Unset Coercions.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
@@ -63,7 +62,7 @@ Infix "-->" := implb (at level 60, right associativity) : bool_scope.
   Qed.
 
   Goal forall (a b: Z), (a < b) -> (a + 2) < (b + 3).
-  Proof. 
+  Proof.
     smt.
   Qed.
 

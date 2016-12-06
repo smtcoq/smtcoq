@@ -17,7 +17,6 @@ Require Import
         SMT_classes SMT_classes_instances SMT_terms.
 Import BVList.BITVECTOR_LIST. 
 
-
 Local Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 Local Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 

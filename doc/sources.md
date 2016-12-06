@@ -142,6 +142,153 @@ This module contains miscellaneous general lemmas that are used in several
 places throughout the development of SMTCoq.
 
 
+### [BoolToProp.v](../src/BoolToProp.v)
+This module includes the tactic `bool2prop` that converts a goal, if Boolean, into
+a goal in Coq's `Prop`, after introducing universally quantified variables into the
+context. 
+
+It simply performs a search in the goal and does the mentioned conversion step by step
+benefitting the `reflect` predicate popularized by the SSReflect library:
+
+```coq
+Inductive reflect (P : Prop) : bool -> Set :=
+   | ReflectT :   P -> reflect P true 
+   | ReflectF : ~ P -> reflect P false.
+```
+
+In fact, the predicate `reflect` returns the Boolean counterpart of a proposition.
+It makes below lemma easily provable:
+
+```coq
+Lemma reflect_iff : forall P b, (P<->b=true) -> reflect P b.
+```
+
+This simply says that if a Coq proposition `P` is equivalent to some Boolean 
+`b` being `true` then `b` is indeed the Boolean counterpart of `P`.
+
+Now, let's exemplify how the tactic `bool2prop` benefits above steps:
+
+Imagine a very simple goal that embodies the `or` connective
+
+```coq
+?G0 || ?G1
+```
+
+for some Boolean variables `G0` and `G1`. Then, the tactic performes the following
+rewrite step on the goal 
+
+```coq
+ rewrite <- (@reflect_iff (?G0 = true \/ ?G1 = true) (?G0 || ?G0)).
+```
+
+which turns it into:
+
+```coq
+  ?G0 = true \/ ?G0 = true
+```
+
+together with introducing an additional goal:
+
+```coq
+reflect (a = true \/ b = true) (a || b)
+```
+
+The first goal is indeed the intended one; so that the tactic leaves it as it is. But the second
+one must somehow be solved. In fact, this not so hard: it suffices to apply the below lemma which
+has already been proven again by benefitting the `reflect` predicate:
+
+
+```coq
+ Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
+```
+
+Notice that the same sort of conversion steps for the other Boolean connectives are also handled
+by the tactic `bool2prop`. It also supports the conversion of the Boolean predicates `bp: A -> A -> bool`
+as Boolean equality and comparison over bit-vectors, Boolean equality and comparison over Coq intergers `Z`,
+and Boolean equality over fuctional arrays; since the proofs of the shape `bp x y = true <-> pp x y`, for some
+propositional predicate `pp: A -> A -> Prop`, have already been done for them.
+
+### [PropToBool.v](../src/PropToBool.v)
+This module includes the tactic `prop2bool` that converts a goal, if in Coq's `Prop`, into
+a Boolean goal, after introducing universally quantified variables into the context.
+It is, in fact, the inverse of the above explained `bool2prop` tactic.
+
+It simply performs a search in the goal and does the mentioned conversion step by step
+benefitting the `reflect` predicate (see above `BoolToProp.v`). The predicate reflect
+makes the following goal easily proveable:
+
+```coq
+Lemma reflect_iff : forall P b, reflect P b -> (P<->b=true).
+```
+
+This basically tells us that if `b` is the Boolean counterpart of some proposition `P`,
+then `P` is indeed equivalent to `b` being `true`.
+
+Now, let's exemplify how the tactic `prop2bool` benefits above steps:
+
+Imagine a very simple goal that embodies the `or` connective
+
+```coq
+?G0 = true \/ ?G1 = true
+```
+for some Boolean variables `G0` and `G1`. Then, the tactic performes the following
+rewrite step on the goal 
+
+```coq
+rewrite (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1))
+```
+
+which turns it into:
+
+```coq
+  ?G0 || ?G0 = true
+```
+
+together with introducing an additional goal:
+
+```coq
+reflect (a = true \/ b = true) (a || b)
+```
+
+The first goal is indeed the intended one; so that the tactic leaves it as it is. But the second
+one must somehow be solved. In fact, this not so hard: it suffices to apply the below lemma which
+has already been proven again by benefitting the `reflect` predicate:
+
+
+```coq
+ Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
+```
+
+Notice that the same sort of conversion steps for the other propositional connectives are also handled
+by the tactic `prop2bool`. It also supports the conversion of the propositional predicates `pp: A -> A -> Prop`
+as propositional equality and comparison over bit-vectors, propositional equality and comparison over Coq
+intergers `Z`, and propositional equality over fuctional arrays; since the proofs of the shape
+`pp x y <-> bp x y = true`, for some Boolean predicate `bp: A -> A -> bool`, have already been done for them.
+
+### [PropToBool.v](../src/Tactics.v)
+This file includes four tactics that are written in `Ltac` language:
+
+ - `zchaff` -> can function on the goals in Coq's `Prop`: 
+ first calls `prop2bool` on the goal, 
+ then calls the reificiation tactic `zchaff_bool` (can only function on Boolean goals),
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ 
+ - `verit` -> can function on the goals in Coq's `Prop`: 
+ first calls `prop2bool` on the goal, 
+ then calls the reificiation tactic `verit_bool` (can only function on Boolean goals),
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ 
+  - `cvc4` -> can function on the goals in Coq's `Prop`: 
+ first calls `prop2bool` on the goal, 
+ then calls the reificiation tactic `cvc4_bool` (can only function on Boolean goals),
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ 
+   - `smt` -> subsumes the power of `cvc4` and `verit` tactics: 
+ first calls `prop2bool` on the goal, 
+ then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only function on Boolean goals),
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+
+
 ### [versions](../src/versions)
 
 This directory contains everything that is dependent on the version of Coq that

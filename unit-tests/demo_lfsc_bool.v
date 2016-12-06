@@ -39,7 +39,7 @@ Section BV.
       bv_eq #b|1|1|0|0| bv3 -->
       bv_eq #b|1|1|1|0| bv4 -->
       bv_ult bv1 bv2  || bv_ult bv3 bv1 --> bv_ult bv1 bv3 --> bv_ult bv1 bv4 || bv_ult bv4 bv1.
-  Proof.
+  Proof. bool2prop. prop2bool.
      smt.
   Qed.
 
