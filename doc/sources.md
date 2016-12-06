@@ -178,13 +178,13 @@ for some Booleans `G0` and `G1`. Then, the tactic performes the following
 rewrite step on the goal 
 
 ```coq
- rewrite <- (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)).
+rewrite <- (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)).
 ```
 
 which turns it into:
 
 ```coq
-  G0 = true \/ G1 = true
+G0 = true \/ G1 = true
 ```
 
 together with introducing an additional goal:
@@ -197,7 +197,7 @@ The first goal is indeed the intended one. However, the tactic can still go a st
 putting the goal into the following shape:
 
 ```coq
-  H0 \/ H1
+H0 \/ H1
 ```
 
 In fact, this is the case for Boolean equality and comparison over bit-vectors, Boolean equality and 
@@ -214,7 +214,7 @@ it suffices to apply the below lemma which has already been proven again by bene
 
 
 ```coq
- Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
+Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
 ```
 
 Notice that the same sort of conversion steps for the other Boolean connectives are also handled
@@ -245,7 +245,7 @@ H0 \/ H1
 ```
 
 for some propositions `H0` and `H1`. At this point, the tactic needs to go a step further and
-puts the goal into the folloing shape to be able to make use of the `reflect_iff` fact:
+puts the goal into the following shape to be able to make use of the `reflect_iff` fact:
 
 ```coq
 G0 = true \/ G1 = true
@@ -270,7 +270,7 @@ rewrite (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1))
 which turns it into:
 
 ```coq
-  G0 || G1 = true
+G0 || G1 = true
 ```
 
 together with introducing an additional goal:
@@ -284,7 +284,7 @@ one must somehow be solved. In fact, this not so hard: it suffices to apply the 
 has already been proven again by benefitting the `reflect` predicate:
 
 ```coq
- Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
+Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
 ```
 
 Notice that the same sort of conversion steps for the other propositional connectives are also handled
