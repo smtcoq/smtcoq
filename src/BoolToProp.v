@@ -34,7 +34,6 @@ Ltac bool2prop :=
 
     | [ |- forall t : Type, CompDec t -> _  ] => intro
     | [ |- CompDec _ -> _  ] => intro
-
     | [ |- context[ bv_ult _ _ ] ] => unfold is_true; rewrite bv_ult_B2P
     | [ |- context[ bv_slt _ _ ] ] => unfold is_true; rewrite bv_slt_B2P
     | [ |- context[ bv_eq _ _ ] ]  => unfold is_true; rewrite bv_eq_reflect
@@ -74,5 +73,4 @@ Ltac bool2prop :=
         |- context[ _: bool ] ] => destruct Eqb as (K, L); simpl; rewrite !L
 
     end.
-
 

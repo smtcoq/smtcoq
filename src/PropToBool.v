@@ -38,6 +38,7 @@ Ltac prop2bool :=
     | [ |- context[ Z.gt _ _ ] ] => rewrite Z.gt_lt_iff; rewrite <- Z.ltb_lt
     | [ |- context[ Z.le _ _ ] ] => rewrite <- Z.leb_le
     | [ |- context[ Z.ge _ _ ] ] => rewrite Z.ge_le_iff; rewrite <- Z.leb_le
+    | [ |- context[ Z.eq _ _ ] ] => rewrite <- Z.eqb_eq
 
     | [ p: (CompDec ?t) |- context[ @Logic.eq ?t _ _ ] ] =>
       pose proof p as p0;
@@ -82,4 +83,8 @@ Ltac prop2bool :=
 
     (* | [ |- _ : (CompDec _ )] => try easy *)
     end.
+
+Goal forall a b: Z, a = b \/ Z.eq b a.
+prop2bool.
+rewrite <- Z.eqb_eq.
 

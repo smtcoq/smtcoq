@@ -171,31 +171,46 @@ Now, let's exemplify how the tactic `bool2prop` benefits above steps:
 Imagine a very simple goal that embodies the `or` connective
 
 ```coq
-?G0 || ?G1
+G0 || G1
 ```
 
-for some Boolean variables `G0` and `G1`. Then, the tactic performes the following
+for some Booleans `G0` and `G1`. Then, the tactic performes the following 
 rewrite step on the goal 
 
 ```coq
- rewrite <- (@reflect_iff (?G0 = true \/ ?G1 = true) (?G0 || ?G0)).
+ rewrite <- (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)).
 ```
 
 which turns it into:
 
 ```coq
-  ?G0 = true \/ ?G0 = true
+  G0 = true \/ G1 = true
 ```
 
 together with introducing an additional goal:
 
 ```coq
-reflect (a = true \/ b = true) (a || b)
+reflect (G0 = true \/ G1 = true) (G0 || G1)
 ```
 
-The first goal is indeed the intended one; so that the tactic leaves it as it is. But the second
-one must somehow be solved. In fact, this not so hard: it suffices to apply the below lemma which
-has already been proven again by benefitting the `reflect` predicate:
+The first goal is indeed the intended one. However, the tactic can still go a step further 
+putting the goal into the following shape:
+
+```coq
+  H0 \/ H1
+```
+
+In fact, this is the case for Boolean equality and comparison over bit-vectors, Boolean equality and 
+comparison over Coq intergers `Z`, and Boolean equality over fuctional arrays, since the corresponding
+propositional predicates are proven to be equivalent. I.e., 
+
+```coq
+Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b.
+```
+where `bv_ult: bitvector n -> bitvector n -> bool` and `bv_ultP: bitvector n -> bitvector n -> Prop`. 
+
+However, the second one must somehow be solved. This is indeed not so hard:
+it suffices to apply the below lemma which has already been proven again by benefitting the `reflect` predicate:
 
 
 ```coq
@@ -203,10 +218,7 @@ has already been proven again by benefitting the `reflect` predicate:
 ```
 
 Notice that the same sort of conversion steps for the other Boolean connectives are also handled
-by the tactic `bool2prop`. It also supports the conversion of the Boolean predicates `bp: A -> A -> bool`
-as Boolean equality and comparison over bit-vectors, Boolean equality and comparison over Coq intergers `Z`,
-and Boolean equality over fuctional arrays; since the proofs of the shape `bp x y = true <-> pp x y`, for some
-propositional predicate `pp: A -> A -> Prop`, have already been done for them.
+by the tactic `bool2prop`.
 
 ### [PropToBool.v](../src/PropToBool.v)
 This module includes the tactic `prop2bool` that converts a goal, if in Coq's `Prop`, into
@@ -226,13 +238,30 @@ then `P` is indeed equivalent to `b` being `true`.
 
 Now, let's exemplify how the tactic `prop2bool` benefits above steps:
 
-Imagine a very simple goal that embodies the `or` connective
+Imagine a very simple goal that embodies the `or` connective as
 
 ```coq
-?G0 = true \/ ?G1 = true
+H0 \/ H1
 ```
-for some Boolean variables `G0` and `G1`. Then, the tactic performes the following
-rewrite step on the goal 
+
+for some propositions `H0` and `H1`. At this point, the tactic needs to go a step further and
+puts the goal into the folloing shape to be able to make use of the `reflect_iff` fact:
+
+```coq
+G0 = true \/ G1 = true
+```
+
+for some Booleans `G0` and `G1`. This step is indeed doable for propositional equality and comparison over
+bit-vectors, propsitional equality and comparison over Coq intergers `Z`, and propositional equality over
+fuctional arrays, since the corresponding Boolean predicates are proven to be equivalent. I.e.,
+
+```coq
+Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b.
+```
+where `bv_ult: bitvector n -> bitvector n -> bool` and `bv_ultP: bitvector n -> bitvector n -> Prop`.
+
+
+Then, the tactic performes the following rewrite step on the goal 
 
 ```coq
 rewrite (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1))
@@ -241,29 +270,25 @@ rewrite (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1))
 which turns it into:
 
 ```coq
-  ?G0 || ?G0 = true
+  G0 || G1 = true
 ```
 
 together with introducing an additional goal:
 
 ```coq
-reflect (a = true \/ b = true) (a || b)
+reflect (G0 = true \/ G1 = true) (G0 || G1)
 ```
 
-The first goal is indeed the intended one; so that the tactic leaves it as it is. But the second
+The first goal is indeed the intended one. So that the tactic leaves the goal as it is. But the second
 one must somehow be solved. In fact, this not so hard: it suffices to apply the below lemma which
 has already been proven again by benefitting the `reflect` predicate:
-
 
 ```coq
  Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
 ```
 
 Notice that the same sort of conversion steps for the other propositional connectives are also handled
-by the tactic `prop2bool`. It also supports the conversion of the propositional predicates `pp: A -> A -> Prop`
-as propositional equality and comparison over bit-vectors, propositional equality and comparison over Coq
-intergers `Z`, and propositional equality over fuctional arrays; since the proofs of the shape
-`pp x y <-> bp x y = true`, for some Boolean predicate `bp: A -> A -> bool`, have already been done for them.
+by the tactic `prop2bool`.
 
 ### [PropToBool.v](../src/Tactics.v)
 This file includes four tactics that are written in `Ltac` language:
@@ -278,12 +303,12 @@ This file includes four tactics that are written in `Ltac` language:
  then calls the reificiation tactic `verit_bool` (can only function on Boolean goals),
  and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
  
-  - `cvc4` -> can function on the goals in Coq's `Prop`: 
+ - `cvc4` -> can function on the goals in Coq's `Prop`: 
  first calls `prop2bool` on the goal, 
  then calls the reificiation tactic `cvc4_bool` (can only function on Boolean goals),
  and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
  
-   - `smt` -> subsumes the power of `cvc4` and `verit` tactics: 
+ - `smt` -> subsumes the power of `cvc4` and `verit` tactics: 
  first calls `prop2bool` on the goal, 
  then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only function on Boolean goals),
  and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
