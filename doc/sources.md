@@ -290,28 +290,28 @@ Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
 Notice that the same sort of conversion steps for the other propositional connectives are also handled
 by the tactic `prop2bool`.
 
-### [PropToBool.v](../src/Tactics.v)
+### [Tactics.v](../src/Tactics.v)
 This file includes four tactics that are written in `Ltac` language:
 
  - `zchaff` -> can function on the goals in Coq's `Prop`: 
- first calls `prop2bool` on the goal, 
- then calls the reificiation tactic `zchaff_bool` (can only function on Boolean goals),
- and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
+ then calls the reificiation tactic `zchaff_bool` (which can only function on Boolean goals),
+ and finally puts the goal back in Coq's `Prop`, by calling `bool2prop`, if not solved.
  
  - `verit` -> can function on the goals in Coq's `Prop`: 
- first calls `prop2bool` on the goal, 
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
  then calls the reificiation tactic `verit_bool` (can only function on Boolean goals),
- and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ and finally puts the goal back in Coq's `Prop`, by calling `bool2prop`, if not solved.
  
  - `cvc4` -> can function on the goals in Coq's `Prop`: 
- first calls `prop2bool` on the goal, 
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
  then calls the reificiation tactic `cvc4_bool` (can only function on Boolean goals),
- and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
  
  - `smt` -> subsumes the power of `cvc4` and `verit` tactics: 
- first calls `prop2bool` on the goal, 
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
  then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only function on Boolean goals),
- and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, if not solved or additional goals returned.
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
 
 
 ### [versions](../src/versions)
