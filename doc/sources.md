@@ -200,9 +200,9 @@ putting the goal into the following shape:
 H0 \/ H1
 ```
 
-In fact, this is the case for Boolean equality and comparison over bit-vectors, Boolean equality and 
-comparison over Coq intergers `Z`, and Boolean equality over fuctional arrays, since the corresponding
-propositional predicates are proven to be equivalent. I.e., 
+for some propositions `H0` and `H1`. This is indeed the case for Boolean equality and comparison over bit-vectors,
+Boolean equality and  comparison over Coq intergers `Z`, and Boolean equality over fuctional arrays;
+since the corresponding propositional predicates are proven to be equivalent. E.g., 
 
 ```coq
 Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b.
@@ -253,7 +253,7 @@ G0 = true \/ G1 = true
 
 for some Booleans `G0` and `G1`. This step is indeed doable for propositional equality and comparison over
 bit-vectors, propsitional equality and comparison over Coq intergers `Z`, and propositional equality over
-fuctional arrays, since the corresponding Boolean predicates are proven to be equivalent. I.e.,
+fuctional arrays, since the corresponding Boolean predicates are proven to be equivalent. E.g.,
 
 ```coq
 Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b.
