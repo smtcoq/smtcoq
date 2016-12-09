@@ -301,9 +301,9 @@ let make_certif_ops modules args =
 (** Useful construction *)
 
 let ceq_refl_true = 
-  lazy (SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])
+  SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|]
 
-let eq_refl_true () = Lazy.force ceq_refl_true
+let eq_refl_true () = ceq_refl_true
 
 let vm_cast_true_delay t =
   Term.mkCast(eq_refl_true (),
@@ -319,9 +319,11 @@ let vm_cast_true env t =
       (SmtMisc.mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
       (SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
-    eq_refl_true ()
+    vm_cast_true_delay t
   with Reduction.NotConvertible ->
     Structures.error ("SMTCoq was not able to check the proof certificate.")
+
+(* let vm_cast_true _ = vm_cast_true_delay *)
 
 (* Compute a nat *)
 let rec mkNat = function

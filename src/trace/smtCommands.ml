@@ -571,7 +571,7 @@ let checker_debug_step t_i t_func t_atom t_form root used_root trace
 
 (* Tactic *)
 
-let build_body env rt ro ra rf l b (max_id, confl) =
+let build_body rt ro ra rf l b (max_id, confl) =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -604,18 +604,18 @@ let build_body env rt ro ra rf l b (max_id, confl) =
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
   
-  let cbc =
+  let cbc env =
     add_lets
       (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                            v 2 (*t_form*); l; b; v 1 (*certif*)|])
     |> vm_cast_true env
   in
 
-  let proof_cast =
+  let proof_cast env =
     add_lets
       (mklApp cchecker_b_correct
          [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
-           l; b; v 1 (*certif*); cbc |]) in
+           l; b; v 1 (*certif*); cbc env |]) in
   
   let proof_nocast =
     add_lets
@@ -626,7 +626,7 @@ let build_body env rt ro ra rf l b (max_id, confl) =
   (proof_cast, proof_nocast, cuts)
 
 
-let build_body_eq env rt ro ra rf l1 l2 l (max_id, confl) =
+let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -654,18 +654,18 @@ let build_body_eq env rt ro ra rf l1 l2 l (max_id, confl) =
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
-  let ceqc =
+  let ceqc env  =
     add_lets
       (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                             v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])
       |> vm_cast_true env
   in
 
-  let proof_cast =
+  let proof_cast env =
     add_lets
       (mklApp cchecker_eq_correct
          [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
-           l1; l2; l; v 1 (*certif*); ceqc |])
+           l1; l2; l; v 1 (*certif*); ceqc env |])
   in
   let proof_nocast =
     add_lets
@@ -699,13 +699,13 @@ let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver env rt ro ra rf l' in
-      build_body env rt ro ra rf (Form.to_coq l) b max_id_confl
+      build_body rt ro ra rf (Form.to_coq l) b max_id_confl
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
-      build_body_eq env rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl in
 
   let tac =
@@ -713,9 +713,10 @@ let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name eqn) eqt)
         tac
-    ) (Btype.get_cuts rt) (Structures.tclTHEN
-                             (Structures.set_evars_tac body_nocast)
-                             (Structures.vm_cast_no_check body_cast))
+      ) (Btype.get_cuts rt)
+      (Structures.tclTHEN
+         (Structures.set_evars_tac body_nocast)
+         (Structures.vm_cast_no_check body_cast))
   in
   List.fold_left (fun tac (n, t) ->
       Structures.tclTHENLAST

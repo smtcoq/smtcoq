@@ -98,9 +98,12 @@ let rec process_congr a_args b_args prem res =
                ((Atom.equal a a') && (Atom.equal b b'))||
                ((Atom.equal a b') && (Atom.equal b a'))) prem in
          process_congr a_args b_args prem ((Some l)::res)
-       with Not_found -> assert false)
+       with Not_found ->
+         failwith "VeritSyntax.process_congr: Cannot link"
+      )
     | [],[] -> List.rev res
-    | _ -> failwith "VeritSyntax.process_congr: incorrect number of arguments in function application"
+    | _ -> failwith "VeritSyntax.process_congr: incorrect number of arguments \
+                     in function application"
 
 
 let mkCongr p =
@@ -122,11 +125,14 @@ let mkCongr p =
           Other (EqCgr (c,cert))
         | Aapp (a_f,a_args), Aapp (b_f,b_args) ->
           if indexed_op_index a_f = indexed_op_index b_f then
-            let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
+            let cert = process_congr
+                (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
             Other (EqCgr (c,cert))
-          else failwith "VeritSyntax.mkCongr: left function is different from right fucntion"
+          else failwith "VeritSyntax.mkCongr: left function is different \
+                         from right fucntion"
         | _, _ -> failwith "VeritSyntax.mkCongr: atoms are not applications")
-    |_ -> failwith "VeritSyntax.mkCongr: no conclusion or more than one conclusion in congruence"
+    |_ -> failwith "VeritSyntax.mkCongr: no conclusion or more than one \
+                    conclusion in congruence"
 
 
 let mkCongrPred p =
@@ -145,13 +151,16 @@ let mkCongrPred p =
               Other (EqCgrP (p_p,c,cert))
             | Aapp (a_f,a_args), Aapp (b_f,b_args) ->
               if indexed_op_index a_f = indexed_op_index b_f then
-                let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
+                let cert = process_congr
+                    (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
                 Other (EqCgrP (p_p,c,cert))
               else failwith "VeritSyntax.mkCongrPred: unmatching predicates"
             | _ -> failwith "VeritSyntax.mkCongrPred : not pred app")
-        |_ ->  failwith "VeritSyntax.mkCongr: no or more than one predicate app premise in congruence")
+        |_ ->  failwith "VeritSyntax.mkCongr: no or more than one predicate \
+                         app premise in congruence")
     |[] ->  failwith "VeritSyntax.mkCongrPred: no conclusion in congruence"
-    |_ -> failwith "VeritSyntax.mkCongrPred: more than one conclusion in congruence"
+    |_ -> failwith "VeritSyntax.mkCongrPred: more than one conclusion in \
+                    congruence"
 
 
 (* Linear arithmetic *)
@@ -169,12 +178,14 @@ let mkSplArith orig cl =
   let res =
     match cl with
       | res::nil -> res
-      | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the resulting clause" in
+      | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the \
+                       resulting clause" in
   try
     let orig' =
       match orig.value with
         | Some [orig'] -> orig'
-        | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the premise clause" in
+        | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in \
+                         the premise clause" in
     let _tbl, _f, cert = Lia.build_lia_certif [Form.neg orig';res] in
     let c =
       match cert with
@@ -438,6 +449,12 @@ let mk_clause (id,typ,value,ids_params) =
   if id > 1 then SmtTrace.link (get_clause (id-1)) cl;
   id
 
+
+let mk_clause cl =
+  try mk_clause cl
+  with Failure f ->
+    Structures.error ("SMTCoq was not able to check the certificate \
+                       for the following reason.\n"^f)
 
 type atom_form_lit =
   | Atom of SmtAtom.Atom.t
