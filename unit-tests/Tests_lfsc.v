@@ -518,7 +518,7 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    Time cvc4.
+    Time cvc4; verit.
   Time Qed.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
@@ -594,7 +594,7 @@ Section Arrays.
 
   Goal forall (a b:bitvector 4), bv_eq a b  -->  bv_eq b a.
   Proof.
-    verit.
+    smt.
   Qed.
 
   Goal forall (a b:bitvector 4), a = b  ->  b = a.
@@ -611,7 +611,7 @@ Section Arrays.
   
   Goal forall (a:farray Z Z) i, Z.eqb (select a i) (select a i).
   Proof.
-    verit.
+    smt.
   Qed.
 
   Goal forall (a:farray Z Z) i, (select a i) = (select a i).
@@ -632,7 +632,7 @@ Section Arrays.
 
   Goal forall (a:bitvector 4), bv_eq (bv_add a a) (bv_add a a).
   Proof.
-    verit.
+    smt.
   Qed.
 
   Goal forall (a:bitvector 4), (bv_add a a) = (bv_add a a).

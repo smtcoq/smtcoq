@@ -1,4 +1,4 @@
-Require Import SMTCoq Smt.
+Require Import SMTCoq.
 
 (* For Notations *)
 Import Bool PArray Int63 List ZArith FArray BVList.BITVECTOR_LIST.
