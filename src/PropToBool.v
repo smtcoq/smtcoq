@@ -14,11 +14,8 @@
 
 Require Import
         Bool ZArith BVList Logic BVList FArray
-        SMT_classes SMT_classes_instances SMT_terms.
+        SMT_classes SMT_classes_instances ReflectFacts.
 Import BVList.BITVECTOR_LIST. 
-
-Local Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-Local Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 Ltac prop2bool :=
   repeat
@@ -87,8 +84,4 @@ Ltac prop2bool :=
 
     (* | [ |- _ : (CompDec _ )] => try easy *)
     end.
-
-Goal forall a b: Z, a = b \/ Z.eq b a.
-prop2bool.
-rewrite <- Z.eqb_eq.
 

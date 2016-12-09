@@ -141,7 +141,9 @@ spl/Operators.v
 
 Misc.v
 SMTCoq.v
+ReflectFacts.v
 PropToBool.v
+BoolToProp.v
 Tactics.v
 SMT_terms.v
 State.v

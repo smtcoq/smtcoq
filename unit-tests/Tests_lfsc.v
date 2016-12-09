@@ -518,7 +518,7 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]]  -->
       equal a c.
   Proof.
-    Time cvc4. verit.
+    Time cvc4.
   Time Qed.
 
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
