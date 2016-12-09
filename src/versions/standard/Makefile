@@ -199,11 +199,11 @@ VFILES:=versions/standard/Int63/Int63.v\
   Misc.v\
   SMTCoq.v\
   PropToBool.v\
-  Tactics.v\
+  BoolToProp.v\
+  Tactics.v\  
   SMT_terms.v\
   State.v\
   Trace.v
-
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))
 else

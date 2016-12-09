@@ -1,3 +1,17 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     * Alain Mebsout                                                    *)
+(*     * Burak Ekici                                                      *)
+(*                                                                        *)
+(*     * The University of Iowa                                           *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith BVList Logic.
 Import ListNotations.
@@ -9,19 +23,12 @@ Local Open Scope bv_scope.
 Import BVList.BITVECTOR_LIST. 
 Require Import FArray.
 
-Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
-Ltac smt := prop2bool; 
-            repeat 
-              match goal with
-                | [ |- context[ CompDec ?t ] ] => try assumption
-                | [ |- _ : bool] => verit
-                | [ |- _ : bool] => try (cvc4; verit)
-              end;
-            try bool2prop.
+Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
   Theorem lia1P: forall (t: Type) (k: CompDec t) (x y: t), (x = y) -> (y = x).
   Proof. smt. Admitted.
+
 
   Theorem lia1P': forall (t: Type) (R: CompDec t) (x y: t), (x = y) <-> (x = y).
   Proof. smt. Qed.
@@ -32,6 +39,7 @@ Ltac smt := prop2bool;
   Theorem lia2P: forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
   Proof. smt. Qed.
 
+
   Theorem lia1B: forall (x y: Z), (x >=? y) --> (y <? x) || (x =? y).
   Proof. smt. Qed.
 
@@ -41,9 +49,12 @@ Ltac smt := prop2bool;
   Qed.
  
   Goal forall x: Z, (x = 0%Z) -> (8 >= 0).
-  Proof. 
+  Proof.
     smt.
    Qed.
+
+  Goal forall x: Z, ~ (x < 0%Z) -> (8 >= 0).
+  Proof. smt. Qed.
 
   Goal forall (a b: Z), a < b -> a < (b + 1).
   Proof.
@@ -51,8 +62,13 @@ Ltac smt := prop2bool;
   Qed.
 
   Goal forall (a b: Z), (a < b) -> (a + 2) < (b + 3).
-  Proof. 
+  Proof.
     smt.
+  Qed.
+
+  Goal forall x: Z, negb (x <? 0%Z) --> Z.geb x 0.
+  Proof. 
+    smt. 
   Qed.
 
   Goal forall (a b: Z), a = b -> a < (b + 1).
@@ -315,6 +331,7 @@ Section Arrays.
   Local Open Scope farray_scope.
   Local Open Scope bv_scope.
 
+
   Goal forall (a b: farray Z Z)
          (v w x y: Z)
          (g: farray Z Z -> Z)
@@ -409,6 +426,7 @@ Section Arrays.
     smt.
   Qed.
 
+
   Goal forall (a b c d: farray Z Z),
       equal b[0 <- 4] c  -->
       equal d b[0 <- 4][1 <- 4]  -->
@@ -417,7 +435,6 @@ Section Arrays.
   Proof.
     smt.
   Qed.
-
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
@@ -442,6 +459,7 @@ Section Arrays.
   Proof.
     smt.
   Qed.
+
 
   Goal forall (bv1 bv2 : bitvector 4)
          (a b c d : farray (bitvector 4) Z),
@@ -515,6 +533,7 @@ Section Arrays.
     Time smt.
   Time Qed.
 
+
   Goal forall (bv1 bv2 : bitvector 4) (x: bitvector 4)
          (a b c d : farray (bitvector 4) (bitvector 4)),
       bv1 = #b|0|0|0|0|  ->
@@ -526,6 +545,7 @@ Section Arrays.
   Proof.
     Time smt.
   Time Qed.
+
 
   Goal forall (a:bool), a || negb a.
     smt.
@@ -543,6 +563,7 @@ Section Arrays.
     smt.
   Qed.
 
+
   Goal forall (bv1 bv2 : bitvector 4) (x: Z)
          (a b c d : farray (bitvector 4) Z),
       bv1 = #b|0|0|0|0| ->
@@ -557,8 +578,9 @@ Section Arrays.
 
   Goal forall (a:farray Z Z), equal a a.
   Proof.
-    verit.
+    smt.
   Qed.
+
 
   Goal forall (a b: farray Z Z), a = b <->  b = a.
   Proof. 
@@ -580,12 +602,11 @@ Section Arrays.
     smt.
   Qed.
 
-
   Definition lenb := @length bool.
     
   Goal forall (l r: list bool), Nat.eqb (lenb l) (lenb r)  -->  Nat.eqb (lenb l) (lenb r).
   Proof.
-    verit. apply Nat_compdec. admit.
+    smt. apply Nat_compdec. admit.
   Admitted.
   
   Goal forall (a:farray Z Z) i, Z.eqb (select a i) (select a i).
@@ -597,12 +618,13 @@ Section Arrays.
   Proof.
     smt.
   Qed.
-  
+
   Goal forall (a:farray Z Z) i, Z.eqb (select (store a i 1) i) (select (store a i 1) i).
   Proof.
     verit.
   Qed.
-  
+
+
   Goal forall (a:farray Z Z) i, (select (store a i 1) i) = (select (store a i 1) i).
   Proof.
     smt.
@@ -1126,9 +1148,9 @@ Section Concret.
   Theorem c1: forall i j,
     (i + j == j) && (negb (i + j == j)) = false.
   Proof. intros.
-    cvc4.
+    smt.
     exact int63_compdec.
-  Qed.  
+  Qed.
 
 End Concret.
 
@@ -1144,7 +1166,7 @@ End Concret2.
 Check concret.
 
 
-(* Congruence in which some premices are REFL *)
+(* Congruence in which some premises are REFL *)
 
 Goal forall (f:Z -> Z -> Z) x y z,
   implb (Z.eqb x y) (Z.eqb (f z x) (f z y)).
