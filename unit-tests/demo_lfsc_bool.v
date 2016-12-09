@@ -1,3 +1,17 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     * Alain Mebsout                                                    *)
+(*     * Burak Ekici                                                      *)
+(*                                                                        *)
+(*     * The University of Iowa                                           *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith BVList Logic.
 Import ListNotations.
@@ -25,19 +39,19 @@ Section BV.
       bv_eq #b|1|1|0|0| bv3 -->
       bv_eq #b|1|1|1|0| bv4 -->
       bv_ult bv1 bv2  || bv_ult bv3 bv1 --> bv_ult bv1 bv3 --> bv_ult bv1 bv4 || bv_ult bv4 bv1.
-  Proof. 
-     cvc4.
+  Proof.
+     smt.
   Qed.
 
   Goal forall (a: bitvector 32), bv_eq a a.
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (bv1 bv2: bitvector 4),
        (Bool.eqb (bv_eq bv1 bv2) (bv_eq bv2 bv1)).
   Proof.
-     cvc4; verit.
+     smt.
   Qed.
 
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
@@ -47,14 +61,14 @@ Section BV.
       bv_eq #b|1|1|1|0| bv4 -->
       bv_ult bv1 bv2 || bv_ult bv3 bv1 && bv_ult bv3 bv4.
   Proof.
-     cvc4.
+     smt.
   Qed.
 
   Goal forall (a b c: bitvector 4),
                                  (bv_eq c (bv_and a b))  -->
                                  (bv_eq (bv_and (bv_and c a) b) c).
   Proof.
-     cvc4.
+     smt.
   Qed.
 
 End BV.
@@ -68,17 +82,17 @@ Section Arrays.
 
   Goal forall (a:farray Z Z), equal a a.
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b: farray Z Z), Bool.eqb (equal a b) (equal b a).
   Proof. 
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b: farray (bitvector 8) (bitvector 8)), Bool.eqb (equal a b) (equal b a).
   Proof. 
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b c d: farray Z Z),
@@ -87,7 +101,7 @@ Section Arrays.
       equal a d[1 <- b[1]]  -->
       equal a c.
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (bv1 bv2 : bitvector 4)
@@ -99,7 +113,7 @@ Section Arrays.
       equal a d[bv2 <- b[bv2]] -->
       equal a c.
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall (a b: farray Z Z)
@@ -108,13 +122,13 @@ Section Arrays.
          (f: Z -> Z),
          (equal a[x <- v] b) && (equal a[y <- w] b) --> (Z.eqb (f x) (f y)) || (Z.eqb (g a) (g b)).
   Proof.
-    cvc4.
+    smt.
   Qed.
 
 Goal forall (a b: farray Z Z) i,
       Z.eqb (select (store (store (store a i 3%Z) 1%Z (select (store b i 4) i)) 2%Z 2%Z) 1%Z) 4.
 Proof.
-    cvc4; try verit.
+    smt.
     rewrite read_over_other_write; try easy.
     rewrite read_over_same_write; try easy; try apply Z_compdec.
     rewrite read_over_same_write; try easy; try apply Z_compdec.
@@ -129,7 +143,7 @@ Section UF.
          (f: Z -> Z),
          Z.eqb y x --> Z.eqb (f x) (f y).
   Proof.
-    cvc4.
+    smt.
   Qed.
 
   Goal forall
@@ -137,7 +151,7 @@ Section UF.
          (f: Z -> Z),
          Z.eqb (f x) (f y) --> Z.eqb (f y) (f x).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall
@@ -145,7 +159,7 @@ Section UF.
          (f: Z -> Z),
          Z.eqb (x + 1)  (y + 1) --> Z.eqb (f y) (f x).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall
@@ -153,13 +167,13 @@ Section UF.
          (f: Z -> Z),
          Z.eqb x (y + 1) --> Z.eqb (f y) (f (x - 1)).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
 
 Goal forall (f:Z -> Z -> Z) x y z, (Z.eqb x y) --> Z.eqb (f z x) (f z y).
 Proof.
-  cvc4.
+  smt.
 Qed.
 
 End UF.
@@ -169,12 +183,12 @@ Section LIA.
 
   Goal forall (a b: Z), Bool.eqb (Z.eqb a b)  (Z.eqb b a).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
   Goal forall (a b: Z), (Z.eqb a a) && (Z.eqb b b).
   Proof.
-    cvc4; verit.
+    smt.
   Qed.
 
 
