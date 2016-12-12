@@ -373,6 +373,7 @@ There are three small checkers for arrays. They check application of the axioms
 (in the theory sense) of the theory of arrays, two for *read over write* and
 one for *extensionality*
 
+## Tactics: proof search
 
 ### [BoolToProp.v](../src/BoolToProp.v)
 This module includes the tactic `bool2prop` that converts a goal, if Boolean, into
