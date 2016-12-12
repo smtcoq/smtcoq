@@ -373,6 +373,116 @@ There are three small checkers for arrays. They check application of the axioms
 (in the theory sense) of the theory of arrays, two for *read over write* and
 one for *extensionality*
 
+
+## OCaml implementation of the plugin
+
+Part of SMTCoq is implemented in OCaml. These concern functionality which are
+not certified such as the reification mechanism, the parsers, pre-processors
+and the definitions of tactics.
+
+This part communicates directly with Coq by using the OCaml Coq API.
+
+
+### [trace](../src/trace)
+
+This directory contain the implementation of certificates and the
+representation of SMT-LIB formulas in SMTCoq.
+
+[coqTerms.ml](../src/trace/coqTerms.ml) contains imports from Coq of terms to
+be used directly in OCaml. These include usual Coq terms but also ones specific
+to SMTCoq.
+
+[smtAtom.mli](../src/trace/smtAtom.mli) contains the definitions for the types
+of atoms in SMTCoq but also provides smart constructors for them. The modules
+defined in this file have functions to reify Coq terms in OCaml and to
+translate back OCaml atoms and types to their Coq counterpart interpretation.
+
+[smtForm.mli](../src/trace/smtForm.mli) plays the same role as `smtAtom` but on
+the level of formulas.
+
+[smtCertif.ml](../src/trace/smtCertif.ml) contains definitions for an OCaml
+version of the steps of the certificate. These are the objects that are
+constructed when importing a certificate from an SMT solver for instance.
+
+[smtTrace.ml](../src/trace/smtTrace.ml) contains functions to build the Coq
+version of the certificate from the OCaml one.
+
+[smtCommands.ml](../src/trace/smtCommands.ml) constitute the bulk of the
+implementation of the plugin. It contains the OCaml functions that are used to
+build the Coq vernacular commands (`Verit_checker`, `Lfsc_checker`, ...) and
+the tactics. It also contains functions to reconstruct Coq counter-examples
+from models returned by the SMT solver.
+
+[smtCnf.ml](../src/trace/smtCnf.ml) implements a CNF conversion on the type of
+SMTCoq formulas.
+
+[smtMisc.ml](../src/trace/smtMisc.ml) contains miscellaneous functions used in
+the previous modules.
+
+
+
+### [smtlib2](../src/smtlib2)
+
+This directory contains utilities to communicate directly with SMT
+solvers. This includes a lexer/parser for the SMT-LIB 2 format
+([smtlib2_parse.mly](../src/smtlib2/smtlib2_parse.mly)) a conversion module
+from SMT-LIB 2 to formulas and atoms of SMTCoq
+([smtlib2_genConstr.ml](../src/smtlib2/smtlib2_genConstr.ml)) and a way to call
+and communicate with SMT solvers through pipes
+([smtlib2_solver.mli](../src/smtlib2/smtlib2_solver.mli)).
+
+
+
+### [zchaff](../src/zchaff)
+
+Files in this directory allow to call the SAT solver ZChaff. It contains a
+parser for the sat solver input files and ZChaff certificates. The
+implementation for the Coq tactic `zchaff` can be found in
+[zchaff.ml](../src/zchaff/zchaff.ml).
+
+
+
+### [verit](../src/verit)
+
+This directory contains the necessary modules to support the SMT solver veriT.
+In particular it contains a parser for the format of certificates of veriT
+([veritParser.mly](../src/verit/veritParser.mly)) and an intermediate
+representation of those certificates
+([veritSyntax.mli](../src/verit/veritSyntax.mli)). This module also implements
+a conversion function from veriT certificates to SMTCoq format of
+certificates. This pre-processor is a simple one-to-one conversion.
+
+The file ([verit.ml](../src/verit/verit.ml)) contains the functions to invoke
+veritT and create SMT-LIB 2 scripts. This is used by the definition of the
+tactic `verit` of the same file.
+
+
+
+### [lfsc](../src/lfsc)
+
+This directory contains the pre-processor for LFSC proofs to SMTCoq
+certificates (as well as veriT certificates). The files
+[ast.ml](../src/lfsc/ast.ml) and [builtin.ml](../src/lfsc/builtin.ml) contain
+an OCaml implementation of a type checker for LFSC proofs. This directory also
+contains a parser and lexer for LFSC (*c.f.*,
+[lfscParser.mly](../src/lfsc/lfscParser.mly)).
+
+The pre-processor is implemented in the module
+[converter.ml](../src/lfsc/converter.ml)) as a *functor*. Depending on the
+module (for terms and clauses conversions) that is passed in the functor
+application, we obtain either a pre-processor from LFSC proofs to SMTCoq
+certificates directly or a converter from LFSC proofs to veriT certificates.
+
+> **Note:** You can obtain a standalone version of the converter by issuing
+> `make` in this directory. This produces a binary `lfsctosmtcoq.native` that
+> can be run with an LFSC proof as argument and produces a veriT certificate
+> on the standard output.
+
+Finally, the tactic `cvc4_bool` is implemented in the file
+[lfsc.ml](../src/lfsc/lfsc.ml)). It contains functions to call the SMT solver
+CVC4, convert its proof and call the base tactic of `smtCommands`.
+
+
 ## Tactics: proof search
 
 ### [BoolToProp.v](../src/BoolToProp.v)
@@ -548,110 +658,4 @@ This file includes four tactics that are written in `Ltac` language:
 
 
 
-## OCaml implementation of the plugin
 
-Part of SMTCoq is implemented in OCaml. These concern functionality which are
-not certified such as the reification mechanism, the parsers, pre-processors
-and the definitions of tactics.
-
-This part communicates directly with Coq by using the OCaml Coq API.
-
-
-### [trace](../src/trace)
-
-This directory contain the implementation of certificates and the
-representation of SMT-LIB formulas in SMTCoq.
-
-[coqTerms.ml](../src/trace/coqTerms.ml) contains imports from Coq of terms to
-be used directly in OCaml. These include usual Coq terms but also ones specific
-to SMTCoq.
-
-[smtAtom.mli](../src/trace/smtAtom.mli) contains the definitions for the types
-of atoms in SMTCoq but also provides smart constructors for them. The modules
-defined in this file have functions to reify Coq terms in OCaml and to
-translate back OCaml atoms and types to their Coq counterpart interpretation.
-
-[smtForm.mli](../src/trace/smtForm.mli) plays the same role as `smtAtom` but on
-the level of formulas.
-
-[smtCertif.ml](../src/trace/smtCertif.ml) contains definitions for an OCaml
-version of the steps of the certificate. These are the objects that are
-constructed when importing a certificate from an SMT solver for instance.
-
-[smtTrace.ml](../src/trace/smtTrace.ml) contains functions to build the Coq
-version of the certificate from the OCaml one.
-
-[smtCommands.ml](../src/trace/smtCommands.ml) constitute the bulk of the
-implementation of the plugin. It contains the OCaml functions that are used to
-build the Coq vernacular commands (`Verit_checker`, `Lfsc_checker`, ...) and
-the tactics. It also contains functions to reconstruct Coq counter-examples
-from models returned by the SMT solver.
-
-[smtCnf.ml](../src/trace/smtCnf.ml) implements a CNF conversion on the type of
-SMTCoq formulas.
-
-[smtMisc.ml](../src/trace/smtMisc.ml) contains miscellaneous functions used in
-the previous modules.
-
-
-
-### [smtlib2](../src/smtlib2)
-
-This directory contains utilities to communicate directly with SMT
-solvers. This includes a lexer/parser for the SMT-LIB 2 format
-([smtlib2_parse.mly](../src/smtlib2/smtlib2_parse.mly)) a conversion module
-from SMT-LIB 2 to formulas and atoms of SMTCoq
-([smtlib2_genConstr.ml](../src/smtlib2/smtlib2_genConstr.ml)) and a way to call
-and communicate with SMT solvers through pipes
-([smtlib2_solver.mli](../src/smtlib2/smtlib2_solver.mli)).
-
-
-
-### [zchaff](../src/zchaff)
-
-Files in this directory allow to call the SAT solver ZChaff. It contains a
-parser for the sat solver input files and ZChaff certificates. The
-implementation for the Coq tactic `zchaff` can be found in
-[zchaff.ml](../src/zchaff/zchaff.ml).
-
-
-
-### [verit](../src/verit)
-
-This directory contains the necessary modules to support the SMT solver veriT.
-In particular it contains a parser for the format of certificates of veriT
-([veritParser.mly](../src/verit/veritParser.mly)) and an intermediate
-representation of those certificates
-([veritSyntax.mli](../src/verit/veritSyntax.mli)). This module also implements
-a conversion function from veriT certificates to SMTCoq format of
-certificates. This pre-processor is a simple one-to-one conversion.
-
-The file ([verit.ml](../src/verit/verit.ml)) contains the functions to invoke
-veritT and create SMT-LIB 2 scripts. This is used by the definition of the
-tactic `verit` of the same file.
-
-
-
-### [lfsc](../src/lfsc)
-
-This directory contains the pre-processor for LFSC proofs to SMTCoq
-certificates (as well as veriT certificates). The files
-[ast.ml](../src/lfsc/ast.ml) and [builtin.ml](../src/lfsc/builtin.ml) contain
-an OCaml implementation of a type checker for LFSC proofs. This directory also
-contains a parser and lexer for LFSC (*c.f.*,
-[lfscParser.mly](../src/lfsc/lfscParser.mly)).
-
-The pre-processor is implemented in the module
-[converter.ml](../src/lfsc/converter.ml)) as a *functor*. Depending on the
-module (for terms and clauses conversions) that is passed in the functor
-application, we obtain either a pre-processor from LFSC proofs to SMTCoq
-certificates directly or a converter from LFSC proofs to veriT certificates.
-
-> **Note:** You can obtain a standalone version of the converter by issuing
-> `make` in this directory. This produces a binary `lfsctosmtcoq.native` that
-> can be run with an LFSC proof as argument and produces a veriT certificate
-> on the standard output.
-
-Finally, the tactic `cvc4` is implemented in the file
-[lfsc.ml](../src/lfsc/lfsc.ml)). It contains functions to call the SMT solver
-CVC4, convert its proof and call the base tactic of `smtCommands`.
