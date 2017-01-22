@@ -199,8 +199,8 @@ and calls the Coq checker. If the checker returns `true` that means that Coq ind
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
 To see a working example, you can run `./cvc4tocoq X.smt2` where `X` being any input file under `tests` directory (`Desktop/smtcoq/src/lfsc/tests`).
-
-Recall that the input problems should be in the supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, `QF_IDL` and their combinations.
+Feel free to generate your own problem files but please recall that the input problems should be from the
+supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, `QF_IDL` and their combinations.
 
 
 
