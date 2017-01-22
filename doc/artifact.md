@@ -197,7 +197,7 @@ call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof an
 To test that, in a terminal go to `tests` directory (from home) by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
 an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
 type check and convert it (using a converter written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
-and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
+and call the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
 To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` being any input file under `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
