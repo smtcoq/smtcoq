@@ -77,9 +77,10 @@ Local Open Scope bv_scope.
 ```
 
 are to load our own [bitvector library](https://github.com/ekiciburak/smtcoq/blob/master/src/bva/BVList.v)
+(called BITVECTOR_LIST in BVList.v file)
 to be able to use the theorems proven and the notations introduced there.
 
-For instance, the goal
+Now, we can state theorems and prove them automatically. For instance, the goal
 
 ```coq
   Goal forall (a b c: bitvector 4),
@@ -87,12 +88,37 @@ For instance, the goal
                                  ((bv_and (bv_and c a) b) = c).
 ```
 
-is proven by the `smt` tactic automatically:
+is proven by the `smt` tactic which subsumes the powers of the reification tactics `cvc4` and `verit`:
 ```coq
   Proof.
     smt.
   Qed.
 ```
+
+Here are some more detailed explanation of the tactics: 
+
+ - `verit` -> can function on the goals in Coq's `Prop`: 
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
+ then calls the reificiation tactic `verit_bool` (can only function on Boolean goals),
+ and finally puts the goal back in Coq's `Prop`, by calling `bool2prop`, if not solved.
+ 
+ - `cvc4` -> can function on the goals in Coq's `Prop`: 
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
+ then calls the reificiation tactic `cvc4_bool` (can only function on Boolean goals),
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
+ 
+ - `smt` -> subsumes the powers of `cvc4` and `verit` tactics: 
+ first calls `prop2bool` on the goal, getting the goal in `bool`, 
+ then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only function on Boolean goals),
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
+
+Notice that the tactics `cvc4_bool` and `verit_bool` are (implemented in OCaml) doing the main job: 
+calling the external solvers (`CVC4` and `veriT` respectively), getting a
+proof certificate and if the checker can validate the certificate, establishing the proof of the initial goal.
+The tactics `prop2bool` and `bool2prop` are implemented in Coq using the Ltac language and are giving the Boolean counterpart
+of a propositional goal and vice versa.
+
+
 
 
 
