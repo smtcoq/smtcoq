@@ -15,6 +15,7 @@ Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size.
 Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox);
 from the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
+The login (and super user) password is two underscores in a row: `__`.
 
 
 ## How to install the artifact
@@ -183,7 +184,7 @@ and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
 Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` is to store the value `v`
 in `a[x]`, `xth` index of array `a`. 
 
-You can run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
+You can also run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
 `coqc Tests-lfsc.v`.
 
 
@@ -192,13 +193,13 @@ You can run Coq in batch mode on our test file by running (once you are in the c
 Using SMTCoq as a `correct-by-construction checker` means that it is possible to start with a problem in SMT-LIB standard,
 call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof and certify the it using the certified Coq checkers.
 
-To test that, in a terminal go to `tests` directory by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
+To test that, in a terminal go to `tests` directory (from home) by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
 an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
 type check and convert it (using a converter written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
 and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
-To see a working example, you can run `./cvc4tocoq X.smt2` where `X` being any input file under `tests` directory (`Desktop/smtcoq/src/lfsc/tests`).
+To see a working example, you can run `./cvc4tocoq X.smt2` where `X` being any input file under `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
 Feel free to generate your own problem files but please recall that the input problems should be from the
 supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, `QF_IDL` and their combinations.
 
