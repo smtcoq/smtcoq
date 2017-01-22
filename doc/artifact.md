@@ -47,7 +47,7 @@ However, this parser is fairly straightforward.
 
 Once logged into the virtual machine, open a terminal and go to `unit-tests` directory
 by typing `cd Desktop/smtcoq/unit-tests` from home. There, to open the test file run
-`coqide Tests-lfsc.v` in the terminal. This will browse you in `CoqIDE` (the Coq interactive development environment)
+`coqide Tests_lfsc.v` in the terminal. This will browse you in `CoqIDE` (the Coq interactive development environment)
 the file where we use SMTCoq within a Coq tactic called `smt`.
 Within the CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the sources since `Go to end` button
 uses a parallelization strategy which has not yet been supported by SMTCoq.
