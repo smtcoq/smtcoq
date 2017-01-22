@@ -25,7 +25,7 @@ There are two use-cases of SMTCoq:
 proof certificate for it. If the checker can validate the certificate, 
 the soundness of the checker allow us to establish a proof of the initial goal
 (aka `computational reflection`).
-In this use case, the trusted base consists only of Coq: if something else goes wron
+In this use case, the trusted base consists only of Coq: if something else goes wrong
 (e.g., the checker cannot validate the certificate), the tactic will fail, but
 nothing unsound will be added to the system.
  - `correct-by-construction checker`: the idea is to check the
@@ -50,6 +50,28 @@ Require Import SMTCoq.
 loads the SMTCoq module that is implemented as explained
 [here](https://github.com/ekiciburak/smtcoq/blob/master/doc/sources.md).
 
+Similarly,
+
+```coq
+Require Import Bool PArray Int63 List ZArith Logic.
+```
+
+loads above-mentioned modules from Coq standard library.
+
+```coq
+Local Open Scope list_scope.
+Local Open Scope int63_scope.
+Local Open Scope Z_scope.
+Local Open Scope bv_scope.
+```
+adds above scopes to the interpretation scope stack. This allows the use of
+above-mentioned contents, i.e. theorems, proofs. 
+
+```coq
+Infix "-->" := implb (at level 60, right associativity) : bool_scope.
+```
+
+introduces a new notation `-->` for the boolean implication. 
 
 ### correct-by-construction checker
 

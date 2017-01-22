@@ -13,28 +13,31 @@
 (**************************************************************************)
 
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith BVList Logic.
-Import ListNotations.
+Require Import Bool PArray Int63 List ZArith Logic.
+(*Import ListNotations.*)
 Local Open Scope list_scope.
 Local Open Scope int63_scope.
 Local Open Scope Z_scope.
 Local Open Scope bv_scope.
 
-Import BVList.BITVECTOR_LIST. 
-Require Import FArray.
+(*Import BVList.BITVECTOR_LIST. *)
 
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
+(*
   Theorem lia1P: forall (t: Type) (k: CompDec t) (x y: t), (x = y) -> (y = x).
   Proof. smt. Admitted.
+*)
 
 
   Theorem lia1P': forall (t: Type) (R: CompDec t) (x y: t), (x = y) <-> (x = y).
   Proof. smt. Qed.
 
+(*
   Theorem lia1P'': forall (t: Type) (p: CompDec t) (x y: t) (f: t -> t), (x = y) -> (f x) = (f y).
   Proof. smt. Admitted.
+*)
 
   Theorem lia2P: forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
   Proof. smt. Qed.
