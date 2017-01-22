@@ -1,4 +1,4 @@
-# Getting Started
+# SMTCoq sources
 
 This document describes the organization of the SMTCoq repository and locations
 of source code and modules.
