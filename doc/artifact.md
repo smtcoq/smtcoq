@@ -5,18 +5,19 @@ This document describes the organization of the SMTCoq artifact.
 
 ## How to download the artifact
 
-To download the articaft, please browse to ... You will get the image of an
+To download the articaft, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view).
+There, you can get the image of an
 Ubuntu 16.04 LTS running virtual machine, named `SMTCoq.ova`, with approximately 3.6GB size.
-Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox).
-From the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
+Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox),
+from the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
 
 
 ## How to install the artifact
 
-Once logged into the virtual machine, you will find SMTCoq is installed. 
-If you want to install it on another machine, please check the installation
-guide that can be found [here](https://github.com/ekiciburak/smtcoq/blob/master/INSTALL.md).
+Once logged into the virtual machine, you will find SMTCoq installed. 
+If you want to install it on a seperate machine, please check the installation
+guide which can be found [here](https://github.com/ekiciburak/smtcoq/blob/master/INSTALL.md).
 
 
 ## How to run the artifact
@@ -119,11 +120,31 @@ proof certificate and if the checker can validate the certificate, establishing 
 The tactics `prop2bool` and `bool2prop` are implemented in Coq using the Ltac language and are giving the Boolean counterpart
 of a propositional goal and vice versa.
 
+Another example of a goal in the theory of bit-vectors is the following:
+
+```coq
+  Goal forall (bv1 bv2 bv3: bitvector 4),
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      bv3 = #b|1|1|0|0|  ->
+      bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
+  Proof. 
+     smt.
+  Qed.
+```
+
+Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then assigns `0000`, `1000` and `1100` in the given order
+(`#b|1|0|...|` is the notation to annotate the bits of a bit-vector; `0` stands for `false` and `1` is for `true`). Finally,
+it states that `bv1` is less than (unsigned less than over bit-vectors) `bv2` and (propositional) `bv2` is less than `bv3`.
+The tactic `smt` suffices to solve the goal. 
+
+
 The following sections `Arrays`, `A_BV_EUF`, `LIA`, `EUF` and `CNF` include goals that could be proven by the `smt` tactic from the
 theories of functional arrays, combination of functional arrays, bit-vectors and uninterpreted functions, linear integer arithmetic,
 uninterpreted functions and cnf conversion respectively.
 
-The example appears in the paper is given as follows:
+
+The example appears in the paper could be found in the section `A_BV_EUF`:
 
 ```coq  
 Goal forall (a b: farray Z Z) (v w x y: Z)
@@ -139,6 +160,12 @@ Goal forall (a b: farray Z Z) (v w x y: Z)
     smt. (** "cvc4. verit." also solves the goal *)
   Qed.
 ```
+
+It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays with integer indices);
+four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions `f`, `g` and `h`. Then it does some assignments
+and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
+Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` stores the value `v`
+in `a[x]`, `xth` index of array `a`. 
 
 
 ### correct-by-construction checker
