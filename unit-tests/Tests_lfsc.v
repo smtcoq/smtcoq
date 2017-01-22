@@ -15,16 +15,19 @@
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith Logic.
 (*Import ListNotations.*)
-Local Open Scope list_scope.
+
+(*Local Open Scope list_scope.
 Local Open Scope int63_scope.
 Local Open Scope Z_scope.
-Local Open Scope bv_scope.
+
+*)
 
 (*Import BVList.BITVECTOR_LIST. *)
 
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
+(*
 (*
   Theorem lia1P: forall (t: Type) (k: CompDec t) (x y: t), (x = y) -> (y = x).
   Proof. smt. Admitted.
@@ -87,178 +90,20 @@ Proof.
     rewrite read_over_same_write; try easy; try apply Z_compdec.
     rewrite read_over_same_write; try easy; try apply Z_compdec.
 Qed.
+*)
 
 Section BV.
 
-  Import BVList.BITVECTOR_LIST.
 
-  Local Open Scope bv_scope.
+Import BVList.BITVECTOR_LIST.
+Local Open Scope bv_scope.
 
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      Logic.eq #b|0|0|0|0| bv1 /\
-      Logic.eq #b|1|0|0|0| bv2  /\
-      Logic.eq #b|1|1|0|0| bv3  ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3.
-  Proof.
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv_eq #b|1|1|1|0| bv4 = true  ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 \/ bv_ultP bv1 bv4.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv_eq #b|1|1|1|0| bv4 = true  ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 /\ bv_ultP bv1 bv4.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv_eq #b|1|1|1|0| bv4 = true  ->
-      bv_ult bv1 bv2 = true \/ bv_ultP bv3 bv1 -> bv_ultP bv1 bv3 /\ bv_ultP bv1 bv4.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      Logic.eq #b|0|0|0|0| bv1 /\
-      Logic.eq #b|1|0|0|0| bv2  /\
-      Logic.eq #b|1|1|0|0| bv3  ->
-      Logic.eq #b|1|1|1|0| bv4  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 -> bv_ultP bv1 bv3 /\ bv_ultP bv1 bv4.
-  Proof. 
-     Time smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv_eq #b|1|1|1|0| bv4 = true  ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true -> bv_ultP bv1 bv3 -> bv_ultP bv1 bv4 \/ bv_ultP bv4 bv1.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (a: bitvector 32), a = a.
+  Goal forall (a b c: bitvector 4),
+                                 (c = (bv_and a b)) ->
+                                 ((bv_and (bv_and c a) b) = c).
   Proof.
     smt.
   Qed.
-
-  Goal forall (bv1 bv2: bitvector 4),
-       bv1 = bv2 <-> bv2 = bv1.
-  Proof.
-     smt.
-  Qed.
-
-
-  Goal forall (bv1 bv2: bitvector 4),
-      bv_eq bv1 bv2 = true <-> bv_eq bv2 bv1 = true.
-  Proof.
-     smt.
-  Qed.
-
-
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true  ->
-      bv_eq #b|1|0|0|0| bv2 = true /\
-      bv_eq #b|1|1|0|0| bv3 = true ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true \/ bv_ult bv2 bv1 = true.
-  Proof. 
-     smt.
-  Qed.
-
-
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv1 = #b|0|0|0|0|  /\
-      bv2 = #b|1|0|0|0|  /\
-      bv3 = #b|1|1|0|0|  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv_eq #b|1|0|0|0| bv2 = true /\
-      bv_eq #b|1|1|0|0| bv3 = true ->
-      bv_ult bv1 bv2 = true \/ bv_ult bv3 bv1 = true.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv1 = #b|0|0|0|0|  ->
-      bv2 = #b|1|0|0|0|  /\
-      bv3 = #b|1|1|0|0|  ->
-      bv4 = #b|1|1|1|0|  ->
-      (bv_ult bv1 bv2 = true \/ bv_ultP bv3 bv1) /\ bv_ultP bv3 bv4 \/ bv_ult bv1 bv4 = true /\ bv_ultP bv2 bv4.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true  ->
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv_eq #b|1|1|0|0| bv3 = true ->
-      bv_eq #b|1|1|1|0| bv4 = true ->
-      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true /\ bv_ult bv3 bv4 = true.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv1 = #b|0|0|0|0|  /\
-      bv_eq #b|1|0|0|0| bv2 = true  /\
-      bv3 = #b|1|1|0|0|  ->
-      bv4 = #b|1|1|1|0|  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4 /\ bv_ult bv1 bv4 = true.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv2 = #b|1|0|0|0|  /\
-      bv3 = #b|1|1|0|0|  ->
-      bv4 = #b|1|1|1|0|  ->
-      bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
-      bv_eq #b|0|0|0|0| bv1 = true  /\
-      bv2 = #b|1|0|0|0|  /\
-      bv_eq #b|1|1|0|0| bv3 = true  ->
-      bv4 = #b|1|1|1|0| ->
-      bv_ultP bv1 bv2 \/ bv_ult bv3 bv1 = true /\ bv_ultP bv3 bv4.
-  Proof. 
-     smt.
-  Qed.
-
 
   Goal forall (bv1 bv2 bv3: bitvector 4),
       bv1 = #b|0|0|0|0|  /\
@@ -269,57 +114,14 @@ Section BV.
      smt.
   Qed.
 
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv1 = #b|0|0|0|0|  /\
-      bv2 = #b|1|0|0|0|  /\
-      bv3 = #b|1|1|0|0|  ->
-      bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3 /\ bv_ultP bv1 bv3.
-  Proof. 
-     smt.
-  Qed.
 
-  Goal forall (bv1 bv2: bitvector 4),
-      bv1 = #b|0|0|0|0|  /\
-      bv2 = #b|1|0|0|0|  ->
-      bv_ultP bv1 bv2.
-  Proof. 
-     smt.
-  Qed.
-
-  Goal forall (a b c: bitvector 4),
-                                 (c = (bv_and a b)) ->
-                                 ((bv_and (bv_and c a) b) = c).
+  Goal forall (a: bitvector 32), a = a.
   Proof.
     smt.
   Qed.
 
   Goal forall (bv1 bv2: bitvector 4),
-      bv1 = #b|0|0|0|0|  ->
-      bv2 = #b|1|0|0|0|  ->
-      bv_ultP bv1 bv2.
-  Proof. 
-     smt.
-  Qed.
-
-
-  Goal forall (a b c: bitvector 4),
-                                 (c = (bv_and a b)) ->
-                                 ((bv_and (bv_and c a) b) = c).
-  Proof.
-     smt.
-  Qed.
-
-  Goal forall (a b c: bitvector 4),
-                                 (bv_eq c (bv_and a b)) = true ->
-                                 (bv_eq (bv_and (bv_and c a) b) c) = true.
-  Proof.
-     smt.
-  Qed.
-
-  Goal forall (bv1 bv2 : bitvector 4),
-      #b|0|0|0|0| = bv1  ->
-      #b|1|0|0|0| = bv2  ->
-      bv_ultP bv1 bv2.
+       bv1 = bv2 <-> bv2 = bv1.
   Proof.
      smt.
   Qed.

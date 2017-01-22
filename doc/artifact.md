@@ -59,19 +59,44 @@ Require Import Bool PArray Int63 List ZArith Logic.
 loads above-mentioned modules from Coq standard library.
 
 ```coq
-Local Open Scope list_scope.
-Local Open Scope int63_scope.
-Local Open Scope Z_scope.
-Local Open Scope bv_scope.
-```
-adds above scopes to the interpretation scope stack. This allows the use of
-above-mentioned contents, i.e. theorems, proofs. 
-
-```coq
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 ```
 
-introduces a new notation `-->` for the boolean implication. 
+introduces a new notation `-->` for the boolean implication.
+
+Using 
+
+```coq
+Section BV.
+```
+we open a new section to prove theorems from the theory of fixed-size bitvectors. 
+
+```coq
+Import BVList.BITVECTOR_LIST.
+Local Open Scope bv_scope.
+```
+
+are to load our own [bitvector library](https://github.com/ekiciburak/smtcoq/blob/master/src/bva/BVList.v)
+to be able to use the theorems proven and the notations introduced there.
+
+For instance, the goal
+
+```coq
+  Goal forall (a b c: bitvector 4),
+                                 (c = (bv_and a b)) ->
+                                 ((bv_and (bv_and c a) b) = c).
+```
+
+is proven by the `smt` tactic automatically:
+```coq
+  Proof.
+    smt.
+  Qed.
+```
+
+
+
+
 
 ### correct-by-construction checker
 
