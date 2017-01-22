@@ -198,7 +198,7 @@ Section LIA.
 End LIA.
 
 
-Section CNF.
+Section PR.
 
  Local Open Scope int63_scope.
 
@@ -604,10 +604,10 @@ Proof.
 Qed.
 
 
-End CNF.
+End PR.
 
 
-Section A_BV_EUF_LIA.
+Section A_BV_EUF_LIA_PR.
   Import BVList.BITVECTOR_LIST FArray.
 
   Local Open Scope farray_scope.
@@ -661,7 +661,7 @@ Section A_BV_EUF_LIA.
     smt.
   Qed.
 
-End A_BV_EUF_LIA.
+End A_BV_EUF_LIA_PR.
 
 
 

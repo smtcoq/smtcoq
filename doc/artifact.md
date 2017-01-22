@@ -3,7 +3,7 @@
 SMTCoq is a Coq tool that checks proof witnesses coming from external SAT and SMT solvers.
 It currenly supports the quantifier free fragments of the theories fixed-sized bit-vectors (`QF_BV`),
 functional arrays (`QF_A`), linear integer arithmetic (`QF_LIA`), equality over uninterpreted functions
-(`QF_EUF`), diference logic (`QF_IDL`) and their combinations.
+(`QF_EUF`), propositional reasoning and their combinations.
 
 This document describes the organization of the SMTCoq artifact.
 
@@ -154,14 +154,15 @@ it states that `bv1` is less than (unsigned less than over bit-vectors) `bv2` an
 The tactic `smt` suffices to solve the goal. 
 
 
-The following sections `Arrays`, `LIA`, `EUF`, `CNF`and `A_BV_EUF_LIA`
+The following sections `Arrays`, `LIA`, `EUF`, `PR`and `A_BV_EUF_LIA_PR`
 include goals that could be proven by the `smt` tactic from the
 theories of functional arrays; linear integer arithmetic;
-uninterpreted functions; cnf conversion and
-the combination of functional arrays, fixed-size bit-vectors, uninterpreted functions and linear integer arithmetic; respectively.
+uninterpreted functions; propositional reasoning and
+the combination of functional arrays, fixed-size bit-vectors, uninterpreted functions, linear integer arithmetic
+and propositional reasoning; respectively.
 
 
-The example appears in the paper could be found in the section `A_BV_EUF_LIA`:
+The example appears in the paper could be found in the section `A_BV_EUF_LIA_PR`:
 
 ```coq
 Goal forall (a b: farray Z Z) (v w x y: Z)
@@ -199,9 +200,9 @@ type check and convert it (using a converter written in OCaml) into SMTCoq forma
 and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
-To see a working example, you can run `./cvc4tocoq X.smt2` where `X` being any input file under `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
+To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` being any input file under `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
 Feel free to generate your own problem files but please recall that the input problems should be from the
-supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, `QF_IDL` and their combinations.
+supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, propositional reasoning and their combinations.
 
 
 
