@@ -1,7 +1,7 @@
 # SMTCoq artifact
 
 SMTCoq is a Coq tool that checks proof witnesses coming from external SAT and SMT solvers.
-It currenly supports the quantitfier free fragments of the theories fixed-sized bit-vectors (`QF_BV`),
+It currenly supports the quantifier free fragments of the theories fixed-sized bit-vectors (`QF_BV`),
 functional arrays (`QF_A`), linear integer arithmetic (`QF_LIA`), equality over uninterpreted functions
 (`QF_EUF`), diference logic (`QF_IDL`) and their combinations.
 
@@ -12,7 +12,7 @@ This document describes the organization of the SMTCoq artifact.
 To get the articaft, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view)
 and download the `SMTCoq.ova` which is an image of an 
 Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size.
-Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox),
+Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox);
 from the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
 
@@ -45,9 +45,14 @@ However, this parser is fairly straightforward.
 ### within a Coq tactic
 
 Once logged into the virtual machine, open a terminal and go to `unit-tests` directory
-by typing `cd Desktop/smtcoq/unit-tests`. To open the test file type
-`coqide Tests-lfsc.v`. This will browse you in `coqide` (the Coq interactive development environment)
-a file where we use SMTCoq within a Coq tactic called `smt`.
+by typing `cd Desktop/smtcoq/unit-tests` from home. To open the test file run
+`coqide Tests-lfsc.v` in the terminal. This will browse you in `CoqIDE` (the Coq interactive development environment)
+the file where we use SMTCoq within a Coq tactic called `smt`.
+Within CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the sources since `Go to end` button
+uses a parallelization strategy which has not yet been supported by SMTCoq.
+Note also that if the background becomes green, then Coq has accepted the statement,
+and at the end of the session the whole file should be green. If Coq fails to accept any statement,
+you will see a brief reason of the failure in the bottom-right rectangle within the `Errors` tab.
 
 ```coq
 Require Import SMTCoq.
@@ -178,6 +183,9 @@ and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
 Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` is to store the value `v`
 in `a[x]`, `xth` index of array `a`. 
 
+One can run Coq in batch mode on our test file by running (once she is in the correct directory) by simply typing
+`coqc Tests-lfsc.v`.
+
 
 ### correct-by-construction checker
 
@@ -186,7 +194,7 @@ call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof an
 
 To test that, in a terminal go to `tests` directory by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
 an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
-type check and convert it (using an converter wirtten in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
+type check and convert it (using a converter written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
 and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
