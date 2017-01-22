@@ -1,6 +1,10 @@
 # SMTCoq artifact
 
 SMTCoq is a Coq tool that checks proof witnesses coming from external SAT and SMT solvers.
+It currenly supports the quantitfier free fragments of the theories fixed-sized bit-vectors (`QF_BV`),
+functional arrays (`QF_A`), linear integer arithmetic (`QF_LIA`), equality over uninterpreted functions
+(`QF_EUF`), diference logic (`QF_IDL`) and their combinations.
+
 This document describes the organization of the SMTCoq artifact.
 
 ## How to download the artifact
@@ -80,7 +84,12 @@ Local Open Scope bv_scope.
 
 are to load our own [bitvector library](https://github.com/ekiciburak/smtcoq/blob/master/src/bva/BVList.v)
 (called BITVECTOR_LIST in BVList.v file)
-to be able to use theorems proven and notations introduced there.
+to be able to use theorems proven and notations introduced there. Note that to end a section `XX` you need to
+type
+
+```coq
+End XX.
+```
 
 Now, we can state goals and prove them automatically. For instance, the goal
 
@@ -176,13 +185,12 @@ Using SMTCoq as a `correct-by-construction checker` means that it is possible to
 call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof and certify the it using the certified Coq checkers.
 
 To test that, in a terminal go to `tests` directory by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
-the input file (.smt2 extended) by typing `./cvc4tocoq file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
+an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
 type check and convert it (using an converter wirtten in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
 and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
-
-
+Recall that the input problems should be in the supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, `QF_IDL` and their combinations.
 
 
 
