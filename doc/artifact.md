@@ -1,26 +1,46 @@
 # Getting Started
 
+SMTCoq is a Coq tool that checks proof witnesses coming from external SAT and SMT solvers.
 This document describes the organization of the SMTCoq artifact.
 
 ## How to download the artifact
 
-To download the articaft, please browse to ... What you will get is an image of an
-Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size.
+To download the articaft, please browse to ... You will get the image of an
+Ubuntu 16.04 LTS running virtual machine, named `SMTCoq.ova`, with approximately 3.6GB size.
+Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox).
+From the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
+image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
 
 
 ## How to install the artifact
 
-To install the artifact, please run
-[VirtualBox](https://www.virtualbox.org/wiki/VirtualBox). From the `File` top-down
-menu click `Import Applicance...` and locate the `cav2017.ova` image. This will
-create you a virtual machine named `cav2017`.
+SMTCoq is already installed on the virtual machine. However, the detailed installation
+guide can be found [here](https://github.com/ekiciburak/smtcoq/blob/master/INSTALL.md).
+
 
 ## How to run the artifact
 
-To run the artifact, simply click on `Start` from the `VirtualBox Manager` menu.
-This will boot Ubuntu 16.04 LTS operating system.
+There are two use-cases of SMTCoq:
+ - `within a Coq tactic`: we can give a Coq goal to an external solver and get a
+proof certificate for it. If the checker can validate the certificate, 
+the soundness of the checker allow us to establish a proof of the initial goal
+(aka `computational reflection`).
+In this use case, the trusted base consists only of Coq: if something else goes wron
+(e.g., the checker cannot validate the certificate), the tactic will fail, but
+nothing unsound will be added to the system.
+ - `correct-by-construction checker`: the idea is to check the
+validity of a proof witness, or proof certificate, coming from an external solver
+against some input problem. In this use case, the
+trusted base is both Coq and the parser of the input problem.
+The parse is part of the trusted based because we need to make sure 
+we are effectively verifying a proof of the problem we sent to the external solver.
+However, this parser is fairly straightforward.
 
-### [Trace.v](../src/Trace.v)
+### within a Coq tactic
+
+### correct-by-construction checker
+
+
 
 This file defines the types of certificates and steps (atomic certificate
 pieces) as well as the *main checkers*.
