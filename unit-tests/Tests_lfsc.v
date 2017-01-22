@@ -254,10 +254,7 @@ Section LIA.
 End LIA.
 
 
-Local Open Scope int63_scope.
-
-
-Section Connectors.
+Section CNF.
 
 (* Simple connectors *)
 
@@ -662,7 +659,7 @@ Proof.
 Qed.
 
 
-End Connectors.
+End CNF.
 
 
 

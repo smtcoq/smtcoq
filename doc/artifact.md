@@ -78,7 +78,7 @@ Local Open Scope bv_scope.
 
 are to load our own [bitvector library](https://github.com/ekiciburak/smtcoq/blob/master/src/bva/BVList.v)
 (called BITVECTOR_LIST in BVList.v file)
-to be able to use the theorems proven and the notations introduced there.
+to be able to use theorems proven and notations introduced there.
 
 Now, we can state theorems and prove them automatically. For instance, the goal
 
@@ -118,7 +118,26 @@ proof certificate and if the checker can validate the certificate, establishing 
 The tactics `prop2bool` and `bool2prop` are implemented in Coq using the Ltac language and are giving the Boolean counterpart
 of a propositional goal and vice versa.
 
+The following sections `Arrays`, `A_BV_EUF`, `LIA`, `EUF` and `CNF` include goals that could be proven by the `smt` tactic from the
+theories of functional arrays, combination of functional arrays, bit-vectors and uninterpreted functions, linear integer arithmetic,
+uninterpreted functions and cnf conversion respectively.
 
+The example appears in the paper is given as follows:
+
+```coq  
+Goal forall (a b: farray Z Z) (v w x y: Z)
+            (r s: bitvector 4)
+            (f: Z -> Z)
+            (g: farray Z Z -> Z)
+            (h: bitvector 4 -> Z),
+            a[x <- v] = b /\ a[y <- w] = b ->
+            r = s /\ h r = v /\ h s = y ->
+            v < x + 1 /\ v > x - 1 ->
+            f (h r) = f (h s) \/ g a = g b.
+  Proof.
+    smt. (** "cvc4. verit." also solves the goal *)
+  Qed.
+```
 
 
 
