@@ -148,7 +148,7 @@ Another example of a goal in the theory of bit-vectors is the following:
   Qed.
 ```
 
-Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then sets them `0000`, `1000` and `1100` in the given order
+Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then sets them to `0000`, `1000` and `1100` in the given order
 (`#b|1|0|...|` is the notation to annotate the bits of a bit-vector; `0` stands for `false` and `1` is for `true`). Finally,
 it states that `bv1` is less than (unsigned less than over bit-vectors) `bv2` and (propositional) `bv2` is less than `bv3`.
 The tactic `smt` suffices to solve the goal. 
