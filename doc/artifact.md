@@ -46,12 +46,12 @@ However, this parser is fairly straightforward.
 ### within a Coq tactic
 
 Once logged into the virtual machine, open a terminal and go to `unit-tests` directory
-by typing `cd Desktop/smtcoq/unit-tests` from home. To open the test file run
+by typing `cd Desktop/smtcoq/unit-tests` from home. There, to open the test file run
 `coqide Tests-lfsc.v` in the terminal. This will browse you in `CoqIDE` (the Coq interactive development environment)
 the file where we use SMTCoq within a Coq tactic called `smt`.
-Within CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the sources since `Go to end` button
+Within the CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the sources since `Go to end` button
 uses a parallelization strategy which has not yet been supported by SMTCoq.
-Note also that if the background becomes green, then Coq has accepted the statement,
+Note also that if the background becomes green after going one command forward, this means that Coq has accepted the statement,
 and at the end of the session the whole file should be green. If Coq fails to accept any statement,
 you will see a brief reason of the failure in the bottom-right rectangle within the `Errors` tab.
 
