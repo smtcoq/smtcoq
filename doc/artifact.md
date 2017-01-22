@@ -186,7 +186,7 @@ Notice that `a[i]` is to select the value stored in the `ith` index of the array
 in `a[x]`, `xth` index of array `a`. 
 
 You can also run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
-`coqc Tests-lfsc.v`.
+`coqc Tests_lfsc.v`.
 
 
 ### correct-by-construction checker
