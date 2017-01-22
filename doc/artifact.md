@@ -1,36 +1,24 @@
-# SMTCoq sources
+# Getting Started
 
-This document describes the organization of the SMTCoq repository and locations
-of source code and modules.
+This document describes the organization of the SMTCoq artifact.
 
-Sources are contained in the directory [src](../src) which can be found at
-top-level. The directories [examples](../examples) and
-[unit-tests](../unit-tests) contain respectively example files of usage for
-SMTCoq and regression tests for the different tactics and vernacular commands
-that the plugin provides.
+## How to download the artifact
 
-The rest of the document describes the organization of `src`.
+To download the articaft, please browse to ... What you will get is an image of an
+Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size.
 
 
-## Top-level architecture of SMTCoq
+## How to install the artifact
 
-SMTCoq sources are contained in this directory. A few Coq files can be found at
-top-level.
+To install the artifact, please run
+[VirtualBox](https://www.virtualbox.org/wiki/VirtualBox). From the `File` top-down
+menu click `Import Applicance...` and locate the `cav2017.ova` image. This will
+create you a virtual machine named `cav2017`.
 
-### [configure.sh](../src/configure.sh)
+## How to run the artifact
 
-This script is meant to be run when compiling SMTCoq for the first time. It
-should also be run every time the Makefile is modified. It takes as argument an
-optional flag `-native` which, when present, will set up the sources to use the
-*native Coq* libraries. Otherwise the standard version 8.5 of Coq is used. See
-section [versions](#versions).
-
-### [SMTCoq.v](../src/SMTCoq.v)
-
-This is the main SMTCoq entry point, it is meant to be imported by users that
-want to use SMTCoq in their Coq developments. It provides (exports) the other
-SMTCoq modules as well as declares the OCaml plugin for adding the new
-vernacular commands and tactics.
+To run the artifact, simply click on `Start` from the `VirtualBox Manager` menu.
+This will boot Ubuntu 16.04 LTS operating system.
 
 ### [Trace.v](../src/Trace.v)
 
