@@ -13,7 +13,7 @@ To get the articaft, please browse [here](https://drive.google.com/file/d/0BzDtB
 and download the `SMTCoq.ova` which is an image of an 
 Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size.
 Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox);
-from the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
+from the `File` top-down menu click on `Import Appliance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
 The login (and super user) password is two underscores in a row: `__`.
 
@@ -49,7 +49,7 @@ Once logged into the virtual machine, open a terminal and go to `unit-tests` dir
 by typing `cd Desktop/smtcoq/unit-tests` from home. There, to open the test file run
 `coqide Tests_lfsc.v` in the terminal. This will browse you in `CoqIDE` (the Coq interactive development environment)
 the file where we use SMTCoq within a Coq tactic called `smt`.
-Within the CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the sources since `Go to end` button
+Within the CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the source since `Go to end` button
 uses a parallelization strategy which has not yet been supported by SMTCoq.
 Note also that if the background becomes green after going one command forward, this means that Coq has accepted the statement,
 and at the end of the session the whole file should be green. If Coq fails to accept any statement,
@@ -148,7 +148,7 @@ Another example of a goal in the theory of bit-vectors is the following:
   Qed.
 ```
 
-Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then assigns `0000`, `1000` and `1100` in the given order
+Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then assigns them `0000`, `1000` and `1100` in the given order
 (`#b|1|0|...|` is the notation to annotate the bits of a bit-vector; `0` stands for `false` and `1` is for `true`). Finally,
 it states that `bv1` is less than (unsigned less than over bit-vectors) `bv2` and (propositional) `bv2` is less than `bv3`.
 The tactic `smt` suffices to solve the goal. 
@@ -182,8 +182,8 @@ Goal forall (a b: farray Z Z) (v w x y: Z)
 It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays with integer indices);
 four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions `f`, `g` and `h`. Then it does some assignments
 and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
-Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` is to store the value `v`
-in `a[x]`, `xth` index of array `a`. 
+Notice that `a[i]` is to select the value stored in the `i<sup>th</sup>` index of the array `a` while `a[x <- v]` is to store the value `v`
+in `a[x]`, `x<sup>th</sup>` index of array `a`. 
 
 You can also run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
 `coqc Tests_lfsc.v`.
@@ -192,13 +192,13 @@ You can also run Coq in batch mode on our test file by running (once you are in 
 ### correct-by-construction checker
 
 Using SMTCoq as a `correct-by-construction checker` means that it is possible to start with a problem in SMT-LIB standard,
-call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof and certify the it using the certified Coq checkers.
+call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof and certify it using the certified Coq checkers.
 
 To test that, in a terminal go to `tests` directory (from home) by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
 an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
 type check and convert it (using a converter written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
 and call the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
-returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
+returns `false`, that means either that the proof is incorrect or that the OCaml converter is mistaken/incomplete.
 
 To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` being any input file under `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
 Feel free to generate your own problem files but please recall that the input problems should be from the
