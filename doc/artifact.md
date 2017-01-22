@@ -183,7 +183,7 @@ and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
 Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` is to store the value `v`
 in `a[x]`, `xth` index of array `a`. 
 
-One can run Coq in batch mode on our test file by running (once she is in the correct directory) by simply typing
+You can run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
 `coqc Tests-lfsc.v`.
 
 
@@ -198,7 +198,7 @@ type check and convert it (using a converter written in OCaml) into SMTCoq forma
 and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
 returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
 
-To see a working example, you can run `./cvc4tocoq X.smt2` where `X` being any input file under tests directory.
+To see a working example, you can run `./cvc4tocoq X.smt2` where `X` being any input file under `tests` directory (`Desktop/smtcoq/src/lfsc/tests`).
 
 Recall that the input problems should be in the supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, `QF_IDL` and their combinations.
 
