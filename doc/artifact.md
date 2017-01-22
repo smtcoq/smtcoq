@@ -38,6 +38,19 @@ However, this parser is fairly straightforward.
 
 ### within a Coq tactic
 
+Once logged into the virtual machine, open a terminal and go to `unit-tests` directory
+by typing `cd Desktop/smtcoq/unit-tests`. To open the test file type
+`coqide Tests-lfsc.v`. This will browse you in `coqide` (the Coq interactive development environment)
+a file where we use SMTCoq within a Coq tactic called `smt`.
+
+```coq
+Require Import SMTCoq.
+```
+
+loads the SMTCoq module that is implemented as explained
+[here](https://github.com/ekiciburak/smtcoq/blob/master/doc/sources.md).
+
+
 ### correct-by-construction checker
 
 
