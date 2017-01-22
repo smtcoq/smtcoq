@@ -102,62 +102,6 @@ Section Arrays.
 End Arrays.
 
 
-Section A_BV_EUF.
-  Import BVList.BITVECTOR_LIST FArray.
-
-  Local Open Scope farray_scope.
-  Local Open Scope bv_scope. 
-
-  Goal forall (bv1 bv2 : bitvector 4)
-         (a b c d : farray (bitvector 4) Z),
-      bv1 = #b|0|0|0|0|  ->
-      bv2 = #b|1|0|0|0|  ->
-      c = b[bv1 <- 4]  ->
-      d = b[bv1 <- 4][bv2 <- 4]  ->
-      a = d[bv2 <- b[bv2]]  ->
-      a = c.
-  Proof.
-    smt.
-  Qed.
-
-  Goal forall (bv1 bv2 : bitvector 4)
-         (a b c d : farray (bitvector 4) Z),
-      bv1 = #b|0|0|0|0|  /\
-      bv2 = #b|1|0|0|0|  /\
-      c = b[bv1 <- 4]  /\
-      d = b[bv1 <- 4][bv2 <- 4]  /\
-      a = d[bv2 <- b[bv2]]  ->
-      a = c.
-  Proof.
-    smt.
-  Qed.
-
-  (** the example in the paper *)
-  Goal forall (a b: farray Z Z) (v w x y: Z)
-              (r s: bitvector 4)
-              (f: Z -> Z)
-              (g: farray Z Z -> Z)
-              (h: bitvector 4 -> Z),
-              a[x <- v] = b /\ a[y <- w] = b ->
-              r = s /\ h r = v /\ h s = y ->
-              v < x + 1 /\ v > x - 1 ->
-              f (h r) = f (h s) \/ g a = g b.
-  Proof.
-    smt. (** "cvc4. verit." also solves the goal *)
-  Qed.
-
-  Goal forall (a:farray Z Z), a = a.
-  Proof.
-    smt.
-  Qed.
-
-  Goal forall (a b: farray Z Z), a = b <->  b = a.
-  Proof. 
-    smt.
-  Qed.
-
-End A_BV_EUF.
-
 Section EUF.
 
   Goal forall
@@ -256,6 +200,8 @@ End LIA.
 
 Section CNF.
 
+ Local Open Scope int63_scope.
+
 (* Simple connectors *)
 
 Goal forall (a:bool), a || negb a.
@@ -274,11 +220,11 @@ Goal forall a, negb (a && negb a).
   smt.
 Qed.
 
-Goal forall a, implb a a.
+Goal forall a, a --> a.
   smt.
 Qed.
 
-Goal forall a, negb (implb a a) = false.
+Goal forall a, negb (a --> a) = false.
   smt.
 Qed.
 
@@ -362,7 +308,7 @@ Proof.
 Qed.
 
 
-Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
+Goal forall x y, Bool.eqb (x --> y) ((x && y) || (negb x)).
 Proof.
   smt.
 Qed.
@@ -543,19 +489,19 @@ Qed.
 
 
 
-Goal forall x y z, implb ((x <=? 3) && ((y <=? 7) || (z <=? 9)))
+Goal forall x y z, ((x <=? 3) && ((y <=? 7) || (z <=? 9))) -->
   ((x + y <=? 10) || (x + z <=? 12)) = true.
 Proof.
   smt.
 Qed.
 
-Goal forall x, implb (Z.eqb (x - 3) 7) (x >=? 10) = true.
+Goal forall x, (Z.eqb (x - 3) 7)  -->  (x >=? 10) = true.
 Proof.
   smt.
 Qed.
 
 
-Goal forall x y, implb (x >? y) (y + 1 <=? x) = true.
+Goal forall x y, (x >? y) --> (y + 1 <=? x) = true.
 Proof.
   smt.
 Qed.
@@ -572,12 +518,12 @@ Goal forall x y, ((x + y <=? - (3)) && (y >=? 0)
    smt.
  Qed. 
 
-Goal forall x, implb (andb ((x - 3) <=? 7) (7 <=? (x - 3))) (x >=? 10) = true.
+Goal forall x, (andb ((x - 3) <=? 7) (7 <=? (x - 3))) --> (x >=? 10) = true.
 Proof.
   smt.
 Qed.
 
-Goal forall x, implb (Z.eqb (x - 3) 7) (10 <=? x) = true.
+Goal forall x, (Z.eqb (x - 3) 7) --> (10 <=? x) = true.
 Proof.
   smt.
 Qed.
@@ -598,11 +544,10 @@ Qed.
 
 
 Goal forall b1 b2 x1 x2,
-  implb
   (ifb b1
     (ifb b2 (Z.eqb (2*x1+1) (2*x2+1)) (Z.eqb (2*x1+1) (2*x2)))
-    (ifb b2 (Z.eqb (2*x1) (2*x2+1)) (Z.eqb (2*x1) (2*x2))))
-  ((implb b1 b2) && (implb b2 b1) && (Z.eqb x1 x2)).
+    (ifb b2 (Z.eqb (2*x1) (2*x2+1)) (Z.eqb (2*x1) (2*x2)))) -->
+  ((b1 --> b2) && (b2 --> b1) && (Z.eqb x1 x2)).
 Proof.
   smt.
 Qed.
@@ -641,7 +586,7 @@ Qed.
 
 (* Congruence in which some premises are REFL *)
 Goal forall (f:Z -> Z -> Z) x y z,
-  implb (Z.eqb x y) (Z.eqb (f z x) (f z y)).
+  (Z.eqb x y) --> (Z.eqb (f z x) (f z y)).
 Proof.
   smt.
 Qed.
@@ -653,13 +598,70 @@ Proof.
 Qed.
 
 Goal forall (P:Z -> Z -> bool) x y z,
-  implb (Z.eqb x y) (implb (P z x) (P z y)).
+  (Z.eqb x y) --> ((P z x) --> (P z y)).
 Proof.
   smt.
 Qed.
 
 
 End CNF.
+
+
+Section A_BV_EUF_LIA.
+  Import BVList.BITVECTOR_LIST FArray.
+
+  Local Open Scope farray_scope.
+  Local Open Scope bv_scope. 
+
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv1 = #b|0|0|0|0|  ->
+      bv2 = #b|1|0|0|0|  ->
+      c = b[bv1 <- 4]  ->
+      d = b[bv1 <- 4][bv2 <- 4]  ->
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
+  Proof.
+    smt.
+  Qed.
+
+  Goal forall (bv1 bv2 : bitvector 4)
+         (a b c d : farray (bitvector 4) Z),
+      bv1 = #b|0|0|0|0|  /\
+      bv2 = #b|1|0|0|0|  /\
+      c = b[bv1 <- 4]  /\
+      d = b[bv1 <- 4][bv2 <- 4]  /\
+      a = d[bv2 <- b[bv2]]  ->
+      a = c.
+  Proof.
+    smt.
+  Qed.
+
+  (** the example in the paper *)
+  Goal forall (a b: farray Z Z) (v w x y: Z)
+              (r s: bitvector 4)
+              (f: Z -> Z)
+              (g: farray Z Z -> Z)
+              (h: bitvector 4 -> Z),
+              a[x <- v] = b /\ a[y <- w] = b ->
+              r = s /\ h r = v /\ h s = y ->
+              v < x + 1 /\ v > x - 1 ->
+              f (h r) = f (h s) \/ g a = g b.
+  Proof.
+    smt. (** "cvc4. verit." also solves the goal *)
+  Qed.
+
+  Goal forall (a:farray Z Z), a = a.
+  Proof.
+    smt.
+  Qed.
+
+  Goal forall (a b: farray Z Z), a = b <->  b = a.
+  Proof. 
+    smt.
+  Qed.
+
+End A_BV_EUF_LIA.
 
 
 

@@ -1,13 +1,13 @@
-# Getting Started
+# SMTCoq artifact
 
 SMTCoq is a Coq tool that checks proof witnesses coming from external SAT and SMT solvers.
 This document describes the organization of the SMTCoq artifact.
 
 ## How to download the artifact
 
-To download the articaft, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view).
-There, you can get the image of an
-Ubuntu 16.04 LTS running virtual machine, named `SMTCoq.ova`, with approximately 3.6GB size.
+To get the articaft, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view)
+and download the `SMTCoq.ova` which is an image of an 
+Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size.
 Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox),
 from the `File` top-down menu click on `Import Applicance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
@@ -16,8 +16,8 @@ image. This will create you a virtual machine named `SMTCoq`. To run it, simply 
 ## How to install the artifact
 
 Once logged into the virtual machine, you will find SMTCoq installed. 
-If you want to install it on a seperate machine, please check the installation
-guide which can be found [here](https://github.com/ekiciburak/smtcoq/blob/master/INSTALL.md).
+If you want to install it on a seperate machine, please check the 
+[installation guide] (https://github.com/ekiciburak/smtcoq/blob/master/INSTALL.md).
 
 
 ## How to run the artifact
@@ -49,8 +49,8 @@ a file where we use SMTCoq within a Coq tactic called `smt`.
 Require Import SMTCoq.
 ```
 
-loads the SMTCoq module that is implemented as explained
-[here](https://github.com/ekiciburak/smtcoq/blob/master/doc/sources.md).
+loads the SMTCoq module whose implementation is explained
+[here](https://github.com/ekiciburak/smtcoq/blob/master/doc/sources.md) in details.
 
 Similarly,
 
@@ -58,7 +58,7 @@ Similarly,
 Require Import Bool PArray Int63 List ZArith Logic.
 ```
 
-loads above-mentioned modules from Coq standard library.
+loads above-mentioned modules from the Coq standard library.
 
 ```coq
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
@@ -82,7 +82,7 @@ are to load our own [bitvector library](https://github.com/ekiciburak/smtcoq/blo
 (called BITVECTOR_LIST in BVList.v file)
 to be able to use theorems proven and notations introduced there.
 
-Now, we can state theorems and prove them automatically. For instance, the goal
+Now, we can state goals and prove them automatically. For instance, the goal
 
 ```coq
   Goal forall (a b c: bitvector 4),
@@ -139,14 +139,16 @@ it states that `bv1` is less than (unsigned less than over bit-vectors) `bv2` an
 The tactic `smt` suffices to solve the goal. 
 
 
-The following sections `Arrays`, `A_BV_EUF`, `LIA`, `EUF` and `CNF` include goals that could be proven by the `smt` tactic from the
-theories of functional arrays, combination of functional arrays, bit-vectors and uninterpreted functions, linear integer arithmetic,
-uninterpreted functions and cnf conversion respectively.
+The following sections `Arrays`, `LIA`, `EUF`, `CNF`and `A_BV_EUF_LIA`
+include goals that could be proven by the `smt` tactic from the
+theories of functional arrays; linear integer arithmetic;
+uninterpreted functions; cnf conversion and
+the combination of functional arrays, fixed-size bit-vectors, uninterpreted functions and linear integer arithmetic; respectively.
 
 
-The example appears in the paper could be found in the section `A_BV_EUF`:
+The example appears in the paper could be found in the section `A_BV_EUF_LIA`:
 
-```coq  
+```coq
 Goal forall (a b: farray Z Z) (v w x y: Z)
             (r s: bitvector 4)
             (f: Z -> Z)
@@ -164,11 +166,24 @@ Goal forall (a b: farray Z Z) (v w x y: Z)
 It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays with integer indices);
 four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions `f`, `g` and `h`. Then it does some assignments
 and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
-Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` stores the value `v`
+Notice that `a[i]` is to select the value stored in the `ith` index of the array `a` while `a[x <- v]` is to store the value `v`
 in `a[x]`, `xth` index of array `a`. 
 
 
 ### correct-by-construction checker
+
+Using SMTCoq as a `correct-by-construction checker` means that it is possible to start with a problem in SMT-LIB standard,
+call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof and certify the it using the certified Coq checkers.
+
+To test that, in a terminal go to `tests` directory by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
+the input file (.smt2 extended) by typing `./cvc4tocoq file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
+type check and convert it (using an converter wirtten in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
+and calls the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
+returns `false`, that means either the proof is incorrect or the OCaml converter is mistaken/incomplete.
+
+
+
+
 
 
 
