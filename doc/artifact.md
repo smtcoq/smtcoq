@@ -182,8 +182,8 @@ Goal forall (a b: farray Z Z) (v w x y: Z)
 It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays with integer indices);
 four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions `f`, `g` and `h`. Then it does some assignments
 and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
-Notice that `a[i]` is to select the value stored in the `i<sup>th</sup>` index of the array `a` while `a[x <- v]` is to store the value `v`
-in `a[x]`, `x<sup>th</sup>` index of array `a`. 
+Notice that `a[i]` is to select the value stored in the `i^th^` index of the array `a` while `a[x <- v]` is to store the value `v`
+in `a[x]`, `x^th^` index of array `a`. 
 
 You can also run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
 `coqc Tests_lfsc.v`.
