@@ -1,15 +1,16 @@
 # SMTCoq artifact
 
-SMTCoq is a Coq tool that checks proof witnesses coming from external SAT and SMT solvers.
-It currenly supports the quantifier free fragments of the theories of fixed-sized bit-vectors (`QF_BV`),
+SMTCoq is a Coq tool that can be used to dispatch goals to external SAT and SMT solvers
+or simply to checks proof witnesses produced by them.
+It currenly supports the quantifier free fragments of the SMT-LIB theories of fixed-sized bit-vectors (`QF_BV`),
 functional arrays (`QF_A`), linear integer arithmetic (`QF_LIA`), equality over uninterpreted functions
-(`QF_EUF`), propositional reasoning and their combinations.
+(`QF_EUF`), and their combinations.
 
-This document describes the organization of the SMTCoq artifact.
+This document describes the organization of the SMTCoq artifact submission for CAV 2017.
 
 ## How to download the artifact
 
-To get the articaft, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view)
+To get the artifact, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view)
 and download the `SMTCoq.ova` which is an image of an 
 Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size 
 (using 8GB memory, single processor and approximately 63GB virtual disk space once imported).
