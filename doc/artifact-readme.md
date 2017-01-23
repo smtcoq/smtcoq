@@ -165,7 +165,7 @@ proof certificate, and if SMTCoq's checker can validate the certificate, establi
 of the initial goal. The translation tactics `prop2bool` and `bool2prop` are implemented in Coq using
 the Ltac language.
 
-NB: all these tactics perform better "standard" machine compared to the VM.
+NB: all of the above tactics perform better on a "standard" machine compared to the VM.
 
 Another example of a goal in the theory of bit-vectors is the following:
 
