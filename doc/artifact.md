@@ -23,7 +23,7 @@ The login (and super user) password is two underscores in a row: `__`.
 ## How to install the artifact
 
 Once logged into the virtual machine, you will find SMTCoq installed. 
-If you want to install it on a seperate machine, please check the SMTCoq
+If you want to install it on a separate machine, please check the SMTCoq
 [installation guide] (https://github.com/lfsc/smtcoq/blob/master/INSTALL.md).
 
 
