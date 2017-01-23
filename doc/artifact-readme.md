@@ -1,5 +1,4 @@
 # SMTCoq artifact
-(NB: please get the latest version of this file [here](https://github.com/ekiciburak/smtcoq/blob/master/doc/artifact-readme.md))
 
 SMTCoq is a Coq tool that can be used to dispatch goals to external SAT and SMT solvers
 or simply to checks proof witnesses produced by them.
