@@ -11,7 +11,7 @@ This document describes the organization of the SMTCoq artifact.
 
 To get the articaft, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view)
 and download the `SMTCoq.ova` which is an image of an 
-Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size (requires 8GB memory once imported).
+Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size (using 8GB memory and a single processor once imported).
 Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox);
 from the `File` top-down menu click on `Import Appliance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
