@@ -17,7 +17,7 @@ Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size
 Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox);
 from the `File` top-down menu click on `Import Appliance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
-The login (and super user) password is two underscores in a row: `__`.
+The login (and super user) password is `123`.
 
 
 ## How to install the artifact
