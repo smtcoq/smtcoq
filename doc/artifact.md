@@ -23,7 +23,7 @@ The login (and super user) password is two underscores in a row: `__`.
 ## How to install the artifact
 
 Once logged into the virtual machine, you will find SMTCoq installed. 
-If you want to install it on a seperate machine, please check the 
+If you want to install it on a seperate machine, please check the SMTCoq
 [installation guide] (https://github.com/lfsc/smtcoq/blob/master/INSTALL.md).
 
 
@@ -33,17 +33,14 @@ There are two use-cases of SMTCoq:
  - `within a Coq tactic`: we can give a Coq goal to an external solver and get a
 proof certificate for it. If the checker can validate the certificate, 
 the soundness of the checker allow us to establish a proof of the initial goal
-(aka `computational reflection`).
+(by `computational reflection`).
 In this use case, the trusted base consists only of Coq: if something else goes wrong
 (e.g., the checker cannot validate the certificate), the tactic will fail, but
 nothing unsound will be added to the system.
  - `correct-by-construction checker`: the idea is to check the
-validity of a proof witness, or proof certificate, coming from an external solver
-against some input problem. In this use case, the
+validity of a proof witness, or proof certificate, produced by an external SMT solver
+for some input problem. In this use case, the
 trusted base is both Coq and the parser of the input problem.
-The parse is part of the trusted based because we need to make sure 
-we are effectively verifying a proof of the problem we sent to the external solver.
-However, this parser is fairly straightforward.
 
 ### Within a Coq tactic
 
@@ -66,8 +63,8 @@ Within the CoqIDE, use `Forward one command` button (downarrow on the top-left c
 navigate through the source since `Go to end` button uses a parallelization strategy
 which is not yet supported by SMTCoq.
 
-Note also that if the background becomes green after going one command forward, this means
-that Coq has accepted the statement,and at the end of the session the whole file should be green.
+If the background becomes green after going one command forward, this means
+that Coq has accepted the statement. At the end of the session the whole file should be green.
 If Coq fails to accept any statement, you will see a brief reason of the failure in the
 bottom-right rectangle within the `Errors` tab.
 
