@@ -44,17 +44,46 @@ The parse is part of the trusted based because we need to make sure
 we are effectively verifying a proof of the problem we sent to the external solver.
 However, this parser is fairly straightforward.
 
-### within a Coq tactic
+### Within a Coq tactic
 
 Once logged into the virtual machine, open a terminal and go to `unit-tests` directory
-by typing `cd Desktop/smtcoq/unit-tests` from home. There, to open the test file run
-`coqide Tests_lfsc.v` in the terminal. This will browse you in `CoqIDE` (the Coq interactive development environment)
+by typing `cd Desktop/smtcoq/unit-tests` from home. It contains a test file which makes
+use of the new SMTCoq tactics inside Coq, to discharge goals with the aid of various SMT
+solvers.
+
+#### Interactive session through CoqIDE
+
+In the `unit-test` directory, open the test file by running
+
+```
+coqide Tests_lfsc.v
+```
+
+in the terminal. This will load in `CoqIDE` (the Coq interactive development environment)
 the file where we use SMTCoq within a Coq tactic called `smt`.
-Within the CoqIDE, please use `Forward one command` button (downarrow on the top-left corner) to navigate through the source since `Go to end` button
-uses a parallelization strategy which has not yet been supported by SMTCoq.
-Note also that if the background becomes green after going one command forward, this means that Coq has accepted the statement,
-and at the end of the session the whole file should be green. If Coq fails to accept any statement,
-you will see a brief reason of the failure in the bottom-right rectangle within the `Errors` tab.
+Within the CoqIDE, use `Forward one command` button (downarrow on the top-left corner) to
+navigate through the source since `Go to end` button uses a parallelization strategy
+which is not yet supported by SMTCoq.
+
+Note also that if the background becomes green after going one command forward, this means
+that Coq has accepted the statement,and at the end of the session the whole file should be green.
+If Coq fails to accept any statement, you will see a brief reason of the failure in the
+bottom-right rectangle within the `Errors` tab.
+
+
+#### Running everything with a single command
+
+You can also run Coq in batch mode on our test file by running (once you are in the correct
+directory) by simply running the following command
+
+```
+coqc Tests_lfsc.v
+```
+
+The return code should be 0 to indicate that Coq typed-checked everything correctyly.
+
+
+#### Understanding the test file
 
 ```coq
 Require Import SMTCoq.
@@ -91,8 +120,8 @@ Local Open Scope bv_scope.
 
 are to load our own [bitvector library](https://github.com/lfsc/smtcoq/blob/master/src/bva/BVList.v)
 (called BITVECTOR_LIST in BVList.v file)
-to be able to use theorems proven and notations introduced there. Note that to end a section `XX` you need to
-type
+to be able to use theorems proven and notations introduced there. Note that to end a
+section `XX` you need to type
 
 ```coq
 End XX.
@@ -123,18 +152,21 @@ Here are some more detailed explanation of the tactics:
  - `cvc4` -> can function on the goals in Coq's `Prop`: 
  first calls `prop2bool` on the goal, getting the goal in `bool`, 
  then calls the reificiation tactic `cvc4_bool` (can only function on Boolean goals),
- and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
+ and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it
+ is not solved or additional goals returned.
  
  - `smt` -> subsumes the powers of `cvc4` and `verit` tactics: 
  first calls `prop2bool` on the goal, getting the goal in `bool`, 
- then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only function on Boolean goals),
- and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
+ then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only
+ function on Boolean goals), and finally puts the goal(s) back in Coq's `Prop`, by
+ calling `bool2prop`, in case it is not solved or additional goals returned.
 
-Notice that the tactics `cvc4_bool` and `verit_bool` are (implemented in OCaml) doing the main job: 
-calling the external solvers (`CVC4` and `veriT` respectively), getting a
-proof certificate and if the checker can validate the certificate, establishing the proof of the initial goal.
-The tactics `prop2bool` and `bool2prop` are implemented in Coq using the Ltac language and are giving the Boolean counterpart
-of a propositional goal and vice versa.
+Notice that the tactics `cvc4_bool` and `verit_bool` are (implemented in OCaml) doing the
+main job: calling the external solvers (`CVC4` and `veriT` respectively), getting a
+proof certificate and if the checker can validate the certificate, establishing the proof
+of the initial goal. The tactics `prop2bool` and `bool2prop` are implemented in Coq using
+the Ltac language and are giving the Boolean counterpart of a propositional goal and
+vice versa.
 
 Another example of a goal in the theory of bit-vectors is the following:
 
@@ -149,18 +181,18 @@ Another example of a goal in the theory of bit-vectors is the following:
   Qed.
 ```
 
-Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then sets them to `0000`, `1000` and `1100` in the given order
-(`#b|1|0|...|` is the notation to annotate the bits of a bit-vector; `0` stands for `false` and `1` is for `true`). Finally,
-it states that `bv1` is less than (unsigned less than over bit-vectors) `bv2` and (propositional) `bv2` is less than `bv3`.
-The tactic `smt` suffices to solve the goal. 
+Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then sets them to
+`0000`, `1000` and `1100` in the given order (`#b|1|0|...|` is the notation to annotate 
+the bits of a bit-vector; `0` stands for `false` and `1` is for `true`). Finally, it states
+that `bv1` is less than (unsigned less than over bit-vectors) `bv2` and (propositional)
+`bv2` is less than `bv3`. The tactic `smt` suffices to solve the goal. 
 
 
-The following sections `Arrays`, `LIA`, `EUF`, `PR`and `A_BV_EUF_LIA_PR`
-include goals that could be proven by the `smt` tactic from the
-theories of functional arrays; linear integer arithmetic;
-uninterpreted functions; propositional reasoning and
-the combination of functional arrays, fixed-size bit-vectors, uninterpreted functions, linear integer arithmetic
-and propositional reasoning; respectively.
+The following sections `Arrays`, `LIA`, `EUF`, `PR`and `A_BV_EUF_LIA_PR` include goals that
+could be proven by the `smt` tactic from the theories of functional arrays; linear integer
+arithmetic; uninterpreted functions; propositional reasoning and the combination of functional
+arrays, fixed-size bit-vectors, uninterpreted functions, linear integer arithmetic and
+propositional reasoning; respectively.
 
 
 The example appears in the paper could be found in the section `A_BV_EUF_LIA_PR`:
@@ -180,33 +212,31 @@ Goal forall (a b: farray Z Z) (v w x y: Z)
   Qed.
 ```
 
-It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays with integer indices);
-four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions `f`, `g` and `h`. Then it does some assignments
-and states that either `f (h r) = f (h s)` or (propositional) `g a = g b`.
-Notice that `a[i]` is to select the value stored in the `i^th^` index of the array `a` while `a[x <- v]` is to store the value `v`
-in `a[x]`, `x^th^` index of array `a`. 
-
-You can also run Coq in batch mode on our test file by running (once you are in the correct directory) by simply typing
-`coqc Tests_lfsc.v`.
+It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays
+with integer indices); four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions
+`f`, `g` and `h`. Then it does some assignments and states that either `f (h r) = f (h s)`
+or (propositional) `g a = g b`.
+Notice that `a[i]` is to select the value stored in the `i^th^` index of the array `a`
+while `a[x <- v]` is to store the value `v` in `a[x]`, `x^th^` index of array `a`. 
 
 
-### correct-by-construction checker
 
-Using SMTCoq as a `correct-by-construction checker` means that it is possible to start with a problem in SMT-LIB standard,
-call an external solver (CVC4 or veriT) on it, get the unsatisfiability proof and certify it using the certified Coq checkers.
+### Correct-by-construction checker
 
-To test that, in a terminal go to `tests` directory (from home) by typing `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
-an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. This will call `CVC4`, get the proof in `LFSC` format,
-type check and convert it (using a converter written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`)
-and call the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of the input problem is correct. If it
-returns `false`, that means either that the proof is incorrect or that the OCaml converter is mistaken/incomplete.
+Using SMTCoq as a `correct-by-construction checker` means that it is possible to start with
+a problem in SMT-LIB standard, call an external solver (CVC4 or veriT) on it, get the
+unsatisfiability proof and certify it using the certified Coq checkers.
 
-To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` being any input file under `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
+To test that, in a terminal go to `tests` directory (from home) by typing 
+`cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
+an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. 
+This will call `CVC4`, get the proof in `LFSC` format, type check and convert it (using a converter
+written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`) and call
+the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of
+the input problem is correct. If it returns `false`, that means either that the proof is incorrect
+or that the OCaml converter is mistaken/incomplete.
+
+To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` being any input file under
+`tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
 Feel free to generate your own problem files but please recall that the input problems should be from the
 supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, propositional reasoning and their combinations.
-
-
-
-
-
-
