@@ -154,7 +154,7 @@ Here are some more detailed explanation of the tactics:
  and it finally converts any unsolved subgoals returned by CVC4 back to `Prop`, 
  by calling `bool2prop`.
  
- - `smt` -> has the combined effect of the `cvc4` and `verit` tactics: 
+- `smt` -> has the combined effect of the `cvc4` and `verit` tactics: 
  it first calls `prop2bool` on the goal, it then calls either of the `cvc4_bool` and 
  `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`, 
  by calling `bool2prop`.
@@ -178,21 +178,21 @@ Another example of a goal in the theory of bit-vectors is the following:
   Qed.
 ```
 
-Above goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then sets them to
-`0000`, `1000` and `1100` in the given order (`#b|1|0|...|` is the notation to annotate 
-the bits of a bit-vector; `0` stands for `false` and `1` is for `true`). Finally, it states
+This goal uses three bit-vectors of size four: `bv1`, `bv2` and `bv3` then sets them to
+`0000`, `1000` and `1100` in the given order (`#b|1|0|...|` is the notation for bit-vector
+constants, where `0` stands for `false` and `1` is for `true`). Finally, it states
 that `bv1` is less than (unsigned less than over bit-vectors) `bv2` and (propositional)
 `bv2` is less than `bv3`. The tactic `smt` suffices to solve the goal. 
 
 
-The following sections `Arrays`, `LIA`, `EUF`, `PR`and `A_BV_EUF_LIA_PR` include goals that
-could be proven by the `smt` tactic from the theories of functional arrays; linear integer
+The following sections `Arrays`, `LIA`, `EUF`, `PR`and `A_BV_EUF_LIA_PR` in the Coq file include goals that
+can be proven by the `smt` tactic from the theories of functional arrays; linear integer
 arithmetic; uninterpreted functions; propositional reasoning and the combination of functional
 arrays, fixed-size bit-vectors, uninterpreted functions, linear integer arithmetic and
 propositional reasoning; respectively.
 
 
-The example appears in the paper could be found in the section `A_BV_EUF_LIA_PR`:
+The example that appears in the paper can be found in the section `A_BV_EUF_LIA_PR`:
 
 ```coq
 Goal forall (a b: farray Z Z) (v w x y: Z)
@@ -211,10 +211,9 @@ Goal forall (a b: farray Z Z) (v w x y: Z)
 
 It introduces two arrays `a` and `b` of type `farray Z Z` (the type of integer arrays
 with integer indices); four integers `v`, `w`, `x` and `y`; three uninterpreted fuctions
-`f`, `g` and `h`. Then it does some assignments and states that either `f (h r) = f (h s)`
-or (propositional) `g a = g b`.
-Notice that `a[i]` is to select the value stored in the `i^th^` index of the array `a`
-while `a[x <- v]` is to store the value `v` in `a[x]`, `x^th^` index of array `a`. 
+`f`, `g` and `h`. 
+Notice that `a[i]` is used to select the value stored in the `i^th^` index of the array `a`
+while `a[x <- v]` is used to store the value `v` in `a[x]`, `x^th^` index of array `a`. 
 
 
 
@@ -222,18 +221,18 @@ while `a[x <- v]` is to store the value `v` in `a[x]`, `x^th^` index of array `a
 
 Using SMTCoq as a `correct-by-construction checker` means that it is possible to start with
 a problem in SMT-LIB standard, call an external solver (CVC4 or veriT) on it, get the
-unsatisfiability proof and certify it using the certified Coq checkers.
+unsatisfiability proof and certify it using the certified "small checkers" of SMTCoq.
 
 To test that, in a terminal go to `tests` directory (from home) by typing 
 `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
 an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. 
 This will call `CVC4`, get the proof in `LFSC` format, type check and convert it (using a converter
 written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`) and call
-the Coq checker. If the checker returns `true` that means that Coq indeed agreed that the proof of
+the SMTCoq checker. If the checker returns `true` that means that SMTCoq indeed agreed that the proof of
 the input problem is correct. If it returns `false`, that means either that the proof is incorrect
 or that the OCaml converter is mistaken/incomplete.
 
-To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` being any input file under
+To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` is any input file under
 `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
 Feel free to generate your own problem files but please recall that the input problems should be from the
-supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, propositional reasoning and their combinations.
+supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, and their combinations.
