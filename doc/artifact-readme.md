@@ -52,7 +52,7 @@ solvers.
 
 #### Running everything with a single command
 
-You can run Coq in batch mode on our test file by running (once you are in the correct
+You can run Coq in batch mode on our test file (once you are in the correct
 directory) by simply running the following command:
 
 ```
