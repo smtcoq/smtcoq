@@ -1,7 +1,7 @@
 # SMTCoq artifact
 
 SMTCoq is a Coq tool that can be used to dispatch goals to external SAT and SMT solvers
-or simply to checks proof witnesses produced by them.
+or simply to check proof witnesses produced by them.
 It currenly supports the quantifier free fragments of the SMT-LIB theories of fixed-sized bit-vectors (`QF_BV`),
 functional arrays (`QF_A`), linear integer arithmetic (`QF_LIA`), equality over uninterpreted functions
 (`QF_EUF`), and their combinations.
@@ -60,7 +60,7 @@ coqc Tests_lfsc.v
 ```
 
 The return code should be 0 to indicate that Coq typed-checked everything correctly. The batch
-compiler `coqc` tries to compile `Tests_lfsc.v` file into `Test_lfsc.vo`. Please refer to the
+compiler `coqc` tries to compile `Tests_lfsc.v` file into `Test_lfsc.vo`. Please refer to
 [Coq reference manual](https://coq.inria.fr/refman/Reference-Manual008.html#compiled) for details.
 
 #### Interactive session through CoqIDE
@@ -91,7 +91,7 @@ Require Import SMTCoq.
 ```
 
 loads the SMTCoq module. It might be interesting to check out the implementation
-details (with pointers to sources) of the SMTCoq module
+details (with pointers to source codes) of the SMTCoq module
 [here](https://github.com/lfsc/smtcoq/blob/master/doc/sources.md). 
 
 Similarly,
@@ -149,7 +149,7 @@ Here are some more detailed explanation of the tactics:
  - `verit` -> applies to Coq goals of type `Prop`: 
  it first calls `prop2bool` on the goal, converting the goal to a term of type `bool`, 
  it then calls the reification tactic `verit_bool` (which applies only to Boolean goals),
- and it finally converts the goals back to `Prop`, by calling `bool2prop`, it is was not
+ and it finally converts the goals back to `Prop`, by calling `bool2prop`, if it is not
  solved.
  
 - `cvc4` -> applies to Coq goals of type `Prop`: 
