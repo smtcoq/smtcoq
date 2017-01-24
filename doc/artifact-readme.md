@@ -13,7 +13,8 @@ This document describes the organization of the SMTCoq artifact submission for C
 To get the artifact, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9RVd2aDVidktPNm8/view)
 and download the `SMTCoq.ova` which is an image of an 
 Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size 
-(using 8GB memory, single processor and approximately 63GB virtual disk space once imported).
+(using 8GB memory, single processor which runs at the same frequency with the host processor,
+and approximately 63GB virtual disk space once imported).
 Then, please run [VirtualBox](https://www.virtualbox.org/wiki/VirtualBox);
 from the `File` top-down menu click on `Import Appliance...` and locate the `SMTCoq.ova`
 image. This will create you a virtual machine named `SMTCoq`. To run it, simply click on `Start`.
@@ -24,7 +25,7 @@ The login (and super user) password is `123`.
 
 Once logged into the virtual machine, you will find SMTCoq installed. 
 If you want to install it on a separate machine, please check the SMTCoq
-[installation guide] (https://github.com/lfsc/smtcoq/blob/master/INSTALL.md).
+[installation guide](https://github.com/lfsc/smtcoq/blob/master/INSTALL.md).
 
 
 ## How to run the artifact
@@ -45,9 +46,22 @@ trusted base is both Coq and the parser of the input problem.
 ### Within a Coq tactic
 
 Once logged into the virtual machine, open a terminal and go to `unit-tests` directory
-by typing `cd Desktop/smtcoq/unit-tests` from home. It contains a test file which makes
+by typing `cd Desktop/smtcoq/unit-tests` from home. It contains a test file (`Tests_lfsc.v`) which makes
 use of the new SMTCoq tactics inside Coq, to discharge goals with the aid of various SMT
 solvers.
+
+#### Running everything with a single command
+
+You can run Coq in batch mode on our test file by running (once you are in the correct
+directory) by simply running the following command:
+
+```
+coqc Tests_lfsc.v
+```
+
+The return code should be 0 to indicate that Coq typed-checked everything correctly. The batch
+compiler `coqc` tries to compile `Tests_lfsc.v` file into `Test_lfsc.vo`. Please refer to the
+[Coq reference manual](https://coq.inria.fr/refman/Reference-Manual008.html#compiled) for details.
 
 #### Interactive session through CoqIDE
 
@@ -69,17 +83,6 @@ If Coq fails to accept any statement, you will see a brief reason of the failure
 bottom-right rectangle within the `Errors` tab.
 
 
-#### Running everything with a single command
-
-You can also run Coq in batch mode on our test file by running (once you are in the correct
-directory) by simply running the following command
-
-```
-coqc Tests_lfsc.v
-```
-
-The return code should be 0 to indicate that Coq typed-checked everything correctyly.
-
 
 #### Understanding the test file
 
@@ -87,8 +90,9 @@ The return code should be 0 to indicate that Coq typed-checked everything correc
 Require Import SMTCoq.
 ```
 
-loads the SMTCoq module whose implementation is explained
-[here](https://github.com/lfsc/smtcoq/blob/master/doc/sources.md) in details.
+loads the SMTCoq module. It might be interesting to check out the implementation
+details (with pointers to sources) of the SMTCoq module
+[here](https://github.com/lfsc/smtcoq/blob/master/doc/sources.md). 
 
 Similarly,
 
@@ -163,7 +167,7 @@ The tactics `cvc4_bool` and `verit_bool`, implemented in OCaml, do most of the w
 calling the external solvers (`CVC4` and `veriT` respectively), getting a
 proof certificate, and if SMTCoq's checker can validate the certificate, establishing the proof
 of the initial goal. The translation tactics `prop2bool` and `bool2prop` are implemented in Coq using
-the Ltac language.
+the Ltac language. 
 
 NB: all of the above tactics perform better on a "standard" machine compared to the VM.
 
@@ -227,14 +231,14 @@ unsatisfiability proof and certify it using the certified "small checkers" of SM
 
 To test that, in a terminal go to `tests` directory (from home) by typing 
 `cd Desktop/smtcoq/src/lfsc/tests`. Run the shell script `cvc4tocoq` providing
-an input file (i.e., `inp_file.smt2` extended) by typing `./cvc4tocoq inp_file.smt2`. 
+an input file (i.e., `uf1.smt2`) by typing `./cvc4tocoq uf1.smt2`. 
 This will call `CVC4`, get the proof in `LFSC` format, type check and convert it (using a converter
 written in OCaml) into SMTCoq format (which is very close to the proof format of `veriT`) and call
 the SMTCoq checker. If the checker returns `true` that means that SMTCoq indeed agreed that the proof of
 the input problem is correct. If it returns `false`, that means either that the proof is incorrect
-or that the OCaml converter is mistaken/incomplete.
-
-To get a working example, you can run `./cvc4tocoq X.smt2` where `X.smt2` is any input file under
+or that the OCaml converter is mistaken/incomplete. Note that you can replace `uf1.smt2`
+with any `.smt2` extended file under
 `tests` directory (`/home/Desktop/smtcoq/src/lfsc/tests`).
+
 Feel free to generate your own problem files but please recall that the input problems should be from the
 supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, and their combinations.
