@@ -137,7 +137,7 @@ Now, we can state goals and prove them automatically. For instance, the goal
                                  ((bv_and (bv_and c a) b) = c).
 ```
 
-is proven by the `smt` tactic which subsumes the powers of the reification tactics `cvc4` and `verit`:
+is proven by the `smt` tactic which subsumes the powers of the tactics `cvc4` and `verit`:
 ```coq
   Proof.
     smt.
@@ -163,7 +163,7 @@ Here are some more detailed explanation of the tactics:
  `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`, 
  by calling `bool2prop`.
 
-The tactics `cvc4_bool` and `verit_bool`, implemented in OCaml, do most of the work:
+The reification tactics `cvc4_bool` and `verit_bool`, implemented in OCaml, do most of the work:
 calling the external solvers (`CVC4` and `veriT` respectively), getting a
 proof certificate, and if SMTCoq's checker can validate the certificate, establishing the proof
 of the initial goal. The translation tactics `prop2bool` and `bool2prop` are implemented in Coq using
