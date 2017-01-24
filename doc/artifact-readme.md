@@ -248,7 +248,7 @@ files:
 - `XX.lfsc` -> the file includes the `LFSC` style unsatisfiability proof of the input problem `XX.smt2`.
 - `XX.v`    -> Coq source file that calls the Coq checkers to validate the proof`XX.lfsc`.
 - `XX.glob` -> the file includes the globals of the source `XX.v`.
-- `XX.vo`   -> compliled module file of the source `XX.v`, it has to be there while loading the modules in the source `XX.v`.
+- `XX.vo`   -> compliled module file of the source `XX.v`, it is used when to load the modules from the source `XX.v`.
 
  
 
