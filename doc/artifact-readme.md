@@ -120,7 +120,7 @@ Import BVList.BITVECTOR_LIST.
 Local Open Scope bv_scope.
 ```
 
-are to load our own [bitvector library](https://github.com/lfsc/smtcoq/blob/master/src/bva/BVList.v)
+are to load our own [bitvector module](https://github.com/lfsc/smtcoq/blob/master/src/bva/BVList.v)
 (called BITVECTOR_LIST in BVList.v file)
 to be able to use theorems proven and notations introduced there. Note that to end a
 section `XX` you need to type
