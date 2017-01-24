@@ -10,7 +10,7 @@ This document describes the organization of the SMTCoq artifact submission for C
 
 ## How to download the artifact
 
-To get the artifact, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9YWM3bHV0S0RqMGM/view)
+To get the artifact, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9WVNNLTlBQy1Lc28/view)
 and download the `SMTCoq.ova` which is an image of an 
 Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size 
 (using 8GB memory, single processor which runs at the same frequency with the host processor,
