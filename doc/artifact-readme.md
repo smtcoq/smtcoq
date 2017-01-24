@@ -91,7 +91,7 @@ Require Import SMTCoq.
 ```
 
 loads the SMTCoq module. It might be interesting to check out the implementation
-details (with pointers to source codes) of the SMTCoq module
+details (with pointers to source codes) of the module
 [here](https://github.com/lfsc/smtcoq/blob/master/doc/sources.md). 
 
 Similarly,
