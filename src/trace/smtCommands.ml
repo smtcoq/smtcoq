@@ -246,7 +246,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
         Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
-	         vm_cast_true (Global.env ())
+	         vm_cast_true_delay
 	           (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))),
         Term.VMcast,
         theorem_concl)

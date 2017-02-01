@@ -240,7 +240,7 @@ let theorem name fdimacs ftrace =
         Term.mkLambda (mkName "v", vtype,
         mklApp ctheorem_checker
                [| Term.mkRel 3(*d*); Term.mkRel 2(*c*);
-		  vm_cast_true (Global.env ())
+		  vm_cast_true_delay
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
                   Term.mkRel 1(*v*)|]))),
       Term.VMcast,
