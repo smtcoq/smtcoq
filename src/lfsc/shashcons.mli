@@ -1,3 +1,16 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     Alain Mebsout ♯                                                    *)
+(*     Burak Ekici   ♯                                                    *)
+(*                                                                        *)
+(*     ♯ The University of Iowa                                           *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
 
 (** Hash tables for hash consing *)
 

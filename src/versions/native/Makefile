@@ -148,6 +148,7 @@ VFILES:=Trace.v\
   Tactics.v\
   PropToBool.v\
   BoolToProp.v\
+  ReflectFacts.v\
   SMTCoq.v\
   Misc.v\
   spl/Operators.v\

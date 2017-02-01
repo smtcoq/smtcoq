@@ -14,7 +14,7 @@
 
 Require Import
         Bool ZArith BVList Logic BVList FArray
-        SMT_classes SMT_classes_instances SMT_terms.
+        SMT_classes SMT_classes_instances ReflectFacts.
 Import BVList.BITVECTOR_LIST. 
 
 Local Coercion is_true : bool >-> Sortclass.
@@ -29,6 +29,7 @@ Ltac bool2prop :=
     | [ |- forall _ : farray _ _, _] => intro
     | [ |- forall _ : _ -> _, _] => intro
     | [ |- forall _ : Z, _] => intro
+    | [ |- forall _ : bool, _] => intro
     | [ |- forall _ : Type, _] => intro
     | [ p: Type |-  context[ forall _ : ?t, _ ] ] => intro
 
@@ -47,31 +48,30 @@ Ltac bool2prop :=
 
     | [ |- context[?G0 --> ?G1 ] ] =>
       unfold is_true; rewrite <- (@reflect_iff (G0 = true -> G1 = true)  (G0 --> G1)); 
-      try apply implyP; try rewrite !equal_iff_eq
+      [ | apply implyP]
 
     | [ |- context[?G0 || ?G1 ] ] =>
       unfold is_true; rewrite <- (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)); 
-      try apply orP; try rewrite !equal_iff_eq
+      [ | apply orP]
 
     | [ |- context[?G0 && ?G1 ] ] =>
       unfold is_true; rewrite <- (@reflect_iff (G0 = true /\ G1 = true) (G0 && G1)); 
-      try apply andP; try rewrite !equal_iff_eq
+      [ | apply andP]
 
     | [ |- context[?G0 <--> ?G1 ] ] =>
       unfold is_true; rewrite <- (@reflect_iff (G0 = true <-> G1 = true) (G0 <--> G1)); 
-      try apply iffP; try rewrite !equal_iff_eq
+      [ | apply iffP]
 
-    | [ |- context[ negb ?G0 ] ] =>
-      unfold is_true; rewrite <- (@reflect_iff ((G0 <> true)) (negb G0)); 
-      try apply negP; try rewrite !equal_iff_eq
+    | [ |- context[ negb ?G ] ] =>
+      unfold is_true; rewrite <- (@reflect_iff (G <> true) (negb G)); 
+      [ | apply negP]
 
-    | [ 
-        R : CompDec ?t
-        |- context[ _ : bool ] ] => destruct R
+    | [R : CompDec ?t |- context[ CompDec ?t  ] ] => exact R
 
-    | [ 
-        Eqb : EqbType ?t
-        |- context[ _: bool ] ] => destruct Eqb as (K, L); simpl; rewrite !L
+    | [R : EqbType ?t |- context[ EqbType ?t  ] ] => exact R
+
+    | [ |- context[ false = true ] ] => rewrite FalseB
+                                              
+    | [ |- context[ true = true ] ] => rewrite TrueB
 
     end.
-

@@ -111,7 +111,11 @@ let lift = Term.lift
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
-let vm_cast_no_check = Tactics.vm_cast_no_check
+let vm_cast_no_check t =
+  Proofview.Goal.enter (fun gl ->
+    let env = Proofview.Goal.env gl in
+    Tactics.vm_cast_no_check (t env)
+    )
 let mk_tactic tac gl =
   let env = Tacmach.pf_env gl in
   let sigma = Tacmach.project gl in

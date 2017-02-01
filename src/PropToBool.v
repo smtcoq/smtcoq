@@ -14,12 +14,8 @@
 
 Require Import
         Bool ZArith BVList Logic BVList FArray
-        SMT_classes SMT_classes_instances SMT_terms.
+        SMT_classes SMT_classes_instances ReflectFacts.
 Import BVList.BITVECTOR_LIST. 
-
-
-Local Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-Local Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 Ltac prop2bool :=
   repeat
@@ -28,6 +24,7 @@ Ltac prop2bool :=
     | [ |- forall _ : farray _ _, _] => intro
     | [ |- forall _ : _ -> _, _] => intro
     | [ |- forall _ : Z, _] => intro
+    | [ |- forall _ : bool, _] => intro
     | [ |- forall _ : Type, _] => intro
     | [ p: (CompDec ?t) |-  context[ forall _ : ?t, _ ] ] => intro
 
@@ -39,6 +36,7 @@ Ltac prop2bool :=
     | [ |- context[ Z.gt _ _ ] ] => rewrite Z.gt_lt_iff; rewrite <- Z.ltb_lt
     | [ |- context[ Z.le _ _ ] ] => rewrite <- Z.leb_le
     | [ |- context[ Z.ge _ _ ] ] => rewrite Z.ge_le_iff; rewrite <- Z.leb_le
+    | [ |- context[ Z.eq _ _ ] ] => rewrite <- Z.eqb_eq
 
     | [ p: (CompDec ?t) |- context[ @Logic.eq ?t _ _ ] ] =>
       pose proof p as p0;
@@ -59,23 +57,26 @@ Ltac prop2bool :=
 
     | [ |- context[?G0 = true \/ ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
-      try apply orP
+      [ | apply orP]
 
     | [ |- context[?G0 = true -> ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true -> G1 = true) (implb G0 G1)); 
-      try apply implyP
+      [ | apply implyP]
 
     | [ |- context[?G0 = true /\ ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true /\ G1 = true) (andb G0 G1));
-      try apply andP
+      [ | apply andP]
 
     | [ |- context[?G0 = true <-> ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true <-> G1 = true) (Bool.eqb G0 G1));
-      try apply iffP
+      [ | apply iffP]
+          
+    | [ |- context[ ~ ?G = true ] ] =>
+      rewrite (@reflect_iff (~ G = true) (negb G));
+      [ | apply negP]
 
-    | [ |- context[?G0 <> true] ] =>
-      rewrite (@reflect_iff (G0 <> true) (negb G0));
-      try apply negP
+    | [ |- context[ is_true ?G ] ] =>
+      unfold is_true
 
     | [ |- context[ True ] ] => rewrite <- TrueB
 

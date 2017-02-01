@@ -138,7 +138,12 @@ let lift = Vars.lift
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
-let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t)
+let vm_cast_no_check t =
+  Proofview.Goal.enter (fun gl ->
+    let env = Proofview.Goal.env gl in
+    Proofview.V82.tactic (Tactics.vm_cast_no_check (t env))
+    )
+  
 let mk_tactic tac =
   Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in

@@ -4,7 +4,6 @@
 (*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
 (*     Chantal Keller  *                                                  *)
-(*     Tianyi  Liang   ♯                                                  *)
 (*     Alain   Mebsout ♯                                                  *)
 (*     Burak   Ekici   ♯                                                  *)
 (*                                                                        *)

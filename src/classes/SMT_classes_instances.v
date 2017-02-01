@@ -3,18 +3,15 @@
 (*     SMTCoq                                                             *)
 (*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*     Burak Ekici                                                        *)
-(*     Alain Mebsout                                                      *)
+(*     Burak Ekici   ♯                                                    *)
+(*     Alain Mebsout ♯                                                    *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
-(*     The University of Iowa                                             *)
+(*     ♯ The University of Iowa                                           *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
+
 
 Require Import Bool Int63 State OrderedType BinPos ZArith BVList.
 Require Export SMT_classes.

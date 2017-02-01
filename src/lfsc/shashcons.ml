@@ -1,3 +1,16 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2016                                          *)
+(*                                                                        *)
+(*     Alain Mebsout ♯                                                    *)
+(*     Burak Ekici   ♯                                                    *)
+(*                                                                        *)
+(*     ♯ The University of Iowa                                           *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
 
 (*s Hash tables for hash-consing. (Some code is borrowed from the ocaml
     standard library, which is copyright 1996 INRIA.) *)
