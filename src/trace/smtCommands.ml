@@ -246,7 +246,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
         Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
-	         vm_cast_true_delay
+	         vm_cast_true_no_check
 	           (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))),
         Term.VMcast,
         theorem_concl)
@@ -574,7 +574,7 @@ let checker_debug_step t_i t_func t_atom t_form root used_root trace
 
 (* Tactic *)
 
-let build_body rt ro ra rf l b (max_id, confl) =
+let build_body rt ro ra rf l b (max_id, confl) vm_cast =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -611,7 +611,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
     add_lets
       (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                            v 2 (*t_form*); l; b; v 1 (*certif*)|])
-    |> vm_cast_true env
+    |> vm_cast env
   in
 
   let proof_cast env =
@@ -629,7 +629,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
   (proof_cast, proof_nocast, cuts)
 
 
-let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
+let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -661,7 +661,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
     add_lets
       (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                             v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])
-      |> vm_cast_true env
+      |> vm_cast env
   in
 
   let proof_cast env =
@@ -693,7 +693,7 @@ let make_proof call_solver env rt ro ra rf l =
   call_solver env rt ro ra rf (root,l)
 
 
-let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
+let core_tactic call_solver solver_logic rt ro ra rf vm_cast env sigma concl =
   let a, b = get_arguments concl in
   let (body_cast, body_nocast, cuts) =
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
@@ -702,14 +702,14 @@ let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver env rt ro ra rf l' in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl
+      build_body rt ro ra rf (Form.to_coq l) b max_id_confl vm_cast
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-        (Form.to_coq l) max_id_confl in
+        (Form.to_coq l) max_id_confl vm_cast in
 
   let tac =
     List.fold_right (fun (eqn, eqt) tac ->
@@ -728,10 +728,10 @@ let core_tactic call_solver solver_logic rt ro ra rf env sigma concl =
     ) tac cuts
 
 
-let tactic call_solver solver_logic rt ro ra rf =
+let tactic call_solver solver_logic rt ro ra rf vm_cast =
   Structures.tclTHEN
     Tactics.intros
-    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf))
+    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf vm_cast))
 
 
 
