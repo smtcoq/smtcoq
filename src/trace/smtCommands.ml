@@ -607,18 +607,18 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast =
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
   
-  let cbc env =
+  let cbc =
     add_lets
       (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                            v 2 (*t_form*); l; b; v 1 (*certif*)|])
-    |> vm_cast env
+    |> vm_cast
   in
 
-  let proof_cast env =
+  let proof_cast =
     add_lets
       (mklApp cchecker_b_correct
          [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
-           l; b; v 1 (*certif*); cbc env |]) in
+           l; b; v 1 (*certif*); cbc |]) in
   
   let proof_nocast =
     add_lets
@@ -657,18 +657,18 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast =
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
-  let ceqc env  =
+  let ceqc =
     add_lets
       (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                             v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])
-      |> vm_cast env
+      |> vm_cast
   in
 
-  let proof_cast env =
+  let proof_cast =
     add_lets
       (mklApp cchecker_eq_correct
          [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
-           l1; l2; l; v 1 (*certif*); ceqc env |])
+           l1; l2; l; v 1 (*certif*); ceqc|])
   in
   let proof_nocast =
     add_lets
@@ -702,14 +702,14 @@ let core_tactic call_solver solver_logic rt ro ra rf vm_cast env sigma concl =
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let max_id_confl = make_proof call_solver env rt ro ra rf l' in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl vm_cast
+      build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env)
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
       let max_id_confl = make_proof call_solver env rt ro ra rf l in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-        (Form.to_coq l) max_id_confl vm_cast in
+        (Form.to_coq l) max_id_confl (vm_cast env) in
 
   let tac =
     List.fold_right (fun (eqn, eqt) tac ->

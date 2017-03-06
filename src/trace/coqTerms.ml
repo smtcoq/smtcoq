@@ -318,7 +318,7 @@ let vm_cast_true_no_check t =
    SMTCoq's tactics. *)
 let vm_cast_true env t =
   try
-    Vconv.vm_conv Reduction.CUMUL env
+    Structures.vm_conv Reduction.CUMUL env
       (SmtMisc.mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
       (SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
