@@ -1,3 +1,18 @@
+(* This example tests the tactics in "real" condition: a part of the
+   proof of correctness of insertion sort. It requires propositional
+   reasoning, uninterpreted functions, and a bit of integer arithmetic.
+
+   Ideally, the proof of each lemma should consists only on
+   induction/destruct followed by a call to [smt]. What we currently
+   lack:
+     - we have to provide all the needed lemmas and unfold all the
+       definitions
+     - it requires too much from uninterpreted functions even when it is
+       not needed
+     - it sometimes fails? (may be realted to the previous item)
+ *)
+
+
 Add Rec LoadPath "../src" as SMTCoq.
 
 Require Import SMTCoq.
