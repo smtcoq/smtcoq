@@ -1,7 +1,7 @@
 # SMTCoq artifact
 
 SMTCoq is a Coq tool that can be used to dispatch goals to external SAT and SMT solvers
-or simply to checks proof witnesses produced by them.
+or simply to check proof witnesses produced by them.
 It currenly supports the quantifier free fragments of the SMT-LIB theories of fixed-sized bit-vectors (`QF_BV`),
 functional arrays (`QF_A`), linear integer arithmetic (`QF_LIA`), equality over uninterpreted functions
 (`QF_EUF`), and their combinations.
@@ -10,7 +10,7 @@ This document describes the organization of the SMTCoq artifact submission for C
 
 ## How to download the artifact
 
-To get the artifact, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9YWM3bHV0S0RqMGM/view)
+To get the artifact, please browse [here](https://drive.google.com/file/d/0BzDtBR99eKp9WVNNLTlBQy1Lc28/view)
 and download the `SMTCoq.ova` which is an image of an 
 Ubuntu 16.04 LTS running virtual machine with approximately 3.6GB size 
 (using 8GB memory, single processor which runs at the same frequency with the host processor,
@@ -52,7 +52,7 @@ solvers.
 
 #### Running everything with a single command
 
-You can run Coq in batch mode on our test file by running (once you are in the correct
+You can run Coq in batch mode on our test file (once you are in the correct
 directory) by simply running the following command:
 
 ```
@@ -60,7 +60,7 @@ coqc Tests_lfsc.v
 ```
 
 The return code should be 0 to indicate that Coq typed-checked everything correctly. The batch
-compiler `coqc` tries to compile `Tests_lfsc.v` file into `Test_lfsc.vo`. Please refer to the
+compiler `coqc` tries to compile `Tests_lfsc.v` file into `Test_lfsc.vo`. Please refer to
 [Coq reference manual](https://coq.inria.fr/refman/Reference-Manual008.html#compiled) for details.
 
 #### Interactive session through CoqIDE
@@ -91,7 +91,7 @@ Require Import SMTCoq.
 ```
 
 loads the SMTCoq module. It might be interesting to check out the implementation
-details (with pointers to sources) of the SMTCoq module
+details (with pointers to source codes) of the module
 [here](https://github.com/lfsc/smtcoq/blob/master/doc/sources.md). 
 
 Similarly,
@@ -120,7 +120,7 @@ Import BVList.BITVECTOR_LIST.
 Local Open Scope bv_scope.
 ```
 
-are to load our own [bitvector library](https://github.com/lfsc/smtcoq/blob/master/src/bva/BVList.v)
+are to load our own [bitvector module](https://github.com/lfsc/smtcoq/blob/master/src/bva/BVList.v)
 (called BITVECTOR_LIST in BVList.v file)
 to be able to use theorems proven and notations introduced there. Note that to end a
 section `XX` you need to type
@@ -137,7 +137,7 @@ Now, we can state goals and prove them automatically. For instance, the goal
                                  ((bv_and (bv_and c a) b) = c).
 ```
 
-is proven by the `smt` tactic which subsumes the powers of the reification tactics `cvc4` and `verit`:
+is proven by the `smt` tactic which subsumes the powers of the tactics `cvc4` and `verit`:
 ```coq
   Proof.
     smt.
@@ -149,7 +149,7 @@ Here are some more detailed explanation of the tactics:
  - `verit` -> applies to Coq goals of type `Prop`: 
  it first calls `prop2bool` on the goal, converting the goal to a term of type `bool`, 
  it then calls the reification tactic `verit_bool` (which applies only to Boolean goals),
- and it finally converts the goals back to `Prop`, by calling `bool2prop`, it is was not
+ and it finally converts the goals back to `Prop`, by calling `bool2prop`, if it is not
  solved.
  
 - `cvc4` -> applies to Coq goals of type `Prop`: 
@@ -163,7 +163,7 @@ Here are some more detailed explanation of the tactics:
  `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`, 
  by calling `bool2prop`.
 
-The tactics `cvc4_bool` and `verit_bool`, implemented in OCaml, do most of the work:
+The reification tactics `cvc4_bool` and `verit_bool`, implemented in OCaml, do most of the work:
 calling the external solvers (`CVC4` and `veriT` respectively), getting a
 proof certificate, and if SMTCoq's checker can validate the certificate, establishing the proof
 of the initial goal. The translation tactics `prop2bool` and `bool2prop` are implemented in Coq using
@@ -242,3 +242,16 @@ with any `.smt2` extended file under
 
 Feel free to generate your own problem files but please recall that the input problems should be from the
 supported theories: `QF_A`, `QF_BV`, `QF_LIA`, `QF_EUF`, and their combinations.
+
+NB: The successful execution of the `./cvc4tocoq XX.smt2` script outputs some new
+files:
+- `XX.lfsc` -> the file includes the `LFSC` style unsatisfiability proof of the input problem `XX.smt2`.
+- `XX_lfsc.v`    -> Coq source file that calls the Coq checkers to validate the proof`XX.lfsc`.
+- `XX_lfsc.glob` -> the file includes the globals of the source `XX_lfsc.v`.
+- `XX_lfsc.vo`   -> compliled module file of the source `XX_lfsc.v`, it is used when to load the modules from the source `XX_lfsc.v`.
+
+ 
+
+
+
+
