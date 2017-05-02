@@ -637,7 +637,7 @@ Section A_BV_EUF_LIA_PR.
     smt.
   Qed.
 
-  (** the example in the paper *)
+  (** the example in the CAV paper *)
   Goal forall (a b: farray Z Z) (v w x y: Z)
               (r s: bitvector 4)
               (f: Z -> Z)
@@ -650,6 +650,21 @@ Section A_BV_EUF_LIA_PR.
   Proof.
     smt. (** "cvc4. verit." also solves the goal *)
   Qed.
+
+  (** the example in the FroCoS paper *)
+  Goal forall (a b: farray Z Z) (v w x y z t: Z)
+              (r s: bitvector 4)
+              (f: Z -> Z)
+              (g: farray Z Z -> Z)
+              (h: bitvector 4 -> Z),
+              a[x <- v] = b /\ a[y <- w] = b ->
+              a[z <- w] = b /\ a[t <- v] = b ->
+              r = s -> v < x + 10 /\ v > x - 5 ->
+              ~ (g a = g b) \/ f (h r) = f (h s).
+  Proof.
+    smt. (** "cvc4. verit." also solves the goal *)
+  Qed.
+
 
   Goal forall (a:farray Z Z), a = a.
   Proof.
