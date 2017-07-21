@@ -1,8 +1,0 @@
-(set-logic QF_UF)
-(declare-fun x () Bool)
-(declare-fun y () Bool)
-(assert x)
-(assert y)
-(assert (not (= x y)))
-(check-sat)
-(exit)

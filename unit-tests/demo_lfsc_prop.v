@@ -30,6 +30,28 @@ Section BV.
 
   Local Open Scope bv_scope.
 
+  (*
+  (** cvc4 preprocesses the entire goal *)
+  Goal forall (a b c: bitvector 4), 
+      bv_mult a (bv_add b c) = bv_add (bv_mult a b) (bv_mult a c).
+  *)
+
+
+  Goal forall (a b: bitvector 8), 
+      #b|1|0|0|0|0|0|0|0| = a ->
+      #b|1|0|0|0|0|0|0|0| = b -> (bv_mult a b) =  #b|0|0|0|0|0|0|0|0|.
+  Proof.
+     smt.
+  Qed.
+
+(*
+
+Goal forall (a b: bitvector 32), a = b.
+Proof. smt. Fail Qed.
+
+*)
+
+
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
       #b|0|0|0|0| = bv1 /\
       #b|1|0|0|0| = bv2 /\
@@ -67,6 +89,7 @@ Section BV.
   Proof.
      smt.
   Qed.
+
 
 
 End BV.

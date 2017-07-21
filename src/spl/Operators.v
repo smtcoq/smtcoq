@@ -3,11 +3,14 @@
 (*     SMTCoq                                                             *)
 (*     Copyright (C) 2011 - 2016                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
+(*     Michaël Armand    *                                                *)
+(*     Benjamin Grégoire *                                                *)
+(*     Chantal Keller    *                                                *)
+(*     Alain Mebsout     ♯                                                *)
+(*     Burak Ekici       ♯                                                *)
 (*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     * Inria - École Polytechnique - Université Paris-Sud               *)
+(*     ♯ The University of Iowa                                           *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -170,8 +173,11 @@ Section Operators.
           (get_atom a = Atom.Abop (Atom.BO_eq A) x y \/
             get_atom a = Atom.Abop (Atom.BO_eq A) y x))).
   Proof.
-    intros A dist diseq; unfold check_diseqs; rewrite andb_true_iff, PArray.forallb_spec, check_diseqs_complete_spec, length_mapi; split; intros [H1 H2]; split.
-    clear H2; intros i Hi; generalize (H1 _ Hi); rewrite get_mapi; auto; case_eq (Lit.is_pos (diseq .[ i])); try discriminate; intro Heq1; case_eq (get_form (Lit.blit (diseq .[ i]))); try discriminate; intros a Heq2; case_eq (get_atom a); try discriminate; intros [ | | | | | | | B | | | | | | | | | | | | | ]; try discriminate; intros h1 h2 Heq3; case_eq (Typ.eqb A B); try discriminate; change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec; intro; subst B; case_eq (h1 == h2); try discriminate; rewrite eqb_false_spec; intro H2; case_eq (check_in h1 dist); try discriminate; case_eq (check_in h2 dist); try discriminate; rewrite !check_in_spec; intros H3 H4 _; split; try discriminate; exists a; split; auto; exists h1, h2; repeat split; auto; rewrite <- In2_In; auto.
+    intros A dist diseq; unfold check_diseqs; rewrite andb_true_iff,
+     PArray.forallb_spec, check_diseqs_complete_spec, length_mapi; split; intros [H1 H2]; split.
+    clear H2; intros i Hi; generalize (H1 _ Hi); rewrite get_mapi; 
+    auto; case_eq (Lit.is_pos (diseq .[ i])); try discriminate; intro Heq1; case_eq (get_form (Lit.blit (diseq .[ i]))); 
+    try discriminate; intros a Heq2; case_eq (get_atom a); try discriminate; intros [ | | | | | | | B | | | | | | | | | | | | | ]; try discriminate; intros h1 h2 Heq3; case_eq (Typ.eqb A B); try discriminate; change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec; intro; subst B; case_eq (h1 == h2); try discriminate; rewrite eqb_false_spec; intro H2; case_eq (check_in h1 dist); try discriminate; case_eq (check_in h2 dist); try discriminate; rewrite !check_in_spec; intros H3 H4 _; split; try discriminate; exists a; split; auto; exists h1, h2; repeat split; auto; rewrite <- In2_In; auto.
     clear H1; intros x y Hxy; destruct (H2 _ _ Hxy) as [i [H1 H4]]; clear H2; rewrite get_mapi in H4; auto; exists i; split; auto; generalize H4; 
     
     case_eq (Lit.is_pos (diseq .[ i])); intro Heq; try (intros [H|H]; discriminate); case_eq (get_form (Lit.blit (diseq .[ i]))); [intros a| | |intros a1 a2|intros a1|intros a1|intros a1|intros a1 a2|intros a1 a2| intros a1 a2 a3|intros a ls]; intro Heq2; try (intros [H|H]; discriminate); case_eq (get_atom a); [intros a1|intros a1 a2|intros [ | | | | | | | B | | | | | | | | | | | | | ] h1 h2|intros a1 a2|intros a1 a2 | intros a1 a2]; intro Heq3; try (intros [H|H]; discriminate); try (case_eq (Typ.eqb A B); try (intros _ [H|H]; discriminate); change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec; intro; subst B; case_eq (h1 == h2); try (intros _ [H|H]; discriminate); rewrite eqb_false_spec; intro H10; case (check_in h1 dist); try (intros [H|H]; discriminate); case (check_in h2 dist); try (intros [H|H]; discriminate); simpl; intro H3; split; try discriminate; exists a; split; auto; destruct H3 as [H3|H3]; inversion H3; subst; auto).
