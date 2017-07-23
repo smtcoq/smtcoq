@@ -17,8 +17,6 @@ Require Import
 
 Local Coercion is_true : bool >-> Sortclass.
 
-Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-
 Section ReflectFacts.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.

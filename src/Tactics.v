@@ -24,14 +24,14 @@ Ltac zchaff := prop2bool; zchaff_bool; bool2prop.
 Ltac verit  := prop2bool; verit_bool; bool2prop.
 Ltac cvc4   := prop2bool; cvc4_bool; bool2prop.
 
-Ltac smt := prop2bool; 
-            repeat
-              match goal with
-                | [ |- context[ CompDec ?t ] ] => try assumption
-                | [ |- _ : bool] => verit_bool
-                | [ |- _ : bool] => try (cvc4_bool; verit_bool)
-              end;
-            bool2prop.
+(* The `try` prevents cvc4 from returning sub-goals *)
+(* Ltac smt := prop2bool;  *)
+(*             repeat *)
+(*               match goal with *)
+(*                 | [ |- context[ CompDec ?t ] ] => try assumption *)
+(*                 | [ |- _ : bool] => verit_bool *)
+(*                 | [ |- _ : bool] => try (cvc4_bool; verit_bool) *)
+(*               end; *)
+(*             bool2prop. *)
 
-
-(*Ltac smt := (prop2bool; try verit; cvc4_bool; try verit_bool; bool2prop).*)
+Ltac smt := (prop2bool; try verit_bool; cvc4_bool; try verit_bool; bool2prop).
