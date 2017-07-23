@@ -153,7 +153,7 @@ where `l` is a list of Booleans. Those Booleans can be any concrete
 terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL` and their combinations.
 
-###### Tactic for goals live ib `Prop`
+##### Tactic for goals live in `Prop`
 
 The `verit` tactic applies to Coq goals of type `Prop`: 
  it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`),
@@ -208,7 +208,7 @@ terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL`, `QF_BV`, `QF_A` and their combinations.
 
 
-###### Tactic for goals live ib `Prop`
+##### Tactic for goals live in `Prop`
 
 The `cvc4` tactic applies to Coq goals of type `Prop`: 
  it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
@@ -216,7 +216,7 @@ The `cvc4` tactic applies to Coq goals of type `Prop`:
  and it finally converts any unsolved subgoals returned by CVC4 back to `Prop`, 
  by calling `bool2prop`.
 
-## The smt tactic
+### The smt tactic
  
 The final notable outcome is the `smt` tactic that has the combined effect of the `cvc4` and `verit` tactics: 
 it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
