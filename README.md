@@ -153,8 +153,10 @@ where `l` is a list of Booleans. Those Booleans can be any concrete
 terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL` and their combinations.
 
+###### Tactic for goals live ib `Prop`
+
 The `verit` tactic applies to Coq goals of type `Prop`: 
- it first calls `prop2bool` on the goal, converting the goal to a term of type `bool`, 
+ it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`),
  it then calls the reification tactic `verit_bool` (which applies only to Boolean goals),
  and it finally converts the goals back to `Prop`, by calling `bool2prop`, if it is not
  solved.
@@ -205,15 +207,20 @@ where `l` is a list of Booleans. Those Booleans can be any concrete
 terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 `QF_IDL`, `QF_BV`, `QF_A` and their combinations.
 
- 
+
+###### Tactic for goals live ib `Prop`
+
 The `cvc4` tactic applies to Coq goals of type `Prop`: 
- it first calls `prop2bool` on the goal, converting the goal to a term of type `bool`, 
- it then calls the reification tactic `cvc4_bool` (which applies only to Boolean goals),
+ it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
+ then calls the reification tactic `cvc4_bool` (which applies only to Boolean goals),
  and it finally converts any unsolved subgoals returned by CVC4 back to `Prop`, 
  by calling `bool2prop`.
+
+## The smt tactic
  
 The final notable outcome is the `smt` tactic that has the combined effect of the `cvc4` and `verit` tactics: 
- it first calls `prop2bool` on the goal, it then calls either of the `cvc4_bool` and 
+it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
+it then calls either of the `cvc4_bool` and 
  `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`, 
  by calling `bool2prop`.
 
