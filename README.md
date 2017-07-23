@@ -221,6 +221,5 @@ The `cvc4` tactic applies to Coq goals of type `Prop`:
 The final notable outcome is the `smt` tactic that has the combined effect of the `cvc4` and `verit` tactics: 
 it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
 it then calls either of the `cvc4_bool` and 
- `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`, 
- by calling `bool2prop`.
+ `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`.
 
