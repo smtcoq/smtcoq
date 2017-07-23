@@ -666,6 +666,20 @@ Section A_BV_EUF_LIA_PR.
   Qed.
 
 
+  Goal forall (a b: farray (bitvector 4) Z)
+         (x y: bitvector 4)
+         (v: Z),
+      b[bv_add y x <- v] = a /\
+      b = a[bv_add x y <- v]  ->
+      a = b.
+  Proof.
+    smt.
+    (* CVC4 preprocessing hole on BV *)
+    replace (bv_add x y) with (bv_add y x)
+      by apply bv_eq_reflect, bv_add_comm.
+    verit.
+  Qed.
+
   Goal forall (a:farray Z Z), a = a.
   Proof.
     smt.

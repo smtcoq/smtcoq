@@ -493,10 +493,12 @@ let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
-let tactic () =
+let tactic_gen vm_cast =
   clear_all ();
   let rt = Btype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf
+  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf vm_cast
+let tactic () = tactic_gen vm_cast_true
+let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)

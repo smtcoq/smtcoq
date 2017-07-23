@@ -2564,8 +2564,8 @@ Qed.
 
 Fixpoint pow2 (n: nat): nat :=
   match n with
-    | O => 1
-    | S n' => 2 * pow2 n'
+    | O => 1%nat
+    | S n' => (2 * pow2 n')%nat
   end.
 
 Fixpoint _list2nat_be (a: list bool) (n i: nat) : nat :=

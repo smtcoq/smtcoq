@@ -17,15 +17,14 @@ Require Import
 
 Local Coercion is_true : bool >-> Sortclass.
 
-Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-
 Section ReflectFacts.
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
 Lemma reflect_iff : forall P b, reflect P b -> (P<->b=true).
 Proof.
- intros; destruct H; easy.
+ intros; destruct H; intuition.
+ discriminate H.
 Qed.
 
 Lemma iff_reflect : forall P b, (P<->b=true) -> reflect P b.
