@@ -36,3 +36,8 @@ Section Trace.
   Admitted.
 
 End Trace.
+
+
+Definition nat_eqb := Nat.eqb.
+Definition nat_eqb_eq := Nat.eqb_eq.
+Definition nat_eqb_refl := Nat.eqb_refl.

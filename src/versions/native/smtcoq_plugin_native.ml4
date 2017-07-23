@@ -75,12 +75,15 @@ END
 
 TACTIC EXTEND Tactic_zchaff
 | [ "zchaff_bool" ] -> [ Zchaff.tactic () ]
+| [ "zchaff_bool_no_check" ] -> [ Zchaff.tactic_no_check () ]
 END
 
 TACTIC EXTEND Tactic_verit
 | [ "verit_bool" ] -> [ Verit.tactic () ]
+| [ "verit_bool_no_check" ] -> [ Verit.tactic_no_check () ]
 END
 
 TACTIC EXTEND Tactic_cvc4
 | [ "cvc4_bool" ] -> [ Lfsc.tactic () ]
+| [ "cvc4_bool_no_check" ] -> [ Lfsc.tactic_no_check () ]
 END
