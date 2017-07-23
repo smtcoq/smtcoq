@@ -158,7 +158,7 @@ terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
 The `verit` tactic applies to Coq goals of type `Prop`: 
  it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`),
  it then calls the reification tactic `verit_bool` (which applies only to Boolean goals),
- and it finally converts the goals back to `Prop`, if it is not
+ and it finally converts the goals back to `Prop`, if not
  solved.
 
 #### CVC4
