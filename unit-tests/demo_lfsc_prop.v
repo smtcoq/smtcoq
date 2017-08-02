@@ -44,6 +44,14 @@ Section BV.
      smt.
   Qed.
 
+(*
+
+Goal forall (a b: bitvector 32), a = b.
+Proof. smt. Fail Qed.
+
+*)
+
+
   Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
       #b|0|0|0|0| = bv1 /\
       #b|1|0|0|0| = bv2 /\
