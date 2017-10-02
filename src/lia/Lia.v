@@ -1513,7 +1513,7 @@ Transparent build_z_atom.
      case_eq ((a0 == a1) && (a0 == b1) && (b == b0) && (b == a2)); intros; subst;
        try (unfold C.valid; apply valid_C_true; trivial).
      repeat(apply andb_prop in H19; destruct H19).
-     apply Int63Properties.eqb_spec in H19;apply Int63Properties.eqb_spec in H20;apply Int63Properties.eqb_spec in H21;apply Int63Properties.eqb_spec in H22;subst.
+     apply Int63Properties.eqb_spec in H19;apply Int63Properties.eqb_spec in H20;apply Int63Properties.eqb_spec in H21;apply Int63Properties.eqb_spec in H22; subst a0 b.
      unfold C.interp; simpl; rewrite orb_false_r.
      unfold Lit.interp; rewrite Lit.is_pos_lit.
      unfold Var.interp; rewrite Lit.blit_lit.
@@ -1561,7 +1561,7 @@ Transparent build_z_atom.
      case_eq ((a0 == b0) && (a0 == a2) && (b == a1) && (b == b1)); intros; subst;
        try (unfold C.valid; apply valid_C_true; trivial).
      repeat(apply andb_prop in H19; destruct H19).
-     apply Int63Properties.eqb_spec in H19;apply Int63Properties.eqb_spec in H20;apply Int63Properties.eqb_spec in H21;apply Int63Properties.eqb_spec in H22;subst.
+     apply Int63Properties.eqb_spec in H19;apply Int63Properties.eqb_spec in H20;apply Int63Properties.eqb_spec in H21;apply Int63Properties.eqb_spec in H22;subst a0 b.
      unfold C.interp; simpl; rewrite orb_false_r.
      unfold Lit.interp; rewrite Lit.is_pos_lit.
      unfold Var.interp; rewrite Lit.blit_lit.
