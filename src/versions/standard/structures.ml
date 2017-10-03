@@ -111,7 +111,7 @@ let mkTConst c noc ty =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let error = Errors.error
+let error = CErrors.error
 
 let coqtype = Future.from_val Term.mkSet
 
@@ -140,19 +140,20 @@ let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
 
 let vm_conv = Vconv.vm_conv
-let vm_cast_no_check t =
-  Proofview.Goal.enter (fun gl ->
-    let env = Proofview.Goal.env gl in
-    Proofview.V82.tactic (Tactics.vm_cast_no_check t)
-    )
+let vm_cast_no_check t = Tactics.vm_cast_no_check t
+(* let vm_cast_no_check t = *)
+(*   Proofview.Goal.enter (fun gl -> *)
+(*     let env = Proofview.Goal.env gl in *)
+(*     Proofview.V82.tactic (Tactics.vm_cast_no_check t) *)
+(*     ) *)
 
 let mk_tactic tac =
-  Proofview.Goal.nf_enter (fun gl ->
+  Proofview.Goal.nf_enter {enter = (fun gl ->
     let env = Proofview.Goal.env gl in
-    let sigma = Proofview.Goal.sigma gl in
+    let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in
     tac env sigma t
-  )
+  )}
 let set_evars_tac noc =
   mk_tactic (
       fun env sigma _ ->
@@ -163,3 +164,10 @@ let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
 let constrextern_extern_constr =
   let env = Global.env () in
   Constrextern.extern_constr false env (Evd.from_env env)
+
+
+(* New packaging of plugins *)
+module Micromega_plugin_Certificate = Micromega_plugin.Certificate
+module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
+module Micromega_plugin_Micromega = Micromega_plugin.Micromega
+module Micromega_plugin_Mutils = Micromega_plugin.Mutils

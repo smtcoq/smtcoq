@@ -1193,7 +1193,7 @@ Proof.
       case_eq (t_atom .[ f]); try (intros; now apply C.interp_true).
 
       intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ];
-         try (intros; now apply C.interp_true). intros n a b Heq3.
+         try (intros; now apply C.interp_true). intros a b Heq3.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
       intros c Heq4.
       case_eq c; try (intros; now apply C.interp_true).
@@ -4533,12 +4533,12 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N| | | | ]; 
           try (intros; now apply C.interp_true).
 
-       intros n0 a1' a2' Heq9.
+       intros a1' a2' Heq9.
        case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); 
          simpl; intros Heq15; try (now apply C.interp_true).
 
        case_eq (check_eq bs1 bs2 [bsres] &&
-       (N.of_nat (Datatypes.length bs1) =? n0)%N); 
+       (N.of_nat (Datatypes.length bs1) =? n)%N); 
        simpl; intros Heq16; try (now apply C.interp_true).
 
        unfold C.valid. simpl.
@@ -4633,7 +4633,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
 
         assert (
-        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = n0
+        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = n
         ).
         {
           rewrite !andb_true_iff in Heq16.
@@ -4650,7 +4650,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         rewrite Typ.cast_refl.
 
         assert (
-        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = n0
+        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = n
         ).
         {
           rewrite !andb_true_iff in Heq16.
@@ -4779,7 +4779,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         unfold BITVECTOR_LIST.of_bits, RAWBITVECTOR_LIST.of_bits.
 
         assert (
-        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = n0
+        H100: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs1))) = n
         ).
         {
           rewrite N.eqb_eq in Heq16r.
@@ -4792,7 +4792,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
         rewrite !Typ.cast_refl.
 
         assert (
-        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = n0
+        H101: (N.of_nat (Datatypes.length (map (Lit.interp rho) bs2))) = n
         ).
         {
           rewrite N.eqb_eq in Heq16r.

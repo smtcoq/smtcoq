@@ -1,3 +1,5 @@
+Add Rec LoadPath "../src" as SMTCoq.
+
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith.
 

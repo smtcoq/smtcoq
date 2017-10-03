@@ -9,18 +9,18 @@
 ########################################################################
 ## To generate the Makefile:                                          ##
 ##   coq_makefile -f Make -o Makefile                                 ##
-## Change the "all" target into:                                      ##
-##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   ##
-## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA. ##
-## Change the "install" target: change CMO into CMX.                  ##
-## Remove the automatically generated line with %.cmxs: %.cmx         ##
-## Finally, suppress the "Makefile" target and add to the "clean" target: ##
-##   - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtcoq.a ##
+## Suppress the "Makefile" target                                     ##
+## Suppress the "test", "ztest", "vtest" and "./" dependencies from   ##
+##   the all target                                                   ##
+## Suppress the "+" lines of the install and the clean targets        ##
+## Add to the clean target:                                           ##
+##   - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.mli smtlib2/sExprParser.ml smtlib2/sExprLexer.ml ##
 ########################################################################
 
 
 -R . SMTCoq
 
+-I .
 -I bva
 -I classes
 -I array
@@ -36,20 +36,15 @@
 -I versions/standard/Int63
 -I versions/standard/Array
 
--custom "cd ../unit-tests; make" "" "test"
--custom "cd ../unit-tests; make zchaff" "" "ztest"
--custom "cd ../unit-tests; make verit" "" "vtest"
--custom "cd ../unit-tests; make lfsc" "" "lfsctest"
+-extra "test" "" "cd ../unit-tests; make" ""
+-extra "ztest" "" "cd ../unit-tests; make zchaff"
+-extra "vtest" "" "cd ../unit-tests; make verit"
+-extra "lfsctest" "" "cd ../unit-tests; make lfsc"
 
--custom "$(CAMLLEX) $<" "%.mll" "%.ml"
--custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"
--custom "" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/SExprParser.ml smtlib2/SExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml" "ml"
+-extra "%.ml" "%.mll" "$(CAMLLEX) $<"
+-extra "%.ml %.mli" "%.mly" "$(CAMLYACC) $<"
+-extra-phony "smtcoq_plugin.mlpack.d" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.ml smtlib2/sExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml" ""
 
--custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "versions/standard/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx smtlib2/SExpr.cmx smtlib2/SExprParser.cmx smtlib2/SExprLexer.cmx smtlib2/smtlib2_solver.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx" "$(CMXA)"
--custom "$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^" "$(CMXA)" "$(CMXS)"
-
-CMXA = smtcoq.cmxa
-CMXS = smtcoq_plugin.cmxs
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
 
@@ -90,13 +85,13 @@ smtlib2/smtlib2_ast.ml
 smtlib2/smtlib2_genConstr.ml
 smtlib2/smtlib2_lex.ml
 smtlib2/smtlib2_util.ml
-smtlib2/SExpr.ml
-smtlib2/SExpr.mli
+smtlib2/sExpr.ml
+smtlib2/sExpr.mli
 smtlib2/smtlib2_solver.ml
 smtlib2/smtlib2_solver.mli
-smtlib2/SExprParser.ml
-smtlib2/SExprParser.mli
-smtlib2/SExprLexer.ml
+smtlib2/sExprParser.ml
+smtlib2/sExprParser.mli
+smtlib2/sExprLexer.ml
 
 verit/veritParser.ml
 verit/veritParser.mli
@@ -149,4 +144,5 @@ SMT_terms.v
 State.v
 Trace.v
 
-smtcoq_plugin.ml4
+g_smtcoq.ml4
+smtcoq_plugin.mlpack

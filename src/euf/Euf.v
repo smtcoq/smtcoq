@@ -240,7 +240,7 @@ Section certif.
       match goal with
       | [ H1 : is_true (Typ.eqb ?a ?t1),
           H2 : is_true (Typ.eqb ?a ?t2) |- _ ] =>
-        assert (W:= tunicity _ _ _ H1 H2);try subst
+        assert (W:= tunicity _ _ _ H1 H2)
       | _ => idtac
       end.
 
@@ -294,11 +294,11 @@ Section certif.
       rewrite orb_true_iff, !andb_true_iff in H7;destruct H7 as
         [[H7 H8] | [H7 H8]].
       rewrite eqb_spec in H7. rewrite eqb_spec in H8. subst.
-      tunicity. rewrite H4, H1;auto.
+      tunicity. subst t. rewrite H4, H1;auto.
       rewrite eqb_spec in H7. rewrite eqb_spec in H8. subst.
-      tunicity;rewrite interp_binop_eqb_sym in H1;rewrite H4, H1;auto.
+      tunicity. subst t;rewrite interp_binop_eqb_sym in H1;rewrite H4, H1;auto.
       apply get_eq_interp;intros.
-      destruct (Int63Properties.reflect_eqb t2 b);subst;tunicity.
+      destruct (Int63Properties.reflect_eqb t2 b);subst;tunicity; try subst t.
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -307,7 +307,7 @@ Section certif.
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (4:= H1);trivial.
       rewrite interp_binop_eqb_sym;trivial.
-      destruct (Int63Properties.reflect_eqb t2 a0); subst;tunicity.
+      destruct (Int63Properties.reflect_eqb t2 a0); subst;tunicity; try subst t.
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -315,7 +315,7 @@ Section certif.
       case_eq (rho (Lit.blit a));[rewrite H4; intros | simpl;auto].
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (4:= H1);trivial.
-      destruct (Int63Properties.reflect_eqb t1 b);subst;tunicity.
+      destruct (Int63Properties.reflect_eqb t1 b);subst;tunicity; try subst t.
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -323,7 +323,7 @@ Section certif.
       case_eq (rho (Lit.blit a));[rewrite H4; intros | simpl;auto].
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (5:= H1);trivial.
-      destruct (Int63Properties.reflect_eqb t1 a0);[subst;tunicity|auto].
+      destruct (Int63Properties.reflect_eqb t1 a0);[subst;tunicity;try subst t|auto].
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.

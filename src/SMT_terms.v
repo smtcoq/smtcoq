@@ -1233,7 +1233,7 @@ Qed.
       Lemma check_aux_dec : forall a,
         {exists T, check_aux a T} + {forall T, check_aux a T = false}.
       Proof.
-        intros [op|op h|op h1 h2|op ha|f args | i e ]; simpl.
+        intros [op|op h|op h1 h2|op ha i i0|f args | i e ]; simpl.
         (* Constants *)
         left; destruct op; simpl.
         exists Typ.Tpositive; auto.
@@ -1432,7 +1432,7 @@ Qed.
           right. intros. rewrite andb_false_r. easy.
 
           (* Ternary operators *)
-        destruct op; simpl. intros h1 h2.
+        revert i i0; destruct op; simpl. intros h1 h2.
         (case (Typ.eqb (get_type h1) _)); (case (Typ.eqb (get_type h2) _));
         (case (Typ.eqb (get_type ha) _)).
           left. exists (Typ.TFArray t t0). rewrite !Typ.eqb_refl. easy.
@@ -1725,7 +1725,7 @@ Qed.
       Proof.
         intros [op|op h|op h1 h2|op h1 h2 h3|op ha|f l]; simpl.
         (* Constants *)
-        destruct op; intros [ | i | | | | ]; simpl; try discriminate; intros n0.
+        destruct op; intros [ | i | | | | ]; simpl; try discriminate.
         exists 1%positive; auto.
         exists 0%Z; auto.
         exists (BITVECTOR_LIST._of_bits l n0). unfold is_true in H. rewrite N.eqb_eq in H. now rewrite H.
@@ -1743,7 +1743,7 @@ Qed.
         exists (BITVECTOR_LIST.bitOf n0 y); auto.
         (* bv_not *)
         intros.
-        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
         rewrite N.eqb_eq in Ha.
         revert x y Hx Hy Hb.
         rewrite <- Ha in *. intros.
@@ -1753,7 +1753,7 @@ Qed.
         exists (@BITVECTOR_LIST.bv_not n y); auto. rewrite Typ.cast_refl; auto.
         (* bv_neg *)
         intros.
-        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
         rewrite N.eqb_eq in Ha.
         revert x y Hx Hy Hb.
         rewrite <- Ha in *. intros.
@@ -1763,7 +1763,7 @@ Qed.
         exists (@BITVECTOR_LIST.bv_neg n y); auto. rewrite Typ.cast_refl; auto.
         (* bv_extr *)
         intros.
-        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
         rewrite N.eqb_eq in Ha.
         revert x y Hx Hy Hb.
         rewrite <- Ha in *. intros.
@@ -1773,7 +1773,7 @@ Qed.
         exists (@BITVECTOR_LIST.bv_extr i n0 n1 y); auto. rewrite Typ.cast_refl; auto.
         (* bv_zextn *)
         intros.
-        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
         rewrite N.eqb_eq in Ha.
         revert x y Hx Hy Hb.
         rewrite <- Ha in *. intros.
@@ -1783,7 +1783,7 @@ Qed.
         exists (@BITVECTOR_LIST.bv_zextn n i y); auto. rewrite Typ.cast_refl; auto.
         (* bv_sextn *)
         intros.
-        apply andb_true_iff in H. destruct H as (Ha, Hb).
+        apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
         rewrite N.eqb_eq in Ha.
         revert x y Hx Hy Hb.
         rewrite <- Ha in *. intros.

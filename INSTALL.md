@@ -6,47 +6,19 @@ SMTCoq is designed to work on computers equipped with a POSIX (Unix or a
 clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64) and Mac OS X.
 
-<!--
-You have various ways to install it:
+For now you have to install it from the sources. (We plan on releasing
+an updated opam package soon with the latest additions.)
 
-- the simplest one is via opam;
-- you can also install 
--->
-  
-For now you have to install it from the sources, using two different versions
-of Coq (depending on the efficiency you want). (We plan on releasing an updated
-opam package soon with the latest additions.)
-  
-  
-In either case, you will also need to
-[install the provers](#installationoftheprovers) you want to use and make
-some [small configuration changes](#settingupenvironmentforsmtcoq).
+You will also need to [install the provers](#installationoftheprovers)
+you want to use and make some [small configuration
+changes](#settingupenvironmentforsmtcoq).
+
 
 ## Requirements
 
-You need to have OCaml version >= 4.03.0 and Coq version 8.5pl2. The easiest
-way to install these two pieces of software is through opam.
+You need to have OCaml version >= 4.03.0 and Coq version 8.6 or 8.6.1.
+The easiest way to install these two pieces of software is through opam.
 
-<!-- This branch is not on opam
-## Installation via opam (*only for base branch of main fork*)
-
-Simply add the coq-extra-dev repo to opam:
-```bash
-opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
-```
-and install smtcoq:
-```bash
-opam install coq-smtcoq
-```
--->
-
-## Installation from the sources
-
-You can <!-- also --> build SMTCoq from the sources, using either Coq 8.5 or
-the
-[version of Coq with native data-structures](https://github.com/smtcoq/native-coq).
-We recommend Coq 8.5 for standard use, and native-coq for uses that require
-very efficient computation (such as checking big certificates).
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
@@ -88,17 +60,16 @@ opam switch 4.03.0
 
 #### Install Coq
 
-After OCaml is installed, you can install Coq through opam (we recommend 8.5.2
-because we haven't tested 8.5.3 with SMTCoq yet).
+After OCaml is installed, you can install Coq through opam (we recommend 8.6.1).
 
 ```bash
-opam install coq.8.5.2
+opam install coq.8.6.1
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.5.2 coqide.8.5.2
+opam install coq.8.6.1 coqide.8.6.1
 ```
 
 but you might need to install some extra packages and libraries for your system
@@ -118,11 +89,11 @@ make install
 in the src directory.
 
 
-### Installation with official Coq 8.5 release
+### Installation with official Coq 8.6 release
 
-1. Download the last stable version of Coq 8.5:
+1. Download the last stable version of Coq 8.6:
 ```bash
-wget https://coq.inria.fr/distrib/V8.5pl2/files/coq-8.5pl2.tar.gz
+wget https://coq.inria.fr/distrib/8.6.1/files/coq-8.6.1.tar.gz
 ```
    and compile it by following the instructions available in the
    repository (make sure you use OCaml 4.03.0 for that). We recommand
@@ -135,43 +106,13 @@ make
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
 ```bash
-export COQBIN=/home/jdoe/coq-8.5pl2/bin/
+export COQBIN=/home/jdoe/coq-8.6.1/bin/
 ```
    (the final slash is mandatory).
 
 3. Compile and install SMTCoq by using the commands:
 ```
 ./configure.sh
-make
-make install
-```
-   in the src directory.
-
-
-### Installation with native-coq
-
-1. Download the git version of Coq with native compilation:
-```
-git clone https://github.com/smtcoq/native-coq.git
-```
-   and compile it by following the instructions available in the
-   repository. We recommand that you do not install it, but only compile
-   it in local:
-```
-./configure -local
-make
-```
-
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```bash
-export COQBIN=/home/jdoe/native-coq/bin/
-```
-   (the final slash is mandatory).
-
-3. Compile and install SMTCoq by using the commands:
-```bash
-./configure.sh -native
 make
 make install
 ```

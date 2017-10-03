@@ -12,6 +12,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+Add Rec LoadPath "../src" as SMTCoq.
+
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith Logic.
 
@@ -691,7 +693,3 @@ Section A_BV_EUF_LIA_PR.
   Qed.
 
 End A_BV_EUF_LIA_PR.
-
-
-
-

@@ -961,7 +961,7 @@ Proof. intro a.
            + intros i H0 H1. rewrite map2_and_empty_empty1.
              rewrite map2_nth_empty_false. rewrite andb_false_r. reflexivity.
            + intros i H0 H1. simpl.
-             revert i H1. intros [ | i IHi].
+             revert i H1. intros [ | i]; [ |intros IHi].
              * simpl. auto.
              * apply IHxs.
                  inversion H0; reflexivity.
@@ -1157,7 +1157,7 @@ Proof. intro a.
              rewrite map2_nth_empty_false. rewrite orb_false_r. rewrite H0 in H1.
              contradict H1. simpl. unfold not. intros. easy.
            + intros i H0 H1. simpl.
-             revert i H1. intros [ | i IHi].
+             revert i H1. intros [ | i]; [ |intros IHi].
              * simpl. auto.
              * apply IHxs.
                  inversion H0; reflexivity.
@@ -1301,7 +1301,7 @@ Proof. intro a.
              rewrite map2_nth_empty_false. rewrite xorb_false_r. rewrite H0 in H1.
              contradict H1. simpl. unfold not. intros. easy.
            + intros i H0 H1. simpl.
-             revert i H1. intros [ | i IHi].
+             revert i H1. intros [ | i]; [ |intros IHi].
              * simpl. auto.
              * apply IHxs.
                  inversion H0; reflexivity.

@@ -19,7 +19,11 @@
 
 DECLARE PLUGIN "smtcoq_plugin"
 
-VERNAC COMMAND EXTEND Vernac_zchaff
+open Genarg
+open Stdarg
+open Constrarg
+
+VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY
 | [ "Parse_certif_zchaff" 
     ident(dimacs) ident(trace) string(fdimacs) string(fproof) ] ->
   [
@@ -35,7 +39,7 @@ VERNAC COMMAND EXTEND Vernac_zchaff
   ]
 END
 
-VERNAC COMMAND EXTEND Vernac_verit
+VERNAC COMMAND EXTEND Vernac_verit CLASSIFIED AS QUERY
 | [ "Parse_certif_verit"
     ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
   [
@@ -55,7 +59,7 @@ VERNAC COMMAND EXTEND Vernac_verit
   ]
 END
 
-VERNAC COMMAND EXTEND Vernac_lfsc
+VERNAC COMMAND EXTEND Vernac_lfsc CLASSIFIED AS QUERY
 | [ "Parse_certif_lfsc"
     ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
   [
