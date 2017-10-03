@@ -14,7 +14,7 @@ In either case, you will also need to install the provers you want to
 use (see below).
 
 
-## Installation via opam
+## Installation via opam (uses Coq-8.5)
 
 Simply add the coq-extra-dev repo to opam:
 ```
@@ -26,19 +26,19 @@ opam install coq-smtcoq
 ```
 
 
-## Installation from the sources
+## Installation from the sources (uses Coq-8.6 or native-coq)
 
-You can also build SMTCoq from the sources, using either Coq 8.5 or the
+You can also build SMTCoq from the sources, using either Coq 8.6 or the
 [version of Coq with native data-structures](https://github.com/smtcoq/native-coq).
-We recommend Coq 8.5 for standard use, and native-coq for uses that
+We recommend Coq 8.6 for standard use, and native-coq for uses that
 require very efficient computation (such as checking big certificates).
 
 
-### Installation with Coq 8.5
+### Installation with Coq 8.6
 
-1. Download the last stable version of Coq 8.5:
+1. Download the last stable version of Coq 8.6:
 ```
-wget https://coq.inria.fr/distrib/V8.5pl2/files/coq-8.5pl2.tar.gz
+wget https://coq.inria.fr/distrib/8.6.1/files/coq-8.6.1.tar.gz
 ```
    and compile it by following the instructions available in the
    repository. We recommand that you do not install it, but only compile
@@ -51,7 +51,7 @@ make
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
 ```
-export COQBIN=/home/jdoe/coq-8.5pl2/bin/
+export COQBIN=/home/jdoe/coq-8.6.1/bin/
 ```
    (the final slash is mandatory).
 

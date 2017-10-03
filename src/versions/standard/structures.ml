@@ -157,3 +157,10 @@ let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
 let constrextern_extern_constr =
   let env = Global.env () in
   Constrextern.extern_constr false env (Evd.from_env env)
+
+
+(* New packaging of plugins *)
+module Micromega_plugin_Certificate = Micromega_plugin.Certificate
+module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
+module Micromega_plugin_Micromega = Micromega_plugin.Micromega
+module Micromega_plugin_Mutils = Micromega_plugin.Mutils
