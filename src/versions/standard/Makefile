@@ -314,7 +314,7 @@ endif
 #                                     #
 #######################################
 
-all: $(VOFILES) $(CMOFILES) $(if $(HASNATDYNLINK_OR_EMPTY),$(CMXSFILES)) 
+all: $(VOFILES) $(CMOFILES) $(if $(HASNATDYNLINK_OR_EMPTY),$(CMXSFILES))
 
 mlihtml: $(MLIFILES:.mli=.cmi)
 	 mkdir $@ || rm -rf $@/*
@@ -359,13 +359,22 @@ beautify: $(VFILES:=.beautified)
 	@echo 'Do not do "make clean" until you are sure that everything went well!'
 	@echo 'If there were a problem, execute "for file in $$(find . -name \*.v.old -print); do mv $${file} $${file%.old}; done" in your shell/'
 
-.PHONY: all archclean beautify byte clean cleanall gallina gallinahtml html install install-doc install-natdynlink install-toploop opt printenv quick uninstall userinstall validate vio2vo smtcoq_plugin.mlpack.d
+.PHONY: all archclean beautify byte clean cleanall gallina gallinahtml html install install-doc install-natdynlink install-toploop opt printenv quick uninstall userinstall validate vio2vo ./ smtcoq_plugin.mlpack.d
 
 ###################
 #                 #
 # Custom targets. #
 #                 #
 ###################
+
+test: 
+	cd ../unit-tests; make
+
+ztest: 
+	cd ../unit-tests; make zchaff
+
+vtest: 
+	cd ../unit-tests; make verit
 
 %.ml: %.mll
 	$(CAMLLEX) $<
@@ -374,6 +383,15 @@ beautify: $(VFILES:=.beautified)
 	$(CAMLYACC) $<
 
 smtcoq_plugin.mlpack.d: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
+
+###################
+#                 #
+# Subdirectories. #
+#                 #
+###################
+
+./:
+	+cd "./" && $(MAKE) all
 
 #####################################
 #                                   #
@@ -419,6 +437,7 @@ install:$(if $(HASNATDYNLINK_OR_EMPTY),install-natdynlink)
 	 install -d "`dirname "$(DSTROOT)"$(COQLIBINSTALL)/SMTCoq/$$i`"; \
 	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/SMTCoq/$$i; \
 	done
+	+cd ./ && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./" install
 
 install-doc:
 	install -d "$(DSTROOT)"$(COQDOCINSTALL)/SMTCoq/html
@@ -499,12 +518,17 @@ clean::
 	rm -f $(VOFILES) $(VOFILES:.vo=.vio) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
 	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
 	- rm -rf html mlihtml uninstall_me.sh
+	- rm -rf test
+	- rm -rf ztest
+	- rm -rf vtest
+	+cd ./ && $(MAKE) clean
 
 cleanall:: clean
 	rm -f $(foreach f,$(VFILES:.v=),$(dir $(f)).$(notdir $(f)).aux)
 
 archclean::
 	rm -f *.cmx *.o
+	+cd ./ && $(MAKE) archclean
 
 printenv:
 	@"$(COQBIN)coqtop" -config
@@ -513,7 +537,6 @@ printenv:
 	@echo 'COQFLAGS =	$(COQFLAGS)'
 	@echo 'COQLIBINSTALL =	$(COQLIBINSTALL)'
 	@echo 'COQDOCINSTALL =	$(COQDOCINSTALL)'
-
 
 
 ###################

@@ -10,6 +10,8 @@
 ## To generate the Makefile:                                          ##
 ##   coq_makefile -f Make -o Makefile                                 ##
 ## Suppress the "Makefile" target                                     ##
+## Suppress the "test", "ztest", "vtest" and "./" dependencies from   ##
+##   the all target                                                   ##
 
 ## Change the "all" target into:                                      ##
 ##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   ##
@@ -37,9 +39,9 @@
 
 -I $(COQBIN)../plugins/micromega
 
-# -extra "test" "" "cd ../unit-tests; make" ""
-# -extra "ztest" "" "cd ../unit-tests; make zchaff"
-# -extra "vtest" "" "cd ../unit-tests; make verit"
+-extra "test" "" "cd ../unit-tests; make" ""
+-extra "ztest" "" "cd ../unit-tests; make zchaff"
+-extra "vtest" "" "cd ../unit-tests; make verit"
 
 -extra "%.ml" "%.mll" "$(CAMLLEX) $<"
 -extra "%.ml %.mli" "%.mly" "$(CAMLYACC) $<"
