@@ -9,9 +9,9 @@ amd64) and Mac OS X.
 For now you have to install it from the sources. (We plan on releasing
 an updated opam package soon with the latest additions.)
 
-You will also need to [install the provers](#installationoftheprovers)
+You will also need to [install the provers](#installation-of-the-provers)
 you want to use and make some [small configuration
-changes](#settingupenvironmentforsmtcoq).
+changes](#setting-up-environment-for-smtcoq).
 
 
 ## Requirements
@@ -136,6 +136,16 @@ instructions available for each solver in order to compile them **in a
 proof production mode**, as detailed below.
 
 
+### CVC4
+
+Use the version of CVC4 that is available in the master branch of its
+[git repository](https://github.com/CVC4/CVC4) or one of the **development**
+versions available at [http://cvc4.cs.nyu.edu/downloads/] (we recommend using
+the latest version available).
+
+The `cvc4` binary must be present in your PATH to use it through SMTCoq.
+
+
 ### veriT
 
 The
@@ -143,6 +153,8 @@ The
 points to a snapshot of veriT which is known to be compatible with
 SMTCoq, and is already in proof production mode. If you encounter
 problems to compile it, please report an issue.
+
+The `veriT` binary must be present in your PATH to use it through SMTCoq.
 
 
 ### zChaff
@@ -156,14 +168,7 @@ please report an issue.
 To turn proof production on, you need to uncomment the line
 `// #define VERIFY_ON ` in `zchaff_solver.cpp`.
 
-
-### CVC4
-
-Use the version of CVC4 that is available in the master branch of its
-[git repository](https://github.com/CVC4/CVC4) or one of the **development**
-versions available at [http://cvc4.cs.nyu.edu/downloads/] (we recommend using
-the latest version available). CVC4's binary must be present in your PATH to use
-it through SMTCoq.
+The `zchaff` binary must be present in your PATH to use it through SMTCoq.
 
 
 ## Setting up environment for SMTCoq
