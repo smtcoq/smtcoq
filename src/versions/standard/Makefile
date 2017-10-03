@@ -437,7 +437,6 @@ install:$(if $(HASNATDYNLINK_OR_EMPTY),install-natdynlink)
 	 install -d "`dirname "$(DSTROOT)"$(COQLIBINSTALL)/SMTCoq/$$i`"; \
 	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/SMTCoq/$$i; \
 	done
-	+cd ./ && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./" install
 
 install-doc:
 	install -d "$(DSTROOT)"$(COQDOCINSTALL)/SMTCoq/html
@@ -521,7 +520,7 @@ clean::
 	- rm -rf test
 	- rm -rf ztest
 	- rm -rf vtest
-	+cd ./ && $(MAKE) clean
+	- rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml
 
 cleanall:: clean
 	rm -f $(foreach f,$(VFILES:.v=),$(dir $(f)).$(notdir $(f)).aux)

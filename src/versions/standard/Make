@@ -12,14 +12,9 @@
 ## Suppress the "Makefile" target                                     ##
 ## Suppress the "test", "ztest", "vtest" and "./" dependencies from   ##
 ##   the all target                                                   ##
-
-## Change the "all" target into:                                      ##
-##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   ##
-## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA. ##
-## Change the "install" target: change CMO into CMX.                  ##
-## Remove the automatically generated line with %.cmxs: %.cmx         ##
-## Finally, suppress the "Makefile" target and add to the "clean" target: ##
-##   - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtcoq.a ##
+## Suppress the "+" lines of the install and the clean targets        ##
+## Add to the clean target:                                           ##
+##   - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml ##
 ########################################################################
 
 
