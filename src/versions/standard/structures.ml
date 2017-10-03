@@ -111,7 +111,7 @@ let mkTConst c noc ty =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let error = Errors.error
+let error = CErrors.error
 
 let coqtype = Future.from_val Term.mkSet
 
@@ -138,14 +138,15 @@ let lift = Vars.lift
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
-let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t)
+let vm_cast_no_check t = Tactics.vm_cast_no_check t
+(* let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t) *)
 let mk_tactic tac =
-  Proofview.Goal.nf_enter (fun gl ->
+  Proofview.Goal.nf_enter {enter = (fun gl ->
     let env = Proofview.Goal.env gl in
-    let sigma = Proofview.Goal.sigma gl in
+    let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in
     tac env sigma t
-  )
+  )}
 let set_evars_tac noc =
   mk_tactic (
       fun env sigma _ ->

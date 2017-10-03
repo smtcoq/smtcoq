@@ -20,7 +20,6 @@
 (* Add LoadPath "../lia" as SMTCoq.lia. *)
 Require Import List PArray Bool Int63 ZMicromega.
 Require Import Misc State SMT_terms.
-Require Lia.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.

@@ -80,8 +80,6 @@ Notation "t '.[' i '<-' a ']'" := (set t i a) (at level 50) : array_scope.
 
 Local Open Scope array_scope.
 
-Set Vm Optimize.
-
 Definition max_array_length := 4194302%int31.
 
 (** Axioms *)

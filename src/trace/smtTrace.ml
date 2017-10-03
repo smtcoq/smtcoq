@@ -324,12 +324,12 @@ let to_coq to_lit interp (cstep,
           mklApp cEqCgrP [|out_c c; out_f f1; out_f f2; res|]
 	| LiaMicromega (cl,d) ->
           let cl' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
-          let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Coq_micromega.M.coq_proofTerm; Coq_micromega.dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force Coq_micromega.M.coq_proofTerm|]) in
+          let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Micromega_plugin.Coq_micromega.M.coq_proofTerm; Micromega_plugin.Coq_micromega.dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force Micromega_plugin.Coq_micromega.M.coq_proofTerm|]) in
           mklApp cLiaMicromega [|out_c c; cl'; c'|]
         | LiaDiseq l -> mklApp cLiaDiseq [|out_c c; out_f l|]
         | SplArith (orig,res,l) ->
           let res' = out_f res in
-          let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Coq_micromega.M.coq_proofTerm; Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Coq_micromega.M.coq_proofTerm|]) in
+          let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Micromega_plugin.Coq_micromega.M.coq_proofTerm; Micromega_plugin.Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Micromega_plugin.Coq_micromega.M.coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
         | Hole (prem_id, concl) ->
