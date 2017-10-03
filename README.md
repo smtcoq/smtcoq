@@ -8,8 +8,10 @@ vernacular commands and tactics to interface with the SAT solver zChaff
 and the SMT solvers veriT and CVC4 are provided. It is designed in a modular way
 allowing to extend it easily to other solvers.
 
+<!--- Extraction is probably broken
 SMTCoq also provides an extracted version of the checker, that can be
 run outside Coq.
+--->
 
 The current stable version is version 1.3.
 
@@ -43,24 +45,31 @@ SMTCoq.` command. For each supported solver, it provides:
 
 - a vernacular command to safely import theorems:
   `XXX_Theorem theo "problem_file" "witness_file"` produces a Coq term
-  `teo` whose type is the theorem stated in `problem_file` if
+  `theo` whose type is the theorem stated in `problem_file` if
   `witness_file` is a proof of the unsatisfiability of it, and fails
   otherwise.
 
-- safe tactics to try to solve a Coq goal using the chosen solver.
+- safe tactics to try to solve a Coq goal using the chosen solver (or a
+  combination of solvers).
 
+<!--- Extraction is probably broken
 The SMTCoq checker can also be extracted to OCaml and then used
 independently from Coq.
+--->
 
+We now give more details for each solver.
+
+<!--- Extraction is probably broken
 We now give more details for each solver, and explanations on
 extraction.
+--->
 
 
 #### zChaff
 
 Compile and install zChaff as explained in the installation
 instructions. In the following, we consider that the command `zchaff` is
-in your `PATH` variable environment.
+in your `PATH` environment variable.
 
 
 ##### Checking zChaff answers of unsatisfiability and importing theorems
@@ -96,14 +105,15 @@ The `zchaff` tactic can be used to solve any goal of the form:
 ```coq
 forall l, b1 = b2
 ```
-where `l` is a list of Booleans (that can be concrete terms).
+where `l` is quantifier-free list of variables and `b1` and `b2` are
+expressions of type `bool`.
 
 
 #### veriT
 
 Compile and install veriT as explained in the installation instructions.
 In the following, we consider that the command `veriT` is in your `PATH`
-variable environment.
+environment variable.
 
 
 ##### Checking veriT answers of unsatisfiability and importing theorems
@@ -139,8 +149,9 @@ End File.
 will produce a Coq term `theo` whose type is the theorem stated in
 `file.smt2`.
 
-The theories that are currently supported are `QF_UF`, `QF_LIA`,
-`QF_IDL` and their combinations.
+The theories that are currently supported by these commands are `QF_UF`
+(theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
+(differential logic) and their combinations.
 
 
 ##### veriT as a Coq decision procedure
@@ -149,26 +160,30 @@ The `verit_bool` tactic can be used to solve any goal of the form:
 ```coq
 forall l, b1 = b2
 ```
-where `l` is a list of Booleans. Those Booleans can be any concrete
-terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
-`QF_IDL` and their combinations.
+where `l` is quantifier-free list of variables and `b1` and `b2` are
+expressions of type `bool`.
 
-##### Tactic for goals live in `Prop`
+In addition, the `verit` tactic applies to Coq goals of sort `Prop`: it
+first converts the goal intto a term of type `bool` (thanks to the
+`reflect` predicate of `SSReflect`), and then calls the previous tactic
+`verit_bool`.
 
-The `verit` tactic applies to Coq goals of type `Prop`: 
- it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`),
- it then calls the reification tactic `verit_bool` (which applies only to Boolean goals),
- and it finally converts the goals back to `Prop`, if not
- solved.
+The theories that are currently supported by these tactics are `QF_UF`
+(theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
+(differential logic) and their combinations.
+
 
 #### CVC4
 
-Compile and install `CVC4` as explained in the installation instructions.
+Compile and install `CVC4` as explained in the installation
+instructions. In the following, we consider that the command `cvc4` is
+in your `PATH` environment variable.
+
 
 ##### Checking CVC4 answers of unsatisfiability and importing theorems
 
 To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
-`name.smt2` (in `..smtcoq/src/lfsc/tests` directory):
+`name.smt2`:
 
 - Produce a CVC4 proof witness; run:
 
@@ -191,11 +206,19 @@ Section File.
 End File.
 ```
 
-- Compile `name.v`: `coqc -R ../../ SMTCoq name.v`. If it returns `true` then CVC4 indeed proved that the problem was unsatisfiable.
+- Compile `name.v`: `coqc name.v`. If it returns `true` then CVC4 indeed
+  proved that the problem was unsatisfiable.
 
-NB: Use `cvc4tocoq` script in `src/lfsc/tests` to automatize above steps.
+NB: Use `cvc4tocoq` script in `src/lfsc/tests` to automatize the above steps.
 
-- Ex: `./cvc4tocoq name.smt2`, similary returned `true` amounts to correct unsatisfiability proof of the problem by CVC4.
+- Ex: `./cvc4tocoq name.smt2` returns `true` only if the problem
+  `name.smt2` has been proved unsatisfiable by CVC4.
+
+The theories that are currently supported by these commands are `QF_UF`
+(theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
+(differential logic) `QF_BV` (theory of fixed-size bit vectors), `QF_A`
+(theory of arrays), and their combinations.
+
 
 ##### CVC4 as a Coq decision procedure
 
@@ -203,22 +226,28 @@ The `cvc4_bool` tactic can be used to solve any goal of the form:
 ```coq
 forall l, b1 = b2
 ```
-where `l` is a list of Booleans. Those Booleans can be any concrete
-terms. The theories that are currently supported are `QF_UF`, `QF_LIA`,
-`QF_IDL`, `QF_BV`, `QF_A` and their combinations.
 
+where `l` is quantifier-free list of variables and `b1` and `b2` are
+expressions of type `bool`.
 
-##### Tactic for goals live in `Prop`
+In addition, the `cvc4` tactic applies to Coq goals of sort `Prop`: it
+ first converts the goal into a term of type `bool` (thanks to the
+ `reflect` predicate of `SSReflect`), it then calls the previous tactic
+ `cvc4_bool`, and it finally converts any unsolved subgoals returned by
+ CVC4 back to `Prop`, thus offering to the user the possibility to solve
+ these (simpler) subgoals.
 
-The `cvc4` tactic applies to Coq goals of type `Prop`: 
- it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
- then calls the reification tactic `cvc4_bool` (which applies only to Boolean goals),
- and it finally converts any unsolved subgoals returned by CVC4 back to `Prop`.
+The theories that are currently supported by these tactics are `QF_UF`
+(theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
+(differential logic) `QF_BV` (theory of fixed-size bit vectors), `QF_A`
+(theory of arrays), and their combinations.
+
 
 ### The smt tactic
- 
-The final notable outcome is the `smt` tactic that has the combined effect of the `cvc4` and `verit` tactics: 
-it first converts the goal to a term of type `bool` (thanks to the `reflect` predicate of `SSReflect`), 
-it then calls either of the `cvc4_bool` and 
- `verit_bool` tactics, and it finally converts any unsolved subgoals back to `Prop`.
 
+The more powerful tactic `smt` combines all the previous tactics: it
+first converts the goal to a term of type `bool` (thanks to the
+`reflect` predicate of `SSReflect`), it then calls a combination of the
+`cvc4_bool` and `verit_bool` tactics, and it finally converts any
+unsolved subgoals back to `Prop`, thus offering to the user the
+possibility to solve these (simpler) subgoals.
