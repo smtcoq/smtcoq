@@ -55,13 +55,12 @@ export COQBIN=/home/jdoe/coq-8.6.1/bin/
 ```
    (the final slash is mandatory).
 
-3. Compile and install SMTCoq by using the commands:
+3. Compile and install SMTCoq by using the following commands in the src directory.
 ```
 ./configure.sh
 make
 make install
 ```
-   in the src directory.
 
 
 ### Installation with native-coq
@@ -85,13 +84,12 @@ export COQBIN=/home/jdoe/native-coq/bin/
 ```
    (the final slash is mandatory).
 
-3. Compile and install SMTCoq by using the commands:
+3. Compile and install SMTCoq by using the following commands in the src directory.
 ```
 ./configure.sh -native
 make
 make install
 ```
-   in the src directory.
 
 
 ## Installation of the provers
