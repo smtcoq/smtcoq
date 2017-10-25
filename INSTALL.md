@@ -78,15 +78,13 @@ but you might need to install some extra packages and libraries for your system
 
 #### Install SMTCoq
 
-Compile and install SMTCoq by using the commands:
+Compile and install SMTCoq by using the following commands in the src directory.
 
 ```bash
 ./configure.sh
 make
 make install
 ```
-
-in the src directory.
 
 
 ### Installation with official Coq 8.6 release
@@ -110,13 +108,12 @@ export COQBIN=/home/jdoe/coq-8.6.1/bin/
 ```
    (the final slash is mandatory).
 
-3. Compile and install SMTCoq by using the commands:
+3. Compile and install SMTCoq by using the following commands in the src directory.
 ```
 ./configure.sh
 make
 make install
 ```
-   in the src directory.
 
 
 ## Installation of the provers
@@ -151,10 +148,16 @@ The `cvc4` binary must be present in your PATH to use it through SMTCoq.
 The
 [above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
 points to a snapshot of veriT which is known to be compatible with
-SMTCoq, and is already in proof production mode. If you encounter
-problems to compile it, please report an issue.
-
-The `veriT` binary must be present in your PATH to use it through SMTCoq.
+SMTCoq, and is already in proof production mode. To compile it, unpack
+the archive and use the following commands:
+```
+autoconf
+./configure
+make
+```
+This will produce an executable called `veriT` that you should add to
+your path. If you encounter problems to compile it, please report an
+issue.
 
 
 ### zChaff
