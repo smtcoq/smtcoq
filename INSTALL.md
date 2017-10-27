@@ -137,7 +137,7 @@ proof production mode**, as detailed below.
 
 Use the version of CVC4 that is available in the master branch of its
 [git repository](https://github.com/CVC4/CVC4) or one of the **development**
-versions available at [http://cvc4.cs.nyu.edu/downloads/] (we recommend using
+versions available at [http://cvc4.cs.stanford.edu/downloads] (we recommend using
 the latest version available).
 
 The `cvc4` binary must be present in your PATH to use it through SMTCoq.
