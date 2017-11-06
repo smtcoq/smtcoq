@@ -15,7 +15,7 @@ COQTOP=$(COQBIN)../
 FLAGS=-rectypes
 COMPILEFLAGS=-cclib -lunix
 
-SMTLIB=-I .. -I ../zchaff -I ../verit -I ../trace -I ../lia -I ../euf -I ../cnf
+SMTLIB=-I .. -I ../zchaff -I ../verit -I ../trace -I ../smtlib2 -I ../lia -I ../euf -I ../cnf -I ../versions/native/
 COQLIB=-I ${COQTOP}kernel -I ${COQTOP}lib -I ${COQTOP}library -I ${COQTOP}parsing -I ${COQTOP}pretyping -I ${COQTOP}interp -I ${COQTOP}proofs -I ${COQTOP}tactics -I ${COQTOP}toplevel -I ${COQTOP}plugins/btauto -I ${COQTOP}plugins/cc -I ${COQTOP}plugins/decl_mode -I ${COQTOP}plugins/extraction -I ${COQTOP}plugins/field -I ${COQTOP}plugins/firstorder -I ${COQTOP}plugins/fourier -I ${COQTOP}plugins/funind -I ${COQTOP}plugins/micromega -I ${COQTOP}plugins/nsatz -I ${COQTOP}plugins/omega -I ${COQTOP}plugins/quote -I ${COQTOP}plugins/ring -I ${COQTOP}plugins/romega -I ${COQTOP}plugins/rtauto -I ${COQTOP}plugins/setoid_ring -I ${COQTOP}plugins/syntax -I ${COQTOP}plugins/xml -I /usr/lib/ocaml/camlp5
 
 CMXA=nums.cmxa str.cmxa unix.cmxa gramlib.cmxa dynlink.cmxa ${COQTOP}kernel/byterun/coq_fix_code.o ${COQTOP}kernel/byterun/coq_interp.o ${COQTOP}kernel/byterun/coq_memory.o ${COQTOP}kernel/byterun/coq_values.o clib.cmxa lib.cmxa kernel.cmxa library.cmxa pretyping.cmxa interp.cmxa proofs.cmxa parsing.cmxa tactics.cmxa toplevel.cmxa micromega_plugin.cmxa smtcoq.cmxa

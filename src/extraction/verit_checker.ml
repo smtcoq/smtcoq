@@ -16,6 +16,7 @@
 
 open SmtMisc
 open SmtCertif
+open SmtCommands
 open SmtForm
 open SmtAtom
 open SmtTrace
@@ -25,7 +26,7 @@ open Smtlib2_genConstr
 (* open Smt_checker *)
 
 
-module Mc = Micromega
+module Mc = Structures.Micromega_plugin_Certificate.Mc
 
 
 let mkInt = ExtrNative.of_int
