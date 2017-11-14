@@ -216,7 +216,7 @@ let ccertif = gen_constant sat_checker_modules "certif"
 let ctheorem_checker = gen_constant sat_checker_modules "theorem_checker"
 let cchecker = gen_constant sat_checker_modules "checker"
 
-let theorem name fdimacs ftrace =   
+let theorems interp name fdimacs ftrace =
   SmtTrace.clear ();
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
@@ -227,7 +227,7 @@ let theorem name fdimacs ftrace =
   let certif =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
 
-  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots first last|] |] in
+  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
   let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
   let theorem_type = 
     Term.mkProd (mkName "v", vtype, theorem_concl) in
@@ -254,6 +254,10 @@ let theorem name fdimacs ftrace =
   let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_type in
   let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
   ()
+
+let theorem = theorems (fun _ -> interp_roots)
+let theorem_abs =
+  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|Term.mkRel 1(*v*)|]; d|])
 
 
 let checker fdimacs ftrace =

@@ -165,6 +165,9 @@ let cFite = gen_constant smt_modules "Fite"
 
 let cis_true = gen_constant smt_modules "is_true"
 
+let cvalid_sat_checker = gen_constant [["SMTCoq";"Trace";"Sat_Checker"]] "valid"
+let cinterp_var_sat_checker = gen_constant [["SMTCoq";"Trace";"Sat_Checker"]] "interp_var"
+
 let make_certif_ops modules args =
   let gen_constant c =
     match args with
