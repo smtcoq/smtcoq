@@ -33,6 +33,13 @@ VERNAC COMMAND EXTEND Vernac_zchaff
   ]
 END
 
+VERNAC COMMAND EXTEND Vernac_zchaff_abs
+| [ "Zchaff_Theorem_Abs" ident(name) string(fdimacs) string(fproof) ] ->
+  [
+    Zchaff.theorem_abs name fdimacs fproof
+  ]
+END
+
 VERNAC COMMAND EXTEND Vernac_verit
 | [ "Parse_certif_verit"
     ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
