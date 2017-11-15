@@ -126,3 +126,12 @@ let ppconstr_lsimpleconstr = Ppconstr.lsimple
 let constrextern_extern_constr =
   let env = Global.env () in
   Constrextern.extern_constr false env
+
+let get_rel_dec_name = fun _ -> Names.Anonymous
+
+
+(* Old packaging of plugins *)
+module Micromega_plugin_Certificate = Certificate
+module Micromega_plugin_Coq_micromega = Coq_micromega
+module Micromega_plugin_Micromega = Micromega
+module Micromega_plugin_Mutils = Mutils

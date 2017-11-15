@@ -1725,12 +1725,12 @@ Qed.
       Proof.
         intros [op|op h|op h1 h2|op h1 h2 h3|op ha|f l]; simpl.
         (* Constants *)
-        destruct op; intros [ | i | | | | ]; simpl; try discriminate.
+        destruct op as [ | |l n]; intros [ | i | | | | ]; simpl; try discriminate.
         exists 1%positive; auto.
         exists 0%Z; auto.
-        exists (BITVECTOR_LIST._of_bits l n0). unfold is_true in H. rewrite N.eqb_eq in H. now rewrite H.
+        intros n0 H. exists (BITVECTOR_LIST._of_bits l n0). unfold is_true in H. rewrite N.eqb_eq in H. now rewrite H.
         (* Unary operators *)
-        destruct op; intros [ | ind| | | | ]; 
+        destruct op as [ | | | | |n n0|n|n|n n0 n1|n n0|n n0]; intros [ | ind| | | |size]; 
         simpl; try discriminate; try rewrite Typ.eqb_spec; 
         intros H1a; destruct (check_aux_interp_hatom h) 
         as [x Hx]; rewrite Hx; simpl; generalize x Hx; 
@@ -1740,6 +1740,7 @@ Qed.
         exists (Zpos y); auto.
         exists (Zneg y); auto.
         exists (- y)%Z; auto.
+        (* bitOf *)
         exists (BITVECTOR_LIST.bitOf n0 y); auto.
         (* bv_not *)
         intros.
@@ -1770,7 +1771,7 @@ Qed.
         apply Typ.eqb_spec in Hb.
         revert x y Hx Hy.
         rewrite Hb. intros.
-        exists (@BITVECTOR_LIST.bv_extr i n0 n1 y); auto. rewrite Typ.cast_refl; auto.
+        exists (@BITVECTOR_LIST.bv_extr n n0 n1 y); auto. rewrite Typ.cast_refl; auto.
         (* bv_zextn *)
         intros.
         apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
@@ -1780,7 +1781,7 @@ Qed.
         apply Typ.eqb_spec in Hb.
         revert x y Hx Hy.
         rewrite Hb. intros.
-        exists (@BITVECTOR_LIST.bv_zextn n i y); auto. rewrite Typ.cast_refl; auto.
+        exists (@BITVECTOR_LIST.bv_zextn n n0 y); auto. rewrite Typ.cast_refl; auto.
         (* bv_sextn *)
         intros.
         apply andb_true_iff in H1a. destruct H1a as (Ha, Hb).
@@ -1790,7 +1791,7 @@ Qed.
         apply Typ.eqb_spec in Hb.
         revert x y Hx Hy.
         rewrite Hb. intros.
-        exists (@BITVECTOR_LIST.bv_sextn n i y); auto. rewrite Typ.cast_refl; auto.   
+        exists (@BITVECTOR_LIST.bv_sextn n n0 y); auto. rewrite Typ.cast_refl; auto.   
   (* Binary operators *)
         destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s5 | s6 | s7 | s8 | s9 | s10 | n m | ti te | ti te];
           [ intros [ ti' te' | i | | | |s ] |

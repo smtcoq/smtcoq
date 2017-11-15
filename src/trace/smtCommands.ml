@@ -744,16 +744,13 @@ open SExpr
 open Smtlib2_genConstr
 open Format
 
-let get_rel_dec_name = function
-  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
-
 let vstring_i env i =
   let cf = SmtAtom.Atom.get_coq_term_op i in
   if Term.isRel cf then
     let dbi = Term.destRel cf in
     let s =
       Environ.lookup_rel dbi env
-      |> get_rel_dec_name
+      |> Structures.get_rel_dec_name
       |> function
       | Names.Name id -> Names.string_of_id id
       | Names.Anonymous -> "?" in

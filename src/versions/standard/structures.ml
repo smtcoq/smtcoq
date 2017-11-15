@@ -165,6 +165,9 @@ let constrextern_extern_constr =
   let env = Global.env () in
   Constrextern.extern_constr false env (Evd.from_env env)
 
+let get_rel_dec_name = function
+  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
+
 
 (* New packaging of plugins *)
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate

@@ -1193,7 +1193,7 @@ Proof.
       case_eq (t_atom .[ f]); try (intros; now apply C.interp_true).
 
       intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ];
-         try (intros; now apply C.interp_true). intros a b Heq3.
+         try (intros; now apply C.interp_true). intros n a b Heq3.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
       intros c Heq4.
       case_eq c; try (intros; now apply C.interp_true).
@@ -4533,7 +4533,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N| | | | ]; 
           try (intros; now apply C.interp_true).
 
-       intros a1' a2' Heq9.
+       intros n a1' a2' Heq9.
        case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1')); 
          simpl; intros Heq15; try (now apply C.interp_true).
 
