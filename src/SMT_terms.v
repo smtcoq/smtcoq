@@ -253,6 +253,9 @@ Module Form.
 End Form.
 
 
+Require OrderedTypeEx.
+
+
 Module Typ.
 
   Import FArray.
@@ -271,7 +274,7 @@ Module Typ.
 
   Section Interp.
 
-    Require Import OrderedTypeEx.
+    Import OrderedTypeEx.
     
     Variable t_i : PArray.array typ_compdec.
     
@@ -1725,10 +1728,10 @@ Qed.
       Proof.
         intros [op|op h|op h1 h2|op h1 h2 h3|op ha|f l]; simpl.
         (* Constants *)
-        destruct op as [ | |l n]; intros [ | i | | | | ]; simpl; try discriminate.
+        destruct op as [ | |l n]; intros [ | i | | | |size]; simpl; try discriminate.
         exists 1%positive; auto.
         exists 0%Z; auto.
-        intros n0 H. exists (BITVECTOR_LIST._of_bits l n0). unfold is_true in H. rewrite N.eqb_eq in H. now rewrite H.
+        intros H. exists (BITVECTOR_LIST._of_bits l size). unfold is_true in H. rewrite N.eqb_eq in H. now rewrite H.
         (* Unary operators *)
         destruct op as [ | | | | |n n0|n|n|n n0 n1|n n0|n n0]; intros [ | ind| | | |size]; 
         simpl; try discriminate; try rewrite Typ.eqb_spec; 

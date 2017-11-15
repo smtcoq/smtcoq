@@ -201,10 +201,10 @@ MLFILES:=lia/lia.ml\
   verit/verit.ml\
   verit/veritLexer.ml\
   verit/veritParser.ml\
-  smtlib2/sExprLexer.ml\
-  smtlib2/sExprParser.ml\
   smtlib2/smtlib2_solver.ml\
   smtlib2/sExpr.ml\
+  smtlib2/sExprLexer.ml\
+  smtlib2/sExprParser.ml\
   smtlib2/smtlib2_util.ml\
   smtlib2/smtlib2_genConstr.ml\
   smtlib2/smtlib2_ast.ml\
@@ -230,9 +230,9 @@ MLIFILES:=lfsc/tosmtcoq.mli\
   lfsc/hstring.mli\
   lfsc/shashcons.mli\
   verit/veritSyntax.mli\
-  smtlib2/sExprParser.mli\
   smtlib2/smtlib2_solver.mli\
   smtlib2/sExpr.mli\
+  smtlib2/sExprParser.mli\
   trace/smtForm.mli\
   trace/smtAtom.mli
 
@@ -397,7 +397,7 @@ clean:
 	- rm -rf vtest
 	- rm -rf ztest
 	- rm -rf test
-	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a
+	- rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.mli smtlib2/sExprParser.ml smtlib2/sExprLexer.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a
 
 archclean:
 	rm -f *.cmx *.o

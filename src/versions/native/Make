@@ -14,7 +14,7 @@
 ## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA and VCMXS. ##
 ## Change the "install" target: change CMO into CMX.                  ##
 ## Finally, suppress the "Makefile" target and add to the "clean" target: ##
-##   - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a ##
+##   - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.mli smtlib2/sExprParser.ml smtlib2/sExprLexer.ml lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli trace/smtcoq.a ##
 ########################################################################
 
 
@@ -81,13 +81,13 @@ smtlib2/smtlib2_lex.ml
 smtlib2/smtlib2_ast.ml
 smtlib2/smtlib2_genConstr.ml
 smtlib2/smtlib2_util.ml
+smtlib2/sExprParser.ml
+smtlib2/sExprParser.mli
+smtlib2/sExprLexer.ml
 smtlib2/sExpr.ml
 smtlib2/sExpr.mli
 smtlib2/smtlib2_solver.ml
 smtlib2/smtlib2_solver.mli
-smtlib2/sExprParser.ml
-smtlib2/sExprParser.mli
-smtlib2/sExprLexer.ml
 
 verit/veritParser.ml
 verit/veritLexer.ml
