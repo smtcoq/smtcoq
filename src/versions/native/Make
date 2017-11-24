@@ -48,41 +48,62 @@ CAMLYACC = $(CAMLBIN)ocamlyacc
 
 versions/native/Structures.v
 versions/native/structures.ml
+versions/native/structures.mli
 
 trace/coqTerms.ml
+trace/coqTerms.mli
 trace/satAtom.ml
+trace/satAtom.mli
 trace/smtAtom.ml
 trace/smtAtom.mli
 trace/smtCertif.ml
+trace/smtCertif.mli
 trace/smtCnf.ml
+trace/smtCnf.mli
 trace/smtCommands.ml
+trace/smtCommands.mli
 trace/smtForm.ml
 trace/smtForm.mli
 trace/smtMisc.ml
+trace/smtMisc.mli
 trace/smtTrace.ml
+trace/smtTrace.mli
 
 smtlib2/smtlib2_parse.ml
+smtlib2/smtlib2_parse.mli
 smtlib2/smtlib2_lex.ml
+smtlib2/smtlib2_lex.mli
 smtlib2/smtlib2_ast.ml
+smtlib2/smtlib2_ast.mli
 smtlib2/smtlib2_genConstr.ml
+smtlib2/smtlib2_genConstr.mli
 smtlib2/smtlib2_util.ml
+smtlib2/smtlib2_util.mli
 
 verit/veritParser.ml
+verit/veritParser.mli
 verit/veritLexer.ml
+verit/veritLexer.mli
 verit/verit.ml
+verit/verit.mli
 verit/veritSyntax.ml
 verit/veritSyntax.mli
 
 zchaff/cnfParser.ml
+zchaff/cnfParser.mli
 zchaff/satParser.ml
+zchaff/satParser.mli
 zchaff/zchaff.ml
+zchaff/zchaff.mli
 zchaff/zchaffParser.ml
+zchaff/zchaffParser.mli
 
 cnf/Cnf.v
 
 euf/Euf.v
 
 lia/lia.ml
+lia/lia.mli
 lia/Lia.v
 
 spl/Assumptions.v

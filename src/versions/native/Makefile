@@ -192,9 +192,30 @@ MLFILES:=lia/lia.ml\
 -include $(addsuffix .d,$(MLFILES))
 .SECONDARY: $(addsuffix .d,$(MLFILES))
 
-MLIFILES:=verit/veritSyntax.mli\
+MLIFILES:=lia/lia.mli\
+  zchaff/zchaffParser.mli\
+  zchaff/zchaff.mli\
+  zchaff/satParser.mli\
+  zchaff/cnfParser.mli\
+  verit/veritSyntax.mli\
+  verit/verit.mli\
+  verit/veritLexer.mli\
+  verit/veritParser.mli\
+  smtlib2/smtlib2_util.mli\
+  smtlib2/smtlib2_genConstr.mli\
+  smtlib2/smtlib2_ast.mli\
+  smtlib2/smtlib2_lex.mli\
+  smtlib2/smtlib2_parse.mli\
+  trace/smtTrace.mli\
+  trace/smtMisc.mli\
   trace/smtForm.mli\
-  trace/smtAtom.mli
+  trace/smtCommands.mli\
+  trace/smtCnf.mli\
+  trace/smtCertif.mli\
+  trace/smtAtom.mli\
+  trace/satAtom.mli\
+  trace/coqTerms.mli\
+  versions/native/structures.mli
 
 -include $(addsuffix .d,$(MLIFILES))
 .SECONDARY: $(addsuffix .d,$(MLIFILES))
