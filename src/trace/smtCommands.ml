@@ -711,21 +711,14 @@ let core_tactic call_solver solver_logic rt ro ra rf vm_cast env sigma concl =
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq l) max_id_confl (vm_cast env) in
 
-  let tac =
-    List.fold_right (fun (eqn, eqt) tac ->
+  List.fold_right (fun (eqn, eqt) tac ->
       Structures.tclTHENLAST
         (Structures.assert_before (Names.Name eqn) eqt)
         tac
-      ) (Btype.get_cuts rt)
-      (Structures.tclTHEN
-         (Structures.set_evars_tac body_nocast)
-         (Structures.vm_cast_no_check body_cast))
-  in
-  List.fold_left (fun tac (n, t) ->
-      Structures.tclTHENLAST
-        (Structures.assert_before (Names.Name n) t)
-        tac
-    ) tac cuts
+    ) ((Btype.get_cuts rt)@cuts)
+    (Structures.tclTHEN
+       (Structures.set_evars_tac body_nocast)
+       (Structures.vm_cast_no_check body_cast))
 
 
 let tactic call_solver solver_logic rt ro ra rf vm_cast =
