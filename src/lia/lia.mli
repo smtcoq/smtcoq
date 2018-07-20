@@ -56,4 +56,4 @@ val build_lia_certif :
   my_tbl *
   Structures.Micromega_plugin_Micromega.z
   Structures.Micromega_plugin_Coq_micromega.formula *
-  Certificate.Mc.zArithProof list option
+  Structures.Micromega_plugin_Certificate.Mc.zArithProof list option

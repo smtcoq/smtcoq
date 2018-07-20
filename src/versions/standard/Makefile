@@ -65,7 +65,7 @@ OCAMLLIBS?=-I "."\
   -I "versions/standard"\
   -I "versions/standard/Int63"\
   -I "versions/standard/Array"\
-  -I "$(COQBIN)../plugins/micromega"
+  -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 COQLIBS?=\
   -R "." SMTCoq\
   -I "."\
@@ -79,7 +79,7 @@ COQLIBS?=\
   -I "versions/standard"\
   -I "versions/standard/Int63"\
   -I "versions/standard/Array"\
-  -I "$(COQBIN)../plugins/micromega"
+  -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 COQCHKLIBS?=\
   -R "." SMTCoq
 COQDOCLIBS?=\
@@ -244,13 +244,13 @@ MLFILES:=versions/standard/structures.ml\
   trace/smtMisc.ml\
   trace/smtTrace.ml\
   smtlib2/smtlib2_parse.ml\
+  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_ast.ml\
   smtlib2/smtlib2_genConstr.ml\
-  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_util.ml\
   verit/veritParser.ml\
-  verit/verit.ml\
   verit/veritLexer.ml\
+  verit/verit.ml\
   verit/veritSyntax.ml\
   zchaff/cnfParser.ml\
   zchaff/satParser.ml\
@@ -280,11 +280,30 @@ endif
 
 .SECONDARY: $(addsuffix .d,$(MLPACKFILES))
 
-MLIFILES:=trace/smtAtom.mli\
+MLIFILES:=versions/standard/structures.mli\
+  trace/coqTerms.mli\
+  trace/satAtom.mli\
+  trace/smtAtom.mli\
+  trace/smtCertif.mli\
+  trace/smtCnf.mli\
+  trace/smtCommands.mli\
   trace/smtForm.mli\
+  trace/smtMisc.mli\
+  trace/smtTrace.mli\
   smtlib2/smtlib2_parse.mli\
+  smtlib2/smtlib2_lex.mli\
+  smtlib2/smtlib2_ast.mli\
+  smtlib2/smtlib2_genConstr.mli\
+  smtlib2/smtlib2_util.mli\
   verit/veritParser.mli\
-  verit/veritSyntax.mli
+  verit/veritLexer.mli\
+  verit/verit.mli\
+  verit/veritSyntax.mli\
+  zchaff/cnfParser.mli\
+  zchaff/satParser.mli\
+  zchaff/zchaff.mli\
+  zchaff/zchaffParser.mli\
+  lia/lia.mli
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(MLIFILES))
@@ -505,8 +524,8 @@ uninstall: uninstall_me.sh
 	@echo "S versions/standard/Int63" >> .merlin
 	@echo "B versions/standard/Array" >> .merlin
 	@echo "S versions/standard/Array" >> .merlin
-	@echo "B $(COQBIN)../plugins/micromega" >> .merlin
-	@echo "S $(COQBIN)../plugins/micromega" >> .merlin
+	@echo "B $(shell $(COQBIN)coqc -where)/plugins/micromega" >> .merlin
+	@echo "S $(shell $(COQBIN)coqc -where)/plugins/micromega" >> .merlin
 
 clean::
 	rm -f $(ALLCMOFILES) $(CMIFILES) $(CMAFILES)

@@ -84,5 +84,5 @@ val make_proof :
   Environ.env ->
   SatAtom.Form.reify ->
   SatAtom.Form.t -> int * SatAtom.Form.t SmtCertif.clause
-val core_tactic : Environ.env -> 'a -> Term.types -> Proof_type.tactic
-val tactic : unit -> Proof_type.tactic
+val core_tactic : Environ.env -> 'a -> Term.types -> Structures.tactic
+val tactic : unit -> Structures.tactic

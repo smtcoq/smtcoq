@@ -38,3 +38,4 @@ module Micromega_plugin_Certificate = Certificate
 module Micromega_plugin_Coq_micromega = Coq_micromega
 module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
+type tactic = Proof_type.tactic

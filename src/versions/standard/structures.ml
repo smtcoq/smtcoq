@@ -164,3 +164,6 @@ module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+
+(* Type of coq tactics *)
+type tactic = unit Proofview.tactic
