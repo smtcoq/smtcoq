@@ -242,6 +242,7 @@ MLFILES:=versions/standard/structures.ml\
   trace/smtCommands.ml\
   trace/smtForm.ml\
   trace/smtMisc.ml\
+  trace/smtBtype.ml\
   trace/smtTrace.ml\
   smtlib2/smtlib2_parse.ml\
   smtlib2/smtlib2_lex.ml\
@@ -289,6 +290,7 @@ MLIFILES:=versions/standard/structures.mli\
   trace/smtCommands.mli\
   trace/smtForm.mli\
   trace/smtMisc.mli\
+  trace/smtBtype.mli\
   trace/smtTrace.mli\
   smtlib2/smtlib2_parse.mli\
   smtlib2/smtlib2_lex.mli\
@@ -333,7 +335,7 @@ endif
 #                                     #
 #######################################
 
-all: $(VOFILES) $(CMOFILES) $(if $(HASNATDYNLINK_OR_EMPTY),$(CMXSFILES))
+all: $(VOFILES) $(CMOFILES) $(if $(HASNATDYNLINK_OR_EMPTY),$(CMXSFILES)) 
 
 mlihtml: $(MLIFILES:.mli=.cmi)
 	 mkdir $@ || rm -rf $@/*
@@ -555,7 +557,6 @@ printenv:
 	@echo 'COQFLAGS =	$(COQFLAGS)'
 	@echo 'COQLIBINSTALL =	$(COQLIBINSTALL)'
 	@echo 'COQDOCINSTALL =	$(COQDOCINSTALL)'
-
 
 ###################
 #                 #

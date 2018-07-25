@@ -1,21 +1,24 @@
-########################################################################
-##   This file is intended to developers, please do not use it to     ##
-## generate a Makefile, rather use the provided Makefile.             ##
-########################################################################
+################################################################################
+##   This file is intended to developers, please do not use it to	      ##
+## generate a Makefile, rather use the provided Makefile.             	      ##
+################################################################################
 
 
 
 
-########################################################################
-## To generate the Makefile:                                          ##
-##   coq_makefile -f Make -o Makefile                                 ##
-## Change the "all" target into:                                      ##
-##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   ##
-## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA and VCMXS. ##
-## Change the "install" target: change CMO into CMX.                  ##
-## Finally, suppress the "Makefile" target and add to the "clean" target: ##
+################################################################################
+## First add your file paths below as indicated by the comments.	      ##
+## Then generate the Makefile:						      ##
+##   coq_makefile -f Make -o Makefile                                 	      ##
+## In the Makefile :						       	      ##
+## 1) Change the "all" target of the Makefile into:                   	      ##
+##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   	      ##
+## 2) Change the "install-natdynlink" target:				      ##
+##   change CMXSFILES into CMXS and add the same thing for CMXA and VCMXS.    ##
+## 3) Change the "install" target: change CMOFILES into CMXFILES.             ##
+## 4) Finally, suppress the "Makefile" target and add to the "clean" target:  ##
 ##   - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml ##
-########################################################################
+################################################################################
 
 
 -R . SMTCoq
@@ -37,7 +40,8 @@
 -custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"
 -custom "" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml" "ml"
 
--custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx smtcoq_plugin.cmx" "$(CMXA)"
+## Add your new files in the following command : ##
+-custom "$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^" "versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtBtype.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx smtlib2/smtlib2_util.cmx smtlib2/smtlib2_ast.cmx smtlib2/smtlib2_parse.cmx smtlib2/smtlib2_lex.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx smtcoq_plugin.cmx" "$(CMXA)"
 -custom "$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^" "$(CMXA)" "$(CMXS)"
 
 CMXA = smtcoq.cmxa
@@ -46,6 +50,7 @@ VCMXS = "versions/native/NSMTCoq_versions_native_Structures.cmxs NSMTCoq_State.c
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
 
+## Also add your new files here ##
 versions/native/Structures.v
 versions/native/structures.ml
 versions/native/structures.mli
@@ -56,6 +61,8 @@ trace/satAtom.ml
 trace/satAtom.mli
 trace/smtAtom.ml
 trace/smtAtom.mli
+trace/smtBtype.ml
+trace/smtBtype.mli
 trace/smtCertif.ml
 trace/smtCertif.mli
 trace/smtCnf.ml
@@ -68,6 +75,7 @@ trace/smtMisc.ml
 trace/smtMisc.mli
 trace/smtTrace.ml
 trace/smtTrace.mli
+
 
 smtlib2/smtlib2_parse.ml
 smtlib2/smtlib2_parse.mli

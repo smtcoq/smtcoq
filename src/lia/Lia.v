@@ -1005,8 +1005,9 @@ Transparent build_z_atom.
           simpl;tauto.
       symmetry;apply Zgt_is_gt_bool.
       destruct t0;inversion H13;clear H13;subst.
-      simpl.
-      symmetry;apply (Zeq_is_eq_bool (Zeval_expr (interp_vmap vm') pe1) (Zeval_expr (interp_vmap vm') pe2)).
+      simpl. 
+      apply (Z.eqb_eq (Zeval_expr (interp_vmap vm') pe1) (Zeval_expr (interp_vmap vm') pe2)).
+
     Qed.
 
     Lemma build_formula_correct :
@@ -1474,7 +1475,7 @@ Transparent build_z_atom.
      case_eq (vb <=? va); intros; subst.
      apply Zle_bool_imp_le in H2.
      apply Zle_bool_imp_le in H3.
-     apply Zeq_bool_neq in H.
+     apply Z.eqb_neq in H.
      (*pour la beauté du geste!*) lia.
      rewrite H3 in H1; simpl in H1; elim diff_true_false; trivial.
      rewrite H2 in H0; simpl in H1; elim diff_true_false; trivial.

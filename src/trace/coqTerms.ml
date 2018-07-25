@@ -13,7 +13,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-
 open Coqlib
 
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
@@ -52,11 +51,9 @@ let cltb = gen_constant z_modules "ltb"
 let cleb = gen_constant z_modules "leb"
 let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
-(* Je ne comprends pas pourquoi ça fonctionne avec Zeq_bool et pas avec
-   Z.eqb *)
-(* let ceqbZ = gen_constant z_modules "eqb" *)
-let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool"
+let ceqbZ = gen_constant z_modules "eqb" 
 
+                         
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
 
@@ -93,7 +90,9 @@ let csigT = gen_constant init_modules "sigT"
 let cnot = gen_constant init_modules "not"
 let ceq = gen_constant init_modules "eq"
 let crefl_equal = gen_constant init_modules "eq_refl"
-
+let cconj = gen_constant init_modules "conj"
+let cand = gen_constant init_modules "and"
+                        
 (* SMT_terms *)
 
 let smt_modules = [ ["SMTCoq";"Misc"];
@@ -182,7 +181,7 @@ let make_certif_ops modules args =
   gen_constant"ImmBuildDef2",
   gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
   gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
-  gen_constant "Hole")
+  gen_constant "Hole", gen_constant "ForallInst")
   
 
 (** Useful construction *)
@@ -196,3 +195,7 @@ let vm_cast_true t =
   Term.mkCast(eq_refl_true (),
 	      Term.VMcast, 
 	      SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+
+
+
+                             

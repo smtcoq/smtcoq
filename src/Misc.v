@@ -1008,3 +1008,10 @@ Implicit Arguments forallb2 [A B].
    coq-load-path: ((rec "." "SMTCoq"))
    End: 
 *)
+
+Lemma neg_eq_true_eq_false b : b = false <-> b <> true.
+Proof. destruct b; intuition. Qed.
+
+Lemma is_true_iff e :  e = true <-> is_true e.
+Proof. now unfold is_true. Qed. 
+

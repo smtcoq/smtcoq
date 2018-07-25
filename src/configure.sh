@@ -1,20 +1,34 @@
 #!/bin/sh
 
-set -e
+pre=$(echo $0 | sed "s,\(\([^/]*/\)*\)[^/]*,\1,")
 
+rm -f ${pre}Makefile
+rm -f ${pre}smtcoq_plugin.ml4
+rm -f ${pre}versions/native/Structures.v
+rm -f ${pre}g_smtcoq.ml4
+rm -f ${pre}smtcoq_plugin.mlpack
+rm -f ${pre}versions/standard/Int63/Int63.v
+rm -f ${pre}versions/standard/Int63/Int63Native.v
+rm -f ${pre}versions/standard/Int63/Int63Op.v
+rm -f ${pre}versions/standard/Int63/Int63Axioms.v
+rm -f ${pre}versions/standard/Int63/Int63Properties.v
+rm -f ${pre}versions/standard/Array/PArray.v
+rm -f ${pre}versions/standard/Structures.v
+
+set -e
 if [ $@ -a $@ = -native ]; then
-    cp versions/native/Makefile Makefile
-    cp versions/native/smtcoq_plugin_native.ml4 smtcoq_plugin.ml4
-    cp versions/native/Structures_native.v versions/native/Structures.v
+    cp ${pre}versions/native/Makefile ${pre}Makefile
+    cp ${pre}versions/native/smtcoq_plugin_native.ml4 ${pre}smtcoq_plugin.ml4
+    cp ${pre}versions/native/Structures_native.v ${pre}versions/native/Structures.v
 else
-    cp versions/standard/Makefile Makefile
-    cp versions/standard/g_smtcoq_standard.ml4 g_smtcoq.ml4
-    cp versions/standard/smtcoq_plugin_standard.mlpack smtcoq_plugin.mlpack
-    cp versions/standard/Int63/Int63_standard.v versions/standard/Int63/Int63.v
-    cp versions/standard/Int63/Int63Native_standard.v versions/standard/Int63/Int63Native.v
-    cp versions/standard/Int63/Int63Op_standard.v versions/standard/Int63/Int63Op.v
-    cp versions/standard/Int63/Int63Axioms_standard.v versions/standard/Int63/Int63Axioms.v
-    cp versions/standard/Int63/Int63Properties_standard.v versions/standard/Int63/Int63Properties.v
-    cp versions/standard/Array/PArray_standard.v versions/standard/Array/PArray.v
-    cp versions/standard/Structures_standard.v versions/standard/Structures.v
+    cp ${pre}versions/standard/Makefile ${pre}Makefile
+    cp ${pre}versions/standard/g_smtcoq_standard.ml4 ${pre}g_smtcoq.ml4
+    cp ${pre}versions/standard/smtcoq_plugin_standard.mlpack ${pre}smtcoq_plugin.mlpack
+    cp ${pre}versions/standard/Int63/Int63_standard.v ${pre}versions/standard/Int63/Int63.v
+    cp ${pre}versions/standard/Int63/Int63Native_standard.v ${pre}versions/standard/Int63/Int63Native.v
+    cp ${pre}versions/standard/Int63/Int63Op_standard.v ${pre}versions/standard/Int63/Int63Op.v
+    cp ${pre}versions/standard/Int63/Int63Axioms_standard.v ${pre}versions/standard/Int63/Int63Axioms.v
+    cp ${pre}versions/standard/Int63/Int63Properties_standard.v ${pre}versions/standard/Int63/Int63Properties.v
+    cp ${pre}versions/standard/Array/PArray_standard.v ${pre}versions/standard/Array/PArray.v
+    cp ${pre}versions/standard/Structures_standard.v ${pre}versions/standard/Structures.v
 fi

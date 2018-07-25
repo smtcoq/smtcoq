@@ -160,6 +160,7 @@ let rec smt_Form_to_coq_micromega_formula tbl l =
           failwith "Lia.smt_Form_to_coq_micromega_formula: wrong number of arguments for Fnot2"
         else
           smt_Form_to_coq_micromega_formula tbl l.(0)
+      | Fapp (Fforall _, _) -> assert false
   in
   if Form.is_pos l then v
   else N(v)

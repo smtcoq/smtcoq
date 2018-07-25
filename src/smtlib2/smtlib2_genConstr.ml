@@ -19,7 +19,7 @@ open SmtAtom
 open SmtForm
 open SmtMisc
 open CoqTerms
-
+open SmtBtype
 
 (* For debugging *)
 
@@ -80,7 +80,7 @@ let declare_sort rt sym =
   let eq_refl = Term.mkProd (x,cons_t,Term.mkProd (y,cons_t,mklApp creflect [|mklApp ceq [|cons_t;rx;ry|];mklApp (lazy eq_t) [|rx;ry|]|])) in
   let eq_refl_v = declare_new_variable (Names.id_of_string ("eq_refl_"^s)) eq_refl in
   let ce = mklApp cTyp_eqb [|cons_t;eq_t;eq_refl_v|] in
-  let res = Btype.declare rt cons_t ce in
+  let res = SmtBtype.declare rt cons_t ce in
   VeritSyntax.add_btype s res;
   res
 
@@ -90,10 +90,10 @@ let declare_fun rt ro sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
 
-  let coqTy = List.fold_right (fun typ c -> Term.mkArrow (Btype.interp_to_coq rt (fst typ)) c) tyl (Btype.interp_to_coq rt (fst ty)) in
+  let coqTy = List.fold_right (fun typ c -> Term.mkArrow (interp_to_coq rt (fst typ)) c) tyl (interp_to_coq rt (fst ty)) in
   let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
 
-  let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) in
+  let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) None in
   VeritSyntax.add_fun s op;
   op
 
@@ -147,35 +147,35 @@ let make_root ra rf t =
           | Atom a', Atom b' ->
             (match Atom.type_of a' with
               | Tbool -> Form (Form.get rf (Fapp (Fiff, [|Form.get rf (Fatom a'); Form.get rf (Fatom b')|])))
-              | ty -> Atom (Atom.mk_eq ra ty a' b'))
+              | ty -> Atom (Atom.mk_eq ra true ty a' b'))
           | _, _ -> assert false)
       | "<", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_lt ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_lt ra true a' b')
           | _, _ -> assert false)
       | "<=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_le ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_le ra true a' b')
           | _, _ -> assert false)
       | ">", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_gt ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_gt ra true a' b')
           | _, _ -> assert false)
       | ">=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_ge ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_ge ra true a' b')
           | _, _ -> assert false)
       | "+", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_plus ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_plus ra true a' b')
           | _, _ -> assert false)
       | "-", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_minus ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_minus ra true a' b')
           | _, _ -> assert false)
       | "*", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_mult ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_mult ra true a' b')
           | _, _ -> assert false)
       | "-", [a] ->
         (match make_root_term a with
@@ -213,9 +213,8 @@ let make_root ra rf t =
 
   and make_root t =
     match make_root_term t with
-      | Atom h -> Form.get rf (Fatom h)
-      | Form f -> f in
-
+    | Atom h -> Form.get rf (Fatom h)
+    | Form f -> f in
   make_root t
 
 

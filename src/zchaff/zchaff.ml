@@ -31,7 +31,7 @@ open SmtMisc
 
 let rec is_trivial cl =
   match cl with
-  | l :: cl -> 
+  | l :: cl ->
       let nl = Form.neg l in
       List.exists (fun l' -> Form.equal nl l') cl || is_trivial cl
   | [] -> false
@@ -49,20 +49,21 @@ let string_of_op = function
   | Fiff -> "iff"
   | Fite -> "ite"
   | Fnot2 i -> "!"^string_of_int i
-
-let rec pp_form fmt l = 
+  | Fforall _ -> assert false
+                                 
+let rec pp_form fmt l =
   Format.fprintf fmt "(#%i %a %a)" (Form.to_lit l)pp_sign l pp_pform (Form.pform l)
-and pp_sign fmt l = 
-  if Form.is_pos l then () 
+and pp_sign fmt l =
+  if Form.is_pos l then ()
   else Format.fprintf fmt "-"
-and pp_pform fmt p = 
+and pp_pform fmt p =
   match p with
   | Fatom x -> Format.fprintf fmt "x%i" x
   | Fapp(op,args) ->
       Format.fprintf fmt "%s" (string_of_op op);
       Array.iter (fun a -> Format.fprintf fmt "%a " pp_form a) args
 
-let pp_value fmt c = 
+let pp_value fmt c =
   match c.value with
   | Some cl ->
       Format.fprintf fmt "VAL = {";
@@ -71,16 +72,16 @@ let pp_value fmt c =
   | _ -> Format.fprintf fmt "Val = empty@."
 
 
-let pp_kind fmt c = 
+let pp_kind fmt c =
   match c.kind with
   | Root -> Format.fprintf fmt "Root"
-  | Res res -> 
+  | Res res ->
       Format.fprintf fmt "(Res %i %i " res.rc1.id res.rc2.id;
       List.iter (fun c -> Format.fprintf fmt "%i " c.id) res.rtail;
       Format.fprintf fmt ") "
   | Other other ->
     begin match other with
-    | ImmFlatten (c,l) -> 
+    | ImmFlatten (c,l) ->
 	Format.fprintf fmt "(ImmFlatten %i %a)"
 	  c.id pp_form l
     | True -> Format.fprintf fmt "True"
@@ -95,18 +96,18 @@ let pp_kind fmt c =
     end
   | Same c -> Format.fprintf fmt "(Same %i)" c.id
 
-let rec pp_trace fmt c = 
+let rec pp_trace fmt c =
   Format.fprintf fmt "%i = %a %a" c.id pp_kind c pp_value c;
   if c.next <> None then pp_trace fmt (next c)
 
 
 (******************************************************************************)
 (** Given a cnf (dimacs) files and a resolve_trace build                      *)
-(*  the corresponding object                                                  *) 
+(*  the corresponding object                                                  *)
 (******************************************************************************)
 
 
-let import_cnf filename = 
+let import_cnf filename =
   let nvars, first, last = CnfParser.parse_cnf filename in
   let reloc = Hashtbl.create 17 in
   let count = ref 0 in
@@ -140,7 +141,7 @@ let import_cnf_trace reloc filename first last =
 let make_roots first last =
   let cint = Lazy.force cint in
   let roots = Array.make (last.id + 2) (Structures.mkArray (cint, Array.make 1 (mkInt 0))) in
-  let mk_elem l = 
+  let mk_elem l =
     let x = match Form.pform l with
     | Fatom x -> x + 2
     | _ -> assert false  in
@@ -151,7 +152,7 @@ let make_roots first last =
     let croot = Array.make (Array.length root + 1) (mkInt 0) in
     Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
     roots.(!r.id) <- Structures.mkArray (cint, croot);
-    r := next !r 
+    r := next !r
   done;
   let root = Array.of_list (get_val !r) in
   let croot = Array.make (Array.length root + 1) (mkInt 0) in
@@ -162,13 +163,13 @@ let make_roots first last =
 
 let interp_roots first last =
   let tbl = Hashtbl.create 17 in
-  let mk_elem l = 
+  let mk_elem l =
     let x = match Form.pform l with
     | Fatom x -> x
     | _ -> assert false in
     let ph = x lsl 1 in
     let h = if Form.is_pos l then ph else ph lxor 1 in
-    try Hashtbl.find tbl h 
+    try Hashtbl.find tbl h
     with Not_found ->
       let p = Term.mkApp (Term.mkRel 1, [|mkInt (x+1)|]) in
       let np = mklApp cnegb [|p|] in
@@ -178,8 +179,8 @@ let interp_roots first last =
   let interp_root c =
     match get_val c with
     | [] -> Lazy.force cfalse
-    | l :: cl -> 
-	List.fold_left (fun acc l -> mklApp corb [|acc; mk_elem l|]) 
+    | l :: cl ->
+	List.fold_left (fun acc l -> mklApp corb [|acc; mk_elem l|])
 	  (mk_elem l) cl in
   let res = ref (interp_root first) in
   if first.id <> last.id then begin
@@ -194,7 +195,7 @@ let interp_roots first last =
 let sat_checker_modules = [ ["SMTCoq";"Trace";"Sat_Checker"] ]
 
 let certif_ops = CoqTerms.make_certif_ops sat_checker_modules None
-let cCertif = gen_constant sat_checker_modules "Certif" 
+let cCertif = gen_constant sat_checker_modules "Certif"
 
 let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
@@ -204,9 +205,9 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
-  let certif = 
-   mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in 
+  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
+  let certif =
+   mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
   let ce2 = Structures.mkUConst certif in
   let _ = declare_constant trace (DefinitionEntry ce2, IsDefinition Definition) in
   ()
@@ -223,13 +224,13 @@ let theorems interp name fdimacs ftrace =
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) =
-    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
-   mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
+   mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
   let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
-  let theorem_type = 
+  let theorem_type =
     Term.mkProd (mkName "v", vtype, theorem_concl) in
   let theorem_proof_cast =
     Term.mkCast (
@@ -267,7 +268,7 @@ let checker fdimacs ftrace =
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) =
-    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
@@ -278,35 +279,35 @@ let checker fdimacs ftrace =
 
 
 
-  
+
 (******************************************************************************)
 (** Given a Coq formula build the proof                                       *)
 (******************************************************************************)
 
 let export_clause fmt cl =
-  List.iter 
-    (fun l -> Format.fprintf fmt "%s%i " 
+  List.iter
+    (fun l -> Format.fprintf fmt "%s%i "
 	(if Form.is_pos l then "" else "-") (Form.index l + 1)) cl;
   Format.fprintf fmt "0@\n"
 
 let export out_channel nvars first =
-  let fmt = Format.formatter_of_out_channel out_channel in 
+  let fmt = Format.formatter_of_out_channel out_channel in
   let reloc = Hashtbl.create 17 in
   let count = ref 0 in
   (* count the number of non trivial clause *)
   let r = ref first in
-  let add_count c = 
+  let add_count c =
     match c.value with
     | Some cl -> if not (is_trivial cl) then incr count
     | _ -> () in
   while !r.next <> None do add_count !r; r := next !r done;
   add_count !r;
   Format.fprintf fmt "p cnf %i %i@." nvars !count;
-  count := 0; r := first; 
+  count := 0; r := first;
   (* ouput clause *)
-  let out c = 
+  let out c =
     match c.value with
-    | Some cl -> 
+    | Some cl ->
 	if not (is_trivial cl) then begin
 	  Hashtbl.add reloc !count c;
 	  incr count;
@@ -326,21 +327,22 @@ let call_zchaff nvars root =
   let resfilename = (Filename.chop_extension filename)^".zlog" in
   let reloc, last = export outchan nvars root in
   close_out outchan;
-  let command = "zchaff "^filename^" > "^resfilename in
+  let command = "zchaff " ^ filename ^ " > " ^ resfilename in
   Format.eprintf "%s@." command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  Format.eprintf "Zchaff = %.5f@." (t1-.t0);  
-  if exit_code <> 0 then 
-    failwith ("Zchaff.call_zchaff: command "^command^
-	      " exited with code "^(string_of_int exit_code));
-  let logfilename = (Filename.chop_extension filename)^".log" in
+  Format.eprintf "Zchaff = %.5f@." (t1-.t0);
+  if exit_code <> 0 then
+    failwith ("Zchaff.call_zchaff: command " ^ command ^
+	        " exited with code " ^ (string_of_int exit_code));
+  let logfilename = (Filename.chop_extension filename) ^ ".log" in
   let command2 = "mv resolve_trace "^logfilename in
   let exit_code2 = Sys.command command2 in
-  if exit_code2 <> 0 then 
-      failwith ("Zchaff.call_zchaff: command "^command2^
-                " exited with code "^(string_of_int exit_code2));
+  if exit_code2 <> 0 then
+      failwith ("Zchaff.call_zchaff: command " ^ command2 ^
+                  " exited with code " ^ (string_of_int exit_code2) ^
+        "\nDid you forget to turn on Zchaff proof production?" );
   (* import_cnf_trace reloc logfilename root last  *)
   (reloc, resfilename, logfilename, last)
 
@@ -350,23 +352,23 @@ let call_zchaff nvars root =
 let cnf_checker_modules = [ ["SMTCoq";"Trace";"Cnf_Checker"] ]
 
 let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules None
-let ccertif = gen_constant cnf_checker_modules "certif" 
-let cCertif = gen_constant cnf_checker_modules "Certif" 
-let cchecker_b_correct = 
-  gen_constant cnf_checker_modules "checker_b_correct" 
-let cchecker_b = gen_constant cnf_checker_modules "checker_b" 
-let cchecker_eq_correct = 
-  gen_constant cnf_checker_modules "checker_eq_correct" 
-let cchecker_eq = gen_constant cnf_checker_modules "checker_eq" 
+let ccertif = gen_constant cnf_checker_modules "certif"
+let cCertif = gen_constant cnf_checker_modules "Certif"
+let cchecker_b_correct =
+  gen_constant cnf_checker_modules "checker_b_correct"
+let cchecker_b = gen_constant cnf_checker_modules "checker_b"
+let cchecker_eq_correct =
+  gen_constant cnf_checker_modules "checker_eq_correct"
+let cchecker_eq = gen_constant cnf_checker_modules "checker_eq"
 
-let build_body reify_atom reify_form l b (max_id, confl) = 
+let build_body reify_atom reify_form l b (max_id, confl) =
   let ntvar = mkName "t_var" in
   let ntform = mkName "t_form" in
   let nc = mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
-    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in
@@ -397,9 +399,9 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
-    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
-    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in 
+    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
@@ -420,7 +422,7 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   in
   (proof_cast, proof_nocast)
 
-let get_arguments concl = 
+let get_arguments concl =
   let f, args = Term.decompose_app concl in
   match args with
   | [ty;a;b] when (Term.eq_constr f (Lazy.force ceq)) && (Term.eq_constr ty (Lazy.force cbool)) -> a, b
@@ -470,8 +472,7 @@ let check_unsat filename =
       let i = input_int f in
       get_model (i::acc)
     with
-      | Finished -> acc in
-  try
+      | Finished -> acc in  try
     while true do
       let l = input_line f in
       let n = String.length l in
@@ -490,8 +491,8 @@ let check_unsat filename =
 let make_proof pform_tbl atom_tbl env reify_form l =
   let fl = Form.flatten reify_form l in
   let root = SmtTrace.mkRootV [l] in
-  let _ = 
-    if Form.equal l fl then Cnf.make_cnf reify_form root 
+  let _ =
+    if Form.equal l fl then Cnf.make_cnf reify_form root
     else
       let first_c = SmtTrace.mkOther (ImmFlatten(root,fl)) (Some [fl]) in
       SmtTrace.link root first_c;
@@ -532,7 +533,7 @@ let core_tactic env sigma t =
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
-      build_body reify_atom reify_form (Form.to_coq l) b max_id_confl 
+      build_body reify_atom reify_form (Form.to_coq l) b max_id_confl
     else
       let l1 = Form.of_coq (Atom.get reify_atom) reify_form a in
       let l2 = Form.of_coq (Atom.get reify_atom) reify_form b in
@@ -540,7 +541,7 @@ let core_tactic env sigma t =
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l in
-      build_body_eq reify_atom reify_form 
+      build_body_eq reify_atom reify_form
 	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
   in
 
