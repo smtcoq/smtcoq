@@ -33,6 +33,10 @@ You can also build SMTCoq from the sources, using either Coq 8.6 or the
 We recommend Coq 8.6 for standard use, and native-coq for uses that
 require very efficient computation (such as checking big certificates).
 
+You will need an appropriate OCaml version.
+OCaml 4.01.0 is too old for SMTCoq, while OCaml 4.06.0 is too for Coq 8.6.1.
+OCaml 4.04.0 is reported to work with Coq 8.6.1 and SMTCoq df1a51d.
+
 
 ### Installation with Coq 8.6
 
