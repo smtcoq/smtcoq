@@ -46,6 +46,8 @@ module Btype :
 
       val of_coq : reify_tbl -> logic -> Term.constr -> btype
 
+      val get_coq_type_op : int -> Term.constr
+
       val interp_tbl : reify_tbl -> Term.constr
 
       val to_list : reify_tbl ->  (int * indexed_type) list

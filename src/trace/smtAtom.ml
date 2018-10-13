@@ -183,7 +183,13 @@ module Btype =
         cuts = [];
         unsup_tbl = Hashtbl.create 17;
       }
-    
+
+
+    (* Should we give a way to clear it? *)
+    let op_coq_types = Hashtbl.create 17
+    let get_coq_type_op = Hashtbl.find op_coq_types
+
+
     (* let logic_of_coq reify t = logic (of_coq reify t) *)
     
 
@@ -281,7 +287,7 @@ module Btype =
         in
         Hashtbl.add reify.unsup_tbl ty res;
         res
-    
+
 
     let rec of_coq reify known_logic t =
       try
@@ -316,7 +322,9 @@ module Btype =
             let compdec_type = mklApp cCompDec [| t |]in
             reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
             let ce = mklApp cTyp_compdec [|t; compdec_var|] in
-            declare reify t ce
+            let ty = declare reify t ce in
+            (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
+            ty
 
       with Unknown_type ty ->
       try Hashtbl.find reify.tbl t
@@ -1492,7 +1500,7 @@ module Atom =
             let targs = Array.map type_of hargs in
             let tres = Btype.of_coq rt known_logic ty in
             Op.declare ro c targs tres in
-        Hashtbl.add op_coq_terms op.index c;
+        Hashtbl.add op_coq_terms op.index c; (* Chantal: I think we should move it to "Not_found" (otherwise it is already in the table) *)
         get reify (Aapp (op,hargs))
 
       (* create an uninterpreted symbol for an unsupported symbol but fisrt do

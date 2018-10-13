@@ -737,6 +737,19 @@ open SExpr
 open Smtlib2_genConstr
 open Format
 
+
+let string_index_of_constr env i cf =
+  try
+    let s = string_coq_constr cf in
+    let nc = Environ.named_context env in
+    let nd = Environ.lookup_named (Names.id_of_string s) env in
+    let cpt = ref 0 in
+    (try List.iter (fun n -> incr cpt; if n == nd then raise Exit) nc
+     with Exit -> ());
+    s, !cpt
+  with _ -> string_coq_constr cf, -i
+
+
 let vstring_i env i =
   let cf = SmtAtom.Atom.get_coq_term_op i in
   if Term.isRel cf then
@@ -749,21 +762,23 @@ let vstring_i env i =
       | Names.Anonymous -> "?" in
     s, dbi
   else
-    try
-      let s = string_coq_constr cf in
-      let nc = Environ.named_context env in
-      let nd = Environ.lookup_named (Names.id_of_string s) env in
-      let cpt = ref 0 in
-      (try List.iter (fun n -> incr cpt; if n == nd then raise Exit) nc
-       with Exit -> ());
-      s, !cpt
-    with _ -> string_coq_constr cf, -i
+    string_index_of_constr env i cf
+
+
+let sstring_i env i v =
+  let tf = SmtAtom.Btype.get_coq_type_op i in
+  let (s, idx) = string_index_of_constr env i tf in
+  (s^"#"^v, idx)
 
 
 let smt2_id_to_coq_string env t_i ra rf name =
   try
-    Scanf.sscanf name "op_%d" (vstring_i env)
-  with _ -> name, 0
+    let l = String.split_on_char '_' name in
+    match l with
+      | ["op"; i] -> vstring_i env (int_of_string i)
+      | ["@uc"; "Tindex"; i; j] -> sstring_i env (int_of_string i) j
+      | _ -> raise Not_found
+  with _ -> (name, 0)
 
 
 let op_to_coq_string op = match op with
@@ -859,27 +874,39 @@ let lambda_to_coq_string l s =
             | _ -> assert false) l))
     s
 
+type model =
+  | Fun of ((string * int) * string)
+  | Sort
+
 let model_item env rt ro ra rf =
   let t_i = make_t_i rt in
   function
   | List [Atom "define-fun"; Atom n; List []; _; expr] ->
-    (smt2_id_to_coq_string env t_i ra rf n,
-     smt2_sexpr_to_coq_string env t_i ra rf expr)
-    
+     Fun (smt2_id_to_coq_string env t_i ra rf n,
+           smt2_sexpr_to_coq_string env t_i ra rf expr)
+
   | List [Atom "define-fun"; Atom n; List l; _; expr] ->
-    (smt2_id_to_coq_string env t_i ra rf n,
-     lambda_to_coq_string l
-       (smt2_sexpr_to_coq_string env t_i ra rf expr))
-    
-  | _ -> Structures.error ("Could not reconstruct model")
+     Fun (smt2_id_to_coq_string env t_i ra rf n,
+           lambda_to_coq_string l
+             (smt2_sexpr_to_coq_string env t_i ra rf expr))
+
+  | List [Atom "declare-sort"; Atom n; _] ->
+     Sort
+
+  | l ->
+     (* let out = open_out_gen [Open_append] 700 "/tmp/test.log" in
+      * let outf = Format.formatter_of_out_channel out in
+      * SExpr.print outf l; pp_print_flush outf ();
+      * close_out out; *)
+     Structures.error ("Could not reconstruct model")
 
 
 let model env rt ro ra rf = function
   | List (Atom "model" :: l) ->
-    List.map (model_item env rt ro ra rf) l
-    |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
+     List.fold_left (fun acc m -> match model_item env rt ro ra rf m with Fun m -> m::acc | Sort -> acc) [] l
+     |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
   | _ -> Structures.error ("No model")
-    
+
 
 let model_string env rt ro ra rf s =
   String.concat "\n"
