@@ -139,6 +139,7 @@ VFILES:=Trace.v\
   SMT_terms.v\
   SMTCoq.v\
   Misc.v\
+  Conversion_tactics.v\
   spl/Operators.v\
   spl/Arithmetic.v\
   spl/Syntactic.v\

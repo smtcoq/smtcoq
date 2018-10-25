@@ -117,6 +117,7 @@ spl/Syntactic.v
 spl/Arithmetic.v
 spl/Operators.v
 
+Conversion_tactics.v
 Misc.v
 SMTCoq.v
 SMT_terms.v

@@ -68,3 +68,73 @@ Goal forall b1 b2 x1 x2,
 Proof.
   verit.
 Qed.
+
+
+(* Examples of using the conversion tactics *)
+
+Local Open Scope positive_scope.
+
+Goal forall (f : positive -> positive) (x y : positive),
+  implb ((x + 3) =? y)
+        ((f (x + 3)) <=? (f y))
+  = true.
+Proof.
+pos_convert.
+verit.
+Qed.
+
+Goal forall (f : positive -> positive) (x y : positive),
+  implb ((x + 3) =? y)
+        ((3 <? y) && ((f (x + 3)) <=? (f y)))
+  = true.
+Proof.
+pos_convert.
+verit.
+Qed.
+
+Local Close Scope positive_scope.
+
+Local Open Scope N_scope.
+
+Goal forall (f : N -> N) (x y : N),
+  implb ((x + 3) =? y)
+        ((f (x + 3)) <=? (f y))
+  = true.
+Proof.
+N_convert.
+verit.
+Qed.
+
+Goal forall (f : N -> N) (x y : N),
+  implb ((x + 3) =? y)
+        ((2 <? y) && ((f (x + 3)) <=? (f y)))
+  = true.
+Proof.
+N_convert.
+verit.
+Qed.
+
+Local Close Scope N_scope.
+
+Require Import NPeano.
+Local Open Scope nat_scope.
+
+Goal forall (f : nat -> nat) (x y : nat),
+  implb (Nat.eqb (x + 3) y)
+        ((f (x + 3)) <=? (f y))
+  = true.
+Proof.
+nat_convert.
+verit.
+Qed.
+
+Goal forall (f : nat -> nat) (x y : nat),
+  implb (Nat.eqb (x + 3) y)
+        ((2 <? y) && ((f (x + 3)) <=? (f y)))
+  = true.
+Proof.
+nat_convert.
+verit.
+Qed.
+
+Local Close Scope nat_scope.
