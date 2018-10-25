@@ -44,6 +44,9 @@ Definition Z2Pos (z : Z) :=
     | Zneg _ => 1%positive
   end.
 
+Lemma Pos2Z_id : forall (p : positive), Z2Pos (Pos2Z p) = p.
+Proof. reflexivity. Qed.
+
 (* Remplace tous les sous-termes p de type positive par Z2Pos (Pos2Z p) *)
 Ltac pos_converting :=
   (* On crée une variable fraîche de type positive *)
@@ -55,25 +58,25 @@ Ltac pos_converting :=
     (* On capture chaque sous-terme p avec son contexte, i.e. le but est C[p] *)
     | |- context C[?p]  =>
       (* Si p est de type positive *)
-      match type of p with
+      lazymatch type of p with
       | positive =>
-        match p with
+        lazymatch p with
         (* Si p est de la forme Z2Pos (Pos2Z _) on abandonne le match car p est déjà réécrit *)
-        | Z2Pos (Pos2Z _) => fail 1
+        | Z2Pos (Pos2Z _) => fail
         (* Il n'est pas nécessaire de réécrire au dessus des symboles connus *)
-        | Pos.add _ _ => fail 1
-        | Pos.mul _ _ => fail 1
+        | Pos.add _ _ => fail
+        | Pos.mul _ _ => fail
         | _ =>
           (* Sinon, on analyse la formule obtenue en remplaçant p par notre variable fraîche dans le but *)
-          match context C[var] with
+          lazymatch context C[var] with
           (* Si elle contient le terme Z2Pos (Pos2Z var), cela signifie que le contexte C[]
              est de la forme C'[Z2Pos (Pos2Z [])] et donc on abandonne le match car p est déjà réécrit *)
-          | context [Z2Pos (Pos2Z var)] => fail 1
+          | context [Z2Pos (Pos2Z var)] => fail
           (* Idem: si le contexte contient xO ou xI, c'est qu'on est à l'intérieur d'une constante *)
-          | context [xO var] => fail 1
-          | context [xI var] => fail 1
+          | context [xO var] => fail
+          | context [xI var] => fail
           (* Sinon on réécrit *)
-          | _ => change p with (Z2Pos (Pos2Z p))
+          | _ => replace p with (Z2Pos (Pos2Z p)) by apply Pos2Z_id
           end
         end
       end
@@ -98,9 +101,9 @@ Proof. reflexivity. Qed.
 
 (* Réussit si f est un symbole de fonction non interprété *)
 Ltac pos_is_uninterp_fun f :=
-  match f with
-    | xI => fail 1
-    | xO => fail 1
+  lazymatch f with
+    | xI => fail
+    | xO => fail
     | _ => idtac
   end.
 
@@ -138,20 +141,20 @@ Ltac N_converting :=
     (* On capture chaque sous-terme n avec son contexte, i.e. le but est C[n] *)
     | |- context C[?n]  =>
       (* Si n est de type N *)
-      match type of n with
+      lazymatch type of n with
       | N =>
-        match n with
+        lazymatch n with
         (* Si n est de la forme Z2N (N2Z _) on abandonne le match car n est déjà réécrit *)
-        | Z2N (N2Z _) => fail 1
+        | Z2N (N2Z _) => fail
         (* Il n'est pas nécessaire de réécrire au dessus des symboles connus *)
-        | N.add _ _ => fail 1
-        | N.mul _ _ => fail 1
+        | N.add _ _ => fail
+        | N.mul _ _ => fail
         | _ =>
           (* Sinon, on analyse la formule obtenue en remplaçant n par notre variable fraîche dans le but *)
-          match context C[var] with
+          lazymatch context C[var] with
           (* Si elle contient le terme Z2N (N2Z var), cela signifie que le contexte C[]
              est de la forme C'[Z2N (N2Z [])] et donc on abandonne le match car n est déjà réécrit *)
-          | context [Z2N (N2Z var)] => fail 1
+          | context [Z2N (N2Z var)] => fail
           (* Sinon on réécrit *)
           | _ => replace n with (Z2N (N2Z n)) by apply N2Z.id
           end
@@ -190,8 +193,8 @@ Proof. intro; apply Zle_imp_le_bool; apply N2Z.is_nonneg. Qed.
 
 (* Réussit si f est un symbole de fonction non interprété *)
 Ltac N_is_uninterp_fun f :=
-  match f with
-    | Npos => fail 1
+  lazymatch f with
+    | Npos => fail
     | _ => idtac
   end.
 
@@ -232,20 +235,20 @@ Ltac nat_converting :=
     (* On capture chaque sous-terme n avec son contexte, i.e. le but est C[n] *)
     | |- context C[?n]  =>
       (* Si n est de type nat *)
-      match type of n with
+      lazymatch type of n with
       | nat =>
-        match n with
+        lazymatch n with
         (* Si n est de la forme Z2Nat (Nat2Z _) on abandonne le match car n est déjà réécrit *)
-        | Z2Nat (Nat2Z _) => fail 1
+        | Z2Nat (Nat2Z _) => fail
         (* Il n'est pas nécessaire de réécrire au dessus des symboles connus *)
-        | Nat.add _ _ => fail 1
-        | Nat.mul _ _ => fail 1
+        | Nat.add _ _ => fail
+        | Nat.mul _ _ => fail
         | _ =>
           (* Sinon, on analyse la formule obtenue en remplaçant n par notre variable fraîche dans le but *)
-          match context C[var] with
+          lazymatch context C[var] with
           (* Si elle contient le terme Z2Nat (Nat2Z var), cela signifie que le contexte C[]
              est de la forme C'[Z2Nat (Nat2Z [])] et donc on abandonne le match car n est déjà réécrit *)
-          | context [Z2Nat (Nat2Z var)] => fail 1
+          | context [Z2Nat (Nat2Z var)] => fail
           (* Sinon on réécrit *)
           | _ => replace n with (Z2Nat (Nat2Z n)) by apply Nat2Z.id
           end
@@ -284,9 +287,9 @@ Proof. intro; apply Zle_imp_le_bool; apply Nat2Z.is_nonneg. Qed.
 
 (* Réussit si f est un symbole de fonction non interprété *)
 Ltac nat_is_uninterp_fun f :=
-  match f with
-    | O => fail 1
-    | S => fail 1
+  lazymatch f with
+    | O => fail
+    | S => fail
     | _ => idtac
   end.
 
