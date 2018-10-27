@@ -9,12 +9,15 @@
 ########################################################################
 ## To generate the Makefile:                                          ##
 ##   coq_makefile -f Make -o Makefile                                 ##
-## Change the "all" target into:                                      ##
-##   all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                   ##
-## Change the "install-natdynlink" target: change CMXSFILES into CMXS and add the same thing for CMXA and VCMXS. ##
-## Change the "install" target: change CMO into CMX.                  ##
-## Finally, suppress the "Makefile" target and add to the "clean" target: ##
-##   - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml ##
+## In the Makefile :                                                  ##
+## 1) Suppress the "Makefile" target                                  ##
+## 2) Change the "all" target into:                                   ##
+##    all: ml $(CMXFILES) $(CMXA) $(CMXS) $(VOFILES)                  ##
+## 3) Change the "install-natdynlink" target:                         ##
+##    change CMXSFILES into CMXS and add the same block for CMXA and VCMXS. ##
+## 4) Change the "install" target: change CMOFILES into CMXFILES.     ##
+## 5) Add to the "clean" target:                                      ##
+##    - rm -f NSMTCoq* cnf/NSMTCoq* euf/NSMTCoq* lia/NSMTCoq* spl/NSMTCoq* ../unit-tests/NSMTCoq* ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml ##
 ########################################################################
 
 
