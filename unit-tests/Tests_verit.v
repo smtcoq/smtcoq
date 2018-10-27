@@ -5,7 +5,6 @@ Require Import Bool PArray Int63 List ZArith.
 
 Local Open Scope int63_scope.
 
-
 (* First a tactic, to test the universe computation in an empty
    environment. *)
 
@@ -610,7 +609,7 @@ Qed.
 (* (a ∨ b ∨ c) ∧ (¬a ∨ ¬b ∨ ¬c) ∧ (¬a ∨ b) ∧ (¬b ∨ c) ∧ (¬c ∨ a) = ⊥ *)
 
 Goal forall a b c,
-  (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
+    (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
   verit.
 Qed.
@@ -619,10 +618,10 @@ Qed.
 (* The same, but with a, b and c being concrete terms *)
 
 Goal forall i j k,
-  let a := i == j in
-  let b := j == k in
-  let c := k == i in
-  (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
+    let a := i == j in
+    let b := j == k in
+    let c := k == i in
+    (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
   verit.
 Qed.
@@ -783,7 +782,7 @@ Qed.
 (* lia1.smt *)
 
 Goal forall x y z, implb ((x <=? 3) && ((y <=? 7) || (z <=? 9)))
-  ((x + y <=? 10) || (x + z <=? 12)) = true.
+                         ((x + y <=? 10) || (x + z <=? 12)) = true.
 Proof.
   verit.
 Qed.
@@ -812,7 +811,7 @@ Qed.
 (* lia5.smt *)
 
 Goal forall x y, ((x + y <=? - (3)) && (y >=? 0)
-        || (x <=? - (3))) && (x >=? 0) = false.
+                  || (x <=? - (3))) && (x >=? 0) = false.
 Proof.
   verit.
 Qed.
@@ -860,15 +859,15 @@ Qed.
 (* With let ... in ... *)
 
 Goal forall b,
-  let a := b in
-  a && (negb a) = false.
+    let a := b in
+    a && (negb a) = false.
 Proof.
   verit.
 Qed.
 
 Goal forall b,
-  let a := b in
-  a || (negb a) = true.
+    let a := b in
+    a || (negb a) = true.
 Proof.
   verit.
 Qed.
@@ -884,15 +883,15 @@ Qed.
 (* With concrete terms *)
 
 Goal forall i j,
-  let a := i == j in
-  a && (negb a) = false.
+    let a := i == j in
+    a && (negb a) = false.
 Proof.
   verit.
 Qed.
 
 Goal forall i j,
-  let a := i == j in
-  a || (negb a) = true.
+    let a := i == j in
+    a || (negb a) = true.
 Proof.
   verit.
 Qed.
@@ -926,8 +925,8 @@ Proof.
 Qed.
 
 
-(* 
+(*
    Local Variables:
    coq-load-path: ((rec "../src" "SMTCoq"))
-   End: 
+   End:
 *)

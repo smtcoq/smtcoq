@@ -1292,7 +1292,6 @@ Module Atom.
       let get_type := get_type' t_interp in
         PArray.forallbi (fun i h => check_aux get_type h (get_type i)) t_atom.
 
-
     Definition interp_hatom (t_atom : PArray.array atom) :=
       let t_a := t_interp t_atom in
       PArray.get t_a.

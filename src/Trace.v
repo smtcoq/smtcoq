@@ -88,7 +88,7 @@ Section trace.
     (* intros a i _ Ha;apply PArray.fold_left_ind;trivial. *)
     (* intros a0 i0 _ H1;auto. *)
   Qed.
- 
+
 End trace.
 
 
@@ -100,22 +100,22 @@ Module Sat_Checker.
    | Res (_:int) (_:resolution).
 
  Definition resolution_checker s t :=
-    _checker_ (fun s (st:step) => let (pos, r) := st in S.set_resolve s pos r) s t.
+   _checker_ (fun s (st:step) => let (pos, r) := st in S.set_resolve s pos r) s t.
 
  Lemma resolution_checker_correct :
     forall rho, Valuation.wf rho ->
     forall s t cid, resolution_checker C.is_false s t cid->
      ~S.valid rho s.
  Proof.
-   intros rho Hwr;apply _checker__correct.
+   intros rho Hwr; apply _checker__correct.
    intros; apply C.is_false_correct; trivial.
-   intros s Hv (pos, r);apply S.valid_set_resolve;trivial. 
+   intros s Hv (pos, r); apply S.valid_set_resolve; trivial.
  Qed.
-   
+
  (** Application to Zchaff *)
  Definition dimacs := PArray.array (PArray.array _lit).
 
- Definition C_interp_or rho c := 
+ Definition C_interp_or rho c :=
    afold_left _ _ false orb (Lit.interp rho) c.
 
  Lemma C_interp_or_spec : forall rho c,
@@ -145,7 +145,7 @@ Qed.
  Inductive certif :=
    | Certif : int -> _trace_ step -> clause_id -> certif.
 
- Definition add_roots s (d:dimacs) := 
+ Definition add_roots s (d:dimacs) :=
    PArray.foldi_right (fun i c s => S.set_clause s i (PArray.to_list c)) d s.
 
  Definition checker (d:dimacs) (c:certif) :=
@@ -161,7 +161,7 @@ Qed.
 
  Lemma checker_correct : forall d c,
     checker d c = true ->
-    forall rho, Valuation.wf rho -> ~valid rho d.
+    forall rho, Valuation.wf rho -> ~ valid rho d.
  Proof.
    unfold checker; intros d (nclauses, t, confl_id) Hc rho Hwf Hv.
    apply (resolution_checker_correct Hwf Hc).
@@ -169,31 +169,31 @@ Qed.
    apply S.valid_make; auto.
  Qed.
 
- Definition interp_var rho x := 
+ Definition interp_var rho x :=
    match compare x 1 with
    | Lt => true
    | Eq => false
-   | Gt => rho (x - 1) 
+   | Gt => rho (x - 1)
      (* This allows to have variable starting at 1 in the interpretation as in dimacs files *)
    end.
 
- Lemma theorem_checker : 
+ Lemma theorem_checker :
    forall d c,
      checker d c = true ->
-     forall rho, ~valid (interp_var rho) d.
+     forall rho, ~ valid (interp_var rho) d.
  Proof.
-  intros d c H rho;apply checker_correct with c;trivial.
+  intros d c H rho; apply checker_correct with c;trivial.
   split;compute;trivial;discriminate.
  Qed.
 
 End Sat_Checker.
 
 Module Cnf_Checker.
-  
+
   Inductive step :=
   | Res (pos:int) (res:resolution)
-  | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit) 
-  | CTrue (pos:int)       
+  | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
+  | CTrue (pos:int)
   | CFalse (pos:int)
   | BuildDef (pos:int) (l:_lit)
   | BuildDef2 (pos:int) (l:_lit)
@@ -209,15 +209,15 @@ Module Cnf_Checker.
   Definition step_checker t_form s (st:step) :=
     match st with
     | Res pos res => S.set_resolve s pos res
-    | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_form s cid lf) 
+    | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_form s cid lf)
     | CTrue pos => S.set_clause s pos Cnf.check_True
     | CFalse pos => S.set_clause s pos Cnf.check_False
     | BuildDef pos l => S.set_clause s pos (check_BuildDef t_form l)
     | BuildDef2 pos l => S.set_clause s pos (check_BuildDef2 t_form l)
     | BuildProj pos l i => S.set_clause s pos (check_BuildProj t_form l i)
-    | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid) 
+    | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid)
     | ImmBuildDef2 pos cid => S.set_clause s pos (check_ImmBuildDef2 t_form s cid)
-    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i) 
+    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i)
     end.
 
   Lemma step_checker_correct : forall rho t_form,
@@ -257,9 +257,9 @@ Module Cnf_Checker.
    | Certif : int -> _trace_ step -> int -> certif.
 
  Definition checker t_form l (c:certif) :=
-   let (nclauses, t, confl) := c in   
+   let (nclauses, t, confl) := c in
    Form.check_form t_form &&
-   cnf_checker t_form C.is_false (S.set_clause (S.make nclauses) 0 (l::nil)) t confl.
+                   cnf_checker t_form C.is_false (S.set_clause (S.make nclauses) 0 (l::nil)) t confl.
 
  Lemma checker_correct : forall t_form l c,
     checker t_form l c = true ->
@@ -282,11 +282,11 @@ Module Cnf_Checker.
  Qed.
 
  Definition checker_eq t_form l1 l2 l (c:certif) :=
-   negb (Lit.is_pos l) && 
+   negb (Lit.is_pos l) &&
    match t_form.[Lit.blit l] with
    | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
    | _ => false
-   end && 
+   end &&
    checker t_form l c.
 
  Lemma checker_eq_correct : forall t_var t_form l1 l2 l c,
@@ -317,7 +317,7 @@ Module Euf_Checker.
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.
 
-  Inductive step :=
+Inductive step :=
   | Res (pos:int) (res:resolution)
   | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
   | CTrue (pos:int)
@@ -465,7 +465,7 @@ Module Euf_Checker.
     checker_b (* t_func t_atom t_form *) l b c = true ->
     Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form) l = b.
   Proof.
-   unfold checker_b; intros (* t_i t_func t_atom t_form *) l b (nclauses, t, confl); case b; intros H2; case_eq (Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form) l); auto; intros H1; elim (checker_correct H2); auto; unfold valid; apply afold_left_andb_true; intros i Hi; rewrite get_make; auto; rewrite Lit.interp_neg, H1; auto.
+    unfold checker_b; intros (* t_i t_func t_atom t_form *) l b (nclauses, t, confl); case b; intros H2; case_eq (Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form) l); auto; intros H1; elim (checker_correct H2); auto; unfold valid; apply afold_left_andb_true; intros i Hi; rewrite get_make; auto; rewrite Lit.interp_neg, H1; auto.
  Qed.
 
   Definition checker_eq (* t_i t_func t_atom t_form *) l1 l2 l (c:certif) :=

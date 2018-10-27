@@ -20,14 +20,15 @@ type 'hform rule =
       Structures.Micromega_plugin_Certificate.Mc.zArithProof list
   | SplDistinctElim of 'hform clause * 'hform
   | Hole of 'hform clause list * 'hform list
+
 and 'hform clause = {
-  id : clause_id;
-  mutable kind : 'hform clause_kind;
-  mutable pos : int option;
-  mutable used : used;
-  mutable prev : 'hform clause option;
-  mutable next : 'hform clause option;
-  value : 'hform list option;
+            id    : clause_id;
+    mutable kind  : 'hform clause_kind;
+    mutable pos   : int option;
+    mutable used  : used;
+    mutable prev  : 'hform clause option;
+    mutable next  : 'hform clause option;
+            value : 'hform list option;
 }
 and 'hform clause_kind =
     Root

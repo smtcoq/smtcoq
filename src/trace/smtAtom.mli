@@ -142,8 +142,8 @@ module Atom :
       val get : reify_tbl -> atom -> hatom
 
       (** Given a coq term, build the corresponding atom *)
-      val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl ->
-        Environ.env -> Evd.evar_map -> Term.constr -> t
+      val of_coq : Btype.reify_tbl -> Op.reify_tbl ->
+        reify_tbl -> Environ.env -> Evd.evar_map -> Term.constr -> t
 
       val to_coq : hatom -> Term.constr
 
@@ -157,6 +157,7 @@ module Atom :
       (* Generation of atoms *)
       val hatom_Z_of_int : reify_tbl -> int -> hatom
       val hatom_Z_of_bigint : reify_tbl -> Big_int.big_int -> hatom
+
       val mk_eq : reify_tbl -> btype -> hatom -> hatom -> hatom
       val mk_lt : reify_tbl -> hatom -> hatom -> hatom
       val mk_le : reify_tbl -> hatom -> hatom -> hatom

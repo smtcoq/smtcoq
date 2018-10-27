@@ -21,7 +21,8 @@ val theorem : Names.identifier -> string -> string -> unit
 val checker : string -> string -> unit
 val export :
   out_channel ->
-  SmtAtom.Btype.reify_tbl -> SmtAtom.Op.reify_tbl -> SmtAtom.Form.t -> unit
+  SmtAtom.Btype.reify_tbl -> SmtAtom.Op.reify_tbl ->
+  SmtAtom.Form.t -> unit
 val call_verit :
   SmtAtom.Btype.reify_tbl ->
   SmtAtom.Op.reify_tbl ->

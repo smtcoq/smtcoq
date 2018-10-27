@@ -60,7 +60,7 @@ let mkTrace step_to_coq next carray _ _ _ _ size step def_step r =
   if r1 <> 0 then (
     let traceq = Array.make (r1 + 1) def_step in
     for i = 0 to r1-1 do
-    r := next !r;
+      r := next !r;
     traceq.(i) <- step_to_coq !r;
     done;
     trace.(q) <- mkArray (step, traceq)

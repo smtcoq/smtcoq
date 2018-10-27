@@ -21,18 +21,18 @@ type used = int
 type clause_id  = int
 
 type 'hform rule =
-  | ImmFlatten of 'hform clause * 'hform 
+  | ImmFlatten of 'hform clause * 'hform
 
   (* CNF Transformations *)
-  | True       
-     (*  * true             : {true} 
+  | True
+     (*  * true             : {true}
      *)
-  | False 
-     (* * false             : {(not false)} 
+  | False
+     (* * false             : {(not false)}
      *)
-  | BuildDef of 'hform (* the first literal of the clause *)       
+  | BuildDef of 'hform (* the first literal of the clause *)
      (*  * and_neg          : {(and a_1 ... a_n) (not a_1) ... (not a_n)}
-         * or_pos           : {(not (or a_1 ... a_n)) a_1 ... a_n} 
+         * or_pos           : {(not (or a_1 ... a_n)) a_1 ... a_n}
          * implies_pos      : {(not (implies a b)) (not a) b}
          * xor_pos1         : {(not (xor a b)) a b}
          * xor_neg1         : {(xor a b) a (not b)}
@@ -41,7 +41,7 @@ type 'hform rule =
          * ite_pos1         : {(not (if_then_else a b c)) a c}
          * ite_neg1         : {(if_then_else a b c) a (not c)}
      *)
-  | BuildDef2 of 'hform (* the first literal of the clause *) 
+  | BuildDef2 of 'hform (* the first literal of the clause *)
      (* * xor_pos2          : {(not (xor a b)) (not a) (not b)}
         * xor_neg2          : {(xor a b) (not a) b}
         * equiv_pos2        : {(not (iff a b)) (not a) b}
@@ -50,15 +50,15 @@ type 'hform rule =
         * ite_neg2          : {(if_then_else a b c) (not a) (not b)}
 
      *)
-  | BuildProj of 'hform * int 
+  | BuildProj of 'hform * int
      (*  * or_neg           : {(or a_1 ... a_n) (not a_i)}
-         * and_pos          : {(not (and a_1 ... a_n)) a_i} 
+         * and_pos          : {(not (and a_1 ... a_n)) a_i}
          * implies_neg1     : {(implies a b) a}
          * implies_neg2     : {(implies a b) (not b)}
      *)
 
   (* Immediate CNF transformation : CNF transformation + Reso *)
-  | ImmBuildDef of 'hform clause 
+  | ImmBuildDef of 'hform clause
      (* * not_and           : {(not (and a_1 ... a_n))} --> {(not a_1) ... (not a_n)}
         * or                : {(or a_1 ... a_n)} --> {a_1 ... a_n}
         * implies           : {(implies a b)} --> {(not a) b}
@@ -78,7 +78,7 @@ type 'hform rule =
         * not_ite2          : {(not (if_then_else a b c))} --> {(not a) (not b)}
      *)
   | ImmBuildProj of 'hform clause * int
-     (*  * and               : {(and a_1 ... a_n)} --> {a_i} 
+     (*  * and               : {(and a_1 ... a_n)} --> {a_i}
          * not_or            : {(not (or a_1 ... a_n))} --> {(not a_i)}
          * not_implies1      : {(not (implies a b))} --> {a}
          * not_implies2      : {(not (implies a b))} --> {(not b)}
@@ -90,11 +90,11 @@ type 'hform rule =
         * eq_transitive    : {(not (= x_1 x_2)) ... (not (= x_{n-1} x_n)) (= x_1 x_n)}
     *)
   | EqCgr of 'hform * ('hform option) list
-    (*  * eq_congruent     : {(not (= x_1 y_1)) ... (not (= x_n y_n)) 
+    (*  * eq_congruent     : {(not (= x_1 y_1)) ... (not (= x_n y_n))
                                    (= (f x_1 ... x_n) (f y_1 ... y_n))}
     *)
   | EqCgrP of 'hform * 'hform * ('hform option) list
-    (*  * eq_congruent_pred : {(not (= x_1 y_1)) ... (not (= x_n y_n)) 
+    (*  * eq_congruent_pred : {(not (= x_1 y_1)) ... (not (= x_n y_n))
                                    (not (p x_1 ... x_n)) (p y_1 ... y_n)}
     *)
 

@@ -58,7 +58,6 @@ Proof.
   verit.
 Qed.
 
-
 Goal forall b1 b2 x1 x2,
   implb
   (ifb b1
@@ -68,7 +67,6 @@ Goal forall b1 b2 x1 x2,
 Proof.
   verit.
 Qed.
-
 
 (* Examples of using the conversion tactics *)
 

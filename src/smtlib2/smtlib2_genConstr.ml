@@ -20,7 +20,6 @@ open SmtForm
 open SmtMisc
 open CoqTerms
 
-
 (* For debugging *)
 
 let pp_symbol s =
@@ -213,9 +212,8 @@ let make_root ra rf t =
 
   and make_root t =
     match make_root_term t with
-      | Atom h -> Form.get rf (Fatom h)
-      | Form f -> f in
-
+    | Atom h -> Form.get rf (Fatom h)
+    | Form f -> f in
   make_root t
 
 

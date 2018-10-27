@@ -37,7 +37,6 @@ type fop =
   | Fiff
   | Fite
   | Fnot2 of int
-
  
 type ('a,'f) gen_pform = 
   | Fatom of 'a
@@ -73,7 +72,7 @@ module type FORM =
       
       (** Given a coq term, build the corresponding formula *)  
       val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
-   
+
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
 

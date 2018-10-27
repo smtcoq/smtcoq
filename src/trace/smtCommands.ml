@@ -39,7 +39,6 @@ let cchecker_eq_correct =
   gen_constant euf_checker_modules "checker_eq_correct"
 let cchecker_eq = gen_constant euf_checker_modules "checker_eq"
 
-
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
 
 let compute_roots roots last_root =
@@ -387,12 +386,11 @@ let core_tactic call_solver rt ro ra rf env sigma concl =
   let cuts = (Btype.get_cuts rt)@cuts in
 
   List.fold_right (fun (eqn, eqt) tac ->
-      Structures.tclTHENLAST (Structures.assert_before (Names.Name eqn) eqt) tac
-    ) cuts
-      (Structures.tclTHEN
-         (Structures.set_evars_tac body_nocast)
-         (Structures.vm_cast_no_check body_cast))
-
+      Structures.tclTHENLAST (Structures.assert_before (Names.Name eqn) eqt) tac)
+    cuts
+    (Structures.tclTHEN
+       (Structures.set_evars_tac body_nocast)
+       (Structures.vm_cast_no_check body_cast))
 
 let tactic call_solver rt ro ra rf =
   Structures.tclTHEN
