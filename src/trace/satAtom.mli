@@ -28,14 +28,15 @@ module Form :
     val neg : t -> t
     val is_pos : t -> bool
     val is_neg : t -> bool
-    val to_smt :
-      (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
+    val to_string : ?pi:bool -> (hatom -> string) -> t -> string
+    val to_smt : (hatom -> string) -> Format.formatter -> t -> unit
     exception NotWellTyped of pform
     type reify = SmtForm.Make(Atom).reify
     val create : unit -> reify
     val clear : reify -> unit
-    val get : reify -> pform -> t
+    val get : ?declare:bool -> reify -> pform -> t
     val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
+    val hash_hform : (hatom -> hatom) -> reify -> t -> t
     val flatten : reify -> t -> t
     val to_coq : t -> Term.constr
     val pform_tbl : reify -> pform array

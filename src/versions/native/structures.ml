@@ -108,6 +108,12 @@ let pr_constr_env = Printer.pr_constr_env
 
 let lift = Term.lift
 
+let destruct_rel_decl (n, _, t) = n, t
+
+let interp_constr env sigma = Constrintern.interp_constr sigma env
+
+type constr_expr = Topconstr.constr_expr
+                            
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac

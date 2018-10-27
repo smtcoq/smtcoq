@@ -18,13 +18,15 @@ type btype =
 let index_tbl = Hashtbl.create 17
 
 let index_to_coq i =
-  let i = i.index in 
   try Hashtbl.find index_tbl i
   with Not_found ->
     let interp = mklApp cTindex [|mkInt i|] in
     Hashtbl.add index_tbl i interp;
     interp
 
+let indexed_type_of_int i =
+  {index = i; hval = index_to_coq i }
+      
 let equal t1 t2 =
   match t1,t2 with
   | Tindex i, Tindex j -> i.index == j.index
@@ -34,13 +36,15 @@ let to_coq = function
   | TZ -> Lazy.force cTZ
   | Tbool -> Lazy.force cTbool
   | Tpositive -> Lazy.force cTpositive
-  | Tindex i -> index_to_coq i
+  | Tindex i -> index_to_coq i.index
 
-let to_smt fmt = function
-  | TZ -> Format.fprintf fmt "Int"
-  | Tbool -> Format.fprintf fmt "Bool"
-  | Tpositive -> Format.fprintf fmt "Int"
-  | Tindex i -> Format.fprintf fmt "Tindex_%i" i.index
+let to_string = function
+  | TZ -> "Int"
+  | Tbool -> "Bool"
+  | Tpositive -> "Int"
+  | Tindex i -> "Tindex_" ^ string_of_int i.index
+
+let to_smt fmt b = Format.fprintf fmt "%s" (to_string b)
 
 (* reify table *)
 type reify_tbl =

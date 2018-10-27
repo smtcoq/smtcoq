@@ -15,6 +15,7 @@
 
 
 %{
+  open SmtBtype 
   open SmtAtom
   open SmtForm
   open VeritSyntax
@@ -29,13 +30,20 @@
 %token COLON SHARP
 %token LPAR RPAR
 %token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP HOLE
+%token TBOOL TINT
+%token<int> TINDEX
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP HOLE FORALL
 %token <int> INT
 %token <Big_int.big_int> BIGINT
-%token <string> VAR BINDVAR
+%token <string> VAR BINDVAR ATVAR
+
 
 /* type de "retour" du parseur : une clause */
 %type <int> line
+/*
+%type <VeritSyntax.atom_form_lit> term
+%start term
+*/
 %start line
 
 
@@ -45,9 +53,13 @@ line:
   | SAT                                                    { raise Sat }
   | INT COLON LPAR typ clause                   RPAR EOL   { mk_clause ($1,$4,$5,[]) }
   | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { mk_clause ($1,$4,$5,$6) }
+  | INT COLON LPAR TPQT LPAR SHARP INT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $7 $10; add_ref $7 $1; mk_clause ($1, Tpqt, [], [$13]) }
+  | INT COLON LPAR FINS LPAR SHARP INT COLON LPAR OR LPAR NOT SHARP INT RPAR lit RPAR RPAR RPAR EOL
+  { mk_clause ($1, Fins, [snd $16], [get_ref $14]) }
 ;
 
 typ:
+  | TPBR                                                   { Tpbr  }
   | INPU                                                   { Inpu  }
   | DEEP                                                   { Deep  }
   | TRUE                                                   { True  }
@@ -80,7 +92,6 @@ typ:
   | LATA                                                   { Lata  }
   | DLDE                                                   { Dlde  }
   | LADE                                                   { Lade  }
-  | FINS                                                   { Fins  }
   | EINS                                                   { Eins  }
   | SKEA                                                   { Skea  }
   | SKAA                                                   { Skaa  }
@@ -114,11 +125,9 @@ typ:
   | TPSA                                                   { Tpsa  }
   | TPIE                                                   { Tpie  }
   | TPMA                                                   { Tpma  }
-  | TPBR                                                   { Tpbr  }
   | TPBE                                                   { Tpbe  }
   | TPSC                                                   { Tpsc  }
   | TPPP                                                   { Tppp  }
-  | TPQT                                                   { Tpqt  }
   | TPQS                                                   { Tpqs  }
   | TPSK                                                   { Tpsk  }
   | SUBP                                                   { Subp  }
@@ -127,7 +136,7 @@ typ:
 
 clause:
   | LPAR          RPAR                                     { [] }
-  | LPAR lit_list RPAR                                     { $2 }
+  | LPAR lit_list RPAR                                     { let _, l = list_dec $2 in l }
 ;
 
 lit_list:
@@ -135,67 +144,105 @@ lit_list:
   | lit lit_list                                           { $1::$2 }
 ;
 
-lit:   /* returns a SmtAtom.Form.t */
-  | name_term                                              { lit_of_atom_form_lit rf $1 }
-  | LPAR NOT lit RPAR                                      { Form.neg $3 }
+lit:   /* returns a SmtAtom.Form.t option */
+  | name_term                                              { let decl, t = $1 in decl, lit_of_atom_form_lit rf (decl, t) }
+  | LPAR NOT lit RPAR                                      { apply_dec Form.neg $3 }
 ;
 
-name_term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
+nlit:   
+  | LPAR NOT lit RPAR                                      { apply_dec Form.neg $3 }
+;
+
+var_atvar:   
+  | VAR			                                   { $1 }
+  | ATVAR			                           { $1 }
+;
+
+name_term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean indicates if we should declare the term or not */
   | SHARP INT                                              { get_solver $2 }
-  | SHARP INT COLON LPAR term RPAR                         { let res = $5 in add_solver $2 res; res }
-  | TRUE                                                   { Form Form.pform_true }
-  | FALS                                                   { Form Form.pform_false }
-  | VAR                                                    { Atom (Atom.get ra (Aapp (get_fun $1,[||]))) }
-  | BINDVAR                                                { Hashtbl.find hlets $1 }
-  | INT                                                    { Atom (Atom.hatom_Z_of_int ra $1) }
-  | BIGINT                                                 { Atom (Atom.hatom_Z_of_bigint ra $1) }
+  | SHARP INT COLON LPAR term RPAR                         { let u = $5 in add_solver $2 u; u }
+  | TRUE                                                   { true, Form Form.pform_true }
+  | FALS                                                   { true, Form Form.pform_false }
+  | var_atvar						   { let x = $1 in match find_opt_qvar x with
+    					                   | Some bt -> false, Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
+							   | None -> true, Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
+  | BINDVAR                                                { true, Hashtbl.find hlets $1 }
+  | INT                                                    { true, Atom (Atom.hatom_Z_of_int ra $1) }
+  | BIGINT                                                 { true, Atom (Atom.hatom_Z_of_bigint ra $1) }
 ;
 
-term:   /* returns a SmtAtom.Form.pform or a SmtAtom.hatom */
+tvar:
+  | TINT						   { TZ }
+  | TBOOL						   { Tbool }
+  | TINDEX						   { Tindex (indexed_type_of_int $1) }
+
+var_decl_list:
+  | LPAR var_atvar tvar RPAR				   { add_qvar $2 $3; [$2, $3] }
+  | LPAR var_atvar tvar RPAR var_decl_list		   { add_qvar $2 $3; ($2, $3)::$5 }
+;
+
+forall_decl:
+  | FORALL LPAR var_decl_list RPAR name_term		   { clear_qvar (); false, Form (Fapp (Fforall $3, [|lit_of_atom_form_lit rf $5|])) }
+; 
+
+term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean indicates if we should declare the term or not */
   | LPAR term RPAR                                         { $2 }
 
   /* Formulae */
-  | TRUE                                                   { Form Form.pform_true }
-  | FALS                                                   { Form Form.pform_false }
-  | AND lit_list                                           { Form (Fapp (Fand, Array.of_list $2)) }
-  | OR lit_list                                            { Form (Fapp (For, Array.of_list $2)) }
-  | IMP lit_list                                           { Form (Fapp (Fimp, Array.of_list $2)) }
-  | XOR lit_list                                           { Form (Fapp (Fxor, Array.of_list $2)) }
-  | ITE lit_list                                           { Form (Fapp (Fite, Array.of_list $2)) }
+  | TRUE                                                   { true, Form Form.pform_true }
+  | FALS                                                   { true, Form Form.pform_false }
+  | AND lit_list                                           { apply_dec (fun x -> Form (Fapp (Fand, Array.of_list x))) (list_dec $2) }
+  | OR lit_list                                            { apply_dec (fun x -> Form (Fapp (For, Array.of_list x))) (list_dec $2) }
+  | IMP lit_list                                           { apply_dec (fun x -> Form (Fapp (Fimp, Array.of_list x))) (list_dec $2) }
+  | XOR lit_list                                           { apply_dec (fun x -> Form (Fapp (Fxor, Array.of_list x))) (list_dec $2) }
+  | ITE lit_list                                           { apply_dec (fun x -> Form (Fapp (Fite, Array.of_list x))) (list_dec $2) }
+  | forall_decl                                            { $1 }
 
   /* Atoms */
-  | INT                                                    { Atom (Atom.hatom_Z_of_int ra $1) }
-  | BIGINT                                                 { Atom (Atom.hatom_Z_of_bigint ra $1) }
-  | LT name_term name_term                                 { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_lt ra h1 h2) | _,_ -> assert false }
-  | LEQ name_term name_term                                { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_le ra h1 h2) | _,_ -> assert false }
-  | GT name_term name_term                                 { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_gt ra h1 h2) | _,_ -> assert false }
-  | GEQ name_term name_term                                { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_ge ra h1 h2) | _,_ -> assert false }
-  | PLUS name_term name_term                               { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_plus ra h1 h2) | _,_ -> assert false }
-  | MULT name_term name_term                               { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_mult ra h1 h2) | _,_ -> assert false }
-  | MINUS name_term name_term                              { match $2,$3 with |Atom h1, Atom h2 -> Atom (Atom.mk_minus ra h1 h2) | _,_ -> assert false }
-  | MINUS name_term                                        { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
-  | OPP name_term                                          { match $2 with | Atom h -> Atom (Atom.mk_opp ra h) | _ -> assert false }
-  | DIST args                                              { let a = Array.of_list $2 in Atom (Atom.mk_distinct ra (Atom.type_of a.(0)) a) }
-  | VAR                                                    { Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
-  | VAR args                                               { Atom (Atom.get ra (Aapp (get_fun $1, Array.of_list $2))) }
+  | INT                                                    { true, Atom (Atom.hatom_Z_of_int ra $1) }
+  | BIGINT                                                 { true, Atom (Atom.hatom_Z_of_bigint ra $1) }
+  | LT name_term name_term                                 { apply_bdec_atom (Atom.mk_lt ra) $2 $3 }
+  | LEQ name_term name_term                                { apply_bdec_atom (Atom.mk_le ra) $2 $3 }
+  | GT name_term name_term                                 { apply_bdec_atom (Atom.mk_gt ra) $2 $3 }
+  | GEQ name_term name_term                                { apply_bdec_atom (Atom.mk_ge ra) $2 $3 }
+  | PLUS name_term name_term                               { apply_bdec_atom (Atom.mk_plus ra) $2 $3 }
+  | MULT name_term name_term                               { apply_bdec_atom (Atom.mk_mult ra) $2 $3 }
+  | MINUS name_term name_term                              { apply_bdec_atom (Atom.mk_minus ra) $2 $3}
+  | MINUS name_term                                        { apply_dec_atom (fun d a -> Atom.mk_neg ra a) $2 }
+  | OPP name_term                                          { apply_dec_atom (fun d a -> Atom.mk_opp ra ~declare:d a) $2 }
+  | DIST args                                              { let da, la = list_dec $2 in
+    	 						     let a = Array.of_list la in
+							     da, Atom (Atom.mk_distinct ra (Atom.type_of a.(0)) ~declare:da a) }
+  | VAR                                                    {let x = $1 in match find_opt_qvar x with
+    							     | Some bt -> false, Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
+							     | None -> true, Atom (Atom.get ra (Aapp (get_fun $1, [||])))}
+  | VAR args                                               { let f = $1 in let a = $2 in match find_opt_qvar f with
+    							     | Some bt -> let op = dummy_indexed_op (Rel_name f) [||] bt in
+							       	       	  false, Atom (Atom.get ~declare:false ra (Aapp (op, Array.of_list (snd (list_dec a)))))
+      							     | None -> let dl, l = list_dec $2 in
+							       	       dl, Atom (Atom.get ra ~declare:dl (Aapp (get_fun f, Array.of_list l))) }
+
 
   /* Both */
-  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | Atom h1, Atom h2 when (match Atom.type_of h1 with | Tbool -> false | _ -> true) -> Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2) | _, _ -> Form (Fapp (Fiff, [|lit_of_atom_form_lit rf t1; lit_of_atom_form_lit rf t2|])) }
-  /* This rule introduces lots of shift/reduce conflicts */
-  | EQ lit lit                                             { let t1 = $2 in let t2 = $3 in Form (Fapp (Fiff, [|t1; t2|])) }
+  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | (decl1, Atom h1), (decl2, Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Atom (Atom.mk_eq ra decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); lit_of_atom_form_lit rf (decl2, t2)|])) }
+  | EQ nlit lit                                            { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|t1; t2|])) }
+  | EQ name_term nlit                                      { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); t2|])) }
   | LET LPAR bindlist RPAR name_term                       { $3; $5 }
-  | BINDVAR                                                { Hashtbl.find hlets $1 }
+  | BINDVAR                                                { true, Hashtbl.find hlets $1 }
+;
+
+blit:   
+  | name_term                                              { $1 } 
+  | LPAR NOT lit RPAR                                      { apply_dec (fun l -> Lit (Form.neg l)) $3 }
 ;
 
 bindlist:
-  | LPAR BINDVAR name_term RPAR                            { Hashtbl.add hlets $2 $3 }
-  | LPAR BINDVAR lit RPAR                                  { Hashtbl.add hlets $2 (Lit $3) }
-  | LPAR BINDVAR name_term RPAR bindlist                   { Hashtbl.add hlets $2 $3; $5 }
-  | LPAR BINDVAR lit RPAR bindlist                         { Hashtbl.add hlets $2 (Lit $3); $5 }
+  | LPAR BINDVAR blit RPAR	                           { Hashtbl.add hlets $2 (snd $3) }
+  | LPAR BINDVAR blit RPAR bindlist                        { Hashtbl.add hlets $2 (snd $3); $5 }
 
 args:
-  | name_term                                              { match $1 with Atom h -> [h] | _ -> assert false }
-  | name_term args                                         { match $1 with Atom h -> h::$2 | _ -> assert false }
+  | name_term                                              { match $1 with decl, Atom h -> [decl, h] | _ -> assert false }
+  | name_term args                                         { match $1 with decl, Atom h -> (decl, h)::$2 | _ -> assert false }
 ;
 
 clause_ids_params:

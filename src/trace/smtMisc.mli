@@ -5,3 +5,4 @@ val mklApp : Term.constr Lazy.t -> Term.constr array -> Term.constr
 val declare_new_type : Names.variable -> Term.constr
 val declare_new_variable : Names.variable -> Term.types -> Term.constr
 val mkName : string -> Names.name
+val string_of_name : Names.name -> string

@@ -118,7 +118,9 @@ let get_res c s =
 let get_other c s =
   match c.kind with
   | Other res -> res
-  | _ -> Printf.printf "get_other %s\n" s; assert false
+  | Same _ -> failwith "get_other on a Same"
+  | Res _ -> failwith "get_other on a Res"
+  | Root -> failwith "get_other on a Root"
 
 let get_val c =
   match c.value with
@@ -145,7 +147,86 @@ let rec get_pos c =
 
 let eq_clause c1 c2 = (repr c1).id = (repr c2).id
 
+
+(* Reorders the roots according to the order they were given in initially. *)
+let order_roots init_index first =
+  let r = ref first in
+  let acc = ref [] in
+  while isRoot !r.kind do
+    begin match !r.value with
+    | Some [f] -> let n = next !r in
+                  clear_links !r; 
+                  acc := (init_index f, !r) :: !acc;
+                  r := n
+    | _ -> failwith "root value has unexpected form" end
+  done;
+  let _, lr = List.sort (fun (i1, _) (i2, _) -> Pervasives.compare i1 i2) !acc
+             |> List.split in
+  let link_to c1 c2 =
+    let curr_id = c2.id -1 in
+    c1.id <- curr_id;
+    c1.pos <- Some curr_id;
+    link c1 c2; c1 in
+  List.fold_right link_to lr !r, lr
+
+
+(* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that 
+the following clauses reference those clauses instead of the roots *)
+let add_scertifs to_add c =
+  let r = ref c in
+  clear (); ignore (next_id ());
+  while isRoot !r.kind do
+    ignore (next_id ());
+    r := next !r;
+  done;
+  let after_roots = !r in
+  r := prev !r;
+  let tbl : (int, 'a SmtCertif.clause) Hashtbl.t =
+    Hashtbl.create 17 in
+  let rec push_all = function
+    | [] -> ()
+    | (kind, ov, t_cl)::t -> let cl = mk_scertif kind ov in
+                             Hashtbl.add tbl t_cl.id cl;
+                             link !r cl;
+                             r := next !r;
+                             push_all t in
+  push_all to_add; link !r after_roots; r:= after_roots;
+  let uc c = try Hashtbl.find tbl c.id
+             with Not_found -> c in
+  let update_kind = function
+    | Root -> Root
+    | Same c -> Same (uc c)
+    | Res {rc1 = r1; rc2 = r2; rtail = rt} ->
+       Res {rc1 = uc r1;
+            rc2 = uc r2;
+            rtail = List.map uc rt}
+    | Other u ->
+       Other begin match u with
+         | ImmBuildProj (c, x) -> ImmBuildProj (uc c, x)
+         | ImmBuildDef c -> ImmBuildDef (uc c)
+         | ImmBuildDef2 c -> ImmBuildDef2 (uc c)
+         | Forall_inst (c, x) -> Forall_inst (uc c, x) 
+         | ImmFlatten (c, x) -> ImmFlatten (uc c, x) 
+         | SplArith (c, x, y) -> SplArith (uc c, x, y) 
+         | SplDistinctElim (c, x) -> SplDistinctElim (uc c, x) 
+
+         | Hole (cs, x) -> Hole (List.map uc cs, x)
+
+         | x -> x end in
+  let continue = ref true in
+  while !continue do
+    !r.kind <- update_kind !r.kind;
+    !r.id <- next_id ();
+    match !r.next with 
+    | None -> continue := false
+    | Some n -> r := n
+  done;
+  !r
+
 (* Selection of useful rules *)
+(* For <select>, <occur> and <alloc> we assume that the roots and only the 
+roots are at the beginning of the smtcoq certif *)
+(* After <select> no selected clauses are used so that <occur> works properly*)
 let select c =
   let mark c =
     if not (isRoot c.kind) then c.used <- 1 in
@@ -162,7 +243,8 @@ let select c =
             List.iter mark res.rtail
           end else
           skip !r;
-     | Same _ ->
+     | Same c ->
+        mark c;
         skip !r
      | _ ->
         if !r.used == 1 then
@@ -176,9 +258,8 @@ let select c =
     r := p
   done
 
-
-
-(* Compute the number of occurence of each_clause *)
+(* Compute the number of occurence of each clause so that <alloc> works 
+properly *)
 let rec occur c =
   match c.kind with
   | Root -> c.used <- c.used + 1
@@ -226,23 +307,22 @@ let alloc c =
   let decr_other o =
     List.iter decr_clause (used_clauses o) in
 
-  while !r.next <> None do
-    let n = next !r in
+  let continue = ref true in
+  while !continue do
     assert (!r.used <> notUsed);
     if isRes !r.kind then
       decr_res (get_res !r "alloc")
     else
       decr_other (get_other !r "alloc");
-    begin match !free_pos with
-          | p::free -> free_pos := free; !r.pos <- Some p
-          | _ -> incr last_set; !r.pos <- Some !last_set
+    begin try match !free_pos with
+              | p::free -> free_pos := free; !r.pos <- Some p
+              | _ -> incr last_set; !r.pos <- Some !last_set
+          with _ -> failwith (to_string !r.kind)
     end;
-    r := n
+    match !r.next with
+    | None -> continue := false
+    | Some n -> r := n
   done;
-  begin match !free_pos with
-  | p::free -> free_pos := free; !r.pos <- Some p
-  | _ -> incr last_set; !r.pos <- Some !last_set
-  end;
   !last_set
 
 
@@ -277,12 +357,13 @@ let to_coq to_lit interp (cstep,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,
     cEqTr, cEqCgr, cEqCgrP,
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
-    cHole) confl =
+    cHole, cForallInst) confl sf =
 
   let cuts = ref [] in
 
   let out_f f = to_lit f in
   let out_c c = mkInt (get_pos c) in
+  let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
   let step_to_coq c =
     match c.kind with
     | Res res ->
@@ -335,11 +416,20 @@ let to_coq to_lit interp (cstep,
            let ass_ty = interp (prem, concl) in
            cuts := (ass_name, ass_ty)::!cuts;
            let ass_var = Term.mkVar ass_name in
-           let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
            let prem_id' = List.fold_right (fun c l -> mklApp ccons [|Lazy.force cint; out_c c; l|]) prem_id (mklApp cnil [|Lazy.force cint|]) in
            let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
            let concl' = out_cl concl in
            mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
+        | Forall_inst (cl, concl) | Qf_lemma (cl, concl) ->
+           let clemma, cplemma = match sf with
+             | Some find -> find cl
+             | None -> assert false in
+           let concl' = out_cl [concl] in
+           let app_name = Names.id_of_string ("app" ^ (string_of_int (Hashtbl.hash concl))) in
+           let app_var = Term.mkVar app_name in
+           let app_ty = Term.mkArrow clemma (interp ([], [concl])) in
+           cuts := (app_name, app_ty)::!cuts;
+           mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
 	end
     | _ -> assert false in
   let step = Lazy.force cstep in
@@ -373,7 +463,8 @@ let to_coq to_lit interp (cstep,
   (*   trace.(q) <- Structures.mkArray (step, traceq) *)
   (* end; *)
   (* (Structures.mkArray (mklApp carray [|step|], trace), last_root, !cuts) *)
-  (Structures.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r, last_root, !cuts)
+  let tres = Structures.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r in
+  (tres, last_root, !cuts)
 
 
 

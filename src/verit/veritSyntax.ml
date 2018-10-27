@@ -203,16 +203,76 @@ let get_clause id =
 let add_clause id cl = Hashtbl.add clauses id cl
 let clear_clauses () = Hashtbl.clear clauses
 
-let mk_clause (id,typ,value,ids_params) =
+
+(* <ref_cl> maps solver integers to id integers. *)
+let ref_cl : (int, int) Hashtbl.t = Hashtbl.create 17
+let get_ref i = Hashtbl.find ref_cl i
+let add_ref i j = Hashtbl.add ref_cl i j
+let clear_ref () = Hashtbl.clear ref_cl
+
+(* Recognizing and modifying clauses depending on a forall_inst clause. *)
+                                 
+let rec fins_lemma ids_params =
+  match ids_params with
+    [] -> raise Not_found
+  | h :: t -> let cl_target = repr (get_clause h) in
+              match cl_target.kind with
+                Other (Forall_inst (lemma, _)) -> lemma
+              | _ -> fins_lemma t
+
+let rec find_remove_lemma lemma ids_params =
+  let eq_lemma h = eq_clause lemma (get_clause h) in
+  list_find_remove eq_lemma ids_params 
+
+(* Removes the lemma in a list of ids containing an instance of this lemma *)                   
+let rec merge ids_params =
+  let rest_opt = try let lemma = fins_lemma ids_params in
+                     let _, rest = find_remove_lemma lemma ids_params in
+                     Some rest
+                 with Not_found -> None in
+  match rest_opt with
+    None -> ids_params
+  | Some r -> merge r
+
+let to_add = ref []
+                     
+let rec mk_clause (id,typ,value,ids_params) =
   let kind =
     match typ with
+    | Tpbr ->
+       begin match ids_params with
+       | [id] ->
+          Same (get_clause id)
+       | _ -> failwith "unexpected form of tmp_betared" end
+    | Tpqt ->
+       begin match ids_params with
+       | [id] ->
+          Same (get_clause id)
+       | _ -> failwith "unexpected form of tmp_qnt_tidy" end
+    | Fins ->
+       begin match value, ids_params with
+        | [inst], [ref_th] when Form.is_pos inst ->
+           let cl_th = get_clause ref_th in
+           Other (Forall_inst (repr cl_th, inst))
+        | _ -> failwith "unexpected form of forall_inst" end
+    | Or ->
+       (match ids_params with
+        | [id_target] ->
+           let cl_target = get_clause id_target in
+           begin match cl_target.kind with
+           | Other (Forall_inst _) -> Same cl_target
+           | _ -> Other (ImmBuildDef cl_target) end
+        | _ -> assert false)
     (* Resolution *)
     | Reso ->
+       let ids_params = merge ids_params in
        (match ids_params with
         | cl1::cl2::q ->
            let res = {rc1 = get_clause cl1; rc2 = get_clause cl2; rtail = List.map get_clause q} in
            Res res
-        | _ -> assert false)
+        | [fins_id] -> Same (get_clause fins_id)
+        | [] -> assert false)
+
     (* Roots *)
     | Inpu -> Root
     (* Cnf conversion *)
@@ -238,7 +298,7 @@ let mk_clause (id,typ,value,ids_params) =
        (match value with
         | l::_ -> Other (BuildProj (l,1))
         | _ -> assert false)
-    | Nand | Or | Imp | Xor1 | Nxor1 | Equ2 | Nequ2 | Ite1 | Nite1 ->
+    | Nand | Imp | Xor1 | Nxor1 | Equ2 | Nequ2 | Ite1 | Nite1 ->
        (match ids_params with
         | [id] -> Other (ImmBuildDef (get_clause id))
         | _ -> assert false)
@@ -291,7 +351,6 @@ let mk_clause (id,typ,value,ids_params) =
     | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
     (* Not implemented *)
     | Deep -> failwith "VeritSyntax.ml: rule deep_res not implemented yet"
-    | Fins -> failwith "VeritSyntax.ml: rule forall_inst not implemented yet"
     | Eins -> failwith "VeritSyntax.ml: rule exists_inst not implemented yet"
     | Skea -> failwith "VeritSyntax.ml: rule skolem_ex_ax not implemented yet"
     | Skaa -> failwith "VeritSyntax.ml: rule skolem_all_ax not implemented yet"
@@ -300,11 +359,9 @@ let mk_clause (id,typ,value,ids_params) =
     | Tpne -> failwith "VeritSyntax.ml: rule tmp_nary_elim not implemented yet"
     | Tpie -> failwith "VeritSyntax.ml: rule tmp_ite_elim not implemented yet"
     | Tpma -> failwith "VeritSyntax.ml: rule tmp_macrosubst not implemented yet"
-    | Tpbr -> failwith "VeritSyntax.ml: rule tmp_betared not implemented yet"
     | Tpbe -> failwith "VeritSyntax.ml: rule tmp_bfun_elim not implemented yet"
     | Tpsc -> failwith "VeritSyntax.ml: rule tmp_sk_connector not implemented yet"
     | Tppp -> failwith "VeritSyntax.ml: rule tmp_pm_process not implemented yet"
-    | Tpqt -> failwith "VeritSyntax.ml: rule tmp_qnt_tidy not implemented yet"
     | Tpqs -> failwith "VeritSyntax.ml: rule tmp_qnt_simplify not implemented yet"
     | Tpsk -> failwith "VeritSyntax.ml: rule tmp_skolemize not implemented yet"
     | Subp -> failwith "VeritSyntax.ml: rule subproof not implemented yet"
@@ -323,12 +380,36 @@ type atom_form_lit =
   | Form of SmtAtom.Form.pform
   | Lit of SmtAtom.Form.t
 
+(* functions for applying on a pair with a boolean when the boolean indicates
+   if the entire term should be declared in the tables *)
 let lit_of_atom_form_lit rf = function
-  | Atom a -> Form.get rf (Fatom a)
-  | Form f -> Form.get rf f
-  | Lit l -> l
+  | decl, Atom a -> Form.get ~declare:decl rf (Fatom a)
+  | decl, Form f -> begin match f with
+                    | Fapp (Fforall _, _) when decl -> failwith "decl is true on a forall"
+                    | _ -> Form.get ~declare:decl rf f end
+  | decl, Lit l -> l
 
-let solver : (int,atom_form_lit) Hashtbl.t = Hashtbl.create 17
+let apply_dec f (decl, a) = decl, f a
+
+let rec list_dec = function
+  | [] -> true, []
+  | (decl_h, h) :: t ->
+     let decl_t, l_t = list_dec t in
+     decl_h && decl_t, h :: l_t
+    
+let apply_dec_atom f = function
+  | decl, Atom h -> decl, Atom (f decl h)
+  | _ -> assert false
+
+let apply_bdec_atom f o1 o2 =
+  match o1, o2 with
+  | (decl1, Atom h1), (decl2, Atom h2) ->
+     let decl = decl1 && decl2 in
+     decl, Atom (f decl h1 h2)
+  | _ -> assert false
+
+
+let solver : (int, (bool * atom_form_lit)) Hashtbl.t = Hashtbl.create 17
 let get_solver id =
   try Hashtbl.find solver id
   with | Not_found -> failwith ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n")
@@ -349,18 +430,66 @@ let get_fun id =
 let add_fun id cl = Hashtbl.add funs id cl
 let clear_funs () = Hashtbl.clear funs
 
+let qvar_tbl : (string, SmtBtype.btype) Hashtbl.t = Hashtbl.create 10
+let find_opt_qvar s = try Some (Hashtbl.find qvar_tbl s)
+                      with Not_found -> None
+let add_qvar s bt = Hashtbl.add qvar_tbl s bt
+let clear_qvar () = Hashtbl.clear qvar_tbl
 
+let string_hform = Form.to_string ~pi:true (Atom.to_string ~pi:true )
+
+(* Finding the index of a root in <lsmt> modulo the <re_hash> function. 
+   This function is used by SmtTrace.order_roots *)
+let init_index lsmt re_hash =
+  let form_index_init_rank : (int, int) Hashtbl.t = Hashtbl.create 20 in
+  let add = Hashtbl.add form_index_init_rank in
+  let find = Hashtbl.find form_index_init_rank in
+  let rec walk rank = function
+    | [] -> ()
+    | h::t -> add (Form.to_lit h) rank;
+              walk (rank+1) t in
+  walk 1 lsmt;
+  fun hf -> let re_hf = re_hash hf in
+            try find (Form.to_lit re_hf)
+            with Not_found ->
+              let oc = open_out "/tmp/input_not_found.log" in
+              (List.map string_hform lsmt)
+              |> List.iter (Printf.fprintf oc "%s\n");
+              Printf.fprintf oc "\n%s\n" (string_hform re_hf);
+              flush oc; close_out oc;
+              failwith "not found: log available"
+
+let qf_to_add lr =
+  let is_forall l = match Form.pform l with
+    | Fapp (Fforall _, _) -> true
+    | _ -> false in
+  let rec qf_lemmas = function
+    | [] -> []
+    | ({value = Some [l]} as r)::t when not (is_forall l) ->
+       (Other (Qf_lemma (r, l)), r.value, r) :: qf_lemmas t
+    | _::t -> qf_lemmas t in
+  qf_lemmas lr
+                       
 let ra = Atom.create ()
 let rf = Form.create ()
+let ra' = Atom.create ()
+let rf' = Form.create ()
 
 let hlets : (string, atom_form_lit) Hashtbl.t = Hashtbl.create 17
 
+let clear_mk_clause () = 
+  to_add := [];
+  clear_ref ()
 
 let clear () =
+  clear_qvar ();
+  clear_mk_clause ();
   clear_clauses ();
   clear_solver ();
   clear_btypes ();
   clear_funs ();
   Atom.clear ra;
   Form.clear rf;
+  Atom.clear ra';
+  Form.clear rf';
   Hashtbl.clear hlets

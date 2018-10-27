@@ -17,6 +17,7 @@
 open Util
 open SmtMisc
 open CoqTerms
+open SmtBtype
 
 module type ATOM =
   sig
@@ -41,6 +42,7 @@ type fop =
   | Fiff
   | Fite
   | Fnot2 of int
+  | Fforall of (string * btype) list
 
 type ('a,'f) gen_pform =
   | Fatom of 'a
@@ -66,18 +68,21 @@ module type FORM =
     val is_pos : t -> bool
     val is_neg : t -> bool
 
-      val to_smt : (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
+    val to_string : ?pi:bool -> (hatom -> string) -> t -> string
+    val to_smt : (hatom -> string) -> Format.formatter ->
+                 t -> unit
 
     (* Building formula from positive formula *)
     exception NotWellTyped of pform
     type reify
     val create : unit -> reify
     val clear : reify -> unit
-    val get : reify -> pform -> t
+    val get : ?declare:bool -> reify -> pform -> t
 
     (** Give a coq term, build the corresponding formula *)
     val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
 
+    val hash_hform : (hatom -> hatom) -> reify -> t -> t
     (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
     val flatten : reify -> t -> t
 
@@ -145,20 +150,22 @@ module Make (Atom:ATOM) =
       | Pos hp -> hp.hval
       | Neg hp -> hp.hval
 
+    let rec to_string ?pi:(pi=false) atom_to_string = function
+      | Pos hp -> (if pi then string_of_int hp.index ^ ":" else "")
+                  ^ to_string_pform atom_to_string hp.hval
+      | Neg hp -> (if pi then string_of_int hp.index ^ ":" else "") ^ "(not "
+                  ^ to_string_pform atom_to_string hp.hval ^ ")"
 
-    let rec to_smt atom_to_smt fmt = function
-      | Pos hp -> to_smt_pform atom_to_smt fmt hp.hval
-      | Neg hp ->
-        Format.fprintf fmt "(not ";
-        to_smt_pform atom_to_smt fmt hp.hval;
-        Format.fprintf fmt ")"
+    and to_string_pform atom_to_string = function
+      | Fatom a -> atom_to_string a
+      | Fapp (op,args) -> to_string_op_args atom_to_string op args
 
-    and to_smt_pform atom_to_smt fmt = function
-      | Fatom a -> atom_to_smt fmt a
-      | Fapp (op,args) -> to_smt_op atom_to_smt fmt op args
+    and to_string_op_args atom_to_string op args =
+      let (s1,s2) = if Array.length args = 0 then ("","") else ("(",")") in
+      s1 ^ to_string_op op ^
+        Array.fold_left (fun acc h -> acc ^ " " ^ to_string atom_to_string h) "" args ^ s2
 
-    and to_smt_op atom_to_smt fmt op args =
-      let s = match op with
+    and to_string_op = function
         | Ftrue -> "true"
         | Ffalse -> "false"
         | Fand -> "and"
@@ -167,12 +174,26 @@ module Make (Atom:ATOM) =
         | Fimp -> "=>"
         | Fiff -> "="
         | Fite -> "ite"
-        | Fnot2 _ -> "" in
-      let (s1,s2) = if Array.length args = 0 then ("","") else ("(",")") in
-      Format.fprintf fmt "%s%s" s1 s;
-      Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
-      Format.fprintf fmt "%s" s2
+        | Fnot2 _ -> ""
+        | Fforall l -> "forall (" ^
+                       to_string_args l ^
+                       ")"
+                                                                                
+    and to_string_args = function
+      | [] -> " "
+      | (s, t)::rest -> " (" ^ s ^ " " ^ SmtBtype.to_string t ^ ")"
+                        ^ to_string_args rest
 
+    let dumbed_down op =
+      let dumbed_down_bt = function
+        | Tindex it -> Tindex (dummy_indexed_type (indexed_type_index it))
+        | x -> x in
+      match op with
+      | Fforall l -> Fforall (List.map (fun (x, bt) -> x, dumbed_down_bt bt) l)
+      | x -> x
+
+    let to_smt atom_to_string fmt f =
+      Format.fprintf fmt "%s" (to_string atom_to_string f)
 
     module HashedForm =
       struct
@@ -182,8 +203,8 @@ module Make (Atom:ATOM) =
 	let equal pf1 pf2 =
 	  match pf1, pf2 with
 	  | Fatom ha1, Fatom ha2 -> Atom.equal ha1 ha2
-	  | Fapp(op1,args1), Fapp(op2,args2) ->
-	      op1 = op2 && 
+	  | Fapp(op1,args1), Fapp(op2,args2) -> 
+	     dumbed_down op1 = dumbed_down op2 && 
 	       Array.length args1 == Array.length args2 &&
 	         (try
 		    for i = 0 to Array.length args1 - 1 do
@@ -205,7 +226,7 @@ module Make (Atom:ATOM) =
 	       | _ ->
 		  (to_lit args.(2)) lsl 4 + (to_lit args.(1)) lsl 2 +
 		    to_lit args.(0) in
-	     (hash_args * 10 + Hashtbl.hash op) * 2 + 1
+	     (hash_args * 10 + Hashtbl.hash (dumbed_down op)) * 2 + 1
 
       end
 
@@ -232,6 +253,7 @@ module Make (Atom:ATOM) =
 	    if Array.length args <> 2 then raise (NotWellTyped pf)
 	 | Fite ->
 	    if Array.length args <> 3 then raise (NotWellTyped pf)
+         | Fforall l -> ()
 
     let declare reify pf =
       check pf;
@@ -255,9 +277,11 @@ module Make (Atom:ATOM) =
       let _ = declare r pform_false in
       ()
 
-    let get reify pf =
-      try HashForm.find reify.tbl pf
-      with Not_found -> declare reify pf
+    let get ?declare:(decl=true) reify pf =
+      if decl then 
+        try HashForm.find reify.tbl pf
+        with Not_found -> declare reify pf
+      else Pos {index = -1; hval = pf}
 
     (** Given a coq term, build the corresponding formula *)
     type coq_cst =
@@ -376,6 +400,17 @@ module Make (Atom:ATOM) =
 
       mk_hform c
 
+    let hash_hform hash_hatom rf' hf =
+      let rec mk_hform = function
+        | Pos hp -> Pos (mk_hpform hp)
+        | Neg hp -> Neg (mk_hpform hp)
+      and mk_hpform {index = _; hval = hv} =
+        let new_hv = match hv with
+          | Fatom a -> Fatom (hash_hatom a)
+          | Fapp (fop, arr) -> Fapp (fop, Array.map mk_hform arr) in
+        match get rf' new_hv with Pos x | Neg x -> x in
+      mk_hform hf
+
     (** Flattening of Fand and For, removing of Fnot2 *)
     let set_sign f f' =
       if is_pos f then f' else neg f'
@@ -434,6 +469,7 @@ module Make (Atom:ATOM) =
 	 | Fiff -> mklApp cFiff (Array.map to_coq args)
 	 | Fite -> mklApp cFite (Array.map to_coq args)
 	 | Fnot2 i -> mklApp cFnot2 [|mkInt i; to_coq args.(0)|]
+         | Fforall _ -> failwith "pf_to_coq on forall"
 
     let pform_tbl reify =
       let t = Array.make reify.count pform_true in
@@ -497,7 +533,8 @@ module Make (Atom:ATOM) =
 		        for i = 1 to n do
                           r := mklApp cnegb [|!r|]
                         done;
-                        !r in
+                        !r
+                     |Fforall _ -> failwith "interp_to_coq on forall" in
 	        Hashtbl.add form_tbl l pc;
 	        pc
       and interp_args op args =

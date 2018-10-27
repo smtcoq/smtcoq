@@ -49,6 +49,7 @@ let string_of_op = function
   | Fiff -> "iff"
   | Fite -> "ite"
   | Fnot2 i -> "!"^string_of_int i
+  | Fforall _ -> assert false
 
 let rec pp_form fmt l =
   Format.fprintf fmt "(#%i %a %a)" (Form.to_lit l)pp_sign l pp_pform (Form.pform l)
@@ -204,7 +205,7 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
-  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
+  let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
   let ce2 = Structures.mkUConst certif in
@@ -223,11 +224,11 @@ let theorems interp name fdimacs ftrace =
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) =
-    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
-  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
+  let theorem_concl = mklApp cis_true [|mklApp cnegb [|interp d first last|] |] in
   let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
   let theorem_type =
     Term.mkProd (mkName "v", vtype, theorem_concl) in
@@ -267,7 +268,7 @@ let checker fdimacs ftrace =
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) =
-    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
@@ -340,7 +341,8 @@ let call_zchaff nvars root =
   let exit_code2 = Sys.command command2 in
   if exit_code2 <> 0 then
       failwith ("Zchaff.call_zchaff: command " ^ command2 ^
-                  " exited with code " ^ (string_of_int exit_code2));
+                  " exited with code " ^ (string_of_int exit_code2) ^
+        "\nDid you forget to turn on Zchaff proof production?" );
   (* import_cnf_trace reloc logfilename root last  *)
   (reloc, resfilename, logfilename, last)
 
@@ -366,7 +368,7 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
-    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in
@@ -397,7 +399,7 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
-    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl in
+    SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
   let vtvar = Term.mkRel 3 in

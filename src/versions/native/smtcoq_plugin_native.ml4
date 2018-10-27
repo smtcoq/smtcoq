@@ -58,6 +58,14 @@ TACTIC EXTEND Tactic_zchaff
 | [ "zchaff" ] -> [ Zchaff.tactic () ]
 END
 
+let lemmas_list = ref []
+
+VERNAC COMMAND EXTEND Add_lemma
+| [ "Add_lemmas" constr_list(lems) ] -> [ lemmas_list := lems @ !lemmas_list ]
+| [ "Clear_lemmas" ] -> [ lemmas_list := [] ]
+END
+
+
 TACTIC EXTEND Tactic_verit
-| [ "verit" ] -> [ Verit.tactic () ]
+| [ "verit_base" constr_list(lpl) ] -> [ Verit.tactic lpl !lemmas_list ]
 END

@@ -68,7 +68,7 @@ Section Checker.
 
   End Forallb2.
 
-  Definition check_hole (s:S.t) (prem_id:list clause_id) (prem:list C.t) (concl:C.t) :=
+  Definition check_hole (s:S.t) (prem_id:list clause_id) (prem:list C.t) (concl:C.t) : C.t :=
     if forallb2 (fun id c => forallb2 (fun i j => i == j) (S.get s id) (S.sort_uniq c)) prem_id prem
     then concl
     else C._true.
@@ -107,6 +107,18 @@ Section Checker_correct.
     rewrite <- (interp_check_clause _ _ H). now apply Hs.
   Qed.
 
+  Lemma valid_check_forall_inst (lemma : Prop) :
+    lemma ->
+    forall concl,
+    (lemma -> interp_uf rho concl) ->
+    C.valid rho concl.
+
+  Proof.
+    intros pl concl applemma.
+    unfold C.valid. rewrite interp_equiv.
+    now apply applemma.
+  Qed.
+
   Variable prem_id : list int.
   Variable prem : list C.t.
   Variable concl : C.t.
@@ -123,10 +135,7 @@ Section Checker_correct.
     - now apply C.interp_true.
     - case_eq (forallb2 (fun i j => i == j) (S.get s pid) (S.sort_uniq p));
       simpl; intro Heq; [ |now apply C.interp_true].
-      case_eq (forallb2 (fun id c => forallb2 (fun i j => i == j) (S.get s id) (S.sort_uniq c)) pids ps);
-      simpl; intro Heq2; [ |now apply C.interp_true].
-      assert (IH:=IHpids _ (H (valid_check_clause _ _ Heq))).
-      now rewrite Heq2 in IH.
+      apply IHpids. apply H. apply (valid_check_clause _ _ Heq).
   Qed.
 
 End Checker_correct.

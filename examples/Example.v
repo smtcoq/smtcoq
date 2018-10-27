@@ -136,3 +136,79 @@ verit.
 Qed.
 
 Local Close Scope nat_scope.
+
+Open Scope Z_scope.
+
+(* Some examples of using verit with lemmas. Use <verit_base H1 .. Hn; vauto>
+   to temporarily add the lemmas H1 .. Hn to the verit environment. *)
+Lemma const_fun_is_eq_val_0 :
+  forall f : Z -> Z,
+    (forall a b, f a =? f b) ->
+    forall x, f x =? f 0.
+Proof.
+  intros f Hf.
+  verit_base Hf; vauto.
+Qed.
+
+Section Without_lemmas.
+  Lemma fSS:
+    forall (f : Z -> Z) (k : Z) (x : Z),
+      implb (f (x+1) =? f x + k)
+     (implb (f (x+2) =? f (x+1) + k)
+            (f (x+2) =? f x + 2 * k)).
+  Proof. verit. Qed.
+End Without_lemmas.
+
+Section With_lemmas.
+  Variable f : Z -> Z.
+  Variable k : Z.
+  Hypothesis f_k_linear : forall x, f (x + 1) =? f x + k.
+
+  Lemma fSS2:
+    forall x, f (x + 2) =? f x + 2 * k.
+  Proof. verit_base f_k_linear; vauto. Qed.
+End With_lemmas.
+
+(* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
+   the environment. If you did so in a section then, at the end of the section,
+   you should use <Clear_lemmas> to empty the globally added lemmas because
+   those lemmas won't be available outside of the section. *)
+Section mult3.
+  Variable mult3 : Z -> Z.
+  Hypothesis mult3_0 : mult3 0 =? 0.
+  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
+  Add_lemmas mult3_0 mult3_Sn.
+
+  Lemma mult3_21 : mult3 7 =? 21.
+  Proof. verit. Qed.
+
+  Clear_lemmas.
+End mult3.
+
+Section group.
+  Variable op : Z -> Z -> Z.
+  Variable inv : Z -> Z.
+  Variable e : Z.
+
+  Hypothesis associative :
+    forall a b c : Z, op a (op b c) =? op (op a b) c.
+  Hypothesis identity :
+    forall a : Z, (op e a =? a) && (op a e =? a).
+  Hypothesis inverse :
+    forall a : Z, (op a (inv a) =? e) && (op (inv a) a =? e).
+  Add_lemmas associative identity inverse.
+
+  Lemma unique_identity e':
+    (forall z, op e' z =? z) -> e' =? e.
+  Proof. intros pe'. verit_base pe'; vauto. Qed.
+
+  Lemma simplification_right x1 x2 y:
+      op x1 y =? op x2 y -> x1 =? x2.
+  Proof. intro H. verit_base H; vauto. Qed.
+
+  Lemma simplification_left x1 x2 y:
+      op y x1 =? op y x2 -> x1 =? x2.
+  Proof. intro H. verit_base H; vauto. Qed.
+
+  Clear_lemmas.
+End group.

@@ -23,6 +23,9 @@ val extern_constr : Term.constr -> Topconstr.constr_expr
 val vernacentries_interp : Topconstr.constr_expr -> unit
 val pr_constr_env : Environ.env -> Term.constr -> Pp.std_ppcmds
 val lift : int -> Term.constr -> Term.constr
+val destruct_rel_decl : Term.rel_declaration -> Names.name * Term.constr
+val interp_constr : Environ.env -> Evd.evar_map -> Topconstr.constr_expr -> Term.constr
+type constr_expr = Topconstr.constr_expr
 val tclTHEN : Proof_type.tactic -> Proof_type.tactic -> Proof_type.tactic
 val tclTHENLAST : Proof_type.tactic -> Proof_type.tactic -> Proof_type.tactic
 val assert_before : Names.name -> Term.types -> Proof_type.tactic

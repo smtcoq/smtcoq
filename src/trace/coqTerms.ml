@@ -90,6 +90,8 @@ let csigT = gen_constant init_modules "sigT"
 let cnot = gen_constant init_modules "not"
 let ceq = gen_constant init_modules "eq"
 let crefl_equal = gen_constant init_modules "eq_refl"
+let cconj = gen_constant init_modules "conj"
+let cand = gen_constant init_modules "and"
 
 (* SMT_terms *)
 
@@ -179,7 +181,7 @@ let make_certif_ops modules args =
   gen_constant"ImmBuildDef2",
   gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
   gen_constant "LiaMicromega", gen_constant "LiaDiseq", gen_constant "SplArith", gen_constant "SplDistinctElim",
-  gen_constant "Hole")
+  gen_constant "Hole", gen_constant "ForallInst")
   
 
 (** Useful construction *)

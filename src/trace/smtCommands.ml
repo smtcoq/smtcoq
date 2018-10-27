@@ -38,6 +38,7 @@ let cchecker_b = gen_constant euf_checker_modules "checker_b"
 let cchecker_eq_correct =
   gen_constant euf_checker_modules "checker_eq_correct"
 let cchecker_eq = gen_constant euf_checker_modules "checker_eq"
+let cZeqbsym = gen_constant z_modules "eqb_sym"
 
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
 
@@ -105,7 +106,8 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
   let ce2 = Structures.mkUConst t_form' in
   let ct_form = Term.mkConst (declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition)) in
 
-  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl in
+  (* EMPTY LEMMA LIST *)
+  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl None in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -160,7 +162,8 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
 
-  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  (* EMPTY LEMMA LIST *)
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl None in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -182,7 +185,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
     Structures.mkArray (Lazy.force cint, res) in
 
-  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots roots|]|] in
+  let theorem_concl = mklApp cis_true [|mklApp cnegb [|interp_roots roots|]|] in
   let theorem_proof_cast =
     Term.mkCast (
         Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_eqb|],
@@ -234,7 +237,8 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
 
-  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl in
+  (* EMPTY LEMMA LIST *)
+  let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) interp_conseq_uf (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl None in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -274,7 +278,7 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
 
 (* Tactic *)
 
-let build_body rt ro ra rf l b (max_id, confl) =
+let build_body rt ro ra rf l b (max_id, confl) find =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -287,7 +291,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl find in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -314,7 +318,7 @@ let build_body rt ro ra rf l b (max_id, confl) =
   (proof_cast, proof_nocast, cuts)
 
 
-let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
+let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) find =
   let nti = mkName "t_i" in
   let ntfunc = mkName "t_func" in
   let ntatom = mkName "t_atom" in
@@ -327,7 +331,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) =
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
-  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq interp_conseq_uf (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl find in
   let certif =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
@@ -362,26 +366,89 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver rt ro rf l =
-  let fl = Form.flatten rf l in
-  let root = SmtTrace.mkRootV [l] in
-  call_solver rt ro fl (root,l)
+let make_proof call_solver rt ro rf ra' rf' l' ls_smtc=
+  let fl' = Form.flatten rf' l' in
+  let root = SmtTrace.mkRootV [l'] in
+  call_solver rt ro ra' rf' (Some (root, l')) (fl'::ls_smtc)
 
+(* <of_coq_lemma> reifies the coq lemma given, we can then easily print it in a
+ .smt2 file. We need the reify tables to correctly recognize unbound variables
+ of the lemma. We also need to make sure to leave unchanged the tables because
+ the new objects may contain bound (by forall of the lemma) variables. *)
+exception Axiom_form_unsupported
+              
+let of_coq_lemma rt ro ra' rf' env sigma clemma =
+  let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
+  let env_lemma = List.fold_right Environ.push_rel rel_context env in
+  let forall_args =
+    let fmap r = let n, t = Structures.destruct_rel_decl r in
+                 string_of_name n, SmtBtype.of_coq rt t in
+    List.map fmap rel_context in
+  let f, args = Term.decompose_app qf_lemma in
+  let core_f =
+    if Term.eq_constr f (Lazy.force cis_true) then
+      match args with
+      | [a] -> a
+      | _ -> raise Axiom_form_unsupported
+    else if Term.eq_constr f (Lazy.force ceq) then
+      match args with
+      | [ty; arg1; arg2] when Term.eq_constr ty (Lazy.force cbool) &&
+                                Term.eq_constr arg2 (Lazy.force ctrue) ->
+         arg1
+      | _ -> raise Axiom_form_unsupported
+    else raise Axiom_form_unsupported in
+  let core_smt = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' env_lemma sigma)
+                   rf' core_f in
+  match forall_args with
+    [] -> core_smt
+  | _ -> Form.get rf' (Fapp (Fforall forall_args, [|core_smt|]))
 
-let core_tactic call_solver rt ro ra rf env sigma concl =
+let core_tactic call_solver rt ro ra rf ra' rf' lcpl lcepl env sigma concl =
   let a, b = get_arguments concl in
+  let tlcepl = List.map (Structures.interp_constr env sigma) lcepl in
+  let lcpl = lcpl @ tlcepl in
+  let lcl = List.map (Retyping.get_type_of env sigma) lcpl in
+
+  let lsmt  = List.map (of_coq_lemma rt ro ra' rf' env sigma) lcl in
+  let l_pl_ls = List.combine (List.combine lcl lcpl) lsmt in
+
+  let lem_tbl : (int, Term.constr * Term.constr) Hashtbl.t =
+    Hashtbl.create 100 in
+  let new_ref ((l, pl), ls) =
+    Hashtbl.add lem_tbl (Form.index ls) (l, pl) in
+
+  List.iter new_ref l_pl_ls;
+  
+  let find_lemma cl =
+    let re_hash hf = Form.hash_hform (Atom.hash_hatom ra') rf' hf in
+    match cl.value with
+    | Some [l] ->
+       let hl = re_hash l in
+       begin try Hashtbl.find lem_tbl (Form.index hl)
+             with Not_found ->
+               let oc = open_out "/tmp/find_lemma.log" in
+               List.iter (fun u -> Printf.fprintf oc "%s\n"
+                                     (VeritSyntax.string_hform u)) lsmt;
+               Printf.fprintf oc "\n%s\n" (VeritSyntax.string_hform hl);
+               flush oc; close_out oc; failwith "find_lemma" end
+      | _ -> failwith "unexpected form of root" in
+  
   let (body_cast, body_nocast, cuts) =
     if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
-      let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
-      let max_id_confl = make_proof call_solver rt ro rf l' in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl
+      let l' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' env sigma) rf' a in
+      let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l' else l' in
+      let max_id_confl = make_proof call_solver rt ro rf ra' rf' l' lsmt in
+      build_body rt ro ra rf (Form.to_coq l) b max_id_confl (Some find_lemma)
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra env sigma) rf b in
       let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
-      let max_id_confl = make_proof call_solver rt ro rf l in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl in
+      let l1' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' env sigma) rf' a in
+      let l2' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' env sigma) rf' b in
+      let l' = Form.neg (Form.get rf' (Fapp(Fiff,[|l1';l2'|]))) in
+      let max_id_confl = make_proof call_solver rt ro rf ra' rf' l' lsmt in
+      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl (Some find_lemma) in
 
   let cuts = SmtBtype.get_cuts rt @ cuts in
 
@@ -392,7 +459,7 @@ let core_tactic call_solver rt ro ra rf env sigma concl =
        (Structures.set_evars_tac body_nocast)
        (Structures.vm_cast_no_check body_cast))
 
-let tactic call_solver rt ro ra rf =
+let tactic call_solver rt ro ra rf ra' rf' lcpl lcepl =
   Structures.tclTHEN
     Tactics.intros
-    (Structures.mk_tactic (core_tactic call_solver rt ro ra rf))
+    (Structures.mk_tactic (core_tactic call_solver rt ro ra rf ra' rf' lcpl lcepl))

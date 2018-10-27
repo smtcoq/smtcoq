@@ -45,6 +45,8 @@ val csigT : Term.constr lazy_t
 val cnot : Term.constr lazy_t
 val ceq : Term.constr lazy_t
 val crefl_equal : Term.constr lazy_t
+val cconj : Term.constr lazy_t
+val cand : Term.constr lazy_t
 val smt_modules : string list list
 val cState_C_t : Term.constr lazy_t
 val cdistinct : Term.constr lazy_t
@@ -106,7 +108,7 @@ val make_certif_ops :
   Term.constr lazy_t * Term.constr lazy_t * Term.constr lazy_t *
   Term.constr lazy_t * Term.constr lazy_t * Term.constr lazy_t *
   Term.constr lazy_t * Term.constr lazy_t * Term.constr lazy_t *
-  Term.constr lazy_t
+  Term.constr lazy_t * Term.constr lazy_t 
 val ceq_refl_true : Term.constr lazy_t
 val eq_refl_true : unit -> Term.constr
 val vm_cast_true : Term.constr -> Term.constr
