@@ -53,7 +53,7 @@ Qed.
 
 
 Goal forall (a b : Z) (P : Z -> bool) (f : Z -> Z),
-  (negb (Zeq_bool (f a) b)) || (negb (P (f a))) || (P b).
+  negb (f a =? b) || negb (P (f a)) || (P b).
 Proof.
   verit.
 Qed.
@@ -62,9 +62,9 @@ Qed.
 Goal forall b1 b2 x1 x2,
   implb
   (ifb b1
-    (ifb b2 (Zeq_bool (2*x1+1) (2*x2+1)) (Zeq_bool (2*x1+1) (2*x2)))
-    (ifb b2 (Zeq_bool (2*x1) (2*x2+1)) (Zeq_bool (2*x1) (2*x2))))
-  ((implb b1 b2) && (implb b2 b1) && (Zeq_bool x1 x2)).
+    (ifb b2 (2*x1+1 =? 2*x2+1) (2*x1+1 =? 2*x2))
+    (ifb b2 (2*x1 =? 2*x2+1) (2*x1 =? 2*x2)))
+  ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
 Proof.
   verit.
 Qed.

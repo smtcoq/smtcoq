@@ -6,14 +6,6 @@ Require Import ZArith.
 (********************************************************************)
 (********************************************************************)
 
-(* SMTCoq utilise Zeq_bool *)
-Lemma Zeq_bool_Zeqb a b : Z.eqb a b = Zeq_bool a b.
-Proof.
-  case_eq (a =? b)%Z.
-  - rewrite Z.eqb_eq. intros ->. symmetry. now rewrite <- Zeq_is_eq_bool.
-  - rewrite Z.eqb_neq. intro H. case_eq (Zeq_bool a b); auto. now rewrite <- Zeq_is_eq_bool.
-Qed.
-
 (* Généralise fun x => f (g x) *)
 Ltac generalize_fun f g :=
   repeat
@@ -92,7 +84,7 @@ Ltac pos_rewriting :=
     | |-context [Pos.mul (Z2Pos ?X) (Z2Pos ?Y) ] =>  change (Pos.mul (Z2Pos X) (Z2Pos Y)) with (Z2Pos (X * Y))
     | |-context [Pos.ltb (Z2Pos ?X) (Z2Pos ?Y) ] =>  change (Pos.ltb (Z2Pos X) (Z2Pos Y)) with (Z.ltb X Y)
     | |-context [Pos.leb (Z2Pos ?X) (Z2Pos ?Y) ] =>  change (Pos.leb (Z2Pos X) (Z2Pos Y)) with (Z.leb X Y)
-    | |-context [Pos.eqb (Z2Pos ?X) (Z2Pos ?Y) ] =>  change (Pos.eqb (Z2Pos X) (Z2Pos Y)) with (Z.eqb X Y);rewrite Zeq_bool_Zeqb
+    | |-context [Pos.eqb (Z2Pos ?X) (Z2Pos ?Y) ] =>  change (Pos.eqb (Z2Pos X) (Z2Pos Y)) with (Z.eqb X Y)
   end.
 
 (* Après avoir converti dans Z il faudra ajouter l'hypothèse de positivité *)
@@ -184,7 +176,7 @@ Ltac N_rewriting :=
     | |-context [N.mul (Z2N ?X) (Z2N ?Y) ] =>  replace (N.mul (Z2N X) (Z2N Y)) with (Z2N (X * Y)) by (apply Z2N.inj_mul; N_solve_pos)
     | |-context [N.ltb (Z2N ?X) (Z2N ?Y) ] =>  replace (N.ltb (Z2N X) (Z2N Y)) with (Z.ltb X Y) by (apply N_inj_ltb; N_solve_pos)
     | |-context [N.leb (Z2N ?X) (Z2N ?Y) ] =>  replace (N.leb (Z2N X) (Z2N Y)) with (Z.leb X Y) by (apply N_inj_leb; N_solve_pos)
-    | |-context [N.eqb (Z2N ?X) (Z2N ?Y) ] =>  replace (N.eqb (Z2N X) (Z2N Y)) with (Z.eqb X Y) by (apply N_inj_eqb; N_solve_pos);rewrite Zeq_bool_Zeqb
+    | |-context [N.eqb (Z2N ?X) (Z2N ?Y) ] =>  replace (N.eqb (Z2N X) (Z2N Y)) with (Z.eqb X Y) by (apply N_inj_eqb; N_solve_pos)
   end.
 
 (* Après avoir converti dans Z il faudra ajouter l'hypothèse de positivité *)
@@ -278,7 +270,7 @@ Ltac nat_rewriting :=
     | |-context [Nat.mul (Z2Nat ?X) (Z2Nat ?Y) ] =>  replace (Nat.mul (Z2Nat X) (Z2Nat Y)) with (Z2Nat (X * Y)) by (apply Z2Nat.inj_mul; nat_solve_pos)
     | |-context [Nat.ltb (Z2Nat ?X) (Z2Nat ?Y) ] =>  replace (Nat.ltb (Z2Nat X) (Z2Nat Y)) with (Z.ltb X Y) by (apply nat_inj_ltb; nat_solve_pos)
     | |-context [Nat.leb (Z2Nat ?X) (Z2Nat ?Y) ] =>  replace (Nat.leb (Z2Nat X) (Z2Nat Y)) with (Z.leb X Y) by (apply nat_inj_leb; nat_solve_pos)
-    | |-context [Nat.eqb (Z2Nat ?X) (Z2Nat ?Y) ] =>  replace (Nat.eqb (Z2Nat X) (Z2Nat Y)) with (Z.eqb X Y) by (apply nat_inj_eqb; nat_solve_pos);rewrite Zeq_bool_Zeqb
+    | |-context [Nat.eqb (Z2Nat ?X) (Z2Nat ?Y) ] =>  replace (Nat.eqb (Z2Nat X) (Z2Nat Y)) with (Z.eqb X Y) by (apply nat_inj_eqb; nat_solve_pos)
   end.
 
 (* Après avoir converti dans Z il faudra ajouter l'hypothèse de positivité *)

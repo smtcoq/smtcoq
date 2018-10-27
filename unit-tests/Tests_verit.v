@@ -742,7 +742,7 @@ Qed.
 
 (* uf1.smt *)
 
-Goal forall a b c f p, ((Zeq_bool a c) && (Zeq_bool b c) && ((negb (Zeq_bool (f a) (f b))) || ((p a) && (negb (p b))))) = false.
+Goal forall a b c f p, ( (a =? c) && (b =? c) && ((negb (f a =?f b)) || ((p a) && (negb (p b))))) = false.
 Proof.
   verit.
 Qed.
@@ -758,7 +758,7 @@ Qed.
 
 (* uf3.smt *)
 
-Goal forall x y z f, ((Zeq_bool x y) && (Zeq_bool y z) && (negb (Zeq_bool (f x) (f z)))) = false.
+Goal forall x y z f, ((x =? y) && (y =? z) && (negb (f x =? f z))) = false.
 Proof.
   verit.
 Qed.
@@ -766,7 +766,7 @@ Qed.
 
 (* uf4.smt *)
 
-Goal forall x y z f, ((negb (Zeq_bool (f x) (f y))) && (Zeq_bool y z) && (Zeq_bool (f x) (f (f z))) && (Zeq_bool x y)) = false.
+Goal forall x y z f, ((negb (f x =? f y)) && (y =? z) && (f x =? f (f z)) && (x =? y)) = false.
 Proof.
   verit.
 Qed.
@@ -774,7 +774,7 @@ Qed.
 
 (* uf5.smt *)
 
-Goal forall a b c d e f, ((Zeq_bool a b) && (Zeq_bool b c) && (Zeq_bool c d) && (Zeq_bool c e) && (Zeq_bool e f) && (negb (Zeq_bool a f))) = false.
+Goal forall a b c d e f, ((a =? b) && (b =? c) && (c =? d) && (c =? e) && (e =? f) && (negb (a =? f))) = false.
 Proof.
   verit.
 Qed.
@@ -790,7 +790,7 @@ Qed.
 
 (* lia2.smt *)
 
-Goal forall x, implb (Zeq_bool (x - 3) 7) (x >=? 10) = true.
+Goal forall x, implb (x - 3 =? 7) (x >=? 10) = true.
 Proof.
   verit.
 Qed.
@@ -826,7 +826,7 @@ Qed.
 
 (* lia7.smt *)
 
-Goal forall x, implb (Zeq_bool (x - 3) 7) (10 <=? x) = true.
+Goal forall x, implb (x - 3 =? 7) (10 <=? x) = true.
 Proof.
   verit.
 Qed.
@@ -840,18 +840,18 @@ Qed.
 
 
 Goal forall (a b : Z) (P : Z -> bool) (f : Z -> Z),
-  (negb (Zeq_bool (f a) b)) || (negb (P (f a))) || (P b).
+    (negb (f a =? b)) || (negb (P (f a))) || (P b).
 Proof.
   verit.
 Qed.
 
 
 Goal forall b1 b2 x1 x2,
-  implb
-  (ifb b1
-    (ifb b2 (Zeq_bool (2*x1+1) (2*x2+1)) (Zeq_bool (2*x1+1) (2*x2)))
-    (ifb b2 (Zeq_bool (2*x1) (2*x2+1)) (Zeq_bool (2*x1) (2*x2))))
-  ((implb b1 b2) && (implb b2 b1) && (Zeq_bool x1 x2)).
+    implb
+      (ifb b1
+           (ifb b2 (2*x1+1 =? 2*x2+1) (2*x1+1 =? 2*x2))
+           (ifb b2 (2*x1 =? 2*x2+1) (2*x1 =? 2*x2)))
+      ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
 Proof.
   verit.
 Qed.
@@ -914,13 +914,13 @@ Qed.
 (* Congruence in which some premises are REFL *)
 
 Goal forall (f:Z -> Z -> Z) x y z,
-  implb (Zeq_bool x y) (Zeq_bool (f z x) (f z y)).
+    implb (x =? y) (f z x =? f z y).
 Proof.
   verit.
 Qed.
 
 Goal forall (P:Z -> Z -> bool) x y z,
-  implb (Zeq_bool x y) (implb (P z x) (P z y)).
+    implb (x =? y) (implb (P z x) (P z y)).
 Proof.
   verit.
 Qed.

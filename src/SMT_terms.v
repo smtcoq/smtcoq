@@ -302,7 +302,7 @@ Module Typ.
       Definition i_eqb (t:type) : interp t -> interp t -> bool :=
         match t with
         | Tindex i => (t_i.[i]).(te_eqb)
-        | TZ => Zeq_bool
+        | TZ => Z.eqb
         | Tbool => Bool.eqb
         | Tpositive => Peqb
         end.
@@ -311,7 +311,7 @@ Module Typ.
       Proof.
        destruct t;simpl;intros.
        symmetry;apply reflect_iff;apply te_reflect.
-       symmetry;apply Zeq_is_eq_bool.
+       apply Z.eqb_eq.
        apply Bool.eqb_true_iff.
        apply Peqb_eq.
       Qed.
@@ -321,11 +321,11 @@ Module Typ.
         intros;apply iff_reflect;symmetry;apply i_eqb_spec.
       Qed.
 
-      Lemma i_eqb_sym : forall t x y, i_eqb t x y = i_eqb t y x.
-      Proof.
-        intros t x y; case_eq (i_eqb t x y); case_eq (i_eqb t y x); auto.
-        change (i_eqb t x y = true) with (is_true (i_eqb t x y)); rewrite i_eqb_spec; intros H1 H2; subst y; pose (H:=reflect_i_eqb t x x); inversion H; [rewrite <- H0 in H1; discriminate|elim H2; auto].
-        change (i_eqb t y x = true) with (is_true (i_eqb t y x)); rewrite i_eqb_spec; intros H1 H2; subst y; pose (H:=reflect_i_eqb t x x); inversion H; [rewrite <- H0 in H2; discriminate|elim H1; auto].
+     Lemma i_eqb_sym : forall t x y, i_eqb t x y = i_eqb t y x.
+     Proof.
+       intros t x y; case_eq (i_eqb t x y); intro H1; symmetry;
+          [ | rewrite neg_eq_true_eq_false in *; intro H2; apply H1];
+          rewrite is_true_iff in *; now rewrite i_eqb_spec in *.
       Qed.
 
     End Interp_Equality.
