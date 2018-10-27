@@ -31,8 +31,8 @@ val lit_of_atom_form_lit : SmtAtom.Form.reify -> atom_form_lit -> SmtAtom.Form.t
 val get_solver : int -> atom_form_lit
 val add_solver : int -> atom_form_lit -> unit
 
-val get_btype : string -> SmtAtom.btype
-val add_btype : string -> SmtAtom.btype -> unit
+val get_btype : string -> SmtBtype.btype
+val add_btype : string -> SmtBtype.btype -> unit
 
 val get_fun : string -> SmtAtom.indexed_op
 val add_fun : string -> SmtAtom.indexed_op -> unit

@@ -19,6 +19,7 @@ open SmtAtom
 open SmtForm
 open SmtMisc
 open CoqTerms
+open SmtBtype
 
 (* For debugging *)
 
@@ -79,7 +80,7 @@ let declare_sort rt sym =
   let eq_refl = Term.mkProd (x,cons_t,Term.mkProd (y,cons_t,mklApp creflect [|mklApp ceq [|cons_t;rx;ry|];mklApp (lazy eq_t) [|rx;ry|]|])) in
   let eq_refl_v = declare_new_variable (Names.id_of_string ("eq_refl_"^s)) eq_refl in
   let ce = mklApp cTyp_eqb [|cons_t;eq_t;eq_refl_v|] in
-  let res = Btype.declare rt cons_t ce in
+  let res = declare rt cons_t ce in
   VeritSyntax.add_btype s res;
   res
 
@@ -89,7 +90,7 @@ let declare_fun rt ro sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
 
-  let coqTy = List.fold_right (fun typ c -> Term.mkArrow (Btype.interp_to_coq rt (fst typ)) c) tyl (Btype.interp_to_coq rt (fst ty)) in
+  let coqTy = List.fold_right (fun typ c -> Term.mkArrow (interp_to_coq rt (fst typ)) c) tyl (interp_to_coq rt (fst ty)) in
   let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
 
   let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) in

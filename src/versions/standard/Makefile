@@ -235,6 +235,7 @@ endif
 
 MLFILES:=versions/standard/structures.ml\
   trace/coqTerms.ml\
+  trace/smtBtype.ml\
   trace/satAtom.ml\
   trace/smtAtom.ml\
   trace/smtCertif.ml\
@@ -282,6 +283,7 @@ endif
 
 MLIFILES:=versions/standard/structures.mli\
   trace/coqTerms.mli\
+  trace/smtBtype.mli\
   trace/satAtom.mli\
   trace/smtAtom.mli\
   trace/smtCertif.mli\

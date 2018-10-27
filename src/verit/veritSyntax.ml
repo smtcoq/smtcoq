@@ -335,7 +335,7 @@ let get_solver id =
 let add_solver id cl = Hashtbl.add solver id cl
 let clear_solver () = Hashtbl.clear solver
 
-let btypes : (string,btype) Hashtbl.t = Hashtbl.create 17
+let btypes : (string, SmtBtype.btype) Hashtbl.t = Hashtbl.create 17
 let get_btype id =
   try Hashtbl.find btypes id
   with | Not_found -> failwith ("VeritSyntax.get_btype : sort symbol \""^id^"\" not found\n")

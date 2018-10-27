@@ -60,6 +60,8 @@ versions/standard/structures.mli
 
 trace/coqTerms.ml
 trace/coqTerms.mli
+trace/smtBtype.ml
+trace/smtBtype.mli
 trace/satAtom.ml
 trace/satAtom.mli
 trace/smtAtom.ml
