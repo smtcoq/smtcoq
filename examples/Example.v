@@ -137,6 +137,18 @@ Qed.
 
 Local Close Scope nat_scope.
 
+(* An example with all 3 types and a binary function *)
+Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat),
+  implb (x =? 3)%positive
+    (implb (Nat.eqb y 7)
+      (implb (f 3%positive 7%nat =? 12)%N
+        (f x y =? 12)%N)) = true.
+pos_convert.
+nat_convert.
+N_convert.
+verit.
+Qed.
+
 Open Scope Z_scope.
 
 (* Some examples of using verit with lemmas. Use <verit_base H1 .. Hn; vauto>

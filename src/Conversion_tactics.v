@@ -54,14 +54,6 @@ Module convert (M : convert_type).
 
 Import M.
 
-(* Généralise fun x => f (g x) *)
-Ltac generalize_fun f g :=
-  repeat
-    match goal with
-      | |- context [ f (g ?X) ] => change (f (g X)) with ((fun x => f (g x)) X)
-    end;
-  generalize (fun x => f (g x)).
-
 (* SMTCoq travaille avec les booléens *)
 Lemma implb_impl : forall a b : bool, (implb a b = true -> a = true -> b = true).
 Proof.
@@ -69,16 +61,19 @@ intros a b H.
 destruct a; destruct b; try reflexivity; discriminate.
 Qed.
 
+(* Récupère le symbole de tête d'une application *)
 Ltac get_head x := lazymatch x with ?x _ => get_head x | _ => x end.
 
 (* inverse_tactic tactic réussit là où tactic échoue et inversement *)
 Ltac inverse_tactic tactic := try (tactic; fail 1).
 
+(* constr_neq t u échoue si et seulement si t et u sont convertibles *)
 Ltac constr_neq t u := inverse_tactic ltac:(constr_eq t u).
 
 (* is_not_constructor T sym échoue si et seulement si sym est un symbole de constructeur de U *)
 Ltac is_not_constructor T sym :=
-assert (T -> True) by
+let H := fresh in
+assert (T -> True) as H by
        (let x := fresh in
         let y := fresh in
         intro x;
@@ -87,7 +82,7 @@ assert (T -> True) by
         let C := eval unfold y in y in
         let c := get_head C in
         constr_neq sym c;
-        exact I).
+        exact I); clear H.
 
 (* is_not_constructor U sym réussit si et seulement si sym est un symbole de constructeur de U *)
 Ltac is_constructor U sym := inverse_tactic ltac:(is_not_constructor U sym).
@@ -152,15 +147,157 @@ Ltac rewriting :=
     | |- context [eqb (Z2T ?X) (Z2T ?Y)] => replace (eqb (Z2T X) (Z2T Y)) with (Z.eqb X Y) by (rewrite eqb_morph; solve_inT)
   end.
 
-(* Remplace les symbole de fonction et de variables par des versions dans Z
-   et ajoute les hypothèses de positivité *)
+(* expand_type [Tn;...T2;;T1] T = T1->T2->...->Tn->T *)
+Fixpoint expand_type l T : Type :=
+  match l with
+    | nil => T
+    | cons h l => expand_type l (h -> T)
+  end.
+(* get_args (f t1 t2 ... tn) = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
+Ltac get_args X :=
+  lazymatch X with
+    | ?x ?y => let x_args := get_args x in let T := type of y in constr:(cons (existT (fun z => z) T y) x_args)
+    | _ => constr:(@nil (sigT (fun x => x)))
+  end.
+(* get_args_types [(Tn,tn);...;(T2,t2);(T1,t1)] = [Tn;...;T2;T1] *)
+Fixpoint get_args_types (l : list (sigT (fun x => x))) : list Type :=
+  match l with
+    | nil => nil
+    | cons (@existT _ _ T _) l => cons T (get_args_types l)
+  end.
+(* apply_args [(Tn,tn);...;(T2,t2);(T1,t1)] T (f : T1->T2->...->Tn->T) = f t1 t2 ... tn *)
+Ltac apply_args f args :=
+  lazymatch args with
+    | nil => constr:(f)
+    | cons ?arg ?args => match arg with existT _ _ ?arg => let f := apply_args f args in constr:(f arg) end
+  end.
+
+(* expand_fun [Tn;...;T2;T1] T U (f : T1->T2->...->Tn->T) (g : T->U) = fun x1 x2 ... xn => g (f x1 x2 ... xn) *)
+Fixpoint expand_fun (l : list Type) (T : Type) (U : Type) : expand_type l T -> (T -> U) -> expand_type l U :=
+  match l with
+    | nil => fun f g => g f
+    | cons h l' => fun f g => expand_fun l' (h -> T) (h -> U) f (fun a x => g (a x))
+  end.
+(* expand (f (t1:T1) (t2:T2) ... (tn:Tn) : T) (g : T->U) = fun x1 x2 ... xn => g (f x1 x2 ... xn) *)
+Ltac expand X g :=
+  (* Soit argsX = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
+  let argsX := get_args X in
+  (* Soit argsXtypes = [Tn;...;T2;T1] *)
+  let argsXtypes := constr:(get_args_types argsX) in
+  (* Soit typeX = T *)
+  let typeX := type of X in
+  (* Soit h = f *)
+  let h := get_head X in
+  (* soit typeg = U *)
+  let typeg := match type of g with _ -> ?U => U end in
+  (* On renvoie expand_fun [Tn;...;T2;T1] T Z f T2Z = fun x1 x2 ... xn => g (f x1 x2 ... xn) *)
+  constr:(expand_fun argsXtypes typeX typeg h g).
+
+(* Remplace les symbole de fonction et de variables à valeurs dans T
+   par des versions à valeurs dans Z et ajoute les hypothèses de positivité *)
 Ltac renaming :=
   repeat
-  match goal with
-    | |-context [T2Z ?X] => is_var X; generalize (T2Z_pres X); apply implb_impl; generalize (T2Z X); clear X; intro X
-    | |-context [?X (Z2T ?Y)] => try (is_constructor T X; fail 1); generalize_fun X Z2T; clear X; intro X
-    | |-context [T2Z (?X ?Y)] => try (is_constructor T X; fail 1); generalize_fun T2Z X; clear X; intro X
+    match goal with
+      (* S'il y a un terme de la forme (T2Z (f t1 ... tn)) *)
+      | |- appcontext [T2Z ?X] =>
+        (* On récupère le symbole de tête *)
+        let f := get_head X in
+        (* S'il s'agit d'un constructeur on ne fait rien *)
+        is_not_constructor T f;
+        (* Sinon, soit fe = fun x1 ... xn => T2Z (f x1 ... xn) *)
+        let fe := expand X T2Z in
+        let fe := eval cbv in fe in
+        (* On pose dans le contexte fe_id := fun x1 ... xn => T2Z (f x1 ... xn) *)
+        let fe_id := fresh in pose (fe_id := fe);
+        repeat
+          match goal with
+            (* Pour chaque terme de la forme (T2Z (f' t'1 ... t'n)) *)
+            | |- appcontext [T2Z ?X'] =>
+              (* On récupère le symbole de tête *)
+              let f' := get_head X' in
+              (* Si f' = f *)
+              constr_eq f f';
+              (* On ajoute l'hypothèse inT (T2Z X') *)
+              generalize (T2Z_pres X'); apply implb_impl;
+              (* Soit args = [t'1;...;t'n] *)
+              let args := get_args X' in
+              (* Soit Y = fe_id t'1 ... t'n *)
+              let Y := apply_args fe_id args in
+              (* Et remplaçons (T2Z (f t'1 ... t'n)) par Y *)
+              change (T2Z X') with Y
+          end;
+        (* On abstrait sur (fe_id := fun x1 ... xn => T2Z (f x1 ... xn)) *)
+        generalize fe_id;
+        (* On efface l'ancien f ainsi que notre fe_id temporaire *)
+        clear f fe_id;
+        (* Et on introduit le nouveau f avec le même nom *)
+        let f := fresh f in
+        intro f
+    end.
+
+(* expand_fun' [Tn;...;T2;T1] T U (f : T1->T2->...->Tn->T) (a : T->U) = fun x1 x2 ... xn => a (f x1 x2 ... xn) *)
+Fixpoint expand_fun' (l : list Type) : forall T U : Type, expand_type l T -> (T -> U) -> expand_type l U :=
+  match l as l return forall T U, expand_type l T -> (T ->U) -> expand_type l U with
+    | nil => fun T U f a => a f
+    | cons T' l => fun T U f a => expand_fun' l (T' -> T) (T' -> U) f (fun g xn => a (g xn))
   end.
+(* expand' (f (t1:T1) (t2:T2) ... (tn:Tn) : T) (g : U->Tn) = fun x1 x2 ... xn => f x1 x2 ... (g xn) *)
+Ltac expand' X g :=
+  (* Soit argsX = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
+  let argsX := get_args X in
+  (* Soit argsXtypes = [Tn;...;T2;T1] *)
+  let argsXtypes := constr:(get_args_types argsX) in
+  let argsXtypes := eval cbv in argsXtypes in
+  (* Soit Tn = Tn *)
+  let Tn := match argsXtypes with cons ?T _ => T end in
+  (* Soit argsXtypes = [Tn-1;...;T2;T1] *)
+  let argsXtypes := match argsXtypes with cons _ ?args => args end in
+  (* Soit typeX = T *)
+  let typeX := type of X in
+  (* Soit h = f *)
+  let h := get_head X in
+  (* soit typeg = U *)
+  let typeg := match type of g with ?U -> _ => U end in
+  (* On renvoie expand_fun' [Tn-1;...;T2;T1] (Tn->T) (Z->T) f (fun b x => b (g x))) = fun x1 x2 ... xn => f x1 x2 ... (g xn) *)
+  constr:(expand_fun' argsXtypes (Tn -> typeX) (typeg -> typeX) h (fun b x => b (g x))).
+
+(* Remplace les symbole de fonction et à paramètres dans T
+   par des versions à paramètres dans Z *)
+Ltac renaming' :=
+  repeat
+    match goal with
+      (* S'il y a un terme de la forme (f t1 ... (Z2T tn)) *)
+      | |- appcontext [?X (Z2T ?Y)] =>
+        (* On récupère le symbole de tête *)
+        let f := get_head X in
+        (* S'il s'agit d'un constructeur on ne fait rien *)
+        is_not_constructor T f;
+        (* Sinon, soit fe = fun x1 ... xn => f x1 ... (Z2T xn) *)
+        let fe := expand' (X (Z2T Y)) Z2T in
+        let fe := eval simpl in fe in
+        repeat
+          match goal with
+            (* Pour chaque terme de la forme (f' t'1 ... (Z2T t'n)) *)
+            | |- appcontext [?X' (Z2T ?Y')] =>
+              (* On récupère le symbole de tête *)
+              let f' := get_head X' in
+              (* Si f' = f *)
+              constr_eq f f';
+              (* Soit args = [t'1;...;t'n] *)
+              let args := get_args X' in
+              (* Soit Z = (fun x1 ... xn => f x1 ... (Z2T xn)) t'1 ... t'n *)
+              let Z := apply_args fe args in
+              (* Et remplaçons (f t'1 ... (Z2T t'n)) par Z *)
+              change (X' (Z2T Y')) with (Z Y')
+          end;
+        (* On abstrait sur (fun x1 ... xn => (f x1 ... (Z2T xn)) *)
+        generalize fe;
+        (* On efface l'ancien f *)
+        clear f;
+        (* Et on introduit le nouveau f avec le même nom *)
+        let f := fresh f in
+        intro f
+    end.
 
 (* La tactique complète *)
 Ltac convert :=
@@ -169,6 +306,7 @@ intros;
 converting;
 rewriting;
 renaming;
+renaming';
 let T2Z_unfolded := eval red in T2Z in change T2Z with T2Z_unfolded;
 let inT_unfolded := eval red in inT in change inT with inT_unfolded;
 simpl.
