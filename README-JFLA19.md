@@ -22,13 +22,13 @@ La fin du fichier [examples/Example.v](https://github.com/smtcoq/smtcoq/blob/mas
 
 Côté Coq:
 
-- L'extension du vérificateur (§ 3.3) est définie dans le fichier [src/Trace.v](https://github.com/smtcoq/smtcoq/blob/master/src/Trace.v). Notamment, la nouvelle règle `ForallInst` apparaît à la ligne 344. Son fonctionnement est donné dans le fichier [src/spl/Assumptions.v](https://github.com/smtcoq/smtcoq/blob/master/src/spl/Assumptions.v).
+- L'extension du vérificateur (§ 3.3) est définie dans le fichier [src/Trace.v](https://github.com/smtcoq/smtcoq/blob/master/src/Trace.v). Notamment, la nouvelle règle `ForallInst` apparaît à la ligne 344. Sa propriété de correction est prouvée dans le fichier [src/spl/Assumptions.v](https://github.com/smtcoq/smtcoq/blob/master/src/spl/Assumptions.v).
 
 - Le cas d'application à la tactique `verit` (§ 3.4.3) est définie dans le fichier [src/SMTCoq.v](https://github.com/smtcoq/smtcoq/blob/master/src/SMTCoq.v), avec la définition de la tactique `vauto` permettant la preuve automatique des instanciations.
 
 Côté OCaml:
 
-- L'extension du vérificateur (§ 3.3) est définie dans le fichier [src/trace/smtCertif.ml](https://github.com/smtcoq/smtcoq/blob/master/src/trace/smtCertif.ml). Notamment, la nouvelle règle `ForallInst` apparaît à la ligne 113. Son trairement est donné dans le fichier [src/trace/smtTrace.ml](https://github.com/smtcoq/smtcoq/blob/master/src/trace/smtTrace.ml), ligne 423.
+- L'extension du vérificateur (§ 3.3) est définie dans le fichier [src/trace/smtCertif.ml](https://github.com/smtcoq/smtcoq/blob/master/src/trace/smtCertif.ml). Notamment, la nouvelle règle `ForallInst` apparaît à la ligne 113. Son traitement est donné dans le fichier [src/trace/smtTrace.ml](https://github.com/smtcoq/smtcoq/blob/master/src/trace/smtTrace.ml), ligne 423.
 
 - Le préprocesseur pour la règle forall_inst de veriT (§ 3.4.2 et 3.4.3) est défini dans le fichier [src/verit/veritSyntax.ml](https://github.com/smtcoq/smtcoq/blob/master/src/verit/veritSyntax.ml), lignes 213 et suivantes.
 

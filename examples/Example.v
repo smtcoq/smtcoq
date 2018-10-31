@@ -197,6 +197,16 @@ Section mult3.
   Clear_lemmas.
 End mult3.
 
+Section NonLinear.
+  Lemma distr_right_inst a b (mult : Z -> Z -> Z) :
+    (forall x y z, mult (x + y)  z =? mult x z + mult y z) ->
+    (mult (3 + a) b =? mult 3 b + mult a b).
+  Proof.
+    intro H.
+    verit_base H; vauto.
+  Qed.
+End NonLinear.
+
 Section group.
   Variable op : Z -> Z -> Z.
   Variable inv : Z -> Z.
