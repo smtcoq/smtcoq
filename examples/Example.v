@@ -214,11 +214,19 @@ Section group.
 
   Hypothesis associative :
     forall a b c : Z, op a (op b c) =? op (op a b) c.
-  Hypothesis identity :
-    forall a : Z, (op e a =? a) && (op a e =? a).
   Hypothesis inverse :
-    forall a : Z, (op a (inv a) =? e) && (op (inv a) a =? e).
+    forall a : Z, (op (inv a) a =? e).
+  Hypothesis identity :
+    forall a : Z, (op e a =? a).
   Add_lemmas associative identity inverse.
+  Lemma inverse' :
+    forall a : Z, (op a (inv a) =? e).
+  Proof. verit. Qed.
+  Add_lemmas inverse'.
+  Lemma identity' :
+    forall a : Z, (op a e =? a).
+  Proof. verit. Qed.
+  Add_lemmas identity'.
 
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
