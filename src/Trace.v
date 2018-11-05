@@ -372,7 +372,7 @@ Inductive step :=
   | Hole (pos:int) (prem_id:list clause_id) (prem:list C.t) (concl:C.t)
     (p:interp_conseq_uf (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) prem concl)
   | ForallInst (pos:int) (lemma:Prop) (plemma:lemma) (concl:C.t)
-    (p: lemma -> interp_conseq_uf (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form) nil concl)
+    (p: lemma -> interp_conseq_uf (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) nil concl)
   .
 
   Local Open Scope list_scope.
@@ -483,7 +483,7 @@ Inductive step :=
     - apply valid_check_rowneq; auto.
     - apply valid_check_ext; auto.
     - apply valid_check_hole; auto.
-    apply valid_check_forall_inst with lemma; auto.
+    - apply valid_check_forall_inst with lemma; auto.
   Qed.
 
   Definition euf_checker (* t_atom t_form *) s t :=
@@ -585,7 +585,8 @@ Inductive step :=
       | RowEq pos _
       | RowNeq pos _
       | Ext pos _
-      | @Hole pos _ _ _ _ => pos
+      | @Hole pos _ _ _ _
+      | ForallInst pos _ _ => pos
     end.
 
 
@@ -641,7 +642,8 @@ Inductive step :=
   | Name_RowEq
   | Name_RowNeq
   | Name_Ext
-  | Name_Hole.
+  | Name_Hole
+  | Name_ForallInst.
 
   Definition name_of_step (st:step) :=
     match st with
@@ -684,6 +686,7 @@ Inductive step :=
     | RowNeq _ _ => Name_RowNeq
     | Ext _ _ => Name_Ext
     | @Hole _ _ _ _ _ => Name_Hole
+    | ForallInst _ _ _ => Name_ForallInst
     end.
 
 
@@ -714,7 +717,7 @@ Inductive step :=
 
   Lemma checker_correct : forall (* t_i t_func t_atom t_form *) d used_roots c,
     checker (* t_i t_func t_atom t_form *) d used_roots c = true ->
-    negb (valid t_func t_atom t_form d).
+    ~ (valid t_func t_atom t_form d).
   Proof.
     unfold checker; intros (* t_i t_func t_atom t_form *) d used_roots (nclauses, t, confl); rewrite !andb_true_iff; intros [[[H1 H2] H10] H3] H; eelim euf_checker_correct; try eassumption; apply add_roots_correct; try eassumption; apply S.valid_make; destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [_ H4]; auto.
   Qed.

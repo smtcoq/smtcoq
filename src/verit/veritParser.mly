@@ -19,7 +19,6 @@
 (**************************************************************************)
 
 
-%{
   open SmtBtype
   open SmtAtom
   open SmtForm
@@ -48,7 +47,9 @@
 %token COLON
 %token LPAR RPAR LBRACKET RBRACKET
 %token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVULE BVSLE BVCONC BVEXTR BVZEXT BVSEXT BVNOT BVNEG SELECT STORE DIFF BVSHL BVSHR
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE BBVA BBCONST BBEXTR BBZEXT BBSEXT BBEQ BBDIS BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE BBSHL BBSHR
+%token TBOOL TINT
+%token<int> TINDEX
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE FORALL BBVA BBCONST BBEXTR BBZEXT BBSEXT BBEQ BBDIS BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE BBSHL BBSHR
 %token <int> INT SHARPINT
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR ATVAR BITV
@@ -68,9 +69,9 @@ line:
   | SAT                                                    { raise Sat }
   | INT COLON LPAR typ clause                   RPAR EOL   { mk_clause ($1,$4,$5,[]) }
   | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { mk_clause ($1,$4,$5,$6) }
-  | INT COLON LPAR TPQT LPAR SHARP INT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $7 $10; add_ref $7 $1; mk_clause ($1, Tpqt, [], [$13]) }
-  | INT COLON LPAR FINS LPAR SHARP INT COLON LPAR OR LPAR NOT SHARP INT RPAR lit RPAR RPAR RPAR EOL
-  { mk_clause ($1, Fins, [snd $16], [get_ref $14]) }
+  | INT COLON LPAR TPQT LPAR SHARPINT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $6 $9; add_ref $6 $1; mk_clause ($1, Tpqt, [], [$12]) }
+  | INT COLON LPAR FINS LPAR SHARPINT COLON LPAR OR LPAR NOT SHARPINT RPAR lit RPAR RPAR RPAR EOL
+  { mk_clause ($1, Fins, [snd $14], [get_ref $12]) }
 ;
 
 typ:
@@ -257,69 +258,69 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
   | BITOF INT name_term
     { match $3 with
       | Atom h -> (match Atom.type_of h with
-                   | TBV s -> true, Atom (Atom.mk_bitof ra s $2 h)   /* change true */
+                   | TBV s -> (true, Atom (Atom.mk_bitof ra s $2 h))   (* change true *)
                    | _ -> assert false)
       | _ -> assert false }
 
   | BVNOT name_term
     { match $2 with
       | Atom h -> (match Atom.type_of h with
-                   | TBV s -> true, Atom (Atom.mk_bvnot ra s h)   /* change true */
+                   | TBV s -> true, Atom (Atom.mk_bvnot ra s h)   (* change true *)
                    | _ -> assert false)
       | _ -> assert false }
 
   | BVAND name_term name_term
     { match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvand ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvand ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false }
 
   | BVOR name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvor ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvor ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
   | BVXOR name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvxor ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvxor ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
   | BVNEG name_term
     { match $2 with
       | Atom h -> (match Atom.type_of h with
-                   | TBV s -> true, Atom (Atom.mk_bvneg ra s h)   /* change true */
+                   | TBV s -> true, Atom (Atom.mk_bvneg ra s h)   (* change true *)
                    | _ -> assert false)
       | _ -> assert false }
   | BVADD name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvadd ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvadd ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
   | BVMUL name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvmult ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvmult ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
   | BVULT name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvult ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvult ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
   | BVSLT name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvslt ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvslt ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
@@ -329,7 +330,7 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
        (match Atom.type_of h1 with
         | TBV s ->
            let a = Atom (Atom.mk_bvult ra s h2 h1) in
-           true, Lit (Form.neg (lit_of_atom_form_lit rf a))   /* change true */
+           true, Lit (Form.neg (lit_of_atom_form_lit rf a))   (* change true *)
         | _ -> assert false)
     | _,_ -> assert false
     }
@@ -339,21 +340,21 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
        (match Atom.type_of h1 with
         | TBV s ->
            let a = Atom (Atom.mk_bvslt ra s h2 h1) in
-           true, Lit (Form.neg (lit_of_atom_form_lit rf a))   /* change true */
+           true, Lit (Form.neg (lit_of_atom_form_lit rf a))   (* change true *)
         | _ -> assert false)
     | _,_ -> assert false
     }
   | BVSHL name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvshl ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvshl ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
   | BVSHR name_term name_term {
     match $2,$3 with
       | Atom h1, Atom h2 -> (match Atom.type_of h1 with
-                             | TBV s -> true, Atom (Atom.mk_bvshr ra s h1 h2)   /* change true */
+                             | TBV s -> true, Atom (Atom.mk_bvshr ra s h1 h2)   (* change true *)
                              | _ -> assert false)
       | _,_ -> assert false
     }
@@ -361,7 +362,7 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
     match $2,$3 with
     | Atom h1, Atom h2 ->
        (match Atom.type_of h1, Atom.type_of h2 with
-        | TBV s1, TBV s2 -> true, Atom (Atom.mk_bvconcat ra s1 s2 h1 h2)   /* change true */
+        | TBV s1, TBV s2 -> true, Atom (Atom.mk_bvconcat ra s1 s2 h1 h2)   (* change true *)
         | _ -> assert false)
     | _,_ -> assert false
     }
@@ -369,28 +370,28 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
     { let j, i = $2, $3 in
       match $4 with
       | Atom h -> (match Atom.type_of h with
-                   | TBV s -> true, Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) h)   /* change true */
+                   | TBV s -> true, Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) h)   (* change true *)
                    | _ -> assert false)
       | _ -> assert false }
   | BVZEXT INT name_term
     { let n = $2 in
       match $3 with
       | Atom h -> (match Atom.type_of h with
-                   | TBV s -> true, Atom (Atom.mk_bvzextn ra ~s ~n h)   /* change true */
+                   | TBV s -> true, Atom (Atom.mk_bvzextn ra ~s ~n h)   (* change true *)
                    | _ -> assert false)
       | _ -> assert false }
   | BVSEXT INT name_term
     { let n = $2 in
       match $3 with
       | Atom h -> (match Atom.type_of h with
-                   | TBV s -> true, Atom (Atom.mk_bvsextn ra ~s ~n h)   /* change true */
+                   | TBV s -> true, Atom (Atom.mk_bvsextn ra ~s ~n h)   (* change true *)
                    | _ -> assert false)
       | _ -> assert false }
   | SELECT name_term name_term {
     match $2,$3 with
     | Atom h1, Atom h2 ->
        (match Atom.type_of h1 with
-        | TFArray (ti,te) -> true, Atom (Atom.mk_select ra ti te h1 h2)   /* change true */
+        | TFArray (ti,te) -> true, Atom (Atom.mk_select ra ti te h1 h2)   (* change true *)
         | _ -> assert false)
     | _,_ -> assert false
     }
@@ -398,7 +399,7 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
     match $2,$3 with
     | Atom h1, Atom h2 ->
        (match Atom.type_of h1 with
-        | TFArray (ti,te) -> true, Atom (Atom.mk_diffarray ra ti te h1 h2)   /* change true */
+        | TFArray (ti,te) -> true, Atom (Atom.mk_diffarray ra ti te h1 h2)   (* change true *)
         | _ -> assert false)
     | _,_ -> assert false
     }
@@ -406,7 +407,7 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
     match $2,$3,$4 with
     | Atom h1, Atom h2, Atom h3 ->
        (match Atom.type_of h1 with
-        | TFArray (ti,te) -> true, Atom (Atom.mk_store ra ti te h1 h2 h3)   /* change true */
+        | TFArray (ti,te) -> true, Atom (Atom.mk_store ra ti te h1 h2 h3)   (* change true *)
         | _ -> assert false)
     | _ -> assert false
     }

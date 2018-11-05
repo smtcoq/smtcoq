@@ -124,6 +124,9 @@ let mkCongr p =
         if indexed_op_index a_f = indexed_op_index b_f then
           let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
           Other (EqCgr (c,cert))
+        else failwith "VeritSyntax.mkCongr: left function is different from right fucntion"
+     | _, _ -> failwith "VeritSyntax.mkCongr: atoms are not applications")
+  |_ -> failwith "VeritSyntax.mkCongr: no conclusion or more than one conclusion in congruence"
 
 
 let mkCongrPred p =
