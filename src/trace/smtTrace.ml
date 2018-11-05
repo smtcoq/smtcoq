@@ -23,7 +23,7 @@ open SmtCertif
 
 let notUsed = 0
 
-let next_id = ref 0 
+let next_id = ref 0
 
 let clear () = next_id := 0
 
@@ -34,7 +34,7 @@ let next_id () =
 
 (** Basic functions over small certificates *)
 
-let mk_scertif kind ov = 
+let mk_scertif kind ov =
   {
    id   = next_id ();
    kind = kind;
@@ -42,13 +42,13 @@ let mk_scertif kind ov =
    used = notUsed;
    prev = None;
    next = None;
-   value = ov 
+   value = ov
  }
-  
+
 (** Roots *)
 
 
-let mkRootGen ov = 
+let mkRootGen ov =
   let pos = next_id () in
   {
    id   = pos;
@@ -57,17 +57,17 @@ let mkRootGen ov =
    used = notUsed;
    prev = None;
    next = None;
-   value = ov 
+   value = ov
  }
 
 (* let mkRoot = mkRootGen None *)
 let mkRootV v = mkRootGen (Some v)
- 
-let isRoot k = k == Root 
+
+let isRoot k = k == Root
 
 (** Resolutions *)
 
-let mkRes c1 c2 tl = 
+let mkRes c1 c2 tl =
   mk_scertif (Res { rc1 = c1; rc2 = c2; rtail = tl }) None
 
 let isRes k =
@@ -121,7 +121,9 @@ let get_res c s =
 let get_other c s =
   match c.kind with
   | Other res -> res
-  | _ -> Printf.printf "get_other %s\n" s; assert false
+  | Same _ -> failwith "get_other on a Same"
+  | Res _ -> failwith "get_other on a Res"
+  | Root -> failwith "get_other on a Root"
 
 let get_val c =
   match c.value with
@@ -144,11 +146,90 @@ let rec get_pos c =
       | Some n -> n
       | _ -> assert false
       end
-  | Same c -> get_pos c 
+  | Same c -> get_pos c
 
 let eq_clause c1 c2 = (repr c1).id = (repr c2).id
 
+
+(* Reorders the roots according to the order they were given in initially. *)
+let order_roots init_index first =
+  let r = ref first in
+  let acc = ref [] in
+  while isRoot !r.kind do
+    begin match !r.value with
+    | Some [f] -> let n = next !r in
+                  clear_links !r; 
+                  acc := (init_index f, !r) :: !acc;
+                  r := n
+    | _ -> failwith "root value has unexpected form" end
+  done;
+  let _, lr = List.sort (fun (i1, _) (i2, _) -> Pervasives.compare i1 i2) !acc
+             |> List.split in
+  let link_to c1 c2 =
+    let curr_id = c2.id -1 in
+    c1.id <- curr_id;
+    c1.pos <- Some curr_id;
+    link c1 c2; c1 in
+  List.fold_right link_to lr !r, lr
+
+
+(* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that 
+the following clauses reference those clauses instead of the roots *)
+let add_scertifs to_add c =
+  let r = ref c in
+  clear (); ignore (next_id ());
+  while isRoot !r.kind do
+    ignore (next_id ());
+    r := next !r;
+  done;
+  let after_roots = !r in
+  r := prev !r;
+  let tbl : (int, 'a SmtCertif.clause) Hashtbl.t =
+    Hashtbl.create 17 in
+  let rec push_all = function
+    | [] -> ()
+    | (kind, ov, t_cl)::t -> let cl = mk_scertif kind ov in
+                             Hashtbl.add tbl t_cl.id cl;
+                             link !r cl;
+                             r := next !r;
+                             push_all t in
+  push_all to_add; link !r after_roots; r:= after_roots;
+  let uc c = try Hashtbl.find tbl c.id
+             with Not_found -> c in
+  let update_kind = function
+    | Root -> Root
+    | Same c -> Same (uc c)
+    | Res {rc1 = r1; rc2 = r2; rtail = rt} ->
+       Res {rc1 = uc r1;
+            rc2 = uc r2;
+            rtail = List.map uc rt}
+    | Other u ->
+       Other begin match u with
+         | ImmBuildProj (c, x) -> ImmBuildProj (uc c, x)
+         | ImmBuildDef c -> ImmBuildDef (uc c)
+         | ImmBuildDef2 c -> ImmBuildDef2 (uc c)
+         | Forall_inst (c, x) -> Forall_inst (uc c, x) 
+         | ImmFlatten (c, x) -> ImmFlatten (uc c, x) 
+         | SplArith (c, x, y) -> SplArith (uc c, x, y) 
+         | SplDistinctElim (c, x) -> SplDistinctElim (uc c, x) 
+
+         | Hole (cs, x) -> Hole (List.map uc cs, x)
+
+         | x -> x end in
+  let continue = ref true in
+  while !continue do
+    !r.kind <- update_kind !r.kind;
+    !r.id <- next_id ();
+    match !r.next with 
+    | None -> continue := false
+    | Some n -> r := n
+  done;
+  !r
+
 (* Selection of useful rules *)
+(* For <select>, <occur> and <alloc> we assume that the roots and only the 
+roots are at the beginning of the smtcoq certif *)
+(* After <select> no selected clauses are used so that <occur> works properly*)
 let select c =
   let mark c =
     if not (isRoot c.kind) then c.used <- 1 in
@@ -157,49 +238,46 @@ let select c =
   while not (isRoot !r.kind) do
     let p = prev !r in
     (match !r.kind with
-      | Res res ->
-      if !r.used == 1 then begin
-        !r.used <- notUsed;
-        (* let res = get_res !r "select" in *)
-        mark res.rc1; mark res.rc2;
-        List.iter mark res.rtail
-      end else
-        skip !r;
-      | Same _ ->
+     | Res res ->
+        if !r.used == 1 then begin
+            !r.used <- notUsed;
+            (* let res = get_res !r "select" in *)
+            mark res.rc1; mark res.rc2;
+            List.iter mark res.rtail
+          end else
+          skip !r;
+     | Same c ->
+        mark c;
         skip !r
-      | _ ->
-      if !r.used == 1 then 
-	begin
-          !r.used <- notUsed;
-          let rl = get_other !r "select" in
-          List.iter mark (used_clauses rl)
-	end 
-      else skip !r;
+     | _ ->
+        if !r.used == 1 then
+	  begin
+            !r.used <- notUsed;
+            let rl = get_other !r "select" in
+            List.iter mark (used_clauses rl)
+	  end
+        else skip !r;
     );
     r := p
   done
 
- 
-
-
-(* Compute the number of occurence of each_clause *)
-
+(* Compute the number of occurence of each clause so that <alloc> works 
+properly *)
 let rec occur c =
   match c.kind with
   | Root -> c.used <- c.used + 1
   | Res res ->
-      if c.used == notUsed then 
+      if c.used == notUsed then
 	begin occur res.rc1; occur res.rc2; List.iter occur res.rtail end;
       c.used <- c.used + 1
   | Other res ->
-      if c.used == notUsed then List.iter occur (used_clauses res);
-      c.used <- c.used + 1;
+     if c.used == notUsed then List.iter occur (used_clauses res);
+     c.used <- c.used + 1;
   | Same c' ->
     occur c';
     c.used <- c.used + 1
 
-(* Allocate clause *)
-
+(* Allocate clauses *)
 let alloc c =
   let free_pos = ref [] in
 
@@ -214,12 +292,12 @@ let alloc c =
   done;
 
   (* r is the first clause defined by resolution or another rule,
-     normaly the first used *)
+     normally the first used *)
   let last_set = ref (get_pos (prev !r)) in
 
   let decr_clause c =
     let rc = repr c in
-      assert (rc.used > notUsed);
+    assert (rc.used > notUsed);
     rc.used <- rc.used - 1;
     if rc.used = notUsed then
       free_pos := get_pos rc :: !free_pos in
@@ -232,23 +310,22 @@ let alloc c =
   let decr_other o =
     List.iter decr_clause (used_clauses o) in
 
-  while !r.next <> None do
-    let n = next !r in
-      assert (!r.used <> notUsed);
+  let continue = ref true in
+  while !continue do
+    assert (!r.used <> notUsed);
     if isRes !r.kind then
       decr_res (get_res !r "alloc")
     else
       decr_other (get_other !r "alloc");
-    begin match !free_pos with
-    | p::free -> free_pos := free; !r.pos <- Some p
-    | _ -> incr last_set; !r.pos <- Some !last_set
+    begin try match !free_pos with
+              | p::free -> free_pos := free; !r.pos <- Some p
+              | _ -> incr last_set; !r.pos <- Some !last_set
+          with _ -> failwith (to_string !r.kind)
     end;
-    r := n
+    match !r.next with
+    | None -> continue := false
+    | Some n -> r := n
   done;
-  begin match !free_pos with
-  | p::free -> free_pos := free; !r.pos <- Some p
-  | _ -> incr last_set; !r.pos <- Some !last_set
-  end;
   !last_set
 
 
@@ -280,23 +357,24 @@ let build_certif first_root confl =
 let to_coq to_lit interp (cstep,
     cRes, cWeaken, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
-    cImmBuildProj,cImmBuildDef,cImmBuildDef2,  
-    cEqTr, cEqCgr, cEqCgrP, 
+    cImmBuildProj,cImmBuildDef,cImmBuildDef2,
+    cEqTr, cEqCgr, cEqCgrP,
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
     cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBDiseq,
     cBBNeg, cBBAdd, cBBMul, cBBUlt, cBBSlt, cBBConc,
     cBBExtr, cBBZextn, cBBSextn,
     cBBShl, cBBShr,
     cRowEq, cRowNeq, cExt,
-    cHole) confl =
+    cHole, cForallInst) confl sf =
 
   let cuts = ref [] in
 
   let out_f f = to_lit f in
   let out_c c = mkInt (get_pos c) in
+  let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
   let step_to_coq c =
     match c.kind with
-    | Res res -> 
+    | Res res ->
 	let size = List.length res.rtail + 3 in
 	let args = Array.make size (mkInt 0) in
 	args.(0) <- mkInt (get_pos res.rc1);
@@ -304,10 +382,10 @@ let to_coq to_lit interp (cstep,
 	let l = ref res.rtail in
 	for i = 2 to size - 2 do
 	  match !l with
-	  | c::tl -> 
+	  | c::tl ->
 	      args.(i) <- mkInt (get_pos c);
 	      l := tl
-	  | _ -> assert false 
+	  | _ -> assert false
 	done;
 	mklApp cRes [|mkInt (get_pos c); Structures.mkArray (Lazy.force cint, args)|]
     | Other other ->
@@ -391,15 +469,24 @@ let to_coq to_lit interp (cstep,
            let ass_ty = interp (prem, concl) in
            cuts := (ass_name, ass_ty)::!cuts;
            let ass_var = Term.mkVar ass_name in
-           let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
            let prem_id' = List.fold_right (fun c l -> mklApp ccons [|Lazy.force cint; out_c c; l|]) prem_id (mklApp cnil [|Lazy.force cint|]) in
            let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
            let concl' = out_cl concl in
            mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
+        | Forall_inst (cl, concl) | Qf_lemma (cl, concl) ->
+           let clemma, cplemma = match sf with
+             | Some find -> find cl
+             | None -> assert false in
+           let concl' = out_cl [concl] in
+           let app_name = Names.id_of_string ("app" ^ (string_of_int (Hashtbl.hash concl))) in
+           let app_var = Term.mkVar app_name in
+           let app_ty = Term.mkArrow clemma (interp ([], [concl])) in
+           cuts := (app_name, app_ty)::!cuts;
+           mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
 	end
     | _ -> assert false in
   let step = Lazy.force cstep in
-  let def_step = 
+  let def_step =
     mklApp cRes [|mkInt 0; Structures.mkArray (Lazy.force cint, [|mkInt 0|]) |] in
   let r = ref confl in
   let nc = ref 0 in
@@ -415,13 +502,13 @@ let to_coq to_lit interp (cstep,
 
 (** Optimization of the trace *)
 
-module MakeOpt (Form:SmtForm.FORM) = 
-  struct 
+module MakeOpt (Form:SmtForm.FORM) =
+  struct
     (* Share the certificate building a common clause *)
     let share_value c =
       let tbl = Hashtbl.create 17 in
       let to_lits v = List.map (Form.to_lit) v in
-      let process c = 
+      let process c =
 	match c.value with
 	| None -> ()
 	| Some v ->
@@ -434,7 +521,7 @@ module MakeOpt (Form:SmtForm.FORM) =
       while !r.next <> None do
 	let next = next !r in
 	process !r;
-	r := next 
+	r := next
       done;
       process !r
 
@@ -463,7 +550,7 @@ module MakeOpt (Form:SmtForm.FORM) =
 	    if eq_clause c1 c2 then aux (repr c1 :: rhd) tl1' tl2'
 	    else List.rev rhd, tl1, tl2
       in aux [] tl1 tl2
-	
+
     let share_prefix first_c n =
       let tbl = HRtbl.create (min n Sys.max_array_length) in
       let rec share c2 =

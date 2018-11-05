@@ -22,322 +22,12 @@ open CoqTerms
 open Entries
 open Declare
 open Decl_kinds
+open SmtBtype
 
-(** Syntaxified version of Coq type *)
-type indexed_type = Term.constr gen_hashed
-
-let dummy_indexed_type i = {index = i; hval = Term.mkProp}
-let indexed_type_index i = i.index
-
-type btype =
-  | TZ
-  | Tbool
-  | Tpositive
-  | TBV of int
-  | Tindex of indexed_type
-  | TFArray of btype * btype
-
-
-
-let mk_bool b =
-  let c, args = Term.decompose_app b in
-  if Term.eq_constr c (Lazy.force ctrue) then true
-  else if Term.eq_constr c (Lazy.force cfalse) then false
-  else assert false
-
-let rec mk_bool_list bs =
-  let c, args = Term.decompose_app bs in
-  if Term.eq_constr c (Lazy.force cnil) then []
-  else if Term.eq_constr c (Lazy.force ccons) then
-    match args with
-    | [_; b; bs] -> mk_bool b :: mk_bool_list bs
-    | _ -> assert false
-  else assert false
-
-let rec mk_nat n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cO) then
-    0
-  else if Term.eq_constr c (Lazy.force cS) then
-    match args with
-    | [n] -> (mk_nat n) + 1
-    | _ -> assert false
-  else assert false
-
-let rec mk_positive n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cxH) then
-    1
-  else if Term.eq_constr c (Lazy.force cxO) then
-    match args with
-    | [n] -> 2 * (mk_positive n)
-    | _ -> assert false
-  else if Term.eq_constr c (Lazy.force cxI) then
-    match args with
-    | [n] -> 2 * (mk_positive n) + 1
-    | _ -> assert false
-  else assert false
-
-
-let mk_N n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cN0) then
-    0
-  else if Term.eq_constr c (Lazy.force cNpos) then
-    match args with
-    | [n] -> mk_positive n
-    | _ -> assert false
-  else assert false
-
-
-let mk_Z n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cZ0) then 0
-  else if Term.eq_constr c (Lazy.force cZpos) then
-    match args with
-    | [n] -> mk_positive n
-    | _ -> assert false
-  else if Term.eq_constr c (Lazy.force cZneg) then
-    match args with
-    | [n] -> - mk_positive n
-    | _ -> assert false
-  else assert false
-
-
-(* size of bivectors are either N.of_nat (length l) or an N *)
-let mk_bvsize n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cof_nat) then
-    match args with
-    | [nl] ->
-      let c, args = Term.decompose_app nl in
-      if Term.eq_constr c (Lazy.force clength) then
-        match args with
-        | [_; l] -> List.length (mk_bool_list l)
-        | _ -> assert false
-      else assert false
-    | _ -> assert false
-  else mk_N n
-
-
-module Btype = 
-  struct 
-
-    let index_tbl = Hashtbl.create 17 
-
-    let index_to_coq i =
-      let i = i.index in 
-      try Hashtbl.find index_tbl i
-      with Not_found ->
-	let interp = mklApp cTindex [|mkInt i|] in
-	Hashtbl.add index_tbl i interp;
-	interp
-
-    let rec equal t1 t2 =
-      match t1,t2 with
-        | Tindex i, Tindex j -> i.index == j.index
-        | TBV i, TBV j -> i == j
-        | TFArray (ti, te), TFArray (ti', te') -> equal ti ti' && equal te te'
-        | _ -> t1 == t2
-
-    let rec to_coq = function 
-      | TZ -> Lazy.force cTZ
-      | Tbool -> Lazy.force cTbool
-      | Tpositive -> Lazy.force cTpositive
-      | TBV n -> mklApp cTBV [|mkN n|]
-      | Tindex i -> index_to_coq i
-      | TFArray (ti, te) ->
-        mklApp cTFArray [|to_coq ti; to_coq te|]
-
-    let rec to_smt fmt = function
-      | TZ -> Format.fprintf fmt "Int"
-      | Tbool -> Format.fprintf fmt "Bool"
-      | Tpositive -> Format.fprintf fmt "Int"
-      | TBV i -> Format.fprintf fmt "(_ BitVec %i)" i
-      | Tindex i -> Format.fprintf fmt "Tindex_%i" i.index
-      | TFArray (ti, te) ->
-        Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
-
-    let rec logic = function
-      | TZ | Tpositive -> SL.singleton LLia
-      | Tbool -> SL.empty
-      | TBV _ -> SL.singleton LBitvectors
-      | Tindex _ -> SL.singleton LUF
-      | TFArray (ti, te) -> SL.add LArrays (SL.union (logic ti) (logic te))
-          
-    (* reify table *)
-    type reify_tbl = 
-      { mutable count : int;
-	tbl : (Term.constr, btype) Hashtbl.t;
-        mutable cuts : (Structures.names_id_t * Term.types) list;
-        unsup_tbl : (btype, btype) Hashtbl.t;
-      }
-
-    let create () = 
-      let htbl = Hashtbl.create 17 in  
-      Hashtbl.add htbl (Lazy.force cZ) TZ;
-      Hashtbl.add htbl (Lazy.force cbool) Tbool;
-      (* Hashtbl.add htbl (Lazy.force cpositive) Tpositive; *)
-      { count = 0;
-	tbl = htbl;
-        cuts = [];
-        unsup_tbl = Hashtbl.create 17;
-      }
-
-
-    (* Should we give a way to clear it? *)
-    let op_coq_types = Hashtbl.create 17
-    let get_coq_type_op = Hashtbl.find op_coq_types
-
-
-    (* let logic_of_coq reify t = logic (of_coq reify t) *)
-    
-
-    let interp_tbl reify =
-      let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_compdec) in
-      let set _ = function
-        | Tindex it -> t.(it.index) <- it.hval
-        | _ -> () in
-      Hashtbl.iter set reify.tbl;
-      Structures.mkArray (Lazy.force ctyp_compdec, t)
-
-
-    let to_list reify =
-      let set _ t acc = match t with
-	| Tindex it -> (it.index,it)::acc
-	| _ -> acc in
-      Hashtbl.fold set reify.tbl []
-
-    let make_t_i rt = interp_tbl rt
-
-
-    let interp_t t_i t =
-        mklApp cinterp_t [|t_i ; to_coq t|]
-
-    let dec_interp t_i t =
-      mklApp cdec_interp [|t_i ; to_coq t|]
-        
-    let ord_interp t_i t =
-      mklApp cord_interp [|t_i ; to_coq t|]
-        
-    let comp_interp t_i t =
-      mklApp ccomp_interp [|t_i ; to_coq t|]
-        
-    let inh_interp t_i t =
-        mklApp cinh_interp [|t_i ; to_coq t|]
-
-    let rec interp t_i = function
-      | TZ -> Lazy.force cZ
-      | Tbool -> Lazy.force cbool
-      | Tpositive -> Lazy.force cpositive
-      | TBV n -> mklApp cbitvector [|mkN n|]
-      | Tindex c -> mklApp cte_carrier [|c.hval|]
-      (* | TFArray _ as t -> interp_t t_i t *)
-      | TFArray (ti,te) ->
-        mklApp cfarray [| interp t_i ti; interp t_i te;
-                          ord_interp t_i ti; inh_interp t_i te |]
-
-    
-    let interp_to_coq reify t = interp (make_t_i reify) t
-
-
-
-
-    let get_cuts reify = reify.cuts
-
-    let declare reify t typ_compdec =
-      (* TODO: allows to have only typ_compdec *)
-      assert (not (Hashtbl.mem reify.tbl t));
-      let res = Tindex {index = reify.count; hval = typ_compdec} in
-      Hashtbl.add reify.tbl t res;
-      reify.count <- reify.count + 1;
-      res
-
-
-    exception Unknown_type of btype
-    
-    let check_known ty known_logic =
-      let l = logic ty in
-      if not (SL.subset l known_logic) then raise (Unknown_type ty)
-      else ty
-
-    let rec compdec_btype reify = function
-      | Tbool -> Lazy.force cbool_compdec
-      | TZ -> Lazy.force cZ_compdec
-      | Tpositive -> Lazy.force cPositive_compdec
-      | TBV s -> mklApp cBV_compdec [|mkN s|]
-      | TFArray (ti, te) ->
-        mklApp cFArray_compdec
-          [|interp_to_coq reify ti; interp_to_coq reify te;
-            compdec_btype reify ti; compdec_btype reify te|]
-      | Tindex i ->
-        let c, args = Term.decompose_app i.hval in
-        if Term.eq_constr c (Lazy.force cTyp_compdec) then
-          match args with
-          | [_; tic] -> tic
-          | _ -> assert false
-        else assert false
-
-    
-    let declare_and_compdec reify t ty =
-      try Hashtbl.find reify.unsup_tbl ty
-      with Not_found ->
-        let res =
-          declare reify t (mklApp cTyp_compdec [|t; compdec_btype reify ty|])
-        in
-        Hashtbl.add reify.unsup_tbl ty res;
-        res
-
-
-    let rec of_coq reify known_logic t =
-      try
-        let c, args = Term.decompose_app t in
-        if Term.eq_constr c (Lazy.force cbool) ||
-           Term.eq_constr c (Lazy.force cTbool) then Tbool
-        else if Term.eq_constr c (Lazy.force cZ) ||
-                Term.eq_constr c (Lazy.force cTZ) then
-          check_known TZ known_logic
-        else if Term.eq_constr c (Lazy.force cpositive) ||
-                Term.eq_constr c (Lazy.force cTpositive) then
-          check_known Tpositive known_logic
-        else if Term.eq_constr c (Lazy.force cbitvector) ||
-                Term.eq_constr c (Lazy.force cTBV) then
-           match args with
-           | [s] -> check_known (TBV (mk_bvsize s)) known_logic
-           | _ -> assert false
-        else if Term.eq_constr c (Lazy.force cfarray) ||
-                Term.eq_constr c (Lazy.force cTFArray) then
-           match args with
-           | ti :: te :: _ ->
-             let ty = TFArray (of_coq reify known_logic ti,
-                               of_coq reify known_logic te) in
-             check_known ty known_logic
-           | _ -> assert false
-        else
-          try Hashtbl.find reify.tbl t
-          with Not_found ->
-            let n = string_of_int (List.length reify.cuts) in
-            let compdec_name = Names.id_of_string ("CompDec"^n) in
-            let compdec_var = Term.mkVar compdec_name in
-            let compdec_type = mklApp cCompDec [| t |]in
-            reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
-            let ce = mklApp cTyp_compdec [|t; compdec_var|] in
-            let ty = declare reify t ce in
-            (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
-            ty
-
-      with Unknown_type ty ->
-      try Hashtbl.find reify.tbl t
-      with Not_found -> declare_and_compdec reify t ty
-
-
-
-    
-  end
 
 (** Operators *)
 
-type cop = 
+type cop =
    | CO_xH
    | CO_Z0
    | CO_BV of bool list
@@ -345,7 +35,7 @@ type cop =
 type uop =
    | UO_xO
    | UO_xI
-   | UO_Zpos 
+   | UO_Zpos
    | UO_Zneg
    | UO_Zopp
    | UO_BVbitOf of int * int
@@ -355,7 +45,7 @@ type uop =
    | UO_BVzextn of int * int
    | UO_BVsextn of int * int
 
-type bop = 
+type bop =
    | BO_Zplus
    | BO_Zminus
    | BO_Zmult
@@ -385,16 +75,19 @@ type top =
 type nop =
   | NO_distinct of btype
 
-type op_def = { 
-    tparams : btype array; 
-    tres : btype; 
+type op_def = {
+    tparams : btype array;
+    tres : btype;
     op_val : Term.constr }
 
-type indexed_op = op_def gen_hashed 
+type index = Index of int
+           | Rel_name of string
+
+type indexed_op = index * op_def
 
 let dummy_indexed_op i dom codom =
   {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
-  
+
 let indexed_op_index op = op.index
 
 let debruijn_indexed_op i ty =
@@ -402,7 +95,7 @@ let debruijn_indexed_op i ty =
     hval = {tparams = [||]; tres = ty; op_val = Term.mkRel i}}
 
 module Op =
-  struct 
+  struct
     let c_to_coq = function
       | CO_xH -> Lazy.force cCO_xH
       | CO_Z0 -> Lazy.force cCO_Z0
@@ -418,10 +111,10 @@ module Op =
       | CO_Z0 -> Lazy.force cZ0
       | CO_BV bv -> mklApp cof_bits [|mk_bv_list bv|]
 
-    let u_to_coq = function 
+    let u_to_coq = function
       | UO_xO -> Lazy.force cUO_xO
       | UO_xI -> Lazy.force cUO_xI
-      | UO_Zpos -> Lazy.force cUO_Zpos 
+      | UO_Zpos -> Lazy.force cUO_Zpos
       | UO_Zneg -> Lazy.force cUO_Zneg
       | UO_Zopp -> Lazy.force cUO_Zopp
       | UO_BVbitOf (s, i) -> mklApp cUO_BVbitOf [|mkN s; mkNat i|]
@@ -431,22 +124,22 @@ module Op =
       | UO_BVzextn (s, n) -> mklApp cUO_BVzextn [|mkN s; mkN n|]
       | UO_BVsextn (s, n) -> mklApp cUO_BVsextn [|mkN s; mkN n|]
 
-    let u_type_of = function 
+    let u_type_of = function
       | UO_xO | UO_xI -> Tpositive
       | UO_Zpos | UO_Zneg | UO_Zopp -> TZ
       | UO_BVbitOf _ -> Tbool
       | UO_BVnot s | UO_BVneg s -> TBV s
       | UO_BVextr (_, n, _) -> TBV n
       | UO_BVzextn (s, n) | UO_BVsextn (s, n) -> TBV (s + n)
-          
-    let u_type_arg = function 
+
+    let u_type_arg = function
       | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
       | UO_Zopp -> TZ
       | UO_BVbitOf (s,_) -> TBV s
       | UO_BVnot s | UO_BVneg s -> TBV s
       | UO_BVextr (_, _, s) -> TBV s
       | UO_BVzextn (s, _) | UO_BVsextn (s, _) -> TBV s
-      
+
 
     let interp_uop = function
       | UO_xO -> Lazy.force cxO
@@ -461,15 +154,15 @@ module Op =
       | UO_BVzextn (s, n) -> mklApp cbv_zextn [|mkN s; mkN n|]
       | UO_BVsextn (s, n) -> mklApp cbv_sextn [|mkN s; mkN n|]
 
-    let eq_tbl = Hashtbl.create 17 
-    let select_tbl = Hashtbl.create 17 
-    let store_tbl = Hashtbl.create 17 
-    let diffarray_tbl = Hashtbl.create 17 
-    
+    let eq_tbl = Hashtbl.create 17
+    let select_tbl = Hashtbl.create 17
+    let store_tbl = Hashtbl.create 17
+    let diffarray_tbl = Hashtbl.create 17
+
     let eq_to_coq t =
-      try Hashtbl.find eq_tbl t 
+      try Hashtbl.find eq_tbl t
       with Not_found ->
-	let op = mklApp cBO_eq [|Btype.to_coq t|] in
+	let op = mklApp cBO_eq [|SmtBtype.to_coq t|] in
 	Hashtbl.add eq_tbl t op;
 	op
 
@@ -515,7 +208,7 @@ module Op =
       | BO_BVshr s -> mklApp cBO_BVshr [|mkN s|]
       | BO_select (ti, te) -> select_to_coq ti te
       | BO_diffarray (ti, te) -> diffarray_to_coq ti te
-        
+
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
@@ -527,7 +220,7 @@ module Op =
       | BO_diffarray (ti, _) -> ti
 
     let b_type_args = function
-      | BO_Zplus | BO_Zminus | BO_Zmult 
+      | BO_Zplus | BO_Zminus | BO_Zmult
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
       | BO_eq t -> (t,t)
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
@@ -536,7 +229,7 @@ module Op =
       | BO_BVconcat (s1, s2) -> (TBV s1, TBV s2)
       | BO_select (ti, te) -> (TFArray (ti, te), ti)
       | BO_diffarray (ti, te) -> (TFArray (ti, te), TFArray (ti, te))
-                                 
+
 
     let interp_ieq t_i t =
       mklApp cinterp_eqb [|t_i ; Btype.to_coq t|]
@@ -547,7 +240,7 @@ module Op =
       let evd, ty = Typing.type_of env evd te in
       Vnorm.cbv_vm env te ty
 
-    
+
     let interp_ieq_eval t_i t =
       let te = mklApp cinterp_eqb [|t_i ; Btype.to_coq t|] in
       veval_t te
@@ -580,7 +273,7 @@ module Op =
                 dec_interp t_i ti; ord_interp t_i ti; comp_interp t_i ti;
                 ord_interp t_i te; comp_interp t_i te; inh_interp t_i te |]
 
-    
+
     let interp_eq t_i = function
       | TZ -> Lazy.force ceqbZ
       | Tbool -> Lazy.force ceqb
@@ -591,7 +284,7 @@ module Op =
                                  mklApp cte_compdec [|i.hval|]|]
       | TFArray (ti, te) -> interp_eqarray t_i ti te
 
-    
+
 
     let interp_bop t_i = function
       | BO_Zplus -> Lazy.force cadd
@@ -627,9 +320,9 @@ module Op =
     let interp_top t_i = function
       | TO_store (ti, te) -> interp_store t_i ti te
 
-    
+
     let n_to_coq = function
-      | NO_distinct t -> mklApp cNO_distinct [|Btype.to_coq t|]
+      | NO_distinct t -> mklApp cNO_distinct [|SmtBtype.to_coq t|]
 
     let n_type_of = function
       | NO_distinct _ -> Tbool
@@ -637,51 +330,60 @@ module Op =
     let n_type_args = function
       | NO_distinct ty -> ty
 
+    let interp_distinct = function
+      | TZ -> Lazy.force cZ
+      | Tbool -> Lazy.force cbool
+      | Tpositive -> Lazy.force cpositive
+      | Tindex i -> mklApp cte_carrier [|indexed_type_hval i|]
 
     let interp_nop t_i = function
       | NO_distinct ty ->
         mklApp cdistinct [|Btype.interp t_i ty; interp_eq t_i ty|]
 
-    let i_to_coq i = mkInt i.index
+    let i_to_coq i = let index, _ = destruct "destruct on a Rel: called by i_to_coq" i in
+                     mkInt index
 
-    let i_type_of i = i.hval.tres
+    let i_type_of (_, hval) = hval.tres
 
-    let i_type_args i = i.hval.tparams
-	  
+    let i_type_args (_, hval) = hval.tparams
+
     (* reify table *)
     type reify_tbl =
-        { mutable count : int;
-	          tbl : (Term.constr, indexed_op) Hashtbl.t
-	}
+      { mutable count : int;
+	        tbl : (Term.constr, indexed_op) Hashtbl.t
+      }
 
     let create () =
       { count = 0;
 	tbl =  Hashtbl.create 17 }
 
-    let declare reify op tparams tres =
+    let declare reify op tparams tres os =
       assert (not (Hashtbl.mem reify.tbl op));
-      let v = { tparams = tparams; tres = tres; op_val = op } in
-      let res = {index = reify.count; hval = v } in
-      Hashtbl.add reify.tbl op res;
-      reify.count <- reify.count + 1;
-      res
+      let opa = { tparams = tparams; tres = tres; op_val = op } in
+      match os with
+      | None ->  let res = Index reify.count, opa in
+                 Hashtbl.add reify.tbl op res;
+                 reify.count <- reify.count + 1;
+                 res
+      | Some name -> Rel_name name, opa
 
     let of_coq reify op =
       Hashtbl.find reify.tbl op
 
 
     let interp_tbl tval mk_Tval reify =
-      let t = Array.make (reify.count + 1) 
-	  (mk_Tval [||] Tbool (Lazy.force ctrue))  in
-      let set _ v = 
-	t.(v.index) <- mk_Tval v.hval.tparams v.hval.tres v.hval.op_val in
+      let t = Array.make (reify.count + 1)
+	        (mk_Tval [||] Tbool (Lazy.force ctrue)) in
+      let set _ op =
+        let index, hval = destruct "destruct on a Rel: called by set in interp_tbl" op in
+        t.(index) <- mk_Tval hval.tparams hval.tres hval.op_val in
       Hashtbl.iter set reify.tbl;
       Structures.mkArray (tval, t)
 
     let to_list reify =
       let set _ op acc =
-        let value = op.hval in
-        (op.index,value.tparams,value.tres,op)::acc in
+        let index, hval = destruct "destruct on a Rel: called by set in to_list" op in
+        (index, hval.tparams, hval.tres, op)::acc in
       Hashtbl.fold set reify.tbl []
 
     let c_equal op1 op2 = match op1, op2 with
@@ -708,7 +410,7 @@ module Op =
 
     let b_equal op1 op2 =
       match op1,op2 with
-        | BO_eq t1, BO_eq t2 -> Btype.equal t1 t2
+        | BO_eq t1, BO_eq t2 -> SmtBtype.equal t1 t2
         | BO_BVand n1, BO_BVand n2 -> n1 == n2
         | BO_BVor n1, BO_BVor n2 -> n1 == n2
         | BO_BVxor n1, BO_BVxor n2 -> n1 == n2
@@ -731,9 +433,9 @@ module Op =
 
     let n_equal op1 op2 =
       match op1,op2 with
-        | NO_distinct t1, NO_distinct t2 -> Btype.equal t1 t2
+      | NO_distinct t1, NO_distinct t2 -> SmtBtype.equal t1 t2
 
-    let i_equal op1 op2 = op1.index == op2.index
+    let i_equal (i1, _) (i2, _) = i1 = i2
 
 
 
@@ -779,10 +481,10 @@ module Op =
     let logic_of_nop = function
       | NO_distinct ty -> Btype.logic ty
 
-    
+
     let logic_of_indexed t =
       Array.fold_left (fun l ty ->
-         SL.union (Btype.logic ty) l  
+         SL.union (Btype.logic ty) l
         ) (Btype.logic t.hval.tres) t.hval.tparams
 
 
@@ -795,10 +497,10 @@ module Op =
 
 (** Definition of atoms *)
 
-type atom = 
+type atom =
   | Acop of cop
-  | Auop of uop * hatom 
-  | Abop of bop * hatom * hatom 
+  | Auop of uop * hatom
+  | Abop of bop * hatom * hatom
   | Atop of top * hatom * hatom * hatom
   | Anop of nop * hatom array
   | Aapp of indexed_op * hatom array
@@ -833,7 +535,7 @@ and hatom = atom gen_hashed
 (*   | Aapp (op,a) -> "(Aapp "^(string_of_int op.index)^" ("^(Array.fold_left (fun acc h -> acc^" "^(pp_atom h.hval)) "" a)^"))" *)
 
 module HashedAtom =
-  struct 
+  struct
     type t = atom
 
     let equal a b =
@@ -864,7 +566,7 @@ module HashedAtom =
     let hash = function
       |	Acop op -> ((Hashtbl.hash op) lsl 3) lxor 1
       | Auop (op,h) ->
-          (( (h.index lsl 3) + (Hashtbl.hash op)) lsl 3) lxor 2
+         (( (h.index lsl 3) + (Hashtbl.hash op)) lsl 3) lxor 2
       | Abop (op,h1,h2) ->
         (((( (h1.index lsl 2) + h2.index) lsl 3) + Hashtbl.hash op) lsl 3) lxor 3
       | Atop (op,h1,h2,h3) ->
@@ -890,18 +592,18 @@ module HashedAtom =
           (hash_args lsl 5 + op.index lsl 3) lxor 4
 
 
-    
+
   end
 
 module HashAtom = Hashtbl.Make(HashedAtom)
 
-module Atom = 
-  struct 
+module Atom =
+  struct
 
     type t = hatom
 
     let atom h = h.hval
-    let index h = h.index 
+    let index h = h.index
 
     let equal h1 h2 = h1.index == h2.index
 
@@ -914,18 +616,18 @@ module Atom =
       | Anop (op,_) -> Op.n_type_of op
       | Aapp (op,_) -> Op.i_type_of op
 
-    let is_bool_type h = Btype.equal (type_of h) Tbool
+    let is_bool_type h = SmtBtype.equal (type_of h) Tbool
     let is_bv_type h = match type_of h with | TBV _ -> true | _ -> false
 
 
     let rec compute_int = function
       | Acop c ->
-        (match c with
+         (match c with
           | CO_xH -> 1
           | CO_Z0 -> 0
           | CO_BV _ -> assert false)
       | Auop (op,h) ->
-        (match op with
+         (match op with
           | UO_xO -> 2*(compute_hint h)
           | UO_xI -> 2*(compute_hint h) + 1
           | UO_Zpos -> compute_hint h
@@ -937,7 +639,7 @@ module Atom =
 
     and compute_hint h = compute_int (atom h)
 
-    let to_smt_int fmt i =
+    let to_string_int i =
       let s1 = if i < 0 then "(- " else "" in
       let s2 = if i < 0 then ")" else "" in
       let j = if i < 0 then -i else i in
@@ -949,7 +651,7 @@ module Atom =
       | false :: bv -> Format.fprintf fmt "%a0" bv_to_smt bv
       | [] -> ()
 
-    
+
     let rec to_smt fmt h = to_smt_atom fmt (atom h)
 
     and to_smt_atom fmt = function
@@ -1029,7 +731,7 @@ module Atom =
       (* Format.eprintf "Checking %a @." to_smt_atom a; *)
       match a with
       | Acop _ -> ()
-      | Auop(op,h) -> 
+      | Auop(op,h) ->
 	if not (Btype.equal (Op.u_type_arg op) (type_of h)) then
 	  raise (NotWellTyped a)
       | Abop(op,h1,h2) ->
@@ -1052,7 +754,7 @@ module Atom =
               raise (NotWellTyped a)) ha
       | Aapp(op,args) ->
 	let tparams = Op.i_type_args op in
-	Array.iteri (fun i t -> 
+	Array.iteri (fun i t ->
 	    if not (Btype.equal t (type_of args.(i))) then
 	      (Format.eprintf "Wanted %a, got %a@."
                 Btype.to_smt t Btype.to_smt (type_of args.(i));
@@ -1060,10 +762,10 @@ module Atom =
 
     type reify_tbl =
       { mutable count : int;
-	tbl : hatom HashAtom.t 
+	tbl : hatom HashAtom.t
       }
 
-    let create () = 
+    let create () =
       { count = 0;
 	tbl =  HashAtom.create 17 }
 
@@ -1074,46 +776,67 @@ module Atom =
       reify.count <- 0;
       HashAtom.clear reify.tbl
 
-    (* let z_to_pos a = match atom a with *)
-    (*   | Auop (UO_Zpos, x) -> x *)
-    (*   | _ -> assert false *)
-
-
-    (* let coerce to_ty h = *)
-    (*   if Btype.equal to_ty Tpositive && Btype.equal (type_of h) TZ then *)
-    (*     z_to_pos h *)
-    (*   else h *)
-
-
-    (* let z_to_pos_coerction a = match a with *)
-    (*   | Acop _ | Auop _ -> a *)
-    (*   | Abop (op, h1, h2) -> *)
-    (*     let t1, t2 = Op.b_type_args op in *)
-    (*     Abop (op, coerce t1 h1, coerce t2 h2) *)
-    (*   | Atop(op,h1,h2,h3) -> *)
-    (*     let (t1,t2,t3) = Op.t_type_args op in *)
-    (*     Atop (op, coerce t1 h1, coerce t2 h2, coerce t3 h3) *)
-    (*   | Anop(op,ha) -> *)
-    (*     let ty = Op.n_type_args op in *)
-    (*     Anop(op, Array.map (coerce ty) ha) *)
-    (*   | Aapp(op,args) -> *)
-    (*     let tparams = Op.i_type_args op in *)
-    (*     Aapp(op, Array.mapi (fun i -> coerce tparams.(i)) args) *)
-
-
     let declare reify a =
-      (* check a; *)
+      check a;
       let res = {index = reify.count; hval = a} in
       HashAtom.add reify.tbl a res;
       reify.count <- reify.count + 1;
       res
 
+    let get ?declare:(decl=true) reify a =
+      if decl
+      then try HashAtom.find reify.tbl a
+           with Not_found -> declare reify a
+      else {index = -1; hval = a}
 
-    let get reify a =
-      try HashAtom.find reify.tbl a
-      with Not_found -> declare reify a
+    let mk_eq reify decl ty h1 h2 =
+      let op = BO_eq ty in
+      try
+        HashAtom.find reify.tbl (Abop (op, h1, h2))
+      with Not_found ->
+        try
+          HashAtom.find reify.tbl (Abop (op, h2, h1))
+        with Not_found ->
+          get ~declare:decl reify (Abop (op, h1, h2))
 
-    
+    let mk_neg reify ({index = i; hval = a} as ha) =
+      try HashAtom.find reify.tbl (Auop (UO_Zopp, ha))
+      with Not_found ->
+        let na = match a with
+          | Auop (UO_Zpos, x) -> Auop (UO_Zneg, x)
+          | Auop (UO_Zneg, x) -> Auop (UO_Zpos, x)
+          | _ -> failwith "opp not on Z" in
+        get reify na
+
+    let rec hash_hatom ra' {index = _; hval = a} =
+      match a with
+      | Acop cop -> get ra' a
+      | Auop (uop, ha) -> get ra' (Auop (uop, hash_hatom ra' ha))
+      | Abop (bop, ha1, ha2) ->
+         let new_ha1 = hash_hatom ra' ha1 in
+         let new_ha2 = hash_hatom ra' ha2 in
+         begin match bop with
+         | BO_eq ty -> mk_eq ra' true ty new_ha1 new_ha2
+         | _ -> get ra' (Abop (bop, new_ha1, new_ha2)) end
+      | Anop _ -> assert false
+      | Aapp (op, arr) -> get ra' (Aapp (op, Array.map (hash_hatom ra') arr))
+
+    let copy {count=c; tbl=t} = {count = c; tbl = HashAtom.copy t}
+
+    let print_atoms reify where =
+      let oc = open_out where in
+      let fmt = Format.formatter_of_out_channel oc in
+      let accumulate _ ha acc = ha :: acc in
+      let list = HashAtom.fold accumulate reify.tbl [] in
+      let compare ha1 ha2 = compare ha1.index ha2.index in
+      let slist = List.sort compare list in
+      let print ha = Format.fprintf fmt "%i: " ha.index;
+                     to_smt fmt ha; Format.fprintf fmt "\n" in
+      List.iter print slist;
+      Format.fprintf fmt "@.";
+      close_out oc
+
+
     (** Given a coq term, build the corresponding atom *)
     type coq_cst =
       | CCxH
@@ -1192,15 +915,15 @@ module Atom =
       | CCBVzextn
       | CCBVshl
       | CCBVshr -> SL.singleton LBitvectors
-        
+
       | CCselect | CCdiff | CCstore -> SL.singleton LArrays
-                                                  
+
       | CCeqb -> SL.empty
 
       (* | CCeqbP | CCeqbZ -> SL.singleton LLia *)
       (* | CCeqbBV -> SL.singleton LBitvectors *)
       (* | CCeqbA -> SL.singleton LArrays *)
-        
+
       | CCeqbP | CCeqbZ | CCeqbBV | CCeqbA
       | CCunknown | CCunknown_deps _  -> SL.singleton LUF
 
@@ -1228,9 +951,9 @@ module Atom =
       | CCselect -> 5
       | CCdiff -> 10
       | CCstore -> 8
-        
+
       | _ -> 0
-    
+
 
     let op_tbl () =
       let tbl = Hashtbl.create 29 in
@@ -1267,9 +990,9 @@ module Atom =
 
     let get_coq_term_op =
       Hashtbl.find op_coq_terms
-    
-        
-    let of_coq rt ro reify known_logic env sigma c =
+
+
+    let of_coq ?hash:(h=false) rt ro reify known_logic env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try
@@ -1279,7 +1002,7 @@ module Atom =
         with Not_found -> CCunknown
       in
       let rec mk_hatom h =
-	let c, args = Term.decompose_app h in
+        let c, args = Term.decompose_app h in
 	match get_cst c with
         | CCxH -> mk_cop CCxH args
         | CCZ0 -> mk_cop CCZ0 args
@@ -1324,14 +1047,14 @@ module Atom =
         | CCunknown_deps gobble ->
           mk_unknown_deps c args (Retyping.get_type_of env sigma h) gobble
 
-    
+
       and mk_cop op args = match op, args with
         | CCxH, [] -> get reify (Acop CO_xH)
         | CCZ0, [] -> get reify (Acop CO_Z0)
         | CCBV, [bs] -> get reify (Acop (CO_BV (mk_bool_list bs)))
         | _ -> assert false
-          
-    
+
+
       and mk_uop op = function
         | [a] -> let h = mk_hatom a in
           get reify (Auop (op,h))
@@ -1375,10 +1098,10 @@ module Atom =
 
       and mk_bop op = function
         | [a1;a2] ->
-          let h1 = mk_hatom a1 in
-          let h2 = mk_hatom a2 in
-          get reify (Abop (op,h1,h2))
-        | _ -> assert false
+           let h1 = mk_hatom a1 in
+           let h2 = mk_hatom a2 in
+           get reify (Abop (op,h1,h2))
+        | _ -> failwith "unexpected number of arguments for mk_bop"
 
       and mk_top op = function
         | [a1;a2;a3] ->
@@ -1498,7 +1221,7 @@ module Atom =
           try Op.of_coq ro c
           with | Not_found ->
             let targs = Array.map type_of hargs in
-            let tres = Btype.of_coq rt known_logic ty in
+            let tres = SmtBtype.of_coq rt known_logic ty in
             Op.declare ro c targs tres in
         Hashtbl.add op_coq_terms op.index c; (* Chantal: I think we should move it to "Not_found" (otherwise it is already in the table) *)
         get reify (Aapp (op,hargs))
@@ -1510,7 +1233,7 @@ module Atom =
         let deps, args = split_list_at gobble args in
         let c = Term.mkApp (c, Array.of_list deps) in
         mk_unknown c args ty
-    
+
       in
       mk_hatom c
 
@@ -1521,9 +1244,9 @@ module Atom =
       match a with
       | Acop op -> mklApp cAcop [|Op.c_to_coq op|]
       | Auop (op,h) -> mklApp cAuop [|Op.u_to_coq op; to_coq h|]
-      | Abop (op,h1,h2) -> 
+      | Abop (op,h1,h2) ->
 	  mklApp cAbop [|Op.b_to_coq op;to_coq h1; to_coq h2|]
-      | Atop (op,h1,h2,h3) -> 
+      | Atop (op,h1,h2,h3) ->
 	  mklApp cAtop [|Op.t_to_coq op;to_coq h1; to_coq h2; to_coq h3|]
       | Anop (op,ha) ->
         let cop = Op.n_to_coq op in
@@ -1583,13 +1306,13 @@ module Atom =
 
     (* Generation of atoms *)
 
-    let mk_nop op reify a = get reify (Anop (op,a))
+    let mk_nop op reify ?declare:(decl=true) a = get ~declare:decl reify (Anop (op,a))
 
-    let mk_binop op reify h1 h2 = get reify (Abop (op, h1, h2))
+    let mk_binop op reify decl h1 h2 = get ~declare:decl reify (Abop (op, h1, h2))
 
     let mk_terop op reify h1 h2 h3 = get reify (Atop (op, h1, h2, h3))
 
-    let mk_unop op reify h = get reify (Auop (op, h))
+    let mk_unop op reify h ?declare:(decl=true) = get ~declare:decl reify (Auop (op, h))
 
     let rec hatom_pos_of_int reify i =
       if i <= 1 then
@@ -1627,17 +1350,7 @@ module Atom =
           mk_unop UO_Zneg reify
             (hatom_pos_of_bigint reify (Big_int.minus_big_int i))
 
-    let mk_eq reify ty h1 h2 =
-      let op = BO_eq ty in
-      try
-        HashAtom.find reify.tbl (Abop (op, h1, h2))
-      with
-        | Not_found ->
-          try
-            HashAtom.find reify.tbl (Abop (op, h2, h1))
-          with
-            | Not_found ->
-              declare reify (Abop (op, h1, h2))
+    let mk_unop op reify ?declare:(decl=true) h = get ~declare:decl reify (Auop (op, h))
 
     let mk_lt = mk_binop BO_Zlt
     let mk_le = mk_binop BO_Zle
@@ -1675,7 +1388,7 @@ module Atom =
       | Auop (u, h) -> SL.union (Op.logic_of_uop u) (logic h)
       | Abop (b, h1, h2) ->
         SL.union (Op.logic_of_bop b) (SL.union (logic h1) (logic h2))
-      | Atop (t, h1, h2, h3) -> 
+      | Atop (t, h1, h2, h3) ->
         SL.union (Op.logic_of_top t)
           (SL.union (logic h1) (SL.union (logic h2) (logic h3)))
       | Anop (n, ha) ->
@@ -1685,7 +1398,7 @@ module Atom =
           (Op.logic_of_indexed i) ha
 
     and logic h = logic_atom h.hval
-    
+
   end
 
 
@@ -1699,12 +1412,12 @@ let mk_ftype cod dom =
   let typeb = Lazy.force ctype in
   let typea = mklApp clist [|typeb|] in
   let a = Array.fold_right
-      (fun bt acc -> mklApp ccons [|typeb; Btype.to_coq bt; acc|])
+      (fun bt acc -> mklApp ccons [|typeb; SmtBtype.to_coq bt; acc|])
       cod (mklApp cnil [|typeb|]) in
-  let b = Btype.to_coq dom in
+  let b = SmtBtype.to_coq dom in
   mklApp cpair [|typea;typeb;a;b|]
 
-let make_t_i = Btype.make_t_i
+let make_t_i = SmtBtype.make_t_i
 let make_t_func ro t_i =
   Op.interp_tbl (mklApp ctval [|t_i|])
     (fun cod dom value -> mklApp cTval [|t_i; mk_ftype cod dom; value|]) ro

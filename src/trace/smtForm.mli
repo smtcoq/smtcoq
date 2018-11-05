@@ -41,7 +41,7 @@ type fop =
   | Fiff
   | Fite
   | Fnot2 of int
-
+  | Fforall of (string * SmtBtype.btype) list 
  
 type ('a,'f) gen_pform = 
   | Fatom of 'a
@@ -67,7 +67,8 @@ module type FORM =
       val is_pos : t -> bool
       val is_neg : t -> bool
 
-      val to_smt : (Format.formatter -> hatom -> unit) -> Format.formatter -> t -> unit
+      val to_string : ?pi:bool -> (hatom -> string) -> t -> string
+      val to_smt : (hatom -> string) -> Format.formatter -> t -> unit
 
       val logic : t -> logic
 
@@ -76,11 +77,13 @@ module type FORM =
       type reify 
       val create : unit -> reify
       val clear : reify -> unit
-      val get : reify -> pform -> t
+      val get : ?declare:bool -> reify -> pform -> t
       
       (** Given a coq term, build the corresponding formula *)  
       val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
-   
+
+      val hash_hform : (hatom -> hatom) -> reify -> t -> t
+                                             
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
 

@@ -60,7 +60,7 @@ let mkTrace step_to_coq next carray _ _ _ _ size step def_step r =
   if r1 <> 0 then (
     let traceq = Array.make (r1 + 1) def_step in
     for i = 0 to r1-1 do
-    r := next !r;
+      r := next !r;
     traceq.(i) <- step_to_coq !r;
     done;
     trace.(q) <- mkArray (step, traceq)
@@ -108,13 +108,18 @@ let pr_constr_env = Printer.pr_constr_env
 
 let lift = Term.lift
 
+let destruct_rel_decl (n, _, t) = n, t
+
+let interp_constr env sigma = Constrintern.interp_constr sigma env
+
+type constr_expr = Topconstr.constr_expr
+
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
 
 let vm_conv = Reduction.vm_conv
 let vm_cast_no_check = Tactics.vm_cast_no_check
-
 let mk_tactic tac gl =
   let env = Tacmach.pf_env gl in
   let sigma = Tacmach.project gl in
@@ -135,3 +140,7 @@ module Micromega_plugin_Certificate = Certificate
 module Micromega_plugin_Coq_micromega = Coq_micromega
 module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
+
+
+(* Type of coq tactics *)
+type tactic = Proof_type.tactic

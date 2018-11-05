@@ -9,7 +9,7 @@ Section Trace.
 
   Definition trace_to_list {step:Type} (t:trace step) : list step :=
     let (t, _) := t in t.
-  
+
   Definition trace_length {step:Type} (t:trace step) : int :=
     let (t,_) := t in
     List.fold_left (fun i _ => (i+1)%int) t 0%int.

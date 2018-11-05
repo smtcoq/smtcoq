@@ -2,6 +2,7 @@ Structures
 
 SmtMisc
 CoqTerms
+SmtBtype
 SmtForm
 SmtCertif
 SmtTrace

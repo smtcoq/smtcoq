@@ -24,9 +24,10 @@ open Decl_kinds
 open SmtMisc
 open CoqTerms
 open SmtForm
-open SmtCertif
 open SmtTrace
 open SmtAtom
+open SmtBtype
+open SmtCertif
 
 
 let debug = false
@@ -35,8 +36,38 @@ let debug = false
 (******************************************************************************)
 (* Given a verit trace build the corresponding certif and theorem             *)
 (******************************************************************************)
+exception Import_trace of int
 
-let import_trace filename first =
+let get_val = function
+    Some a -> a
+  | None -> assert false
+
+(* For debugging certif processing : <add_scertif> <select> <occur> <alloc> *)
+let print_certif c where=
+  let r = ref c in
+  let out_channel = open_out where in
+  let fmt = Format.formatter_of_out_channel out_channel in
+  let continue = ref true in
+  while !continue do
+    let kind = to_string (!r.kind) in
+    let id = !r.id in
+    let pos = match !r.pos with
+      | None -> "None"
+      | Some p -> string_of_int p in
+    let used = !r.used in
+    Format.fprintf fmt "id:%i kind:%s pos:%s used:%i value:" id kind pos used;
+    begin match !r.value with
+    | None -> Format.fprintf fmt "None"
+    | Some l -> List.iter (fun f -> Form.to_smt Atom.to_string fmt f;
+                                    Format.fprintf fmt " ") l end;
+    Format.fprintf fmt "\n";
+    match !r.next with
+    | None -> continue := false
+    | Some n -> r := n
+  done;
+  Format.fprintf fmt "@."; close_out out_channel
+
+let import_trace ra' rf' filename first lsmt =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let confl_num = ref (-1) in
@@ -56,24 +87,30 @@ let import_trace filename first =
     raise VeritLexer.Eof
   with
     | VeritLexer.Eof ->
-      close_in chan;
-      let first =
-        let aux = VeritSyntax.get_clause !first_num in
-        match first, aux.value with
-          | Some (root,l), Some (fl::nil) ->
-            if Form.equal l fl then
-              aux
-            else (
-              aux.kind <- Other (ImmFlatten(root,fl));
-              SmtTrace.link root aux;
-              root
-            )
-          | _,_ -> aux in
-      let confl = VeritSyntax.get_clause !confl_num in
-      SmtTrace.select confl;
-      (* Trace.share_prefix first (2 * last.id); *)
-      occur confl;
-      (alloc first, confl)
+       close_in chan;
+       let cfirst = ref (VeritSyntax.get_clause !first_num) in
+       let confl = ref (VeritSyntax.get_clause !confl_num) in
+       let re_hash = Form.hash_hform (Atom.hash_hatom ra') rf' in
+       begin match first with
+       | None -> ()
+       | Some _ ->
+          let cf, lr = order_roots (VeritSyntax.init_index lsmt re_hash)
+                         !cfirst in
+          cfirst := cf;
+          let to_add = VeritSyntax.qf_to_add (List.tl lr) in
+          let to_add =
+            (match first, !cfirst.value with
+             | Some (root, l), Some [fl] when not (Form.equal l (re_hash fl)) ->
+                let cfirst_value = !cfirst.value in
+                !cfirst.value <- root.value;
+                [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
+             | _ -> []) @ to_add in
+       match to_add with
+       | [] -> ()
+       | _  -> confl := add_scertifs to_add !cfirst end;
+       select !confl;
+       occur !confl;
+       (alloc !cfirst, !confl)
     | Parsing.Parse_error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
 
 
@@ -84,12 +121,14 @@ let clear_all () =
 
 let import_all fsmt fproof =
   clear_all ();
-  let rt = Btype.create () in
+  let rt = SmtBtype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
+  let ra' = VeritSyntax.ra' in
+  let rf' = VeritSyntax.rf' in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace fproof None in
+  let (max_id, confl) = import_trace ra' rf' fproof None [] in
   (rt, ro, ra, rf, roots, max_id, confl)
 
 
@@ -102,7 +141,7 @@ let checker_debug fsmt fproof =
 
 let theorem name fsmt fproof =
   SmtCommands.theorem name (import_all fsmt fproof)
-    
+
 let checker fsmt fproof =
   SmtCommands.checker (import_all fsmt fproof)
 
@@ -112,64 +151,77 @@ let checker fsmt fproof =
 (** Given a Coq formula build the proof                                       *)
 (******************************************************************************)
 
-let export out_channel rt ro l =
+let export out_channel rt ro lsmt =
   let fmt = Format.formatter_of_out_channel out_channel in
-  Format.fprintf fmt "(set-logic QF_UFLIA)@.";
+  Format.fprintf fmt "(set-logic UFLIA)@.";
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
     VeritSyntax.add_btype s (Tindex t);
     Format.fprintf fmt "(declare-sort %s 0)@." s
-  ) (Btype.to_list rt);
+  ) (SmtBtype.to_list rt);
 
-  List.iter (fun (i,cod,dom,op) ->
+  List.iter (fun (i,dom,cod,op) ->
     let s = "op_"^(string_of_int i) in
     VeritSyntax.add_fun s op;
     Format.fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
-    Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; Btype.to_smt fmt t) cod;
+    Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;
     Format.fprintf fmt ") ";
-    Btype.to_smt fmt dom;
+    SmtBtype.to_smt fmt cod;
     Format.fprintf fmt ")@."
   ) (Op.to_list ro);
 
-  Format.fprintf fmt "(assert ";
-  Form.to_smt Atom.to_smt fmt l;
-  Format.fprintf fmt ")@\n(check-sat)@\n(exit)@."
+  List.iter (fun u -> Format.fprintf fmt "(assert ";
+                      Form.to_smt Atom.to_string fmt u;
+                      Format.fprintf fmt ")\n") lsmt;
+
+  Format.fprintf fmt "(check-sat)\n(exit)@."
 
 
 (* val call_verit : Btype.reify_tbl -> Op.reify_tbl -> Form.t -> (Form.t clause * Form.t) -> (int * Form.t clause) *)
-let call_verit _ rt ro ra rf root =
+let call_verit _ rt ro ra' rf' root lsmt =
   let fl = Form.flatten rf (snd root) in
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
-  export outchan rt ro fl;
+  export outchan rt ro lsmt;  (* TODO: lsmt of fl? *)
   close_out outchan;
-  let logfilename = (Filename.chop_extension filename)^".vtlog" in
-
-  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof="^logfilename^" "^filename in
+  let logfilename = Filename.chop_extension filename ^ ".vtlog" in
+  let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
+  close_out woc;
+  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " 2> " ^ wname in
   Format.eprintf "%s@." command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
   Format.eprintf "Verit = %.5f@." (t1-.t0);
-  if exit_code <> 0 then
-    failwith ("Verit.call_verit: command "^command^
-	      " exited with code "^(string_of_int exit_code));
+  let win = open_in wname in
   try
-    import_trace logfilename (Some root)
-  with
-    | VeritSyntax.Sat -> Structures.error "veriT can't prove this"
+    if exit_code <> 0 then
+      failwith ("Verit.call_verit: command " ^ command ^
+	          " exited with code " ^ string_of_int exit_code);
+
+    try let _ = input_line win in
+        Structures.error "veriT returns 'unknown'"
+    with End_of_file ->
+          try
+            let res = import_trace ra' rf' logfilename first lsmt in
+            close_in win; Sys.remove wname; res
+          with
+            | VeritSyntax.Sat -> Structures.error "veriT found a counter-example"
+  with x -> close_in win; Sys.remove wname; raise x
 
 
 let verit_logic =
   SL.of_list [LUF; LLia]
 
-let tactic_gen vm_cast =
+let tactic_gen vm_cast lcpl lcepl =
   clear_all ();
-  let rt = Btype.create () in
+  let rt = SmtBtype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_verit verit_logic rt ro ra rf vm_cast
-let tactic () = tactic_gen vm_cast_true
-let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)
+  let ra' = VeritSyntax.ra' in
+  let rf' = VeritSyntax.rf' in
+  SmtCommands.tactic call_verit verit_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl
+let tactic = tactic_gen vm_cast_true
+let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)

@@ -13,17 +13,20 @@ You will also need to [install the provers](#installation-of-the-provers)
 you want to use and make some [small configuration
 changes](#setting-up-environment-for-smtcoq).
 
-
 ## Requirements
 
 You need to have OCaml version >= 4.04.0 and Coq version 8.6 or 8.6.1.
 The easiest way to install these two pieces of software is through opam.
 
-
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
 > with OCaml version >= 4.04.0.
+
+If you want to use SMTCoq with high performance, you need to use the
+[version of Coq with native
+data-structures](https://github.com/smtcoq/native-coq) instead of
+Coq-8.6.
 
 
 ### Installation with Coq and OCaml opam packages
@@ -114,6 +117,47 @@ export COQBIN=/home/jdoe/coq-8.6.1/bin/
 make
 make install
 ```
+```
+
+
+### Installation with native-coq
+
+1. Download the git version of Coq with native compilation:
+```bash
+git clone https://github.com/smtcoq/native-coq.git
+```
+   and compile it by following the instructions available in the
+   repository. We recommand that you do not install it, but only compile
+   it in local:
+```bash
+./configure -local
+make
+```
+
+2. Set an environment variable COQBIN to the directory where Coq's
+   binaries are; for instance:
+```bash
+export COQBIN=/home/jdoe/native-coq/bin/
+```
+   (the final slash is mandatory).
+
+3. Compile and install SMTCoq by using the following commands in the src directory.
+```
+./configure.sh -native
+make
+make install
+```
+
+
+### Deprecated: installation via opam (uses Coq-8.5)
+
+Simply add the coq-extra-dev repo to opam:
+```bash
+opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+```
+and install smtcoq:
+```bash
+opam install coq-smtcoq
 
 
 ## Installation of the provers
@@ -121,14 +165,14 @@ make install
 To use SMTCoq, you need one or more solvers supported by SMTCoq.
 Currently, these solvers are:
 
-- [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
+- [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 
 - [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
 
 - [CVC4](http://cvc4.cs.nyu.edu)
 
 Please download the solvers you would like to use via the above links
-(since SMTCoq might not support later versions), and follow the
+(since SMTCoq might not support other versions), and follow the
 instructions available for each solver in order to compile them **in a
 proof production mode**, as detailed below.
 
@@ -146,7 +190,7 @@ The `cvc4` binary must be present in your PATH to use it through SMTCoq.
 ### veriT
 
 The
-[above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/verit2c2b43b.tar.gz)
+[above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 points to a snapshot of veriT which is known to be compatible with
 SMTCoq, and is already in proof production mode. To compile it, unpack
 the archive and use the following commands:

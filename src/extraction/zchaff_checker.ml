@@ -54,7 +54,7 @@ let to_coq to_lit (cstep,
                    cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
                    cImmBuildProj,cImmBuildDef,cImmBuildDef2,
                    cEqTr, cEqCgr, cEqCgrP,
-                   cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim) confl =
+                   cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim, cHole) confl =
   let step_to_coq c =
     match c.kind with
       | Res res ->

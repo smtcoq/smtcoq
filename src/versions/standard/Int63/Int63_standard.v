@@ -17,8 +17,11 @@
 (**************************************************************************)
 
 
-(** Naive software representation of Int63. To improve. Anyway, if you
-    want efficiency, rather use native-coq. **)
+(** Glue with the Int31 library of standard coq, which is linked to
+    native integers during VM computations.
+
+    CAUTION: The name "Int63" is given for compatibility reasons, but
+    int31 is used. **)
 
 Require Export Ring31.
 Require Export Int63Native.

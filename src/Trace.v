@@ -47,16 +47,7 @@ Section trace.
   Variable is_false : C.t -> bool.
   Hypothesis is_false_correct : forall c, is_false c -> ~ C.interp rho c.
 
-(*
-  Parameter (s: array (list _lit)) (t: array (array step)) (i: int) (b: array step).
-  Check PArray.fold_left check_step s b.
-  Check (fun s' a => PArray.fold_left check_step s' a).
-  Check PArray.fold_left (fun s' a => PArray.fold_left check_step s' a) s t.
-  Check let s'' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in
-    is_false (S.get s'' i).
-*)
-
-  Definition _checker_ (s: S.t) (t: _trace_) (confl: clause_id) : bool :=
+  Definition _checker_ (s: S.t) (t: _trace_) (confl:clause_id) : bool :=
     let s' := Structures.trace_fold check_step s t in
     (* let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in *)
     is_false (S.get s' confl).
@@ -98,7 +89,7 @@ Section trace.
     (* intros a i _ Ha;apply PArray.fold_left_ind;trivial. *)
     (* intros a0 i0 _ H1;auto. *)
   Qed.
- 
+
 End trace.
 
 
@@ -116,22 +107,22 @@ Module Sat_Checker.
 *)
 
  Definition resolution_checker s t :=
-    _checker_ (fun s' (st:step) => let (pos, r) := st in S.set_resolve s' pos r) s t.
+   _checker_ (fun s (st:step) => let (pos, r) := st in S.set_resolve s pos r) s t.
 
  Lemma resolution_checker_correct :
     forall rho, Valuation.wf rho ->
     forall s t cid, resolution_checker C.is_false s t cid->
      ~S.valid rho s.
  Proof.
-   intros rho Hwr;apply _checker__correct.
+   intros rho Hwr; apply _checker__correct.
    intros; apply C.is_false_correct; trivial.
-   intros s Hv (pos, r);apply S.valid_set_resolve;trivial. 
+   intros s Hv (pos, r); apply S.valid_set_resolve; trivial.
  Qed.
-   
+
  (** Application to Zchaff *)
  Definition dimacs := PArray.array (PArray.array _lit).
 
- Definition C_interp_or rho c := 
+ Definition C_interp_or rho c :=
    afold_left _ _ false orb (Lit.interp rho) c.
 
  Lemma C_interp_or_spec : forall rho c,
@@ -161,7 +152,7 @@ Qed.
  Inductive certif :=
    | Certif : int -> _trace_ step -> clause_id -> certif.
 
- Definition add_roots s (d:dimacs) := 
+ Definition add_roots s (d:dimacs) :=
    PArray.foldi_right (fun i c s => S.set_clause s i (PArray.to_list c)) d s.
 
  Definition checker (d:dimacs) (c:certif) :=
@@ -177,7 +168,7 @@ Qed.
 
  Lemma checker_correct : forall d c,
     checker d c = true ->
-    forall rho, Valuation.wf rho -> ~valid rho d.
+    forall rho, Valuation.wf rho -> ~ valid rho d.
  Proof.
    unfold checker; intros d (nclauses, t, confl_id) Hc rho Hwf Hv.
    apply (resolution_checker_correct Hwf Hc).
@@ -185,20 +176,22 @@ Qed.
    apply S.valid_make; auto.
  Qed.
 
- Definition interp_var rho x := 
+ Definition interp_var rho x :=
    match compare x 1 with
    | Lt => true
    | Eq => false
-   | Gt => rho (x - 1) 
+   | Gt => rho (x - 1)
      (* This allows to have variable starting at 1 in the interpretation as in dimacs files *)
    end.
 
- Lemma theorem_checker : 
+ Lemma theorem_checker :
    forall d c,
      checker d c = true ->
-     forall rho, ~valid (interp_var rho) d.
+     forall rho, negb (valid (interp_var rho) d).
  Proof.
-  intros d c H rho;apply checker_correct with c;trivial.
+  intros d c H rho.
+  apply negb_true_iff. apply neg_eq_true_eq_false.
+  apply checker_correct with c;trivial.
   split;compute;trivial;discriminate.
  Qed.
 
@@ -206,11 +199,11 @@ End Sat_Checker.
 
 
 Module Cnf_Checker.
-  
+
   Inductive step :=
   | Res (pos:int) (res:resolution)
-  | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit) 
-  | CTrue (pos:int)       
+  | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
+  | CTrue (pos:int)
   | CFalse (pos:int)
   | BuildDef (pos:int) (l:_lit)
   | BuildDef2 (pos:int) (l:_lit)
@@ -226,15 +219,15 @@ Module Cnf_Checker.
   Definition step_checker t_form s (st:step) :=
     match st with
     | Res pos res => S.set_resolve s pos res
-    | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_form s cid lf) 
+    | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_form s cid lf)
     | CTrue pos => S.set_clause s pos Cnf.check_True
     | CFalse pos => S.set_clause s pos Cnf.check_False
     | BuildDef pos l => S.set_clause s pos (check_BuildDef t_form l)
     | BuildDef2 pos l => S.set_clause s pos (check_BuildDef2 t_form l)
     | BuildProj pos l i => S.set_clause s pos (check_BuildProj t_form l i)
-    | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid) 
+    | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid)
     | ImmBuildDef2 pos cid => S.set_clause s pos (check_ImmBuildDef2 t_form s cid)
-    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i) 
+    | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i)
     end.
 
   Lemma step_checker_correct : forall rho rhobv t_form,
@@ -274,9 +267,9 @@ Module Cnf_Checker.
    | Certif : int -> _trace_ step -> int -> certif.
 
  Definition checker t_form l (c:certif) :=
-   let (nclauses, t, confl) := c in   
+   let (nclauses, t, confl) := c in
    Form.check_form t_form &&
-   cnf_checker t_form C.is_false (S.set_clause (S.make nclauses) 0 (l::nil)) t confl.
+                   cnf_checker t_form C.is_false (S.set_clause (S.make nclauses) 0 (l::nil)) t confl.
 
  Lemma checker_correct : forall t_form l c,
     checker t_form l c = true ->
@@ -299,11 +292,11 @@ Module Cnf_Checker.
  Qed.
 
  Definition checker_eq t_form l1 l2 l (c:certif) :=
-   negb (Lit.is_pos l) && 
+   negb (Lit.is_pos l) &&
    match t_form.[Lit.blit l] with
    | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
    | _ => false
-   end && 
+   end &&
    checker t_form l c.
 
  Lemma checker_eq_correct : forall t_var t_form l1 l2 l c,
@@ -334,7 +327,7 @@ Module Euf_Checker.
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.
 
-  Inductive step :=
+Inductive step :=
   | Res (pos:int) (res:resolution)
   | Weaken (pos:int) (cid:clause_id) (cl:list _lit)
   | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
@@ -378,6 +371,8 @@ Module Euf_Checker.
      WARNING: this breaks extraction. *)
   | Hole (pos:int) (prem_id:list clause_id) (prem:list C.t) (concl:C.t)
     (p:interp_conseq_uf (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) prem concl)
+  | ForallInst (pos:int) (lemma:Prop) (plemma:lemma) (concl:C.t)
+    (p: lemma -> interp_conseq_uf (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form) nil concl)
   .
 
   Local Open Scope list_scope.
@@ -425,10 +420,11 @@ Module Euf_Checker.
       | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
       | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
       | @Hole pos prem_id prem concl _ => S.set_clause s pos (check_hole s prem_id prem concl)
+      | @ForallInst pos lemma _ concl  _ => S.set_clause s pos concl
     end.
 
   (* Opaque S.set_weaken. *)
-  
+
   Lemma step_checker_correct :
     let rho := Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form in
       Form.check_form t_form -> Atom.check_atom t_atom ->
@@ -438,14 +434,14 @@ Module Euf_Checker.
   Proof.
     set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
     intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1)
-    as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as 
+    as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as
     [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
     |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
     |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res
     |pos orig1 orig2 res|pos orig1 orig2 res
     |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res
-    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res 
-    |pos res |pos prem_id prem concl p]; simpl; try apply S.valid_set_clause; auto.
+    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res
+    |pos res |pos prem_id prem concl p|pos lemma plemma concl p]; simpl; try apply S.valid_set_clause; auto.
     - apply S.valid_set_resolve; auto.
     - apply S.valid_set_weaken; auto.
     - apply valid_check_flatten; auto; intros h1 h2 H.
@@ -487,6 +483,7 @@ Module Euf_Checker.
     - apply valid_check_rowneq; auto.
     - apply valid_check_ext; auto.
     - apply valid_check_hole; auto.
+    apply valid_check_forall_inst with lemma; auto.
   Qed.
 
   Definition euf_checker (* t_atom t_form *) s t :=
@@ -550,24 +547,24 @@ Module Euf_Checker.
 
   Definition position_of_step (st:step) :=
     match st with
-      | Res pos _ 
+      | Res pos _
       | Weaken pos _ _
       | ImmFlatten pos _ _
       | CTrue pos
-      | CFalse pos 
+      | CFalse pos
       | BuildDef pos _
       | BuildDef2 pos _
-      | BuildProj pos _ _ 
+      | BuildProj pos _ _
       | ImmBuildDef pos _
       | ImmBuildDef2 pos _
-      | ImmBuildProj pos _ _ 
-      | EqTr pos _ _ 
-      | EqCgr pos _ _ 
+      | ImmBuildProj pos _ _
+      | EqTr pos _ _
+      | EqCgr pos _ _
       | EqCgrP pos _ _ _
-      | LiaMicromega pos _ _ 
+      | LiaMicromega pos _ _
       | LiaDiseq pos _
       | SplArith pos _ _ _
-      | SplDistinctElim pos _ _ 
+      | SplDistinctElim pos _ _
       | BBVar pos _
       | BBConst pos _
       | BBOp pos _ _ _
@@ -591,7 +588,7 @@ Module Euf_Checker.
       | @Hole pos _ _ _ _ => pos
     end.
 
-  
+
   Definition checker_step_debug s step_t :=
     let s := step_checker s step_t in
     (s, C.has_true (S.get s (position_of_step step_t))).
@@ -606,24 +603,24 @@ Module Euf_Checker.
     end.
 
   Inductive name_step :=
-  | Name_Res 
+  | Name_Res
   | Name_Weaken
   | Name_ImmFlatten
   | Name_CTrue
-  | Name_CFalse 
+  | Name_CFalse
   | Name_BuildDef
   | Name_BuildDef2
-  | Name_BuildProj 
+  | Name_BuildProj
   | Name_ImmBuildDef
   | Name_ImmBuildDef2
-  | Name_ImmBuildProj 
-  | Name_EqTr 
-  | Name_EqCgr 
+  | Name_ImmBuildProj
+  | Name_EqTr
+  | Name_EqCgr
   | Name_EqCgrP
-  | Name_LiaMicromega 
+  | Name_LiaMicromega
   | Name_LiaDiseq
   | Name_SplArith
-  | Name_SplDistinctElim 
+  | Name_SplDistinctElim
   | Name_BBVar
   | Name_BBConst
   | Name_BBOp
@@ -645,7 +642,7 @@ Module Euf_Checker.
   | Name_RowNeq
   | Name_Ext
   | Name_Hole.
-  
+
   Definition name_of_step (st:step) :=
     match st with
     | Res _ _ => Name_Res
@@ -688,8 +685,8 @@ Module Euf_Checker.
     | Ext _ _ => Name_Ext
     | @Hole _ _ _ _ _ => Name_Hole
     end.
-  
-  
+
+
   Definition checker_debug d used_roots (c:certif) :=
     let (nclauses, t, confl) := c in
     let s := add_roots (S.make nclauses) d used_roots in
@@ -712,12 +709,12 @@ Module Euf_Checker.
     | Some st => Some (nb, name_of_step st)
     | None => None
     end
-  .    
-  
-  
+  .
+
+
   Lemma checker_correct : forall (* t_i t_func t_atom t_form *) d used_roots c,
     checker (* t_i t_func t_atom t_form *) d used_roots c = true ->
-    ~ valid t_func t_atom t_form d.
+    negb (valid t_func t_atom t_form d).
   Proof.
     unfold checker; intros (* t_i t_func t_atom t_form *) d used_roots (nclauses, t, confl); rewrite !andb_true_iff; intros [[[H1 H2] H10] H3] H; eelim euf_checker_correct; try eassumption; apply add_roots_correct; try eassumption; apply S.valid_make; destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [_ H4]; auto.
   Qed.
@@ -780,9 +777,3 @@ End Euf_Checker.
 
 
 Unset Implicit Arguments.
-
-(* 
-   Local Variables:
-   coq-load-path: ((rec "." "SMTCoq"))
-   End: 
-*)

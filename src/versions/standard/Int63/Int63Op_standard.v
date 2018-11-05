@@ -154,23 +154,24 @@ Definition existsb (f:int -> bool) from to :=
 (* Definition to_Z := to_Z_rec size. *)
 
 Definition to_Z := phi.
+Definition of_Z := phi_inv.
 
-Fixpoint of_pos_rec (n:nat) (p:positive) :=
-  match n, p with
-  | O, _ => 0
-  | S n, xH => 1
-  | S n, xO p => (of_pos_rec n p) << 1
-  | S n, xI p => (of_pos_rec n p) << 1 lor 1
-  end.
+(* Fixpoint of_pos_rec (n:nat) (p:positive) := *)
+(*   match n, p with *)
+(*   | O, _ => 0 *)
+(*   | S n, xH => 1 *)
+(*   | S n, xO p => (of_pos_rec n p) << 1 *)
+(*   | S n, xI p => (of_pos_rec n p) << 1 lor 1 *)
+(*   end. *)
 
-Definition of_pos := of_pos_rec size.
+(* Definition of_pos := of_pos_rec size. *)
 
-Definition of_Z z :=
-  match z with
-  | Zpos p => of_pos p
-  | Z0 => 0
-  | Zneg p => - (of_pos p)
-  end.
+(* Definition of_Z z := *)
+(*   match z with *)
+(*   | Zpos p => of_pos p *)
+(*   | Z0 => 0 *)
+(*   | Zneg p => - (of_pos p) *)
+(*   end. *)
 
 (** Gcd **)
 Fixpoint gcd_rec (guard:nat) (i j:int) {struct guard} :=
@@ -250,7 +251,7 @@ Definition cast_digit d1 d2 :
   | _, _ => None
   end.
 
-(* TODO: improve this definition... *)
+(* May need to improve this definition, but no reported efficiency problem for the moment *)
 Definition cast i j :
   option (forall P : int -> Type, P i -> P j) :=
   match i, j return option (forall P : int -> Type, P i -> P j) with
@@ -331,3 +332,10 @@ Definition eqo i j : option (i = j) :=
   | Some k => Some (k (fun j => i = j) (refl_equal i))
   | None => None
   end.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "../../.." "SMTCoq"))
+   End: 
+*)

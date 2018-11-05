@@ -149,7 +149,8 @@ module MakeCnf (Form:FORM) =
 		  cnf c
 
 	      | Fnot2 _ -> cnf args.(0)
- 
+              | Fforall _ -> assert false
+
     exception Cnf_done
 
     let rec imm_link_Other other l =
@@ -245,6 +246,7 @@ module MakeCnf (Form:FORM) =
 		  push_cnf args
 
               | Fnot2 _ -> assert false
+              | Fforall _ -> assert false
 
     let make_cnf reify c =
       let ftrue = Form.get reify (Fapp(Ftrue, [||])) in

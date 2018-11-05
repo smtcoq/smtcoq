@@ -13,58 +13,12 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open SmtMisc
 
-
-type indexed_type
-
-val dummy_indexed_type: int -> indexed_type
-val indexed_type_index : indexed_type -> int
-
-type btype =
-  | TZ
-  | Tbool
-  | Tpositive
-  | TBV of int
-  | Tindex of indexed_type
-  | TFArray of btype * btype
-
-module Btype : 
-    sig
-      
-      val equal : btype -> btype -> bool
-	  
-      val to_coq : btype -> Term.constr
-
-      val to_smt : Format.formatter -> btype -> unit
-
-      type reify_tbl
-	  
-      val create : unit -> reify_tbl
-
-      val declare : reify_tbl -> Term.constr -> Term.constr -> btype
-
-      val of_coq : reify_tbl -> logic -> Term.constr -> btype
-
-      val get_coq_type_op : int -> Term.constr
-
-      val interp_tbl : reify_tbl -> Term.constr
-
-      val to_list : reify_tbl ->  (int * indexed_type) list
-
-      val interp_to_coq : reify_tbl -> btype -> Term.constr
-
-      val get_cuts : reify_tbl -> (Structures.names_id_t * Term.types) list
-
-      val logic : btype -> logic
-
-      (* val logic_of_coq : reify_tbl -> Term.constr -> logic *)
-
-    end
+open SmtBtype
 
 (** Operators *)
 
-type cop = 
+type cop =
    | CO_xH
    | CO_Z0
    | CO_BV of bool list
@@ -72,7 +26,7 @@ type cop =
 type uop =
    | UO_xO
    | UO_xI
-   | UO_Zpos 
+   | UO_Zpos
    | UO_Zneg
    | UO_Zopp
    | UO_BVbitOf of int * int
@@ -82,7 +36,7 @@ type uop =
    | UO_BVzextn of int * int
    | UO_BVsextn of int * int
 
-type bop = 
+type bop =
    | BO_Zplus
    | BO_Zminus
    | BO_Zmult
@@ -112,37 +66,41 @@ type nop =
 
 type indexed_op
 
-val dummy_indexed_op: int -> btype array -> btype -> indexed_op
+type index = Index of int
+           | Rel_name of string
+
+val dummy_indexed_op: index -> btype array -> btype -> indexed_op
 val indexed_op_index : indexed_op -> int
 val debruijn_indexed_op : int -> btype -> indexed_op
-  
+
 module Op :
   sig
-	  
+
     type reify_tbl
 
     val create : unit -> reify_tbl
 
-    val declare : reify_tbl -> Term.constr -> btype array -> btype -> indexed_op
+    val declare : reify_tbl -> Term.constr -> btype array ->
+                  btype -> string option -> indexed_op
 
     val of_coq : reify_tbl -> Term.constr -> indexed_op
 
-    val interp_tbl : Term.constr -> 
-      (btype array -> btype -> Term.constr -> Term.constr) -> 
-      reify_tbl -> Term.constr 
+    val interp_tbl : Term.constr ->
+      (btype array -> btype -> Term.constr -> Term.constr) ->
+      reify_tbl -> Term.constr
 
     val to_list : reify_tbl -> (int * (btype array) * btype * indexed_op) list
 
     val logic_ro : reify_tbl -> logic
-    
+
   end
 
 
 (** Definition of atoms *)
 
-type hatom 
+type hatom
 
-type atom = 
+type atom =
   | Acop of cop
   | Auop of uop * hatom
   | Abop of bop * hatom * hatom
@@ -152,8 +110,8 @@ type atom =
 
 
 
-module Atom : 
-    sig 
+module Atom :
+    sig
 
       type t = hatom
 
@@ -162,27 +120,41 @@ module Atom :
       val index : hatom -> int
 
       val atom : hatom -> atom
- 
+
       val type_of : hatom -> btype
+
+      val to_string : ?pi:bool -> hatom -> string
 
       val to_smt : Format.formatter -> t -> unit
 
       exception NotWellTyped of atom
 
-      type reify_tbl 
+      type reify_tbl
 
       val create : unit -> reify_tbl
 
       val clear : reify_tbl -> unit
 
-      val get : reify_tbl -> atom -> hatom
+      val get : ?declare:bool -> reify_tbl -> atom -> hatom
+
+      val mk_eq : reify_tbl -> bool -> btype -> hatom -> hatom -> hatom
+
+      val mk_neg : reify_tbl -> hatom -> hatom
+
+      val hash_hatom : reify_tbl -> hatom -> hatom
+
+      (** for debugging purposes **)
+
+      val copy : reify_tbl -> reify_tbl
+
+      val print_atoms : reify_tbl -> string -> unit
 
       (** Given a coq term, build the corresponding atom *)
-      val of_coq : Btype.reify_tbl -> Op.reify_tbl -> reify_tbl -> logic ->
-        Environ.env -> Evd.evar_map -> Term.constr -> t
+      val of_coq : ?hash:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
+        reify_tbl -> Environ.env -> Evd.evar_map -> Term.constr -> t
 
       val get_coq_term_op : int -> Term.constr
-      
+
       val to_coq : hatom -> Term.constr
 
       val to_array : reify_tbl -> 'a -> (atom -> 'a) -> 'a array
@@ -193,7 +165,7 @@ module Atom :
 	t -> Term.constr
 
       val logic : t -> logic
-      
+
       (* Generation of atoms *)
       val hatom_Z_of_int : reify_tbl -> int -> hatom
       val hatom_Z_of_bigint : reify_tbl -> Big_int.big_int -> hatom
@@ -213,8 +185,8 @@ module Atom :
       val mk_bvult : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_bvslt : reify_tbl -> int -> hatom -> hatom -> hatom
       val mk_bvconcat : reify_tbl -> int -> int -> hatom -> hatom -> hatom
-      val mk_opp : reify_tbl -> hatom -> hatom
-      val mk_distinct : reify_tbl -> btype -> hatom array -> hatom
+      val mk_opp : reify_tbl -> ?declare:bool -> hatom -> hatom
+      val mk_distinct : reify_tbl -> btype -> ?declare:bool -> hatom array -> hatom
       val mk_bitof : reify_tbl -> int -> int -> hatom -> hatom
       val mk_bvnot : reify_tbl -> int -> hatom -> hatom
       val mk_bvneg : reify_tbl -> int -> hatom -> hatom
@@ -238,7 +210,7 @@ module Trace : sig
 end
 
 
-val make_t_i : Btype.reify_tbl -> Term.constr
+val make_t_i : SmtBtype.reify_tbl -> Term.constr
 val make_t_func : Op.reify_tbl -> Term.constr -> Term.constr
 
 

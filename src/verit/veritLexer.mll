@@ -56,6 +56,7 @@
         "dl_disequality", DLDE;
         "la_disequality", LADE;
         "forall_inst", FINS;
+	"forall", FORALL;
         "exists_inst", EINS;
         "skolem_ex_ax", SKEA;
         "skolem_all_ax", SKAA;
@@ -158,6 +159,7 @@ let alpha = [ 'a'-'z' 'A' - 'Z' ]
 let blank = [' ' '\t']
 let newline = ['\n' '\r']
 let var = alpha (alpha|digit|'_')*
+let atvar = '@' var
 let bindvar = '?' var+
 let int = '-'? digit+
 
@@ -188,13 +190,18 @@ rule token = parse
 
   | "Formula is Satisfiable"   { SAT }
 
+  | "Tindex_" (int as i)       { TINDEX (int_of_string i) }
+  | "Int"     	      	       { TINT }
+  | "Bool"		       { TBOOL }
   | (int as i)                 { try INT (int_of_string i)
-	                         with _ -> 
+	                         with _ ->
                                    BIGINT (Big_int.big_int_of_string i) }
   | bitvector as bv            { BITV bv }
   | var                        { let v = Lexing.lexeme lexbuf in
                                  try Hashtbl.find typ_table v with
                                    | Not_found -> VAR v }
   | bindvar as v               { BINDVAR v }
+
+  | atvar 		       { ATVAR (Lexing.lexeme lexbuf) }
 
   | eof                        { raise Eof }

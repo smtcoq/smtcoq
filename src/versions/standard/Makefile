@@ -68,7 +68,8 @@ OCAMLLIBS?=-I "."\
   -I "zchaff"\
   -I "versions/standard"\
   -I "versions/standard/Int63"\
-  -I "versions/standard/Array"
+  -I "versions/standard/Array"\
+  -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 COQLIBS?=\
   -R "." SMTCoq\
   -I "."\
@@ -85,7 +86,8 @@ COQLIBS?=\
   -I "zchaff"\
   -I "versions/standard"\
   -I "versions/standard/Int63"\
-  -I "versions/standard/Array"
+  -I "versions/standard/Array"\
+  -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 COQCHKLIBS?=\
   -R "." SMTCoq
 COQDOCLIBS?=\
@@ -208,6 +210,7 @@ VFILES:=versions/standard/Int63/Int63.v\
   spl/Syntactic.v\
   spl/Arithmetic.v\
   spl/Operators.v\
+  Conversion_tactics.v\
   Misc.v\
   SMTCoq.v\
   ReflectFacts.v\
@@ -251,6 +254,7 @@ endif
 
 MLFILES:=versions/standard/structures.ml\
   trace/coqTerms.ml\
+  trace/smtBtype.ml\
   trace/satAtom.ml\
   trace/smtAtom.ml\
   trace/smtCertif.ml\
@@ -260,17 +264,17 @@ MLFILES:=versions/standard/structures.ml\
   trace/smtMisc.ml\
   trace/smtTrace.ml\
   smtlib2/smtlib2_parse.ml\
+  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_ast.ml\
   smtlib2/smtlib2_genConstr.ml\
-  smtlib2/smtlib2_lex.ml\
   smtlib2/smtlib2_util.ml\
   smtlib2/sExpr.ml\
   smtlib2/smtlib2_solver.ml\
   smtlib2/sExprParser.ml\
   smtlib2/sExprLexer.ml\
   verit/veritParser.ml\
-  verit/verit.ml\
   verit/veritLexer.ml\
+  verit/verit.ml\
   verit/veritSyntax.ml\
   lfsc/shashcons.ml\
   lfsc/hstring.ml\
@@ -310,20 +314,40 @@ endif
 
 .SECONDARY: $(addsuffix .d,$(MLPACKFILES))
 
-MLIFILES:=trace/smtAtom.mli\
+MLIFILES:=versions/standard/structures.mli\
+  trace/coqTerms.mli\
+  trace/smtBtype.mli\
+  trace/satAtom.mli\
+  trace/smtAtom.mli\
+  trace/smtCertif.mli\
+  trace/smtCnf.mli\
+  trace/smtCommands.mli\
   trace/smtForm.mli\
+  trace/smtMisc.mli\
+  trace/smtTrace.mli\
   smtlib2/smtlib2_parse.mli\
+  smtlib2/smtlib2_lex.mli\
+  smtlib2/smtlib2_ast.mli\
+  smtlib2/smtlib2_genConstr.mli\
+  smtlib2/smtlib2_util.mli\
   smtlib2/sExpr.mli\
   smtlib2/smtlib2_solver.mli\
   smtlib2/sExprParser.mli\
   verit/veritParser.mli\
+  verit/veritLexer.mli\
+  verit/verit.mli\
   verit/veritSyntax.mli\
   lfsc/shashcons.mli\
   lfsc/hstring.mli\
   lfsc/lfscParser.mli\
   lfsc/ast.mli\
   lfsc/translator_sig.mli\
-  lfsc/tosmtcoq.mli
+  lfsc/tosmtcoq.mli\
+  zchaff/cnfParser.mli\
+  zchaff/satParser.mli\
+  zchaff/zchaff.mli\
+  zchaff/zchaffParser.mli\
+  lia/lia.mli
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(MLIFILES))
@@ -525,8 +549,8 @@ uninstall: uninstall_me.sh
 	@echo "B $(COQLIB)config" >> .merlin
 	@echo "B $(COQLIB)ltac" >> .merlin
 	@echo "B $(COQLIB)engine" >> .merlin
-	@echo "B /home/artemis/Recherche/Github/smtcoq/smtcoq-lfsc/src/versions/standard" >> .merlin
-	@echo "S /home/artemis/Recherche/Github/smtcoq/smtcoq-lfsc/src/versions/standard" >> .merlin
+	@echo "B /home/artemis/Recherche/github.com/ckeller/smtcoq-lfsc/src/versions/standard" >> .merlin
+	@echo "S /home/artemis/Recherche/github.com/ckeller/smtcoq-lfsc/src/versions/standard" >> .merlin
 	@echo "B bva" >> .merlin
 	@echo "S bva" >> .merlin
 	@echo "B classes" >> .merlin
@@ -555,6 +579,8 @@ uninstall: uninstall_me.sh
 	@echo "S versions/standard/Int63" >> .merlin
 	@echo "B versions/standard/Array" >> .merlin
 	@echo "S versions/standard/Array" >> .merlin
+	@echo "B $(shell $(COQBIN)coqc -where)/plugins/micromega" >> .merlin
+	@echo "S $(shell $(COQBIN)coqc -where)/plugins/micromega" >> .merlin
 
 clean::
 	rm -f $(ALLCMOFILES) $(CMIFILES) $(CMAFILES)

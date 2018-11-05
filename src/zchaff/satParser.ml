@@ -26,7 +26,7 @@ let buff_length = 1024
 let open_file s name =
   try
     let in_channel = open_in name in
-    let buff = String.create buff_length in
+    let buff = Bytes.create buff_length in
     let buff_end = input in_channel buff 0 buff_length in
     { buff = buff; curr_char = 0; buff_end = buff_end; in_ch = in_channel }
   with _ ->
@@ -83,7 +83,7 @@ let skip_string lb s =
 let match_string lb s =
   if not (skip_string lb s) then raise (Invalid_argument ("match_string "^s))
 
-let aux_buff = String.create buff_length
+let aux_buff = Bytes.create buff_length
 let aux_be = ref 0
 let aux_pi = ref 0
 let aux_cc = ref 0

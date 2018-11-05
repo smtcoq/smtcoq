@@ -161,6 +161,7 @@ let rec smt_Form_to_coq_micromega_formula tbl l =
         else
           smt_Form_to_coq_micromega_formula tbl l.(0)
       | FbbT _ -> assert false
+      | Fapp (Fforall _, _) -> assert false
   in
   if Form.is_pos l then v
   else N(v)

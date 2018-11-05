@@ -50,6 +50,11 @@ let string_coq_constr t =
   Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
 
 
+let string_of_name = function
+    Names.Name id -> Names.string_of_id id
+  | _ -> failwith "unnamed rel"
+
+
 (** Logics *)
 
 type logic_item =

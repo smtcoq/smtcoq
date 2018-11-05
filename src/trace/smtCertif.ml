@@ -29,18 +29,18 @@ type 'hform rule =
      (*  * weaken          : {a_1 ... a_n} --> {a_1 ... a_n b_1 ... b_n} *)
 
   (* Simplification *)
-  | ImmFlatten of 'hform clause * 'hform 
+  | ImmFlatten of 'hform clause * 'hform
 
   (* CNF Transformations *)
-  | True       
-     (*  * true             : {true} 
+  | True
+     (*  * true             : {true}
      *)
-  | False 
-     (* * false             : {(not false)} 
+  | False
+     (* * false             : {(not false)}
      *)
-  | BuildDef of 'hform (* the first literal of the clause *)       
+  | BuildDef of 'hform (* the first literal of the clause *)
      (*  * and_neg          : {(and a_1 ... a_n) (not a_1) ... (not a_n)}
-         * or_pos           : {(not (or a_1 ... a_n)) a_1 ... a_n} 
+         * or_pos           : {(not (or a_1 ... a_n)) a_1 ... a_n}
          * implies_pos      : {(not (implies a b)) (not a) b}
          * xor_pos1         : {(not (xor a b)) a b}
          * xor_neg1         : {(xor a b) a (not b)}
@@ -49,7 +49,7 @@ type 'hform rule =
          * ite_pos1         : {(not (if_then_else a b c)) a c}
          * ite_neg1         : {(if_then_else a b c) a (not c)}
      *)
-  | BuildDef2 of 'hform (* the first literal of the clause *) 
+  | BuildDef2 of 'hform (* the first literal of the clause *)
      (* * xor_pos2          : {(not (xor a b)) (not a) (not b)}
         * xor_neg2          : {(xor a b) (not a) b}
         * equiv_pos2        : {(not (iff a b)) (not a) b}
@@ -58,15 +58,15 @@ type 'hform rule =
         * ite_neg2          : {(if_then_else a b c) (not a) (not b)}
 
      *)
-  | BuildProj of 'hform * int 
+  | BuildProj of 'hform * int
      (*  * or_neg           : {(or a_1 ... a_n) (not a_i)}
-         * and_pos          : {(not (and a_1 ... a_n)) a_i} 
+         * and_pos          : {(not (and a_1 ... a_n)) a_i}
          * implies_neg1     : {(implies a b) a}
          * implies_neg2     : {(implies a b) (not b)}
      *)
 
   (* Immediate CNF transformation : CNF transformation + Reso *)
-  | ImmBuildDef of 'hform clause 
+  | ImmBuildDef of 'hform clause
      (* * not_and           : {(not (and a_1 ... a_n))} --> {(not a_1) ... (not a_n)}
         * or                : {(or a_1 ... a_n)} --> {a_1 ... a_n}
         * implies           : {(implies a b)} --> {(not a) b}
@@ -86,7 +86,7 @@ type 'hform rule =
         * not_ite2          : {(not (if_then_else a b c))} --> {(not a) (not b)}
      *)
   | ImmBuildProj of 'hform clause * int
-     (*  * and               : {(and a_1 ... a_n)} --> {a_i} 
+     (*  * and               : {(and a_1 ... a_n)} --> {a_i}
          * not_or            : {(not (or a_1 ... a_n))} --> {(not a_i)}
          * not_implies1      : {(not (implies a b))} --> {a}
          * not_implies2      : {(not (implies a b))} --> {(not b)}
@@ -98,11 +98,11 @@ type 'hform rule =
         * eq_transitive    : {(not (= x_1 x_2)) ... (not (= x_{n-1} x_n)) (= x_1 x_n)}
     *)
   | EqCgr of 'hform * ('hform option) list
-    (*  * eq_congruent     : {(not (= x_1 y_1)) ... (not (= x_n y_n)) 
+    (*  * eq_congruent     : {(not (= x_1 y_1)) ... (not (= x_n y_n))
                                    (= (f x_1 ... x_n) (f y_1 ... y_n))}
     *)
   | EqCgrP of 'hform * 'hform * ('hform option) list
-    (*  * eq_congruent_pred : {(not (= x_1 y_1)) ... (not (= x_n y_n)) 
+    (*  * eq_congruent_pred : {(not (= x_1 y_1)) ... (not (= x_n y_n))
                                    (not (p x_1 ... x_n)) (p y_1 ... y_n)}
     *)
 
@@ -226,15 +226,17 @@ type 'hform rule =
 
   (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
   | Hole of ('hform clause) list * 'hform list
+  | Forall_inst of 'hform clause * 'hform
+  | Qf_lemma of 'hform clause * 'hform
 
 and 'hform clause = {
-            id    : clause_id;
+    mutable id    : clause_id;
     mutable kind  : 'hform clause_kind;
     mutable pos   : int option;
     mutable used  : used;
     mutable prev  : 'hform clause option;
     mutable next  : 'hform clause option;
-            value : 'hform list option
+    mutable value : 'hform list option
               (* This field should be defined for rules which can create atoms :
                  EqTr, EqCgr, EqCgrP, Lia, Dlde, Lra *)
 }
@@ -253,6 +255,7 @@ and 'hform resolution = {
 let used_clauses r =
   match r with
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
+
   | Weaken (c,_) | ImmFlatten (c,_)
   | SplArith (c,_,_) | SplDistinctElim (c,_)
   | BBNot (c, _) | BBNeg (c, _) | BBExtr (c, _)
@@ -265,9 +268,44 @@ let used_clauses r =
   | BBEq (c1,c2,_) -> [c1;c2]
 
   | Hole (cs, _) -> cs
+  | Forall_inst (c, _) | Qf_lemma (c, _) -> [c]
 
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _
   | BBVar _ | BBConst _ | BBDiseq _
   | RowEq _ | RowNeq _ | Ext _ -> []
+
+(* for debugging *)
+let to_string r =
+  match r with
+            Root -> "Root"
+          | Same c -> "Same(" ^ string_of_int (c.id) ^ ")"
+          | Res r ->
+             let id1 = string_of_int r.rc1.id in
+             let id2 = string_of_int r.rc2.id in
+             let rest_ids = List.fold_left (fun str rc -> str ^ "; " ^ string_of_int rc.id) "" r.rtail in
+             "Res [" ^ id1 ^ "; " ^ id2 ^ rest_ids ^"]"
+          | Other x -> "Other(" ^
+                         begin match x with
+                         | True -> "True"
+                         | False -> "False"
+                         | BuildDef _ -> "BuildDef"
+                         | BuildDef2 _ -> "BuildDef2"
+                         | BuildProj _ -> "BuildProj"
+                         | EqTr _ -> "EqTr"
+                         | EqCgr _ -> "EqCgr"
+                         | EqCgrP _ -> "EqCgrP"
+                         | LiaMicromega _ -> "LiaMicromega"
+                         | LiaDiseq _ -> "LiaDiseq"
+                         | Qf_lemma _ -> "Qf_lemma"
+
+                         | Hole _ -> "Hole"
+
+                         | ImmFlatten _ -> "ImmFlatten"
+                         | ImmBuildDef _ -> "ImmBuildDef"
+                         | ImmBuildDef2 _ -> "ImmBuildDef2"
+                         | ImmBuildProj _ -> "ImmBuildProj"
+                         | SplArith _ -> "SplArith"
+                         | SplDistinctElim _ -> "SplDistinctElim"
+                         | Forall_inst _ -> "Forall_inst"  end ^ ")"

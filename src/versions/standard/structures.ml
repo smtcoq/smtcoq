@@ -63,7 +63,6 @@ let mkArray : Term.types * Term.constr array -> Term.constr =
                        ) (0,mklApp cmake [|ty; mkInt l; a.(l)|]) a)
 
 
-
 (* Traces *)
 (* WARNING: side effect on r! *)
 let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
@@ -135,18 +134,21 @@ let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
 let lift = Vars.lift
 
+type rel_decl = Context.Rel.Declaration.t
+
+let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
+                          Context.Rel.Declaration.get_type r
+
+type constr_expr = Constrexpr.constr_expr
+
+let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
+
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
 
 let vm_conv = Vconv.vm_conv
 let vm_cast_no_check t = Tactics.vm_cast_no_check t
-(* let vm_cast_no_check t = *)
-(*   Proofview.Goal.enter (fun gl -> *)
-(*     let env = Proofview.Goal.env gl in *)
-(*     Proofview.V82.tactic (Tactics.vm_cast_no_check t) *)
-(*     ) *)
-
 let mk_tactic tac =
   Proofview.Goal.nf_enter {enter = (fun gl ->
     let env = Proofview.Goal.env gl in
@@ -174,3 +176,6 @@ module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+
+(* Type of coq tactics *)
+type tactic = unit Proofview.tactic

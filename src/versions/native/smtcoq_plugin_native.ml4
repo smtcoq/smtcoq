@@ -85,9 +85,17 @@ TACTIC EXTEND Tactic_zchaff
 | [ "zchaff_bool_no_check" ] -> [ Zchaff.tactic_no_check () ]
 END
 
+let lemmas_list = ref []
+
+VERNAC COMMAND EXTEND Add_lemma
+| [ "Add_lemmas" constr_list(lems) ] -> [ lemmas_list := lems @ !lemmas_list ]
+| [ "Clear_lemmas" ] -> [ lemmas_list := [] ]
+END
+
+
 TACTIC EXTEND Tactic_verit
-| [ "verit_bool" ] -> [ Verit.tactic () ]
-| [ "verit_bool_no_check" ] -> [ Verit.tactic_no_check () ]
+| [ "verit_bool" constr_list(lpl) ] -> [ Verit.tactic lpl !lemmas_list ]
+| [ "verit_bool_no_check" constr_list(lpl) ] -> [ Verit.tactic_no_check lpl !lemmas_list ]
 END
 
 TACTIC EXTEND Tactic_cvc4

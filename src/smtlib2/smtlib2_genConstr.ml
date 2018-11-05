@@ -19,7 +19,7 @@ open SmtAtom
 open SmtForm
 open SmtMisc
 open CoqTerms
-
+open SmtBtype
 
 (* For debugging *)
 
@@ -120,7 +120,7 @@ let declare_fun rt ro sym arg cod =
       Term.mkArrow (Btype.interp_to_coq rt typ) c)
       tyl (Btype.interp_to_coq rt ty) in
   let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
-  let op = Op.declare ro cons_v (Array.of_list tyl) ty in
+  let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) in
   VeritSyntax.add_fun s op;
   op
 
@@ -150,8 +150,8 @@ let make_root_specconstant ra = function
   | SpecConstString _ -> failwith "Smtlib2_genConstr.make_root_specconstant: strings not implemented yet"
   | SpecConstsHex _ -> failwith "Smtlib2_genConstr.make_root_specconstant: hexadecimals not implemented yet"
   | SpecConstsBinary (_, s) -> Atom.mk_bvconst ra (parse_smt2bv s)
-    
-    
+
+
 
 
 type atom_form = | Atom of SmtAtom.Atom.t | Form of SmtAtom.Form.t
@@ -192,36 +192,35 @@ let make_root ra rf t =
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' when Atom.type_of a' <> Tbool ->
            Atom (Atom.mk_eq ra (Atom.type_of a') a' b')
-         | _ ->
-           Form (Form.get rf (Fapp (For, [| make_root a; make_root b |])))
+         | _ -> Form (Form.get rf (Fapp (Fiff, [|Form.get rf (Fatom a'); Form.get rf (Fatom b')|])))
         )
       | "<", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_lt ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_lt ra true a' b')
           | _, _ -> assert false)
       | "<=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_le ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_le ra true a' b')
           | _, _ -> assert false)
       | ">", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_gt ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_gt ra true a' b')
           | _, _ -> assert false)
       | ">=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_ge ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_ge ra true a' b')
           | _, _ -> assert false)
       | "+", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_plus ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_plus ra true a' b')
           | _, _ -> assert false)
       | "-", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_minus ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_minus ra true a' b')
           | _, _ -> assert false)
       | "*", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_mult ra a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_mult ra true a' b')
           | _, _ -> assert false)
       | "-", [a] ->
         (match make_root_term a with
@@ -338,7 +337,7 @@ let make_root ra rf t =
             | TFArray (ti, te) -> Atom (Atom.mk_select ra ti te a' i')
             | _ -> assert false)
          | _ -> assert false)
-        
+
       | "store", [a;i;v] ->
         (match make_root_term a, make_root_term i, make_root_term v with
          | Atom a', Atom i', Atom v' ->
@@ -346,7 +345,7 @@ let make_root ra rf t =
             | TFArray (ti, te) -> Atom (Atom.mk_store ra ti te a' i' v')
             | _ -> assert false)
          | _ -> assert false)
-        
+
       | "distinct", _ ->
         let make_h h =
           match make_root_term h with
@@ -384,7 +383,7 @@ let make_root ra rf t =
              | _ -> assert false)
              )
          with _ -> assert false)
-        
+
       | _, [a] when startwith "zero_extend_" v ->
         (try
            Scanf.sscanf v "zero_extend_%d" (fun n ->
@@ -396,7 +395,7 @@ let make_root ra rf t =
                 | _ -> assert false)
              )
          with _ -> assert false)
-        
+
       | _, [a] when startwith "sign_extend_" v ->
         (try
            Scanf.sscanf v "sign_extend_%d" (fun n ->
@@ -418,9 +417,8 @@ let make_root ra rf t =
 
   and make_root t =
     match make_root_term t with
-      | Atom h -> Form.get rf (Fatom h)
-      | Form f -> f in
-
+    | Atom h -> Form.get rf (Fatom h)
+    | Form f -> f in
   make_root t
 
 

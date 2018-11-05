@@ -21,9 +21,6 @@
 
 Require Import Int31.
 Require Export Int63.
-(* Require Export Int63. *)
-(* Require Import Ring63. *)
-(* Require Int63Lib. *)
 Require FMapAVL.
 
 Local Open Scope int63_scope.
@@ -82,8 +79,6 @@ Notation "t '.[' i ']'" := (get t i) (at level 50) : array_scope.
 Notation "t '.[' i '<-' a ']'" := (set t i a) (at level 50) : array_scope.
 
 Local Open Scope array_scope.
-
-Set Vm Optimize.
 
 Definition max_array_length := 4194302%int31.
 
@@ -270,7 +265,6 @@ Proof.
  assert (i < length t = true).
    rewrite ltb_leb_sub1;auto.
  apply H;trivial.
- rewrite <-(to_Z_add_1 _ _ H4), of_to_Z in H3;auto.
  exact H1.
 Qed.
 
@@ -394,3 +388,10 @@ Proof.
  intros i _; rewrite <- (reflect_iff _ _ (HA _ _));trivial.
  rewrite <- not_true_iff_false, <- (reflect_iff _ _ (HA _ _)) in H0;apply H0;trivial.
 Qed.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "../../.." "SMTCoq"))
+   End: 
+*)

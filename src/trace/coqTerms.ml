@@ -52,7 +52,7 @@ let n_modules = [["Coq";"NArith";"BinNat";"N"]]
 let cN = gen_constant positive_modules "N"
 let cN0 = gen_constant positive_modules "N0"
 let cNpos = gen_constant positive_modules "Npos"
-    
+
 let cof_nat = gen_constant n_modules "of_nat"
 
 
@@ -73,10 +73,7 @@ let cltb = gen_constant z_modules "ltb"
 let cleb = gen_constant z_modules "leb"
 let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
-(* Je ne comprends pas pourquoi ça fonctionne avec Zeq_bool et pas avec
-   Z.eqb *)
-let ceqbZ = gen_constant [["Coq";"ZArith";"BinInt";"Z"]] "eqb"
-(* let ceqbZ = gen_constant [["Coq";"ZArith";"Zbool"]] "Zeq_bool" *)
+let ceqbZ = gen_constant z_modules "eqb"
 
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
@@ -121,6 +118,8 @@ let csigT_of_sigT2 = gen_constant init_modules "sigT_of_sigT2"
 let cnot = gen_constant init_modules "not"
 let ceq = gen_constant init_modules "eq"
 let crefl_equal = gen_constant init_modules "eq_refl"
+let cconj = gen_constant init_modules "conj"
+let cand = gen_constant init_modules "and"
 
 (* Bit vectors *)
 let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
@@ -283,14 +282,14 @@ let make_certif_ops modules args =
     match args with
       | Some args -> lazy (SmtMisc.mklApp (gen_constant modules c) args)
       | None -> gen_constant modules c in
- (gen_constant "step", 
-  gen_constant "Res", gen_constant "Weaken", gen_constant "ImmFlatten", 
-  gen_constant "CTrue", gen_constant "CFalse", 
-  gen_constant "BuildDef", gen_constant "BuildDef2", 
-  gen_constant "BuildProj", 
-  gen_constant "ImmBuildProj", gen_constant"ImmBuildDef", 
+ (gen_constant "step",
+  gen_constant "Res", gen_constant "Weaken", gen_constant "ImmFlatten",
+  gen_constant "CTrue", gen_constant "CFalse",
+  gen_constant "BuildDef", gen_constant "BuildDef2",
+  gen_constant "BuildProj",
+  gen_constant "ImmBuildProj", gen_constant"ImmBuildDef",
   gen_constant"ImmBuildDef2",
-  gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", 
+  gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP",
   gen_constant "LiaMicromega", gen_constant "LiaDiseq",
   gen_constant "SplArith", gen_constant "SplDistinctElim",
   gen_constant "BBVar", gen_constant "BBConst",
@@ -301,12 +300,12 @@ let make_certif_ops modules args =
   gen_constant "BBExtract", gen_constant "BBZextend", gen_constant "BBSextend",
   gen_constant "BBShl", gen_constant "BBShr",
   gen_constant "RowEq", gen_constant "RowNeq", gen_constant "Ext",
-  gen_constant "Hole")
-  
+  gen_constant "Hole", gen_constant "ForallInst")
+
 
 (** Useful construction *)
 
-let ceq_refl_true = 
+let ceq_refl_true =
   SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|]
 
 let eq_refl_true () = ceq_refl_true
