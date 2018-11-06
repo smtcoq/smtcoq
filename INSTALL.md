@@ -6,24 +6,10 @@ SMTCoq is designed to work on computers equipped with a POSIX (Unix or a
 clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64).
 
-You have various ways to install it:
-- the simplest one is via opam;
-- you can also install it from the sources, using two different versions
+You can install it from the sources, using two different versions
   of Coq (depending on the efficiency you want).
 In either case, you will also need to install the provers you want to
 use (see below).
-
-
-## Installation via opam (uses Coq-8.5)
-
-Simply add the coq-extra-dev repo to opam:
-```
-opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
-```
-and install smtcoq:
-```
-opam install coq-smtcoq
-```
 
 
 ## Installation from the sources (uses Coq-8.6 or native-coq)
@@ -92,6 +78,18 @@ export COQBIN=/home/jdoe/native-coq/bin/
 ./configure.sh -native
 make
 make install
+```
+
+
+## Deprecated: installation via opam (uses Coq-8.5)
+
+Simply add the coq-extra-dev repo to opam:
+```
+opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+```
+and install smtcoq:
+```
+opam install coq-smtcoq
 ```
 
 
