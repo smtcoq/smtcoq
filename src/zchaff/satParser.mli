@@ -1,5 +1,5 @@
 type lex_buff = {
-  buff : string;
+  buff : bytes;
   mutable curr_char : int;
   mutable buff_end : int;
   in_ch : in_channel;

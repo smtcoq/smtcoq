@@ -15,7 +15,7 @@
 
 
 type lex_buff = {
-            buff       : string;
+            buff       : bytes;
     mutable curr_char  : int;
     mutable buff_end   : int;
             in_ch      : in_channel
@@ -41,7 +41,7 @@ let eof lb = lb.buff_end == 0
 
 let curr_char lb =
   if eof lb then raise End_of_file
-  else lb.buff.[lb.curr_char]
+  else Bytes.get lb.buff lb.curr_char
 
 let refill lb =
   let ne = input lb.in_ch lb.buff 0 buff_length in
@@ -55,8 +55,8 @@ let is_space_ret c = c == ' ' || c == '\n' || c == '\t'
 
 
 let skip to_skip lb =
-  while not (eof lb) && to_skip lb.buff.[lb.curr_char] do
-    while lb.curr_char < lb.buff_end && to_skip lb.buff.[lb.curr_char] do
+  while not (eof lb) && to_skip (Bytes.get lb.buff lb.curr_char) do
+    while lb.curr_char < lb.buff_end && to_skip (Bytes.get lb.buff lb.curr_char) do
       lb.curr_char <- lb.curr_char + 1
     done;
     if lb.curr_char = lb.buff_end then refill lb
@@ -69,10 +69,10 @@ let skip_blank lb = skip is_space_ret lb
 let skip_string lb s =
   let slen = String.length s in
   let pos = ref 0 in
-  while !pos < slen && not (eof lb) && lb.buff.[lb.curr_char] == s.[!pos] do
+  while !pos < slen && not (eof lb) && Bytes.get lb.buff lb.curr_char == s.[!pos] do
     lb.curr_char <- lb.curr_char + 1;
     incr pos;
-    while !pos < slen &&  lb.curr_char < lb.buff_end && lb.buff.[lb.curr_char] == s.[!pos] do
+    while !pos < slen &&  lb.curr_char < lb.buff_end && Bytes.get lb.buff lb.curr_char == s.[!pos] do
       lb.curr_char <- lb.curr_char + 1;
       incr pos
     done;
@@ -92,20 +92,20 @@ let save_lb lb =
   aux_cc := lb.curr_char;
   aux_be := lb.buff_end;
   aux_pi := pos_in lb.in_ch;
-  String.blit lb.buff !aux_cc aux_buff !aux_cc (!aux_be - !aux_cc)
+  Bytes.blit lb.buff !aux_cc aux_buff !aux_cc (!aux_be - !aux_cc)
 
 let restore_lb lb =
   lb.curr_char <- !aux_cc;
   lb.buff_end <- !aux_be;
   seek_in lb.in_ch !aux_pi;
-  String.blit aux_buff !aux_cc lb.buff !aux_cc (!aux_be - !aux_cc)
+  Bytes.blit aux_buff !aux_cc lb.buff !aux_cc (!aux_be - !aux_cc)
 
 let check_string lb s =
   let slen = String.length s in
   if String.length s <= lb.buff_end - lb.curr_char then
     let cc = lb.curr_char in
     let pos = ref 0 in
-    while !pos < slen && lb.buff.[lb.curr_char] == s.[!pos] do
+    while !pos < slen && Bytes.get lb.buff lb.curr_char == s.[!pos] do
       lb.curr_char <- lb.curr_char + 1;
       incr pos
     done;
@@ -136,26 +136,26 @@ let is_digit c =
 
 let is_start_int lb =
   skip_blank lb;
-  not (eof lb) && (is_digit lb.buff.[lb.curr_char] || lb.buff.[lb.curr_char] == '-')
+  not (eof lb) && (is_digit (Bytes.get lb.buff lb.curr_char) || Bytes.get lb.buff lb.curr_char == '-')
 
 let input_int lb =
   if eof lb then raise End_of_file
   else begin
     let sign =
-      if lb.buff.[lb.curr_char] == '-' then begin
+      if Bytes.get lb.buff lb.curr_char == '-' then begin
 	lb.curr_char <- lb.curr_char + 1;
 	if lb.curr_char = lb.buff_end then refill lb;
 	-1
       end else
 	1 in
     if eof lb then raise End_of_file;
-    if not (is_digit lb.buff.[lb.curr_char]) then raise (Invalid_argument "input_int");
-    let n = ref (Char.code lb.buff.[lb.curr_char] - Char.code '0') in
+    if not (is_digit (Bytes.get lb.buff lb.curr_char)) then raise (Invalid_argument "input_int");
+    let n = ref (Char.code (Bytes.get lb.buff lb.curr_char) - Char.code '0') in
     lb.curr_char <- lb.curr_char + 1;
     if lb.curr_char = lb.buff_end then refill lb;
-    while not (eof lb) && is_digit lb.buff.[lb.curr_char] do
-      while lb.curr_char < lb.buff_end && is_digit lb.buff.[lb.curr_char] do
-	n := !n*10 + (Char.code lb.buff.[lb.curr_char] - Char.code '0');
+    while not (eof lb) && is_digit (Bytes.get lb.buff lb.curr_char) do
+      while lb.curr_char < lb.buff_end && is_digit (Bytes.get lb.buff lb.curr_char) do
+	n := !n*10 + (Char.code (Bytes.get lb.buff lb.curr_char) - Char.code '0');
 	lb.curr_char <- lb.curr_char + 1
       done;
       if lb.curr_char = lb.buff_end then refill lb
@@ -172,7 +172,7 @@ let skip_line lb =
   let notfound = ref true in
   while not (eof lb) && !notfound do
     while lb.curr_char < lb.buff_end && !notfound do
-      if lb.buff.[lb.curr_char] == '\n' then notfound := false;
+      if Bytes.get lb.buff lb.curr_char == '\n' then notfound := false;
       lb.curr_char <- lb.curr_char + 1
     done;
     if lb.curr_char = lb.buff_end then refill lb
