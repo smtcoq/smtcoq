@@ -1,52 +1,5 @@
-module Atom :
-  sig
-    type t = int
-    val index : 'a -> 'a
-    val equal : 'a -> 'a -> bool
-    val is_bool_type : 'a -> bool
-    type reify_tbl = {
-      mutable count : int;
-      tbl : (Term.constr, int) Hashtbl.t;
-    }
-    val create : unit -> reify_tbl
-    val declare : reify_tbl -> Term.constr -> int
-    val get : reify_tbl -> Term.constr -> int
-    val atom_tbl : reify_tbl -> Term.constr array
-    val interp_tbl : reify_tbl -> Term.constr
-  end
-module Form :
-  sig
-    type hatom = Atom.t
-    type t = SmtForm.Make(Atom).t
-    type pform = (hatom, t) SmtForm.gen_pform
-    val pform_true : pform
-    val pform_false : pform
-    val equal : t -> t -> bool
-    val to_lit : t -> int
-    val index : t -> int
-    val pform : t -> pform
-    val neg : t -> t
-    val is_pos : t -> bool
-    val is_neg : t -> bool
-    val to_string : ?pi:bool -> (hatom -> string) -> t -> string
-    val to_smt : (hatom -> string) -> Format.formatter -> t -> unit
-    exception NotWellTyped of pform
-    type reify = SmtForm.Make(Atom).reify
-    val create : unit -> reify
-    val clear : reify -> unit
-    val get : ?declare:bool -> reify -> pform -> t
-    val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
-    val hash_hform : (hatom -> hatom) -> reify -> t -> t
-    val flatten : reify -> t -> t
-    val to_coq : t -> Term.constr
-    val pform_tbl : reify -> pform array
-    val to_array : reify -> 'a -> (pform -> 'a) -> int * 'a array
-    val interp_tbl : reify -> Term.constr * Term.constr
-    val nvars : reify -> int
-    val interp_to_coq :
-      (hatom -> Term.constr) ->
-      (int, Term.constr) Hashtbl.t -> t -> Term.constr
-  end
+module Atom : SmtForm.ATOM
+module Form : SmtForm.FORM with type hatom = Atom.t
 module Trace :
   sig
     val share_value : Form.t SmtCertif.clause -> unit
