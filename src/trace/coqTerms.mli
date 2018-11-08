@@ -78,6 +78,8 @@ val cand : Term.constr lazy_t
 
 (* Bit vectors *)
 val cbitvector : Term.constr lazy_t
+val cof_bits : Term.constr lazy_t
+val cbv_eq : Term.constr lazy_t
 
 (* Arrays *)
 val cfarray : Term.constr lazy_t
@@ -156,6 +158,7 @@ val cFxor : Term.constr lazy_t
 val cFimp : Term.constr lazy_t
 val cFiff : Term.constr lazy_t
 val cFite : Term.constr lazy_t
+val cFbbT : Term.constr lazy_t
 
 val cis_true : Term.constr lazy_t
 

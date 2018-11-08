@@ -75,9 +75,9 @@ module type FORM =
     val is_pos : t -> bool
     val is_neg : t -> bool
 
-    val to_string : ?pi:bool -> (hatom -> string) -> t -> string
-    val to_smt : (hatom -> string) -> Format.formatter ->
-                 t -> unit
+    val to_smt : ?pi:bool ->
+                 (Format.formatter -> hatom -> unit) ->
+                 Format.formatter -> t -> unit
 
     val logic : t -> logic
 
@@ -479,7 +479,9 @@ module Make (Atom:ATOM) =
       and mk_hpform {index = _; hval = hv} =
         let new_hv = match hv with
             | Fatom a -> Fatom (hash_hatom a)
-            | Fapp (fop, arr) -> Fapp (fop, Array.map mk_hform arr) in
+            | Fapp (fop, arr) -> Fapp (fop, Array.map mk_hform arr)
+            | FbbT (a, l) -> FbbT (hash_hatom a, List.map mk_hform l)
+        in
         match get rf' new_hv with Pos x | Neg x -> x in
       mk_hform hf
 

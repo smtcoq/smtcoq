@@ -49,7 +49,7 @@ Module Form.
    (* Bit-blasting predicate (theory of bit vectors):
         bbT a [l1;...;ln] means [l1;...;ln] is the bitwise representation of a
       (in little endian)
-      WARNING: this breaks stratification
+      WARNING: this is a slight infringement of stratification
       *)
   | FbbT (_:atom) (_:list _lit)
   (* TODO: replace [list _lit] with [fargs] *)
