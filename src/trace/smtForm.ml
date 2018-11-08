@@ -166,10 +166,10 @@ module Make (Atom:ATOM) =
 
     let rec to_smt ?pi:(pi=false) atom_to_smt fmt = function
       | Pos hp ->
-         if pi then Format.fprintf fmt (string_of_int hp.index ^ ":");
+         if pi then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
          to_smt_pform atom_to_smt fmt hp.hval
       | Neg hp ->
-         if pi then Format.fprintf fmt (string_of_int hp.index ^ ":");
+         if pi then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
          Format.fprintf fmt "(not ";
          to_smt_pform atom_to_smt fmt hp.hval;
          Format.fprintf fmt ")"
@@ -187,29 +187,34 @@ module Make (Atom:ATOM) =
         Format.fprintf fmt "])"
 
     and to_smt_op atom_to_smt fmt op args =
-      let s = match op with
-        | Ftrue -> "true"
-        | Ffalse -> "false"
-        | Fand -> "and"
-        | For -> "or"
-        | Fxor -> "xor"
-        | Fimp -> "=>"
-        | Fiff -> "="
-        | Fite -> "ite"
-        | Fnot2 _ -> ""
-        | Fforall l -> "forall (" ^
-                         to_string_args l ^
-                           ")"
-      in
-      let (s1,s2) = if Array.length args = 0 || s = "" then ("","") else ("(",")") in
-      Format.fprintf fmt "%s%s" s1 s;
-      Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
-Format.fprintf fmt "%s" s2
+      let (s1,s2) = if ((Array.length args = 0) || (match op with Fnot2 _ -> true | _ -> false)) then ("","") else ("(",")") in
+      Format.fprintf fmt "%s" s1;
+      (match op with
+         | Ftrue -> Format.fprintf fmt "true"
+         | Ffalse -> Format.fprintf fmt "false"
+         | Fand -> Format.fprintf fmt "and"
+         | For -> Format.fprintf fmt "or"
+         | Fxor -> Format.fprintf fmt "xor"
+         | Fimp -> Format.fprintf fmt "=>"
+         | Fiff -> Format.fprintf fmt "="
+         | Fite -> Format.fprintf fmt "ite"
+         | Fnot2 _ -> ()
+         | Fforall l ->
+            (Format.fprintf fmt "forall (";
+             to_smt_args fmt l;
+             Format.fprintf fmt  ")")
+      );
 
-    and to_string_args = function
-      | [] -> " "
-      | (s, t)::rem -> " (" ^ s ^ " " ^ SmtBtype.to_string t ^ ")"
-                       ^ to_string_args rem
+      Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
+      Format.fprintf fmt "%s" s2
+
+    and to_smt_args fmt = function
+      | [] -> Format.fprintf fmt " "
+      | (s, t)::rem ->
+         (Format.fprintf fmt " (%s " s;
+          SmtBtype.to_smt fmt t;
+          Format.fprintf fmt ")";
+          to_smt_args fmt rem)
 
     let rec logic_pform = function
       | Fatom a -> Atom.logic a
