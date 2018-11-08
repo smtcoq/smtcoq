@@ -34,8 +34,6 @@ let cnat = gen_constant init_modules "nat"
 let cO = gen_constant init_modules "O"
 let cS = gen_constant init_modules "S"
 
-let ciff = gen_constant init_modules "iff"
-
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];
                         ["Coq";"PArith";"BinPosDef";"Pos"]]
@@ -88,6 +86,7 @@ let cnegb = gen_constant init_modules "negb"
 let cimplb = gen_constant init_modules "implb"
 let ceqb = gen_constant  bool_modules "eqb"
 let cifb = gen_constant bool_modules "ifb"
+let ciff = gen_constant init_modules "iff"
 let creflect = gen_constant bool_modules "reflect"
 
 (* Lists *)
@@ -153,11 +152,11 @@ let cstore = gen_constant array_modules "store"
 let cdiff = gen_constant array_modules "diff"
 let cequalarray = gen_constant array_modules "FArray.equal"
 
+(* OrderedType *)
 let cOrderedTypeCompare =
   gen_constant [["Coq";"Structures";"OrderedType"]] "Compare"
 
 (* SMT_terms *)
-
 let smt_modules = [ ["SMTCoq";"Misc"];
 		    ["SMTCoq";"State"];
 		    ["SMTCoq";"SMT_terms"];
@@ -176,8 +175,8 @@ let cTZ = gen_constant smt_modules "TZ"
 let cTbool = gen_constant smt_modules "Tbool"
 let cTpositive = gen_constant smt_modules "Tpositive"
 let cTBV = gen_constant smt_modules "TBV"
-let cTindex = gen_constant smt_modules "Tindex"
 let cTFArray = gen_constant smt_modules "TFArray"
+let cTindex = gen_constant smt_modules "Tindex"
 
 let ct_i = gen_constant smt_modules "t_i"
 let cinterp_t = gen_constant smt_modules "Typ.interp"
@@ -303,12 +302,12 @@ let make_certif_ops modules args =
   gen_constant "Hole", gen_constant "ForallInst")
 
 
-(** Useful construction *)
+(** Useful constructions *)
 
 let ceq_refl_true =
-  SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|]
+  lazy (SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])
 
-let eq_refl_true () = ceq_refl_true
+let eq_refl_true () = Lazy.force ceq_refl_true
 
 let vm_cast_true_no_check t =
   Term.mkCast(eq_refl_true (),

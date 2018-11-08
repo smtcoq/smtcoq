@@ -46,6 +46,7 @@ val tclTHEN :
 val tclTHENLAST :
   unit Proofview.tactic -> unit Proofview.tactic -> unit Proofview.tactic
 val assert_before : Names.Name.t -> Term.types -> unit Proofview.tactic
+val vm_conv : Reduction.conv_pb -> Term.types Reduction.kernel_conversion_function
 val vm_cast_no_check : Term.constr -> unit Proofview.tactic
 val mk_tactic :
   (Environ.env -> Evd.evar_map -> Term.constr -> unit Proofview.tactic) ->

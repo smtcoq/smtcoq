@@ -13,6 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+open SmtMisc
+
 
 type indexed_type
 
@@ -24,8 +26,8 @@ type btype =
   | Tbool
   | Tpositive
   | TBV of int
-  | Tindex of indexed_type
   | TFArray of btype * btype
+  | Tindex of indexed_type
 
 val equal : btype -> btype -> bool
 

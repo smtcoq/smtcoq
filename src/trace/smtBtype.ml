@@ -35,6 +35,7 @@ type btype =
   | TBV of int
   | TFArray of btype * btype
   | Tindex of indexed_type
+
 let mk_bool b =
   let c, args = Term.decompose_app b in
   if Term.eq_constr c (Lazy.force ctrue) then true
@@ -118,6 +119,7 @@ let mk_bvsize n =
 let index_tbl = Hashtbl.create 17
 
 let index_to_coq i =
+  let i = i.index in
   try Hashtbl.find index_tbl i
   with Not_found ->
     let interp = mklApp cTindex [|mkInt i|] in
