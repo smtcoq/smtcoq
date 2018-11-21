@@ -1,5 +1,30 @@
-module Atom : SmtForm.ATOM with type t = int
+module Atom : sig
+  type t = int
+  val index : t -> int
+
+  val equal : t -> t -> bool
+
+  val is_bool_type : t -> bool
+  val is_bv_type : t -> bool
+  val to_smt : Format.formatter -> t -> unit
+  val logic : t -> SmtMisc.logic
+
+  val is_bool_type : t -> bool
+  type reify_tbl = {
+      mutable count : int;
+      tbl : (Term.constr, t) Hashtbl.t;
+    }
+  val create : unit -> reify_tbl
+  val declare : reify_tbl -> Term.constr -> t
+  val get : reify_tbl -> Term.constr -> t
+  val atom_tbl : reify_tbl -> Term.constr array
+  val interp_tbl : reify_tbl -> Term.constr
+end
+
+
 module Form : SmtForm.FORM with type hatom = Atom.t
+
+
 module Trace :
   sig
     val share_value : Form.t SmtCertif.clause -> unit

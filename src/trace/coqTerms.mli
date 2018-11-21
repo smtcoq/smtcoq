@@ -1,3 +1,5 @@
+val gen_constant : string list list -> string -> Term.constr lazy_t
+
 (* Int63 *)
 val cint : Term.constr lazy_t
 val ceq63 : Term.constr lazy_t
@@ -232,6 +234,7 @@ val make_certif_ops :
 (* Some constructions *)
 val ceq_refl_true : Term.constr lazy_t
 val eq_refl_true : unit -> Term.constr
+val vm_cast_true_no_check : Term.constr -> Term.constr
 val vm_cast_true : Environ.env -> Term.constr -> Term.constr
 val mkNat : int -> Term.constr
 val mkN : int -> Term.constr
