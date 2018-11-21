@@ -1,4 +1,4 @@
-module Atom : SmtForm.ATOM
+module Atom : SmtForm.ATOM with type t = int
 module Form : SmtForm.FORM with type hatom = Atom.t
 module Trace :
   sig
