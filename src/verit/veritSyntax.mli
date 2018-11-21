@@ -60,7 +60,7 @@ val find_opt_qvar : string -> SmtBtype.btype option
 val add_qvar : string -> SmtBtype.btype -> unit
 val clear_qvar : unit -> unit
 
-val string_hform : SmtAtom.Form.t -> string
+val hform_to_smt : Format.formatter -> SmtAtom.Form.t -> unit
 
 val init_index : SmtAtom.Form.t list -> (SmtAtom.Form.t -> SmtAtom.Form.t) ->
                  SmtAtom.Form.t -> int

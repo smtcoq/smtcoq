@@ -565,7 +565,7 @@ let find_opt_qvar s = try Some (Hashtbl.find qvar_tbl s)
 let add_qvar s bt = Hashtbl.add qvar_tbl s bt
 let clear_qvar () = Hashtbl.clear qvar_tbl
 
-let string_hform = Form.to_string ~pi:true (Atom.to_string ~pi:true )
+let hform_to_smt = Form.to_smt ~pi:true Atom.to_smt
 
 (* Finding the index of a root in <lsmt> modulo the <re_hash> function.
    This function is used by SmtTrace.order_roots *)
@@ -582,9 +582,9 @@ let init_index lsmt re_hash =
             try find (Form.to_lit re_hf)
             with Not_found ->
               let oc = open_out "/tmp/input_not_found.log" in
-              (List.map string_hform lsmt)
-              |> List.iter (Printf.fprintf oc "%s\n");
-              Printf.fprintf oc "\n%s\n" (string_hform re_hf);
+              let fmt = Format.formatter_of_out_channel oc in
+              List.iter (fun h -> Format.fprintf fmt "%a\n" hform_to_smt h) lsmt;
+              Format.fprintf fmt "\n%a\n" hform_to_smt re_hf;
               flush oc; close_out oc;
               failwith "not found: log available"
 
