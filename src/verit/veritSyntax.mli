@@ -41,6 +41,9 @@ val apply_dec_atom : (bool -> SmtAtom.hatom -> SmtAtom.hatom) ->
 val apply_bdec_atom :
   (bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) ->
   bool * atom_form_lit -> bool * atom_form_lit -> bool * atom_form_lit
+val apply_tdec_atom :
+  (bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) ->
+  bool * atom_form_lit -> bool * atom_form_lit -> bool * atom_form_lit -> bool * atom_form_lit
 
 val apply_dec : ('a -> 'b) -> bool * 'a -> bool * 'b
 val list_dec : (bool * 'a) list -> bool * 'a list

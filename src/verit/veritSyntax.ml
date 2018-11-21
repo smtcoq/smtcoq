@@ -536,6 +536,13 @@ let apply_bdec_atom f o1 o2 =
      decl, Atom (f decl h1 h2)
   | _ -> assert false
 
+let apply_tdec_atom f o1 o2 o3 =
+  match o1, o2, o3 with
+  | (decl1, Atom h1), (decl2, Atom h2), (decl3, Atom h3) ->
+     let decl = decl1 && decl2 && decl3 in
+     decl, Atom (f decl h1 h2 h3)
+  | _ -> assert false
+
 
 let solver : (int, (bool * atom_form_lit)) Hashtbl.t = Hashtbl.create 17
 let get_solver id =

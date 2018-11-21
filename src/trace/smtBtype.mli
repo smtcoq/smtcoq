@@ -30,6 +30,8 @@ type btype =
   | TFArray of btype * btype
   | Tindex of indexed_type
 
+val indexed_type_of_int : int -> Term.constr SmtMisc.gen_hashed
+
 val equal : btype -> btype -> bool
 
 val to_coq : btype -> Term.constr

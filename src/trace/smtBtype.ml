@@ -39,12 +39,14 @@ type btype =
 let index_tbl = Hashtbl.create 17
 
 let index_to_coq i =
-  let i = i.index in
   try Hashtbl.find index_tbl i
   with Not_found ->
     let interp = mklApp cTindex [|mkInt i|] in
     Hashtbl.add index_tbl i interp;
     interp
+
+let indexed_type_of_int i =
+  {index = i; hval = index_to_coq i }
 
 let rec equal t1 t2 =
   match t1,t2 with
@@ -58,7 +60,7 @@ let rec to_coq = function
   | Tbool -> Lazy.force cTbool
   | Tpositive -> Lazy.force cTpositive
   | TBV n -> mklApp cTBV [|mkN n|]
-  | Tindex i -> index_to_coq i
+  | Tindex i -> index_to_coq i.index
   | TFArray (ti, te) ->
      mklApp cTFArray [|to_coq ti; to_coq te|]
 
