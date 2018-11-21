@@ -16,10 +16,11 @@
 open SmtMisc
 
 
-type indexed_type
+type indexed_type = Term.constr gen_hashed
 
 val dummy_indexed_type: int -> indexed_type
 val indexed_type_index : indexed_type -> int
+val indexed_type_hval : indexed_type -> Term.constr
 
 type btype =
   | TZ
@@ -48,6 +49,14 @@ val get_coq_type_op : int -> Term.constr
 val interp_tbl : reify_tbl -> Term.constr
 
 val to_list : reify_tbl ->  (int * indexed_type) list
+
+val make_t_i : reify_tbl -> Term.constr
+
+val dec_interp : Term.constr -> btype -> Term.constr
+val ord_interp : Term.constr -> btype -> Term.constr
+val comp_interp : Term.constr -> btype -> Term.constr
+val inh_interp : Term.constr -> btype -> Term.constr
+val interp : Term.constr -> btype -> Term.constr
 
 val interp_to_coq : reify_tbl -> btype -> Term.constr
 

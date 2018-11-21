@@ -85,14 +85,19 @@ type index = Index of int
 
 type indexed_op = index * op_def
 
-let dummy_indexed_op i dom codom =
-  {index = i; hval = {tparams = dom; tres = codom; op_val = Term.mkProp}}
+let destruct s (i, hval) = match i with
+    | Index index -> index, hval
+    | Rel_name _ -> failwith s
 
-let indexed_op_index op = op.index
+let dummy_indexed_op i dom codom =
+  (i, {tparams = dom; tres = codom; op_val = Term.mkProp})
+
+let indexed_op_index i =
+  let index, _ = destruct "destruct on a Rel: called by indexed_op_index" i in
+  index
 
 let debruijn_indexed_op i ty =
-  { index = i;
-    hval = {tparams = [||]; tres = ty; op_val = Term.mkRel i}}
+  (Index i, {tparams = [||]; tres = ty; op_val = Term.mkRel i})
 
 module Op =
   struct
@@ -169,21 +174,21 @@ module Op =
     let select_to_coq ti te =
       try Hashtbl.find select_tbl (ti, te)
       with Not_found ->
-        let op = mklApp cBO_select [|Btype.to_coq ti; Btype.to_coq te|] in
+        let op = mklApp cBO_select [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
         Hashtbl.add select_tbl (ti, te) op;
         op
 
     let store_to_coq ti te =
       try Hashtbl.find store_tbl (ti, te)
       with Not_found ->
-        let op = mklApp cTO_store [|Btype.to_coq ti; Btype.to_coq te|] in
+        let op = mklApp cTO_store [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
         Hashtbl.add store_tbl (ti, te) op;
         op
 
     let diffarray_to_coq ti te =
       try Hashtbl.find diffarray_tbl (ti, te)
       with Not_found ->
-        let op = mklApp cBO_diffarray [|Btype.to_coq ti; Btype.to_coq te|] in
+        let op = mklApp cBO_diffarray [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
         Hashtbl.add diffarray_tbl (ti, te) op;
         op
 
@@ -232,7 +237,7 @@ module Op =
 
 
     let interp_ieq t_i t =
-      mklApp cinterp_eqb [|t_i ; Btype.to_coq t|]
+      mklApp cinterp_eqb [|t_i ; SmtBtype.to_coq t|]
 
  (*   let veval_t te =
       let env = Global.env () in
@@ -242,36 +247,36 @@ module Op =
 
 
     let interp_ieq_eval t_i t =
-      let te = mklApp cinterp_eqb [|t_i ; Btype.to_coq t|] in
+      let te = mklApp cinterp_eqb [|t_i ; SmtBtype.to_coq t|] in
       veval_t te
       *)
 
     let interp_eqarray t_i ti te =
       mklApp cequalarray
-        Btype.[|interp t_i ti; interp t_i te;
-                ord_interp t_i ti; comp_interp t_i ti;
-                ord_interp t_i te; comp_interp t_i te;
-                inh_interp t_i te |]
+        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+                SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+                SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
+                SmtBtype.inh_interp t_i te |]
 
     let interp_select t_i ti te =
       mklApp cselect
-        Btype.[|interp t_i ti; interp t_i te;
-                ord_interp t_i ti; comp_interp t_i ti;
-                inh_interp t_i te|]
+        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+                SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+                SmtBtype.inh_interp t_i te|]
 
     let interp_diff t_i ti te =
       mklApp cdiff
-        Btype.[|interp t_i ti; interp t_i te;
-                dec_interp t_i ti; ord_interp t_i ti; comp_interp t_i ti;
-                dec_interp t_i te; ord_interp t_i te; comp_interp t_i te;
-                inh_interp t_i ti; inh_interp t_i te |]
+        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+                SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+                SmtBtype.dec_interp t_i te; SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
+                SmtBtype.inh_interp t_i ti; SmtBtype.inh_interp t_i te |]
 
 
     let interp_store t_i ti te =
       mklApp cstore
-        Btype.[|interp t_i ti; interp t_i te;
-                dec_interp t_i ti; ord_interp t_i ti; comp_interp t_i ti;
-                ord_interp t_i te; comp_interp t_i te; inh_interp t_i te |]
+        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+                SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+                SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te; SmtBtype.inh_interp t_i te |]
 
 
     let interp_eq t_i = function
@@ -330,15 +335,9 @@ module Op =
     let n_type_args = function
       | NO_distinct ty -> ty
 
-    let interp_distinct = function
-      | TZ -> Lazy.force cZ
-      | Tbool -> Lazy.force cbool
-      | Tpositive -> Lazy.force cpositive
-      | Tindex i -> mklApp cte_carrier [|indexed_type_hval i|]
-
     let interp_nop t_i = function
       | NO_distinct ty ->
-        mklApp cdistinct [|Btype.interp t_i ty; interp_eq t_i ty|]
+        mklApp cdistinct [|SmtBtype.interp t_i ty; interp_eq t_i ty|]
 
     let i_to_coq i = let index, _ = destruct "destruct on a Rel: called by i_to_coq" i in
                      mkInt index
@@ -423,13 +422,13 @@ module Op =
         | BO_BVshr n1, BO_BVshr n2 -> n1 == n2
         | BO_select (ti1, te1), BO_select (ti2, te2)
         | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) ->
-          Btype.equal ti1 ti2 && Btype.equal te1 te2
+          SmtBtype.equal ti1 ti2 && SmtBtype.equal te1 te2
         | _ -> op1 == op2
 
     let t_equal op1 op2 =
       match op1,op2 with
         | TO_store (ti1, te1), TO_store (ti2, te2) ->
-          Btype.equal ti1 ti2 && Btype.equal te1 te2
+          SmtBtype.equal ti1 ti2 && SmtBtype.equal te1 te2
 
     let n_equal op1 op2 =
       match op1,op2 with
@@ -458,7 +457,7 @@ module Op =
       | BO_Zle
       | BO_Zge
       | BO_Zgt -> SL.singleton LLia
-      | BO_eq ty -> Btype.logic ty
+      | BO_eq ty -> SmtBtype.logic ty
       | BO_BVand _
       | BO_BVor _
       | BO_BVxor _
@@ -471,21 +470,22 @@ module Op =
       | BO_BVconcat _ -> SL.singleton LBitvectors
       | BO_select (ti, te)
       | BO_diffarray (ti, te) ->
-        SL.add LArrays (SL.union (Btype.logic ti) (Btype.logic te))
+        SL.add LArrays (SL.union (SmtBtype.logic ti) (SmtBtype.logic te))
 
 
     let logic_of_top = function
       | TO_store (ti, te) ->
-        SL.add LArrays (SL.union (Btype.logic ti) (Btype.logic te))
+        SL.add LArrays (SL.union (SmtBtype.logic ti) (SmtBtype.logic te))
 
     let logic_of_nop = function
-      | NO_distinct ty -> Btype.logic ty
+      | NO_distinct ty -> SmtBtype.logic ty
 
 
     let logic_of_indexed t =
+      let (_, hval) = destruct "destruct on a Rel: called by logic_of_indexed" t in
       Array.fold_left (fun l ty ->
-         SL.union (Btype.logic ty) l
-        ) (Btype.logic t.hval.tres) t.hval.tparams
+         SL.union (SmtBtype.logic ty) l
+        ) (SmtBtype.logic hval.tres) hval.tparams
 
 
     let logic_ro reify =
@@ -582,6 +582,7 @@ module HashedAtom =
           in
           (hash_args lsl 5 + (Hashtbl.hash op) lsl 3) lxor 4
       | Aapp (op, args) ->
+         let op_index = try fst (destruct "destruct on a Rel: called by hash" op) with _ -> 0 in
           let hash_args =
             match Array.length args with
             | 0 -> 0
@@ -589,7 +590,7 @@ module HashedAtom =
             | 2 -> args.(1).index lsl 2 + args.(0).index
             | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index
           in
-          (hash_args lsl 5 + op.index lsl 3) lxor 4
+          (hash_args lsl 5 + op_index lsl 3) lxor 4
 
 
 
@@ -639,7 +640,7 @@ module Atom =
 
     and compute_hint h = compute_int (atom h)
 
-    let to_string_int i =
+    let to_smt_int fmt i =
       let s1 = if i < 0 then "(- " else "" in
       let s2 = if i < 0 then ")" else "" in
       let j = if i < 0 then -i else i in
@@ -652,77 +653,99 @@ module Atom =
       | [] -> ()
 
 
-    let rec to_smt fmt h = to_smt_atom fmt (atom h)
+    let to_smt_named ?pi:(pi=false) (fmt:Format.formatter) h =
+      let rec to_smt fmt h =
+        if pi then Format.fprintf fmt "%d:" (index h);
+        to_smt_atom (atom h)
 
-    and to_smt_atom fmt = function
-      | Acop (CO_BV bv) -> Format.fprintf fmt "#b%a" bv_to_smt bv
-      | Acop _ as a -> to_smt_int fmt (compute_int a)
-      | Auop (UO_Zopp,h) ->
-        Format.fprintf fmt "(- ";
-        to_smt fmt h;
+      and to_smt_atom = function
+        | Acop (CO_BV bv) -> Format.fprintf fmt "#b%a" bv_to_smt bv
+        | Acop _ as a -> to_smt_int fmt (compute_int a)
+        | Auop (UO_Zopp,h) ->
+           Format.fprintf fmt "(- ";
+           to_smt fmt h;
+           Format.fprintf fmt ")"
+        | Auop (UO_BVbitOf (_, i), h) ->
+           Format.fprintf fmt "(bitof %d %a)" i to_smt h
+        | Auop (UO_BVnot _, h) ->
+           Format.fprintf fmt "(bvnot %a)" to_smt h
+        | Auop (UO_BVneg _, h) ->
+           Format.fprintf fmt "(bvneg %a)" to_smt h
+        | Auop (UO_BVextr (i, n, _), h) ->
+           Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
+        | Auop (UO_BVzextn (_, n), h) ->
+           Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
+        | Auop (UO_BVsextn (_, n), h) ->
+           Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
+        | Auop _ as a -> to_smt_int fmt (compute_int a)
+        | Abop (op,h1,h2) -> to_smt_bop op h1 h2
+        | Atop (op,h1,h2,h3) -> to_smt_top op h1 h2 h3
+        | Anop (op,a) -> to_smt_nop op a
+        | Aapp ((i,op),a) ->
+           let op_smt () =
+             (match i with
+                | Index index -> Format.fprintf fmt "op_%i" index
+                | Rel_name name -> Format.fprintf fmt "%s" name);
+             if pi then to_smt_op op
+           in
+           if Array.length a = 0 then (
+             op_smt ()
+           ) else (
+             Format.fprintf fmt "(";
+             op_smt ();
+             Array.iter (fun h -> Format.fprintf fmt " "; to_smt fmt h) a;
+             Format.fprintf fmt ")"
+           )
+
+      and to_smt_op {tparams=bta; tres=bt; op_val=t} =
+        Format.fprintf fmt "[(";
+        Array.iter (fun bt -> SmtBtype.to_smt fmt bt; Format.fprintf fmt " ") bta;
+        Format.fprintf fmt ") ( ";
+        SmtBtype.to_smt fmt bt;
+        Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (Printer.pr_constr t))
+
+      and to_smt_bop op h1 h2 =
+        let s = match op with
+            | BO_Zplus -> "+"
+            | BO_Zminus -> "-"
+            | BO_Zmult -> "*"
+            | BO_Zlt -> "<"
+            | BO_Zle -> "<="
+            | BO_Zge -> ">="
+            | BO_Zgt -> ">"
+            | BO_eq _ -> "="
+            | BO_BVand _ -> "bvand"
+            | BO_BVor _ -> "bvor"
+            | BO_BVxor _ -> "bvxor"
+            | BO_BVadd _ -> "bvadd"
+            | BO_BVmult _ -> "bvmul"
+            | BO_BVult _ -> "bvult"
+            | BO_BVslt _ -> "bvslt"
+            | BO_BVconcat _ -> "concat"
+            | BO_BVshl _ -> "bvshl"
+            | BO_BVshr _ -> "bvlshr"
+            | BO_select _ -> "select"
+            | BO_diffarray _ -> "diff" (* should not be used in goals *)
+        in
+        Format.fprintf fmt "(%s %a %a)" s to_smt h1 to_smt h2
+
+      and to_smt_top op h1 h2 h3=
+        let s = match op with
+            | TO_store _ -> "store"
+        in
+        Format.fprintf fmt "(%s %a %a %a)" s to_smt h1 to_smt h2 to_smt h3
+
+      and to_smt_nop op a =
+        let s = match op with
+            | NO_distinct _ -> "distinct" in
+        Format.fprintf fmt "(%s" s;
+        Array.iter (fun h -> Format.fprintf fmt " "; to_smt fmt h) a;
         Format.fprintf fmt ")"
-      | Auop (UO_BVbitOf (_, i), h) ->
-        Format.fprintf fmt "(bitof %d %a)" i to_smt h
-      | Auop (UO_BVnot _, h) ->
-        Format.fprintf fmt "(bvnot %a)" to_smt h
-      | Auop (UO_BVneg _, h) ->
-        Format.fprintf fmt "(bvneg %a)" to_smt h
-      | Auop (UO_BVextr (i, n, _), h) ->
-        Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
-      | Auop (UO_BVzextn (_, n), h) ->
-        Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
-      | Auop (UO_BVsextn (_, n), h) ->
-        Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
-      | Auop _ as a -> to_smt_int fmt (compute_int a)
-      | Abop (op,h1,h2) -> to_smt_bop fmt op h1 h2
-      | Atop (op,h1,h2,h3) -> to_smt_top fmt op h1 h2 h3
-      | Anop (op,a) -> to_smt_nop fmt op a
-      | Aapp (op,a) ->
-        if Array.length a = 0 then (
-          Format.fprintf fmt "op_%i" op.index;
-        ) else (
-          Format.fprintf fmt "(op_%i" op.index;
-          Array.iter (fun h -> Format.fprintf fmt " "; to_smt fmt h) a;
-          Format.fprintf fmt ")"
-        )
 
-    and to_smt_bop fmt op h1 h2 =
-      let s = match op with
-        | BO_Zplus -> "+"
-        | BO_Zminus -> "-"
-        | BO_Zmult -> "*"
-        | BO_Zlt -> "<"
-        | BO_Zle -> "<="
-        | BO_Zge -> ">="
-        | BO_Zgt -> ">"
-        | BO_eq _ -> "="
-        | BO_BVand _ -> "bvand"
-        | BO_BVor _ -> "bvor"
-        | BO_BVxor _ -> "bvxor"
-        | BO_BVadd _ -> "bvadd"
-        | BO_BVmult _ -> "bvmul"
-        | BO_BVult _ -> "bvult"
-        | BO_BVslt _ -> "bvslt"
-        | BO_BVconcat _ -> "concat"
-        | BO_BVshl _ -> "bvshl"
-        | BO_BVshr _ -> "bvlshr"
-        | BO_select _ -> "select"
-        | BO_diffarray _ -> "diff" (* should not be used in goals *)
       in
-      Format.fprintf fmt "(%s %a %a)" s to_smt h1 to_smt h2
+      to_smt fmt h
 
-    and to_smt_top fmt op h1 h2 h3=
-      let s = match op with
-        | TO_store _ -> "store"
-      in
-      Format.fprintf fmt "(%s %a %a %a)" s to_smt h1 to_smt h2 to_smt h3
-
-    and to_smt_nop fmt op a =
-      let s = match op with
-        | NO_distinct _ -> "distinct" in
-      Format.fprintf fmt "(%s" s;
-      Array.iter (fun h -> Format.fprintf fmt " "; to_smt fmt h) a;
-      Format.fprintf fmt ")"
+    let to_smt (fmt:Format.formatter) h = to_smt_named fmt h
 
 
     exception NotWellTyped of atom
@@ -732,32 +755,32 @@ module Atom =
       match a with
       | Acop _ -> ()
       | Auop(op,h) ->
-	if not (Btype.equal (Op.u_type_arg op) (type_of h)) then
+	if not (SmtBtype.equal (Op.u_type_arg op) (type_of h)) then
 	  raise (NotWellTyped a)
       | Abop(op,h1,h2) ->
 	let (t1,t2) = Op.b_type_args op in
- 	if not (Btype.equal t1 (type_of h1) && Btype.equal t2 (type_of h2))
+ 	if not (SmtBtype.equal t1 (type_of h1) && SmtBtype.equal t2 (type_of h2))
         then (Format.eprintf "1. Wanted %a, got %a@.2. Wanted %a, got %a@."
-                Btype.to_smt t1 Btype.to_smt (type_of h1)
-                Btype.to_smt t2 Btype.to_smt (type_of h2);
+                SmtBtype.to_smt t1 SmtBtype.to_smt (type_of h1)
+                SmtBtype.to_smt t2 SmtBtype.to_smt (type_of h2);
               raise (NotWellTyped a))
       | Atop(op,h1,h2,h3) ->
 	let (t1,t2,t3) = Op.t_type_args op in
-        if not (Btype.equal t1 (type_of h1) &&
-                Btype.equal t2 (type_of h2) &&
-                Btype.equal t3 (type_of h3))
+        if not (SmtBtype.equal t1 (type_of h1) &&
+                SmtBtype.equal t2 (type_of h2) &&
+                SmtBtype.equal t3 (type_of h3))
 	then raise (NotWellTyped a)
       | Anop(op,ha) ->
         let ty = Op.n_type_args op in
         Array.iter
-          (fun h -> if not (Btype.equal ty (type_of h)) then
+          (fun h -> if not (SmtBtype.equal ty (type_of h)) then
               raise (NotWellTyped a)) ha
       | Aapp(op,args) ->
 	let tparams = Op.i_type_args op in
 	Array.iteri (fun i t ->
-	    if not (Btype.equal t (type_of args.(i))) then
+	    if not (SmtBtype.equal t (type_of args.(i))) then
 	      (Format.eprintf "Wanted %a, got %a@."
-                Btype.to_smt t Btype.to_smt (type_of args.(i));
+                SmtBtype.to_smt t SmtBtype.to_smt (type_of args.(i));
                       raise (NotWellTyped a))) tparams
 
     type reify_tbl =
@@ -789,7 +812,7 @@ module Atom =
            with Not_found -> declare reify a
       else {index = -1; hval = a}
 
-    let mk_eq reify decl ty h1 h2 =
+    let mk_eq ?declare:(decl=true) reify ty h1 h2 =
       let op = BO_eq ty in
       try
         HashAtom.find reify.tbl (Abop (op, h1, h2))
@@ -816,8 +839,13 @@ module Atom =
          let new_ha1 = hash_hatom ra' ha1 in
          let new_ha2 = hash_hatom ra' ha2 in
          begin match bop with
-         | BO_eq ty -> mk_eq ra' true ty new_ha1 new_ha2
+         | BO_eq ty -> mk_eq ra' ~declare:true ty new_ha1 new_ha2
          | _ -> get ra' (Abop (bop, new_ha1, new_ha2)) end
+      | Atop (top, ha1, ha2, ha3) ->
+         let new_ha1 = hash_hatom ra' ha1 in
+         let new_ha2 = hash_hatom ra' ha2 in
+         let new_ha3 = hash_hatom ra' ha3 in
+         get ra' (Atop (top, new_ha1, new_ha2, new_ha3))
       | Anop _ -> assert false
       | Aapp (op, arr) -> get ra' (Aapp (op, Array.map (hash_hatom ra') arr))
 
@@ -1177,40 +1205,40 @@ module Atom =
         (* We still want to interpret bv equality as uninterpreted
            smtlib2 equality if the solver doesn't support bitvectors *)
         | [s;a1;a2] ->
-          let ty = Btype.of_coq rt known_logic (mklApp cbitvector [|s|]) in
+          let ty = SmtBtype.of_coq rt known_logic (mklApp cbitvector [|s|]) in
           mk_bop (BO_eq ty) [a1;a2]
         | _ -> assert false
 
       and mk_bop_select = function
         | [ti;te;_;_;_;a;i] ->
-          let ti' = Btype.of_coq rt known_logic ti in
-          let te' = Btype.of_coq rt known_logic te in
+          let ti' = SmtBtype.of_coq rt known_logic ti in
+          let te' = SmtBtype.of_coq rt known_logic te in
           mk_bop (BO_select (ti', te')) [a; i]
         | _ -> assert false
 
       and mk_bop_diff = function
         | [ti;te;_;_;_;_;_;_;_;_;a;b] ->
-          let ti' = Btype.of_coq rt known_logic ti in
-          let te' = Btype.of_coq rt known_logic te in
+          let ti' = SmtBtype.of_coq rt known_logic ti in
+          let te' = SmtBtype.of_coq rt known_logic te in
           mk_bop (BO_diffarray (ti', te')) [a; b]
         | _ -> assert false
 
       and mk_top_store = function
         | [ti;te;_;_;_;_;_;_;a;i;e] ->
-          let ti' = Btype.of_coq rt known_logic ti in
-          let te' = Btype.of_coq rt known_logic te in
+          let ti' = SmtBtype.of_coq rt known_logic ti in
+          let te' = SmtBtype.of_coq rt known_logic te in
           mk_top (TO_store (ti', te')) [a; i; e]
         | _ -> assert false
 
       and mk_bop_farray_equal = function
         | [ti;te;_;_;_;_;_;a;b] when SL.mem LArrays known_logic ->
-          let ti' = Btype.of_coq rt known_logic ti in
-          let te' = Btype.of_coq rt known_logic te in
+          let ti' = SmtBtype.of_coq rt known_logic ti in
+          let te' = SmtBtype.of_coq rt known_logic te in
           mk_bop (BO_eq (TFArray (ti', te'))) [a; b]
         (* We still want to interpret array equality as uninterpreted
            smtlib2 equality if the solver doesn't support arrays *)
         | [ti;te;ord_ti;_;_;_;inh_te;a;b] ->
-          let ty = Btype.of_coq rt known_logic
+          let ty = SmtBtype.of_coq rt known_logic
               (mklApp cfarray [|ti; te; ord_ti; inh_te|]) in
           mk_bop (BO_eq ty) [a;b]
         | _ -> assert false
@@ -1222,8 +1250,18 @@ module Atom =
           with | Not_found ->
             let targs = Array.map type_of hargs in
             let tres = SmtBtype.of_coq rt known_logic ty in
-            Op.declare ro c targs tres in
-        Hashtbl.add op_coq_terms op.index c; (* Chantal: I think we should move it to "Not_found" (otherwise it is already in the table) *)
+            let os = if Term.isRel c then
+                       let i = Term.destRel c in
+                       let n, _ = Structures.destruct_rel_decl (Environ.lookup_rel i env) in
+                       Some (string_of_name n)
+                     else
+                       None
+            in
+            Op.declare ro c targs tres os in
+        (try
+           let (i, _) = destruct "" op in
+           Hashtbl.add op_coq_terms i c (* Chantal: I think we should move it to "Not_found" (otherwise it is already in the table) *)
+         with | Failure _ -> ());
         get reify (Aapp (op,hargs))
 
       (* create an uninterpreted symbol for an unsupported symbol but fisrt do
@@ -1235,6 +1273,7 @@ module Atom =
         mk_unknown c args ty
 
       in
+
       mk_hatom c
 
 
@@ -1292,13 +1331,13 @@ module Atom =
                             [|interp_atom h1; interp_atom h2; interp_atom h3|])
               | Anop (NO_distinct ty as op,ha) ->
                 let cop = Op.interp_nop t_i op in
-                let typ = Btype.interp t_i ty in
+                let typ = SmtBtype.interp t_i ty in
                 let cargs = Array.fold_right (fun h l ->
                     mklApp ccons [|typ; interp_atom h; l|])
                     ha (mklApp cnil [|typ|]) in
                 Term.mkApp (cop,[|cargs|])
               | Aapp (op,t) ->
-                Term.mkApp (op.hval.op_val, Array.map interp_atom t) in
+                Term.mkApp ((snd op).op_val, Array.map interp_atom t) in
 	  Hashtbl.add atom_tbl l pc;
 	  pc in
       interp_atom a
@@ -1306,13 +1345,13 @@ module Atom =
 
     (* Generation of atoms *)
 
-    let mk_nop op reify ?declare:(decl=true) a = get ~declare:decl reify (Anop (op,a))
+    let mk_nop ?declare:(decl=true) op reify a = get ~declare:decl reify (Anop (op,a))
 
-    let mk_binop op reify decl h1 h2 = get ~declare:decl reify (Abop (op, h1, h2))
+    let mk_binop ?declare:(decl=true) op reify h1 h2 = get ~declare:decl reify (Abop (op, h1, h2))
 
     let mk_terop op reify h1 h2 h3 = get reify (Atop (op, h1, h2, h3))
 
-    let mk_unop op reify h ?declare:(decl=true) = get ~declare:decl reify (Auop (op, h))
+    let mk_unop ?declare:(decl=true) op reify h = get ~declare:decl reify (Auop (op, h))
 
     let rec hatom_pos_of_int reify i =
       if i <= 1 then
@@ -1350,7 +1389,7 @@ module Atom =
           mk_unop UO_Zneg reify
             (hatom_pos_of_bigint reify (Big_int.minus_big_int i))
 
-    let mk_unop op reify ?declare:(decl=true) h = get ~declare:decl reify (Auop (op, h))
+    let mk_unop ?declare:(decl=true) op reify h = get ~declare:decl reify (Auop (op, h))
 
     let mk_lt = mk_binop BO_Zlt
     let mk_le = mk_binop BO_Zle

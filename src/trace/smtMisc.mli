@@ -9,3 +9,9 @@ val string_of_name : Names.name -> string
 type logic_item = LUF | LLia | LBitvectors | LArrays
 module SL : Set.S with type elt = logic_item
 type logic = SL.t
+
+(* Reification *)
+val mk_bool_list : Term.constr -> bool list
+val mk_nat : Term.constr -> int
+val mk_N : Term.constr -> int
+val mk_bvsize : Term.constr -> int

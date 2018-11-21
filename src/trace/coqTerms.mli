@@ -79,10 +79,30 @@ val cand : Term.constr lazy_t
 (* Bit vectors *)
 val cbitvector : Term.constr lazy_t
 val cof_bits : Term.constr lazy_t
+val cbitOf : Term.constr lazy_t
 val cbv_eq : Term.constr lazy_t
+val cbv_not : Term.constr lazy_t
+val cbv_neg : Term.constr lazy_t
+val cbv_and : Term.constr lazy_t
+val cbv_or : Term.constr lazy_t
+val cbv_xor : Term.constr lazy_t
+val cbv_add : Term.constr lazy_t
+val cbv_mult : Term.constr lazy_t
+val cbv_ult : Term.constr lazy_t
+val cbv_slt : Term.constr lazy_t
+val cbv_concat : Term.constr lazy_t
+val cbv_extr : Term.constr lazy_t
+val cbv_zextn : Term.constr lazy_t
+val cbv_sextn : Term.constr lazy_t
+val cbv_shl : Term.constr lazy_t
+val cbv_shr : Term.constr lazy_t
 
 (* Arrays *)
 val cfarray : Term.constr lazy_t
+val cselect : Term.constr lazy_t
+val cstore : Term.constr lazy_t
+val cdiff : Term.constr lazy_t
+val cequalarray : Term.constr lazy_t
 
 (* OrderedType *)
 
@@ -105,10 +125,14 @@ val cord_interp : Term.constr lazy_t
 val ccomp_interp : Term.constr lazy_t
 val cinh_interp : Term.constr lazy_t
 
+val cinterp_eqb : Term.constr lazy_t
+
 val ctyp_compdec : Term.constr lazy_t
 val cTyp_compdec : Term.constr lazy_t
 val cunit_typ_compdec : Term.constr lazy_t
 val cte_carrier : Term.constr lazy_t
+val cte_compdec : Term.constr lazy_t
+val ceqb_of_compdec : Term.constr lazy_t
 val cCompDec : Term.constr lazy_t
 
 val cbool_compdec : Term.constr lazy_t
@@ -122,12 +146,19 @@ val cTval : Term.constr lazy_t
 
 val cCO_xH : Term.constr lazy_t
 val cCO_Z0 : Term.constr lazy_t
+val cCO_BV : Term.constr lazy_t
 
 val cUO_xO : Term.constr lazy_t
 val cUO_xI : Term.constr lazy_t
 val cUO_Zpos : Term.constr lazy_t
 val cUO_Zneg : Term.constr lazy_t
 val cUO_Zopp : Term.constr lazy_t
+val cUO_BVbitOf : Term.constr lazy_t
+val cUO_BVnot : Term.constr lazy_t
+val cUO_BVneg : Term.constr lazy_t
+val cUO_BVextr : Term.constr lazy_t
+val cUO_BVzextn : Term.constr lazy_t
+val cUO_BVsextn : Term.constr lazy_t
 
 val cBO_Zplus : Term.constr lazy_t
 val cBO_Zminus : Term.constr lazy_t
@@ -137,6 +168,20 @@ val cBO_Zle : Term.constr lazy_t
 val cBO_Zge : Term.constr lazy_t
 val cBO_Zgt : Term.constr lazy_t
 val cBO_eq : Term.constr lazy_t
+val cBO_BVand : Term.constr lazy_t
+val cBO_BVor : Term.constr lazy_t
+val cBO_BVxor : Term.constr lazy_t
+val cBO_BVadd : Term.constr lazy_t
+val cBO_BVmult : Term.constr lazy_t
+val cBO_BVult : Term.constr lazy_t
+val cBO_BVslt : Term.constr lazy_t
+val cBO_BVconcat : Term.constr lazy_t
+val cBO_BVshl : Term.constr lazy_t
+val cBO_BVshr : Term.constr lazy_t
+val cBO_select : Term.constr lazy_t
+val cBO_diffarray : Term.constr lazy_t
+
+val cTO_store : Term.constr lazy_t
 
 val cNO_distinct : Term.constr lazy_t
 
@@ -144,6 +189,7 @@ val catom : Term.constr lazy_t
 val cAcop : Term.constr lazy_t
 val cAuop : Term.constr lazy_t
 val cAbop : Term.constr lazy_t
+val cAtop : Term.constr lazy_t
 val cAnop : Term.constr lazy_t
 val cAapp : Term.constr lazy_t
 
@@ -187,4 +233,6 @@ val make_certif_ops :
 val ceq_refl_true : Term.constr lazy_t
 val eq_refl_true : unit -> Term.constr
 val vm_cast_true : Environ.env -> Term.constr -> Term.constr
+val mkNat : int -> Term.constr
 val mkN : int -> Term.constr
+val mk_bv_list : bool list -> Term.constr
