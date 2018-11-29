@@ -182,7 +182,7 @@ var_decl_list:
 ;
 
 forall_decl:
-  | FORALL LPAR var_decl_list RPAR name_term		   { clear_qvar (); false, Form (Fapp (Fforall $3, [|lit_of_atom_form_lit rf $5|])) }
+  | FORALL LPAR var_decl_list RPAR blit		   { clear_qvar (); false, Form (Fapp (Fforall $3, [|lit_of_atom_form_lit rf $5|])) }
 ; 
 
 term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean indicates if we should declare the term or not */

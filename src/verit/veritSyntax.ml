@@ -251,7 +251,7 @@ let rec mk_clause (id,typ,value,ids_params) =
        | _ -> failwith "unexpected form of tmp_qnt_tidy" end
     | Fins ->
        begin match value, ids_params with
-        | [inst], [ref_th] when Form.is_pos inst ->
+        | [inst], [ref_th] ->
            let cl_th = get_clause ref_th in
            Other (Forall_inst (repr cl_th, inst))
         | _ -> failwith "unexpected form of forall_inst" end
