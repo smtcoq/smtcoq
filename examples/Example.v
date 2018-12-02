@@ -191,7 +191,7 @@ Section mult3.
   Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
   Add_lemmas mult3_0 mult3_Sn.
 
-  Lemma mult3_21 : mult3 7 =? 21.
+  Lemma mult3_21 : mult3 4 =? 12.
   Proof. verit. Qed.
 
   Clear_lemmas.

@@ -1045,6 +1045,12 @@ Lemma lcongr3 (P:Z -> Z -> bool) x y z:
   x =? y -> P z x -> P z y.
 Proof. intros eqxy pzx. verit_base eqxy pzx; vauto. Qed.
 
+Lemma test20 :  forall x, (forall a, a <? x) -> 0 <=? x = false.
+Proof. intros x H. verit_base H; vauto. Qed.
+
+Lemma test21 : forall x, (forall a, negb (x <=? a)) -> negb (0 <=? x).
+Proof. intros x H. verit_base H; vauto. Qed.
+
 Lemma un_menteur (a b c d : Z) dit:
   dit a =? c ->
   dit b =? d ->
@@ -1123,8 +1129,8 @@ Section mult3.
   Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
   Add_lemmas mult3_0 mult3_Sn.
 
-  Lemma mult3_21 : mult3 14 =? 42.
-  Proof. verit. Qed. (* very slow to verify with standard coq *)
+  Lemma mult3_21 : mult3 4 =? 12.
+  Proof. verit. Qed. (* slow to verify with standard coq *)
 
   Clear_lemmas.
 End mult3.
