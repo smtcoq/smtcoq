@@ -146,7 +146,7 @@ let used_clauses r =
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _ -> []
 
-(* for debugging *)                                       
+(* For debugging certif processing purposes : <add_scertif> <select> <occur> <alloc> *)
 let to_string r =
   match r with
             Root -> "Root"
@@ -181,3 +181,32 @@ let to_string r =
                          | Forall_inst _ -> "Forall_inst"  end ^ ")"
 
 
+
+(* To use <print_certif>, pass, as first and second argument, <Form.to_smt> and <Atom.to_string> *)
+let print_certif form_to_smt atom_to_string c where=
+  let rec start c =
+    match c.prev with
+    | None -> c
+    | Some c -> start c in
+  let r = ref (start c) in
+  let out_channel = open_out where in
+  let fmt = Format.formatter_of_out_channel out_channel in
+  let continue = ref true in
+  while !continue do
+    let kind = to_string (!r.kind) in
+    let id = !r.id in
+    let pos = match !r.pos with
+      | None -> "None"
+      | Some p -> string_of_int p in
+    let used = !r.used in
+    Format.fprintf fmt "id:%i kind:%s pos:%s used:%i value:" id kind pos used;
+    begin match !r.value with
+    | None -> Format.fprintf fmt "None"
+    | Some l -> List.iter (fun f -> form_to_smt atom_to_string fmt f;
+                                    Format.fprintf fmt " ") l end;
+    Format.fprintf fmt "\n";
+    match !r.next with
+    | None -> continue := false
+    | Some n -> r := n 
+  done;
+  Format.fprintf fmt "@."; close_out out_channel

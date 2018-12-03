@@ -449,7 +449,9 @@ module Make (Atom:ATOM) =
 
     (** Producing Coq terms *)
 
-    let to_coq hf = mkInt (to_lit hf)
+    let to_coq hf = let i = to_lit hf in
+                    if i < 0 then failwith "This formula should'nt be in Coq"
+                    else mkInt i
 
     let args_to_coq args =
       let cargs = Array.make (Array.length args + 1) (mkInt 0) in
