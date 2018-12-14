@@ -67,6 +67,7 @@ val cNone : Term.constr lazy_t
 
 (* Pairs *)
 val cpair : Term.constr lazy_t
+val cprod : Term.constr lazy_t
 
 (* Dependent pairs *)
 val csigT : Term.constr lazy_t
@@ -110,6 +111,7 @@ val cequalarray : Term.constr lazy_t
 
 (* SMT_terms *)
 val cState_C_t : Term.constr lazy_t
+val cState_S_t : Term.constr lazy_t
 
 val cdistinct : Term.constr lazy_t
 

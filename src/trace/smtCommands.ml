@@ -89,8 +89,6 @@ let cName_RowNeq= gen_constant euf_checker_modules "Name_RowNeq"
 let cName_Ext= gen_constant euf_checker_modules "Name_Ext"
 let cName_Hole= gen_constant euf_checker_modules "Name_Hole"
 
-let cZeqbsym = gen_constant z_modules "eqb_sym"
-
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
 
 let compute_roots roots last_root =
@@ -360,7 +358,7 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
   let (tres,last_root,cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
       (interp_conseq_uf t_i)
       (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*);
-                          v 2(*t_atom*); v 1(* t_form *)|])) confl in
+                          v 2(*t_atom*); v 1(* t_form *)|])) confl None in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -498,7 +496,7 @@ let checker_debug_step t_i t_func t_atom t_form root used_root trace
 
   let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
       (interp_conseq_uf ct_i)
-      (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl in
+      (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl None in
   List.iter (fun (v,ty) ->
     let _ = Structures.declare_new_variable v ty in
     print_assm ty
@@ -692,9 +690,10 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver env rt ro ra rf l ra' rf' l' ls_smtc =
-  let root = SmtTrace.mkRootV [l] in
-  call_solver env rt ro ra rf ra' rf' (root,l) ls_smtc (* For veriT, the result of the call to Form.flatten should be added in the beginning of ls_smtc *)
+let make_proof call_solver env rt ro (* ra rf *) ra' rf' l' ls_smtc =
+  let root = SmtTrace.mkRootV [l'] in
+  call_solver env rt ro (* ra rf *) ra' rf' (Some (root,l')) ls_smtc
+(* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
 (* <of_coq_lemma> reifies the coq lemma given, we can then easily print it in a
  .smt2 file. We need the reify tables to correctly recognize unbound variables
@@ -702,12 +701,12 @@ let make_proof call_solver env rt ro ra rf l ra' rf' l' ls_smtc =
  the new objects may contain bound (by forall of the lemma) variables. *)
 exception Axiom_form_unsupported
 
-let of_coq_lemma rt ro ra' rf' env sigma clemma =
+let of_coq_lemma rt ro ra' rf' env sigma solver_logic clemma =
   let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
   let env_lemma = List.fold_right Environ.push_rel rel_context env in
   let forall_args =
     let fmap r = let n, t = Structures.destruct_rel_decl r in
-                 string_of_name n, SmtBtype.of_coq rt t in
+                 string_of_name n, SmtBtype.of_coq rt solver_logic t in
     List.map fmap rel_context in
   let f, args = Term.decompose_app qf_lemma in
   let core_f =
@@ -722,7 +721,7 @@ let of_coq_lemma rt ro ra' rf' env sigma clemma =
          arg1
       | _ -> raise Axiom_form_unsupported
     else raise Axiom_form_unsupported in
-  let core_smt = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' env_lemma sigma)
+  let core_smt = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env_lemma sigma)
                    rf' core_f in
   match forall_args with
     [] -> core_smt
@@ -735,7 +734,7 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
   let lcpl = lcpl @ tlcepl in
   let lcl = List.map (Retyping.get_type_of env sigma) lcpl in
 
-  let lsmt  = List.map (of_coq_lemma rt ro ra' rf' env sigma) lcl in
+  let lsmt  = List.map (of_coq_lemma rt ro ra' rf' env sigma solver_logic) lcl in
   let l_pl_ls = List.combine (List.combine lcl lcpl) lsmt in
 
   let lem_tbl : (int, Term.constr * Term.constr) Hashtbl.t =
@@ -753,9 +752,9 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
        begin try Hashtbl.find lem_tbl (Form.index hl)
              with Not_found ->
                let oc = open_out "/tmp/find_lemma.log" in
-               List.iter (fun u -> Printf.fprintf oc "%s\n"
-                                     (VeritSyntax.string_hform u)) lsmt;
-               Printf.fprintf oc "\n%s\n" (VeritSyntax.string_hform hl);
+               let fmt = Format.formatter_of_out_channel oc in
+               List.iter (fun u -> Format.fprintf fmt "%a\n" VeritSyntax.hform_to_smt u) lsmt;
+               Format.fprintf fmt "\n%a\n" VeritSyntax.hform_to_smt hl;
                flush oc; close_out oc; failwith "find_lemma" end
       | _ -> failwith "unexpected form of root" in
 
@@ -763,7 +762,7 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
         (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let l' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' env sigma) rf' a in
+      let l' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let l' =
         if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l' else l' in
       let max_id_confl = make_proof call_solver env rt ro ra rf ra' rf' l' lsmt in

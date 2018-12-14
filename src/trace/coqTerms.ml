@@ -72,6 +72,7 @@ let cleb = gen_constant z_modules "leb"
 let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
 let ceqbZ = gen_constant z_modules "eqb"
+let cZeqbsym = gen_constant z_modules "eqb_sym"
 
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]

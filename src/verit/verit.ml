@@ -179,11 +179,14 @@ let export out_channel rt ro lsmt =
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
 
-(* val call_verit : Btype.reify_tbl -> Op.reify_tbl -> Form.t -> (Form.t clause * Form.t) -> (int * Form.t clause) *)
 let call_verit _ rt ro ra' rf' root lsmt =
-  let fl = Form.flatten rf (snd root) in
+  match root with
+    | None -> assert false
+    | Some (root, l') ->
+  let fl' = Form.flatten rf' l' in
+  let lsmt = fl'::lsmt in
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
-  export outchan rt ro lsmt;  (* TODO: lsmt of fl? *)
+  export outchan rt ro lsmt;
   close_out outchan;
   let logfilename = Filename.chop_extension filename ^ ".vtlog" in
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
