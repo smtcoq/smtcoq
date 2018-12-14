@@ -107,7 +107,7 @@ let declare_sort rt sym =
   let compdec_var =
     declare_new_variable (Names.id_of_string ("CompDec_"^s)) compdec_type in
   let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
-  let res = Btype.declare rt cons_t ce in
+  let res = SmtBtype.declare rt cons_t ce in
   VeritSyntax.add_btype s res;
   res
 
@@ -117,10 +117,10 @@ let declare_fun rt ro sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
   let coqTy = List.fold_right (fun typ c ->
-      Term.mkArrow (Btype.interp_to_coq rt typ) c)
-      tyl (Btype.interp_to_coq rt ty) in
+      Term.mkArrow (interp_to_coq rt typ) c)
+      tyl (interp_to_coq rt ty) in
   let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
-  let op = Op.declare ro cons_v (Array.of_list (List.map fst tyl)) (fst ty) in
+  let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
   VeritSyntax.add_fun s op;
   op
 
@@ -192,35 +192,35 @@ let make_root ra rf t =
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' when Atom.type_of a' <> Tbool ->
            Atom (Atom.mk_eq ra (Atom.type_of a') a' b')
-         | _ -> Form (Form.get rf (Fapp (Fiff, [|Form.get rf (Fatom a'); Form.get rf (Fatom b')|])))
+         | _ -> Form (Form.get rf (Fapp (Fiff, [|make_root a; make_root b|])))
         )
       | "<", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_lt ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_lt ra a' b')
           | _, _ -> assert false)
       | "<=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_le ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_le ra a' b')
           | _, _ -> assert false)
       | ">", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_gt ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_gt ra a' b')
           | _, _ -> assert false)
       | ">=", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_ge ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_ge ra a' b')
           | _, _ -> assert false)
       | "+", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_plus ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_plus ra a' b')
           | _, _ -> assert false)
       | "-", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_minus ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_minus ra a' b')
           | _, _ -> assert false)
       | "*", [a;b] ->
         (match make_root_term a, make_root_term b with
-          | Atom a', Atom b' -> Atom (Atom.mk_mult ra true a' b')
+          | Atom a', Atom b' -> Atom (Atom.mk_mult ra a' b')
           | _, _ -> assert false)
       | "-", [a] ->
         (match make_root_term a with
