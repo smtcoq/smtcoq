@@ -36,13 +36,13 @@ type atom_form_lit =
   | Lit of SmtAtom.Form.t
 val lit_of_atom_form_lit : SmtAtom.Form.reify -> bool * atom_form_lit -> SmtAtom.Form.t
 
-val apply_dec_atom : (bool -> SmtAtom.hatom -> SmtAtom.hatom) ->
+val apply_dec_atom : (?declare:bool -> SmtAtom.hatom -> SmtAtom.hatom) ->
                      bool * atom_form_lit -> bool * atom_form_lit
 val apply_bdec_atom :
-  (bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) ->
+  (?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) ->
   bool * atom_form_lit -> bool * atom_form_lit -> bool * atom_form_lit
 val apply_tdec_atom :
-  (bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) ->
+  (?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) ->
   bool * atom_form_lit -> bool * atom_form_lit -> bool * atom_form_lit -> bool * atom_form_lit
 
 val apply_dec : ('a -> 'b) -> bool * 'a -> bool * 'b

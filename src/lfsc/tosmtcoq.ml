@@ -20,11 +20,14 @@ open VeritSyntax
 open Ast
 open Builtin
 open Format
-open Translator_sig  
+open Translator_sig
+open SmtBtype
 
 type lit = SmtAtom.Form.t
 
 type clause = lit list
+
+let lit_of_atom_form_lit rf af = lit_of_atom_form_lit rf (true, af)
 
 let show_veritproof =
   try ignore (Sys.getenv "DONTSHOWVERIT"); false

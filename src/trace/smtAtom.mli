@@ -165,37 +165,37 @@ module Atom :
       (* Generation of atoms *)
       val hatom_Z_of_int : reify_tbl -> int -> t
       val hatom_Z_of_bigint : reify_tbl -> Big_int.big_int -> t
-      val mk_eq : reify_tbl -> bool -> btype -> t -> t -> t
-      val mk_lt : reify_tbl -> bool -> t -> t -> t
-      val mk_le : reify_tbl -> bool -> t -> t -> t
-      val mk_gt : reify_tbl -> bool -> t -> t -> t
-      val mk_ge : reify_tbl -> bool -> t -> t -> t
-      val mk_plus : reify_tbl -> bool -> t -> t -> t
-      val mk_minus : reify_tbl -> bool -> t -> t -> t
-      val mk_mult : reify_tbl -> bool -> t -> t -> t
-      val mk_bvand : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvor : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvxor : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvadd : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvmult : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvult : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvslt : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvconcat : reify_tbl -> bool -> int -> int -> t -> t -> t
-      val mk_opp : reify_tbl -> bool -> t -> t
-      val mk_distinct : reify_tbl -> bool -> btype -> t array -> t
-      val mk_bitof : reify_tbl -> bool -> int -> int -> t -> t
-      val mk_bvnot : reify_tbl -> bool -> int -> t -> t
-      val mk_bvneg : reify_tbl -> bool -> int -> t -> t
+      val mk_eq : reify_tbl -> ?declare:bool -> btype -> t -> t -> t
+      val mk_lt : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_le : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_gt : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_ge : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_plus : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_minus : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_mult : reify_tbl -> ?declare:bool -> t -> t -> t
+      val mk_bvand : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvor : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvxor : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvadd : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvmult : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvult : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvslt : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvconcat : reify_tbl -> ?declare:bool -> int -> int -> t -> t -> t
+      val mk_opp : reify_tbl -> ?declare:bool -> t -> t
+      val mk_distinct : reify_tbl -> ?declare:bool -> btype -> t array -> t
+      val mk_bitof : reify_tbl -> ?declare:bool -> int -> int -> t -> t
+      val mk_bvnot : reify_tbl -> ?declare:bool -> int -> t -> t
+      val mk_bvneg : reify_tbl -> ?declare:bool -> int -> t -> t
       val mk_bvconst : reify_tbl -> bool list -> t
-      val mk_bvextr : reify_tbl -> bool -> i:int -> n:int -> s:int -> t -> t
-      val mk_bvzextn : reify_tbl -> bool -> s:int -> n:int -> t -> t
-      val mk_bvsextn : reify_tbl -> bool -> s:int -> n:int -> t -> t
-      val mk_bvshl : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_bvshr : reify_tbl -> bool -> int -> t -> t -> t
-      val mk_select : reify_tbl -> bool -> btype -> btype -> t -> t -> t
-      val mk_diffarray : reify_tbl -> bool -> btype -> btype -> t -> t -> t
+      val mk_bvextr : reify_tbl -> ?declare:bool -> i:int -> n:int -> s:int -> t -> t
+      val mk_bvzextn : reify_tbl -> ?declare:bool -> s:int -> n:int -> t -> t
+      val mk_bvsextn : reify_tbl -> ?declare:bool -> s:int -> n:int -> t -> t
+      val mk_bvshl : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_bvshr : reify_tbl -> ?declare:bool -> int -> t -> t -> t
+      val mk_select : reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t
+      val mk_diffarray : reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t
       val mk_store :
-        reify_tbl -> bool -> btype -> btype -> t -> t -> t -> t
+        reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t -> t
 
     end
 

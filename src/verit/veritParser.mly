@@ -250,32 +250,32 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
   | PLUS name_term name_term                               { apply_bdec_atom (Atom.mk_plus ra) $2 $3 }
   | MULT name_term name_term                               { apply_bdec_atom (Atom.mk_mult ra) $2 $3 }
   | MINUS name_term name_term                              { apply_bdec_atom (Atom.mk_minus ra) $2 $3}
-  | MINUS name_term                                        { apply_dec_atom (fun d a -> Atom.mk_neg ra a) $2 }
+  | MINUS name_term                                        { apply_dec_atom (fun ?declare:d a -> Atom.mk_neg ra a) $2 }
   | OPP name_term                                          { apply_dec_atom (Atom.mk_opp ra) $2 }
   | DIST args                                              { let da, la = list_dec $2 in
     	 						     let a = Array.of_list la in
-                                                             da, Atom (Atom.mk_distinct ra da (Atom.type_of a.(0)) a) }
-  | BITOF INT name_term                                    { apply_dec_atom (fun d h -> match Atom.type_of h with TBV s -> Atom.mk_bitof ra d s $2 h | _ -> assert false) $3 }
-  | BVNOT name_term                                        { apply_dec_atom (fun d h -> match Atom.type_of h with TBV s -> Atom.mk_bvnot ra d s h | _ -> assert false) $2 }
-  | BVAND name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvand ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVOR name_term name_term                               { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvor ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVXOR name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvxor ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVNEG name_term                                        { apply_dec_atom (fun d h -> match Atom.type_of h with TBV s -> Atom.mk_bvneg ra d s h | _ -> assert false) $2 }
-  | BVADD name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvadd ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVMUL name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvmult ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVULT name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVSLT name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVULE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra d s h1 h2 | _ -> assert false) $2 $3 in (decl, Lit (Form.neg (lit_of_atom_form_lit rf a))) }
-  | BVSLE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra d s h1 h2 | _ -> assert false) $2 $3 in (decl, Lit (Form.neg (lit_of_atom_form_lit rf a))) }
-  | BVSHL name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshl ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVSHR name_term name_term                              { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshr ra d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVCONC name_term name_term                             { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1, Atom.type_of h2 with TBV s1, TBV s2 -> Atom.mk_bvconcat ra d s1 s2 h1 h2 | _, _ -> assert false) $2 $3 }
-  | BVEXTR INT INT name_term                               { let j, i = $2, $3 in apply_dec_atom (fun d h -> match Atom.type_of h with TBV s -> Atom.mk_bvextr ra d ~s ~i ~n:(j-i+1) h | _ -> assert false) $4 }
-  | BVZEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun d h -> match Atom.type_of h with TBV s -> Atom.mk_bvzextn ra d ~s ~n h | _ -> assert false) $3 }
-  | BVSEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun d h -> match Atom.type_of h with TBV s -> Atom.mk_bvsextn ra d ~s ~n h | _ -> assert false) $3 }
-  | SELECT name_term name_term                             { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_select ra d ti te h1 h2 | _ -> assert false) $2 $3 }
-  | DIFF name_term name_term                               { apply_bdec_atom (fun d h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_diffarray ra d ti te h1 h2 | _ -> assert false) $2 $3 }
-  | STORE name_term name_term name_term                    { apply_tdec_atom (fun d h1 h2 h3 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_store ra d ti te h1 h2 h3 | _ -> assert false) $2 $3 $4 }
+                                                             da, Atom (Atom.mk_distinct ra ~declare:da (Atom.type_of a.(0)) a) }
+  | BITOF INT name_term                                    { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bitof ra ~declare:d s $2 h | _ -> assert false) $3 }
+  | BVNOT name_term                                        { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvnot ra ~declare:d s h | _ -> assert false) $2 }
+  | BVAND name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvand ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVOR name_term name_term                               { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvor ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVXOR name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvxor ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVNEG name_term                                        { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvneg ra ~declare:d s h | _ -> assert false) $2 }
+  | BVADD name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvadd ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVMUL name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvmult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVULT name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVSLT name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVULE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 in (decl, Lit (Form.neg (lit_of_atom_form_lit rf a))) }
+  | BVSLE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 in (decl, Lit (Form.neg (lit_of_atom_form_lit rf a))) }
+  | BVSHL name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshl ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVSHR name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshr ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVCONC name_term name_term                             { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1, Atom.type_of h2 with TBV s1, TBV s2 -> Atom.mk_bvconcat ra ~declare:d s1 s2 h1 h2 | _, _ -> assert false) $2 $3 }
+  | BVEXTR INT INT name_term                               { let j, i = $2, $3 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvextr ra ~declare:d ~s ~i ~n:(j-i+1) h | _ -> assert false) $4 }
+  | BVZEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvzextn ra ~declare:d ~s ~n h | _ -> assert false) $3 }
+  | BVSEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvsextn ra ~declare:d ~s ~n h | _ -> assert false) $3 }
+  | SELECT name_term name_term                             { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_select ra ~declare:d ti te h1 h2 | _ -> assert false) $2 $3 }
+  | DIFF name_term name_term                               { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_diffarray ra ~declare:d ti te h1 h2 | _ -> assert false) $2 $3 }
+  | STORE name_term name_term name_term                    { apply_tdec_atom (fun ?declare:(d=true) h1 h2 h3 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_store ra ~declare:d ti te h1 h2 h3 | _ -> assert false) $2 $3 $4 }
   | VAR                                                    { let x = $1 in match find_opt_qvar x with
     							                     | Some bt -> false, Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
                                                                              | None -> true, Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
@@ -286,7 +286,7 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
                                                                                                      dl, Atom (Atom.get ra ~declare:dl (Aapp (get_fun f, Array.of_list l))) }
 
   /* Both */
-  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | (decl1, Atom h1), (decl2, Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Atom (Atom.mk_eq ra decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); lit_of_atom_form_lit rf (decl2, t2)|])) }
+  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | (decl1, Atom h1), (decl2, Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Atom (Atom.mk_eq ra ~declare:decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); lit_of_atom_form_lit rf (decl2, t2)|])) }
   | EQ nlit lit                                            { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|t1; t2|])) }
   | EQ name_term nlit                                      { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); t2|])) }
   | LET LPAR bindlist RPAR name_term                       { $3; $5 }

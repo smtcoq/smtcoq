@@ -525,22 +525,22 @@ let rec list_dec = function
      let decl_t, l_t = list_dec t in
      decl_h && decl_t, h :: l_t
 
-let apply_dec_atom f = function
-  | decl, Atom h -> decl, Atom (f decl h)
+let apply_dec_atom (f:?declare:bool -> SmtAtom.hatom -> SmtAtom.hatom) = function
+  | decl, Atom h -> decl, Atom (f ~declare:decl h)
   | _ -> assert false
 
-let apply_bdec_atom f o1 o2 =
+let apply_bdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) o1 o2 =
   match o1, o2 with
   | (decl1, Atom h1), (decl2, Atom h2) ->
      let decl = decl1 && decl2 in
-     decl, Atom (f decl h1 h2)
+     decl, Atom (f ~declare:decl h1 h2)
   | _ -> assert false
 
-let apply_tdec_atom f o1 o2 o3 =
+let apply_tdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) o1 o2 o3 =
   match o1, o2, o3 with
   | (decl1, Atom h1), (decl2, Atom h2), (decl3, Atom h3) ->
      let decl = decl1 && decl2 && decl3 in
-     decl, Atom (f decl h1 h2 h3)
+     decl, Atom (f ~declare:decl h1 h2 h3)
   | _ -> assert false
 
 

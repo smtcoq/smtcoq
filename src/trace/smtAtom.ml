@@ -812,7 +812,7 @@ module Atom =
            with Not_found -> declare reify a
       else {index = -1; hval = a}
 
-    let mk_eq reify decl ty h1 h2 =
+    let mk_eq reify ?declare:(decl=true) ty h1 h2 =
       let op = BO_eq ty in
       try
         HashAtom.find reify.tbl (Abop (op, h1, h2))
@@ -839,7 +839,7 @@ module Atom =
          let new_ha1 = hash_hatom ra' ha1 in
          let new_ha2 = hash_hatom ra' ha2 in
          begin match bop with
-         | BO_eq ty -> mk_eq ra' true ty new_ha1 new_ha2
+         | BO_eq ty -> mk_eq ra' ~declare:true ty new_ha1 new_ha2
          | _ -> get ra' (Abop (bop, new_ha1, new_ha2)) end
       | Atop (top, ha1, ha2, ha3) ->
          let new_ha1 = hash_hatom ra' ha1 in
@@ -1391,35 +1391,35 @@ module Atom =
 
     let mk_unop ?declare:(decl=true) op reify h = get ~declare:decl reify (Auop (op, h))
 
-    let mk_lt ra decl = mk_binop ~declare:decl BO_Zlt ra
-    let mk_le ra decl = mk_binop ~declare:decl BO_Zle ra
-    let mk_gt ra decl = mk_binop ~declare:decl BO_Zgt ra
-    let mk_ge ra decl = mk_binop ~declare:decl BO_Zge ra
-    let mk_plus ra decl = mk_binop ~declare:decl BO_Zplus ra
-    let mk_minus ra decl = mk_binop ~declare:decl BO_Zminus ra
-    let mk_mult ra decl = mk_binop ~declare:decl BO_Zmult ra
-    let mk_bvand reify decl s = mk_binop ~declare:decl (BO_BVand s) reify
-    let mk_bvor reify decl s = mk_binop ~declare:decl (BO_BVor s) reify
-    let mk_bvxor reify decl s = mk_binop ~declare:decl (BO_BVxor s) reify
-    let mk_bvadd reify decl s = mk_binop ~declare:decl (BO_BVadd s) reify
-    let mk_bvmult reify decl s = mk_binop ~declare:decl (BO_BVmult s) reify
-    let mk_bvult reify decl s = mk_binop ~declare:decl (BO_BVult s) reify
-    let mk_bvslt reify decl s = mk_binop ~declare:decl (BO_BVslt s) reify
-    let mk_bvconcat reify decl s1 s2 = mk_binop ~declare:decl (BO_BVconcat (s1, s2)) reify
-    let mk_opp ra decl = mk_unop ~declare:decl UO_Zopp ra
-    let mk_distinct reify decl ty = mk_nop ~declare:decl (NO_distinct ty) reify
-    let mk_bitof reify decl s i = mk_unop ~declare:decl (UO_BVbitOf (s, i)) reify
-    let mk_bvnot reify decl s = mk_unop ~declare:decl (UO_BVnot s) reify
-    let mk_bvneg reify decl s = mk_unop ~declare:decl (UO_BVneg s) reify
+    let mk_lt ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zlt ra
+    let mk_le ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zle ra
+    let mk_gt ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zgt ra
+    let mk_ge ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zge ra
+    let mk_plus ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zplus ra
+    let mk_minus ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zminus ra
+    let mk_mult ra ?declare:(decl=true) = mk_binop ~declare:decl BO_Zmult ra
+    let mk_bvand reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVand s) reify
+    let mk_bvor reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVor s) reify
+    let mk_bvxor reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVxor s) reify
+    let mk_bvadd reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVadd s) reify
+    let mk_bvmult reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVmult s) reify
+    let mk_bvult reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVult s) reify
+    let mk_bvslt reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVslt s) reify
+    let mk_bvconcat reify ?declare:(decl=true) s1 s2 = mk_binop ~declare:decl (BO_BVconcat (s1, s2)) reify
+    let mk_opp ra ?declare:(decl=true) = mk_unop ~declare:decl UO_Zopp ra
+    let mk_distinct reify ?declare:(decl=true) ty = mk_nop ~declare:decl (NO_distinct ty) reify
+    let mk_bitof reify ?declare:(decl=true) s i = mk_unop ~declare:decl (UO_BVbitOf (s, i)) reify
+    let mk_bvnot reify ?declare:(decl=true) s = mk_unop ~declare:decl (UO_BVnot s) reify
+    let mk_bvneg reify ?declare:(decl=true) s = mk_unop ~declare:decl (UO_BVneg s) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
-    let mk_select reify decl ti te = mk_binop ~declare:decl (BO_select (ti, te)) reify
-    let mk_diffarray reify decl ti te = mk_binop ~declare:decl (BO_diffarray (ti, te)) reify
-    let mk_store reify decl ti te = mk_terop ~declare:decl (TO_store (ti, te)) reify
-    let mk_bvextr reify decl ~i ~n ~s = mk_unop ~declare:decl (UO_BVextr (i, n, s)) reify
-    let mk_bvzextn reify decl ~s ~n = mk_unop ~declare:decl (UO_BVzextn (s, n)) reify
-    let mk_bvsextn reify decl ~s ~n = mk_unop ~declare:decl (UO_BVsextn (s, n)) reify
-    let mk_bvshl reify decl s = mk_binop ~declare:decl (BO_BVshl s) reify
-    let mk_bvshr reify decl s = mk_binop ~declare:decl (BO_BVshr s) reify
+    let mk_select reify ?declare:(decl=true) ti te = mk_binop ~declare:decl (BO_select (ti, te)) reify
+    let mk_diffarray reify ?declare:(decl=true) ti te = mk_binop ~declare:decl (BO_diffarray (ti, te)) reify
+    let mk_store reify ?declare:(decl=true) ti te = mk_terop ~declare:decl (TO_store (ti, te)) reify
+    let mk_bvextr reify ?declare:(decl=true) ~i ~n ~s = mk_unop ~declare:decl (UO_BVextr (i, n, s)) reify
+    let mk_bvzextn reify ?declare:(decl=true) ~s ~n = mk_unop ~declare:decl (UO_BVzextn (s, n)) reify
+    let mk_bvsextn reify ?declare:(decl=true) ~s ~n = mk_unop ~declare:decl (UO_BVsextn (s, n)) reify
+    let mk_bvshl reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVshl s) reify
+    let mk_bvshr reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVshr s) reify
 
 
     let rec logic_atom = function
