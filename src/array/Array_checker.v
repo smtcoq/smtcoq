@@ -1,20 +1,14 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Chantal Keller  *                                                  *)
-(*     Alain   Mebsout ♯                                                  *)
-(*     Burak   Ekici   ♯                                                  *)
-(*                                                                        *)
-(*    * Inria - École Polytechnique - Université Paris-Sud                *)
-(*    ♯ The University of Iowa                                            *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
 
-(*Add Rec LoadPath "." as SMTCoq.*)
 
 Require Import Bool List Int63 PArray SMT_classes.
 Require Import Misc State SMT_terms FArray.

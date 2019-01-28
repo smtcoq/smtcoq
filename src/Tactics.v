@@ -1,20 +1,14 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*     Burak Ekici                                                        *)
-(*     Alain Mebsout                                                      *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
-(*     The University of Iowa                                             *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
+
 
 Require Import PropToBool BoolToProp.  (* Before SMTCoq.State *)
 Require Import Int63 List PArray Bool.

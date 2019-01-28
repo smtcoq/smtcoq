@@ -1,16 +1,14 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     * Alain Mebsout                                                    *)
-(*     * Burak Ekici                                                      *)
-(*                                                                        *)
-(*     * The University of Iowa                                           *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
+
 
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith BVList Logic.
