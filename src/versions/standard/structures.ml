@@ -178,5 +178,5 @@ module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 
 (* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
-type names_id = Names.id.t
+type names_id = Names.Id.t
 type constr_expr = Constrexpr.constr_expr
