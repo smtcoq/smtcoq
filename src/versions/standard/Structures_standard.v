@@ -1,3 +1,15 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 Require Import Int63.
 
 Require Import List.
@@ -6,6 +18,9 @@ Require Import List.
 Section Trace.
 
   Definition trace (step:Type) := ((list step) * step)%type.
+
+  Definition trace_to_list {step:Type} (t:trace step) : list step :=
+    let (t, _) := t in t.
 
   Definition trace_length {step:Type} (t:trace step) : int :=
     let (t,_) := t in
@@ -33,3 +48,8 @@ Section Trace.
   Admitted.
 
 End Trace.
+
+
+Definition nat_eqb := Nat.eqb.
+Definition nat_eqb_eq := Nat.eqb_eq.
+Definition nat_eqb_refl := Nat.eqb_refl.

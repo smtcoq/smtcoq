@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -352,11 +348,16 @@ let build_certif first_root confl =
 
 
 let to_coq to_lit interp (cstep,
-    cRes, cImmFlatten,
+    cRes, cWeaken, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,
     cEqTr, cEqCgr, cEqCgrP,
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
+    cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBDiseq,
+    cBBNeg, cBBAdd, cBBMul, cBBUlt, cBBSlt, cBBConc,
+    cBBExtr, cBBZextn, cBBSextn,
+    cBBShl, cBBShr,
+    cRowEq, cRowNeq, cExt,
     cHole, cForallInst) confl sf =
 
   let cuts = ref [] in
@@ -382,6 +383,12 @@ let to_coq to_lit interp (cstep,
 	mklApp cRes [|mkInt (get_pos c); Structures.mkArray (Lazy.force cint, args)|]
     | Other other ->
 	begin match other with
+        | Weaken (c',l') ->
+          let out_cl cl =
+            List.fold_right (fun f l ->
+                mklApp ccons [|Lazy.force cint; out_f f; l|])
+              cl (mklApp cnil [|Lazy.force cint|]) in
+          mklApp cWeaken [|out_c c;out_c c'; out_cl l'|]
 	| ImmFlatten (c',f) -> mklApp cImmFlatten [|out_c c;out_c c'; out_f f|]
         | True -> mklApp cTrue [|out_c c|]
 	| False -> mklApp cFalse [|out_c c|]
@@ -410,6 +417,45 @@ let to_coq to_lit interp (cstep,
           let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Structures.Micromega_plugin_Coq_micromega.M.coq_proofTerm; Structures.Micromega_plugin_Coq_micromega.dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force Structures.Micromega_plugin_Coq_micromega.M.coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
+        | BBVar res -> mklApp cBBVar [|out_c c; out_f res|]
+        | BBConst res -> mklApp cBBConst [|out_c c; out_f res|]
+        | BBOp (c1,c2,res) ->
+          mklApp cBBOp [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBNot (c1,res) ->
+          mklApp cBBNot [|out_c c; out_c c1; out_f res|]
+        | BBNeg (c1,res) ->
+          mklApp cBBNeg [|out_c c; out_c c1; out_f res|]
+        | BBAdd (c1,c2,res) ->
+          mklApp cBBAdd [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBMul (c1,c2,res) ->
+          mklApp cBBMul [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBUlt (c1,c2,res) ->
+          mklApp cBBUlt [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBSlt (c1,c2,res) ->
+          mklApp cBBSlt [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBConc (c1,c2,res) ->
+          mklApp cBBConc [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBExtr (c1,res) ->
+          mklApp cBBExtr [|out_c c; out_c c1; out_f res|]
+        | BBZextn (c1,res) ->
+          mklApp cBBZextn [|out_c c; out_c c1; out_f res|]
+        | BBSextn (c1,res) ->
+          mklApp cBBSextn [|out_c c; out_c c1; out_f res|]
+        | BBShl (c1,c2,res) ->
+          mklApp cBBShl [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBShr (c1,c2,res) ->
+          mklApp cBBShr [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBEq (c1,c2,res) ->
+          mklApp cBBEq [|out_c c; out_c c1; out_c c2; out_f res|]
+        | BBDiseq (res) -> mklApp cBBDiseq [|out_c c; out_f res|]
+        | RowEq (res) -> mklApp cRowEq [|out_c c; out_f res|]
+        | RowNeq (cl) ->
+          let out_cl cl =
+            List.fold_right (fun f l ->
+                mklApp ccons [|Lazy.force cint; out_f f; l|])
+              cl (mklApp cnil [|Lazy.force cint|]) in
+          mklApp cRowNeq [|out_c c; out_cl cl|]
+        | Ext (res) -> mklApp cExt [|out_c c; out_f res|]
         | Hole (prem_id, concl) ->
            let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
            let ass_name = Names.id_of_string ("ass"^(string_of_int (Hashtbl.hash concl))) in
@@ -439,32 +485,11 @@ let to_coq to_lit interp (cstep,
   let nc = ref 0 in
   while not (isRoot !r.kind) do r := prev !r; incr nc done;
   let last_root = !r in
-
-  (* let size = !nc in *)
-  (* let max = Structures.max_array_size - 1 in *)
-  (* let q,r1 = size / max, size mod max in *)
-  (* let trace =  *)
-  (*   let len = if r1 = 0 then q + 1 else q + 2 in *)
-  (*   Array.make len (Structures.mkArray (step, [|def_step|])) in *)
-  (* for j = 0 to q - 1 do *)
-  (*   let tracej = Array.make Structures.max_array_size def_step in *)
-  (*   for i = 0 to max - 1 do *)
-  (*     r := next !r; *)
-  (*     tracej.(i) <- step_to_coq !r;  *)
-  (*   done; *)
-  (*   trace.(j) <- Structures.mkArray (step, tracej) *)
-  (* done; *)
-  (* if r1 <> 0 then begin *)
-  (*   let traceq = Array.make (r1 + 1) def_step in *)
-  (*   for i = 0 to r1-1 do  *)
-  (*   r := next !r;  *)
-  (*   traceq.(i) <- step_to_coq !r;  *)
-  (*   done; *)
-  (*   trace.(q) <- Structures.mkArray (step, traceq) *)
-  (* end; *)
-  (* (Structures.mkArray (mklApp carray [|step|], trace), last_root, !cuts) *)
-  let tres = Structures.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r in
-  (tres, last_root, !cuts)
+  (* Be careful, step_to_coq makes a side effect on cuts so it needs to be called first *)
+  let res =
+    Structures.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r
+  in
+  (res, last_root, !cuts)
 
 
 

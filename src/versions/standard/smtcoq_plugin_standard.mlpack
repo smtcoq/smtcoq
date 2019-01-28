@@ -19,6 +19,10 @@ Smtlib2_util
 Smtlib2_ast
 Smtlib2_parse
 Smtlib2_lex
+SExpr
+SExprParser
+SExprLexer
+Smtlib2_solver
 
 Lia
 
@@ -26,10 +30,22 @@ VeritSyntax
 VeritParser
 VeritLexer
 
+Shashcons
+Hstring
+Type
+Ast
+Builtin
+Tosmtcoq
+Converter
+LfscParser
+LfscLexer
+
 Smtlib2_genConstr
 
 SmtCommands
 
 Verit
+
+Lfsc
 
 G_smtcoq

@@ -1,3 +1,15 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 val mkInt : int -> ExtrNative.uint
 val mkArray : 'a array -> 'a ExtrNative.parray
 val make_roots :

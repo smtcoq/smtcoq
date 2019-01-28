@@ -1,3 +1,15 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 val notUsed : int
 val clear : unit -> unit
 val next_id : unit -> SmtCertif.clause_id
@@ -37,15 +49,24 @@ val build_certif : 'a SmtCertif.clause -> 'b SmtCertif.clause -> int
 val to_coq :
   ('a -> Term.constr) ->
   ('a list list * 'a list -> Term.types) ->
-  Term.types Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
   Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
   Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
   Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
   Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
   Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t -> 'a SmtCertif.clause ->
-  ('a SmtCertif.clause -> Term.constr * Term.constr) option ->
-  Term.constr * 'a SmtCertif.clause * (Names.identifier * Term.types) list
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
+  Term.constr Lazy.t * Term.constr Lazy.t ->
+  'a SmtCertif.clause ->
+  ('a SmtCertif.clause -> Term.types * Term.constr) option ->
+  Term.constr * 'a SmtCertif.clause *
+    (Names.identifier * Term.types) list
 module MakeOpt :
   functor (Form : SmtForm.FORM) ->
     sig

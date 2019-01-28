@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -140,17 +136,19 @@ type rel_decl = Context.Rel.Declaration.t
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r
 
-type constr_expr = Constrexpr.constr_expr
-                        
 let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
-                        
+
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
 let assert_before = Tactics.assert_before
+
+let vm_conv = Vconv.vm_conv
 let vm_cast_no_check t = Tactics.vm_cast_no_check t
-(* let vm_cast_no_check t = Proofview.V82.tactic (Tactics.vm_cast_no_check t) *)
+
+(* Warning 40: this record of type Proofview.Goal.enter contains fields
+   that are not visible in the current scope: enter. *)
 let mk_tactic tac =
-  Proofview.Goal.nf_enter {enter = (fun gl ->
+  Proofview.Goal.nf_enter {Proofview.Goal.enter = (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in
@@ -167,6 +165,9 @@ let constrextern_extern_constr =
   let env = Global.env () in
   Constrextern.extern_constr false env (Evd.from_env env)
 
+let get_rel_dec_name = function
+  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
+
 
 (* New packaging of plugins *)
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
@@ -174,5 +175,8 @@ module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 
-(* Type of coq tactics *)
+
+(* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
+type names_id = Names.Id.t
+type constr_expr = Constrexpr.constr_expr

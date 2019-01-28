@@ -1,24 +1,33 @@
-/**************************************************************************/
-/*                                                                        */
-/*     SMTCoq                                                             */
-/*     Copyright (C) 2011 - 2016                                          */
-/*                                                                        */
-/*     Michaël Armand                                                     */
-/*     Benjamin Grégoire                                                  */
-/*     Chantal Keller                                                     */
-/*                                                                        */
-/*     Inria - École Polytechnique - Université Paris-Sud                 */
-/*                                                                        */
-/*   This file is distributed under the terms of the CeCILL-C licence     */
-/*                                                                        */
-/**************************************************************************/
-
-
 %{
-  open SmtBtype 
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
+  open SmtBtype
   open SmtAtom
   open SmtForm
   open VeritSyntax
+
+
+
+  let parse_bv s =
+    let l = ref [] in
+    for i = 2 to String.length s - 1 do
+      match s.[i] with
+      | '0' -> l := false :: !l
+      | '1' -> l := true :: !l
+      | _ -> assert false
+    done;
+    !l
+
 %}
 
 
@@ -27,16 +36,15 @@
 */
 
 %token EOL SAT
-%token COLON SHARP
-%token LPAR RPAR
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST
+%token COLON
+%token LPAR RPAR LBRACKET RBRACKET
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVULE BVSLE BVCONC BVEXTR BVZEXT BVSEXT BVNOT BVNEG SELECT STORE DIFF BVSHL BVSHR
 %token TBOOL TINT
 %token<int> TINDEX
-%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP HOLE FORALL
-%token <int> INT
+%token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE FORALL BBVA BBCONST BBEXTR BBZEXT BBSEXT BBEQ BBDIS BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE BBSHL BBSHR
+%token <int> INT SHARPINT
 %token <Big_int.big_int> BIGINT
-%token <string> VAR BINDVAR ATVAR
-
+%token <string> VAR BINDVAR ATVAR BITV
 
 /* type de "retour" du parseur : une clause */
 %type <int> line
@@ -53,9 +61,9 @@ line:
   | SAT                                                    { raise Sat }
   | INT COLON LPAR typ clause                   RPAR EOL   { mk_clause ($1,$4,$5,[]) }
   | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { mk_clause ($1,$4,$5,$6) }
-  | INT COLON LPAR TPQT LPAR SHARP INT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $7 $10; add_ref $7 $1; mk_clause ($1, Tpqt, [], [$13]) }
-  | INT COLON LPAR FINS LPAR SHARP INT COLON LPAR OR LPAR NOT SHARP INT RPAR lit RPAR RPAR RPAR EOL
-  { mk_clause ($1, Fins, [snd $16], [get_ref $14]) }
+  | INT COLON LPAR TPQT LPAR SHARPINT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $6 $9; add_ref $6 $1; mk_clause ($1, Tpqt, [], [$12]) }
+  | INT COLON LPAR FINS LPAR SHARPINT COLON LPAR OR LPAR NOT SHARPINT RPAR lit RPAR RPAR RPAR EOL
+  { mk_clause ($1, Fins, [snd $14], [get_ref $12]) }
 ;
 
 typ:
@@ -98,6 +106,7 @@ typ:
   | QNTS                                                   { Qnts  }
   | QNTM                                                   { Qntm  }
   | RESO                                                   { Reso  }
+  | WEAK                                                   { Weak  }
   | AND                                                    { And   }
   | NOR                                                    { Nor   }
   | OR                                                     { Or    }
@@ -131,7 +140,28 @@ typ:
   | TPQS                                                   { Tpqs  }
   | TPSK                                                   { Tpsk  }
   | SUBP                                                   { Subp  }
+  | FLAT                                                   { Flat  }
   | HOLE                                                   { Hole  }
+  | BBVA                                                   { Bbva  }
+  | BBCONST                                                { Bbconst }
+  | BBEQ                                                   { Bbeq  }
+  | BBDIS                                                  { Bbdis }
+  | BBOP                                                   { Bbop  }
+  | BBADD                                                  { Bbadd }
+  | BBMUL                                                  { Bbmul }
+  | BBULT                                                  { Bbult }
+  | BBSLT                                                  { Bbslt }
+  | BBNOT                                                  { Bbnot }
+  | BBNEG                                                  { Bbneg }
+  | BBCONC                                                 { Bbconc }
+  | BBEXTR                                                 { Bbextr }
+  | BBZEXT                                                 { Bbzext }
+  | BBSEXT                                                 { Bbsext }
+  | BBSHL                                                  { Bbshl }
+  | BBSHR                                                  { Bbshr }
+  | ROW1                                                   { Row1  }
+  | ROW2                                                   { Row2  }
+  | EXTE                                                   { Exte  }
 ;
 
 clause:
@@ -149,18 +179,19 @@ lit:   /* returns a SmtAtom.Form.t option */
   | LPAR NOT lit RPAR                                      { apply_dec Form.neg $3 }
 ;
 
-nlit:   
+nlit:
   | LPAR NOT lit RPAR                                      { apply_dec Form.neg $3 }
 ;
 
-var_atvar:   
+var_atvar:
   | VAR			                                   { $1 }
   | ATVAR			                           { $1 }
 ;
 
-name_term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean indicates if we should declare the term or not */
-  | SHARP INT                                              { get_solver $2 }
-  | SHARP INT COLON LPAR term RPAR                         { let u = $5 in add_solver $2 u; u }
+name_term:   /* returns a bool * (SmtAtom.Form.pform or a SmtAtom.hatom), the boolean indicates if we should declare the term or not */
+  | SHARPINT                                              { get_solver $1 }
+  | SHARPINT COLON LPAR term RPAR                         { let res = $4 in add_solver $1 res; res }
+  | BITV                                                   { true, Atom (Atom.mk_bvconst ra (parse_bv $1)) }
   | TRUE                                                   { true, Form Form.pform_true }
   | FALS                                                   { true, Form Form.pform_false }
   | var_atvar						   { let x = $1 in match find_opt_qvar x with
@@ -174,7 +205,8 @@ name_term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the bool
 tvar:
   | TINT						   { TZ }
   | TBOOL						   { Tbool }
-  | TINDEX						   { Tindex (indexed_type_of_int $1) }
+  | TINDEX                                                 { Tindex (indexed_type_of_int $1) }
+;
 
 var_decl_list:
   | LPAR var_atvar tvar RPAR				   { add_qvar $2 $3; [$2, $3] }
@@ -197,10 +229,12 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
   | XOR lit_list                                           { apply_dec (fun x -> Form (Fapp (Fxor, Array.of_list x))) (list_dec $2) }
   | ITE lit_list                                           { apply_dec (fun x -> Form (Fapp (Fite, Array.of_list x))) (list_dec $2) }
   | forall_decl                                            { $1 }
+  | BBT name_term LBRACKET lit_list RBRACKET               { let (decl, t) = $2 in let (decll, l) = list_dec $4 in (decl && decll, match t with | Atom a -> Form (FbbT (a, l)) | _ -> assert false) }
 
   /* Atoms */
   | INT                                                    { true, Atom (Atom.hatom_Z_of_int ra $1) }
   | BIGINT                                                 { true, Atom (Atom.hatom_Z_of_bigint ra $1) }
+  | BITV                                                   { true, Atom (Atom.mk_bvconst ra (parse_bv $1)) }
   | LT name_term name_term                                 { apply_bdec_atom (Atom.mk_lt ra) $2 $3 }
   | LEQ name_term name_term                                { apply_bdec_atom (Atom.mk_le ra) $2 $3 }
   | GT name_term name_term                                 { apply_bdec_atom (Atom.mk_gt ra) $2 $3 }
@@ -208,31 +242,51 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
   | PLUS name_term name_term                               { apply_bdec_atom (Atom.mk_plus ra) $2 $3 }
   | MULT name_term name_term                               { apply_bdec_atom (Atom.mk_mult ra) $2 $3 }
   | MINUS name_term name_term                              { apply_bdec_atom (Atom.mk_minus ra) $2 $3}
-  | MINUS name_term                                        { apply_dec_atom (fun d a -> Atom.mk_neg ra a) $2 }
-  | OPP name_term                                          { apply_dec_atom (fun d a -> Atom.mk_opp ra ~declare:d a) $2 }
+  | MINUS name_term                                        { apply_dec_atom (fun ?declare:d a -> Atom.mk_neg ra a) $2 }
+  | OPP name_term                                          { apply_dec_atom (Atom.mk_opp ra) $2 }
   | DIST args                                              { let da, la = list_dec $2 in
     	 						     let a = Array.of_list la in
-							     da, Atom (Atom.mk_distinct ra (Atom.type_of a.(0)) ~declare:da a) }
-  | VAR                                                    {let x = $1 in match find_opt_qvar x with
-    							     | Some bt -> false, Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
-							     | None -> true, Atom (Atom.get ra (Aapp (get_fun $1, [||])))}
+                                                             da, Atom (Atom.mk_distinct ra ~declare:da (Atom.type_of a.(0)) a) }
+  | BITOF INT name_term                                    { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bitof ra ~declare:d s $2 h | _ -> assert false) $3 }
+  | BVNOT name_term                                        { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvnot ra ~declare:d s h | _ -> assert false) $2 }
+  | BVAND name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvand ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVOR name_term name_term                               { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvor ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVXOR name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvxor ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVNEG name_term                                        { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvneg ra ~declare:d s h | _ -> assert false) $2 }
+  | BVADD name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvadd ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVMUL name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvmult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVULT name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVSLT name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVULE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 in (decl, Lit (Form.neg (lit_of_atom_form_lit rf a))) }
+  | BVSLE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 in (decl, Lit (Form.neg (lit_of_atom_form_lit rf a))) }
+  | BVSHL name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshl ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVSHR name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshr ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
+  | BVCONC name_term name_term                             { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1, Atom.type_of h2 with TBV s1, TBV s2 -> Atom.mk_bvconcat ra ~declare:d s1 s2 h1 h2 | _, _ -> assert false) $2 $3 }
+  | BVEXTR INT INT name_term                               { let j, i = $2, $3 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvextr ra ~declare:d ~s ~i ~n:(j-i+1) h | _ -> assert false) $4 }
+  | BVZEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvzextn ra ~declare:d ~s ~n h | _ -> assert false) $3 }
+  | BVSEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvsextn ra ~declare:d ~s ~n h | _ -> assert false) $3 }
+  | SELECT name_term name_term                             { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_select ra ~declare:d ti te h1 h2 | _ -> assert false) $2 $3 }
+  | DIFF name_term name_term                               { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_diffarray ra ~declare:d ti te h1 h2 | _ -> assert false) $2 $3 }
+  | STORE name_term name_term name_term                    { apply_tdec_atom (fun ?declare:(d=true) h1 h2 h3 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_store ra ~declare:d ti te h1 h2 h3 | _ -> assert false) $2 $3 $4 }
+  | VAR                                                    { let x = $1 in match find_opt_qvar x with
+    							                     | Some bt -> false, Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
+                                                                             | None -> true, Atom (Atom.get ra (Aapp (get_fun $1, [||]))) }
   | VAR args                                               { let f = $1 in let a = $2 in match find_opt_qvar f with
-    							     | Some bt -> let op = dummy_indexed_op (Rel_name f) [||] bt in
-							       	       	  false, Atom (Atom.get ~declare:false ra (Aapp (op, Array.of_list (snd (list_dec a)))))
-      							     | None -> let dl, l = list_dec $2 in
-							       	       dl, Atom (Atom.get ra ~declare:dl (Aapp (get_fun f, Array.of_list l))) }
-
+    							                                   | Some bt -> let op = dummy_indexed_op (Rel_name f) [||] bt in
+							       	       	                                false, Atom (Atom.get ~declare:false ra (Aapp (op, Array.of_list (snd (list_dec a)))))
+      							                                   | None -> let dl, l = list_dec $2 in
+                                                                                                     dl, Atom (Atom.get ra ~declare:dl (Aapp (get_fun f, Array.of_list l))) }
 
   /* Both */
-  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | (decl1, Atom h1), (decl2, Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Atom (Atom.mk_eq ra decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); lit_of_atom_form_lit rf (decl2, t2)|])) }
+  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | (decl1, Atom h1), (decl2, Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Atom (Atom.mk_eq ra ~declare:decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); lit_of_atom_form_lit rf (decl2, t2)|])) }
   | EQ nlit lit                                            { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|t1; t2|])) }
   | EQ name_term nlit                                      { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form (Fapp (Fiff, [|lit_of_atom_form_lit rf (decl1, t1); t2|])) }
   | LET LPAR bindlist RPAR name_term                       { $3; $5 }
   | BINDVAR                                                { true, Hashtbl.find hlets $1 }
 ;
 
-blit:   
-  | name_term                                              { $1 } 
+blit:
+  | name_term                                              { $1 }
   | LPAR NOT lit RPAR                                      { apply_dec (fun l -> Lit (Form.neg l)) $3 }
 ;
 

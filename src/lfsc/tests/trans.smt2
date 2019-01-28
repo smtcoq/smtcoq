@@ -6,6 +6,6 @@
 (declare-fun d () U)
 (declare-fun e () U)
 (declare-fun f () U)
-(assert (and (= a b) (= b c) (= c d) (= c e) (= e f) (not (= a f))))
+(assert (and (= a b) (and (= b c) (and (= c d) (and (= c e) (and (= e f) (not (= a f))))))))
 (check-sat)
 (exit)

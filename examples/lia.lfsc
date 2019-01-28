@@ -1,0 +1,43 @@
+unsat
+(check
+ ;; Declarations
+(% x (term Int)
+(% A1 (th_holds true)
+(% A0 (th_holds (not (impl (= Int (-_Int x (a_int 3) )  (a_int 7) ) (<=_Int (a_int 10)  x) )))
+(: (holds cln)
+
+ ;; Printing deferred declarations 
+
+
+;; BV const letification
+
+
+
+ ;; Printing the global let map
+(@ let1 false
+
+ ;; Printing aliasing declarations 
+
+
+ ;; Rewrites for Lemmas 
+
+ ;; In the preprocessor we trust 
+(th_let_pf _ (trust_f false) (\ .PA205
+(th_let_pf _ (trust_f (not let1)) (\ .PA227
+
+;; Printing mapping from preprocessed assertions into atoms 
+(decl_atom let1 (\ .v1 (\ .a1
+(satlem _ _ (ast _ _ _ .a1 (\ .l3 (clausify_false (contra _ .l3 .PA227)))) (\ .pb1
+(satlem _ _ (asf _ _ _ .a1 (\ .l2 (clausify_false (contra _ .PA205 .l2)))) (\ .pb4
+ ;; Theory Lemmas 
+
+;; BB atom mapping
+
+
+;; Bit-blasting definitional clauses 
+
+
+ ;; Bit-blasting learned clauses 
+
+(satlem_simplify _ _ _ (R _ _ .pb4 .pb1 .v1) (\ empty empty)))))))))))))))))))
+;;

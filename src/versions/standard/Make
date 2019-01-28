@@ -12,19 +12,24 @@
 ## In the Makefile :                                                  ##
 ## 1) Suppress the "Makefile" target                                  ##
 ## 2) Change the "all" target:                                        ##
-##    remove the "test", "ztest", "vtest" and "./" dependencies       ##
+##    remove the "test", "ztest", "vtest", "lfsctest" and "./"        ##
+##    dependencies                                                    ##
 ## 3) Change the "install" and "clean" targets:                       ##
 ##    Suppress the "+" lines                                          ##
 ## 4) Add to the "clean" target:                                      ##
-##    - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml ##
+##    - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.mli smtlib2/sExprParser.ml smtlib2/sExprLexer.ml ##
 ########################################################################
 
 
 -R . SMTCoq
 
 -I .
+-I bva
+-I classes
+-I array
 -I cnf
 -I euf
+-I lfsc
 -I lia
 -I smtlib2
 -I trace
@@ -39,10 +44,11 @@
 -extra "test" "" "cd ../unit-tests; make" ""
 -extra "ztest" "" "cd ../unit-tests; make zchaff"
 -extra "vtest" "" "cd ../unit-tests; make verit"
+-extra "lfsctest" "" "cd ../unit-tests; make lfsc"
 
 -extra "%.ml" "%.mll" "$(CAMLLEX) $<"
 -extra "%.ml %.mli" "%.mly" "$(CAMLYACC) $<"
--extra-phony "smtcoq_plugin.mlpack.d" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml" ""
+-extra-phony "smtcoq_plugin.mlpack.d" "verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.ml smtlib2/sExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml" ""
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
@@ -57,6 +63,15 @@ versions/standard/Array/PArray.v
 versions/standard/Structures.v
 versions/standard/structures.ml
 versions/standard/structures.mli
+
+bva/BVList.v
+bva/Bva_checker.v
+
+classes/SMT_classes.v
+classes/SMT_classes_instances.v
+
+array/FArray.v
+array/Array_checker.v
 
 trace/coqTerms.ml
 trace/coqTerms.mli
@@ -89,6 +104,13 @@ smtlib2/smtlib2_genConstr.ml
 smtlib2/smtlib2_genConstr.mli
 smtlib2/smtlib2_util.ml
 smtlib2/smtlib2_util.mli
+smtlib2/sExpr.ml
+smtlib2/sExpr.mli
+smtlib2/smtlib2_solver.ml
+smtlib2/smtlib2_solver.mli
+smtlib2/sExprParser.ml
+smtlib2/sExprParser.mli
+smtlib2/sExprLexer.ml
 
 verit/veritParser.ml
 verit/veritParser.mli
@@ -98,6 +120,23 @@ verit/verit.ml
 verit/verit.mli
 verit/veritSyntax.ml
 verit/veritSyntax.mli
+
+lfsc/shashcons.mli
+lfsc/shashcons.ml
+lfsc/hstring.mli
+lfsc/hstring.ml
+lfsc/lfscParser.ml
+lfsc/lfscParser.mli
+lfsc/type.ml
+lfsc/ast.ml
+lfsc/ast.mli
+lfsc/translator_sig.mli
+lfsc/builtin.ml
+lfsc/tosmtcoq.ml
+lfsc/tosmtcoq.mli
+lfsc/converter.ml
+lfsc/lfsc.ml
+lfsc/lfscLexer.ml
 
 zchaff/cnfParser.ml
 zchaff/cnfParser.mli
@@ -124,6 +163,10 @@ spl/Operators.v
 Conversion_tactics.v
 Misc.v
 SMTCoq.v
+ReflectFacts.v
+PropToBool.v
+BoolToProp.v
+Tactics.v
 SMT_terms.v
 State.v
 Trace.v

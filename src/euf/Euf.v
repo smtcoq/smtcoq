@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -16,7 +12,6 @@
 
 Require Import Bool List Int63 PArray.
 Require Import State SMT_terms.
-
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
 
@@ -141,7 +136,7 @@ Section certif.
 
   Section Proof.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array SMT_classes.typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
@@ -153,8 +148,11 @@ Section certif.
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
 
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
+
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Let wf_t_atom : Atom.wf t_atom.
     Proof. destruct (Atom.check_atom_correct _ ch_atom); auto. Qed.
@@ -164,32 +162,32 @@ Section certif.
 
     Let def_t_form : default t_form = Form.Ftrue.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [H _]; destruct H; auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [H _]; destruct H; auto.
     Qed.
 
     Let wf_t_form : Form.wf t_form.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [H _]; destruct H; auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [H _]; destruct H; auto.
     Qed.
 
     Let wf_rho : Valuation.wf rho.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form); auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto.
     Qed.
 
     Lemma valid_C_true : C.interp rho C._true.
     Proof.
       apply C.interp_true.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form);trivial.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form);trivial.
     Qed.
     Hint Resolve valid_C_true.
 
     Local Notation interp := (Atom.interp t_i t_func t_atom).
 
     Lemma wf_interp_form : forall x,
-       rho x = Form.interp interp_form_hatom t_form (t_form.[x]).
+       rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[x]).
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form).
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form).
       destruct H; intros x;rewrite Form.wf_interp_form;trivial.
     Qed.
 
@@ -248,8 +246,8 @@ Section certif.
       destruct (Typ.cast ta u);destruct (Typ.cast tb u);trivial.
       apply f_equal; apply eq_true_iff_eq.
       match goal with |- ?x = _ <-> ?y = _ =>
-         change (is_true x <-> is_true y) end.
-      rewrite !Typ.i_eqb_spec;split;auto.
+                      change (is_true x <-> is_true y) end.
+      split; intro; rewrite Typ.i_eqb_sym in H; auto.
     Qed.
 
     Lemma interp_binop_eqb_trans:
@@ -270,7 +268,7 @@ Section certif.
       unfold Atom.interp_hatom.
       rewrite HHa, HHb, HHc;simpl;rewrite Typ.cast_refl.
       unfold Atom.interp_bool;simpl.
-      rewrite !Typ.i_eqb_spec;intros HH;rewrite HH;trivial.
+      apply Typ.i_eqb_trans.
     Qed.
 
     Lemma check_trans_aux_correct :
@@ -291,9 +289,9 @@ Section certif.
       rewrite eqb_spec in H7. rewrite eqb_spec in H8. subst.
       tunicity. subst t. rewrite H4, H1;auto.
       rewrite eqb_spec in H7. rewrite eqb_spec in H8. subst.
-      tunicity;subst t;rewrite interp_binop_eqb_sym in H1;rewrite H4, H1;auto.
+      tunicity. subst t;rewrite interp_binop_eqb_sym in H1;rewrite H4, H1;auto.
       apply get_eq_interp;intros.
-      destruct (Int63Properties.reflect_eqb t2 b). subst;tunicity; subst t.
+      destruct (Int63Properties.reflect_eqb t2 b);subst;tunicity; try subst t.
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -318,7 +316,7 @@ Section certif.
       case_eq (rho (Lit.blit a));[rewrite H4; intros | simpl;auto].
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (5:= H1);trivial.
-      destruct (Int63Properties.reflect_eqb t1 a0);[subst;tunicity; try subst t|auto].
+      destruct (Int63Properties.reflect_eqb t1 a0);[subst;tunicity;try subst t|auto].
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -345,7 +343,7 @@ Section certif.
       generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom b). rewrite Typ.eqb_spec in H3. unfold Atom.get_type in H3. rewrite H3. intros [vb HHb].
       unfold Atom.interp_hatom.
       rewrite HHb;simpl;rewrite Typ.cast_refl;simpl.
-      rewrite !Typ.i_eqb_spec;trivial.
+      apply Typ.i_eqb_refl.
       auto.
       apply get_eq_interp;intros.
       apply check_trans_aux_correct with t;trivial.
@@ -412,9 +410,10 @@ Section certif.
        inversion H6;subst.
        unfold Atom.interp_hatom in H10.
        rewrite <- HHa; rewrite <- HHb, H10;trivial.
-      rewrite Typ.i_eqb_spec.
-      inversion H7.
-      apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+       inversion H7.
+       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+       rewrite H9.
+       apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto.
       (* bop *)
       destruct (Atom.reflect_bop_eqb b0 b1);[subst | auto].
@@ -432,9 +431,10 @@ Section certif.
        inversion H12;clear H12;subst.
        unfold Atom.interp_hatom in H10, H8.
        rewrite <- HHa. rewrite <- HHb, H10, H8;trivial.
-      rewrite Typ.i_eqb_spec.
       inversion H7.
       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+      rewrite H9.
+      apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto.
       (* op *)
       destruct (Int63Properties.reflect_eqb i i0);[subst | auto].
@@ -453,9 +453,10 @@ Section certif.
         induction H6;simpl;trivial.
         unfold Atom.interp_hatom in H4.
         rewrite IHForall2, H4;trivial.
-      rewrite Typ.i_eqb_spec.
       inversion H7.
       apply Eqdep_dec.inj_pair2_eq_dec in H9;trivial.
+      rewrite H9.
+      apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto.
     Qed.
 
@@ -537,3 +538,10 @@ Section certif.
   End Proof.
 
 End certif.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)

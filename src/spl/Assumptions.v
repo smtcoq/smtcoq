@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -78,17 +74,18 @@ End Checker.
 
 Section Checker_correct.
 
-  Variable t_i : array typ_eqb.
+  Variable t_i : array SMT_classes.typ_compdec.
   Variable t_func : array (Atom.tval t_i).
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.
 
-  Local Notation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) t_form).
+  Local Notation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form).
 
   Variable s : S.t.
   Hypothesis Hs : S.valid rho s.
   Hypothesis Ht3 : Valuation.wf
           (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom)
+                                 (Atom.interp_form_hatom_bv t_i t_func t_atom)
              t_form).
 
   Lemma interp_check_clause c1 : forall c2,
@@ -124,6 +121,7 @@ Section Checker_correct.
   Variable concl : C.t.
   Hypothesis p : interp_conseq_uf
         (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom)
+                               (Atom.interp_form_hatom_bv t_i t_func t_atom)
            t_form) prem concl.
 
   Lemma valid_check_hole: C.valid rho (check_hole s prem_id prem concl).

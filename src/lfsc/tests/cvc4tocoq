@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+name=${1%.*}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+gnudate() {
+    if hash gdate 2>/dev/null; then
+        gdate "$@"
+    else
+        date "$@"
+    fi
+}
+
+echo -n "Running CVC4... "
+T0=$(gnudate +%s.%N)
+cvc4 --proof --dump-proof --no-simplification --fewer-preprocessing-holes --no-bv-eq --no-bv-ineq --no-bv-algebraic --allow-empty-dependencies $1 > $name.lfsc
+T1=$(gnudate +%s.%N)
+CVC4TIME=$(echo "$T1 - $T0" | bc)
+echo "Done [$CVC4TIME s]"
+
+# sed -i -e '1d' $name.lfsc
+
+ cat > ${name}_lfsc.v <<EOF
+ Require Import SMTCoq Bool List.
+ Import ListNotations BVList.BITVECTOR_LIST FArray.
+ Local Open Scope list_scope.
+ Local Open Scope farray_scope.
+ Local Open Scope bv_scope.
+
+ Section File.
+   Lfsc_Checker "$name.smt2" "$name.lfsc".
+ End File.
+EOF
+
+echo "Checking LFSC proof with Coq directly."
+coqc -q -R $DIR/../.. SMTCoq ${name}_lfsc.v
+
+exit 0
+

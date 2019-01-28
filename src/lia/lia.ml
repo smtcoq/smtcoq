@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -160,6 +156,7 @@ let rec smt_Form_to_coq_micromega_formula tbl l =
           failwith "Lia.smt_Form_to_coq_micromega_formula: wrong number of arguments for Fnot2"
         else
           smt_Form_to_coq_micromega_formula tbl l.(0)
+      | FbbT _ -> assert false
       | Fapp (Fforall _, _) -> assert false
   in
   if Form.is_pos l then v

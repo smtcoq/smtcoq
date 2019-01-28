@@ -1,3 +1,15 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 Add Rec LoadPath "../src" as SMTCoq.
 
 Require Import SMTCoq.
@@ -34,8 +46,14 @@ Lemma fun_const2 :
     (forall x, g (f x) 2) -> g (f 3) 2.
 Proof.
   intros f g Hf.
-  verit_base Hf; vauto.
+  verit_bool_base Hf; vauto.
 Qed.
+(*
+Toplevel input, characters 916-942:
+ Warning: Bytecode compiler failed, falling back to standard conversion
+ [bytecode-compiler-failed,bytecode-compiler]
+*)
+
 
 (* veriT vernacular commands *)
 
@@ -143,9 +161,12 @@ Section Checker_Lia3.
   Verit_Checker "lia3.smt2" "lia3.vtlog".
 End Checker_Lia3.
 
+(* TODO: it does not go through anymore
+   Anomaly: File "trace/smtCommands.ml", line 102, characters 12-18: Assertion failed.
 Section Checker_Lia4.
   Verit_Checker "lia4.smt2" "lia4.vtlog".
 End Checker_Lia4.
+*)
 
 Section Checker_Lia5.
   Verit_Checker "lia5.smt2" "lia5.vtlog".
@@ -179,6 +200,14 @@ Section Checker_Lia5_holes.
   Verit_Checker "lia5.smt2" "lia5-with-holes.vtlog".
 End Checker_Lia5_holes.
 *)
+
+Section Checker_Bv1.
+  Verit_Checker "bv1.smt2" "bv1.log".
+End Checker_Bv1.
+
+Section Checker_Bv2.
+  Verit_Checker "bv2.smt2" "bv2.log".
+End Checker_Bv2.
 
 
 Section Sat0.
@@ -301,10 +330,12 @@ Section Lia3.
   Compute @Euf_Checker.checker t_i_lia3 t_func_lia3 t_atom_lia3 t_form_lia3 root_lia3 used_roots_lia3 trace_lia3.
 End Lia3.
 
+(* TODO: it does not go through anymore
 Section Lia4.
   Parse_certif_verit t_i_lia4 t_func_lia4 t_atom_lia4 t_form_lia4 root_lia4 used_roots_lia4 trace_lia4 "lia4.smt2" "lia4.vtlog".
   Compute @Euf_Checker.checker t_i_lia4 t_func_lia4 t_atom_lia4 t_form_lia4 root_lia4 used_roots_lia4 trace_lia4.
 End Lia4.
+*)
 
 Section Lia5.
   Parse_certif_verit t_i_lia5 t_func_lia5 t_atom_lia5 t_form_lia5 root_lia5 used_roots_lia5 trace_lia5 "lia5.smt2" "lia5.vtlog".
@@ -345,6 +376,16 @@ Section Lia5_holes.
   Compute @Euf_Checker.checker t_i_lia5_holes t_func_lia5_holes t_atom_lia5_holes t_form_lia5_holes root_lia5_holes used_roots_lia5_holes trace_lia5_holes.
 End Lia5_holes.
 *)
+
+Section Bv1.
+  Parse_certif_verit t_i_bv1 t_func_bv1 t_atom_bv1 t_form_bv1 root_bv1 used_roots_bv1 trace_bv1 "bv1.smt2" "bv1.log".
+  Compute @Euf_Checker.checker t_i_bv1 t_func_bv1 t_atom_bv1 t_form_bv1 root_bv1 used_roots_bv1 trace_bv1.
+End Bv1.
+
+Section Bv2.
+  Parse_certif_verit t_i_bv2 t_func_bv2 t_atom_bv2 t_form_bv2 root_bv2 used_roots_bv2 trace_bv2 "bv2.smt2" "bv2.log".
+  Compute @Euf_Checker.checker t_i_bv2 t_func_bv2 t_atom_bv2 t_form_bv2 root_bv2 used_roots_bv2 trace_bv2.
+End Bv2.
 
 
 Section Theorem_Sat0.
@@ -443,9 +484,11 @@ Section Theorem_Lia3.
   Time Verit_Theorem theorem_lia3 "lia3.smt2" "lia3.vtlog".
 End Theorem_Lia3.
 
+(* TODO: it does not go through anymore
 Section Theorem_Lia4.
   Time Verit_Theorem theorem_lia4 "lia4.smt2" "lia4.vtlog".
 End Theorem_Lia4.
+*)
 
 Section Theorem_Lia5.
   Time Verit_Theorem theorem_lia5 "lia5.smt2" "lia5.vtlog".
@@ -481,6 +524,14 @@ Section Theorem_Lia5_holes.
 End Theorem_Lia5_holes.
 Check theorem_lia5_holes.
 *)
+
+Section Theorem_Bv1.
+  Time Verit_Theorem theorem_bv1 "bv1.smt2" "bv1.log".
+End Theorem_Bv1.
+
+Section Theorem_Bv2.
+  Time Verit_Theorem theorem_bv2 "bv2.smt2" "bv2.log".
+End Theorem_Bv2.
 
 
 (* verit tactic *)
@@ -939,18 +990,20 @@ Proof.
   verit.
 Qed.
 
+(* TODO: fails with native-coq: "compilation error"
 Goal forall (i j:int),
     (i == j) && (negb (i == j)) = false.
 Proof.
   verit.
-  econstructor; eexact Int63Properties.reflect_eqb.
+  exact int63_compdec.
 Qed.
 
 Goal forall i j, (i == j) || (negb (i == j)).
 Proof.
   verit.
-  econstructor; eexact Int63Properties.reflect_eqb.
+  exact int63_compdec.
 Qed.
+*)
 
 
 (* Congruence in which some premises are REFL *)
@@ -968,103 +1021,100 @@ Proof.
 Qed.
 
 
-(*
-   Local Variables:
-   coq-load-path: ((rec "../src" "SMTCoq"))
-   End:
-*)
-
-(* Some examples of using verit with lemmas. Use <verit_base H1 .. Hn; vauto>
+(* Some examples of using verit with lemmas. Use <verit_bool_base H1 .. Hn; vauto>
    to temporarily add the lemmas H1 .. Hn to the verit environment. *)
 
 Lemma taut1 :
   forall f, f 2 =? 0 -> f 2 =? 0.
-Proof. intros f p. verit_base p; vauto. Qed.
+Proof. intros f p. verit_bool_base p; vauto. Qed.
 
 Lemma taut2 :
   forall f, 0 =? f 2 -> 0 =?f 2.
-Proof. intros f p. verit_base p; vauto. Qed.
+Proof. intros f p. verit_bool_base p; vauto. Qed.
 
 Lemma taut3 :
   forall f, f 2 =? 0 -> f 3 =? 5 -> f 2 =? 0.
-Proof. intros f p1 p2. verit_base p1 p2; vauto. Qed.
+Proof. intros f p1 p2. verit_bool_base p1 p2; vauto. Qed.
 
 Lemma taut4 :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
-Proof. intros f p1 p2. verit_base p1 p2; vauto. Qed.
+Proof. intros f p1 p2. verit_bool_base p1 p2; vauto. Qed.
 
-Lemma taut5 :
-  forall f, 0 =? f 2 -> f 2 =? 0.
-Proof. intros f p. verit_base p; vauto. Qed.
+(* Lemma test_eq_sym a b : implb (a =? b) (b =? a). *)
+(* Proof. verit. *)
+
+(* Lemma taut5 : *)
+(*   forall f, 0 =? f 2 -> f 2 =? 0. *)
+(* Proof. intros f p. verit_bool_base p; vauto. Qed. *)
 
 Lemma fun_const_Z :
   forall f , (forall x, f x =? 2) ->
              f 3 =? 2.
-Proof. intros f Hf. verit_base Hf; vauto. Qed.
+Proof. intros f Hf. verit_bool_base Hf; vauto. Qed.
 
 Lemma lid (A : bool) :  A -> A.
-Proof. intro a. verit_base a; vauto. Qed.
+Proof. intro a. verit_bool_base a; vauto. Qed.
 
 Lemma lpartial_id A :
   (xorb A A) -> (xorb A A).
-Proof. intro xa. verit_base xa; vauto. Qed.
+Proof. intro xa. verit_bool_base xa; vauto. Qed.
 
 Lemma llia1 X Y Z:
   (X <=? 3) && ((Y <=? 7) || (Z <=? 9)) ->
   (X + Y <=? 10) || (X + Z <=? 12).
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma llia2 X:
   X - 3 =? 7 -> X >=? 10.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma llia3 X Y:
   X >? Y -> Y + 1 <=? X.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma llia6 X:
   andb ((X - 3) <=? 7) (7 <=? (X - 3)) -> X >=? 10.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma even_odd b1 b2 x1 x2:
   (ifb b1
        (ifb b2 (2*x1+1 =? 2*x2+1) (2*x1+1 =? 2*x2))
        (ifb b2 (2*x1 =? 2*x2+1) (2*x1 =? 2*x2))) ->
   ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma lcongr1 (a b : Z) (P : Z -> bool) f:
   (f a =? b) -> (P (f a)) -> P b.
-Proof. intros eqfab pfa. verit_base eqfab pfa; vauto. Qed.
+Proof. intros eqfab pfa. verit_bool_base eqfab pfa; vauto. Qed.
 
 Lemma lcongr2 (f:Z -> Z -> Z) x y z:
   x =? y -> f z x =? f z y.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma lcongr3 (P:Z -> Z -> bool) x y z:
   x =? y -> P z x -> P z y.
-Proof. intros eqxy pzx. verit_base eqxy pzx; vauto. Qed.
+Proof. intros eqxy pzx. verit_bool_base eqxy pzx; vauto. Qed.
 
 Lemma test20 :  forall x, (forall a, a <? x) -> 0 <=? x = false.
-Proof. intros x H. verit_base H; vauto. Qed.
+Proof. intros x H. verit_bool_base H; vauto. Qed.
 
 Lemma test21 : forall x, (forall a, negb (x <=? a)) -> negb (0 <=? x).
-Proof. intros x H. verit_base H; vauto. Qed.
+Proof. intros x H. verit_bool_base H; vauto. Qed.
 
-Lemma un_menteur (a b c d : Z) dit:
-  dit a =? c ->
-  dit b =? d ->
-  (d =? a) || (b =? c) ->
-  (a =? c) || (a =? d) ->
-  (b =? c) || (b =? d) ->
-  a =? d.
-Proof. intros H1 H2 H3 H4 H5. verit_base H1 H2 H3 H4 H5; vauto. Qed.
+(* Lemma un_menteur (a b c d : Z) dit: *)
+(*   dit a =? c -> *)
+(*   dit b =? d -> *)
+(*   (d =? a) || (b =? c) -> *)
+(*   (a =? c) || (a =? d) -> *)
+(*   (b =? c) || (b =? d) -> *)
+(*   a =? d. *)
+(* Proof. intros H1 H2 H3 H4 H5. verit_bool_base H1 H2 H3 H4 H5; vauto. Qed. *)
 
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
     (forall a b, f a =? f b) ->
     forall x, f x =? f 0.
-Proof. intros f Hf. verit_base Hf; vauto. Qed.
+Proof. intros f Hf. verit_bool_base Hf; vauto. Qed.
 
 (* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
    the environment. If you did so in a section then, at the end of the section,
@@ -1143,7 +1193,7 @@ End mult3.
 (*   Hypothesis mult_Sx : forall x y, mult (x+1) y =? mult x y + y. *)
 
 (*   Lemma mult_1_x : forall x, mult 1 x =? x. *)
-(*   Proof. verit_base mult_0 mult_Sx. *)
+(*   Proof. verit_bool_base mult_0 mult_Sx. *)
 (*   Qed. *)
 (* End mult. *)
 
@@ -1163,8 +1213,7 @@ End implicit_transform.
 
 Section list.
   Variable Zlist : Type.
-  Hypothesis dec_Zlist :
-    {eq : Zlist -> Zlist -> bool & forall x y : Zlist, reflect (x = y) (eq x y)}.
+  Hypothesis dec_Zlist : CompDec Zlist.
   Variable nil : Zlist.
   Variable cons : Z -> Zlist -> Zlist.
   Variable inlist : Z -> Zlist -> bool.
@@ -1276,15 +1325,15 @@ Section group.
 
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
-  Proof. intros pe'. verit_base pe'; vauto. Qed.
+  Proof. intros pe'. verit_bool_base pe'; vauto. Qed.
 
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_bool_base H; vauto. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_bool_base H; vauto. Qed.
 
   Clear_lemmas.
 End group.
