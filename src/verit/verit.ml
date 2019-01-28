@@ -58,7 +58,7 @@ let print_certif c where=
     Format.fprintf fmt "id:%i kind:%s pos:%s used:%i value:" id kind pos used;
     begin match !r.value with
     | None -> Format.fprintf fmt "None"
-    | Some l -> List.iter (fun f -> Form.to_smt Atom.to_string fmt f;
+    | Some l -> List.iter (fun f -> Form.to_smt Atom.to_smt fmt f;
                                     Format.fprintf fmt " ") l end;
     Format.fprintf fmt "\n";
     match !r.next with
@@ -173,16 +173,16 @@ let export out_channel rt ro lsmt =
   ) (Op.to_list ro);
 
   List.iter (fun u -> Format.fprintf fmt "(assert ";
-                      Form.to_smt Atom.to_string fmt u;
+                      Form.to_smt Atom.to_smt fmt u;
                       Format.fprintf fmt ")\n") lsmt;
 
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
 
-let call_verit _ rt ro ra' rf' root lsmt =
-  match root with
+let call_verit _ rt ro ra' rf' first lsmt =
+  match first with
     | None -> assert false
-    | Some (root, l') ->
+    | Some (_, l') ->
   let fl' = Form.flatten rf' l' in
   let lsmt = fl'::lsmt in
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
@@ -197,6 +197,8 @@ let call_verit _ rt ro ra' rf' root lsmt =
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
   Format.eprintf "Verit = %.5f@." (t1-.t0);
+
+  (* TODO: improve readability: remove the three nested try *)
   let win = open_in wname in
   try
     if exit_code <> 0 then

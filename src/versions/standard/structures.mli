@@ -54,6 +54,7 @@ val mk_tactic :
 val set_evars_tac : Term.constr -> unit Proofview.tactic
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : Term.constr -> Constrexpr.constr_expr
+val get_rel_dec_name : Context.Rel.Declaration.t -> Names.Name.t
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
