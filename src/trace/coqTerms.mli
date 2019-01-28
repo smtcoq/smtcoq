@@ -241,3 +241,10 @@ val vm_cast_true : Environ.env -> Term.constr -> Term.constr
 val mkNat : int -> Term.constr
 val mkN : int -> Term.constr
 val mk_bv_list : bool list -> Term.constr
+
+(* Reification *)
+val mk_bool : Term.constr -> bool
+val mk_bool_list : Term.constr -> bool list
+val mk_nat : Term.constr -> int
+val mk_N : Term.constr -> int
+val mk_bvsize : Term.constr -> int

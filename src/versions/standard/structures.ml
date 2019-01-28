@@ -153,7 +153,7 @@ let vm_cast_no_check t = Tactics.vm_cast_no_check t
 (* Warning 40: this record of type Proofview.Goal.enter contains fields
    that are not visible in the current scope: enter. *)
 let mk_tactic tac =
-  Proofview.Goal.nf_enter {enter = (fun gl ->
+  Proofview.Goal.nf_enter {Proofview.Goal.enter = (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in

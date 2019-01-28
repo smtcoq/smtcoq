@@ -356,3 +356,86 @@ let rec mk_bv_list = function
   | [] -> SmtMisc.mklApp cnil [|Lazy.force cbool|]
   | b :: bv ->
     SmtMisc.mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
+
+
+(* Reification *)
+
+let mk_bool b =
+  let c, args = Term.decompose_app b in
+  if Term.eq_constr c (Lazy.force ctrue) then true
+  else if Term.eq_constr c (Lazy.force cfalse) then false
+  else assert false
+
+let rec mk_bool_list bs =
+  let c, args = Term.decompose_app bs in
+  if Term.eq_constr c (Lazy.force cnil) then []
+  else if Term.eq_constr c (Lazy.force ccons) then
+    match args with
+    | [_; b; bs] -> mk_bool b :: mk_bool_list bs
+    | _ -> assert false
+  else assert false
+
+let rec mk_nat n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cO) then
+    0
+  else if Term.eq_constr c (Lazy.force cS) then
+    match args with
+    | [n] -> (mk_nat n) + 1
+    | _ -> assert false
+  else assert false
+
+let rec mk_positive n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cxH) then
+    1
+  else if Term.eq_constr c (Lazy.force cxO) then
+    match args with
+    | [n] -> 2 * (mk_positive n)
+    | _ -> assert false
+  else if Term.eq_constr c (Lazy.force cxI) then
+    match args with
+    | [n] -> 2 * (mk_positive n) + 1
+    | _ -> assert false
+  else assert false
+
+
+let mk_N n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cN0) then
+    0
+  else if Term.eq_constr c (Lazy.force cNpos) then
+    match args with
+    | [n] -> mk_positive n
+    | _ -> assert false
+  else assert false
+
+
+let mk_Z n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cZ0) then 0
+  else if Term.eq_constr c (Lazy.force cZpos) then
+    match args with
+    | [n] -> mk_positive n
+    | _ -> assert false
+  else if Term.eq_constr c (Lazy.force cZneg) then
+    match args with
+    | [n] -> - mk_positive n
+    | _ -> assert false
+  else assert false
+
+
+(* size of bivectors are either N.of_nat (length l) or an N *)
+let mk_bvsize n =
+  let c, args = Term.decompose_app n in
+  if Term.eq_constr c (Lazy.force cof_nat) then
+    match args with
+    | [nl] ->
+      let c, args = Term.decompose_app nl in
+      if Term.eq_constr c (Lazy.force clength) then
+        match args with
+        | [_; l] -> List.length (mk_bool_list l)
+        | _ -> assert false
+      else assert false
+    | _ -> assert false
+  else mk_N n
