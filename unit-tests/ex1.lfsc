@@ -1,0 +1,23 @@
+unsat
+(check
+ ;; Declarations
+(% a (term Bool)
+(% b (term Bool)
+(% c (term Bool)
+(% A1 (th_holds (not (impl (and (impl (p_app a) (p_app b)) (impl (p_app b) (p_app c))) (impl (p_app a) (p_app c)))))
+ ;; Proof of empty clause follows
+(: (holds cln)
+ ;; Preprocessing 
+ ;; Clauses
+(decl_atom (p_app b) (\ var3 (\ atom3
+(decl_atom (p_app a) (\ var2 (\ atom2
+(satlem _ _ (asf _ _ _ atom3 (\ lit6 (ast _ _ _ atom2 (\ lit5 (clausify_false (contra _ (or_elim_1 _ _ (not_not_intro _ lit5) (impl_elim _ _ (and_elim_1 _ _ (and_elim_1 _ _ (not_impl_elim _ _ A1))))) lit6)))))) (\ pb2
+(decl_atom (p_app c) (\ var4 (\ atom4
+(satlem _ _ (asf _ _ _ atom4 (\ lit8 (ast _ _ _ atom3 (\ lit7 (clausify_false (contra _ (or_elim_1 _ _ (not_not_intro _ lit7) (impl_elim _ _ (and_elim_2 _ _ (and_elim_1 _ _ (not_impl_elim _ _ A1))))) lit8)))))) (\ pb3
+(satlem _ _ (asf _ _ _ atom2 (\ lit4 (clausify_false (contra _ (and_elim_1 _ _ (not_impl_elim _ _ (and_elim_2 _ _ (not_impl_elim _ _ A1)))) lit4)))) (\ pb4
+(satlem _ _ (ast _ _ _ atom4 (\ lit9 (clausify_false (contra _ lit9 (and_elim_2 _ _ (not_impl_elim _ _ (and_elim_2 _ _ (not_impl_elim _ _ A1)))))))) (\ pb5
+ ;; Theory Lemmas
+(satlem_simplify _ _ _ (Q _ _ pb2 pb4 var2) (\cl6
+(satlem_simplify _ _ _ (Q _ _ pb3 cl6 var3) (\cl7
+(satlem_simplify _ _ _ (Q _ _ pb5 cl7 var4) (\empty empty)))))))))))))))))))))))))))))
+;;

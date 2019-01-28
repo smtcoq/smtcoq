@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -21,6 +17,11 @@ type used = int
 type clause_id  = int
 
 type 'hform rule =
+  (* Weakening *)
+  | Weaken of 'hform clause * 'hform list
+     (*  * weaken          : {a_1 ... a_n} --> {a_1 ... a_n b_1 ... b_n} *)
+
+  (* Simplification *)
   | ImmFlatten of 'hform clause * 'hform
 
   (* CNF Transformations *)
@@ -108,6 +109,114 @@ type 'hform rule =
   (* Elimination of operators *)
   | SplDistinctElim of 'hform clause * 'hform
 
+  (* Bit-blasting *)
+  | BBVar of 'hform
+  (* Bit-blasting a variable:
+
+       ----------------------- bbVar
+        bbT(x, [x0; ...; xn])
+   *)
+  | BBConst of 'hform
+  (* Bit-blasting a constant:
+
+       ----------------------- bbConst
+        bbT(#0100, [0; 0; 1; 0])
+   *)
+  | BBOp of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitwise operations: bbAnd, bbOr, ...
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a&b, [a0 /\ b0; ...; an /\ bn])
+   *)
+  | BBNot of 'hform clause * 'hform
+  (* Bit-blasting bitvector not
+           bbT(a, [a0; ...; an])
+       ------------------------------ bbNot
+        bbT(not a, [~a0 ; ...; ~an])
+   *)
+  | BBNeg of 'hform clause * 'hform
+  (* Bit-blasting bitvector negation
+           bbT(a, [a0; ...; an])
+       ------------------------------ bbNot
+        bbT(-a, [...])
+   *)
+  | BBAdd of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector addition
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a+b, [...])
+   *)
+  | BBMul of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector multiplication
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bbT(a*b, [...])
+   *)
+  | BBUlt of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector unsigned comparison
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bvult a b <-> ...
+   *)
+  | BBSlt of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector signed comparison
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbAnd
+             bvslt a b <-> ...
+   *)
+  | BBConc of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector concatenation
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbConc
+             bbT(concat a b, [a0; ...; an; b0; ...; bn])
+   *)
+  | BBExtr of 'hform clause * 'hform
+  (* Bit-blasting bitvector extraction
+             bbT(a, [a0; ...; an])
+       ----------------------------------- bbExtr
+        bbT(extract i j a, [ai; ...; aj])
+   *)
+  | BBZextn of 'hform clause * 'hform
+  | BBSextn of 'hform clause * 'hform
+  (* Bit-blasting bitvector extensions
+
+  *)
+  | BBShl of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector shift left *)
+  | BBShr of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting bitvector shift right *)
+  | BBEq of 'hform clause * 'hform clause * 'hform
+  (* Bit-blasting equality
+        bbT(a, [a0; ...; an])      bbT(b, [b0; ...; bn])
+       -------------------------------------------------- bbEq
+         (a = b) <-> [(a0 <-> b0) /\ ... /\ (an <-> bn)]
+   *)
+
+  | BBDiseq of 'hform
+  (* disequality over constant bitvectors
+
+       ----------------------------- bbDiseq
+         #b000010101 <> #b00000000
+   *)
+
+  | RowEq of 'hform
+  (* Read over write same index
+       ------------------------------- roweq
+         select (store a i v) i = v
+   *)
+
+  | RowNeq of 'hform list
+  (* Read over write other index
+       ------------------------------------------------- rowneq
+         i <> j -> select (store a i v) j = select a j
+   *)
+
+  | Ext of 'hform
+  (* Extensionality over arrays
+       ------------------------------------------------------- ext
+         a = b \/ select a (diff a b) <> select b (diff a b)
+   *)
+
   (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
   | Hole of ('hform clause) list * 'hform list
   | Forall_inst of 'hform clause * 'hform
@@ -139,12 +248,26 @@ and 'hform resolution = {
 let used_clauses r =
   match r with
   | ImmBuildProj (c, _) | ImmBuildDef c | ImmBuildDef2 c
-  | ImmFlatten (c,_)  | SplArith (c,_,_) | SplDistinctElim (c,_)
-  | Forall_inst (c, _) | Qf_lemma (c, _) -> [c]
+
+  | Weaken (c,_) | ImmFlatten (c,_)
+  | SplArith (c,_,_) | SplDistinctElim (c,_)
+  | BBNot (c, _) | BBNeg (c, _) | BBExtr (c, _)
+  | BBZextn (c, _) | BBSextn (c, _) -> [c]
+
+  | BBOp (c1,c2,_) | BBAdd (c1,c2,_)
+  | BBMul (c1,c2,_) | BBConc (c1,c2,_)
+  | BBUlt (c1,c2,_) | BBSlt (c1,c2,_)
+  | BBShl (c1,c2,_) | BBShr (c1,c2,_)
+  | BBEq (c1,c2,_) -> [c1;c2]
+
   | Hole (cs, _) -> cs
+  | Forall_inst (c, _) | Qf_lemma (c, _) -> [c]
+
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
-  | LiaMicromega _ | LiaDiseq _ -> []
+  | LiaMicromega _ | LiaDiseq _
+  | BBVar _ | BBConst _ | BBDiseq _
+  | RowEq _ | RowNeq _ | Ext _ -> []
 
 (* For debugging certif processing purposes : <add_scertif> <select> <occur> <alloc> *)
 let to_string r =
@@ -158,27 +281,47 @@ let to_string r =
              "Res [" ^ id1 ^ "; " ^ id2 ^ rest_ids ^"]"
           | Other x -> "Other(" ^
                          begin match x with
-                         | True -> "True"
-                         | False -> "False"
-                         | BuildDef _ -> "BuildDef"
-                         | BuildDef2 _ -> "BuildDef2"
-                         | BuildProj _ -> "BuildProj"
-                         | EqTr _ -> "EqTr"
-                         | EqCgr _ -> "EqCgr"
-                         | EqCgrP _ -> "EqCgrP"
-                         | LiaMicromega _ -> "LiaMicromega"
-                         | LiaDiseq _ -> "LiaDiseq"
-                         | Qf_lemma _ -> "Qf_lemma"
-                                         
-                         | Hole _ -> "Hole"
-
-                         | ImmFlatten _ -> "ImmFlatten"
-                         | ImmBuildDef _ -> "ImmBuildDef"
-                         | ImmBuildDef2 _ -> "ImmBuildDef2"
-                         | ImmBuildProj _ -> "ImmBuildProj"
-                         | SplArith _ -> "SplArith"
-                         | SplDistinctElim _ -> "SplDistinctElim"
-                         | Forall_inst _ -> "Forall_inst"  end ^ ")"
+                           | Weaken _ -> "Weaken"
+                           | ImmFlatten _ -> "ImmFlatten"
+                           | True -> "True"
+                           | False -> "False"
+                           | BuildDef _ -> "BuildDef"
+                           | BuildDef2 _ -> "BuildDef2"
+                           | BuildProj _ -> "BuildProj"
+                           | ImmBuildDef _ -> "ImmBuildDef"
+                           | ImmBuildDef2 _ -> "ImmBuildDef2"
+                           | ImmBuildProj _ -> "ImmBuildProj"
+                           | EqTr _ -> "EqTr"
+                           | EqCgr _ -> "EqCgr"
+                           | EqCgrP _ -> "EqCgrP"
+                           | LiaMicromega _ -> "LiaMicromega"
+                           | LiaDiseq _ -> "LiaDiseq"
+                           | SplArith _ -> "SplArith"
+                           | SplDistinctElim _ -> "SplDistinctElim"
+                           | BBVar _ -> "BBVar"
+                           | BBConst _ -> "BBConst"
+                           | BBOp _ -> "BBOp"
+                           | BBNot _ -> "BBNot"
+                           | BBNeg _ -> "BBNeg"
+                           | BBAdd _ -> "BBAdd"
+                           | BBMul _ -> "BBMul"
+                           | BBUlt _ -> "BBUlt"
+                           | BBSlt _ -> "BBSlt"
+                           | BBConc _ -> "BBConc"
+                           | BBExtr _ -> "BBExtr"
+                           | BBZextn _ -> "BBZextn"
+                           | BBSextn _ -> "BBSextn"
+                           | BBShl _ -> "BBShl"
+                           | BBShr _ -> "BBShr"
+                           | BBEq _ -> "BBEq"
+                           | BBDiseq _ -> "BBDiseq"
+                           | RowEq _ -> "RowEq"
+                           | RowNeq _ -> "RowNeq"
+                           | Ext _ -> "Ext"
+                           | Hole _ -> "Hole"
+                           | Forall_inst _ -> "Forall_inst"
+                           | Qf_lemma _ -> "Qf_lemma"
+                         end ^ ")"
 
 
 

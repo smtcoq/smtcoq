@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -39,6 +35,30 @@ let mkName s =
   let id = Names.id_of_string s in
   Names.Name id
 
+
+let string_coq_constr t =
+  let rec fix rf x = rf (fix rf) x in
+  let pr = fix
+      Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
+  Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
+
+
 let string_of_name = function
     Names.Name id -> Names.string_of_id id
   | _ -> failwith "unnamed rel"
+
+
+(** Logics *)
+
+type logic_item =
+  | LUF
+  | LLia
+  | LBitvectors
+  | LArrays
+
+module SL = Set.Make (struct
+    type t = logic_item
+    let compare = Pervasives.compare
+  end)
+
+type logic = SL.t

@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -27,6 +23,7 @@ module Atom =
     let equal a1 a2 = a1 == a2
 
     let is_bool_type a = true
+    let is_bv_type a = false
 
     type reify_tbl =
         { mutable count : int;
@@ -56,6 +53,10 @@ module Atom =
     let interp_tbl reify =
       Structures.mkArray (Lazy.force cbool, atom_tbl reify)
 
+    let logic _ = SL.empty
+
+    let to_smt = Format.pp_print_int
+    
   end
 
 module Form = SmtForm.Make(Atom)

@@ -1,18 +1,16 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
 
+
+open SmtMisc
 
 module type ATOM = 
   sig 
@@ -23,6 +21,9 @@ module type ATOM =
     val equal : t -> t -> bool
 
     val is_bool_type : t -> bool
+    val is_bv_type : t -> bool
+    val to_smt : Format.formatter -> t -> unit
+    val logic : t -> logic
 
   end 
 
@@ -42,6 +43,7 @@ type fop =
 type ('a,'f) gen_pform = 
   | Fatom of 'a
   | Fapp of fop * 'f array
+  | FbbT of 'a * 'f list
 
 module type FORM =
   sig 
@@ -62,8 +64,11 @@ module type FORM =
       val is_pos : t -> bool
       val is_neg : t -> bool
 
-      val to_string : ?pi:bool -> (hatom -> string) -> t -> string
-      val to_smt : (hatom -> string) -> Format.formatter -> t -> unit
+      val to_smt : ?pi:bool ->
+                   (Format.formatter -> hatom -> unit) ->
+                   Format.formatter -> t -> unit
+
+      val logic : t -> logic
 
       (* Building formula from positive formula *)
       exception NotWellTyped of pform
@@ -79,6 +84,10 @@ module type FORM =
                                              
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
+
+      (** Turn n-ary [Fand] and [For] into their right-associative
+          counter-parts *)
+      val right_assoc : reify -> t -> t
 
       (** Producing Coq terms *) 
 

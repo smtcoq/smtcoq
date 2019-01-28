@@ -1,3 +1,15 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 val pos_of_int : int -> Structures.Micromega_plugin_Micromega.positive
 val z_of_int : int -> Structures.Micromega_plugin_Micromega.z
 type my_tbl = { tbl : (SmtAtom.hatom, int) Hashtbl.t; mutable count : int; }
