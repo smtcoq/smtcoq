@@ -108,8 +108,6 @@ let destruct_rel_decl (n, _, t) = n, t
 
 let interp_constr env sigma = Constrintern.interp_constr sigma env
 
-type constr_expr = Topconstr.constr_expr
-
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
@@ -138,5 +136,7 @@ module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
 
 
-(* Type of coq tactics *)
+(* Types in the Coq source code *)
 type tactic = Proof_type.tactic
+type names_id = Names.identifier
+type constr_expr = Topconstr.constr_expr

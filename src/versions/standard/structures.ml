@@ -136,8 +136,6 @@ type rel_decl = Context.Rel.Declaration.t
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r
 
-type constr_expr = Constrexpr.constr_expr
-
 let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
 
 let tclTHEN = Tacticals.New.tclTHEN
@@ -177,5 +175,8 @@ module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 
-(* Type of coq tactics *)
+
+(* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
+type names_id = Names.id.t
+type constr_expr = Constrexpr.constr_expr

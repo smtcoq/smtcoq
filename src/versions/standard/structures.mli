@@ -51,7 +51,6 @@ val pr_constr_env : Environ.env -> Term.constr -> Pp.std_ppcmds
 val lift : int -> Constr.constr -> Constr.constr
 type rel_decl = Context.Rel.Declaration.t                                     
 val destruct_rel_decl : rel_decl -> Names.Name.t * Constr.t
-type constr_expr = Constrexpr.constr_expr
 val interp_constr : Environ.env -> Evd.evar_map -> Constrexpr.constr_expr -> Term.constr
 val tclTHEN :
   unit Proofview.tactic -> unit Proofview.tactic -> unit Proofview.tactic
@@ -67,8 +66,16 @@ val set_evars_tac : Term.constr -> unit Proofview.tactic
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : Term.constr -> Constrexpr.constr_expr
 val get_rel_dec_name : Context.Rel.Declaration.t -> Names.Name.t
+
+
+(* New packaging of plugins *)
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+
+
+(* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
+type names_id = Names.id.t
+type constr_expr = Constrexpr.constr_expr

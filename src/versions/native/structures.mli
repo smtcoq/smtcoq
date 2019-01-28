@@ -37,10 +37,10 @@ val pr_constr_env : Environ.env -> Term.constr -> Pp.std_ppcmds
 val lift : int -> Term.constr -> Term.constr
 val destruct_rel_decl : Term.rel_declaration -> Names.name * Term.constr
 val interp_constr : Environ.env -> Evd.evar_map -> Topconstr.constr_expr -> Term.constr
-type constr_expr = Topconstr.constr_expr
 val tclTHEN : Proof_type.tactic -> Proof_type.tactic -> Proof_type.tactic
 val tclTHENLAST : Proof_type.tactic -> Proof_type.tactic -> Proof_type.tactic
 val assert_before : Names.name -> Term.types -> Proof_type.tactic
+val vm_conv : Reduction.conv_pb -> Term.types Reduction.conversion_function
 val vm_cast_no_check : Term.constr -> Proof_type.tactic
 val mk_tactic :
   (Environ.env ->
@@ -49,8 +49,17 @@ val mk_tactic :
 val set_evars_tac : 'a -> Proof_type.tactic
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : Term.constr -> Topconstr.constr_expr
+val get_rel_dec_name : 'a -> Names.name
+
+
+(* Old packaging of plugins *)
 module Micromega_plugin_Certificate = Certificate
 module Micromega_plugin_Coq_micromega = Coq_micromega
 module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
+
+
+(* Types in the Coq source code *)
 type tactic = Proof_type.tactic
+type names_id = Names.identifier
+type constr_expr = Topconstr.constr_expr

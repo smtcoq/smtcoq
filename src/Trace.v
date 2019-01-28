@@ -578,7 +578,7 @@ Inductive step :=
       | RowNeq pos _
       | Ext pos _
       | @Hole pos _ _ _ _
-      | ForallInst pos _ _ => pos
+      | @ForallInst pos _ _ _ _ => pos
     end.
 
 
@@ -678,7 +678,7 @@ Inductive step :=
     | RowNeq _ _ => Name_RowNeq
     | Ext _ _ => Name_Ext
     | @Hole _ _ _ _ _ => Name_Hole
-    | ForallInst _ _ _ => Name_ForallInst
+    | @ForallInst _ _ _ _ _ => Name_ForallInst
     end.
 
 
