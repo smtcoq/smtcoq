@@ -34,17 +34,13 @@ Lemma fun_const2 :
     (forall x, g (f x) 2) -> g (f 3) 2.
 Proof.
   intros f g Hf.
-  verit_base Hf; vauto.
+  verit_bool_base Hf; vauto.
 Qed.
-
-(* First a tactic, to test the universe computation in an empty
-   environment. *)
-
-Lemma check_univ (x1: bool):
-  (x1 && (negb x1)) = false.
-Proof.
-  verit.
-Qed.
+(*
+Toplevel input, characters 916-942:
+ Warning: Bytecode compiler failed, falling back to standard conversion
+ [bytecode-compiler-failed,bytecode-compiler]
+*)
 
 
 (* veriT vernacular commands *)
@@ -1013,91 +1009,91 @@ Proof.
 Qed.
 
 
-(* Some examples of using verit with lemmas. Use <verit_base H1 .. Hn; vauto>
+(* Some examples of using verit with lemmas. Use <verit_bool_base H1 .. Hn; vauto>
    to temporarily add the lemmas H1 .. Hn to the verit environment. *)
 
 Lemma taut1 :
   forall f, f 2 =? 0 -> f 2 =? 0.
-Proof. intros f p. verit_base p; vauto. Qed.
+Proof. intros f p. verit_bool_base p; vauto. Qed.
 
 Lemma taut2 :
   forall f, 0 =? f 2 -> 0 =?f 2.
-Proof. intros f p. verit_base p; vauto. Qed.
+Proof. intros f p. verit_bool_base p; vauto. Qed.
 
 Lemma taut3 :
   forall f, f 2 =? 0 -> f 3 =? 5 -> f 2 =? 0.
-Proof. intros f p1 p2. verit_base p1 p2; vauto. Qed.
+Proof. intros f p1 p2. verit_bool_base p1 p2; vauto. Qed.
 
 Lemma taut4 :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
-Proof. intros f p1 p2. verit_base p1 p2; vauto. Qed.
+Proof. intros f p1 p2. verit_bool_base p1 p2; vauto. Qed.
 
-Lemma taut5 :
-  forall f, 0 =? f 2 -> f 2 =? 0.
-Proof. intros f p. verit_base p; vauto. Qed.
+(* Lemma taut5 : *)
+(*   forall f, 0 =? f 2 -> f 2 =? 0. *)
+(* Proof. intros f p. verit_bool_base p; vauto. Qed. *)
 
 Lemma fun_const_Z :
   forall f , (forall x, f x =? 2) ->
              f 3 =? 2.
-Proof. intros f Hf. verit_base Hf; vauto. Qed.
+Proof. intros f Hf. verit_bool_base Hf; vauto. Qed.
 
 Lemma lid (A : bool) :  A -> A.
-Proof. intro a. verit_base a; vauto. Qed.
+Proof. intro a. verit_bool_base a; vauto. Qed.
 
 Lemma lpartial_id A :
   (xorb A A) -> (xorb A A).
-Proof. intro xa. verit_base xa; vauto. Qed.
+Proof. intro xa. verit_bool_base xa; vauto. Qed.
 
 Lemma llia1 X Y Z:
   (X <=? 3) && ((Y <=? 7) || (Z <=? 9)) ->
   (X + Y <=? 10) || (X + Z <=? 12).
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma llia2 X:
   X - 3 =? 7 -> X >=? 10.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma llia3 X Y:
   X >? Y -> Y + 1 <=? X.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma llia6 X:
   andb ((X - 3) <=? 7) (7 <=? (X - 3)) -> X >=? 10.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma even_odd b1 b2 x1 x2:
   (ifb b1
        (ifb b2 (2*x1+1 =? 2*x2+1) (2*x1+1 =? 2*x2))
        (ifb b2 (2*x1 =? 2*x2+1) (2*x1 =? 2*x2))) ->
   ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma lcongr1 (a b : Z) (P : Z -> bool) f:
   (f a =? b) -> (P (f a)) -> P b.
-Proof. intros eqfab pfa. verit_base eqfab pfa; vauto. Qed.
+Proof. intros eqfab pfa. verit_bool_base eqfab pfa; vauto. Qed.
 
 Lemma lcongr2 (f:Z -> Z -> Z) x y z:
   x =? y -> f z x =? f z y.
-Proof. intro p. verit_base p; vauto. Qed.
+Proof. intro p. verit_bool_base p; vauto. Qed.
 
 Lemma lcongr3 (P:Z -> Z -> bool) x y z:
   x =? y -> P z x -> P z y.
-Proof. intros eqxy pzx. verit_base eqxy pzx; vauto. Qed.
+Proof. intros eqxy pzx. verit_bool_base eqxy pzx; vauto. Qed.
 
-Lemma un_menteur (a b c d : Z) dit:
-  dit a =? c ->
-  dit b =? d ->
-  (d =? a) || (b =? c) ->
-  (a =? c) || (a =? d) ->
-  (b =? c) || (b =? d) ->
-  a =? d.
-Proof. intros H1 H2 H3 H4 H5. verit_base H1 H2 H3 H4 H5; vauto. Qed.
+(* Lemma un_menteur (a b c d : Z) dit: *)
+(*   dit a =? c -> *)
+(*   dit b =? d -> *)
+(*   (d =? a) || (b =? c) -> *)
+(*   (a =? c) || (a =? d) -> *)
+(*   (b =? c) || (b =? d) -> *)
+(*   a =? d. *)
+(* Proof. intros H1 H2 H3 H4 H5. verit_bool_base H1 H2 H3 H4 H5; vauto. Qed. *)
 
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
     (forall a b, f a =? f b) ->
     forall x, f x =? f 0.
-Proof. intros f Hf. verit_base Hf; vauto. Qed.
+Proof. intros f Hf. verit_bool_base Hf; vauto. Qed.
 
 (* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
    the environment. If you did so in a section then, at the end of the section,
@@ -1176,7 +1172,7 @@ End mult3.
 (*   Hypothesis mult_Sx : forall x y, mult (x+1) y =? mult x y + y. *)
 
 (*   Lemma mult_1_x : forall x, mult 1 x =? x. *)
-(*   Proof. verit_base mult_0 mult_Sx. *)
+(*   Proof. verit_bool_base mult_0 mult_Sx. *)
 (*   Qed. *)
 (* End mult. *)
 
@@ -1196,8 +1192,7 @@ End implicit_transform.
 
 Section list.
   Variable Zlist : Type.
-  Hypothesis dec_Zlist :
-    {eq : Zlist -> Zlist -> bool & forall x y : Zlist, reflect (x = y) (eq x y)}.
+  Hypothesis dec_Zlist : CompDec Zlist.
   Variable nil : Zlist.
   Variable cons : Z -> Zlist -> Zlist.
   Variable inlist : Z -> Zlist -> bool.
@@ -1309,15 +1304,15 @@ Section group.
 
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
-  Proof. intros pe'. verit_base pe'; vauto. Qed.
+  Proof. intros pe'. verit_bool_base pe'; vauto. Qed.
 
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_bool_base H; vauto. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_bool_base H; vauto. Qed.
 
   Clear_lemmas.
 End group.

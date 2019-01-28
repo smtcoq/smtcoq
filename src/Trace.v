@@ -187,12 +187,10 @@ Qed.
  Lemma theorem_checker :
    forall d c,
      checker d c = true ->
-     forall rho, negb (valid (interp_var rho) d).
+     forall rho, ~ (valid (interp_var rho) d).
  Proof.
-  intros d c H rho.
-  apply negb_true_iff. apply neg_eq_true_eq_false.
-  apply checker_correct with c;trivial.
-  split;compute;trivial;discriminate.
+   intros d c H rho;apply checker_correct with c;trivial.
+   split;compute;trivial;discriminate.
  Qed.
 
 End Sat_Checker.
