@@ -502,5 +502,10 @@ let tactic_gen vm_cast =
   let ra' = VeritSyntax.ra in
   let rf' = VeritSyntax.rf in
   SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+  (* let ra = VeritSyntax.ra in
+   * let rf = VeritSyntax.rf in
+   * (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
+   *    the same ra and rf twice to have everything reifed *\)
+   * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
 let tactic () = tactic_gen vm_cast_true
 let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)

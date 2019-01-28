@@ -1028,6 +1028,9 @@ Lemma taut4 :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
 Proof. intros f p1 p2. verit_bool_base p1 p2; vauto. Qed.
 
+(* Lemma test_eq_sym a b : implb (a =? b) (b =? a). *)
+(* Proof. verit. *)
+
 (* Lemma taut5 : *)
 (*   forall f, 0 =? f 2 -> f 2 =? 0. *)
 (* Proof. intros f p. verit_bool_base p; vauto. Qed. *)
