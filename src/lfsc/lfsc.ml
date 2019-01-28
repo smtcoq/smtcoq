@@ -149,7 +149,7 @@ let clear_all () =
 
 let import_all fsmt fproof =
   clear_all ();
-  let rt = Btype.create () in
+  let rt = SmtBtype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
@@ -353,7 +353,7 @@ let string_logic ro f =
 
 
 
-let call_cvc4 env rt ro ra rf root =
+let call_cvc4 env rt ro ra rf root _ =
   let open Smtlib2_solver in
   let fl = snd root in
 
@@ -371,17 +371,17 @@ let call_cvc4 env rt ro ra rf root =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    VeritSyntax.add_btype s (Tindex t);
+    VeritSyntax.add_btype s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
-  ) (Btype.to_list rt);
+  ) (SmtBtype.to_list rt);
   
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
     VeritSyntax.add_fun s op;
     let args =
       Array.fold_right
-        (fun t acc -> asprintf "%a" Btype.to_smt t :: acc) cod [] in
-    let ret = asprintf "%a" Btype.to_smt dom in
+        (fun t acc -> asprintf "%a" SmtBtype.to_smt t :: acc) cod [] in
+    let ret = asprintf "%a" SmtBtype.to_smt dom in
     declare_fun cvc4 s args ret
   ) (Op.to_list ro);
 
@@ -416,9 +416,9 @@ let export out_channel rt ro l =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    VeritSyntax.add_btype s (Tindex t);
+    VeritSyntax.add_btype s (SmtBtype.Tindex t);
     fprintf fmt "(declare-sort %s 0)@." s
-  ) (Btype.to_list rt);
+  ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
@@ -427,9 +427,9 @@ let export out_channel rt ro l =
     let is_first = ref true in
     Array.iter (fun t ->
         if !is_first then is_first := false
-        else fprintf fmt " "; Btype.to_smt fmt t
+        else fprintf fmt " "; SmtBtype.to_smt fmt t
       ) cod;
-    fprintf fmt ") %a)@." Btype.to_smt dom;
+    fprintf fmt ") %a)@." SmtBtype.to_smt dom;
   ) (Op.to_list ro);
 
   fprintf fmt "(assert %a)@\n(check-sat)@\n(exit)@."
@@ -495,10 +495,12 @@ let cvc4_logic =
 
 let tactic_gen vm_cast =
   clear_all ();
-  let rt = Btype.create () in
+  let rt = SmtBtype.create () in
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf vm_cast
+  let ra' = VeritSyntax.ra in
+  let rf' = VeritSyntax.rf in
+  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
 let tactic () = tactic_gen vm_cast_true
 let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)

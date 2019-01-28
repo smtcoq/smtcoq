@@ -180,9 +180,7 @@ let export out_channel rt ro lsmt =
 
 
 let call_verit _ rt ro ra' rf' first lsmt =
-  match first with
-    | None -> assert false
-    | Some (_, l') ->
+  let (_, l') = first in
   let fl' = Form.flatten rf' l' in
   let lsmt = fl'::lsmt in
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
@@ -209,7 +207,7 @@ let call_verit _ rt ro ra' rf' first lsmt =
         Structures.error "veriT returns 'unknown'"
     with End_of_file ->
           try
-            let res = import_trace ra' rf' logfilename first lsmt in
+            let res = import_trace ra' rf' logfilename (Some first) lsmt in
             close_in win; Sys.remove wname; res
           with
             | VeritSyntax.Sat -> Structures.error "veriT found a counter-example"

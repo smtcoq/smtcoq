@@ -692,7 +692,7 @@ let get_arguments concl =
 
 let make_proof call_solver env rt ro ra' rf' l' ls_smtc =
   let root = SmtTrace.mkRootV [l'] in
-  call_solver env rt ro ra' rf' (Some (root,l')) ls_smtc
+  call_solver env rt ro ra' rf' (root,l') ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
 (* <of_coq_lemma> reifies the coq lemma given, we can then easily print it in a
