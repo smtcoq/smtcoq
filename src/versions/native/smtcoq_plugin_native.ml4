@@ -94,8 +94,8 @@ END
 
 
 TACTIC EXTEND Tactic_verit
-| [ "verit_bool" constr_list(lpl) ] -> [ Verit.tactic lpl !lemmas_list ]
-| [ "verit_bool_no_check" constr_list(lpl) ] -> [ Verit.tactic_no_check lpl !lemmas_list ]
+| [ "verit_bool_base" constr_list(lpl) ] -> [ Verit.tactic lpl !lemmas_list ]
+| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ Verit.tactic_no_check lpl !lemmas_list ]
 END
 
 TACTIC EXTEND Tactic_cvc4
