@@ -75,8 +75,6 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Differences between the two versions of Coq *)
-type names_id_t = Names.Id.t
-
 let dummy_loc = Loc.ghost
 
 let mkUConst c =
@@ -130,8 +128,6 @@ let vernacentries_interp expr =
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
 let lift = Vars.lift
-
-type rel_decl = Context.Rel.Declaration.t
 
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r

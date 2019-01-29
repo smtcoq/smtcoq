@@ -33,7 +33,6 @@ val mkTrace :
   Term.constr Lazy.t ->
   Term.constr Lazy.t ->
   int -> Term.constr -> Term.constr -> 'a ref -> Term.constr
-type names_id_t = Names.Id.t
 val dummy_loc : Loc.t
 val mkUConst :
   Term.constr -> Safe_typing.private_constants Entries.definition_entry
@@ -49,8 +48,7 @@ val extern_constr : Term.constr -> Constrexpr.constr_expr
 val vernacentries_interp : Constrexpr.constr_expr -> unit
 val pr_constr_env : Environ.env -> Term.constr -> Pp.std_ppcmds
 val lift : int -> Constr.constr -> Constr.constr
-type rel_decl = Context.Rel.Declaration.t                                     
-val destruct_rel_decl : rel_decl -> Names.Name.t * Constr.t
+val destruct_rel_decl : Context.Rel.Declaration.t -> Names.Name.t * Constr.t
 val interp_constr : Environ.env -> Evd.evar_map -> Constrexpr.constr_expr -> Term.constr
 val tclTHEN :
   unit Proofview.tactic -> unit Proofview.tactic -> unit Proofview.tactic

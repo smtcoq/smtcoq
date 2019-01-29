@@ -77,7 +77,7 @@ let rec logic = function
 type reify_tbl =
   { mutable count : int;
     tbl : (Term.constr, btype) Hashtbl.t;
-    mutable cuts : (Structures.names_id_t * Term.types) list;
+    mutable cuts : (Structures.names_id * Term.types) list;
     unsup_tbl : (btype, btype) Hashtbl.t;
   }
 

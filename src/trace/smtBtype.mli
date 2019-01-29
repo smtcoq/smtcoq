@@ -59,6 +59,6 @@ val interp : Term.constr -> btype -> Term.constr
 
 val interp_to_coq : reify_tbl -> btype -> Term.constr
 
-val get_cuts : reify_tbl -> (Structures.names_id_t * Term.types) list
+val get_cuts : reify_tbl -> (Structures.names_id * Term.types) list
 
 val logic : btype -> logic
