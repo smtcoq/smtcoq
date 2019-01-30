@@ -1040,12 +1040,12 @@ Lemma taut4 :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
 Proof. intros f p1 p2. verit_bool_base p1 p2; vauto. Qed.
 
-(* Lemma test_eq_sym a b : implb (a =? b) (b =? a). *)
-(* Proof. verit. *)
+Lemma test_eq_sym a b : implb (a =? b) (b =? a).
+Proof. verit. Qed.
 
-(* Lemma taut5 : *)
-(*   forall f, 0 =? f 2 -> f 2 =? 0. *)
-(* Proof. intros f p. verit_bool_base p; vauto. Qed. *)
+Lemma taut5 :
+  forall f, 0 =? f 2 -> f 2 =? 0.
+Proof. intros f p. verit_bool_base p; vauto. Qed.
 
 Lemma fun_const_Z :
   forall f , (forall x, f x =? 2) ->
@@ -1101,14 +1101,14 @@ Proof. intros x H. verit_bool_base H; vauto. Qed.
 Lemma test21 : forall x, (forall a, negb (x <=? a)) -> negb (0 <=? x).
 Proof. intros x H. verit_bool_base H; vauto. Qed.
 
-(* Lemma un_menteur (a b c d : Z) dit: *)
-(*   dit a =? c -> *)
-(*   dit b =? d -> *)
-(*   (d =? a) || (b =? c) -> *)
-(*   (a =? c) || (a =? d) -> *)
-(*   (b =? c) || (b =? d) -> *)
-(*   a =? d. *)
-(* Proof. intros H1 H2 H3 H4 H5. verit_bool_base H1 H2 H3 H4 H5; vauto. Qed. *)
+Lemma un_menteur (a b c d : Z) dit:
+  dit a =? c ->
+  dit b =? d ->
+  (d =? a) || (b =? c) ->
+  (a =? c) || (a =? d) ->
+  (b =? c) || (b =? d) ->
+  a =? d.
+Proof. intros H1 H2 H3 H4 H5. verit_bool_base H1 H2 H3 H4 H5; vauto. Qed.
 
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
