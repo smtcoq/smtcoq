@@ -12,7 +12,7 @@
 
 Require Import Int31 Cyclic31.
 Require Export Int63Native.
-Require Import BigNumPrelude.
+(* Require Import BigNumPrelude. *)
 Require Import Bvector.
 
 

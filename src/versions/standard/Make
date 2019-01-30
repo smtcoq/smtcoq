@@ -41,7 +41,7 @@
 
 -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 
--extra "test" "" "cd ../unit-tests; make" ""
+-extra "test" "" "cd ../unit-tests; make"
 -extra "ztest" "" "cd ../unit-tests; make zchaff"
 -extra "vtest" "" "cd ../unit-tests; make verit"
 -extra "lfsctest" "" "cd ../unit-tests; make lfsc"
