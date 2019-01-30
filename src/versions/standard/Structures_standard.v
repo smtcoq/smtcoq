@@ -50,6 +50,15 @@ Section Trace.
 End Trace.
 
 
+Require Import PeanoNat.
+
 Definition nat_eqb := Nat.eqb.
 Definition nat_eqb_eq := Nat.eqb_eq.
 Definition nat_eqb_refl := Nat.eqb_refl.
+
+
+(*
+   Local Variables:
+   coq-load-path: ((rec "../.." "SMTCoq"))
+   End:
+*)

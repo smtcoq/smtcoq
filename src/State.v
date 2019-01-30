@@ -10,10 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List.
-Require Import Bool.
-Require Import Int63.
-Require Import PArray.
+Require Import List Bool Int63 PArray Omega.
 
 (* Require Import AxiomesInt. *)
 

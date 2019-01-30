@@ -11,7 +11,8 @@
 
 
 Require Import Bool OrderedType SMT_classes.
-Require Import ProofIrrelevance.
+Require Import ProofIrrelevance. (* TODO: REMOVE THIS AXIOM *)
+Require Import FunInd.
 
 (** This file formalizes functional arrays with extensionality as specified in
     SMT-LIB 2. It gives realization to axioms that define the SMT-LIB theory of

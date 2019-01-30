@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import PArray List Bool.
+Require Import PArray List Bool ZArith.
 Require Import Misc State SMT_terms BVList.
 
 Import Form.

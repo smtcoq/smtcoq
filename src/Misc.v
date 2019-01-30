@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool List PArray Int63.
+Require Import Bool List PArray Int63 ZArith.
 Local Open Scope int63_scope.
 Local Open Scope array_scope.
 
@@ -1038,3 +1038,10 @@ Proof. destruct b; intuition. Qed.
 
 Lemma is_true_iff e :  e = true <-> is_true e.
 Proof. now unfold is_true. Qed.
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "." "SMTCoq"))
+   End: 
+*)
