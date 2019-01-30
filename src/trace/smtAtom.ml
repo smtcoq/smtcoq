@@ -832,7 +832,7 @@ module Atom =
          let new_ha1 = hash_hatom ra' ha1 in
          let new_ha2 = hash_hatom ra' ha2 in
          begin match bop with
-         | BO_eq ty -> mk_eq ra' ~declare:true ty new_ha1 new_ha2
+         | BO_eq ty -> mk_eq ra' ty new_ha1 new_ha2
          | _ -> get ra' (Abop (bop, new_ha1, new_ha2)) end
       | Atop (top, ha1, ha2, ha3) ->
          let new_ha1 = hash_hatom ra' ha1 in
@@ -1013,7 +1013,7 @@ module Atom =
       Hashtbl.find op_coq_terms
 
 
-    let of_coq ?hash:(h=false) rt ro reify known_logic env sigma c =
+    let of_coq ?hash:(hash=false) rt ro reify known_logic env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try
@@ -1056,9 +1056,9 @@ module Atom =
         | CCBVsextn -> mk_bvsextn args
         | CCBVshl -> mk_bop_bvshl args
         | CCBVshr -> mk_bop_bvshr args
-        | CCeqb -> mk_bop (BO_eq Tbool) args
-        | CCeqbP -> mk_bop (BO_eq Tpositive) args
-        | CCeqbZ -> mk_bop (BO_eq TZ) args
+        | CCeqb -> mk_teq Tbool args
+        | CCeqbP -> mk_teq Tpositive args
+        | CCeqbZ -> mk_teq TZ args
         | CCeqbA -> mk_bop_farray_equal args
         | CCeqbBV -> mk_bop_bveq args
         | CCselect -> mk_bop_select args
@@ -1116,6 +1116,14 @@ module Atom =
           let h = mk_hatom a in
           get reify (Auop (UO_BVsextn (mk_bvsize s, mk_N n), h))
         | _ -> assert false
+
+      and mk_teq ty args =
+        if hash then match args with
+                  | [a1; a2] -> let h1 = mk_hatom a1 in
+                                let h2 = mk_hatom a2 in
+                                mk_eq reify ty h1 h2
+                  | _ -> failwith "unexpected number of arguments for mk_teq"
+        else mk_bop (BO_eq ty) args
 
       and mk_bop op = function
         | [a1;a2] ->
