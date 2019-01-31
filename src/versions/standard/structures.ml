@@ -15,6 +15,7 @@ open Coqlib
 
 
 let mklApp f args = Term.mkApp (Lazy.force f, args)
+let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
 
@@ -75,17 +76,15 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Differences between the two versions of Coq *)
-let dummy_loc = Loc.ghost
-
-let mkUConst c =
+let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_entry = fun c ->
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, ty = Typing.type_of env evd c in
-  { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
+  let evd, ty = Typing.type_of env evd (EConstr.of_constr c) in
+  { Entries.const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
     const_entry_feedback    = None;
-    const_entry_type        = Some ty;
+    const_entry_type        = Some (EConstr.Unsafe.to_constr ty);
     const_entry_polymorphic = false;
     const_entry_universes   = snd (Evd.universe_context evd);
     const_entry_opaque      = false;
@@ -94,7 +93,7 @@ let mkUConst c =
 let mkTConst c noc ty =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd noc in
+  let evd, _ = Typing.type_of env evd (EConstr.of_constr noc) in
   { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
@@ -105,25 +104,25 @@ let mkTConst c noc ty =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let error = CErrors.error
+let error = CErrors.user_err
 
 let coqtype = Future.from_val Term.mkSet
 
 let declare_new_type t =
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, t) in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (None, t) in
   Term.mkVar t
 
 let declare_new_variable v constr_t =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd constr_t in
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
+  let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (None, v) in
   Term.mkVar v
 
 let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty
 
 let vernacentries_interp expr =
-  Vernacentries.interp (dummy_loc, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
+  Vernacentries.interp (None, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
@@ -144,12 +143,12 @@ let vm_cast_no_check t = Tactics.vm_cast_no_check t
 (* Warning 40: this record of type Proofview.Goal.enter contains fields
    that are not visible in the current scope: enter. *)
 let mk_tactic tac =
-  Proofview.Goal.nf_enter {Proofview.Goal.enter = (fun gl ->
+  Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in
     tac env sigma t
-  )}
+  )
 let set_evars_tac noc =
   mk_tactic (
       fun env sigma _ ->

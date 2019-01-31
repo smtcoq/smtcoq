@@ -24,7 +24,6 @@ val mkTrace :
   'b ->
   'c -> 'd -> 'e -> int -> Term.types -> Term.constr -> 'a ref -> Term.constr
 type names_id_t = Names.identifier
-val dummy_loc : Pp.loc
 val mkUConst : Term.constr -> Entries.definition_entry
 val mkTConst : Term.constr -> 'a -> Term.types -> Entries.definition_entry
 val error : string -> 'a

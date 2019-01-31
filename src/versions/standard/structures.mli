@@ -33,7 +33,7 @@ val mkTrace :
   Term.constr Lazy.t ->
   Term.constr Lazy.t ->
   int -> Term.constr -> Term.constr -> 'a ref -> Term.constr
-val dummy_loc : Loc.t
+
 val mkUConst :
   Term.constr -> Safe_typing.private_constants Entries.definition_entry
 val mkTConst :
