@@ -11,7 +11,6 @@
 
 
 open Entries
-open Coqlib
 
 
 let mklApp f args = Term.mkApp (Lazy.force f, args)
@@ -104,7 +103,7 @@ let mkTConst c noc ty =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let error = CErrors.user_err
+let error s = CErrors.user_err (Pp.str s)
 
 let coqtype = Future.from_val Term.mkSet
 
@@ -119,7 +118,7 @@ let declare_new_variable v constr_t =
   let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (None, v) in
   Term.mkVar v
 
-let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty
+let extern_constr c = Constrextern.extern_constr true Environ.empty_env Evd.empty (EConstr.of_constr c)
 
 let vernacentries_interp expr =
   Vernacentries.interp (None, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
@@ -135,30 +134,28 @@ let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
 
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
-let assert_before = Tactics.assert_before
+let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
 let vm_conv = Vconv.vm_conv
-let vm_cast_no_check t = Tactics.vm_cast_no_check t
+let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
 
-(* Warning 40: this record of type Proofview.Goal.enter contains fields
-   that are not visible in the current scope: enter. *)
 let mk_tactic tac =
   Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
-    let t = Proofview.Goal.concl gl in
-    tac env sigma t
+    let t = Proofview.Goal.concl gl in         (* t : EConstr.t *)
+    tac env sigma (EConstr.Unsafe.to_constr t) (* We do not handle goals with evars *)
   )
 let set_evars_tac noc =
   mk_tactic (
       fun env sigma _ ->
-      let sigma, _ = Typing.type_of env sigma noc in
+      let sigma, _ = Typing.type_of env sigma (EConstr.of_constr noc) in
       Proofview.Unsafe.tclEVARS sigma)
 
 let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
-let constrextern_extern_constr =
+let constrextern_extern_constr c =
   let env = Global.env () in
-  Constrextern.extern_constr false env (Evd.from_env env)
+  Constrextern.extern_constr false env (Evd.from_env env) (EConstr.of_constr c)
 
 let get_rel_dec_name = function
   | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n

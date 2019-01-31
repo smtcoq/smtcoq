@@ -259,4 +259,5 @@ val mk_bool : Term.constr -> bool
 val mk_bool_list : Term.constr -> bool list
 val mk_nat : Term.constr -> int
 val mk_N : Term.constr -> int
+val mk_Z : Term.constr -> int
 val mk_bvsize : Term.constr -> int

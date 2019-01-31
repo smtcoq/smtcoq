@@ -12,8 +12,9 @@
 
 open Coqlib
 
-let gen_constant modules constant =
-  lazy (gen_constant_in_modules "SMT" modules constant)
+
+let gen_constant = Structures.gen_constant
+
 
 (* Int63 *)
 let cint = Structures.cint
