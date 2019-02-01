@@ -11,7 +11,6 @@
 
 
 open Ast
-open Format
 
 
 module H = struct
@@ -90,7 +89,7 @@ module H = struct
 
   let var_bv = Hstring.make "var_bv"
 
-  let a_var_bv = Hstring.make "a_var_bv"
+  (* let a_var_bv = Hstring.make "a_var_bv" *)
   let a_bv = Hstring.make "a_bv"
   let a_int = Hstring.make "a_int"
 
@@ -98,7 +97,7 @@ module H = struct
   let bitof = Hstring.make "bitof"
   let bblast_term = Hstring.make "bblast_term"
 
-  let eq = Hstring.make "="
+  (* let eq = Hstring.make "=" *)
   let bvand = Hstring.make "bvand"
   let bvor = Hstring.make "bvor"
   let bvxor = Hstring.make "bvxor"
@@ -163,7 +162,7 @@ module H = struct
   let tfalse = Hstring.make "false"
   let a_var_bv = Hstring.make "a_var_bv"
   let eq = Hstring.make "="
-  let trust_f = Hstring.make "trust_f"
+  (* let trust_f = Hstring.make "trust_f" *)
   let ext = Hstring.make "ext"
   let decl_atom = Hstring.make "decl_atom"
   let asf = Hstring.make "asf"
@@ -179,7 +178,7 @@ module H = struct
   let or_elim_1 = Hstring.make "or_elim_1"
   let or_elim_2 = Hstring.make "or_elim_2"
   let iff_elim_1 = Hstring.make "iff_elim_1"
-  let iff_elim_2 = Hstring.make "iff_elim_2"
+  (* let iff_elim_2 = Hstring.make "iff_elim_2" *)
   let impl_elim = Hstring.make "impl_elim"
   let not_and_elim = Hstring.make "not_and_elim"
   let xor_elim_1 = Hstring.make "xor_elim_1"
@@ -232,8 +231,8 @@ module H = struct
   let bv_bbl_bvneg = Hstring.make "bv_bbl_bvneg"
   let bv_bbl_bvadd = Hstring.make "bv_bbl_bvadd"
   let bv_bbl_bvmul = Hstring.make "bv_bbl_bvmul"
-  let bv_bbl_bvult = Hstring.make "bv_bbl_bvult"
-  let bv_bbl_bvslt = Hstring.make "bv_bbl_bvslt"
+  (* let bv_bbl_bvult = Hstring.make "bv_bbl_bvult" *)
+  (* let bv_bbl_bvslt = Hstring.make "bv_bbl_bvslt" *)
   let bv_bbl_concat = Hstring.make "bv_bbl_concat"
   let bv_bbl_extract = Hstring.make "bv_bbl_extract"
   let bv_bbl_zero_extend = Hstring.make "bv_bbl_zero_extend"
@@ -1172,7 +1171,7 @@ let rec bblast_bvult x y n =
   | _ -> failwith "bblast_bvult"
 
 
-let rec bblast_bvslt x y n =
+let bblast_bvslt x y n =
   match value x with
   | App (ff, [xi; x']) when term_equal ff bbltc_s ->
     (match value y with

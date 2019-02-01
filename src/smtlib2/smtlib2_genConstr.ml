@@ -50,7 +50,7 @@ let string_type s =
 let sort_of_string s = string_type s
 
 
-let sort_of_symbol s = sort_of_string (string_of_symbol s)
+(* let sort_of_symbol s = sort_of_string (string_of_symbol s) *)
 
 
 let rec bigint_binary_size acc i size =

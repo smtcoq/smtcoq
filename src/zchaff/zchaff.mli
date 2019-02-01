@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+val pp_trace : Format.formatter -> SatAtom.Form.t SmtCertif.clause -> unit
 val parse_certif : Structures.names_id -> Structures.names_id -> string -> string -> unit
 val checker : string -> string -> unit
 val theorem : Structures.names_id -> string -> string -> unit

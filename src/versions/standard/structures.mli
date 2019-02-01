@@ -10,8 +10,13 @@
 (**************************************************************************)
 
 
+(* Constr generation and manipulation *)
+(* WARNING: currently, we map all the econstr into constr: we suppose
+   that the goal does not contain existencial variables *)
 val mklApp : Term.constr Lazy.t -> Term.constr array -> Term.constr
 val gen_constant : string list list -> string -> Term.constr lazy_t
+
+(* Int63 *)
 val int63_modules : string list list
 val int31_module : string list list
 val cD0 : Term.constr lazy_t
@@ -19,11 +24,15 @@ val cD1 : Term.constr lazy_t
 val cI31 : Term.constr lazy_t
 val mkInt : int -> Term.constr
 val cint : Term.constr lazy_t
+
+(* PArray *)
 val parray_modules : string list list
 val cmake : Term.constr lazy_t
 val cset : Term.constr lazy_t
 val max_array_size : int
 val mkArray : Term.types * Term.constr array -> Term.constr
+
+(* Traces *)
 val mkTrace :
   ('a -> Term.constr) ->
   ('a -> 'a) ->
@@ -34,6 +43,7 @@ val mkTrace :
   Term.constr Lazy.t ->
   int -> Term.constr -> Term.constr -> 'a ref -> Term.constr
 
+(* Differences between the two versions of Coq *)
 val mkUConst :
   Term.constr -> Safe_typing.private_constants Entries.definition_entry
 val mkTConst :
@@ -55,8 +65,11 @@ val tclTHEN :
 val tclTHENLAST :
   unit Proofview.tactic -> unit Proofview.tactic -> unit Proofview.tactic
 val assert_before : Names.Name.t -> Term.types -> unit Proofview.tactic
+
 val vm_conv : Reduction.conv_pb -> Term.types Reduction.kernel_conversion_function
 val vm_cast_no_check : Term.constr -> unit Proofview.tactic
+val cbv_vm : Environ.env -> Term.constr -> Term.types -> Term.constr
+
 val mk_tactic :
   (Environ.env -> Evd.evar_map -> Term.constr -> unit Proofview.tactic) ->
   unit Proofview.tactic
@@ -64,13 +77,17 @@ val set_evars_tac : Term.constr -> unit Proofview.tactic
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : Term.constr -> Constrexpr.constr_expr
 val get_rel_dec_name : Context.Rel.Declaration.t -> Names.Name.t
+val retyping_get_type_of : Environ.env -> Evd.evar_map -> Term.constr -> Term.constr
 
 
-(* New packaging of plugins *)
+(* Micromega *)
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+
+val micromega_coq_proofTerm : Term.constr lazy_t
+val micromega_dump_proof_term : Micromega_plugin_Certificate.Mc.zArithProof -> Term.constr
 
 
 (* Types in the Coq source code *)

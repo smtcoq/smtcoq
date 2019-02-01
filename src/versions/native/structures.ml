@@ -128,12 +128,17 @@ let constrextern_extern_constr =
 
 let get_rel_dec_name = fun _ -> Names.Anonymous
 
+let retyping_get_type_of = Retyping.get_type_of
 
-(* Old packaging of plugins *)
-module Micromega_plugin_Certificate = Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega
-module Micromega_plugin_Micromega = Micromega
-module Micromega_plugin_Mutils = Mutils
+
+(* Micromega *)
+type micromega_zArithProof = Certificate.Mc.zArithProof
+
+let micromega_coq_proofTerm =
+  Coq_micromega.M.coq_proofTerm
+
+let micromega_dump_proof_term =
+  Micromega_plugin.Coq_micromega.dump_proof_term p
 
 
 (* Types in the Coq source code *)

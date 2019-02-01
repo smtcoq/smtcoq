@@ -13,6 +13,8 @@
 open Entries
 
 
+(* Constr generation and manipulation *)
+
 let mklApp f args = Term.mkApp (Lazy.force f, args)
 let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
@@ -83,7 +85,7 @@ let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_e
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
     const_entry_feedback    = None;
-    const_entry_type        = Some (EConstr.Unsafe.to_constr ty);
+    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Term.constr *)
     const_entry_polymorphic = false;
     const_entry_universes   = snd (Evd.universe_context evd);
     const_entry_opaque      = false;
@@ -138,13 +140,16 @@ let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
 let vm_conv = Vconv.vm_conv
 let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
+(* Cannot contain evars since it comes from a Term.constr *)
+let cbv_vm env c t = EConstr.Unsafe.to_constr (Vnorm.cbv_vm env Evd.empty (EConstr.of_constr c) (EConstr.of_constr t))
 
 let mk_tactic tac =
   Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
-    let t = Proofview.Goal.concl gl in         (* t : EConstr.t *)
-    tac env sigma (EConstr.Unsafe.to_constr t) (* We do not handle goals with evars *)
+    let t = Proofview.Goal.concl gl in
+    let t = EConstr.to_constr sigma t in (* The goal should not contain uninstanciated evars *)
+    tac env sigma t
   )
 let set_evars_tac noc =
   mk_tactic (
@@ -160,12 +165,24 @@ let constrextern_extern_constr c =
 let get_rel_dec_name = function
   | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
 
+let retyping_get_type_of env sigma c =
+  (* Cannot contain evars since it comes from a Term.constr *)
+  EConstr.Unsafe.to_constr (Retyping.get_type_of env sigma (EConstr.of_constr c))
 
-(* New packaging of plugins *)
+
+(* Micromega *)
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+
+let micromega_coq_proofTerm =
+  (* Cannot contain evars *)
+  lazy (EConstr.Unsafe.to_constr (Lazy.force (Micromega_plugin.Coq_micromega.M.coq_proofTerm)))
+
+let micromega_dump_proof_term p =
+  (* Cannot contain evars *)
+  EConstr.Unsafe.to_constr (Micromega_plugin.Coq_micromega.dump_proof_term p)
 
 
 (* Types in the Coq source code *)

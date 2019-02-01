@@ -12,9 +12,6 @@
 
 open SmtMisc
 open CoqTerms
-open Entries
-open Declare
-open Decl_kinds
 open SmtBtype
 
 
@@ -229,8 +226,8 @@ module Op =
       | BO_diffarray (ti, te) -> (TFArray (ti, te), TFArray (ti, te))
 
 
-    let interp_ieq t_i t =
-      mklApp cinterp_eqb [|t_i ; SmtBtype.to_coq t|]
+    (* let interp_ieq t_i t =
+     *   mklApp cinterp_eqb [|t_i ; SmtBtype.to_coq t|] *)
 
  (*   let veval_t te =
       let env = Global.env () in
@@ -246,30 +243,30 @@ module Op =
 
     let interp_eqarray t_i ti te =
       mklApp cequalarray
-        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
-                SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
-                SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
-                SmtBtype.inh_interp t_i te |]
+        [|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+          SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+          SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
+          SmtBtype.inh_interp t_i te |]
 
     let interp_select t_i ti te =
       mklApp cselect
-        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
-                SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
-                SmtBtype.inh_interp t_i te|]
+        [|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+          SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+          SmtBtype.inh_interp t_i te|]
 
     let interp_diff t_i ti te =
       mklApp cdiff
-        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
-                SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
-                SmtBtype.dec_interp t_i te; SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
-                SmtBtype.inh_interp t_i ti; SmtBtype.inh_interp t_i te |]
+        [|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+          SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+          SmtBtype.dec_interp t_i te; SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
+          SmtBtype.inh_interp t_i ti; SmtBtype.inh_interp t_i te |]
 
 
     let interp_store t_i ti te =
       mklApp cstore
-        SmtBtype.[|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
-                SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
-                SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te; SmtBtype.inh_interp t_i te |]
+        [|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
+          SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
+          SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te; SmtBtype.inh_interp t_i te |]
 
 
     let interp_eq t_i = function
@@ -1022,7 +1019,7 @@ module Atom =
           else CCunknown_deps (gobble_of_coq_cst cc)
         with Not_found -> CCunknown
       in
-      let rec mk_hatom h =
+      let rec mk_hatom (h : Term.constr) =
         let c, args = Term.decompose_app h in
 	match get_cst c with
         | CCxH -> mk_cop CCxH args
@@ -1064,9 +1061,9 @@ module Atom =
         | CCselect -> mk_bop_select args
         | CCdiff -> mk_bop_diff args
         | CCstore -> mk_top_store args
-	| CCunknown -> mk_unknown c args (Retyping.get_type_of env sigma h)
+	| CCunknown -> mk_unknown c args (Structures.retyping_get_type_of env sigma h)
         | CCunknown_deps gobble ->
-          mk_unknown_deps c args (Retyping.get_type_of env sigma h) gobble
+          mk_unknown_deps c args (Structures.retyping_get_type_of env sigma h) gobble
 
 
       and mk_cop op args = match op, args with

@@ -83,12 +83,12 @@ let value t = (deref t).value
 let ttype t = deref (deref t).ttype
 
 
-let rec name c = match value c with
+let name c = match value c with
   | Const {sname=Name n} -> Some n
   | _ -> None
 
 
-let rec app_name r = match value r with
+let app_name r = match value r with
   | App ({value=Const{sname=Name n}}, args) -> Some (n, args)
   | _ -> None
 
@@ -298,36 +298,36 @@ end
 
 
 
-let rec holes_address acc t = match t.value with
-  | Hole i -> (i, t) :: acc
-  | Type | Kind |  Mpz | Mpq | Int _ | Rat _  -> acc
-  | SideCond (name, args, exp, t) -> acc
-  | Const _ -> acc
-  | App (f, args) ->
-    List.fold_left holes_address acc args 
-  | Pi (s, x) -> holes_address acc x
-  | Lambda (s, x) -> holes_address acc x
-  | Ptr t -> holes_address acc t
+(* let rec holes_address acc t = match t.value with
+ *   | Hole i -> (i, t) :: acc
+ *   | Type | Kind |  Mpz | Mpq | Int _ | Rat _  -> acc
+ *   | SideCond (name, args, exp, t) -> acc
+ *   | Const _ -> acc
+ *   | App (f, args) ->
+ *     List.fold_left holes_address acc args
+ *   | Pi (s, x) -> holes_address acc x
+ *   | Lambda (s, x) -> holes_address acc x
+ *   | Ptr t -> holes_address acc t *)
 
-let holes_address = holes_address []
+(* let holes_address = holes_address [] *)
 
 
-let check_holes_integrity where h1 h2 =
-  List.iter (fun (i, a) ->
-      List.iter (fun (j, b) ->
-          if j = i && a != b then
-            (
-              eprintf "\n%s: Hole _%d was at %nx, now at %nx\n@." where i
-                (address_of a) (address_of b);
-              (* eprintf "\n%s: Hole _%d has changed\n@." where i; *)
-              assert false)
-        ) h2
-    ) h1
+(* let check_holes_integrity where h1 h2 =
+ *   List.iter (fun (i, a) ->
+ *       List.iter (fun (j, b) ->
+ *           if j = i && a != b then
+ *             (
+ *               eprintf "\n%s: Hole _%d was at %nx, now at %nx\n@." where i
+ *                 (address_of a) (address_of b);
+ *               (\* eprintf "\n%s: Hole _%d has changed\n@." where i; *\)
+ *               assert false)
+ *         ) h2
+ *     ) h1 *)
 
-let check_term_integrity where t = 
-  let h = holes_address t in
-  check_holes_integrity (where ^ "term has != _") h h
-    
+(* let check_term_integrity where t =
+ *   let h = holes_address t in
+ *   check_holes_integrity (where ^ "term has != _") h h *)
+
 
 
 let eq_name s1 s2 = match s1, s2 with
@@ -471,10 +471,10 @@ module MSym = Map.Make (struct
 
 let empty_subst = MSym.empty
 
-let fresh_alpha =
-  let cpt = ref 0 in
-  fun ty -> incr cpt;
-    mk_symbol ("'a"^string_of_int !cpt) ty
+(* let fresh_alpha =
+ *   let cpt = ref 0 in
+ *   fun ty -> incr cpt;
+ *     mk_symbol ("'a"^string_of_int !cpt) ty *)
 
 
 let get_t ?(gen=true) sigma s =
@@ -834,20 +834,20 @@ let rec hole_nbs acc t = match value t with
   | _ -> acc
 
 
-let rec min_hole acc t = match value t with
-  | Hole nb ->
-    (match acc with Some n when nb < n -> Some nb  | None -> Some nb | _ -> acc)
-  | App (f, args) -> List.fold_left min_hole (min_hole acc f) args 
-  | Pi (s, x) | Lambda (s, x) -> min_hole acc x
-  | Ptr t -> min_hole acc t
-  | _ -> acc
+(* let rec min_hole acc t = match value t with
+ *   | Hole nb ->
+ *     (match acc with Some n when nb < n -> Some nb  | None -> Some nb | _ -> acc)
+ *   | App (f, args) -> List.fold_left min_hole (min_hole acc f) args
+ *   | Pi (s, x) | Lambda (s, x) -> min_hole acc x
+ *   | Ptr t -> min_hole acc t
+ *   | _ -> acc *)
 
 
-let compare_int_opt m1 m2 = match m1, m2 with
-  | None, None -> 0
-  | Some _, None -> -1
-  | None, Some _ -> 1
-  | Some n1, Some n2 -> compare n1 n2
+(* let compare_int_opt m1 m2 = match m1, m2 with
+ *   | None, None -> 0
+ *   | Some _, None -> -1
+ *   | None, Some _ -> 1
+ *   | Some n1, Some n2 -> compare n1 n2 *)
 
 
 let compare_sc_checks (_, args1, exp1) (_, args2, exp2) =

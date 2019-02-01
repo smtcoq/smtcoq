@@ -11,11 +11,6 @@
 
 
 (*** Linking SMT Terms to Micromega Terms ***)
-open Term
-open Coqlib
-open Declare
-open Decl_kinds
-open Entries
 open Util
 open Structures.Micromega_plugin_Micromega
 open Structures.Micromega_plugin_Coq_micromega
@@ -114,7 +109,7 @@ let smt_binop_to_micromega_formula tbl op ha hb =
   let rhs = smt_Atom_to_micromega_pExpr tbl hb in
   {flhs = lhs; fop = op; frhs = rhs }
 
-let rec smt_Atom_to_micromega_formula tbl ha =
+let smt_Atom_to_micromega_formula tbl ha =
   match Atom.atom ha with
     | Abop (op,ha,hb) -> smt_binop_to_micromega_formula tbl op ha hb
     | _ -> Structures.error
@@ -122,7 +117,7 @@ let rec smt_Atom_to_micromega_formula tbl ha =
 
 (* specialized fold *)
 
-let default_constr = mkInt 0
+let default_constr = EConstr.of_constr (mkInt 0)
 let default_tag = Structures.Micromega_plugin_Mutils.Tag.from 0
 (* morphism for general formulas *)
 

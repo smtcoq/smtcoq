@@ -193,18 +193,18 @@ let mkDistinctElim old value =
 
 (* Clause difference (wrt to their sets of literals) *)
 
-let clause_diff c1 c2 =
-  let r =
-    List.filter (fun t1 -> not (List.exists (SmtAtom.Form.equal t1) c2)) c1
-  in
-  Format.eprintf "[";
-  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c1;
-  Format.eprintf "] -- [";
-  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c2;
-  Format.eprintf "] ==\n [";
-  List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) r;
-  Format.eprintf "] @.";
-  r
+(* let clause_diff c1 c2 =
+ *   let r =
+ *     List.filter (fun t1 -> not (List.exists (SmtAtom.Form.equal t1) c2)) c1
+ *   in
+ *   Format.eprintf "[";
+ *   List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c1;
+ *   Format.eprintf "] -- [";
+ *   List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) c2;
+ *   Format.eprintf "] ==\n [";
+ *   List.iter (Format.eprintf " %a ,\n" SmtAtom.(Form.to_smt Atom.to_smt)) r;
+ *   Format.eprintf "] @.";
+ *   r *)
 
 
 
@@ -234,7 +234,7 @@ let rec fins_lemma ids_params =
                 Other (Forall_inst (lemma, _)) -> lemma
               | _ -> fins_lemma t
 
-let rec find_remove_lemma lemma ids_params =
+let find_remove_lemma lemma ids_params =
   let eq_lemma h = eq_clause lemma (get_clause h) in
   list_find_remove eq_lemma ids_params
 
@@ -250,7 +250,7 @@ let rec merge ids_params =
 
 let to_add = ref []
 
-let rec mk_clause (id,typ,value,ids_params) =
+let mk_clause (id,typ,value,ids_params) =
   let kind =
     match typ with
       (* Roots *)

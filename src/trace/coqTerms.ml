@@ -66,7 +66,7 @@ let cleb = gen_constant z_modules "leb"
 let cgeb = gen_constant z_modules "geb"
 let cgtb = gen_constant z_modules "gtb"
 let ceqbZ = gen_constant z_modules "eqb"
-let cZeqbsym = gen_constant z_modules "eqb_sym"
+(* let cZeqbsym = gen_constant z_modules "eqb_sym" *)
 
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
@@ -101,12 +101,12 @@ let cprod = gen_constant init_modules "prod"
 
 (* Dependent pairs *)
 let csigT = gen_constant init_modules "sigT"
-let cprojT1 = gen_constant init_modules "projT1"
-let cprojT2 = gen_constant init_modules "projT2"
-let cprojT3 = gen_constant init_modules "projT3"
+(* let cprojT1 = gen_constant init_modules "projT1" *)
+(* let cprojT2 = gen_constant init_modules "projT2" *)
+(* let cprojT3 = gen_constant init_modules "projT3" *)
 
-let csigT2 = gen_constant init_modules "sigT2"
-let csigT_of_sigT2 = gen_constant init_modules "sigT_of_sigT2"
+(* let csigT2 = gen_constant init_modules "sigT2" *)
+(* let csigT_of_sigT2 = gen_constant init_modules "sigT_of_sigT2" *)
 
 (* Logical Operators *)
 let cnot = gen_constant init_modules "not"
@@ -119,7 +119,7 @@ let cand = gen_constant init_modules "and"
 let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
 let cbitvector = gen_constant bv_modules "bitvector"
 let cof_bits = gen_constant bv_modules "of_bits"
-let c_of_bits = gen_constant bv_modules "_of_bits"
+(* let c_of_bits = gen_constant bv_modules "_of_bits" *)
 let cbitOf = gen_constant bv_modules "bitOf"
 let cbv_eq = gen_constant bv_modules "bv_eq"
 let cbv_not = gen_constant bv_modules "bv_not"
@@ -148,8 +148,8 @@ let cdiff = gen_constant array_modules "diff"
 let cequalarray = gen_constant array_modules "FArray.equal"
 
 (* OrderedType *)
-let cOrderedTypeCompare =
-  gen_constant [["Coq";"Structures";"OrderedType"]] "Compare"
+(* let cOrderedTypeCompare =
+ *   gen_constant [["Coq";"Structures";"OrderedType"]] "Compare" *)
 
 (* SMT_terms *)
 let smt_modules = [ ["SMTCoq";"Misc"];
@@ -173,7 +173,7 @@ let cTBV = gen_constant smt_modules "TBV"
 let cTFArray = gen_constant smt_modules "TFArray"
 let cTindex = gen_constant smt_modules "Tindex"
 
-let ct_i = gen_constant smt_modules "t_i"
+(* let ct_i = gen_constant smt_modules "t_i" *)
 let cinterp_t = gen_constant smt_modules "Typ.interp"
 let cdec_interp = gen_constant smt_modules "dec_interp"
 let cord_interp = gen_constant smt_modules "ord_interp"
@@ -181,14 +181,14 @@ let ccomp_interp = gen_constant smt_modules "comp_interp"
 let cinh_interp = gen_constant smt_modules "inh_interp"
 
 let cinterp_eqb = gen_constant smt_modules "i_eqb"
-let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb_eqb"
+(* let cinterp_eqb_eqb = gen_constant smt_modules "i_eqb_eqb" *)
 
 let classes_modules = [["SMTCoq";"classes";"SMT_classes"];
                        ["SMTCoq";"classes";"SMT_classes_instances"]]
 
 let ctyp_compdec = gen_constant classes_modules "typ_compdec"
 let cTyp_compdec = gen_constant classes_modules "Typ_compdec"
-let ctyp_compdec_from = gen_constant classes_modules "typ_compdec_from"
+(* let ctyp_compdec_from = gen_constant classes_modules "typ_compdec_from" *)
 let cunit_typ_compdec = gen_constant classes_modules "unit_typ_compdec"
 let cte_carrier = gen_constant classes_modules "te_carrier"
 let cte_compdec = gen_constant classes_modules "te_compdec"
@@ -341,7 +341,7 @@ let mkN = function
   | i -> SmtMisc.mklApp cNpos [|mkPositive i|]
 
 (* Compute a Boolean *)
-let rec mkBool = function
+let mkBool = function
   | true -> Lazy.force ctrue
   | false -> Lazy.force cfalse
 

@@ -49,13 +49,13 @@ val set_evars_tac : 'a -> Proof_type.tactic
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : Term.constr -> Topconstr.constr_expr
 val get_rel_dec_name : 'a -> Names.name
+val retyping_get_type_of : Environ.env -> Evd.evar_map -> Term.constr -> Term.constr
 
 
-(* Old packaging of plugins *)
-module Micromega_plugin_Certificate = Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega
-module Micromega_plugin_Micromega = Micromega
-module Micromega_plugin_Mutils = Mutils
+(* Micromega *)
+type micromega_zArithProof
+val micromega_coq_proofTerm : Term.constr lazy_t
+val micromega_dump_proof_term : micromega_zArithProof -> Term.constr
 
 
 (* Types in the Coq source code *)

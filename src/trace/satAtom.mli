@@ -21,7 +21,6 @@ module Atom : sig
   val to_smt : Format.formatter -> t -> unit
   val logic : t -> SmtMisc.logic
 
-  val is_bool_type : t -> bool
   type reify_tbl = {
       mutable count : int;
       tbl : (Term.constr, t) Hashtbl.t;

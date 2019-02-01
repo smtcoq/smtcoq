@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+val pp_symbol : Smtlib2_ast.symbol -> string
 val parse_smt2bv : string -> bool list
 val bigint_bv : Big_int.big_int -> int -> string
 val import_smtlib2 :

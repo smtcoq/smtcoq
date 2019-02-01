@@ -10,55 +10,50 @@
 (**************************************************************************)
 
 
-open Entries
-open Declare
-open Decl_kinds
-
 open SmtMisc
 open CoqTerms
-open SmtForm
 open SmtTrace
 open SmtAtom
 open SmtBtype
 open SmtCertif
 
 
-let debug = false
+(* let debug = false *)
 
 
 (******************************************************************************)
 (* Given a verit trace build the corresponding certif and theorem             *)
 (******************************************************************************)
-exception Import_trace of int
+(* exception Import_trace of int *)
 
-let get_val = function
-    Some a -> a
-  | None -> assert false
+(* let get_val = function
+ *     Some a -> a
+ *   | None -> assert false *)
 
 (* For debugging certif processing : <add_scertif> <select> <occur> <alloc> *)
-let print_certif c where=
-  let r = ref c in
-  let out_channel = open_out where in
-  let fmt = Format.formatter_of_out_channel out_channel in
-  let continue = ref true in
-  while !continue do
-    let kind = to_string (!r.kind) in
-    let id = !r.id in
-    let pos = match !r.pos with
-      | None -> "None"
-      | Some p -> string_of_int p in
-    let used = !r.used in
-    Format.fprintf fmt "id:%i kind:%s pos:%s used:%i value:" id kind pos used;
-    begin match !r.value with
-    | None -> Format.fprintf fmt "None"
-    | Some l -> List.iter (fun f -> Form.to_smt Atom.to_smt fmt f;
-                                    Format.fprintf fmt " ") l end;
-    Format.fprintf fmt "\n";
-    match !r.next with
-    | None -> continue := false
-    | Some n -> r := n
-  done;
-  Format.fprintf fmt "@."; close_out out_channel
+(* let print_certif c where=
+ *   let r = ref c in
+ *   let out_channel = open_out where in
+ *   let fmt = Format.formatter_of_out_channel out_channel in
+ *   let continue = ref true in
+ *   while !continue do
+ *     let kind = to_string (!r.kind) in
+ *     let id = !r.id in
+ *     let pos = match !r.pos with
+ *       | None -> "None"
+ *       | Some p -> string_of_int p in
+ *     let used = !r.used in
+ *     Format.fprintf fmt "id:%i kind:%s pos:%s used:%i value:" id kind pos used;
+ *     begin match !r.value with
+ *     | None -> Format.fprintf fmt "None"
+ *     | Some l -> List.iter (fun f -> Form.to_smt Atom.to_smt fmt f;
+ *                                     Format.fprintf fmt " ") l end;
+ *     Format.fprintf fmt "\n";
+ *     match !r.next with
+ *     | None -> continue := false
+ *     | Some n -> r := n
+ *   done;
+ *   Format.fprintf fmt "@."; close_out out_channel *)
 
 let import_trace ra' rf' filename first lsmt =
   let chan = open_in filename in
