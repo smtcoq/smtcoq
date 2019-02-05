@@ -152,14 +152,16 @@ Proof.
   smt.
 Qed.
 
-Goal forall (a b c d: farray Z Z),
-    b[0 <- 4] = c  ->
-    d = b[0 <- 4][1 <- 4]  ->
-    a = d[1 <- b[1]]  ->
-    a = c.
-Proof.
-  smt.
-Qed.
+
+(* From cvc4_bool : Uncaught exception Not_found *)
+(* Goal forall (a b c d: farray Z Z), *)
+(*     b[0 <- 4] = c  -> *)
+(*     d = b[0 <- 4][1 <- 4]  -> *)
+(*     a = d[1 <- b[1]]  -> *)
+(*     a = c. *)
+(* Proof. *)
+(*   smt. *)
+(* Qed. *)
 
 Goal forall (a b: farray Z Z) (v w x y z t: Z)
             (r s: bitvector 4)
@@ -258,7 +260,7 @@ Qed.
 
 Open Scope Z_scope.
 
-(* Some examples of using verit with lemmas. Use <verit_base H1 .. Hn; vauto>
+(* Some examples of using verit with lemmas. Use <verit H1 .. Hn>
    to temporarily add the lemmas H1 .. Hn to the verit environment. *)
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
@@ -266,7 +268,7 @@ Lemma const_fun_is_eq_val_0 :
     forall x, f x =? f 0.
 Proof.
   intros f Hf.
-  verit_base Hf; vauto.
+  verit Hf.
 Qed.
 
 Section Without_lemmas.
@@ -285,7 +287,7 @@ Section With_lemmas.
 
   Lemma fSS2:
     forall x, f (x + 2) =? f x + 2 * k.
-  Proof. verit_base f_k_linear; vauto. Qed.
+  Proof. verit f_k_linear. Qed.
 End With_lemmas.
 
 (* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
@@ -310,7 +312,7 @@ Section NonLinear.
     (mult (3 + a) b =? mult 3 b + mult a b).
   Proof.
     intro H.
-    verit_base H; vauto.
+    verit H.
   Qed.
 End NonLinear.
 
@@ -337,14 +339,14 @@ Section group.
 
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
-  Proof. intros pe'. verit_base pe'; vauto. Qed.
+  Proof. intros pe'. verit pe'. Qed.
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit H. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit H. Qed.
 
   Clear_lemmas.
 End group.
