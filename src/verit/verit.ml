@@ -94,9 +94,9 @@ let import_trace ra' rf' filename first lsmt =
           let to_add =
             (match first, !cfirst.value with
              | Some (root, l), Some [fl] when init_index fl = 1 && not (Form.equal l (re_hash fl)) ->
-                let cfirst_value = !cfirst.value in
-                !cfirst.value <- root.value;
-                [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
+                 let cfirst_value = !cfirst.value in
+                 !cfirst.value <- root.value;
+                 [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
              | _ -> []) @ to_add in
        match to_add with
        | [] -> ()
@@ -171,11 +171,9 @@ let export out_channel rt ro lsmt =
 
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
+exception Non_empty_warnings
 
 let call_verit _ rt ro ra' rf' first lsmt =
-  let (_, l') = first in
-  let fl' = Form.flatten rf' l' in
-  let lsmt = fl'::lsmt in
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
   close_out outchan;
@@ -189,23 +187,25 @@ let call_verit _ rt ro ra' rf' first lsmt =
   let t1 = Sys.time () in
   Format.eprintf "Verit = %.5f@." (t1-.t0);
 
-  (* TODO: improve readability: remove the three nested try *)
   let win = open_in wname in
+
+  let assert_empty_warnings () =
+    try let _ = input_line win in raise Non_empty_warnings
+    with End_of_file -> () in
+
   try
-    if exit_code <> 0 then
-      failwith ("Verit.call_verit: command " ^ command ^
-	          " exited with code " ^ string_of_int exit_code);
-
-    try let _ = input_line win in
-        Structures.error "veriT returns 'unknown'"
-    with End_of_file ->
-          try
-            let res = import_trace ra' rf' logfilename (Some first) lsmt in
-            close_in win; Sys.remove wname; res
-          with
+    assert (exit_code = 0);
+    assert_empty_warnings ();
+    let res = import_trace ra' rf' logfilename (Some first) lsmt in
+    close_in win; Sys.remove wname; res
+  with x -> close_in win; Sys.remove wname;
+            match x with
+            | Assert_failure _ ->
+                failwith ("Verit.call_verit: command " ^ command ^
+	                    " exited with code " ^ string_of_int exit_code)
+            | Non_empty_warnings -> Structures.error "veriT returns 'unknown'"
             | VeritSyntax.Sat -> Structures.error "veriT found a counter-example"
-  with x -> close_in win; Sys.remove wname; raise x
-
+            | _ -> raise x
 
 let verit_logic =
   SL.of_list [LUF; LLia]
