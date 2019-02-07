@@ -698,3 +698,10 @@ Section A_BV_EUF_LIA_PR.
   (* Qed. *)
 
 End A_BV_EUF_LIA_PR.
+
+
+(*
+   Local Variables:
+   coq-load-path: ((rec "../src" "SMTCoq"))
+   End:
+*)

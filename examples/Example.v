@@ -152,14 +152,14 @@ Proof.
   smt.
 Qed.
 
-Goal forall (a b c d: farray Z Z),
-    b[0 <- 4] = c  ->
-    d = b[0 <- 4][1 <- 4]  ->
-    a = d[1 <- b[1]]  ->
-    a = c.
-Proof.
-  smt.
-Qed.
+(* Goal forall (a b c d: farray Z Z), *)
+(*     b[0 <- 4] = c  -> *)
+(*     d = b[0 <- 4][1 <- 4]  -> *)
+(*     a = d[1 <- b[1]]  -> *)
+(*     a = c. *)
+(* Proof. *)
+(*   smt. *)
+(* Qed. *)
 
 Goal forall (a b: farray Z Z) (v w x y z t: Z)
             (r s: bitvector 4)
@@ -266,7 +266,7 @@ Lemma const_fun_is_eq_val_0 :
     forall x, f x =? f 0.
 Proof.
   intros f Hf.
-  verit_base Hf; vauto.
+  verit_bool_base Hf; vauto.
 Qed.
 
 Section Without_lemmas.
@@ -285,7 +285,7 @@ Section With_lemmas.
 
   Lemma fSS2:
     forall x, f (x + 2) =? f x + 2 * k.
-  Proof. verit_base f_k_linear; vauto. Qed.
+  Proof. verit_bool_base f_k_linear; vauto. Qed.
 End With_lemmas.
 
 (* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
@@ -310,7 +310,7 @@ Section NonLinear.
     (mult (3 + a) b =? mult 3 b + mult a b).
   Proof.
     intro H.
-    verit_base H; vauto.
+    verit_bool_base H; vauto.
   Qed.
 End NonLinear.
 
@@ -337,14 +337,54 @@ Section group.
 
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
-  Proof. intros pe'. verit_base pe'; vauto. Qed.
+  Proof. intros pe'. verit_bool_base pe'; vauto. Qed.
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_bool_base H; vauto. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_bool_base H; vauto. Qed.
 
   Clear_lemmas.
 End group.
+
+
+(* Example coming from CompCert, slightly revisited.
+   See: https://hal.inria.fr/inria-00289542
+        https://xavierleroy.org/memory-model/doc/Memory.html (Section 3)
+ *)
+Section CompCert.
+
+  Definition block := Z.
+  Variable mem: Set.
+  Variable dec_mem : CompDec mem.
+  Variable alloc_block: mem -> Z -> Z -> block.
+  Variable alloc_mem: mem -> Z -> Z -> mem.
+  Variable valid_block: mem -> block -> bool.
+
+  Hypothesis alloc_valid_block_1:
+    forall m lo hi b,
+      valid_block (alloc_mem m lo hi) b --> ((b =? (alloc_block m lo hi)) || valid_block m b).
+
+  Hypothesis alloc_valid_block_2:
+    forall m lo hi b,
+      ((b =? (alloc_block m lo hi)) || valid_block m b) --> valid_block (alloc_mem m lo hi) b.
+
+  Hypothesis alloc_not_valid_block:
+    forall m lo hi,
+       negb (valid_block m (alloc_block m lo hi)).
+
+  Lemma alloc_valid_block_inv m lo hi b :
+    valid_block m b -> valid_block (alloc_mem m lo hi) b.
+  Proof.
+    intro H. unfold block in *. verit_bool_base alloc_valid_block_2 H; vauto.
+  Qed.
+
+  Lemma alloc_not_valid_block_2 m lo hi b' :
+    valid_block m b' -> b' =? (alloc_block m lo hi) = false.
+  Proof.
+    intro H. unfold block in *. verit_bool_base alloc_not_valid_block H; vauto.
+  Qed.
+
+End CompCert.
