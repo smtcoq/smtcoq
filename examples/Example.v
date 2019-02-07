@@ -152,7 +152,6 @@ Proof.
   smt.
 Qed.
 
-
 (* From cvc4_bool : Uncaught exception Not_found *)
 (* Goal forall (a b c d: farray Z Z), *)
 (*     b[0 <- 4] = c  -> *)
@@ -350,3 +349,43 @@ Section group.
 
   Clear_lemmas.
 End group.
+
+
+(* Example coming from CompCert, slightly revisited.
+   See: https://hal.inria.fr/inria-00289542
+        https://xavierleroy.org/memory-model/doc/Memory.html (Section 3)
+ *)
+Section CompCert.
+
+  Definition block := Z.
+  Variable mem: Set.
+  Variable dec_mem : CompDec mem.
+  Variable alloc_block: mem -> Z -> Z -> block.
+  Variable alloc_mem: mem -> Z -> Z -> mem.
+  Variable valid_block: mem -> block -> bool.
+
+  Hypothesis alloc_valid_block_1:
+    forall m lo hi b,
+      valid_block (alloc_mem m lo hi) b --> ((b =? (alloc_block m lo hi)) || valid_block m b).
+
+  Hypothesis alloc_valid_block_2:
+    forall m lo hi b,
+      ((b =? (alloc_block m lo hi)) || valid_block m b) --> valid_block (alloc_mem m lo hi) b.
+
+  Hypothesis alloc_not_valid_block:
+    forall m lo hi,
+       negb (valid_block m (alloc_block m lo hi)).
+
+  Lemma alloc_valid_block_inv m lo hi b :
+    valid_block m b -> valid_block (alloc_mem m lo hi) b.
+  Proof.
+    intro H. unfold block in *. verit_bool_base alloc_valid_block_2 H; vauto.
+  Qed.
+
+  Lemma alloc_not_valid_block_2 m lo hi b' :
+    valid_block m b' -> b' =? (alloc_block m lo hi) = false.
+  Proof.
+    intro H. unfold block in *. verit_bool_base alloc_not_valid_block H; vauto.
+  Qed.
+
+End CompCert.

@@ -1039,8 +1039,8 @@ Lemma taut4 :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
 Proof. intros f p1 p2. verit p1 p2. Qed.
 
-(* Lemma test_eq_sym a b : implb (a =? b) (b =? a). *)
-(* Proof. verit. *)
+Lemma test_eq_sym a b : implb (a =? b) (b =? a).
+Proof. verit. Qed.
 
 Lemma taut5 :
   forall f, 0 =? f 2 -> f 2 =? 0.
