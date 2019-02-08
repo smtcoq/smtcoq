@@ -152,6 +152,18 @@ Proof.
   smt.
 Qed.
 
+(* All tactics have a "no_check" variant that is faster but, in case of
+  failure, it will only fail at Qed *)
+
+Goal forall (bv1 bv2 bv3: bitvector 4),
+    bv1 = #b|0|0|0|0|  /\
+    bv2 = #b|1|0|0|0|  /\
+    bv3 = #b|1|1|0|0|  ->
+    bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
+Proof.
+  smt_no_check.
+Qed.
+
 (* From cvc4_bool : Uncaught exception Not_found *)
 (* Goal forall (a b c d: farray Z Z), *)
 (*     b[0 <- 4] = c  -> *)
@@ -286,7 +298,7 @@ Section With_lemmas.
 
   Lemma fSS2:
     forall x, f (x + 2) =? f x + 2 * k.
-  Proof. verit f_k_linear. Qed.
+  Proof. verit_no_check f_k_linear. Qed.
 End With_lemmas.
 
 (* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
@@ -300,7 +312,7 @@ Section mult3.
   Add_lemmas mult3_0 mult3_Sn.
 
   Lemma mult3_21 : mult3 4 =? 12.
-  Proof. verit. Qed.
+  Proof. verit_no_check. Qed.
 
   Clear_lemmas.
 End mult3.
@@ -329,11 +341,11 @@ Section group.
   Add_lemmas associative identity inverse.
   Lemma inverse' :
     forall a : Z, (op a (inv a) =? e).
-  Proof. verit. Qed.
+  Proof. verit_no_check. Qed.
   Add_lemmas inverse'.
   Lemma identity' :
     forall a : Z, (op a e =? a).
-  Proof. verit. Qed.
+  Proof. verit_no_check. Qed.
   Add_lemmas identity'.
 
   Lemma unique_identity e':
@@ -341,11 +353,11 @@ Section group.
   Proof. intros pe'. verit pe'. Qed.
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit H. Qed.
+  Proof. intro H. verit_no_check H. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit H. Qed.
+  Proof. intro H. verit_no_check H. Qed.
 
   Clear_lemmas.
 End group.
@@ -379,13 +391,13 @@ Section CompCert.
   Lemma alloc_valid_block_inv m lo hi b :
     valid_block m b -> valid_block (alloc_mem m lo hi) b.
   Proof.
-    intro H. unfold block in *. verit_bool_base alloc_valid_block_2 H; vauto.
+    intro H. unfold block in *. verit alloc_valid_block_2 H.
   Qed.
 
   Lemma alloc_not_valid_block_2 m lo hi b' :
     valid_block m b' -> b' =? (alloc_block m lo hi) = false.
   Proof.
-    intro H. unfold block in *. verit_bool_base alloc_not_valid_block H; vauto.
+    intro H. unfold block in *. verit alloc_not_valid_block H.
   Qed.
 
 End CompCert.
