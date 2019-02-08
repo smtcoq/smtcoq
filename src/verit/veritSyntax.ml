@@ -583,7 +583,7 @@ let init_index lsmt re_hash =
             with Not_found ->
               let oc = open_out "/tmp/input_not_found.log" in
               let fmt = Format.formatter_of_out_channel oc in
-              List.iter (fun h -> Format.fprintf fmt "%a\n" hform_to_smt h) lsmt;
+              List.iter (fun h -> Format.fprintf fmt "%a\n" hform_to_smt (re_hash h)) lsmt;
               Format.fprintf fmt "\n%a\n@." hform_to_smt re_hf;
               flush oc; close_out oc;
               failwith "not found: log available"
