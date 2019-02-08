@@ -407,7 +407,7 @@ Definition leb : T -> T -> bool := Nat.leb.
 Lemma t2z_leb_morph : forall x' y', Z.leb (T2Z x') (T2Z y') = leb x' y'.
 Proof.
   intros x y; unfold leb.
-  case_eq (x <=? y); [| rewrite <- 2 Bool.not_true_iff_false];
+  case_eq (Nat.leb x y); [| rewrite <- 2 Bool.not_true_iff_false];
   rewrite <- Zle_is_le_bool; rewrite Nat.leb_le; rewrite Nat2Z.inj_le; auto.
 Qed.
 
@@ -415,7 +415,7 @@ Definition ltb : T -> T -> bool := Nat.ltb.
 Lemma t2z_ltb_morph : forall x' y', Z.ltb (T2Z x') (T2Z y') = ltb x' y'.
 Proof.
   intros x y; unfold ltb.
-  case_eq (x <? y); [| rewrite <- 2 Bool.not_true_iff_false];
+  case_eq (Nat.ltb x y); [| rewrite <- 2 Bool.not_true_iff_false];
   rewrite <- Zlt_is_lt_bool; rewrite Nat.ltb_lt; rewrite Nat2Z.inj_lt; auto.
 Qed.
 
@@ -423,7 +423,7 @@ Definition eqb : T -> T -> bool := Nat.eqb.
 Lemma t2z_eqb_morph : forall x' y', Z.eqb (T2Z x') (T2Z y') = eqb x' y'.
 Proof.
   intros x y; unfold eqb.
-  case_eq (x =? y); [| rewrite <- 2 Bool.not_true_iff_false];
+  case_eq (Nat.eqb x y); [| rewrite <- 2 Bool.not_true_iff_false];
   rewrite Z.eqb_eq; rewrite Nat.eqb_eq; rewrite Nat2Z.inj_iff; auto.
 Qed.
 
