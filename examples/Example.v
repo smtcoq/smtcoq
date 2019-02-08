@@ -188,7 +188,7 @@ Proof.
 Qed.
 
 
-(* Examples of using the conversion tactics *)
+(** Examples of using the conversion tactics **)
 
 Local Open Scope positive_scope.
 
@@ -271,8 +271,10 @@ Qed.
 
 Open Scope Z_scope.
 
-(* Some examples of using verit with lemmas. Use <verit H1 .. Hn>
-   to temporarily add the lemmas H1 .. Hn to the verit environment. *)
+
+(** Some examples of using verit with lemmas. Use <verit H1 .. Hn>
+   to temporarily add the lemmas H1 .. Hn to the verit environment. **)
+
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
     (forall a b, f a =? f b) ->
@@ -281,15 +283,6 @@ Proof.
   intros f Hf.
   verit Hf.
 Qed.
-
-Section Without_lemmas.
-  Lemma fSS:
-    forall (f : Z -> Z) (k : Z) (x : Z),
-      implb (f (x+1) =? f x + k)
-     (implb (f (x+2) =? f (x+1) + k)
-            (f (x+2) =? f x + 2 * k)).
-  Proof. verit. Qed.
-End Without_lemmas.
 
 Section With_lemmas.
   Variable f : Z -> Z.
@@ -301,22 +294,17 @@ Section With_lemmas.
   Proof. verit_no_check f_k_linear. Qed.
 End With_lemmas.
 
-(* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
-   the environment. If you did so in a section then, at the end of the section,
-   you should use <Clear_lemmas> to empty the globally added lemmas because
-   those lemmas won't be available outside of the section. *)
-Section mult3.
-  Variable mult3 : Z -> Z.
-  Hypothesis mult3_0 : mult3 0 =? 0.
-  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
-  Add_lemmas mult3_0 mult3_Sn.
+(* Can't express the k-linearity of a function without lemmas *)
+Section Without_lemmas.
+  Lemma fSS:
+    forall (f : Z -> Z) (k : Z) (x : Z),
+      implb (f (x+1) =? f x + k)
+            (implb (f (x+2) =? f (x+1) + k)
+                   (f (x+2) =? f x + 2 * k)).
+  Proof. verit. Qed.
+End Without_lemmas.
 
-  Lemma mult3_21 : mult3 4 =? 12.
-  Proof. verit_no_check. Qed.
-
-  Clear_lemmas.
-End mult3.
-
+(* Instantiating a lemma with multiple quantifiers *)
 Section NonLinear.
   Lemma distr_right_inst a b (mult : Z -> Z -> Z) :
     (forall x y z, mult (x + y)  z =? mult x z + mult y z) ->
@@ -327,11 +315,31 @@ Section NonLinear.
   Qed.
 End NonLinear.
 
+
+(** You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
+   the environment. If you did so in a section then, at the end of the section,
+   you should use <Clear_lemmas> to empty the globally added lemmas because
+   those lemmas won't be available outside of the section. **)
+
+Section mult3.
+  Variable mult3 : Z -> Z.
+  Hypothesis mult3_0 : mult3 0 =? 0.
+  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
+  Add_lemmas mult3_0 mult3_Sn.
+
+  Lemma mult_3_4_12 : mult3 4 =? 12.
+  Proof. verit_no_check. Qed.
+
+  Clear_lemmas.
+End mult3.
+
 Section group.
   Variable op : Z -> Z -> Z.
   Variable inv : Z -> Z.
   Variable e : Z.
 
+  (* We can prove automatically that we have a group if we only have the "left" versions
+     of the axioms of a group *)
   Hypothesis associative :
     forall a b c : Z, op a (op b c) =? op (op a b) c.
   Hypothesis inverse :
@@ -339,15 +347,19 @@ Section group.
   Hypothesis identity :
     forall a : Z, (op e a =? a).
   Add_lemmas associative identity inverse.
+
+  (* The "right" version of inverse *)
   Lemma inverse' :
     forall a : Z, (op a (inv a) =? e).
   Proof. verit_no_check. Qed.
   Add_lemmas inverse'.
+  (* The "right" version of identity *)
   Lemma identity' :
     forall a : Z, (op a e =? a).
   Proof. verit_no_check. Qed.
   Add_lemmas identity'.
 
+  (* Some other interesting facts about groups *)
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
   Proof. intros pe'. verit pe'. Qed.
