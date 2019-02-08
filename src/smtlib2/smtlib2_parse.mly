@@ -15,6 +15,7 @@
 /*                                                                        */
 /**************************************************************************/
 
+
 %{
    open Smtlib2_ast
 
@@ -23,6 +24,8 @@
 %}
 
 %start main
+%start term
+%start sort
 
 /* general */
 %token EXCLIMATIONPT

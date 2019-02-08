@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -112,11 +108,11 @@ let destruct_rel_decl (n, _, t) = n, t
 
 let interp_constr env sigma = Constrintern.interp_constr sigma env
 
-type constr_expr = Topconstr.constr_expr
-                            
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
+
+let vm_conv = Reduction.vm_conv
 let vm_cast_no_check = Tactics.vm_cast_no_check
 let mk_tactic tac gl =
   let env = Tacmach.pf_env gl in
@@ -130,6 +126,8 @@ let constrextern_extern_constr =
   let env = Global.env () in
   Constrextern.extern_constr false env
 
+let get_rel_dec_name = fun _ -> Names.Anonymous
+
 
 (* Old packaging of plugins *)
 module Micromega_plugin_Certificate = Certificate
@@ -138,5 +136,7 @@ module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
 
 
-(* Type of coq tactics *)
+(* Types in the Coq source code *)
 type tactic = Proof_type.tactic
+type names_id = Names.identifier
+type constr_expr = Topconstr.constr_expr

@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -79,7 +75,7 @@ module MakeCnf (Form:FORM) =
       | Immediate _ | Done -> ()
       | Todo -> 
 	  match Form.pform l with
-	  | Fatom _ -> ()
+	  | Fatom _ | FbbT _ -> ()
 
 	  | Fapp (op,args) ->
 	      match op with
@@ -179,7 +175,7 @@ module MakeCnf (Form:FORM) =
 	  set_immediate l;
 
 	  match Form.pform l with
-	  | Fatom _ -> ()
+	  | Fatom _ | FbbT _ -> ()
 
 	  | Fapp (op,args) ->
 	      match op with

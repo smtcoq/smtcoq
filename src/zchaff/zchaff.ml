@@ -1,13 +1,9 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
@@ -62,6 +58,8 @@ and pp_pform fmt p =
   | Fapp(op,args) ->
       Format.fprintf fmt "%s" (string_of_op op);
       Array.iter (fun a -> Format.fprintf fmt "%a " pp_form a) args
+  (* Nothing to do with ZChaff *)
+  | FbbT _ -> assert false
 
 let pp_value fmt c =
   match c.value with
@@ -228,7 +226,7 @@ let theorems interp name fdimacs ftrace =
   let certif =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
-  let theorem_concl = mklApp cis_true [|mklApp cnegb [|interp d first last|] |] in
+  let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
   let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
   let theorem_type =
     Term.mkProd (mkName "v", vtype, theorem_concl) in
@@ -239,7 +237,7 @@ let theorems interp name fdimacs ftrace =
         Term.mkLambda (mkName "v", vtype,
         mklApp ctheorem_checker
                [| Term.mkRel 3(*d*); Term.mkRel 2(*c*);
-		  vm_cast_true
+		  vm_cast_true_no_check
 		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
                   Term.mkRel 1(*v*)|]))),
       Term.VMcast,
@@ -361,7 +359,7 @@ let cchecker_eq_correct =
   gen_constant cnf_checker_modules "checker_eq_correct"
 let cchecker_eq = gen_constant cnf_checker_modules "checker_eq"
 
-let build_body reify_atom reify_form l b (max_id, confl) =
+let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
   let ntvar = mkName "t_var" in
   let ntform = mkName "t_form" in
   let nc = mkName "c" in
@@ -374,25 +372,27 @@ let build_body reify_atom reify_form l b (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  let proof_cast =
+  let add_lets t =
     Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
     Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
     Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_b_correct
-	   [|vtvar; vtform; l; b; vc;
-	     vm_cast_true (mklApp cchecker_b [|vtform;l;b;vc|])|])))
+    t)))
+  in
+  let cbc =
+    add_lets
+      (mklApp cchecker_b [|vtform;l;b;vc|]) |> vm_cast in
+  let proof_cast =
+    add_lets
+      (mklApp cchecker_b_correct [|vtvar; vtform; l; b; vc; cbc|])
   in
   let proof_nocast =
-    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_b_correct
-	   [|vtvar; vtform; l; b; vc|])))
+    add_lets
+      (mklApp cchecker_b_correct [|vtvar; vtform; l; b; vc|])
   in
   (proof_cast, proof_nocast)
 
 
-let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
+let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) vm_cast =
   let ntvar = mkName "t_var" in
   let ntform = mkName "t_form" in
   let nc = mkName "c" in
@@ -405,20 +405,20 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) =
   let vtvar = Term.mkRel 3 in
   let vtform = Term.mkRel 2 in
   let vc = Term.mkRel 1 in
-  let proof_cast =
+  let add_lets t =
     Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
     Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
     Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_eq_correct
-           [|vtvar; vtform; l1; l2; l; vc;
-	     vm_cast_true (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])|])))
+    t)))
+  in
+  let ceqc = add_lets (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])
+                 |> vm_cast in
+  let proof_cast =
+    add_lets
+      (mklApp cchecker_eq_correct [|vtvar; vtform; l1; l2; l; vc; ceqc|])
   in
   let proof_nocast =
-    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, Lazy.force ccertif,
-    mklApp cchecker_eq_correct
-           [|vtvar; vtform; l1; l2; l; vc|])))
+    add_lets (mklApp cchecker_eq_correct [|vtvar; vtform; l1; l2; l; vc|])
   in
   (proof_cast, proof_nocast)
 
@@ -512,6 +512,8 @@ let make_proof pform_tbl atom_tbl env reify_form l =
             let value = if ispos then " = true" else " = false" in
             acc^"  "^(Pp.string_of_ppcmds (Structures.pr_constr_env env t))^value
           | Fapp _ -> acc
+          (* Nothing to do with ZChaff *)
+          | FbbT _ -> assert false
       ) with | Invalid_argument _ -> acc (* Because cnf computation does not put the new formulas in the table... Perhaps it should? *)
     ) "zchaff found a counterexample:\n" model)
   );
@@ -520,10 +522,10 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 
 (* The whole tactic *)
 
-let core_tactic env sigma t =
+let core_tactic vm_cast env sigma concl =
   SmtTrace.clear ();
 
-  let (forall_let, concl) = Term.decompose_prod_assum t in
+  let (forall_let, concl) = Term.decompose_prod_assum concl in
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
@@ -534,7 +536,7 @@ let core_tactic env sigma t =
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
-      build_body reify_atom reify_form (Form.to_coq l) b max_id_confl
+      build_body reify_atom reify_form (Form.to_coq l) b max_id_confl (vm_cast env)
     else
       let l1 = Form.of_coq (Atom.get reify_atom) reify_form a in
       let l2 = Form.of_coq (Atom.get reify_atom) reify_form b in
@@ -543,7 +545,7 @@ let core_tactic env sigma t =
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l in
       build_body_eq reify_atom reify_form
-	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl
+	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl (vm_cast env)
   in
 
   let compose_lam_assum forall_let body =
@@ -556,4 +558,5 @@ let core_tactic env sigma t =
      (Structures.vm_cast_no_check res_cast))
 
 
-let tactic () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic core_tactic)
+let tactic () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic (core_tactic vm_cast_true))
+let tactic_no_check () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic (core_tactic (fun _ -> vm_cast_true_no_check)))

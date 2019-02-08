@@ -5,6 +5,6 @@
 (declare-fun d () Bool)
 (assert (and a b))
 (assert (or c d))
-(assert (not (or c (and a b d))))
+(assert (not (or c (and a (and b d)))))
 (check-sat)
 (exit)

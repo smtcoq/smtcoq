@@ -10,9 +10,10 @@ COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 COQC?=$(COQBIN)coqc
 
 
-all: $(OBJ) Tests_zchaff.vo Tests_verit.vo
+all: zchaff verit lfsc
 zchaff: $(ZCHAFFLOG) Tests_zchaff.vo
 verit: $(VERITLOG) Tests_verit.vo
+lfsc: Tests_lfsc.vo
 logs: $(OBJ)
 
 

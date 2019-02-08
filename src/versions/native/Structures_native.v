@@ -1,3 +1,15 @@
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 Require Import PArray.
 
 
@@ -5,6 +17,9 @@ Section Trace.
 
   (* We use [array array step] to allow bigger trace *)
   Definition trace (step:Type) := array (array step).
+
+  Definition trace_to_list {step:Type} (t:trace step) : list step :=
+    PArray.fold_left (fun res a => List.app res (PArray.to_list a)) nil t.
 
   Definition trace_length {step:Type} (t:trace step) : int :=
     PArray.fold_left (fun l a => (l + (length a))%int63) 0%int63 t.
@@ -37,3 +52,8 @@ Section Trace.
   Admitted.
 
 End Trace.
+
+
+Definition nat_eqb := beq_nat.
+Definition nat_eqb_eq := beq_nat_true_iff.
+Definition nat_eqb_refl := NPeano.Nat.eqb_refl.

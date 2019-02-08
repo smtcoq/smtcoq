@@ -1,31 +1,19 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2016                                          *)
+(*     Copyright (C) 2011 - 2019                                          *)
 (*                                                                        *)
-(*     Michaël Armand                                                     *)
-(*     Benjamin Grégoire                                                  *)
-(*     Chantal Keller                                                     *)
-(*                                                                        *)
-(*     Inria - École Polytechnique - Université Paris-Sud                 *)
+(*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
 (*   This file is distributed under the terms of the CeCILL-C licence     *)
 (*                                                                        *)
 (**************************************************************************)
 
 
-Require Import Bool.
-Require Import List.
-Require Import Int63.
-Require Import PArray.
-Require Import RingMicromega.
-Require Import ZMicromega.
-Require Import Tauto.
-Require Import Psatz.
+Require Import Bool List Int63 PArray.
+Require Import Misc State SMT_terms Euf.
 
-Require Import Misc State.
-Require Import SMT_terms.
-Require Import SMTCoq.euf.Euf.
+Require Import RingMicromega ZMicromega Tauto Psatz.
 
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
@@ -265,6 +253,7 @@ Section certif.
               end
             | None => None
           end
+        | Form.FbbT _ _ => None
       end.
 
   End Build_form.
@@ -365,7 +354,7 @@ Section certif.
 
   Section Proof.
 
-    Variables (t_i : array typ_eqb)
+    Variables (t_i : array SMT_classes.typ_compdec)
               (t_func : array (Atom.tval t_i))
               (ch_atom : Atom.check_atom t_atom)
               (ch_form : Form.check_form t_form)
@@ -377,8 +366,11 @@ Section certif.
     Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
 
+    Local Notation interp_form_hatom_bv :=
+      (Atom.interp_form_hatom_bv t_i t_func t_atom).
+
     Local Notation rho :=
-      (Form.interp_state_var interp_form_hatom t_form).
+      (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Local Notation t_interp := (t_interp t_i t_func t_atom).
 
@@ -393,17 +385,17 @@ Section certif.
 
     Let def_t_form : default t_form = Form.Ftrue.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [H _]; destruct H; auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [H _]; destruct H; auto.
     Qed.
 
     Let wf_t_form : Form.wf t_form.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form) as [H _]; destruct H; auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [H _]; destruct H; auto.
     Qed.
 
     Let wf_rho : Valuation.wf rho.
     Proof.
-      destruct (Form.check_form_correct interp_form_hatom _ ch_form); auto.
+      destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto.
     Qed.
 
     Lemma build_positive_atom_aux_correct :
@@ -446,7 +438,7 @@ Section certif.
     Proof.
      intros a z.
      destruct a;simpl;try discriminate;auto.
-     destruct c;[discriminate | intros Heq;inversion Heq;trivial].
+     destruct c;[discriminate | intros Heq;inversion Heq;trivial | discriminate].
      destruct u;try discriminate;
        case_eq (build_positive i);try discriminate;
        intros p Hp Heq;inversion Heq;clear Heq;subst;
@@ -682,10 +674,10 @@ Opaque build_z_atom interp_aux.
      case a;simpl;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
 
-     intros u; destruct u; intros j vm vm' pe _H_ Hlt Ht;
+     intros u; destruct u; intros jind vm vm' pe _H_ Hlt Ht;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     generalize (Hb j vm vm').
-     destruct (build_pexpr vm j) as (vm0, pe0); intro W1.
+     generalize (Hb jind vm vm').
+     destruct (build_pexpr vm jind) as (vm0, pe0); intro W1.
      intros Heq Hwf;inversion Heq;clear Heq;subst.
      assert (W:= W1 pe0 Hlt Ht (refl_equal _) Hwf).
      decompose [and] W;clear W W1.
@@ -786,10 +778,10 @@ Transparent build_z_atom.
 Opaque build_z_atom interp_aux.
      case a;simpl;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     intro u; destruct u; intros i vm vm' pe Ht;
+     intro u; destruct u; intros ind vm vm' pe Ht;
        try (intros;apply build_pexpr_atom_aux_correct_z;trivial;fail).
-     generalize (Hb i vm); clear Hb.
-     destruct (build_pexpr vm i) as (vm0,pe0); intro IH.
+     generalize (Hb ind vm); clear Hb.
+     destruct (build_pexpr vm ind) as (vm0,pe0); intro IH.
      intros Heq Hwf;inversion Heq;clear Heq;subst.
      assert (W:= IH vm' pe0 Ht (refl_equal _) Hwf).
      decompose [and] W;clear W IH.
@@ -1007,7 +999,6 @@ Transparent build_z_atom.
       destruct t0;inversion H13;clear H13;subst.
       simpl.
       apply (Z.eqb_eq (Zeval_expr (interp_vmap vm') pe1) (Zeval_expr (interp_vmap vm') pe2)).
-
     Qed.
 
     Lemma build_formula_correct :
@@ -1037,7 +1028,7 @@ Transparent build_z_atom.
 
 
     Lemma build_not2_pos_correct : forall vm f l i,
-      bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l -> bounded_bformula (fst vm) (build_not2 i f) /\ (Form.interp interp_form_hatom t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (build_not2 i f)).
+      bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l -> bounded_bformula (fst vm) (build_not2 i f) /\ (Form.interp interp_form_hatom interp_form_hatom_bv t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (build_not2 i f)).
     Proof.
       simpl; intros vm f l i H1 H2 H3; split; unfold build_not2.
       apply fold_ind; auto.
@@ -1050,7 +1041,7 @@ Transparent build_z_atom.
 
 
     Lemma build_not2_neg_correct : forall vm f l i,
-      bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l = false -> bounded_bformula (fst vm) (N (build_not2 i f)) /\ (Form.interp interp_form_hatom t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (N (build_not2 i f))).
+      bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l = false -> bounded_bformula (fst vm) (N (build_not2 i f)) /\ (Form.interp interp_form_hatom interp_form_hatom_bv t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (N (build_not2 i f))).
     Proof.
       simpl; intros vm f l i H1 H2 H3; split; unfold build_not2.
       apply fold_ind; auto.
@@ -1124,9 +1115,9 @@ Transparent build_z_atom.
             nth_error (snd vm) (nat_of_P (fst vm - p) - 1) =
             nth_error (snd vm')(nat_of_P (fst vm' - p) - 1)) /\
           bounded_bformula (fst vm') bf /\
-          (Form.interp interp_form_hatom t_form f <-> eval_f (Zeval_formula (interp_vmap vm')) bf).
+          (Form.interp interp_form_hatom interp_form_hatom_bv t_form f <-> eval_f (Zeval_formula (interp_vmap vm')) bf).
     Proof.
-      unfold build_hform; intros build_var Hbv [h| | |i l|l|l|l|a b|a b|a b c] vm vm' bf; try discriminate.
+      unfold build_hform; intros build_var Hbv [h| | |i l|l|l|l|a b|a b|a b c|a ls] vm vm' bf; try discriminate.
       (* Fatom *)
       case_eq (build_formula vm h); try discriminate; intros [vm0 f] Heq H1 H2; inversion H1; subst vm0; subst bf; apply build_formula_correct; auto.
       (* Ftrue *)
@@ -1259,7 +1250,7 @@ Transparent build_z_atom.
       (Var.interp rho v <-> eval_f (Zeval_formula (interp_vmap vm')) bf).
     Proof.
       unfold build_var; apply foldi_down_cont_ind; try discriminate.
-      intros i cont _ Hlen Hrec v vm vm' bf; unfold is_true; intros H1 H2; replace (Var.interp rho v) with (Form.interp interp_form_hatom t_form (t_form.[v])).
+      intros i cont _ Hlen Hrec v vm vm' bf; unfold is_true; intros H1 H2; replace (Var.interp rho v) with (Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[v])).
       apply (build_hform_correct cont); auto.
       unfold Var.interp; rewrite <- wf_interp_form; auto.
     Qed.
@@ -1275,7 +1266,7 @@ Transparent build_z_atom.
         nth_error (snd vm) (nat_of_P (fst vm - p) - 1) =
         nth_error (snd vm')(nat_of_P (fst vm' - p) - 1)) /\
       bounded_bformula (fst vm') bf /\
-      (Form.interp interp_form_hatom t_form f <-> eval_f (Zeval_formula (interp_vmap vm')) bf).
+      (Form.interp interp_form_hatom interp_form_hatom_bv t_form f <-> eval_f (Zeval_formula (interp_vmap vm')) bf).
     Proof. apply build_hform_correct; apply build_var_correct. Qed.
 
 
@@ -1293,7 +1284,7 @@ Transparent build_z_atom.
     Proof.
       unfold build_nlit; intros l vm vm' bf; case_eq (build_form vm (t_form .[ Lit.blit (Lit.neg l)])); try discriminate.
       intros [vm1 f] Heq H1 H2; inversion H1; subst vm1; subst bf; case_eq (Lit.is_pos (Lit.neg l)); intro Heq2.
-      replace (negb (Lit.interp rho l)) with (Form.interp interp_form_hatom t_form (t_form .[ Lit.blit (Lit.neg l)])).
+      replace (negb (Lit.interp rho l)) with (Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form .[ Lit.blit (Lit.neg l)])).
       apply build_form_correct; auto.
       unfold Lit.interp; replace (Lit.is_pos l) with false.
       rewrite negb_involutive; unfold Var.interp; rewrite <- wf_interp_form; auto; rewrite Lit.blit_neg; auto.
@@ -1495,9 +1486,9 @@ Transparent build_z_atom.
      unfold C.valid;rewrite H5.
      apply ZTautoChecker_sound with c;trivial.
      apply C.interp_true.
-     destruct (Form.check_form_correct interp_form_hatom _ ch_form);trivial.
+     destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form);trivial.
      intros _;apply C.interp_true.
-     destruct (Form.check_form_correct interp_form_hatom _ ch_form);trivial.
+     destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form);trivial.
    Qed.
 
 
@@ -1610,3 +1601,11 @@ Transparent build_z_atom.
  End Proof.
 
 End certif.
+
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End: 
+*)

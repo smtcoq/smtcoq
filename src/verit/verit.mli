@@ -1,34 +1,23 @@
-val debug : bool
-val import_trace :
-  SmtAtom.Atom.reify_tbl -> SmtAtom.Form.reify -> string ->
-  (SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t) option ->
-  SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause
-val clear_all : unit -> unit
-val import_all :
-  string ->
-  string ->
-  SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl * SmtAtom.Atom.reify_tbl *
-  SmtAtom.Form.reify * SmtAtom.Form.t list * int *
-  SmtAtom.Form.t SmtCertif.clause
+(**************************************************************************)
+(*                                                                        *)
+(*     SMTCoq                                                             *)
+(*     Copyright (C) 2011 - 2019                                          *)
+(*                                                                        *)
+(*     See file "AUTHORS" for the list of authors                         *)
+(*                                                                        *)
+(*   This file is distributed under the terms of the CeCILL-C licence     *)
+(*                                                                        *)
+(**************************************************************************)
+
+
 val parse_certif :
-  Names.identifier ->
-  Names.identifier ->
-  Names.identifier ->
-  Names.identifier ->
-  Names.identifier ->
-  Names.identifier -> Names.identifier -> string -> string -> unit
-val theorem : Names.identifier -> string -> string -> unit
+  Structures.names_id ->
+  Structures.names_id ->
+  Structures.names_id ->
+  Structures.names_id ->
+  Structures.names_id -> Structures.names_id -> Structures.names_id -> string -> string -> unit
 val checker : string -> string -> unit
-val export :
-  out_channel ->
-  SmtBtype.reify_tbl -> SmtAtom.Op.reify_tbl ->
-  SmtAtom.Form.t list -> unit
-val call_verit :
-  SmtBtype.reify_tbl ->
-  SmtAtom.Op.reify_tbl ->
-  SmtAtom.Atom.reify_tbl ->
-  SmtAtom.Form.reify ->
-  (SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t) option ->
-  SmtAtom.Form.t list ->
-  int * SmtAtom.Form.t SmtCertif.clause
+val checker_debug : string -> string -> unit
+val theorem : Structures.names_id -> string -> string -> unit
 val tactic : Term.constr list -> Structures.constr_expr list -> Structures.tactic
+val tactic_no_check : Term.constr list -> Structures.constr_expr list -> Structures.tactic
