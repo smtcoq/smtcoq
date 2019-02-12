@@ -33,11 +33,15 @@ Qed.
 (* Proof. *)
 (*   intros f g Hf. *)
 (*   verit Hf. *)
-(*   exists (fun x y => match (x, y) with (Int31.D0, Int31.D0) | (Int31.D1, Int31.D1) => true | _ => false end). *)
-(*   intros x y; destruct x, y; constructor; try reflexivity; try discriminate. *)
-(*   exists Int63Native.eqb. *)
-(*   apply Int63Properties.reflect_eqb. *)
-(* Qed. *)
+(*   -admit. *)
+(*   (* a proof that there is a decidable equality on digits : *) *)
+(*   (* exists (fun x y => match (x, y) with (Int31.D0, Int31.D0)
+| (Int31.D1, Int31.D1) => true | _ => false end). *) *)
+(*   (* intros x y; destruct x, y; constructor; try reflexivity; try discriminate. *) *)
+(*   (* exists Int63Native.eqb. *) *)
+(*   (* apply Int63Properties.reflect_eqb. *) *)
+(*   -apply int63_compdec. *)
+
 
 Open Scope Z_scope.
 
@@ -1178,7 +1182,7 @@ Section mult3.
   Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
   Add_lemmas mult3_0 mult3_Sn.
 
-  Lemma mult3_21 : mult3 4 =? 12.
+  Lemma mult3_4_12 : mult3 4 =? 12.
   Proof. verit. Qed. (* slow to verify with standard coq *)
 
   Clear_lemmas.
@@ -1337,3 +1341,131 @@ Section group.
   Clear_lemmas.
 End group.
 
+Section Linear1.
+  Parameter f : Z -> Z.
+  Axiom f_spec : forall x,  (f (x+1) =? f x + 1)  && (f 0 =? 0).
+
+  (* Cuts are not automatically proved when one equality is switched *)
+  Lemma f_1 : f 1 =? 1.
+  Proof.
+    verit_bool f_spec; replace (0 =? f 0) with (f 0 =? 0) by apply Z.eqb_sym; auto.
+  Qed.
+End Linear1.
+
+Section Linear2.
+  Parameter g : Z -> Z.
+
+  Axiom g_2_linear : forall x, Z.eqb (g (x + 1)) ((g x) + 2).
+
+(* The call to veriT does not terminate *)
+(* Lemma apply_lemma_infinite : *)
+(*   forall x y, Z.eqb (g (x + y)) ((g x) + y * 2). *)
+(* Proof. verit g_2_linear. *)
+End Linear2.
+
+Section Input_switched1.
+  Parameter m : Z -> Z.
+
+  Axiom m_0 : m 0 =? 5.
+
+  (* veriT switches the input lemma in this case *)
+  Lemma cinq_m_0 : m 0 =? 5.
+  Proof. verit m_0. Qed.
+End Input_switched1.
+
+Section Input_switched2.
+  Parameter h : Z -> Z -> Z.
+
+  Axiom h_Sm_n : forall x y, h (x+1) y =? h x y.
+
+  (* veriT switches the input lemma in this case *)
+  Lemma h_1_0 : h 1 0 =? h 0 0.
+  Proof. verit h_Sm_n. Qed.
+End Input_switched2.
+
+
+(** Examples of using the conversion tactics **)
+
+Local Open Scope positive_scope.
+
+Goal forall (f : positive -> positive) (x y : positive),
+  implb ((x + 3) =? y)
+        ((f (x + 3)) <=? (f y))
+  = true.
+Proof.
+pos_convert.
+verit.
+Qed.
+
+Goal forall (f : positive -> positive) (x y : positive),
+  implb ((x + 3) =? y)
+        ((3 <? y) && ((f (x + 3)) <=? (f y)))
+  = true.
+Proof.
+pos_convert.
+verit.
+Qed.
+
+Local Close Scope positive_scope.
+
+Local Open Scope N_scope.
+
+Goal forall (f : N -> N) (x y : N),
+  implb ((x + 3) =? y)
+        ((f (x + 3)) <=? (f y))
+  = true.
+Proof.
+N_convert.
+verit.
+Qed.
+
+Goal forall (f : N -> N) (x y : N),
+  implb ((x + 3) =? y)
+        ((2 <? y) && ((f (x + 3)) <=? (f y)))
+  = true.
+Proof.
+N_convert.
+verit.
+Qed.
+
+Local Close Scope N_scope.
+
+Require Import NPeano.
+Local Open Scope nat_scope.
+
+Goal forall (f : nat -> nat) (x y : nat),
+  implb (Nat.eqb (x + 3) y)
+        ((f (x + 3)) <=? (f y))
+  = true.
+Proof.
+nat_convert.
+verit.
+Qed.
+
+Goal forall (f : nat -> nat) (x y : nat),
+  implb (Nat.eqb (x + 3) y)
+        ((2 <? y) && ((f (x + 3)) <=? (f y)))
+  = true.
+Proof.
+nat_convert.
+verit.
+Qed.
+
+Local Close Scope nat_scope.
+
+(* An example with all 3 types and a binary function *)
+Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat),
+  implb (x =? 3)%positive
+    (implb (Nat.eqb y 7)
+      (implb (f 3%positive 7%nat =? 12)%N
+        (f x y =? 12)%N)) = true.
+pos_convert.
+nat_convert.
+N_convert.
+verit.
+Qed.
+
+
+(* The tactic simpl does too much here : *)
+(* Goal forall x, 3 + x = x + 3. *)
+(*   nat_convert. *)

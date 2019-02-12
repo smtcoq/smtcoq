@@ -1,4 +1,4 @@
-(* This file is useful when the tactic goes through but not hte Qed *)
+(* This file is useful when the tactic goes through but not the Qed *)
 (* It is works as is for standard-coq and checker_b but can be adapted for native-coq and/or checker_eq *)
 (* Paste the environment and the following code : *)
 
