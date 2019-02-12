@@ -14,7 +14,6 @@ DECLARE PLUGIN "smtcoq_plugin"
 
 open Genarg
 open Stdarg
-open Constrarg
 
 VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY
 | [ "Parse_certif_zchaff" 
