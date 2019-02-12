@@ -829,7 +829,7 @@ module Atom =
          let new_ha1 = hash_hatom ra' ha1 in
          let new_ha2 = hash_hatom ra' ha2 in
          begin match bop with
-         | BO_eq ty -> mk_eq ra' ~declare:true ty new_ha1 new_ha2
+         | BO_eq ty -> mk_eq ra' ty new_ha1 new_ha2
          | _ -> get ra' (Abop (bop, new_ha1, new_ha2)) end
       | Atop (top, ha1, ha2, ha3) ->
          let new_ha1 = hash_hatom ra' ha1 in
@@ -1010,7 +1010,7 @@ module Atom =
       Hashtbl.find op_coq_terms
 
 
-    let of_coq ?hash:(h=false) rt ro reify known_logic env sigma c =
+    let of_coq ?hash:(hash=false) rt ro reify known_logic env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try
@@ -1053,9 +1053,9 @@ module Atom =
         | CCBVsextn -> mk_bvsextn args
         | CCBVshl -> mk_bop_bvshl args
         | CCBVshr -> mk_bop_bvshr args
-        | CCeqb -> mk_bop (BO_eq Tbool) args
-        | CCeqbP -> mk_bop (BO_eq Tpositive) args
-        | CCeqbZ -> mk_bop (BO_eq TZ) args
+        | CCeqb -> mk_teq Tbool args
+        | CCeqbP -> mk_teq Tpositive args
+        | CCeqbZ -> mk_teq TZ args
         | CCeqbA -> mk_bop_farray_equal args
         | CCeqbBV -> mk_bop_bveq args
         | CCselect -> mk_bop_select args
@@ -1113,6 +1113,14 @@ module Atom =
           let h = mk_hatom a in
           get reify (Auop (UO_BVsextn (mk_bvsize s, mk_N n), h))
         | _ -> assert false
+
+      and mk_teq ty args =
+        if hash then match args with
+                  | [a1; a2] -> let h1 = mk_hatom a1 in
+                                let h2 = mk_hatom a2 in
+                                mk_eq reify ty h1 h2
+                  | _ -> failwith "unexpected number of arguments for mk_teq"
+        else mk_bop (BO_eq ty) args
 
       and mk_bop op = function
         | [a1;a2] ->
@@ -1191,12 +1199,12 @@ module Atom =
       and mk_bop_bveq = function
         | [s;a1;a2] when SL.mem LBitvectors known_logic ->
           let s' = mk_bvsize s in
-          mk_bop (BO_eq (TBV s')) [a1;a2]
+          mk_teq (TBV s') [a1;a2]
         (* We still want to interpret bv equality as uninterpreted
            smtlib2 equality if the solver doesn't support bitvectors *)
         | [s;a1;a2] ->
           let ty = SmtBtype.of_coq rt known_logic (mklApp cbitvector [|s|]) in
-          mk_bop (BO_eq ty) [a1;a2]
+          mk_teq ty [a1;a2]
         | _ -> assert false
 
       and mk_bop_select = function
@@ -1224,13 +1232,13 @@ module Atom =
         | [ti;te;_;_;_;_;_;a;b] when SL.mem LArrays known_logic ->
           let ti' = SmtBtype.of_coq rt known_logic ti in
           let te' = SmtBtype.of_coq rt known_logic te in
-          mk_bop (BO_eq (TFArray (ti', te'))) [a; b]
+          mk_teq (TFArray (ti', te')) [a; b]
         (* We still want to interpret array equality as uninterpreted
            smtlib2 equality if the solver doesn't support arrays *)
         | [ti;te;ord_ti;_;_;_;inh_te;a;b] ->
           let ty = SmtBtype.of_coq rt known_logic
               (mklApp cfarray [|ti; te; ord_ti; inh_te|]) in
-          mk_bop (BO_eq ty) [a;b]
+          mk_teq ty [a;b]
         | _ -> assert false
 
       and mk_unknown c args ty =

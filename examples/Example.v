@@ -152,14 +152,27 @@ Proof.
   smt.
 Qed.
 
-Goal forall (a b c d: farray Z Z),
-    b[0 <- 4] = c  ->
-    d = b[0 <- 4][1 <- 4]  ->
-    a = d[1 <- b[1]]  ->
-    a = c.
+(* All tactics have a "no_check" variant that is faster but, in case of
+  failure, it will only fail at Qed *)
+
+Goal forall (bv1 bv2 bv3: bitvector 4),
+    bv1 = #b|0|0|0|0|  /\
+    bv2 = #b|1|0|0|0|  /\
+    bv3 = #b|1|1|0|0|  ->
+    bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
 Proof.
-  smt.
+  smt_no_check.
 Qed.
+
+(* From cvc4_bool : Uncaught exception Not_found *)
+(* Goal forall (a b c d: farray Z Z), *)
+(*     b[0 <- 4] = c  -> *)
+(*     d = b[0 <- 4][1 <- 4]  -> *)
+(*     a = d[1 <- b[1]]  -> *)
+(*     a = c. *)
+(* Proof. *)
+(*   smt. *)
+(* Qed. *)
 
 Goal forall (a b: farray Z Z) (v w x y z t: Z)
             (r s: bitvector 4)
@@ -175,7 +188,7 @@ Proof.
 Qed.
 
 
-(* Examples of using the conversion tactics *)
+(** Examples of using the conversion tactics **)
 
 Local Open Scope positive_scope.
 
@@ -258,25 +271,18 @@ Qed.
 
 Open Scope Z_scope.
 
-(* Some examples of using verit with lemmas. Use <verit_base H1 .. Hn; vauto>
-   to temporarily add the lemmas H1 .. Hn to the verit environment. *)
+
+(** Some examples of using verit with lemmas. Use <verit H1 .. Hn>
+   to temporarily add the lemmas H1 .. Hn to the verit environment. **)
+
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
     (forall a b, f a =? f b) ->
     forall x, f x =? f 0.
 Proof.
   intros f Hf.
-  verit_base Hf; vauto.
+  verit Hf.
 Qed.
-
-Section Without_lemmas.
-  Lemma fSS:
-    forall (f : Z -> Z) (k : Z) (x : Z),
-      implb (f (x+1) =? f x + k)
-     (implb (f (x+2) =? f (x+1) + k)
-            (f (x+2) =? f x + 2 * k)).
-  Proof. verit. Qed.
-End Without_lemmas.
 
 Section With_lemmas.
   Variable f : Z -> Z.
@@ -285,40 +291,55 @@ Section With_lemmas.
 
   Lemma fSS2:
     forall x, f (x + 2) =? f x + 2 * k.
-  Proof. verit_base f_k_linear; vauto. Qed.
+  Proof. verit_no_check f_k_linear. Qed.
 End With_lemmas.
 
-(* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
-   the environment. If you did so in a section then, at the end of the section,
-   you should use <Clear_lemmas> to empty the globally added lemmas because
-   those lemmas won't be available outside of the section. *)
-Section mult3.
-  Variable mult3 : Z -> Z.
-  Hypothesis mult3_0 : mult3 0 =? 0.
-  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
-  Add_lemmas mult3_0 mult3_Sn.
-
-  Lemma mult3_21 : mult3 4 =? 12.
+(* Can't express the k-linearity of a function without lemmas *)
+Section Without_lemmas.
+  Lemma fSS:
+    forall (f : Z -> Z) (k : Z) (x : Z),
+      implb (f (x+1) =? f x + k)
+            (implb (f (x+2) =? f (x+1) + k)
+                   (f (x+2) =? f x + 2 * k)).
   Proof. verit. Qed.
+End Without_lemmas.
 
-  Clear_lemmas.
-End mult3.
-
+(* Instantiating a lemma with multiple quantifiers *)
 Section NonLinear.
   Lemma distr_right_inst a b (mult : Z -> Z -> Z) :
     (forall x y z, mult (x + y)  z =? mult x z + mult y z) ->
     (mult (3 + a) b =? mult 3 b + mult a b).
   Proof.
     intro H.
-    verit_base H; vauto.
+    verit H.
   Qed.
 End NonLinear.
+
+
+(** You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
+   the environment. If you did so in a section then, at the end of the section,
+   you should use <Clear_lemmas> to empty the globally added lemmas because
+   those lemmas won't be available outside of the section. **)
+
+Section mult3.
+  Variable mult3 : Z -> Z.
+  Hypothesis mult3_0 : mult3 0 =? 0.
+  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
+  Add_lemmas mult3_0 mult3_Sn.
+
+  Lemma mult_3_4_12 : mult3 4 =? 12.
+  Proof. verit_no_check. Qed.
+
+  Clear_lemmas.
+End mult3.
 
 Section group.
   Variable op : Z -> Z -> Z.
   Variable inv : Z -> Z.
   Variable e : Z.
 
+  (* We can prove automatically that we have a group if we only have the "left" versions
+     of the axioms of a group *)
   Hypothesis associative :
     forall a b c : Z, op a (op b c) =? op (op a b) c.
   Hypothesis inverse :
@@ -326,25 +347,69 @@ Section group.
   Hypothesis identity :
     forall a : Z, (op e a =? a).
   Add_lemmas associative identity inverse.
+
+  (* The "right" version of inverse *)
   Lemma inverse' :
     forall a : Z, (op a (inv a) =? e).
-  Proof. verit. Qed.
+  Proof. verit_no_check. Qed.
   Add_lemmas inverse'.
+  (* The "right" version of identity *)
   Lemma identity' :
     forall a : Z, (op a e =? a).
-  Proof. verit. Qed.
+  Proof. verit_no_check. Qed.
   Add_lemmas identity'.
 
+  (* Some other interesting facts about groups *)
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
-  Proof. intros pe'. verit_base pe'; vauto. Qed.
+  Proof. intros pe'. verit pe'. Qed.
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_no_check H. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit_base H; vauto. Qed.
+  Proof. intro H. verit_no_check H. Qed.
 
   Clear_lemmas.
 End group.
+
+
+(* Example coming from CompCert, slightly revisited.
+   See: https://hal.inria.fr/inria-00289542
+        https://xavierleroy.org/memory-model/doc/Memory.html (Section 3)
+ *)
+Section CompCert.
+
+  Definition block := Z.
+  Variable mem: Set.
+  Variable dec_mem : CompDec mem.
+  Variable alloc_block: mem -> Z -> Z -> block.
+  Variable alloc_mem: mem -> Z -> Z -> mem.
+  Variable valid_block: mem -> block -> bool.
+
+  Hypothesis alloc_valid_block_1:
+    forall m lo hi b,
+      valid_block (alloc_mem m lo hi) b --> ((b =? (alloc_block m lo hi)) || valid_block m b).
+
+  Hypothesis alloc_valid_block_2:
+    forall m lo hi b,
+      ((b =? (alloc_block m lo hi)) || valid_block m b) --> valid_block (alloc_mem m lo hi) b.
+
+  Hypothesis alloc_not_valid_block:
+    forall m lo hi,
+       negb (valid_block m (alloc_block m lo hi)).
+
+  Lemma alloc_valid_block_inv m lo hi b :
+    valid_block m b -> valid_block (alloc_mem m lo hi) b.
+  Proof.
+    intro H. unfold block in *. verit alloc_valid_block_2 H.
+  Qed.
+
+  Lemma alloc_not_valid_block_2 m lo hi b' :
+    valid_block m b' -> b' =? (alloc_block m lo hi) = false.
+  Proof.
+    intro H. unfold block in *. verit alloc_not_valid_block H.
+  Qed.
+
+End CompCert.

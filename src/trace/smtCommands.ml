@@ -683,9 +683,9 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver env rt ro ra' rf' l' ls_smtc =
-  let root = SmtTrace.mkRootV [l'] in
-  call_solver env rt ro ra' rf' (root,l') ls_smtc
+let make_proof call_solver env rt ro ra' rf' l ls_smtc =
+  let root = SmtTrace.mkRootV [l] in
+  call_solver env rt ro ra' rf' (root,l) ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
 (* <of_coq_lemma> reifies the coq lemma given, we can then easily print it in a
@@ -755,21 +755,22 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
     if ((Term.eq_constr b (Lazy.force ctrue)) ||
         (Term.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let l' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
-      let l' =
-        if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l' else l' in
-      let max_id_confl = make_proof call_solver env rt ro ra' rf' l' lsmt in
+      let nl = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+      let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
+      let lsmt = Form.flatten rf nl :: lsmt in
+      let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+      let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
-      let l = Form.neg (Form.get rf (Fapp(Fiff,[|l1;l2|]))) in
-      let l1' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
-      let l2' = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' b in
-      let l' = Form.neg (Form.get rf' (Fapp(Fiff,[|l1';l2'|]))) in
-      let max_id_confl = make_proof call_solver env rt ro ra' rf' l' lsmt in
+      let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' b in
+      let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
+      let nl = Form.neg l in
+      let lsmt = Form.flatten rf nl :: lsmt in
+      let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
       build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-        (Form.to_coq l) max_id_confl (vm_cast env) (Some find_lemma) in
+        (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) in
 
       let cuts = (SmtBtype.get_cuts rt) @ cuts in
 

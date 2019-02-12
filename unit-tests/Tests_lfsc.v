@@ -46,12 +46,11 @@ Local Open Scope bv_scope.
     smt.
   Qed.
 
-  (* TODO: will be ok when symmetry of equality is back for verit *)
-  (* Goal forall (bv1 bv2: bitvector 4), *)
-  (*      bv1 = bv2 <-> bv2 = bv1. *)
-  (* Proof. *)
-  (*    smt. *)
-  (* Qed. *)
+  Goal forall (bv1 bv2: bitvector 4),
+       bv1 = bv2 <-> bv2 = bv1.
+  Proof.
+     smt.
+  Qed.
 
 End BV.
 
@@ -114,14 +113,13 @@ Section EUF.
     smt.
   Qed.
 
-  (* TODO: will be ok when symmetry of equality is back for verit *)
-  (* Goal forall *)
-  (*        (x y: Z) *)
-  (*        (f: Z -> Z), *)
-  (*        (f x) = (f y) -> (f y) = (f x). *)
-  (* Proof. *)
-  (*   smt. *)
-  (* Qed. *)
+  Goal forall
+         (x y: Z)
+         (f: Z -> Z),
+         (f x) = (f y) -> (f y) = (f x).
+  Proof.
+    smt.
+  Qed.
 
 
   Goal forall
@@ -155,11 +153,10 @@ End EUF.
 Section LIA.
 
 
-  (* TODO: will be ok when symmetry of equality is back for verit *)
-  (* Goal forall (a b: Z), a = b <-> b = a. *)
-  (* Proof. *)
-  (*   smt. *)
-  (* Qed. *)
+  Goal forall (a b: Z), a = b <-> b = a.
+  Proof.
+    smt.
+  Qed.
 
   Goal forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
   Proof. 
@@ -691,10 +688,16 @@ Section A_BV_EUF_LIA_PR.
     smt.
   Qed.
 
-  (* TODO: will be ok when symmetry of equality is back for verit *)
-  (* Goal forall (a b: farray Z Z), a = b <->  b = a. *)
-  (* Proof.  *)
-  (*   smt. *)
-  (* Qed. *)
+  Goal forall (a b: farray Z Z), a = b <->  b = a.
+  Proof.
+    smt.
+  Qed.
 
 End A_BV_EUF_LIA_PR.
+
+
+(*
+   Local Variables:
+   coq-load-path: ((rec "../src" "SMTCoq"))
+   End:
+*)
