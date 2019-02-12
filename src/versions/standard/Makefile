@@ -106,7 +106,7 @@ CAMLOPTC    ?= "$(OCAMLFIND)" opt      -c
 CAMLLINK    ?= "$(OCAMLFIND)" ocamlc   -linkpkg -dontlink $(CAMLDONTLINK)
 CAMLOPTLINK ?= "$(OCAMLFIND)" opt      -linkpkg -dontlink $(CAMLDONTLINK)
 CAMLDOC     ?= "$(OCAMLFIND)" ocamldoc
-CAMLDEP     ?= "$(OCAMLFIND)" ocamldep -slash -ml-synonym .ml4 -ml-synonym .mlpack
+CAMLDEP     ?= "$(OCAMLFIND)" ocamldep -native -slash -ml-synonym .ml4 -ml-synonym .mlpack
 
 # DESTDIR is prepended to all installation paths
 DESTDIR ?=

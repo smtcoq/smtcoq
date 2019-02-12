@@ -10,6 +10,9 @@
 ## To generate the Makefile:                                          ##
 ##   coq_makefile -f Make -o Makefile                                 ##
 ## In the Makefile :                                                  ##
+## 1) add "-native" to the CAMLDEP command (ocamldep -native ...)     ##
+
+
 ## 1) Suppress the "Makefile" target                                  ##
 ## 2) Change the "all" target:                                        ##
 ##    remove the "test", "ztest", "vtest", "lfsctest" and "./"        ##
