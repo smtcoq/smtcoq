@@ -1202,12 +1202,12 @@ module Atom =
       and mk_bop_bveq = function
         | [s;a1;a2] when SL.mem LBitvectors known_logic ->
           let s' = mk_bvsize s in
-          mk_bop (BO_eq (TBV s')) [a1;a2]
+          mk_teq (TBV s') [a1;a2]
         (* We still want to interpret bv equality as uninterpreted
            smtlib2 equality if the solver doesn't support bitvectors *)
         | [s;a1;a2] ->
           let ty = SmtBtype.of_coq rt known_logic (mklApp cbitvector [|s|]) in
-          mk_bop (BO_eq ty) [a1;a2]
+          mk_teq ty [a1;a2]
         | _ -> assert false
 
       and mk_bop_select = function
@@ -1235,13 +1235,13 @@ module Atom =
         | [ti;te;_;_;_;_;_;a;b] when SL.mem LArrays known_logic ->
           let ti' = SmtBtype.of_coq rt known_logic ti in
           let te' = SmtBtype.of_coq rt known_logic te in
-          mk_bop (BO_eq (TFArray (ti', te'))) [a; b]
+          mk_teq (TFArray (ti', te')) [a; b]
         (* We still want to interpret array equality as uninterpreted
            smtlib2 equality if the solver doesn't support arrays *)
         | [ti;te;ord_ti;_;_;_;inh_te;a;b] ->
           let ty = SmtBtype.of_coq rt known_logic
               (mklApp cfarray [|ti; te; ord_ti; inh_te|]) in
-          mk_bop (BO_eq ty) [a;b]
+          mk_teq ty [a;b]
         | _ -> assert false
 
       and mk_unknown c args ty =
