@@ -14,6 +14,11 @@ DECLARE PLUGIN "smtcoq_plugin"
 
 open Stdarg
 
+(* This is requires since Coq 8.7 because the Ltac machinery became a
+   plugin
+   see: https://lists.gforge.inria.fr/pipermail/coq-commits/2017-February/021276.html *)
+open Ltac_plugin
+
 VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY
 | [ "Parse_certif_zchaff" 
     ident(dimacs) ident(trace) string(fdimacs) string(fproof) ] ->
