@@ -117,7 +117,6 @@ export COQBIN=/home/jdoe/coq-8.6.1/bin/
 make
 make install
 ```
-```
 
 
 ### Installation with native-coq
@@ -155,9 +154,10 @@ Simply add the coq-extra-dev repo to opam:
 ```bash
 opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
 ```
-and install smtcoq:
+and install SMTCoq:
 ```bash
 opam install coq-smtcoq
+```
 
 
 ## Installation of the provers
