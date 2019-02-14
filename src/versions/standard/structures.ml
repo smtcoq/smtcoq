@@ -189,3 +189,7 @@ let micromega_dump_proof_term p =
 type tactic = unit Proofview.tactic
 type names_id = Names.Id.t
 type constr_expr = Constrexpr.constr_expr
+
+(* EConstr *)
+type econstr = EConstr.t
+let econstr_of_constr = EConstr.of_constr

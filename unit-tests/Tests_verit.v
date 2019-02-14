@@ -16,47 +16,7 @@ Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith.
 
 Local Open Scope int63_scope.
-
-(* First a tactic, to test the universe computation in an empty
-   environment. *)
-
-Lemma check_univ (x1: bool):
-  (x1 && (negb x1)) = false.
-Proof.
-  verit.
-Qed.
-
-(* (* In standard coq we need decidability of Int31.digits *) *)
-(* Lemma fun_const : *)
-(*   forall f (g : int -> int -> bool), *)
-(*     (forall x, g (f x) 2) -> g (f 3) 2. *)
-(* Proof. *)
-(*   intros f g Hf. *)
-(*   verit Hf. *)
-(*   -admit. *)
-(*   (* a proof that there is a decidable equality on digits : *) *)
-(*   (* exists (fun x y => match (x, y) with (Int31.D0, Int31.D0)
-| (Int31.D1, Int31.D1) => true | _ => false end). *) *)
-(*   (* intros x y; destruct x, y; constructor; try reflexivity; try discriminate. *) *)
-(*   (* exists Int63Native.eqb. *) *)
-(*   (* apply Int63Properties.reflect_eqb. *) *)
-(*   -apply int63_compdec. *)
-
-
 Open Scope Z_scope.
-
-
-Lemma fun_const2 :
-  forall f (g : Z -> Z -> bool),
-    (forall x, g (f x) 2) -> g (f 3) 2.
-Proof.
-  intros f g Hf. verit Hf.
-Qed.
-(*
-Toplevel input, characters 916-942:
- Warning: Bytecode compiler failed, falling back to standard conversion
- [bytecode-compiler-failed,bytecode-compiler]
-*)
 
 
 (* veriT vernacular commands *)
@@ -539,6 +499,20 @@ End Theorem_Bv2.
 
 
 (* verit tactic *)
+
+Lemma check_univ (x1: bool):
+  (x1 && (negb x1)) = false.
+Proof.
+  verit.
+Qed.
+
+Lemma fun_const2 :
+  forall f (g : Z -> Z -> bool),
+    (forall x, g (f x) 2) -> g (f 3) 2.
+Proof.
+  intros f g Hf. verit Hf.
+Qed.
+
 
 (* Simple connectives *)
 

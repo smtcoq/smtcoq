@@ -39,8 +39,11 @@ val interp_constr : Environ.env -> Evd.evar_map -> Topconstr.constr_expr -> Term
 val tclTHEN : Proof_type.tactic -> Proof_type.tactic -> Proof_type.tactic
 val tclTHENLAST : Proof_type.tactic -> Proof_type.tactic -> Proof_type.tactic
 val assert_before : Names.name -> Term.types -> Proof_type.tactic
+
 val vm_conv : Reduction.conv_pb -> Term.types Reduction.conversion_function
 val vm_cast_no_check : Term.constr -> Proof_type.tactic
+val cbv_vm : Environ.env -> Term.constr -> Term.types -> Term.constr
+
 val mk_tactic :
   (Environ.env ->
    Evd.evar_map -> Term.types -> Proof_type.goal Tacmach.sigma -> 'a) ->
@@ -53,12 +56,20 @@ val retyping_get_type_of : Environ.env -> Evd.evar_map -> Term.constr -> Term.co
 
 
 (* Micromega *)
-type micromega_zArithProof
+module Micromega_plugin_Certificate = Certificate
+module Micromega_plugin_Coq_micromega = Coq_micromega
+module Micromega_plugin_Micromega = Micromega
+module Micromega_plugin_Mutils = Mutils
+
 val micromega_coq_proofTerm : Term.constr lazy_t
-val micromega_dump_proof_term : micromega_zArithProof -> Term.constr
+val micromega_dump_proof_term : Micromega_plugin_Certificate.Mc.zArithProof -> Term.constr
 
 
 (* Types in the Coq source code *)
 type tactic = Proof_type.tactic
 type names_id = Names.identifier
 type constr_expr = Topconstr.constr_expr
+
+(* EConstr *)
+type econstr = Term.constr
+val econstr_of_constr : Term.constr -> econstr

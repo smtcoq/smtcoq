@@ -94,3 +94,7 @@ val micromega_dump_proof_term : Micromega_plugin_Certificate.Mc.zArithProof -> T
 type tactic = unit Proofview.tactic
 type names_id = Names.Id.t
 type constr_expr = Constrexpr.constr_expr
+
+(* EConstr *)
+type econstr = EConstr.t
+val econstr_of_constr : Term.constr -> econstr

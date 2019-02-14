@@ -117,7 +117,7 @@ let smt_Atom_to_micromega_formula tbl ha =
 
 (* specialized fold *)
 
-let default_constr = EConstr.of_constr (mkInt 0)
+let default_constr = Structures.econstr_of_constr (mkInt 0)
 let default_tag = Structures.Micromega_plugin_Mutils.Tag.from 0
 (* morphism for general formulas *)
 
