@@ -317,13 +317,11 @@ ALLDFILES = $(addsuffix .d,$(ALLSRCFILES))
 all:
 	$(HIDE)$(MAKE) --no-print-directory -f "$(SELF)" pre-all
 	$(HIDE)$(MAKE) --no-print-directory -f "$(SELF)" real-all
-	$(HIDE)$(MAKE) --no-print-directory -f "$(SELF)" post-all
 .PHONY: all
 
 all.timing.diff:
 	$(HIDE)$(MAKE) --no-print-directory -f "$(SELF)" pre-all
 	$(HIDE)$(MAKE) --no-print-directory -f "$(SELF)" real-all.timing.diff TIME_OF_PRETTY_BUILD_EXTRA_FILES=""
-	$(HIDE)$(MAKE) --no-print-directory -f "$(SELF)" post-all
 .PHONY: all.timing.diff
 
 make-pretty-timed-before:: TIME_OF_BUILD_FILE=$(TIME_OF_BUILD_BEFORE_FILE)
