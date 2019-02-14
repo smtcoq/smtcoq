@@ -11,7 +11,7 @@
 
 
 Require Import PropToBool BoolToProp.  (* Before SMTCoq.State *)
-Require Import Int63 List PArray Bool.
+Require Import Int63 List PArray Bool ZArith.
 Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
 
 Declare ML Module "smtcoq_plugin".
