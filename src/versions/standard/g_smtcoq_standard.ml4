@@ -12,9 +12,12 @@
 
 DECLARE PLUGIN "smtcoq_plugin"
 
-open Genarg
 open Stdarg
-open Constrarg
+
+(* This is requires since Coq 8.7 because the Ltac machinery became a
+   plugin
+   see: https://lists.gforge.inria.fr/pipermail/coq-commits/2017-February/021276.html *)
+open Ltac_plugin
 
 VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY
 | [ "Parse_certif_zchaff" 
@@ -86,8 +89,8 @@ END
 
 
 TACTIC EXTEND Tactic_verit
-| [ "verit_bool_base" constr_list(lpl) ] -> [ Verit.tactic lpl !lemmas_list ]
-| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ Verit.tactic_no_check lpl !lemmas_list ]
+| [ "verit_bool_base" constr_list(lpl) ] -> [ Verit.tactic (List.map EConstr.Unsafe.to_constr lpl) !lemmas_list ]
+| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ Verit.tactic_no_check (List.map EConstr.Unsafe.to_constr lpl) !lemmas_list ]
 END
 
 TACTIC EXTEND Tactic_cvc4

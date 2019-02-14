@@ -114,6 +114,8 @@ let assert_before = Tactics.assert_tac
 
 let vm_conv = Reduction.vm_conv
 let vm_cast_no_check = Tactics.vm_cast_no_check
+let cbv_vm = Vnorm.cbv_vm
+
 let mk_tactic tac gl =
   let env = Tacmach.pf_env gl in
   let sigma = Tacmach.project gl in
@@ -128,15 +130,28 @@ let constrextern_extern_constr =
 
 let get_rel_dec_name = fun _ -> Names.Anonymous
 
+(* Eta-expanded to get rid of optional arguments *)
+let retyping_get_type_of env = Retyping.get_type_of env
 
-(* Old packaging of plugins *)
+
+(* Micromega *)
 module Micromega_plugin_Certificate = Certificate
 module Micromega_plugin_Coq_micromega = Coq_micromega
 module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
+
+let micromega_coq_proofTerm =
+  Coq_micromega.M.coq_proofTerm
+
+let micromega_dump_proof_term p =
+  Coq_micromega.dump_proof_term p
 
 
 (* Types in the Coq source code *)
 type tactic = Proof_type.tactic
 type names_id = Names.identifier
 type constr_expr = Topconstr.constr_expr
+
+(* EConstr *)
+type econstr = Term.constr
+let econstr_of_constr e = e

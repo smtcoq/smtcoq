@@ -11,7 +11,6 @@
 
 
 open SatParser
-open SmtForm
 open SmtCertif
 open SmtTrace
 
@@ -58,7 +57,7 @@ let parse_CL reloc lb last =
 
 (* Parsing of the VAR and CONF part *)
 
-let var_of_lit l = l lsr 1
+(* let var_of_lit l = l lsr 1 *)
 
 type var_key =
   | Var of int

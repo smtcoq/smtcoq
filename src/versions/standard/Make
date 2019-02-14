@@ -10,14 +10,8 @@
 ## To generate the Makefile:                                          ##
 ##   coq_makefile -f Make -o Makefile                                 ##
 ## In the Makefile :                                                  ##
-## 1) Suppress the "Makefile" target                                  ##
-## 2) Change the "all" target:                                        ##
-##    remove the "test", "ztest", "vtest", "lfsctest" and "./"        ##
-##    dependencies                                                    ##
-## 3) Change the "install" and "clean" targets:                       ##
-##    Suppress the "+" lines                                          ##
-## 4) Add to the "clean" target:                                      ##
-##    - rm -f ../unit-tests/*.vo ../unit-tests/*.zlog ../unit-tests/*.vtlog verit/veritParser.mli verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.mli smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.mli smtlib2/sExprParser.ml smtlib2/sExprLexer.ml ##
+## 1) Add "-native" to the CAMLDEP command (ocamldep -native ...)     ##
+## 2) remove "post-all" from the targets "all" and "all.timing.diff"  ##
 ########################################################################
 
 
@@ -41,7 +35,7 @@
 
 -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 
--extra "test" "" "cd ../unit-tests; make" ""
+-extra "test" "" "cd ../unit-tests; make"
 -extra "ztest" "" "cd ../unit-tests; make zchaff"
 -extra "vtest" "" "cd ../unit-tests; make verit"
 -extra "lfsctest" "" "cd ../unit-tests; make lfsc"

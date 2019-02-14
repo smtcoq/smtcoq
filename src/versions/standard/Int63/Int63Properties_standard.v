@@ -16,9 +16,33 @@ Require Import Int31 Cyclic31.
 Require Export Int63Axioms.
 Require Import Eqdep_dec.
 Require Import Psatz.
+Require Import Znumtheory Zpow_facts.
 
 Local Open Scope int63_scope.
 Local Open Scope Z_scope.
+
+
+Notation Zpower_2 := Z.pow_2_r.
+Notation Zpower_Zsucc := Z.pow_succ_r.
+
+
+(* Taken from BigNumPrelude *)
+
+Lemma Zlt0_not_eq : forall n, 0<n -> n<>0.
+Proof.
+ auto with zarith.
+Qed.
+
+Definition Z_div_plus_l a b c H := Zdiv.Z_div_plus_full_l a b c (Zlt0_not_eq _ H).
+
+Theorem Zmod_le_first: forall a b, 0 <= a -> 0 < b -> 0 <= a mod b <= a.
+ Proof.
+  intros a b H H1;case (Z_mod_lt a b);auto with zarith;intros H2 H3;split;auto.
+  case (Z.le_gt_cases b a); intros H4; auto with zarith.
+  rewrite Zmod_small; auto with zarith.
+ Qed.
+
+
 (** Trivial lemmas without axiom *)
 
 Lemma wB_diff_0 : wB <> 0.
@@ -406,7 +430,18 @@ Proof.
  case_eq ((i / j < j)%int);[ | rewrite <- Bool.not_true_iff_false];
   rewrite ltb_spec, div_spec;intros.
  assert ([| j + (i / j)%int|] = [|j|] + [|i|]/[|j|]).
-   rewrite add_spec, Zmod_small;rewrite div_spec;auto with zarith.
+ {
+   rewrite add_spec, Zmod_small;rewrite div_spec; auto with zarith.
+   split.
+   - apply Z.add_nonneg_nonneg.
+     + apply Z.lt_le_incl; apply Z.le_lt_trans with (2 := H). apply Z_div_pos.
+       * apply Z.lt_gt. abstract omega.
+       * abstract omega.
+     + apply Z_div_pos.
+       * apply Z.lt_gt. assumption.
+       * abstract omega.
+   - abstract omega.
+ }
  apply Hrec;rewrite lsr_spec, H0, to_Z_1;change (2^1) with 2.
  split; [ | apply sqrt_test_false;auto with zarith].
  replace ([|j|] + [|i|]/[|j|]) with
@@ -414,9 +449,22 @@ Proof.
  rewrite Z_div_plus_full_l; auto with zarith.
  assert (0 <= [|i|]/ [|j|]) by (apply Z_div_pos; auto with zarith).
  assert (0 <= ([|j|] - 2 + [|i|] / [|j|]) / 2) ; auto with zarith.
- case (Zle_lt_or_eq 1 [|j|]); auto with zarith; intros Hj1.
+ case (Zle_lt_or_eq 1 [|j|]); auto with zarith.
+ {
+   intro. apply Z_div_pos.
+   - apply Zgt_pos_0.
+   - apply Z.add_nonneg_nonneg.
+     + abstract omega.
+     + assumption.
+ }
+ intros Hj1.
  rewrite <- Hj1, Zdiv_1_r.
  assert (0 <= ([|i|] - 1) /2)%Z;[ |apply Z_div_pos]; auto with zarith.
+ {
+   apply Z_div_pos.
+   - apply Zgt_pos_0.
+   - abstract omega.
+ }
  apply sqrt_main;auto with zarith.
  split;[apply sqrt_test_true | ];auto with zarith.
 Qed.
@@ -562,7 +610,16 @@ Proof.
   replace [|(1 << (digits - 1))|] with (wB/2); auto.
   rewrite lsr_spec; auto.
   replace (2^[|1|]) with 2%Z; auto.
-  split; auto with zarith.
+  split.
+  {
+    apply Z.add_nonneg_nonneg.
+    - apply Z_div_pos.
+      + apply Zgt_pos_0.
+      + assumption.
+    - apply Z_div_pos.
+      + apply Zgt_pos_0.
+      + abstract omega.
+  }
   assert ([|i|]/2 < wB/2); auto with zarith.
   apply Zdiv_lt_upper_bound; auto with zarith.
  apply Hrec; rewrite H; clear u H.
@@ -574,6 +631,13 @@ Proof.
         (1 * 2 + (([|j|] - 2) + [||WW ih il||] / [|j|])); try ring.
  rewrite Z_div_plus_full_l; auto with zarith.
  assert (0 <= ([|j|] - 2 + [||WW ih il||] / [|j|]) / 2) ; auto with zarith.
+ {
+   apply Z_div_pos.
+   - apply Zgt_pos_0.
+   - apply Z.add_nonneg_nonneg.
+     + abstract omega.
+     + assumption.
+ }
  apply sqrt_test_false; auto with zarith.
  apply sqrt_main; auto with zarith.
  contradict Hij; apply Zle_not_lt.
@@ -1091,7 +1155,8 @@ Proof.
    replace [|j|] with (d2 + [|i|])%Z.
  2: unfold d2; ring.
  rewrite Zpower_exp; auto with zarith.
- rewrite Zdiv_mult_cancel_r; auto with zarith.
+ rewrite Zdiv_mult_cancel_r.
+ 2: (apply Zlt0_not_eq; apply Z.pow_pos_nonneg; [apply Pos2Z.is_pos|assumption]).
  2: unfold d2; auto with zarith.
  rewrite (Z_div_mod_eq [|x|] (2^d1)) at 2; auto with zarith.
  2: apply Zlt_gt; apply Zpower_gt_0; unfold d1; lia.
@@ -1404,7 +1469,12 @@ Proof.
   case (to_Z_bounded x); intros H1x H2x.
   case (to_Z_bounded (bit x 0)); intros H1b H2b.
   assert (F1: 0 <= [|x >> 1|] < wB/2).
-    rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
+    rewrite lsr_spec, to_Z_1, Zpower_1_r; split.
+    {
+      apply Z_div_pos.
+      - apply Zgt_pos_0.
+      - assumption.
+    }
     apply Zdiv_lt_upper_bound; auto with zarith.
   rewrite (bit_split x) at 1.
   rewrite add_spec, Zmod_small, lsl_spec, to_Z_1, Zpower_1_r, Zmod_small;
@@ -1435,9 +1505,19 @@ Proof.
  rewrite (to_Z_split y) at 1; rewrite (to_Z_split (x lor y)).
  assert ([|y>>1|] <= [|(x lor y) >> 1|]).
   rewrite lor_lsr, <-leb_spec; apply IH.
-  rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
+  rewrite lsr_spec, to_Z_1, Zpower_1_r; split.
+  {
+    apply Z_div_pos.
+    - apply Zgt_pos_0.
+    - abstract omega.
+  }
   apply Zdiv_lt_upper_bound; auto with zarith.
-  rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
+  rewrite lsr_spec, to_Z_1, Zpower_1_r; split.
+  {
+    apply Z_div_pos.
+    - apply Zgt_pos_0.
+    - abstract omega.
+  }
   apply Zdiv_lt_upper_bound; auto with zarith.
  assert ([|bit y 0|] <= [|bit (x lor y) 0|]); auto with zarith.
  rewrite lor_spec; do 2 case bit; try discriminate.
@@ -1462,9 +1542,19 @@ Proof.
  intros Hn.
  assert (F1: ((x >> 1) + (y >> 1))%int = (x >> 1) lor (y >> 1)).
    apply IH.
-   rewrite lsr_spec, Zpower_1_r; split; auto with zarith.
+   rewrite lsr_spec, Zpower_1_r; split.
+   {
+     apply Z_div_pos.
+     - apply Zgt_pos_0.
+     - abstract omega.
+   }
    apply Zdiv_lt_upper_bound; auto with zarith.
-   rewrite lsr_spec, Zpower_1_r; split; auto with zarith.
+   rewrite lsr_spec, Zpower_1_r; split.
+   {
+     apply Z_div_pos.
+     - apply Zgt_pos_0.
+     - abstract omega.
+   }
    apply Zdiv_lt_upper_bound; auto with zarith.
    intros m H1 H2.
    case_eq (digits <= m)%int;  [idtac | rewrite <- not_true_iff_false];
@@ -1501,9 +1591,19 @@ Proof.
   rewrite Zpower_1_r, Z_mod_mult, Zplus_0_l, Zmod_mod; auto with zarith.
   generalize F3; do 2 case bit; try discriminate; auto.
  case (IH (x >> 1) (y >> 1)).
- rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
+ rewrite lsr_spec, to_Z_1, Zpower_1_r; split.
+ {
+   apply Z_div_pos.
+   - apply Zgt_pos_0.
+   - abstract omega.
+ }
  apply Zdiv_lt_upper_bound; auto with zarith.
- rewrite lsr_spec, to_Z_1, Zpower_1_r; split; auto with zarith.
+ rewrite lsr_spec, to_Z_1, Zpower_1_r; split.
+ {
+   apply Z_div_pos.
+   - apply Zgt_pos_0.
+   - abstract omega.
+ }
  apply Zdiv_lt_upper_bound; auto with zarith.
  intros _ HH m; case (to_Z_bounded m); intros H1m H2m.
  case_eq (digits <= m)%int.
@@ -1521,7 +1621,14 @@ Proof.
  rewrite lsl_spec, to_Z_1, Zpower_1_r, Zmod_small; auto with zarith.
  case (to_Z_bounded (x lor y)); intros H1xy H2xy.
  rewrite lsr_spec, to_Z_1, Zpower_1_r; auto with zarith.
- change wB with ((wB/2)*2); split; auto with zarith.
+ change wB with ((wB/2)*2); split.
+ {
+   apply Z.mul_nonneg_nonneg.
+   - apply Z_div_pos.
+     + apply Zgt_pos_0.
+     + assumption.
+   - apply Pos2Z.is_nonneg.
+ }
  assert ([|x lor y|] / 2  < wB / 2); auto with zarith.
  apply Zdiv_lt_upper_bound; auto with zarith.
  split.

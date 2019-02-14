@@ -82,7 +82,7 @@ let read_success s =
   | r -> error s r
 
 
-let no_response _ = ()
+(* let no_response _ = () *)
 
 
 let read_check_result s = 

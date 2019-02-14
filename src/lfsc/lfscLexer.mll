@@ -245,7 +245,7 @@ and scan_string buf start = parse
       {
         let ofs = lexbuf.lex_start_pos in
         let len = lexbuf.lex_curr_pos - ofs in
-        Quoted_string_buffer.add_substring buf lexbuf.lex_buffer ofs len;
+        Quoted_string_buffer.add_substring buf (Bytes.to_string lexbuf.lex_buffer) ofs len;
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
       }

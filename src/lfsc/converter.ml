@@ -874,19 +874,19 @@ module Make (T : Translator_sig.S) = struct
       | _ -> raise Not_found
              
 
-  let rec reso_of_QR acc qr = match app_name qr with
-    | Some (n, [_; _; u1; u2; _]) when n == H.q || n == H.r ->
-      reso_of_QR (reso_of_QR acc u1) u2
-    | _ -> clause_qr qr :: acc
+  (* let rec reso_of_QR acc qr = match app_name qr with
+   *   | Some (n, [_; _; u1; u2; _]) when n == H.q || n == H.r ->
+   *     reso_of_QR (reso_of_QR acc u1) u2
+   *   | _ -> clause_qr qr :: acc *)
 
   (** Returns clauses used in a linear resolution chain *)
-  let reso_of_QR qr = reso_of_QR [] qr |> List.rev
+  (* let reso_of_QR qr = reso_of_QR [] qr |> List.rev *)
 
 
-  let rec reso_of_QR qr = match app_name qr with
-    | Some (n, [_; _; u1; u2; _]) when n == H.q || n == H.r ->
-      reso_of_QR u1 @ reso_of_QR u2
-    | _ -> [clause_qr qr]
+  (* let rec reso_of_QR qr = match app_name qr with
+   *   | Some (n, [_; _; u1; u2; _]) when n == H.q || n == H.r ->
+   *     reso_of_QR u1 @ reso_of_QR u2
+   *   | _ -> [clause_qr qr] *)
 
   let rec reso_of_QR depth acc qr = match app_name qr with
     | Some (n, [_; _; u1; u2; _]) when n == H.q || n == H.r ->
@@ -963,7 +963,7 @@ module Make (T : Translator_sig.S) = struct
       | None -> assert false
 
 
-  let rec bb_lem env p =
+  let bb_lem env p =
     let env, p = bb_trim_intro_unit env p in
     let id = bb_lem_res None p in
     { env with clauses = id :: env.clauses }

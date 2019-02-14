@@ -11,13 +11,9 @@
 
 
 open Format
-open Entries
-open Declare
-open Decl_kinds
 
 open SmtMisc
 open CoqTerms
-open SmtForm
 open SmtCertif
 open SmtTrace
 open SmtAtom
@@ -163,8 +159,8 @@ let checker_debug fsmt fproof =
 let theorem name fsmt fproof =
   SmtCommands.theorem name (import_all fsmt fproof)
 
-let checker fsmt fproof =
-  SmtCommands.checker (import_all fsmt fproof)
+(* let checker fsmt fproof =
+ *   SmtCommands.checker (import_all fsmt fproof) *)
 
 (* Same but print runtime *)
 let checker fsmt fproof =

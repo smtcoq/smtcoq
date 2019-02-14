@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray.
+Require Import Bool List Int63 PArray ZArith.
 Require Import Misc State SMT_terms Euf.
 
 Require Import RingMicromega ZMicromega Tauto Psatz.

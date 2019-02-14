@@ -11,7 +11,7 @@
 
 
 (*** Spl -- a small checker for simplifications ***)
-Require Import List PArray Bool Int63 ZMicromega.
+Require Import List PArray Bool Int63 ZMicromega ZArith.
 Require Import Misc State SMT_terms BVList.
 Require Lia.
 
@@ -214,7 +214,7 @@ Section CheckAtom.
     end.
 
   (* TODO : move this *)
-  Lemma Zge_is_ge_bool : forall x y, (x >= y) <-> (Zge_bool x y = true).
+  Lemma Zge_is_ge_bool : forall x y, (x >= y)%Z <-> (Zge_bool x y = true).
   Proof.
     intros x y;assert (W:=Zge_cases x y);destruct (Zge_bool x y).
     split;auto.

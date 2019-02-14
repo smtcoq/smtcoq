@@ -15,6 +15,8 @@ Add Rec LoadPath "../src" as SMTCoq.
 Require Import SMTCoq.
 Require Import Bool PArray Int63 List ZArith Logic.
 
+Local Open Scope Z_scope.
+
 
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 

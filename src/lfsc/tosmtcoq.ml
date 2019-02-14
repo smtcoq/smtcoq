@@ -12,8 +12,6 @@
 
 open SmtAtom
 open SmtForm
-open SmtCertif
-open SmtTrace
 open VeritSyntax
 open Ast
 open Builtin
@@ -42,7 +40,7 @@ module HT = struct
   let add h k v = h := M.add k v !h
   let find h k = M.find k !h
   let clear h = h := M.empty
-  let iter f h = M.iter f !h
+  (* let iter f h = M.iter f !h *)
 end
 
 
@@ -499,8 +497,8 @@ let register_clause_id cl id =
   Hashtbl.add ids_clauses id cl
 
 
-let register_termclause_id t id =
-  register_clause_id (to_clause t) id
+(* let register_termclause_id t id =
+ *   register_clause_id (to_clause t) id *)
 
 
 let new_clause_id ?(reuse=true) cl =

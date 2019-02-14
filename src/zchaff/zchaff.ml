@@ -14,7 +14,6 @@ open Entries
 open Declare
 open Decl_kinds
 
-open SmtMisc
 open CoqTerms
 open SmtForm
 open SmtCertif

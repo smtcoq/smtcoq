@@ -11,10 +11,12 @@
 
 
 open Entries
-open Coqlib
 
+
+(* Constr generation and manipulation *)
 
 let mklApp f args = Term.mkApp (Lazy.force f, args)
+let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
 
@@ -75,17 +77,15 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Differences between the two versions of Coq *)
-let dummy_loc = Loc.ghost
-
-let mkUConst c =
+let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_entry = fun c ->
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, ty = Typing.type_of env evd c in
-  { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
+  let evd, ty = Typing.type_of env evd (EConstr.of_constr c) in
+  { Entries.const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
     const_entry_feedback    = None;
-    const_entry_type        = Some ty;
+    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Term.constr *)
     const_entry_polymorphic = false;
     const_entry_universes   = snd (Evd.universe_context evd);
     const_entry_opaque      = false;
@@ -94,7 +94,7 @@ let mkUConst c =
 let mkTConst c noc ty =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd noc in
+  let evd, _ = Typing.type_of env evd (EConstr.of_constr noc) in
   { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
@@ -105,25 +105,25 @@ let mkTConst c noc ty =
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let error = CErrors.error
+let error s = CErrors.user_err (Pp.str s)
 
 let coqtype = Future.from_val Term.mkSet
 
 let declare_new_type t =
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (dummy_loc, t) in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (None, t) in
   Term.mkVar t
 
 let declare_new_variable v constr_t =
   let env = Global.env () in
   let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd constr_t in
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (dummy_loc, v) in
+  let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
+  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (None, v) in
   Term.mkVar v
 
-let extern_constr = Constrextern.extern_constr true Environ.empty_env Evd.empty
+let extern_constr c = Constrextern.extern_constr true Environ.empty_env Evd.empty (EConstr.of_constr c)
 
 let vernacentries_interp expr =
-  Vernacentries.interp (dummy_loc, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
+  Vernacentries.interp (None, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
@@ -136,43 +136,60 @@ let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
 
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
-let assert_before = Tactics.assert_before
+let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
 let vm_conv = Vconv.vm_conv
-let vm_cast_no_check t = Tactics.vm_cast_no_check t
+let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
+(* Cannot contain evars since it comes from a Term.constr *)
+let cbv_vm env c t = EConstr.Unsafe.to_constr (Vnorm.cbv_vm env Evd.empty (EConstr.of_constr c) (EConstr.of_constr t))
 
-(* Warning 40: this record of type Proofview.Goal.enter contains fields
-   that are not visible in the current scope: enter. *)
 let mk_tactic tac =
-  Proofview.Goal.nf_enter {Proofview.Goal.enter = (fun gl ->
+  Proofview.Goal.nf_enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in
+    let t = EConstr.to_constr sigma t in (* The goal should not contain uninstanciated evars *)
     tac env sigma t
-  )}
+  )
 let set_evars_tac noc =
   mk_tactic (
       fun env sigma _ ->
-      let sigma, _ = Typing.type_of env sigma noc in
+      let sigma, _ = Typing.type_of env sigma (EConstr.of_constr noc) in
       Proofview.Unsafe.tclEVARS sigma)
 
 let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
-let constrextern_extern_constr =
+let constrextern_extern_constr c =
   let env = Global.env () in
-  Constrextern.extern_constr false env (Evd.from_env env)
+  Constrextern.extern_constr false env (Evd.from_env env) (EConstr.of_constr c)
 
 let get_rel_dec_name = function
   | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
 
+let retyping_get_type_of env sigma c =
+  (* Cannot contain evars since it comes from a Term.constr *)
+  EConstr.Unsafe.to_constr (Retyping.get_type_of env sigma (EConstr.of_constr c))
 
-(* New packaging of plugins *)
+
+(* Micromega *)
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+
+let micromega_coq_proofTerm =
+  (* Cannot contain evars *)
+  lazy (EConstr.Unsafe.to_constr (Lazy.force (Micromega_plugin.Coq_micromega.M.coq_proofTerm)))
+
+let micromega_dump_proof_term p =
+  (* Cannot contain evars *)
+  EConstr.Unsafe.to_constr (Micromega_plugin.Coq_micromega.dump_proof_term p)
 
 
 (* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
 type names_id = Names.Id.t
 type constr_expr = Constrexpr.constr_expr
+
+(* EConstr *)
+type econstr = EConstr.t
+let econstr_of_constr = EConstr.of_constr

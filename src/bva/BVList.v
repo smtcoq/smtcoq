@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith Psatz Int63 Nnat.
+Require Import List Bool NArith Psatz Int63 Nnat ZArith.
 Require Import Misc.
 Import ListNotations.
 Local Open Scope list_scope.

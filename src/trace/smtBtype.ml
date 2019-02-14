@@ -119,8 +119,8 @@ let to_list reify =
 let make_t_i rt = interp_tbl rt
 
 
-let interp_t t_i t =
-  mklApp cinterp_t [|t_i ; to_coq t|]
+(* let interp_t t_i t =
+ *   mklApp cinterp_t [|t_i ; to_coq t|] *)
 
 let dec_interp t_i t =
   mklApp cdec_interp [|t_i ; to_coq t|]

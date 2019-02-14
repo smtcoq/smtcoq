@@ -12,11 +12,9 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-(*Add Rec LoadPath "." as SMTCoq.*)
-
 Require Structures.
 
-Require Import Int63 Int63Properties PArray SMT_classes.
+Require Import Int63 Int63Properties PArray SMT_classes ZArith.
 
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity Nnat.

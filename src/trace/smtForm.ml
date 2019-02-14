@@ -618,7 +618,7 @@ module Make (Atom:ATOM) =
 		             mklApp cifb (Array.map interp_form args)
 		          | Fnot2 n ->
 		             (let r = ref (interp_form args.(0)) in
-		              for i = 1 to n do
+		              for _ = 1 to n do
                                 r := mklApp cnegb [|!r|]
                               done;
                               !r)

@@ -11,7 +11,7 @@
 
 
 Require Import PropToBool BoolToProp.  (* Before SMTCoq.State *)
-Require Import Int63 List PArray Bool.
+Require Import Int63 List PArray Bool ZArith.
 Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
 
 Declare ML Module "smtcoq_plugin".
@@ -50,15 +50,15 @@ Qed.
 
 (* verit considers equality modulo its symmetry, so we have to recover the
    right direction in the instances of the theorems *)
-Definition hidden_eq a b := a =? b.
+Definition hidden_eq (a b : Z) := (a =? b)%Z.
 Ltac all_rew :=
   repeat match goal with
-         | [ |- context [ ?A =? ?B]] =>
-           change (A =? B) with (hidden_eq A B)
+         | [ |- context [ (?A =? ?B)%Z]] =>
+           change (A =? B)%Z with (hidden_eq A B)
          end;
   repeat match goal with
          | [ |- context [ hidden_eq ?A ?B] ] =>
-           replace (hidden_eq A B) with (B =? A);
+           replace (hidden_eq A B) with (B =? A)%Z;
            [ | now rewrite Z.eqb_sym]
          end.
 
@@ -112,3 +112,11 @@ Ltac cvc4_no_check   := prop2bool; cvc4_bool_no_check; bool2prop.
 
 Tactic Notation "smt" constr_list(h) := (prop2bool; try verit_bool h; cvc4_bool; try verit_bool h; bool2prop).
 Tactic Notation "smt_no_check" constr_list(h) := (prop2bool; try verit_bool_no_check h; cvc4_bool_no_check; try verit_bool_no_check h; bool2prop).
+
+
+
+(* 
+   Local Variables:
+   coq-load-path: ((rec "." "SMTCoq"))
+   End: 
+*)

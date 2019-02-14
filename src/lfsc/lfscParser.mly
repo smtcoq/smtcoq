@@ -16,7 +16,6 @@
 open Ast
 open Lexing
 open Format
-open Builtin
 
 let parse_failure what =
   let pos = Parsing.symbol_start_pos () in
