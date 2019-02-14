@@ -53,12 +53,12 @@ Qed.
 Definition hidden_eq (a b : Z) := (a =? b)%Z.
 Ltac all_rew :=
   repeat match goal with
-         | [ |- context [ ?A =? ?B]] =>
-           change (A =? B) with (hidden_eq A B)
+         | [ |- context [ (?A =? ?B)%Z]] =>
+           change (A =? B)%Z with (hidden_eq A B)
          end;
   repeat match goal with
          | [ |- context [ hidden_eq ?A ?B] ] =>
-           replace (hidden_eq A B) with (B =? A);
+           replace (hidden_eq A B) with (B =? A)%Z;
            [ | now rewrite Z.eqb_sym]
          end.
 
