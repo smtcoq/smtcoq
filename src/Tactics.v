@@ -50,7 +50,7 @@ Qed.
 
 (* verit considers equality modulo its symmetry, so we have to recover the
    right direction in the instances of the theorems *)
-Definition hidden_eq a b := a =? b.
+Definition hidden_eq (a b : Z) := (a =? b)%Z.
 Ltac all_rew :=
   repeat match goal with
          | [ |- context [ ?A =? ?B]] =>
