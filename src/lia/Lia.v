@@ -74,7 +74,7 @@ Section certif.
     match l with
     | nil => None
     | h' :: l =>
-      let p := Ppred p in
+      let p := Pos.pred p in
       if Atom.eqb h h' then Some p else find_var_aux h p l
     end.
 
@@ -82,7 +82,7 @@ Section certif.
     let (count,map) := vm in
     match find_var_aux h count map with
     | Some p => (vm, p)
-    | None => ((Psucc count,h::map), count)
+    | None => ((Pos.succ count,h::map), count)
     end.
 
   Definition empty_vmap : vmap := (1%positive, nil).
@@ -508,7 +508,7 @@ Section certif.
       intros pvm Heq1 Heq.
       assert (1 < pvm)%positive.
        rewrite Plt_lt;change (nat_of_P 1) with 1%nat ;omega.
-      assert (Datatypes.length lvm = nat_of_P (Ppred pvm) - 1)%nat.
+      assert (Datatypes.length lvm = nat_of_P (Pos.pred pvm) - 1)%nat.
        rewrite Ppred_minus, Pminus_minus;trivial.
        change (nat_of_P 1) with 1%nat ;try omega.
       revert Heq1.
@@ -554,7 +554,7 @@ Section certif.
      intros pvm p Heq1 Heq.
      assert (1 < pvm)%positive.
        rewrite Plt_lt;change (nat_of_P 1) with 1%nat ;omega.
-     assert (Datatypes.length lvm = nat_of_P (Ppred pvm) - 1)%nat.
+     assert (Datatypes.length lvm = nat_of_P (Pos.pred pvm) - 1)%nat.
      rewrite Ppred_minus, Pminus_minus;trivial.
      change (nat_of_P 1) with 1%nat ;try omega.
      revert Heq1.
@@ -562,8 +562,8 @@ Section certif.
      intros Heq1;inversion Heq1;clear Heq1;subst.
      unfold is_true;rewrite andb_true_iff;intros (H1,H2).
      assert (1 < nat_of_P pvm)%nat by (rewrite Plt_lt in H;trivial).
-     assert (W:=nat_of_P_pos (Ppred pvm)).
-     assert (nat_of_P (pvm - Ppred pvm) - 1 = 0)%nat.
+     assert (W:=nat_of_P_pos (Pos.pred pvm)).
+     assert (nat_of_P (pvm - Pos.pred pvm) - 1 = 0)%nat.
       rewrite Pminus_minus;try omega.
       apply Plt_lt;omega.
      rewrite H4;simpl.
@@ -571,10 +571,10 @@ Section certif.
      rewrite Hz;trivial.
      unfold is_true;rewrite andb_true_iff;intros Heq1 (H1,H2).
      assert (W:= find_var_aux_lt _ _ _ _ Heq1 H0).
-     assert (nat_of_P (pvm - p) - 1 = S (nat_of_P (Ppred pvm - p) - 1))%nat.
+     assert (nat_of_P (pvm - p) - 1 = S (nat_of_P (Pos.pred pvm - p) - 1))%nat.
        assert (W1:= W);rewrite <- Plt_lt in W.
        rewrite !Pminus_minus;trivial.
-       assert (W2:=nat_of_P_pos (Ppred pvm)).
+       assert (W2:=nat_of_P_pos (Pos.pred pvm)).
        omega.
        rewrite Plt_lt.
        apply lt_trans with (1:= W1);omega.
@@ -585,7 +585,7 @@ Section certif.
      rewrite Hh;trivial.
      rewrite Psucc_S;omega.
      intros p Hlt;
-      assert (nat_of_P (Psucc pvm - p) - 1 = S (nat_of_P (pvm - p) - 1))%nat.
+      assert (nat_of_P (Pos.succ pvm - p) - 1 = S (nat_of_P (pvm - p) - 1))%nat.
        assert (W1:= Hlt);rewrite <- Plt_lt in W1.
        rewrite !Pminus_minus;trivial.
        rewrite Psucc_S;omega.
@@ -595,7 +595,7 @@ Section certif.
      rewrite Zpos_succ_morphism;omega.
      destruct (check_aux_interp_aux _ _ _ wf_t_atom _ _ Hh) as (z,Hz).
      rewrite Hz;unfold interp_vmap;simpl.
-     assert (nat_of_P (Psucc pvm - pvm) = 1%nat).
+     assert (nat_of_P (Pos.succ pvm - pvm) = 1%nat).
        rewrite Pplus_one_succ_l, Pminus_minus, Pplus_plus.
        change (nat_of_P 1) with 1%nat;omega.
        rewrite Plt_lt, Pplus_plus.
@@ -611,7 +611,7 @@ Section certif.
    Proof.
     unfold is_true;induction pe;simpl;trivial.
     rewrite <- !Zlt_is_lt_bool; rewrite <- Ple_le in H.
-    intros H1;apply Zlt_le_trans with (1:= H1);trivial.
+    intros H1;apply Z.lt_le_trans with (1:= H1);trivial.
     rewrite !andb_true_iff;intros (H1,H2);auto.
     rewrite !andb_true_iff;intros (H1,H2);auto.
     rewrite !andb_true_iff;intros (H1,H2);auto.
