@@ -33,7 +33,7 @@
 -I versions/standard/Int63
 -I versions/standard/Array
 
--I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
+# -I "$(shell $(COQBIN)coqc -where)/plugins/micromega"
 
 -extra "test" "" "cd ../unit-tests; make"
 -extra "ztest" "" "cd ../unit-tests; make zchaff"

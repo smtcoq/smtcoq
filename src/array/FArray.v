@@ -11,7 +11,8 @@
 
 
 Require Import Bool OrderedType SMT_classes.
-Require Import ProofIrrelevance. (* TODO: REMOVE THIS AXIOM *)
+Require Import ProofIrrelevance Classical_Pred_Type ClassicalEpsilon. (* TODO: REMOVE ALL THESE AXIOMS *)
+
 
 (** This file formalizes functional arrays with extensionality as specified in
     SMT-LIB 2. It gives realization to axioms that define the SMT-LIB theory of
@@ -1776,8 +1777,6 @@ Section FArray.
   Qed.
 
   Section Classical_extensionnality.
-
-    Require Import Classical_Pred_Type ClassicalEpsilon.
 
     Lemma extensionnality2 : forall a b, a <> b -> (exists i, select a i <> select b i).
     Proof.

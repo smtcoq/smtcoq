@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray SMT_classes.
-Require Import Misc State SMT_terms FArray.
+Require Import Bool List Int63 PArray Psatz.
+Require Import Misc State SMT_terms FArray SMT_classes.
 
 Import Form.
 Import Atom.
@@ -896,8 +896,6 @@ Section certif.
   Axiom afold_left_or : forall a,
     afold_left bool int false orb (Lit.interp rho) a =
     C.interp rho (to_list a).
-
-  Require Import Psatz.
 
   Lemma valid_check_ext lres : C.valid rho (check_ext lres).
     unfold check_ext, eq_sel_sym.

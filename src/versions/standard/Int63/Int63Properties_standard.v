@@ -131,7 +131,7 @@ Admitted.
 (** translation with Z *)
 Require Import Ndigits.
 
-Lemma Z_of_N_double : forall n, Z_of_N (Ndouble n) = Zdouble (Z_of_N n).
+Lemma Z_of_N_double : forall n, Z_of_N (N.double n) = Z.double (Z_of_N n).
 Proof.
  destruct n;simpl;trivial.
 Qed.
@@ -148,7 +148,7 @@ Proof. apply phi_bounded. Qed.
 (*  rewrite inj_S;simpl;assert (W:= IHn (x >> 1)%int). *)
 (*  rewrite Zpower_Zsucc;auto with zarith. *)
 (*  destruct (is_even x). *)
-(*  rewrite Zdouble_mult;auto with zarith. *)
+(*  rewrite Z.double_mult;auto with zarith. *)
 (*  rewrite Zdouble_plus_one_mult;auto with zarith. *)
 (* Qed. *)
 
@@ -183,7 +183,7 @@ Proof.
  red in Heq;rewrite Heq;trivial.
  rewrite <- not_true_iff_false, ltb_spec in Heq.
  case_eq (x == y)%int;intros Heq1.
- rewrite eqb_spec in Heq1;rewrite Heq1, Zcompare_refl;trivial.
+ rewrite eqb_spec in Heq1;rewrite Heq1, Z.compare_refl;trivial.
  rewrite <- not_true_iff_false, eqb_spec in Heq1.
  symmetry;change ([|x|] > [|y|]);rewrite <- to_Z_eq in Heq1;omega.
 Qed.
@@ -331,11 +331,11 @@ Proof. intros; unfold pred; apply sub_spec. Qed.
 Lemma diveucl_spec :
   forall x y,
     let (q,r) := diveucl x y in
-    ([|q|],[|r|]) = Zdiv_eucl [|x|] [|y|].
+    ([|q|],[|r|]) = Z.div_eucl [|x|] [|y|].
 Proof.
  intros;rewrite diveucl_def_spec.
  unfold diveucl_def;rewrite div_spec, mod_spec.
- unfold Zdiv, Zmod;destruct (Zdiv_eucl [|x|] [|y|]);trivial.
+ unfold Z.div, Zmod;destruct (Z.div_eucl [|x|] [|y|]);trivial.
 Qed.
 
 (* Sqrt *)
@@ -358,26 +358,26 @@ Proof.
  apply  Zmult_le_0_compat; generalize (Z_div_pos k 2); auto with zarith.
  intros j Hj Hrec _ k Hk; pattern k; apply natlike_ind; auto; clear k Hk.
  rewrite Zmult_0_r, Zplus_0_r, Zplus_0_l.
- generalize (sqr_pos (Zsucc j / 2)) (quotient_by_2 (Zsucc j));
-   unfold Zsucc.
+ generalize (sqr_pos (Z.succ j / 2)) (quotient_by_2 (Z.succ j));
+   unfold Z.succ.
  rewrite Zpower_2, Zmult_plus_distr_l; repeat rewrite Zmult_plus_distr_r.
  auto with zarith.
  intros k Hk _.
- replace ((Zsucc j + Zsucc k) / 2) with ((j + k)/2 + 1).
+ replace ((Z.succ j + Z.succ k) / 2) with ((j + k)/2 + 1).
  generalize (Hrec Hj k Hk) (quotient_by_2 (j + k)).
- unfold Zsucc; repeat rewrite Zpower_2;
+ unfold Z.succ; repeat rewrite Zpower_2;
    repeat rewrite Zmult_plus_distr_l; repeat rewrite Zmult_plus_distr_r.
  repeat rewrite Zmult_1_l; repeat rewrite Zmult_1_r.
  auto with zarith.
  rewrite Zplus_comm, <- Z_div_plus_full_l; auto with zarith.
- apply f_equal2 with (f := Zdiv); auto with zarith.
+ apply f_equal2 with (f := Z.div); auto with zarith.
 Qed.
 
 Lemma sqrt_main i j: 0 <= i -> 0 < j -> i < ((j + (i/j))/2 + 1) ^ 2.
 Proof.
  intros Hi Hj.
  assert (Hij: 0 <= i/j) by (apply Z_div_pos; auto with zarith).
- apply Zlt_le_trans with (2 := sqrt_main_trick _ _ (Zlt_le_weak _ _ Hj) Hij).
+ apply Z.lt_le_trans with (2 := sqrt_main_trick _ _ (Zlt_le_weak _ _ Hj) Hij).
  pattern i at 1; rewrite (Z_div_mod_eq i j); case (Z_mod_lt i j); auto with zarith.
 Qed.
 
@@ -402,7 +402,7 @@ Qed.
 Lemma sqrt_test_true i j: 0 <= i -> 0 < j -> i/j >= j -> j ^ 2 <= i.
 Proof.
  intros Hi Hj Hd; rewrite Zpower_2.
- apply Zle_trans with (j * (i/j)); auto with zarith.
+ apply Z.le_trans with (j * (i/j)); auto with zarith.
  apply Z_mult_div_ge; auto with zarith.
 Qed.
 
@@ -411,7 +411,7 @@ Proof.
  intros Hi Hj H; case (Zle_or_lt j ((j + (i/j))/2)); auto.
  intros H1; contradict H; apply Zle_not_lt.
  assert (2 * j <= j + (i/j)); auto with zarith.
- apply Zle_trans with (2 * ((j + (i/j))/2)); auto with zarith.
+ apply Z.le_trans with (2 * ((j + (i/j))/2)); auto with zarith.
  apply Z_mult_div_ge; auto with zarith.
 Qed.
 
@@ -488,7 +488,7 @@ Proof.
  intros j3 Hj3 Hpj3.
  apply HHrec; auto.
  rewrite inj_S, Zpower_Zsucc.
- apply Zle_trans with (2 ^Z_of_nat n + [|j2|]); auto with zarith.
+ apply Z.le_trans with (2 ^Z_of_nat n + [|j2|]); auto with zarith.
  apply Zle_0_nat.
 Qed.
 
@@ -496,7 +496,7 @@ Lemma sqrt_spec : forall x,
        [|sqrt x|] ^ 2 <= [|x|] < ([|sqrt x|] + 1) ^ 2.
 Proof.
  intros i; unfold sqrt.
- rewrite compare_spec. case Zcompare_spec; rewrite to_Z_1;
+ rewrite compare_spec. case Z.compare_spec; rewrite to_Z_1;
    intros Hi; auto with zarith.
  repeat rewrite Zpower_2; auto with zarith.
  apply iter_sqrt_correct; auto with zarith;
@@ -508,9 +508,9 @@ Proof.
   assert (W:= Z_mult_div_ge [|i|] 2);assert (W':= to_Z_bounded i);auto with zarith.
   intros j2 H1 H2; contradict H2; apply Zlt_not_le.
   fold wB;assert (W:=to_Z_bounded i).
-  apply Zle_lt_trans with ([|i|]); auto with zarith.
+  apply Z.le_lt_trans with ([|i|]); auto with zarith.
   assert (0 <= [|i|]/2)%Z by (apply Z_div_pos; auto with zarith).
-  apply Zle_trans with (2 * ([|i|]/2)); auto with zarith.
+  apply Z.le_trans with (2 * ([|i|]/2)); auto with zarith.
   apply Z_mult_div_ge; auto with zarith.
  case (to_Z_bounded i); repeat rewrite Zpower_2; auto with zarith.
 Qed.
@@ -543,8 +543,8 @@ Proof.
  assert (([|ih|] < [|j|] + 1)%Z); auto with zarith.
  apply Zlt_square_simpl; auto with zarith.
  simpl zn2z_to_Z in H1.
- repeat rewrite <-Zpower_2; apply Zle_lt_trans with (2 := H1).
- apply Zle_trans with ([|ih|] * wB)%Z;try rewrite Zpower_2; auto with zarith.
+ repeat rewrite <-Zpower_2; apply Z.le_lt_trans with (2 := H1).
+ apply Z.le_trans with ([|ih|] * wB)%Z;try rewrite Zpower_2; auto with zarith.
 Qed.
 
 
@@ -553,7 +553,7 @@ Lemma div2_phi ih il j:
 Proof.
  generalize (diveucl_21_spec ih il j).
  case diveucl_21; intros q r Heq.
- simpl zn2z_to_Z;unfold Zdiv;rewrite <- Heq;trivial.
+ simpl zn2z_to_Z;unfold Z.div;rewrite <- Heq;trivial.
 Qed.
 
 Lemma zn2z_to_Z_pos ih il : 0 <= [||WW ih il||].
@@ -577,9 +577,9 @@ Proof.
  case (to_Z_bounded il); intros Hil1 _.
  case (to_Z_bounded j); intros _ Hj1.
  assert (Hp3: (0 < [||WW ih il||])).
-  simpl zn2z_to_Z;apply Zlt_le_trans with ([|ih|] * wB)%Z; auto with zarith.
+  simpl zn2z_to_Z;apply Z.lt_le_trans with ([|ih|] * wB)%Z; auto with zarith.
   apply Zmult_lt_0_compat; auto with zarith.
-  apply Zlt_le_trans with (2:= Hih); auto with zarith.
+  apply Z.lt_le_trans with (2:= Hih); auto with zarith.
  cbv zeta.
  case_eq (ih < j)%int;intros Heq.
  rewrite ltb_spec in Heq.
@@ -642,11 +642,11 @@ Proof.
  apply sqrt_main; auto with zarith.
  contradict Hij; apply Zle_not_lt.
  assert ((1 + [|j|]) <= 2 ^ (Z_of_nat size - 1)); auto with zarith.
- apply Zle_trans with ((2 ^ (Z_of_nat size - 1)) ^2); auto with zarith.
+ apply Z.le_trans with ((2 ^ (Z_of_nat size - 1)) ^2); auto with zarith.
  assert (0 <= 1 + [|j|]); auto with zarith.
  apply Zmult_le_compat; auto with zarith.
  change ((2 ^ (Z_of_nat size - 1))^2) with (2 ^ (Z_of_nat size - 2) * wB).
- apply Zle_trans with ([|ih|] * wB); auto with zarith.
+ apply Z.le_trans with ([|ih|] * wB); auto with zarith.
  unfold zn2z_to_Z, wB; auto with zarith.
 Qed.
 
@@ -671,7 +671,7 @@ Proof.
  intros j3 Hj3 Hpj3.
  apply HHrec; auto.
  rewrite inj_S, Zpower_Zsucc.
- apply Zle_trans with (2 ^Z_of_nat n + [|j2|])%Z; auto with zarith.
+ apply Z.le_trans with (2 ^Z_of_nat n + [|j2|])%Z; auto with zarith.
  apply Zle_0_nat.
 Qed.
 
@@ -688,7 +688,7 @@ Lemma sqrt2_spec : forall x y,
   (intros s; ring).
  assert (Hb: 0 <= wB) by (red; intros HH; discriminate).
  assert (Hi2: [||WW ih il ||] < ([|max_int|] + 1) ^ 2).
-  apply Zle_lt_trans with ((wB - 1) * wB + (wB - 1)); auto with zarith.
+  apply Z.le_lt_trans with ((wB - 1) * wB + (wB - 1)); auto with zarith.
   2: apply refl_equal.
   case (to_Z_bounded ih); case (to_Z_bounded il); intros H1 H2 H3 H4.
   unfold zn2z_to_Z; auto with zarith.
@@ -719,7 +719,7 @@ Lemma sqrt2_spec : forall x y,
  assert ([|ih1|] * wB + 2 * [|s|] + 1 <= [|ih|] * wB); auto with zarith.
  case (to_Z_bounded s); intros _ Hps.
  case (to_Z_bounded ih1); intros Hpih1 _; auto with zarith.
- apply Zle_trans with (([|ih1|] + 2) * wB); auto with zarith.
+ apply Z.le_trans with (([|ih1|] + 2) * wB); auto with zarith.
  rewrite Zmult_plus_distr_l.
  assert (2 * [|s|] + 1 <= 2 * wB); auto with zarith.
  unfold zn2z_to_Z; rewrite <-Hihl1, Hbin; auto.
@@ -734,7 +734,7 @@ Lemma sqrt2_spec : forall x y,
  apply Zlt_not_le; rewrite Zpower_2, Hihl1.
  unfold zn2z_to_Z.
  case (to_Z_bounded il); intros _ H2.
- apply Zlt_le_trans with (([|ih|] + 1) * wB + 0).
+ apply Z.lt_le_trans with (([|ih|] + 1) * wB + 0).
  rewrite Zmult_plus_distr_l, Zplus_0_r; auto with zarith.
  case (to_Z_bounded il1); intros H3 _.
  apply Zplus_le_compat; auto with zarith.
@@ -750,7 +750,7 @@ Lemma sqrt2_spec : forall x y,
   rewrite sub_spec, Zmod_small; auto; replace [|1|] with 1; auto.
   case (to_Z_bounded ih); intros H1 H2.
   split; auto with zarith.
-  apply Zle_trans with (wB/4 - 1); auto with zarith.
+  apply Z.le_trans with (wB/4 - 1); auto with zarith.
  case_eq (ih1 < ih - 1)%int;  [idtac | rewrite <- not_true_iff_false];
   rewrite ltb_spec, Hsih; intros Heq.
  rewrite Zpower_2, Hihl1.
@@ -762,10 +762,10 @@ Lemma sqrt2_spec : forall x y,
   auto with zarith.
  rewrite <-Hil2.
  case (to_Z_bounded il2); intros Hpil2 _.
- apply Zle_trans with ([|ih|] * wB + - wB); auto with zarith.
+ apply Z.le_trans with ([|ih|] * wB + - wB); auto with zarith.
  case (to_Z_bounded s);  intros _ Hps.
  assert (2 * [|s|] + 1 <= 2 * wB); auto with zarith.
- apply Zle_trans with ([|ih1|] * wB + 2 * wB); auto with zarith.
+ apply Z.le_trans with ([|ih1|] * wB + 2 * wB); auto with zarith.
  assert (Hi: ([|ih1|] + 3) * wB <= [|ih|] * wB); auto with zarith.
  rewrite Zmult_plus_distr_l in Hi; auto with zarith.
  unfold zn2z_to_Z; rewrite <-Hihl1, Hbin; auto.
@@ -786,10 +786,10 @@ Lemma sqrt2_spec : forall x y,
    contradict Hs1; apply Zlt_not_le; rewrite Zpower_2, Hihl1.
   unfold zn2z_to_Z.
   case (to_Z_bounded il); intros _ Hpil1.
-  apply Zlt_le_trans with (([|ih|] + 1) * wB).
+  apply Z.lt_le_trans with (([|ih|] + 1) * wB).
   rewrite Zmult_plus_distr_l, Zmult_1_l; auto with zarith.
   case (to_Z_bounded il1); intros Hpil2 _.
-  apply Zle_trans with (([|ih1|]) * wB); auto with zarith.
+  apply Z.le_trans with (([|ih1|]) * wB); auto with zarith.
  contradict Hs1; apply Zlt_not_le; rewrite Zpower_2, Hihl1.
  unfold zn2z_to_Z; rewrite He.
  assert ([|il|] - [|il1|] < 0); auto with zarith.
@@ -880,7 +880,7 @@ Proof.
  unfold wB; change (Z_of_nat size) with [|digits|].
  replace ([|i|]) with (([|i|] - [|digits|]) + [|digits|])%Z; try ring.
  rewrite Zpower_exp, Zmult_assoc, Z_mod_mult; auto with arith.
- apply Zle_ge; auto with zarith.
+ apply Z.le_ge; auto with zarith.
  case (to_Z_bounded digits); auto with zarith.
 Qed.
 
@@ -905,7 +905,7 @@ Proof.
  case (to_Z_bounded digits); intros H1d H2d.
  rewrite leb_spec in H.
  apply Zdiv_small; split; auto.
- apply Zlt_le_trans with (1 := H2x).
+ apply Z.lt_le_trans with (1 := H2x).
  unfold wB; change (Z_of_nat size) with [|digits|].
  apply Zpower_le_monotone; auto with zarith.
 Qed.
@@ -940,8 +940,8 @@ Proof.
    rewrite add_spec, Zmod_small; auto with zarith.
  apply to_Z_inj; rewrite !lsr_spec, Zdiv_Zdiv, <- Zpower_exp; auto with zarith.
  apply Zdiv_small; split; auto with zarith.
- apply Zlt_le_trans with (1 := H2i).
- apply Zle_trans with (1 := H).
+ apply Z.lt_le_trans with (1 := H2i).
+ apply Z.le_trans with (1 := H).
  apply Zpower2_le_lin; auto with zarith.
 Qed.
 
@@ -1082,10 +1082,10 @@ Admitted. (* Too slow *)
 (*    replace (2^[|1|]) with 2%Z;  auto with zarith. *)
 (*  apply Zdiv_lt_upper_bound; auto with zarith. *)
 (*  generalize H2i1; rewrite inj_S. *)
-(*  unfold Zsucc; rewrite Zpower_exp; auto with zarith. *)
+(*  unfold Z.succ; rewrite Zpower_exp; auto with zarith. *)
 (*  apply Zdiv_lt_upper_bound; auto with zarith. *)
 (*  generalize H2i2; rewrite inj_S. *)
-(*  unfold Zsucc; rewrite Zpower_exp; auto with zarith. *)
+(*  unfold Z.succ; rewrite Zpower_exp; auto with zarith. *)
 (*  intros i. *)
 (*  case (Zle_or_lt [|digits|] [|i|]); intros Hi. *)
 (*  rewrite !bit_M; auto; rewrite leb_spec; auto. *)
@@ -1157,17 +1157,14 @@ Proof.
  rewrite Zpower_exp; auto with zarith.
  rewrite Zdiv_mult_cancel_r.
  2: (apply Zlt0_not_eq; apply Z.pow_pos_nonneg; [apply Pos2Z.is_pos|assumption]).
- 2: unfold d2; auto with zarith.
  rewrite (Z_div_mod_eq [|x|] (2^d1)) at 2; auto with zarith.
- 2: apply Zlt_gt; apply Zpower_gt_0; unfold d1; lia.
+ 2: apply Z.lt_gt; apply Zpower_gt_0; unfold d1; lia.
  pattern d1 at 2;
    replace d1 with (d2 + (1+ (d - [|j|] - 1)))%Z.
  2: unfold d1, d2; ring.
  rewrite Zpower_exp; auto with zarith.
- 2: unfold d2; auto with zarith.
  rewrite <-Zmult_assoc, Zmult_comm.
  rewrite Z_div_plus_l; auto with zarith.
- 2: unfold d2; auto with zarith.
  rewrite Zpower_exp, Zpower_1_r; auto with zarith.
  rewrite <-Zplus_mod_idemp_l.
  rewrite <-!Zmult_assoc, Zmult_comm, Z_mod_mult, Zplus_0_l; auto.
@@ -1452,11 +1449,11 @@ Proof.
  apply Zle_antisym.
  apply Zdiv_le_lower_bound; auto with zarith.
  assert (F2: [|x|] + [|z|] < 2 * wB); auto with zarith.
- generalize (Zdiv_lt_upper_bound _ _ _ (Zgt_lt _ _ F1) F2); auto with zarith.
+ generalize (Zdiv_lt_upper_bound _ _ _ (Z.gt_lt _ _ F1) F2); auto with zarith.
  apply Zle_antisym.
  apply Zdiv_le_lower_bound; auto with zarith.
  assert (F2: [|x|] + [|y|] < 2 * wB); auto with zarith.
- generalize (Zdiv_lt_upper_bound _ _ _ (Zgt_lt _ _ F1) F2); auto with zarith.
+ generalize (Zdiv_lt_upper_bound _ _ _ (Z.gt_lt _ _ F1) F2); auto with zarith.
 Qed.
 
 Lemma add_cancel_r x y z : (y + x = z + x)%int -> y = z.
@@ -1499,7 +1496,7 @@ Proof.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  intros n IH x y; rewrite inj_S.
- unfold Zsucc; rewrite Zpower_exp, Zpower_1_r; auto with zarith.
+ unfold Z.succ; rewrite Zpower_exp, Zpower_1_r; auto with zarith.
  intros Hx Hy.
  rewrite leb_spec.
  rewrite (to_Z_split y) at 1; rewrite (to_Z_split (x lor y)).
@@ -1536,7 +1533,7 @@ Proof.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  apply to_Z_inj; rewrite to_Z_0; auto with zarith.
  intros n IH x y; rewrite inj_S.
- unfold Zsucc; rewrite Zpower_exp, Zpower_1_r; auto with zarith.
+ unfold Z.succ; rewrite Zpower_exp, Zpower_1_r; auto with zarith.
  intros Hx Hy.
  split.
  intros Hn.
@@ -1634,7 +1631,7 @@ Proof.
  split.
  case (to_Z_bounded (x >> 1 + y >> 1)); auto with zarith.
  rewrite add_spec.
- apply Zle_lt_trans with (([|x >> 1|] + [|y >> 1|]) * 2); auto with zarith.
+ apply Z.le_lt_trans with (([|x >> 1|] + [|y >> 1|]) * 2); auto with zarith.
  case (Zmod_le_first ([|x >> 1|] + [|y >> 1|]) wB); auto with zarith.
  case (to_Z_bounded (x >> 1)); case (to_Z_bounded (y >> 1)); auto with zarith.
  generalize Hb; rewrite (to_Z_split x) at 1; rewrite (to_Z_split y) at 1.
@@ -1798,22 +1795,22 @@ Qed.
 
 Lemma leb_trans : forall x y z, x <= y = true ->  y <= z = true -> x <= z = true.
 Proof.
- intros x y z;rewrite !leb_spec;apply Zle_trans.
+ intros x y z;rewrite !leb_spec;apply Z.le_trans.
 Qed.
 
 Lemma ltb_trans : forall x y z, x < y = true ->  y < z = true -> x < z = true.
 Proof.
- intros x y z;rewrite !ltb_spec;apply Zlt_trans.
+ intros x y z;rewrite !ltb_spec;apply Z.lt_trans.
 Qed.
 
 Lemma ltb_leb_trans : forall x y z, x < y = true ->  y <= z = true -> x < z = true.
 Proof.
- intros x y z;rewrite leb_spec, !ltb_spec;apply Zlt_le_trans.
+ intros x y z;rewrite leb_spec, !ltb_spec;apply Z.lt_le_trans.
 Qed.
 
 Lemma leb_ltb_trans : forall x y z, x <= y = true ->  y < z = true -> x < z = true.
 Proof.
- intros x y z;rewrite leb_spec, !ltb_spec;apply Zle_lt_trans.
+ intros x y z;rewrite leb_spec, !ltb_spec;apply Z.le_lt_trans.
 Qed.
 
 Lemma gtb_not_leb : forall n m, m < n = true -> ~(n <= m = true).
@@ -1828,7 +1825,7 @@ Qed.
 
 Lemma leb_refl : forall n, n <= n = true.
 Proof.
- intros n;rewrite leb_spec;apply Zle_refl.
+ intros n;rewrite leb_spec;apply Z.le_refl.
 Qed.
 
 Lemma leb_negb_gtb : forall x y, x <= y = negb (y < x).
@@ -2083,7 +2080,7 @@ Qed.
 (*   assert (W:0 <= Zpos p mod 2 ^ Z_of_nat k < 2 ^ Z_of_nat k). *)
 (*    apply Z.mod_pos_bound;auto with zarith. *)
 (*   change (2^1)%Z with 2%Z;split;try omega. *)
-(*   apply Zlt_le_trans with (2 ^ Z_of_nat (S k)). *)
+(*   apply Z.lt_le_trans with (2 ^ Z_of_nat (S k)). *)
 (*   rewrite inj_S, Zpower_Zsucc;omega. *)
 (*   unfold wB;apply Zpower_le_monotone;auto with zarith. *)
 (*   split;auto using inj_le with zarith. *)
@@ -2100,7 +2097,7 @@ Qed.
 (*   assert (W:0 <= Zpos p mod 2 ^ Z_of_nat k < 2 ^ Z_of_nat k). *)
 (*    apply Z.mod_pos_bound;auto with zarith. *)
 (*   change (2^1)%Z with 2%Z;split;try omega. *)
-(*   apply Zlt_le_trans with (2 ^ Z_of_nat (S k)). *)
+(*   apply Z.lt_le_trans with (2 ^ Z_of_nat (S k)). *)
 (*   rewrite inj_S, Zpower_Zsucc;omega. *)
 (*   unfold wB;apply Zpower_le_monotone;auto with zarith. *)
 (*   split;auto using inj_le with zarith. *)

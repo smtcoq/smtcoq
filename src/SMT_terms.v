@@ -416,7 +416,7 @@ Module Typ.
         | Tindex i => eqb_of_compdec (t_i.[i]).(te_compdec)
         | TZ => Z.eqb (* Zeq_bool *)
         | Tbool => Bool.eqb
-        | Tpositive => Peqb
+        | Tpositive => Pos.eqb
         | TBV n => (@BITVECTOR_LIST.bv_eq n)
         | TFArray ti te => i_eqb (TFArray ti te)
         end.
@@ -1513,7 +1513,7 @@ Qed.
         | UO_xI   => apply_unop Typ.Tpositive Typ.Tpositive xI
         | UO_Zpos => apply_unop Typ.Tpositive Typ.TZ Zpos
         | UO_Zneg => apply_unop Typ.Tpositive Typ.TZ Zneg
-        | UO_Zopp => apply_unop Typ.TZ Typ.TZ Zopp
+        | UO_Zopp => apply_unop Typ.TZ Typ.TZ Z.opp
         | UO_BVbitOf s n => apply_unop (Typ.TBV s) Typ.Tbool (BITVECTOR_LIST.bitOf n)
         | UO_BVnot s => apply_unop (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_not s)
         | UO_BVneg s => apply_unop (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_neg s)
