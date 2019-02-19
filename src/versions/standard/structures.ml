@@ -15,7 +15,7 @@ open Entries
 
 (* Constr generation and manipulation *)
 
-let mklApp f args = Term.mkApp (Lazy.force f, args)
+let mklApp f args = Constr.mkApp (Lazy.force f, args)
 let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
@@ -28,7 +28,7 @@ let cD0 = gen_constant int31_module "D0"
 let cD1 = gen_constant int31_module "D1"
 let cI31 = gen_constant int31_module "I31"
 
-let mkInt : int -> Term.constr = fun i ->
+let mkInt : int -> Constr.t = fun i ->
   let a = Array.make 31 (Lazy.force cD0) in
   let j = ref i in
   let k = ref 30 in
@@ -49,7 +49,7 @@ let cmake = gen_constant parray_modules "make"
 let cset = gen_constant parray_modules "set"
 
 let max_array_size : int = 4194302
-let mkArray : Term.types * Term.constr array -> Term.constr =
+let mkArray : Constr.types * Constr.t array -> Constr.t =
   fun (ty, a) ->
   let l = (Array.length a) - 1 in
   snd (Array.fold_left (fun (i,acc) c ->
@@ -77,7 +77,7 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Differences between the two versions of Coq *)
-let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_entry = fun c ->
+let mkUConst : Constr.t -> Safe_typing.private_constants Entries.definition_entry = fun c ->
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, ty = Typing.type_of env evd (EConstr.of_constr c) in
@@ -85,7 +85,7 @@ let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_e
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
     const_entry_feedback    = None;
-    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Term.constr *)
+    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Constr.t *)
     const_entry_polymorphic = false;
     const_entry_universes   = snd (Evd.universe_context evd);
     const_entry_opaque      = false;
@@ -140,7 +140,7 @@ let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
 let vm_conv = Vconv.vm_conv
 let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
-(* Cannot contain evars since it comes from a Term.constr *)
+(* Cannot contain evars since it comes from a Constr.t *)
 let cbv_vm env c t = EConstr.Unsafe.to_constr (Vnorm.cbv_vm env Evd.empty (EConstr.of_constr c) (EConstr.of_constr t))
 
 let mk_tactic tac =
@@ -166,7 +166,7 @@ let get_rel_dec_name = function
   | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
 
 let retyping_get_type_of env sigma c =
-  (* Cannot contain evars since it comes from a Term.constr *)
+  (* Cannot contain evars since it comes from a Constr.t *)
   EConstr.Unsafe.to_constr (Retyping.get_type_of env sigma (EConstr.of_constr c))
 
 

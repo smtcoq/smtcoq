@@ -106,7 +106,7 @@ Ltac converting :=
   repeat
     match goal with
     (* On capture chaque sous-terme x avec son contexte, i.e. le but est C[x] *)
-    | |- appcontext C[?x]  =>
+    | |- context C[?x]  =>
       (* Si x est de type T *)
       let U := type of x in
       lazymatch eval fold T in U with
@@ -125,11 +125,11 @@ Ltac converting :=
           lazymatch context C[var] with
           (* Si elle contient le terme Z2T (T2Z var), cela signifie que le contexte C[]
              est de la forme C'[Z2T (T2Z [])] et donc on abandonne le match car x est déjà réécrit *)
-          | appcontext [Z2T (T2Z var)] => fail
+          | context [Z2T (T2Z var)] => fail
           (* Idem: si le contexte contient un constructeur de Z, c'est qu'on est à l'intérieur d'une constante *)
-          | appcontext [Zpos var] => fail
-          | appcontext [Zneg var] => fail
-          | appcontext [?h var] =>
+          | context [Zpos var] => fail
+          | context [Zneg var] => fail
+          | context [?h var] =>
             (* Idem: si le contexte contient un constructeur de T et que x commence par un
                constructeur de T, c'est qu'on est à l'intérieur d'une constante *)
             let h := get_head h in
@@ -212,7 +212,7 @@ Ltac renaming :=
   repeat
     match goal with
       (* S'il y a un terme de la forme (T2Z (f t1 ... tn)) *)
-      | |- appcontext [T2Z ?X] =>
+      | |- context [T2Z ?X] =>
         (* On récupère le symbole de tête *)
         let f := get_head X in
         (* S'il s'agit d'un constructeur on ne fait rien *)
@@ -225,7 +225,7 @@ Ltac renaming :=
         repeat
           match goal with
             (* Pour chaque terme de la forme (T2Z (f' t'1 ... t'n)) *)
-            | |- appcontext [T2Z ?X'] =>
+            | |- context [T2Z ?X'] =>
               (* On récupère le symbole de tête *)
               let f' := get_head X' in
               (* Si f' = f *)
@@ -280,7 +280,7 @@ Ltac renaming' :=
   repeat
     match goal with
       (* S'il y a un terme de la forme (f t1 ... (Z2T tn)) *)
-      | |- appcontext [?X (Z2T ?Y)] =>
+      | |- context [?X (Z2T ?Y)] =>
         (* On récupère le symbole de tête *)
         let f := get_head X in
         (* S'il s'agit d'un constructeur on ne fait rien *)
@@ -291,7 +291,7 @@ Ltac renaming' :=
         repeat
           match goal with
             (* Pour chaque terme de la forme (f' t'1 ... (Z2T t'n)) *)
-            | |- appcontext [?X' (Z2T ?Y')] =>
+            | |- context [?X' (Z2T ?Y')] =>
               (* On récupère le symbole de tête *)
               let f' := get_head X' in
               (* Si f' = f *)
