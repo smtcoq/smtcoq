@@ -62,10 +62,7 @@ Proof.
   zchaff.
 Qed.
 
-Goal forall i j k,
-  let a := (i == j)%int in
-  let b := (j == k)%int in
-  let c := (k == i)%int in
+Goal forall a b c,
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
   zchaff.
