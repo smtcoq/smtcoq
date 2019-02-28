@@ -18,6 +18,7 @@
 Require Import SMTCoq.SMTCoq.
 Require Import Bool.
 
+Require Import ZArith.
 Local Open Scope Z_scope.
 
 Import BVList.BITVECTOR_LIST.
@@ -26,6 +27,7 @@ Local Open Scope bv_scope.
 Import FArray.
 Local Open Scope farray_scope.
 
+Local Open Scope int63_scope.
 
 (* Examples that check ZChaff certificates *)
 
