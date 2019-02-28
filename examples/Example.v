@@ -19,7 +19,6 @@ Require Import SMTCoq.SMTCoq.
 Require Import Bool.
 
 Require Import ZArith.
-Local Open Scope Z_scope.
 
 Import BVList.BITVECTOR_LIST.
 Local Open Scope bv_scope.
@@ -27,9 +26,9 @@ Local Open Scope bv_scope.
 Import FArray.
 Local Open Scope farray_scope.
 
-Local Open Scope int63_scope.
-
 (* Examples that check ZChaff certificates *)
+
+Local Open Scope int63_scope.
 
 Zchaff_Checker "sat.cnf" "sat.log".
 Zchaff_Theorem sat "sat.cnf" "sat.log".
@@ -83,6 +82,8 @@ Goal forall a b c, ((a || b || c) && ((negb a) || (negb b) || (negb c)) && ((neg
 Proof.
   verit_bool.
 Qed.
+
+Local Open Scope Z_scope.
 
 Goal forall (a b : Z) (P : Z -> bool) (f : Z -> Z),
   (negb (Z.eqb (f a) b)) || (negb (P (f a))) || (P b).
