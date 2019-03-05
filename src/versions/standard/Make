@@ -1,6 +1,6 @@
 ########################################################################
-##   This file is intended to developers, please do not use it to     ##
-## generate a Makefile, rather use the provided Makefile.             ##
+##   This file is intended to developers: please do not use it        ##
+## directly, rather use the "configure.sh" script.                    ##
 ########################################################################
 
 
