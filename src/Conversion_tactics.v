@@ -116,7 +116,7 @@ Ltac converting :=
           pose proof x as var;
           (* Sinon, on analyse la formule obtenue en remplaçant x par notre variable fraîche dans le but *)
           lazymatch context C[var] with
-          | appcontext [?h var] =>
+          | context [?h var] =>
             let h := get_head h in
             lazymatch h with
             (* x est déjà réécrit *)
