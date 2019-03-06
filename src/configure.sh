@@ -2,7 +2,9 @@
 
 pre=$(echo $0 | sed "s,\(\([^/]*/\)*\)[^/]*,\1,")
 
+rm -f ${pre}Make
 rm -f ${pre}Makefile
+rm -f ${pre}Makefile.conf
 rm -f ${pre}smtcoq_plugin.ml4
 rm -f ${pre}versions/native/Structures.v
 rm -f ${pre}g_smtcoq.ml4
@@ -22,8 +24,6 @@ if [ $@ -a $@ = -native ]; then
     cp ${pre}versions/native/Structures_native.v ${pre}versions/native/Structures.v
 else
     cp ${pre}versions/standard/Make ${pre}Make
-    cp ${pre}versions/standard/Makefile ${pre}Makefile
-    cp ${pre}versions/standard/Makefile.conf ${pre}Makefile.conf
     cp ${pre}versions/standard/g_smtcoq_standard.ml4 ${pre}g_smtcoq.ml4
     cp ${pre}versions/standard/smtcoq_plugin_standard.mlpack ${pre}smtcoq_plugin.mlpack
     cp ${pre}versions/standard/Int63/Int63_standard.v ${pre}versions/standard/Int63/Int63.v
@@ -33,4 +33,6 @@ else
     cp ${pre}versions/standard/Int63/Int63Properties_standard.v ${pre}versions/standard/Int63/Int63Properties.v
     cp ${pre}versions/standard/Array/PArray_standard.v ${pre}versions/standard/Array/PArray.v
     cp ${pre}versions/standard/Structures_standard.v ${pre}versions/standard/Structures.v
+    coq_makefile -f Make -o Makefile
+    sed -i Makefile -e "s/ocamldep/ocamldep -native/" -e "s/	\$(HIDE)\$(MAKE) --no-print-directory -f \"\$(SELF)\" post-all//"
 fi

@@ -29,37 +29,32 @@ Axiom T2Z_id : forall x : T, Z2T (T2Z x) = x.
    Par exemple, pour nat il s'agit de (0 <=? z)%Z *)
 Parameter inT : Z -> bool.
 (* L'image de l'injection satisfait cette propriété *)
-Axiom T2Z_pres : forall x, inT (T2Z x) = true.
+Axiom T2Z_pres : forall x : T, inT (T2Z x) = true.
+(* Il est toujours possible de définir inT par <fun z => Z.eqb z (T2Z (Z2T z))>.
+    Dans ce cas la preuve de l'axiome ci-dessus est essentiellement :
+    <rewrite T2Z_id, Z.eqb_eq>. *)
+
+(* On demande que cette injection soit un morphisme pour chacun des symboles suivants *)
 
 (* Addition *)
 Parameter add : T -> T -> T.
-(* Pour des éléments venant de T, l'addition commute avec Z2T *)
-Axiom add_morph : forall x y, inT x = true -> inT y = true -> add (Z2T x) (Z2T y) = Z2T (Z.add x y).
-(* Pour des éléments venant de T, l'addition vient de T *)
-Axiom add_pres : forall x y, inT x = true -> inT y = true -> inT (Z.add x y) = true.
+Axiom t2z_add_morph : forall x' y', Z.add (T2Z x') (T2Z y') = T2Z (add x' y').
 
 (* Multiplication *)
 Parameter mul : T -> T -> T.
-(* Pour des éléments venant de T, la multiplication commute avec Z2T *)
-Axiom mul_morph : forall x y, inT x = true -> inT y = true -> mul (Z2T x) (Z2T y) = Z2T (Z.mul x y).
-(* Pour des éléments venant de T, la multiplication vient de T *)
-Axiom mul_pres : forall x y, inT x = true -> inT y = true -> inT (Z.mul x y) = true.
+Axiom t2z_mul_morph : forall x' y', Z.mul (T2Z x') (T2Z y') = T2Z (mul x' y').
 
 (* <= *)
 Parameter leb : T -> T -> bool.
-(* Pour des éléments venant de T, <= commute avec Z2T *)
-Axiom leb_morph : forall x y, inT x = true -> inT y = true -> Z.leb x y = leb (Z2T x) (Z2T y).
+Axiom t2z_leb_morph : forall x' y', Z.leb (T2Z x') (T2Z y') = leb x' y'.
 
 (* < *)
 Parameter ltb : T -> T -> bool.
-(* Pour des éléments venant de T, < commute avec Z2T *)
-Axiom ltb_morph : forall x y, inT x = true -> inT y = true -> Z.ltb x y = ltb (Z2T x) (Z2T y).
+Axiom t2z_ltb_morph : forall x' y', Z.ltb (T2Z x') (T2Z y') = ltb x' y'.
 
 (* = *)
 Parameter eqb : T -> T -> bool.
-(* Pour des éléments venant de T, = commute avec Z2T *)
-Axiom eqb_morph : forall x y, inT x = true -> inT y = true -> Z.eqb x y = eqb (Z2T x) (Z2T y).
-
+Axiom t2z_eqb_morph : forall x' y', Z.eqb (T2Z x') (T2Z y') = eqb x' y'.
 End convert_type.
 
 (* Ce foncteur construit une tactique de conversion à partir d'un module du type ci-dessus *)
@@ -83,10 +78,10 @@ Ltac inverse_tactic tactic := try (tactic; fail 1).
 (* constr_neq t u échoue si et seulement si t et u sont convertibles *)
 Ltac constr_neq t u := inverse_tactic ltac:(constr_eq t u).
 
-(* is_not_constructor T sym échoue si et seulement si sym est un symbole de constructeur de U *)
-Ltac is_not_constructor T sym :=
+(* is_not_constructor U sym échoue si et seulement si sym est un symbole de constructeur de U *)
+Ltac is_not_constructor U sym :=
 let H := fresh in
-assert (T -> True) as H by
+assert (U -> True) as H by
        (let x := fresh in
         let y := fresh in
         intro x;
@@ -97,10 +92,11 @@ assert (T -> True) as H by
         constr_neq sym c;
         exact I); clear H.
 
-(* is_not_constructor U sym réussit si et seulement si sym est un symbole de constructeur de U *)
+(* is_constructor U sym réussit si et seulement si sym est un symbole de constructeur de U *)
 Ltac is_constructor U sym := inverse_tactic ltac:(is_not_constructor U sym).
 
-(* Remplace tous les sous-termes x de type T par Z2T (T2Z p) *)
+(* Remplace les sous-termes x de type T qui ne sont pas en-dessous d'un symbole connu
+   par Z2T (T2Z x) *)
 Ltac converting :=
   (* Coeur de la tactique *)
   repeat
@@ -114,31 +110,30 @@ Ltac converting :=
         lazymatch x with
         (* Si x est de la forme Z2T (T2Z _) on abandonne le match car x est déjà réécrit *)
         | Z2T (T2Z _) => fail
-        (* Il n'est pas nécessaire de réécrire au dessus des symboles connus *)
-        | add _ _ => fail
-        | mul _ _ => fail
         | _ =>
           (* On crée une variable fraîche de type T *)
           let var := fresh in
           pose proof x as var;
           (* Sinon, on analyse la formule obtenue en remplaçant x par notre variable fraîche dans le but *)
           lazymatch context C[var] with
-          (* Si elle contient le terme Z2T (T2Z var), cela signifie que le contexte C[]
-             est de la forme C'[Z2T (T2Z [])] et donc on abandonne le match car x est déjà réécrit *)
-          | context [Z2T (T2Z var)] => fail
-          (* Idem: si le contexte contient un constructeur de Z, c'est qu'on est à l'intérieur d'une constante *)
-          | context [Zpos var] => fail
-          | context [Zneg var] => fail
-          | context [?h var] =>
+          | appcontext [?h var] =>
+            let h := get_head h in
+            lazymatch h with
+            (* x est déjà réécrit *)
+            | T2Z => fail
+            (* Pas nécessaire de réécrire en-dessous des symboles qui commutent avec T2Z *)
+            | add => fail | mul => fail | ltb => fail | leb => fail | eqb => fail
+            (* Ne pas réécrire à l'intérieur d'une constante *)
+            | Zpos => fail | Zneg => fail
+            | _ =>
             (* Idem: si le contexte contient un constructeur de T et que x commence par un
                constructeur de T, c'est qu'on est à l'intérieur d'une constante *)
-            let h := get_head h in
             let hx := get_head x in
             try (is_constructor T h; is_constructor T hx; fail 1);
             (* Sinon, on réécrit *)
             let old_goal := context C[x] in
             let new_goal := context C[Z2T (T2Z x)] in
-            replace old_goal with new_goal by (rewrite (T2Z_id x); reflexivity)
+            replace old_goal with new_goal by (rewrite (T2Z_id x); reflexivity) end
           end;
           (* On efface notre variable fraîche *)
           clear var
@@ -146,19 +141,13 @@ Ltac converting :=
       end
     end.
 
-(* Résoud les hypothèses inT lors de la réécriture des opérations *)
-Ltac solve_inT := repeat (try apply add_pres; try apply mul_pres; try apply T2Z_pres); reflexivity.
-
-(* Réécrit les opérations et relations de T vers Z *)
 Ltac rewriting :=
-  repeat
-  match goal with
-    | |- context [add (Z2T ?X) (Z2T ?Y)] => replace (add (Z2T X) (Z2T Y)) with (Z2T (X + Y)) by (rewrite add_morph; solve_inT)
-    | |- context [mul (Z2T ?X) (Z2T ?Y)] => replace (mul (Z2T X) (Z2T Y)) with (Z2T (X * Y)) by (rewrite mul_morph; solve_inT)
-    | |- context [ltb (Z2T ?X) (Z2T ?Y)] => replace (ltb (Z2T X) (Z2T Y)) with (Z.ltb X Y) by (rewrite ltb_morph; solve_inT)
-    | |- context [leb (Z2T ?X) (Z2T ?Y)] => replace (leb (Z2T X) (Z2T Y)) with (Z.leb X Y) by (rewrite leb_morph; solve_inT)
-    | |- context [eqb (Z2T ?X) (Z2T ?Y)] => replace (eqb (Z2T X) (Z2T Y)) with (Z.eqb X Y) by (rewrite eqb_morph; solve_inT)
-  end.
+  repeat (try rewrite <- t2z_leb_morph;
+          try rewrite <- t2z_ltb_morph;
+          try rewrite <- t2z_eqb_morph;
+          try rewrite <- t2z_add_morph;
+          try rewrite <- t2z_mul_morph).
+
 
 (* expand_type [Tn;...T2;;T1] T = T1->T2->...->Tn->T *)
 Fixpoint expand_type l T : Type :=
@@ -236,7 +225,7 @@ Ltac renaming :=
               let args := get_args X' in
               (* Soit Y = fe_id t'1 ... t'n *)
               let Y := apply_args fe_id args in
-              (* Et remplaçons (T2Z (f t'1 ... t'n)) par Y *)
+              (* Et remplaçons (T2Z (f' t'1 ... t'n)) par Y *)
               change (T2Z X') with Y
           end;
         (* On abstrait sur (fe_id := fun x1 ... xn => T2Z (f x1 ... xn)) *)
@@ -296,11 +285,11 @@ Ltac renaming' :=
               let f' := get_head X' in
               (* Si f' = f *)
               constr_eq f f';
-              (* Soit args = [t'1;...;t'n] *)
+              (* Soit args = [t'1;...;t'(n-1)] *)
               let args := get_args X' in
-              (* Soit Z = (fun x1 ... xn => f x1 ... (Z2T xn)) t'1 ... t'n *)
+              (* Soit Z = (fun x1 ... xn => f x1 ... (Z2T xn)) t'1 ... t'(n-1) *)
               let Z := apply_args fe args in
-              (* Et remplaçons (f t'1 ... (Z2T t'n)) par Z *)
+              (* Et remplaçons (f' t'1 ... (Z2T t'n)) par (Z t'n) *)
               change (X' (Z2T Y')) with (Z Y')
           end;
         (* On abstrait sur (fun x1 ... xn => (f x1 ... (Z2T xn)) *)
@@ -344,29 +333,24 @@ Definition inT : Z -> bool := fun z => Z.ltb 0 z.
 Lemma T2Z_pres : forall x, inT (T2Z x) = true. reflexivity. Qed.
 
 Definition add : T -> T -> T := Pos.add.
-Lemma add_morph : forall x y, inT x = true -> inT y = true -> add (Z2T x) (Z2T y) = Z2T (Z.add x y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
-Lemma add_pres : forall x y, inT x = true -> inT y = true -> inT (Z.add x y) = true.
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_add_morph : forall x' y', Z.add (T2Z x') (T2Z y') = T2Z (add x' y').
+Proof. reflexivity. Qed.
 
 Definition mul : T -> T -> T := Pos.mul.
-Lemma mul_morph : forall x y, inT x = true -> inT y = true -> mul (Z2T x) (Z2T y) = Z2T (Z.mul x y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
-Lemma mul_pres : forall x y, inT x = true -> inT y = true -> inT (Z.mul x y) = true.
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_mul_morph : forall x' y', Z.mul (T2Z x') (T2Z y') = T2Z (mul x' y').
+Proof. reflexivity. Qed.
 
 Definition leb : T -> T -> bool := Pos.leb.
-Lemma leb_morph : forall x y, inT x = true -> inT y = true -> Z.leb x y = leb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_leb_morph : forall x' y', Z.leb (T2Z x') (T2Z y') = leb x' y'.
+Proof. reflexivity. Qed.
 
 Definition ltb : T -> T -> bool := Pos.ltb.
-Lemma ltb_morph : forall x y, inT x = true -> inT y = true -> Z.ltb x y = ltb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_ltb_morph : forall x' y', Z.ltb (T2Z x') (T2Z y') = ltb x' y'.
+Proof. reflexivity. Qed.
 
 Definition eqb : T -> T -> bool := Pos.eqb.
-Lemma eqb_morph : forall x y, inT x = true -> inT y = true -> Z.eqb x y = eqb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
-
+Lemma t2z_eqb_morph : forall x' y', Z.eqb (T2Z x') (T2Z y') = eqb x' y'.
+Proof. reflexivity. Qed.
 End pos_convert_type.
 
 Module pos_convert_mod := convert pos_convert_type.
@@ -386,28 +370,24 @@ Definition inT : Z -> bool := fun z => Z.leb 0 z.
 Lemma T2Z_pres : forall x, inT (T2Z x) = true. intro; unfold inT; rewrite Z.leb_le; apply N2Z.is_nonneg. Qed.
 
 Definition add : T -> T -> T := N.add.
-Lemma add_morph : forall x y, inT x = true -> inT y = true -> add (Z2T x) (Z2T y) = Z2T (Z.add x y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
-Lemma add_pres : forall x y, inT x = true -> inT y = true -> inT (Z.add x y) = true.
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_add_morph : forall x' y', Z.add (T2Z x') (T2Z y') = T2Z (add x' y').
+Proof. intros x y; destruct x, y; reflexivity. Qed.
 
 Definition mul : T -> T -> T := N.mul.
-Lemma mul_morph : forall x y, inT x = true -> inT y = true -> mul (Z2T x) (Z2T y) = Z2T (Z.mul x y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
-Lemma mul_pres : forall x y, inT x = true -> inT y = true -> inT (Z.mul x y) = true.
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_mul_morph : forall x' y', Z.mul (T2Z x') (T2Z y') = T2Z (mul x' y').
+Proof. intros x y; destruct x, y; reflexivity. Qed.
 
 Definition leb : T -> T -> bool := N.leb.
-Lemma leb_morph : forall x y, inT x = true -> inT y = true -> Z.leb x y = leb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_leb_morph : forall x' y', Z.leb (T2Z x') (T2Z y') = leb x' y'.
+Proof. intros x y; destruct x, y; reflexivity. Qed.
 
 Definition ltb : T -> T -> bool := N.ltb.
-Lemma ltb_morph : forall x y, inT x = true -> inT y = true -> Z.ltb x y = ltb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_ltb_morph : forall x' y', Z.ltb (T2Z x') (T2Z y') = ltb x' y'.
+Proof. intros x y; destruct x, y; reflexivity. Qed.
 
 Definition eqb : T -> T -> bool := N.eqb.
-Lemma eqb_morph : forall x y, inT x = true -> inT y = true -> Z.eqb x y = eqb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_eqb_morph : forall x' y', Z.eqb (T2Z x') (T2Z y') = eqb x' y'.
+Proof. intros x y; destruct x, y; reflexivity. Qed.
 
 End N_convert_type.
 
@@ -429,56 +409,35 @@ Definition inT : Z -> bool := fun z => Z.leb 0 z.
 Lemma T2Z_pres : forall x, inT (T2Z x) = true. intro; unfold inT; rewrite Z.leb_le; apply Nat2Z.is_nonneg. Qed.
 
 Definition add : T -> T -> T := Nat.add.
-Lemma add_morph : forall x y, inT x = true -> inT y = true -> add (Z2T x) (Z2T y) = Z2T (Z.add x y).
-intros x y; destruct x, y; try discriminate; try reflexivity.
-intros; apply Nat.add_0_r.
-unfold inT; rewrite 2 Z.leb_le.
-symmetry; apply Z2Nat.inj_add; assumption.
-Qed.
-Lemma add_pres : forall x y, inT x = true -> inT y = true -> inT (Z.add x y) = true.
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_add_morph : forall x' y', Z.add (T2Z x') (T2Z y') = T2Z (add x' y').
+Proof. symmetry. apply Nat2Z.inj_add. Qed.
 
 Definition mul : T -> T -> T := Nat.mul.
-Lemma mul_morph : forall x y, inT x = true -> inT y = true -> mul (Z2T x) (Z2T y) = Z2T (Z.mul x y).
-intros x y; destruct x, y; try discriminate; try reflexivity.
-intros; apply Nat.mul_0_r.
-unfold inT; rewrite 2 Z.leb_le.
-symmetry; apply Z2Nat.inj_mul; assumption.
-Qed.
-Lemma mul_pres : forall x y, inT x = true -> inT y = true -> inT (Z.mul x y) = true.
-intros x y; destruct x, y; try discriminate; reflexivity. Qed.
+Lemma t2z_mul_morph : forall x' y', Z.mul (T2Z x') (T2Z y') = T2Z (mul x' y').
+Proof. symmetry. apply Nat2Z.inj_mul. Qed.
 
 Definition leb : T -> T -> bool := Nat.leb.
-Lemma leb_morph : forall x y, inT x = true -> inT y = true -> Z.leb x y = leb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; try reflexivity.
-intros H1 H2; clear H1 H2; change (Zpos p <=? 0)%Z with false; unfold Z2T, leb; symmetry.
-apply Bool.not_true_is_false; rewrite Nat.leb_le.
-apply lt_not_le; apply Pos2Nat.is_pos.
-intros H1 H2; unfold Z2T, leb; apply Bool.eq_true_iff_eq.
-rewrite Z.leb_le, Nat.leb_le, Z2Nat.inj_le; try reflexivity; apply Zle_0_pos.
+Lemma t2z_leb_morph : forall x' y', Z.leb (T2Z x') (T2Z y') = leb x' y'.
+Proof.
+  intros x y; unfold leb.
+  case_eq (Nat.leb x y); [| rewrite <- 2 Bool.not_true_iff_false];
+  rewrite <- Zle_is_le_bool; rewrite Nat.leb_le; rewrite Nat2Z.inj_le; auto.
 Qed.
 
 Definition ltb : T -> T -> bool := Nat.ltb.
-Lemma ltb_morph : forall x y, inT x = true -> inT y = true -> Z.ltb x y = ltb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; try reflexivity.
-intros H1 H2; clear H1 H2; change (0 <? Zpos p)%Z with true.
-unfold Z2T, ltb; symmetry.
-rewrite Nat.ltb_lt, <- Z2Nat.inj_lt; try rewrite <- Z.leb_le; reflexivity.
-intros H1 H2; clear H1 H2; unfold Z2T, ltb.
-apply Bool.eq_true_iff_eq.
-rewrite Z.ltb_lt, Nat.ltb_lt.
-rewrite Z2Nat.inj_lt; try reflexivity; apply Zle_0_pos.
+Lemma t2z_ltb_morph : forall x' y', Z.ltb (T2Z x') (T2Z y') = ltb x' y'.
+Proof.
+  intros x y; unfold ltb.
+  case_eq (Nat.ltb x y); [| rewrite <- 2 Bool.not_true_iff_false];
+  rewrite <- Zlt_is_lt_bool; rewrite Nat.ltb_lt; rewrite Nat2Z.inj_lt; auto.
 Qed.
 
 Definition eqb : T -> T -> bool := Nat.eqb.
-Lemma eqb_morph : forall x y, inT x = true -> inT y = true -> Z.eqb x y = eqb (Z2T x) (Z2T y).
-intros x y; destruct x, y; try discriminate; try reflexivity; unfold inT, Z2T, eqb.
-intros H1 H2; clear H1 H2; change (0 =? Zpos p)%Z with false; symmetry.
-rewrite Nat.eqb_neq, Z2Nat.inj_iff; discriminate.
-intros H1 H2; clear H1 H2; change (Zpos p =? 0)%Z with false; symmetry.
-rewrite Nat.eqb_neq, Z2Nat.inj_iff; discriminate.
-intros H1 H2; clear H1 H2; apply Bool.eq_true_iff_eq.
-rewrite Z.eqb_eq, Nat.eqb_eq, Z2Nat.inj_iff; try reflexivity; apply Zle_0_pos.
+Lemma t2z_eqb_morph : forall x' y', Z.eqb (T2Z x') (T2Z y') = eqb x' y'.
+Proof.
+  intros x y; unfold eqb.
+  case_eq (Nat.eqb x y); [| rewrite <- 2 Bool.not_true_iff_false];
+  rewrite Z.eqb_eq; rewrite Nat.eqb_eq; rewrite Nat2Z.inj_iff; auto.
 Qed.
 
 End nat_convert_type.
