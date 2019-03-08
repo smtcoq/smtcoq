@@ -15,7 +15,15 @@ open Coqlib
 
 
 
+type constr = Term.constr
+type types = Term.types
+type name = Names.name
+type id = Names.id
+
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+
+let names_id_of_string = Names.id_of_string
+let names_string_of_id = Names.string_of_id
 
 
 
@@ -96,9 +104,6 @@ let declare_new_variable v constr_t =
   Term.mkVar v
 
 let extern_constr = Constrextern.extern_constr true Environ.empty_env
-
-let vernacentries_interp expr =
-  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some (Glob_term.CbvVm None), None, expr))
 
 let pr_constr_env = Printer.pr_constr_env
 

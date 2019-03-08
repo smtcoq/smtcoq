@@ -270,8 +270,11 @@ let checker fdimacs ftrace =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let tm = mklApp cchecker [|d; certif|] in
-  let expr = Structures.extern_constr tm in
-  Structures.vernacentries_interp expr
+
+  let res = Structures.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
+  Format.eprintf "     = %s\n     : bool@."
+    (if Term.eq_constr res (Lazy.force CoqTerms.ctrue) then
+        "true" else "false")
 
 
 

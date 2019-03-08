@@ -15,6 +15,14 @@ open Entries
 
 (* Constr generation and manipulation *)
 
+type constr = Constr.t
+type types = Constr.types
+type name = Names.Name.t
+type id = Names.Id.t
+
+let names_id_of_string = Names.Id.of_string
+let names_string_of_id = Names.Id.to_string
+
 let mklApp f args = Constr.mkApp (Lazy.force f, args)
 let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
@@ -86,8 +94,7 @@ let mkUConst : Constr.t -> Safe_typing.private_constants Entries.definition_entr
     const_entry_secctx      = None;
     const_entry_feedback    = None;
     const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Constr.t *)
-    const_entry_polymorphic = false;
-    const_entry_universes   = snd (Evd.universe_context evd);
+    const_entry_universes   = Evd.const_univ_entry ~poly:false evd;
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
@@ -100,30 +107,26 @@ let mkTConst c noc ty =
     const_entry_secctx      = None;
     const_entry_feedback    = None;
     const_entry_type        = Some ty;
-    const_entry_polymorphic = false;
-    const_entry_universes   = snd (Evd.universe_context evd);
+    const_entry_universes   = Evd.const_univ_entry ~poly:false evd;
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
 let error s = CErrors.user_err (Pp.str s)
 
-let coqtype = Future.from_val Term.mkSet
+let coqtype = Future.from_val Constr.mkSet
 
 let declare_new_type t =
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (None, t) in
-  Term.mkVar t
+  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Entries.Monomorphic_const_entry Univ.ContextSet.empty) Universes.empty_binders [] false Vernacexpr.NoInline (CAst.make t) in
+  Constr.mkVar t
 
 let declare_new_variable v constr_t =
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (None, v) in
-  Term.mkVar v
+  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.const_univ_entry ~poly:false evd) Universes.empty_binders [] false Vernacexpr.NoInline (CAst.make v) in
+  Constr.mkVar v
 
 let extern_constr c = Constrextern.extern_constr true Environ.empty_env Evd.empty (EConstr.of_constr c)
-
-let vernacentries_interp expr =
-  Vernacentries.interp (None, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
@@ -132,7 +135,8 @@ let lift = Vars.lift
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r
 
-let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
+(* Cannot contain evars since it comes from a Constr.t *)
+let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst |> EConstr.Unsafe.to_constr
 
 let tclTHEN = Tacticals.New.tclTHEN
 let tclTHENLAST = Tacticals.New.tclTHENLAST
