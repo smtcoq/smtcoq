@@ -31,9 +31,8 @@ let mklApp = Structures.mklApp
 let declare_new_type = Structures.declare_new_type
 let declare_new_variable = Structures.declare_new_variable
 
-let mkName s =
-  let id = Structures.names_id_of_string s in
-  Names.Name id
+let mkName = Structures.mkName
+let string_of_name = Structures.string_of_name
 
 
 let string_coq_constr t =
@@ -41,11 +40,6 @@ let string_coq_constr t =
   let pr = fix
       Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
   Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
-
-
-let string_of_name = function
-    Names.Name id -> Structures.names_string_of_id id
-  | _ -> failwith "unnamed rel"
 
 
 (** Logics *)

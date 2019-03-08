@@ -14,7 +14,7 @@ val cInt_tbl : (int, Structures.constr) Hashtbl.t
 val mkInt : int -> Structures.constr
 type 'a gen_hashed = { index : int; hval : 'a; }
 val mklApp : Structures.constr Lazy.t -> Structures.constr array -> Structures.constr
-val declare_new_type : Names.variable -> Structures.constr
+val declare_new_type : Names.variable -> Structures.types
 val declare_new_variable : Names.variable -> Structures.types -> Structures.constr
 val mkName : string -> Structures.name
 val string_coq_constr : Structures.constr -> string

@@ -10,15 +10,24 @@
 (**************************************************************************)
 
 
+(* Constr generation and manipulation *)
 type constr
-type types
-type name
-type id
+type types = constr
+val mklApp : constr Lazy.t -> constr array -> constr
+val decompose_app : constr -> constr * constr list
+val eq_constr : constr -> constr -> bool
 
-val names_id_of_string : string -> id
-val names_string_of_id : id -> string
+type name
+val mkName : string -> name
+val string_of_name : name -> string
+
+type cast_kind
+val vmcast : cast_kind
+val mkCast : constr * cast_kind * constr -> constr
 
 val gen_constant : string list list -> string -> constr lazy_t
+
+(* Int63 *)
 val int63_modules : string list list
 val mkInt : int -> constr
 val cint : constr lazy_t
@@ -36,7 +45,7 @@ val mkUConst : constr -> Entries.definition_entry
 val mkTConst : constr -> 'a -> types -> Entries.definition_entry
 val error : string -> 'a
 val coqtype : types lazy_t
-val declare_new_type : Names.variable -> constr
+val declare_new_type : Names.variable -> types
 val declare_new_variable : Names.variable -> types -> constr
 val extern_constr : constr -> Topconstr.constr_expr
 val pr_constr_env : Environ.env -> constr -> Pp.std_ppcmds

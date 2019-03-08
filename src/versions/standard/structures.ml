@@ -17,13 +17,27 @@ open Entries
 
 type constr = Constr.t
 type types = Constr.types
-type name = Names.Name.t
-type id = Names.Id.t
-
-let names_id_of_string = Names.Id.of_string
-let names_string_of_id = Names.Id.to_string
-
 let mklApp f args = Constr.mkApp (Lazy.force f, args)
+let decompose_app = Constr.decompose_app
+let eq_constr = Constr.equal
+
+
+type name = Names.Name.t
+
+let mkName s =
+  let id = Names.Id.of_string s in
+  Names.Name id
+
+let string_of_name = function
+    Names.Name id -> Names.Id.to_string id
+  | _ -> failwith "unnamed rel"
+
+
+type cast_kind = Constr.cast_kind
+let vmcast = Constr.VMcast
+let mkCast = Constr.mkCast
+
+
 let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 

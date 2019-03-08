@@ -10,18 +10,24 @@
 (**************************************************************************)
 
 
-(* Constr generation and manipulation *)
-type constr
-type types
-type name
-type id
-
-val names_id_of_string : string -> id
-val names_string_of_id : id -> string
-
 (* WARNING: currently, we map all the econstr into constr: we suppose
    that the goal does not contain existencial variables *)
+
+(* Constr generation and manipulation *)
+type constr
+type types = constr
 val mklApp : constr Lazy.t -> constr array -> constr
+val decompose_app : constr -> constr * constr list
+val eq_constr : constr -> constr -> bool
+
+type name
+val mkName : string -> name
+val string_of_name : name -> string
+
+type cast_kind
+val vmcast : cast_kind
+val mkCast : constr * cast_kind * constr -> constr
+
 val gen_constant : string list list -> string -> constr lazy_t
 
 (* Int63 *)
@@ -60,8 +66,8 @@ val mkTConst :
   types -> Safe_typing.private_constants Entries.definition_entry
 val error : string -> 'a
 val coqtype : types Future.computation
-val declare_new_type : Names.variable -> constr
-val declare_new_variable : Names.variable -> constr -> constr
+val declare_new_type : Names.variable -> types
+val declare_new_variable : Names.variable -> types -> constr
 val extern_constr : constr -> Constrexpr.constr_expr
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val lift : int -> Constr.constr -> Constr.constr

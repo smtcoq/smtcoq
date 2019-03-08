@@ -15,7 +15,7 @@ open CoqTerms
 
 (** Syntaxified version of Coq type *)
 
-type indexed_type = Term.constr gen_hashed
+type indexed_type = Structures.constr gen_hashed
 
 let dummy_indexed_type i = {index = i; hval = Term.mkProp}
 let indexed_type_index i = i.index
@@ -76,8 +76,8 @@ let rec logic = function
 (* reify table *)
 type reify_tbl =
   { mutable count : int;
-    tbl : (Term.constr, btype) Hashtbl.t;
-    mutable cuts : (Structures.names_id * Term.types) list;
+    tbl : (Structures.constr, btype) Hashtbl.t;
+    mutable cuts : (Structures.names_id * Structures.types) list;
     unsup_tbl : (btype, btype) Hashtbl.t;
   }
 

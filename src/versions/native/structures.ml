@@ -17,14 +17,28 @@ open Coqlib
 
 type constr = Term.constr
 type types = Term.types
+let mklApp f args = Constr.mkApp (Lazy.force f, args)
+let decompose_app = Term.decompose_app
+let eq_constr = Term.eq_constr
+
+
 type name = Names.name
-type id = Names.id
+
+let mkName s =
+  let id = Names.id_of_string s in
+  Names.Name id
+
+let string_of_name = function
+    Names.Name id -> Names.string_of_id id
+  | _ -> failwith "unnamed rel"
+
+
+type cast_kind = Term.cast_kind
+let vmcast = Term.VMcast
+let mkCast = Term.mkCast
+
 
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
-
-let names_id_of_string = Names.id_of_string
-let names_string_of_id = Names.string_of_id
-
 
 
 (* Int63 *)
