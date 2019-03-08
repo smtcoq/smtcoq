@@ -27,7 +27,7 @@ module Atom =
 
     type reify_tbl =
         { mutable count : int;
-	          tbl : (Term.constr, int) Hashtbl.t 
+	          tbl : (Structures.constr, int) Hashtbl.t
 	}
 
     let create () = 

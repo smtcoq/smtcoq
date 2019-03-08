@@ -458,10 +458,10 @@ let to_coq to_lit interp (cstep,
         | Ext (res) -> mklApp cExt [|out_c c; out_f res|]
         | Hole (prem_id, concl) ->
            let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
-           let ass_name = Names.id_of_string ("ass"^(string_of_int (Hashtbl.hash concl))) in
+           let ass_name = Structures.mkId ("ass"^(string_of_int (Hashtbl.hash concl))) in
            let ass_ty = interp (prem, concl) in
            cuts := (ass_name, ass_ty)::!cuts;
-           let ass_var = Term.mkVar ass_name in
+           let ass_var = Structures.mkVar ass_name in
            let prem_id' = List.fold_right (fun c l -> mklApp ccons [|Lazy.force cint; out_c c; l|]) prem_id (mklApp cnil [|Lazy.force cint|]) in
            let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
            let concl' = out_cl concl in
@@ -471,9 +471,9 @@ let to_coq to_lit interp (cstep,
              | Some find -> find cl
              | None -> assert false in
            let concl' = out_cl [concl] in
-           let app_name = Names.id_of_string ("app" ^ (string_of_int (Hashtbl.hash concl))) in
-           let app_var = Term.mkVar app_name in
-           let app_ty = Term.mkArrow clemma (interp ([], [concl])) in
+           let app_name = Structures.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
+           let app_var = Structures.mkVar app_name in
+           let app_ty = Structures.mkArrow clemma (interp ([], [concl])) in
            cuts := (app_name, app_ty)::!cuts;
            mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
 	end

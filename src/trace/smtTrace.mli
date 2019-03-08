@@ -47,26 +47,26 @@ val alloc : 'a SmtCertif.clause -> int
 val naive_alloc : 'a SmtCertif.clause -> int
 val build_certif : 'a SmtCertif.clause -> 'b SmtCertif.clause -> int
 val to_coq :
-  ('a -> Term.constr) ->
-  ('a list list * 'a list -> Term.types) ->
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t * Term.constr Lazy.t *
-  Term.constr Lazy.t * Term.constr Lazy.t ->
+  ('a -> Structures.constr) ->
+  ('a list list * 'a list -> Structures.types) ->
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
+  Structures.constr Lazy.t * Structures.constr Lazy.t ->
   'a SmtCertif.clause ->
-  ('a SmtCertif.clause -> Term.types * Term.constr) option ->
-  Term.constr * 'a SmtCertif.clause *
-    (Names.identifier * Term.types) list
+  ('a SmtCertif.clause -> Structures.types * Structures.constr) option ->
+  Structures.constr * 'a SmtCertif.clause *
+    (Structures.id * Structures.types) list
 module MakeOpt :
   functor (Form : SmtForm.FORM) ->
     sig

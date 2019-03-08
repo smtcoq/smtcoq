@@ -17,17 +17,28 @@ open Coqlib
 
 type constr = Term.constr
 type types = Term.types
-let mklApp f args = Constr.mkApp (Lazy.force f, args)
-let decompose_app = Term.decompose_app
 let eq_constr = Term.eq_constr
+let hash_constr = Term.hash_constr
+let mkApp = Term.mkApp
+let mklApp f args = mkApp (Lazy.force f, args)
+let decompose_app = Term.decompose_app
+let mkProp = Term.mkProp
+let mkArrow = Term.mkArrow
+let mkRel = Term.mkRel
+let isRel = Term.isRel
+let destRel = Term.destRel
+let pr_constr = Printer.pr_constr
+
+
+type id = Names.id
+let mkId = Names.id_of_string
+let mkVar = Term.mkVar
 
 
 type name = Names.name
-
 let mkName s =
-  let id = Names.id_of_string s in
+  let id = mkId s in
   Names.Name id
-
 let string_of_name = function
     Names.Name id -> Names.string_of_id id
   | _ -> failwith "unnamed rel"
@@ -168,7 +179,6 @@ let micromega_dump_proof_term p =
 
 (* Types in the Coq source code *)
 type tactic = Proof_type.tactic
-type names_id = Names.identifier
 type constr_expr = Topconstr.constr_expr
 
 (* EConstr *)

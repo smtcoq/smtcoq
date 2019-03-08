@@ -17,17 +17,29 @@ open Entries
 
 type constr = Constr.t
 type types = Constr.types
-let mklApp f args = Constr.mkApp (Lazy.force f, args)
-let decompose_app = Constr.decompose_app
 let eq_constr = Constr.equal
+let hash_constr = Constr.hash
+let mkApp = Constr.mkApp
+let mklApp f args = mkApp (Lazy.force f, args)
+let decompose_app = Constr.decompose_app
+let mkProp = Constr.mkProp
+let mkArrow = Term.mkArrow      (* Not ported to Constr! *)
+let mkRel = Constr.mkRel
+let isRel = Constr.isRel
+let destRel = Constr.destRel
+(* Careful, terms are always printed in an empty environment *)
+let pr_constr = Printer.pr_constr_env Environ.empty_env Evd.empty
+
+
+type id = Names.Id.t
+let mkId = Names.Id.of_string
+let mkVar = Constr.mkVar
 
 
 type name = Names.Name.t
-
 let mkName s =
-  let id = Names.Id.of_string s in
+  let id = mkId s in
   Names.Name id
-
 let string_of_name = function
     Names.Name id -> Names.Id.to_string id
   | _ -> failwith "unnamed rel"
@@ -205,7 +217,6 @@ let micromega_dump_proof_term p =
 
 (* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
-type names_id = Names.Id.t
 type constr_expr = Constrexpr.constr_expr
 
 (* EConstr *)

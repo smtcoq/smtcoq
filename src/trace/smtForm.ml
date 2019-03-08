@@ -82,7 +82,7 @@ module type FORM =
     val get : ?declare:bool -> reify -> pform -> t
 
     (** Give a coq term, build the corresponding formula *)
-    val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
+    val of_coq : (Structures.constr -> hatom) -> reify -> Structures.constr -> t
 
     val hash_hform : (hatom -> hatom) -> reify -> t -> t
     (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
@@ -94,20 +94,20 @@ module type FORM =
 
     (** Producing Coq terms *)
 
-    val to_coq : t -> Term.constr
+    val to_coq : t -> Structures.constr
 
     val pform_tbl : reify -> pform array
 
     val to_array : reify -> 'a -> (pform -> 'a) -> int * 'a array
-    val interp_tbl : reify -> Term.constr * Term.constr
+    val interp_tbl : reify -> Structures.constr * Structures.constr
     val nvars : reify -> int
     (** Producing a Coq term corresponding to the interpretation
           of a formula *)
     (** [interp_atom] map [hatom] to coq term, it is better if it produce
           shared terms. *)
     val interp_to_coq :
-      (hatom -> Term.constr) -> (int, Term.constr) Hashtbl.t ->
-      t -> Term.constr
+      (hatom -> Structures.constr) -> (int, Structures.constr) Hashtbl.t ->
+      t -> Structures.constr
   end
 
 module Make (Atom:ATOM) =
@@ -361,9 +361,9 @@ module Make (Atom:ATOM) =
       | CCunknown
 
     module ConstrHash = struct
-      type t = Term.constr
-      let equal = Term.eq_constr
-      let hash = Term.hash_constr
+      type t = Structures.constr
+      let equal = Structures.eq_constr
+      let hash = Structures.hash_constr
     end
     module ConstrHashtbl = Hashtbl.Make(ConstrHash)
 
@@ -386,7 +386,7 @@ module Make (Atom:ATOM) =
       let get_cst c =
         try ConstrHashtbl.find op_tbl c with Not_found -> CCunknown in
       let rec mk_hform h =
-        let c, args = Term.decompose_app h in
+        let c, args = Structures.decompose_app h in
         match get_cst c with
           | CCtrue  -> get reify (Fapp(Ftrue,empty_args))
           | CCfalse -> get reify (Fapp(Ffalse,empty_args))
@@ -427,8 +427,8 @@ module Make (Atom:ATOM) =
       and mk_fnot i args =
         match args with
           | [t] ->
-             let c,args = Term.decompose_app t in
-             if Term.eq_constr c (Lazy.force cnegb) then
+             let c,args = Structures.decompose_app t in
+             if Structures.eq_constr c (Lazy.force cnegb) then
                mk_fnot (i+1) args
              else
                let q,r = i lsr 1 , i land 1 in
@@ -442,8 +442,8 @@ module Make (Atom:ATOM) =
         match args with
           | [t1;t2] ->
              let l2 = mk_hform t2 in
-             let c, args = Term.decompose_app t1 in
-             if Term.eq_constr c (Lazy.force candb) then
+             let c, args = Structures.decompose_app t1 in
+             if Structures.eq_constr c (Lazy.force candb) then
                mk_fand (l2::acc) args
              else
                let l1 = mk_hform t1 in
@@ -454,8 +454,8 @@ module Make (Atom:ATOM) =
         match args with
           | [t1;t2] ->
              let l2 = mk_hform t2 in
-             let c, args = Term.decompose_app t1 in
-             if Term.eq_constr c (Lazy.force corb) then
+             let c, args = Structures.decompose_app t1 in
+             if Structures.eq_constr c (Lazy.force corb) then
                mk_for (l2::acc) args
              else
                let l1 = mk_hform t1 in

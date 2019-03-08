@@ -16,9 +16,21 @@
 (* Constr generation and manipulation *)
 type constr
 type types = constr
+val eq_constr : constr -> constr -> bool
+val hash_constr : constr -> int
+val mkApp : constr * constr array -> constr
 val mklApp : constr Lazy.t -> constr array -> constr
 val decompose_app : constr -> constr * constr list
-val eq_constr : constr -> constr -> bool
+val mkProp : types
+val mkArrow : types -> types -> types
+val mkRel : int -> constr
+val isRel : constr -> bool
+val destRel : constr -> int
+val pr_constr : constr -> Pp.t
+
+type id
+val mkId : string -> id
+val mkVar : id -> constr
 
 type name
 val mkName : string -> name
@@ -71,7 +83,7 @@ val declare_new_variable : Names.variable -> types -> constr
 val extern_constr : constr -> Constrexpr.constr_expr
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val lift : int -> Constr.constr -> Constr.constr
-val destruct_rel_decl : Context.Rel.Declaration.t -> Names.Name.t * constr
+val destruct_rel_decl : Context.Rel.Declaration.t -> name * constr
 val interp_constr : Environ.env -> Evd.evar_map -> Constrexpr.constr_expr -> constr
 val tclTHEN :
   unit Proofview.tactic -> unit Proofview.tactic -> unit Proofview.tactic
@@ -105,7 +117,6 @@ val micromega_dump_proof_term : Micromega_plugin_Certificate.Mc.zArithProof -> c
 
 (* Types in the Coq source code *)
 type tactic = unit Proofview.tactic
-type names_id = Names.Id.t
 type constr_expr = Constrexpr.constr_expr
 
 (* EConstr *)

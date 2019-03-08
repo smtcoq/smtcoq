@@ -17,7 +17,7 @@ open CoqTerms
 
 type indexed_type = Structures.constr gen_hashed
 
-let dummy_indexed_type i = {index = i; hval = Term.mkProp}
+let dummy_indexed_type i = {index = i; hval = Structures.mkProp}
 let indexed_type_index i = i.index
 let indexed_type_hval i = i.hval
 
@@ -77,7 +77,7 @@ let rec logic = function
 type reify_tbl =
   { mutable count : int;
     tbl : (Structures.constr, btype) Hashtbl.t;
-    mutable cuts : (Structures.names_id * Structures.types) list;
+    mutable cuts : (Structures.id * Structures.types) list;
     unsup_tbl : (btype, btype) Hashtbl.t;
   }
 
@@ -175,8 +175,8 @@ let rec compdec_btype reify = function
        [|interp_to_coq reify ti; interp_to_coq reify te;
          compdec_btype reify ti; compdec_btype reify te|]
   | Tindex i ->
-     let c, args = Term.decompose_app i.hval in
-     if Term.eq_constr c (Lazy.force cTyp_compdec) then
+     let c, args = Structures.decompose_app i.hval in
+     if Structures.eq_constr c (Lazy.force cTyp_compdec) then
        match args with
          | [_; tic] -> tic
          | _ -> assert false
@@ -195,22 +195,22 @@ let declare_and_compdec reify t ty =
 
 let rec of_coq reify known_logic t =
   try
-    let c, args = Term.decompose_app t in
-    if Term.eq_constr c (Lazy.force cbool) ||
-         Term.eq_constr c (Lazy.force cTbool) then Tbool
-    else if Term.eq_constr c (Lazy.force cZ) ||
-              Term.eq_constr c (Lazy.force cTZ) then
+    let c, args = Structures.decompose_app t in
+    if Structures.eq_constr c (Lazy.force cbool) ||
+         Structures.eq_constr c (Lazy.force cTbool) then Tbool
+    else if Structures.eq_constr c (Lazy.force cZ) ||
+              Structures.eq_constr c (Lazy.force cTZ) then
       check_known TZ known_logic
-    else if Term.eq_constr c (Lazy.force cpositive) ||
-              Term.eq_constr c (Lazy.force cTpositive) then
+    else if Structures.eq_constr c (Lazy.force cpositive) ||
+              Structures.eq_constr c (Lazy.force cTpositive) then
       check_known Tpositive known_logic
-    else if Term.eq_constr c (Lazy.force cbitvector) ||
-              Term.eq_constr c (Lazy.force cTBV) then
+    else if Structures.eq_constr c (Lazy.force cbitvector) ||
+              Structures.eq_constr c (Lazy.force cTBV) then
       match args with
         | [s] -> check_known (TBV (mk_bvsize s)) known_logic
         | _ -> assert false
-    else if Term.eq_constr c (Lazy.force cfarray) ||
-              Term.eq_constr c (Lazy.force cTFArray) then
+    else if Structures.eq_constr c (Lazy.force cfarray) ||
+              Structures.eq_constr c (Lazy.force cTFArray) then
       match args with
         | ti :: te :: _ ->
            let ty = TFArray (of_coq reify known_logic ti,
@@ -221,8 +221,8 @@ let rec of_coq reify known_logic t =
       try Hashtbl.find reify.tbl t
       with Not_found ->
         let n = string_of_int (List.length reify.cuts) in
-        let compdec_name = Names.id_of_string ("CompDec"^n) in
-        let compdec_var = Term.mkVar compdec_name in
+        let compdec_name = Structures.mkId ("CompDec"^n) in
+        let compdec_var = Structures.mkVar compdec_name in
         let compdec_type = mklApp cCompDec [| t |]in
         reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
         let ce = mklApp cTyp_compdec [|t; compdec_var|] in
