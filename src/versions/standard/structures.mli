@@ -14,7 +14,7 @@
    that the goal does not contain existencial variables *)
 
 (* Constr generation and manipulation *)
-type id
+type id = Names.variable
 val mkId : string -> id
 
 type name
@@ -22,7 +22,7 @@ val name_of_id : id -> name
 val mkName : string -> name
 val string_of_name : name -> string
 
-type constr
+type constr = Constr.t
 type types = constr
 val eq_constr : constr -> constr -> bool
 val hash_constr : constr -> int
@@ -36,11 +36,8 @@ val lift : int -> constr -> constr
 val mkApp : constr * constr array -> constr
 val decompose_app : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
-val mkArrow : types -> types -> types
 val mkProd : name * types * types -> types
-val decompose_prod_assum : types -> Context.Rel.t * types
 val mkLetIn : name * constr * types * constr -> constr
-val mkLambda_or_LetIn : Context.Rel.Declaration.t -> constr -> constr
 
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val pr_constr : constr -> Pp.t
@@ -117,7 +114,7 @@ val destruct_rel_decl : Context.Rel.Declaration.t -> name * constr
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
 val ppconstr_lsimpleconstr : Notation_term.tolerability
 val constrextern_extern_constr : constr -> constr_expr
-val get_rel_dec_name : Context.Rel.Declaration.t -> Names.Name.t
+val get_rel_dec_name : Context.Rel.Declaration.t -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
 
 val vm_conv : Reduction.conv_pb -> types Reduction.kernel_conversion_function

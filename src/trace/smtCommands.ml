@@ -10,10 +10,6 @@
 (**************************************************************************)
 
 
-open Entries
-open Declare
-open Decl_kinds
-
 open SmtMisc
 open CoqTerms
 open SmtForm
@@ -119,7 +115,7 @@ let interp_conseq_uf t_i (prem, concl) =
   let tf = Hashtbl.create 17 in
   let rec interp = function
     | [] -> mklApp cis_true [|interp_uf t_i ta tf concl|]
-    | c::prem -> Structures.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
+    | c::prem -> Term.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
   interp prem
 
 
@@ -688,7 +684,7 @@ let make_proof call_solver env rt ro ra' rf' l ls_smtc =
 exception Axiom_form_unsupported
 
 let of_coq_lemma rt ro ra' rf' env sigma solver_logic clemma =
-  let rel_context, qf_lemma = Structures.decompose_prod_assum clemma in
+  let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
   let env_lemma = List.fold_right Environ.push_rel rel_context env in
   let forall_args =
     let fmap r = let n, t = Structures.destruct_rel_decl r in
@@ -807,14 +803,13 @@ let string_index_of_constr env i cf =
 
 let vstring_i env i =
   let cf = SmtAtom.Atom.get_coq_term_op i in
-  if Term.isRel cf then
-    let dbi = Term.destRel cf in
+  if Structures.isRel cf then
+    let dbi = Structures.destRel cf in
     let s =
       Environ.lookup_rel dbi env
       |> Structures.get_rel_dec_name
-      |> function
-      | Names.Name id -> Names.string_of_id id
-      | Names.Anonymous -> "?" in
+      |> SmtMisc.string_of_name_def "?"
+    in
     s, dbi
   else
     string_index_of_constr env i cf

@@ -473,7 +473,7 @@ let to_coq to_lit interp (cstep,
            let concl' = out_cl [concl] in
            let app_name = Structures.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
            let app_var = Structures.mkVar app_name in
-           let app_ty = Structures.mkArrow clemma (interp ([], [concl])) in
+           let app_ty = Term.mkArrow clemma (interp ([], [concl])) in
            cuts := (app_name, app_ty)::!cuts;
            mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
 	end

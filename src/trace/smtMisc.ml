@@ -27,6 +27,8 @@ type 'a gen_hashed = { index : int; hval : 'a }
 
 let mklApp f args = Structures.mkApp (Lazy.force f, args)
 
+let string_of_name_def d n = try Structures.string_of_name n with | _ -> d
+
 let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in
   let pr = fix

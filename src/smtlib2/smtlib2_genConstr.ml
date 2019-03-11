@@ -113,7 +113,7 @@ let declare_fun rt ro sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
   let coqTy = List.fold_right (fun typ c ->
-      Structures.mkArrow (interp_to_coq rt typ) c)
+      Term.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
   let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in

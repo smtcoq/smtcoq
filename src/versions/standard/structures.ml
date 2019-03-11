@@ -14,7 +14,7 @@ open Entries
 
 
 (* Constr generation and manipulation *)
-type id = Names.Id.t
+type id = Names.variable
 let mkId = Names.Id.of_string
 
 
@@ -42,11 +42,8 @@ let lift = Vars.lift
 let mkApp = Constr.mkApp
 let decompose_app = Constr.decompose_app
 let mkLambda = Constr.mkLambda
-let mkArrow = Term.mkArrow
 let mkProd = Constr.mkProd
-let decompose_prod_assum = Term.decompose_prod_assum
 let mkLetIn = Constr.mkLetIn
-let mkLambda_or_LetIn = Term.mkLambda_or_LetIn
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 let pr_constr = pr_constr_env Environ.empty_env

@@ -19,7 +19,7 @@ val name_of_id : id -> name
 val mkName : string -> name
 val string_of_name : name -> string
 
-type constr
+type constr = Term.constr
 type types = constr
 val eq_constr : constr -> constr -> bool
 val hash_constr : constr -> int
@@ -33,11 +33,8 @@ val lift : int -> constr -> constr
 val mkApp : constr -> constr array -> constr
 val decompose_app : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
-val mkArrow : types -> types -> types
 val mkProd : name * types * types -> types
-val decompose_prod_assum : types -> Context.Rel.t * types
 val mkLetIn : name * constr * types * constr -> constr
-val mkLambda_or_LetIn : Context.Rel.Declaration.t -> constr -> constr
 
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val pr_constr : constr -> Pp.t
@@ -114,7 +111,7 @@ val destruct_rel_decl : Term.rel_declaration -> name * constr
 val interp_constr : Environ.env -> Evd.evar_map -> Topconstr.constr_expr -> constr
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : constr -> Topconstr.constr_expr
-val get_rel_dec_name : 'a -> Names.name
+val get_rel_dec_name : 'a -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
 
 val vm_conv : Reduction.conv_pb -> types Reduction.conversion_function

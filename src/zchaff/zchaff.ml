@@ -222,7 +222,7 @@ let theorems interp name fdimacs ftrace =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
-  let vtype = Structures.mkArrow (Lazy.force cint) (Lazy.force cbool) in
+  let vtype = Term.mkArrow (Lazy.force cint) (Lazy.force cbool) in
   let theorem_type =
     Structures.mkProd (Structures.mkName "v", vtype, theorem_concl) in
   let theorem_proof_cast =
@@ -523,7 +523,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 let core_tactic vm_cast env sigma concl =
   SmtTrace.clear ();
 
-  let (forall_let, concl) = Structures.decompose_prod_assum concl in
+  let (forall_let, concl) = Term.decompose_prod_assum concl in
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
@@ -547,7 +547,7 @@ let core_tactic vm_cast env sigma concl =
   in
 
   let compose_lam_assum forall_let body =
-    List.fold_left (fun t rd -> Structures.mkLambda_or_LetIn rd t) body forall_let in
+    List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
   let res_cast = compose_lam_assum forall_let body_cast in
   let res_nocast = compose_lam_assum forall_let body_nocast in
 

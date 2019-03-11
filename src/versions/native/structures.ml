@@ -43,11 +43,8 @@ let lift = Term.lift
 let mkApp = Term.mkApp
 let decompose_app = Term.decompose_app
 let mkLambda = Term.mkLambda
-let mkArrow = Term.mkArrow
 let mkProd = Term.mkProd
-let decompose_prod_assum = Term.decompose_prod_assum
 let mkLetIn = Term.mkLetIn
-let mkLambda_or_LetIn = Term.mkLambda_or_LetIn
 
 let pr_constr_env = Printer.pr_constr_env
 let pr_constr = Printer.pr_constr
