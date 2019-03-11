@@ -11,13 +11,13 @@
 
 
 val parse_certif :
-  Structures.names_id ->
-  Structures.names_id ->
-  Structures.names_id ->
-  Structures.names_id ->
-  Structures.names_id -> Structures.names_id -> Structures.names_id -> string -> string -> unit
+  Structures.id ->
+  Structures.id ->
+  Structures.id ->
+  Structures.id ->
+  Structures.id -> Structures.id -> Structures.id -> string -> string -> unit
 val checker : string -> string -> unit
 val checker_debug : string -> string -> unit
-val theorem : Structures.names_id -> string -> string -> unit
-val tactic : Term.constr list -> Structures.constr_expr list -> Structures.tactic
-val tactic_no_check : Term.constr list -> Structures.constr_expr list -> Structures.tactic
+val theorem : Structures.id -> string -> string -> unit
+val tactic : Structures.constr list -> Structures.constr_expr list -> Structures.tactic
+val tactic_no_check : Structures.constr list -> Structures.constr_expr list -> Structures.tactic

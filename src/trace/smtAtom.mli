@@ -76,14 +76,14 @@ module Op :
 
     val create : unit -> reify_tbl
 
-    val declare : reify_tbl -> Term.constr -> btype array ->
+    val declare : reify_tbl -> Structures.constr -> btype array ->
                   btype -> string option -> indexed_op
 
-    val of_coq : reify_tbl -> Term.constr -> indexed_op
+    val of_coq : reify_tbl -> Structures.constr -> indexed_op
 
-    val interp_tbl : Term.constr ->
-      (btype array -> btype -> Term.constr -> Term.constr) ->
-      reify_tbl -> Term.constr
+    val interp_tbl : Structures.constr ->
+      (btype array -> btype -> Structures.constr -> Structures.constr) ->
+      reify_tbl -> Structures.constr
 
     val to_list : reify_tbl -> (int * (btype array) * btype * indexed_op) list
 
@@ -143,18 +143,18 @@ module Atom :
 
       (** Given a coq term, build the corresponding atom *)
       val of_coq : ?hash:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
-        reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> Term.constr -> t
+        reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> Structures.constr -> t
 
-      val get_coq_term_op : int -> Term.constr
+      val get_coq_term_op : int -> Structures.constr
 
-      val to_coq : t -> Term.constr
+      val to_coq : t -> Structures.constr
 
       val to_array : reify_tbl -> 'a -> (atom -> 'a) -> 'a array
 
-      val interp_tbl : reify_tbl -> Term.constr
+      val interp_tbl : reify_tbl -> Structures.constr
 
-      val interp_to_coq : Term.constr -> (int, Term.constr) Hashtbl.t ->
-	t -> Term.constr
+      val interp_to_coq : Structures.constr -> (int, Structures.constr) Hashtbl.t ->
+	t -> Structures.constr
 
       val logic : t -> SmtMisc.logic
 
@@ -202,5 +202,5 @@ module Trace : sig
 end
 
 
-val make_t_i : SmtBtype.reify_tbl -> Term.constr
-val make_t_func : Op.reify_tbl -> Term.constr -> Term.constr
+val make_t_i : SmtBtype.reify_tbl -> Structures.constr
+val make_t_func : Op.reify_tbl -> Structures.constr -> Structures.constr

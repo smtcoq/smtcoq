@@ -11,6 +11,7 @@
 
 
 open Coqlib
+open SmtMisc
 
 
 let gen_constant = Structures.gen_constant
@@ -274,7 +275,7 @@ let cinterp_var_sat_checker = gen_constant [["SMTCoq";"Trace";"Sat_Checker"]] "i
 let make_certif_ops modules args =
   let gen_constant c =
     match args with
-      | Some args -> lazy (SmtMisc.mklApp (gen_constant modules c) args)
+      | Some args -> lazy (mklApp (gen_constant modules c) args)
       | None -> gen_constant modules c in
  (gen_constant "step",
   gen_constant "Res", gen_constant "Weaken", gen_constant "ImmFlatten",
@@ -300,14 +301,14 @@ let make_certif_ops modules args =
 (** Useful constructions *)
 
 let ceq_refl_true =
-  lazy (SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])
+  lazy (mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])
 
 let eq_refl_true () = Lazy.force ceq_refl_true
 
 let vm_cast_true_no_check t =
-  Term.mkCast(eq_refl_true (),
-              Term.VMcast,
-              SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+  Structures.mkCast(eq_refl_true (),
+              Structures.vmcast,
+              mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
 
 (* This version checks convertibility right away instead of delaying it at
    Qed. This allows to report issues to the user as soon as he/she runs one of
@@ -315,9 +316,9 @@ let vm_cast_true_no_check t =
 let vm_cast_true env t =
   try
     Structures.vm_conv Reduction.CUMUL env
-      (SmtMisc.mklApp ceq
+      (mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
-      (SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
+      (mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
     vm_cast_true_no_check t
   with Reduction.NotConvertible ->
     Structures.error ("SMTCoq was not able to check the proof certificate.")
@@ -326,19 +327,19 @@ let vm_cast_true env t =
 (* Compute a nat *)
 let rec mkNat = function
   | 0 -> Lazy.force cO
-  | i -> SmtMisc.mklApp cS [|mkNat (i-1)|]
+  | i -> mklApp cS [|mkNat (i-1)|]
 
 (* Compute a positive *)
 let rec mkPositive = function
   | 1 -> Lazy.force cxH
   | i ->
      let c = if (i mod 2) = 0 then cxO else cxI in
-     SmtMisc.mklApp c [|mkPositive (i / 2)|]
+     mklApp c [|mkPositive (i / 2)|]
 
 (* Compute a N *)
 let mkN = function
   | 0 -> Lazy.force cN0
-  | i -> SmtMisc.mklApp cNpos [|mkPositive i|]
+  | i -> mklApp cNpos [|mkPositive i|]
 
 (* Compute a Boolean *)
 let mkBool = function
@@ -347,47 +348,47 @@ let mkBool = function
 
 (* Compute a Boolean list *)
 let rec mk_bv_list = function
-  | [] -> SmtMisc.mklApp cnil [|Lazy.force cbool|]
+  | [] -> mklApp cnil [|Lazy.force cbool|]
   | b :: bv ->
-    SmtMisc.mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
+    mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
 
 
 (* Reification *)
 
 let mk_bool b =
-  let c, args = Term.decompose_app b in
-  if Term.eq_constr c (Lazy.force ctrue) then true
-  else if Term.eq_constr c (Lazy.force cfalse) then false
+  let c, args = Structures.decompose_app b in
+  if Structures.eq_constr c (Lazy.force ctrue) then true
+  else if Structures.eq_constr c (Lazy.force cfalse) then false
   else assert false
 
 let rec mk_bool_list bs =
-  let c, args = Term.decompose_app bs in
-  if Term.eq_constr c (Lazy.force cnil) then []
-  else if Term.eq_constr c (Lazy.force ccons) then
+  let c, args = Structures.decompose_app bs in
+  if Structures.eq_constr c (Lazy.force cnil) then []
+  else if Structures.eq_constr c (Lazy.force ccons) then
     match args with
     | [_; b; bs] -> mk_bool b :: mk_bool_list bs
     | _ -> assert false
   else assert false
 
 let rec mk_nat n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cO) then
+  let c, args = Structures.decompose_app n in
+  if Structures.eq_constr c (Lazy.force cO) then
     0
-  else if Term.eq_constr c (Lazy.force cS) then
+  else if Structures.eq_constr c (Lazy.force cS) then
     match args with
     | [n] -> (mk_nat n) + 1
     | _ -> assert false
   else assert false
 
 let rec mk_positive n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cxH) then
+  let c, args = Structures.decompose_app n in
+  if Structures.eq_constr c (Lazy.force cxH) then
     1
-  else if Term.eq_constr c (Lazy.force cxO) then
+  else if Structures.eq_constr c (Lazy.force cxO) then
     match args with
     | [n] -> 2 * (mk_positive n)
     | _ -> assert false
-  else if Term.eq_constr c (Lazy.force cxI) then
+  else if Structures.eq_constr c (Lazy.force cxI) then
     match args with
     | [n] -> 2 * (mk_positive n) + 1
     | _ -> assert false
@@ -395,10 +396,10 @@ let rec mk_positive n =
 
 
 let mk_N n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cN0) then
+  let c, args = Structures.decompose_app n in
+  if Structures.eq_constr c (Lazy.force cN0) then
     0
-  else if Term.eq_constr c (Lazy.force cNpos) then
+  else if Structures.eq_constr c (Lazy.force cNpos) then
     match args with
     | [n] -> mk_positive n
     | _ -> assert false
@@ -406,13 +407,13 @@ let mk_N n =
 
 
 let mk_Z n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cZ0) then 0
-  else if Term.eq_constr c (Lazy.force cZpos) then
+  let c, args = Structures.decompose_app n in
+  if Structures.eq_constr c (Lazy.force cZ0) then 0
+  else if Structures.eq_constr c (Lazy.force cZpos) then
     match args with
     | [n] -> mk_positive n
     | _ -> assert false
-  else if Term.eq_constr c (Lazy.force cZneg) then
+  else if Structures.eq_constr c (Lazy.force cZneg) then
     match args with
     | [n] -> - mk_positive n
     | _ -> assert false
@@ -421,12 +422,12 @@ let mk_Z n =
 
 (* size of bivectors are either N.of_nat (length l) or an N *)
 let mk_bvsize n =
-  let c, args = Term.decompose_app n in
-  if Term.eq_constr c (Lazy.force cof_nat) then
+  let c, args = Structures.decompose_app n in
+  if Structures.eq_constr c (Lazy.force cof_nat) then
     match args with
     | [nl] ->
-      let c, args = Term.decompose_app nl in
-      if Term.eq_constr c (Lazy.force clength) then
+      let c, args = Structures.decompose_app nl in
+      if Structures.eq_constr c (Lazy.force clength) then
         match args with
         | [_; l] -> List.length (mk_bool_list l)
         | _ -> assert false

@@ -10,10 +10,6 @@
 (**************************************************************************)
 
 
-open Entries
-open Declare
-open Decl_kinds
-
 open SmtMisc
 open CoqTerms
 open SmtForm
@@ -132,19 +128,19 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
 
   let t_i' = make_t_i rt in
   let ce5 = Structures.mkUConst t_i' in
-  let ct_i = Term.mkConst (declare_constant t_i (DefinitionEntry ce5, IsDefinition Definition)) in
+  let ct_i = Structures.mkConst (Structures.declare_constant t_i ce5) in
 
   let t_func' = make_t_func ro ct_i in
   let ce6 = Structures.mkUConst t_func' in
-  let ct_func = Term.mkConst (declare_constant t_func (DefinitionEntry ce6, IsDefinition Definition)) in
+  let ct_func = Structures.mkConst (Structures.declare_constant t_func ce6) in
 
   let t_atom' = Atom.interp_tbl ra in
   let ce1 = Structures.mkUConst t_atom' in
-  let ct_atom = Term.mkConst (declare_constant t_atom (DefinitionEntry ce1, IsDefinition Definition)) in
+  let ct_atom = Structures.mkConst (Structures.declare_constant t_atom ce1) in
 
   let t_form' = snd (Form.interp_tbl rf) in
   let ce2 = Structures.mkUConst t_form' in
-  let ct_form = Term.mkConst (declare_constant t_form (DefinitionEntry ce2, IsDefinition Definition)) in
+  let ct_form = Structures.mkConst (Structures.declare_constant t_form ce2) in
 
   (* EMPTY LEMMA LIST *)
   let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
@@ -167,14 +163,14 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
     mklApp cSome [|mklApp carray [|Lazy.force cint|]; Structures.mkArray (Lazy.force cint, res)|] in
   let ce3 = Structures.mkUConst roots in
-  let _ = declare_constant root (DefinitionEntry ce3, IsDefinition Definition) in
+  let _ = Structures.declare_constant root ce3 in
   let ce3' = Structures.mkUConst used_roots in
-  let _ = declare_constant used_root (DefinitionEntry ce3', IsDefinition Definition) in
+  let _ = Structures.declare_constant used_root ce3' in
 
   let certif =
     mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
   let ce4 = Structures.mkUConst certif in
-  let _ = declare_constant trace (DefinitionEntry ce4, IsDefinition Definition) in
+  let _ = Structures.declare_constant trace ce4 in
 
   ()
 
@@ -188,15 +184,15 @@ let interp_roots t_i roots =
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
 let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
-  let nti = mkName "t_i" in
-  let ntfunc = mkName "t_func" in
-  let ntatom = mkName "t_atom" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
-  let nused_roots = mkName "used_roots" in
-  let nd = mkName "d" in
+  let nti = Structures.mkName "t_i" in
+  let ntfunc = Structures.mkName "t_func" in
+  let ntatom = Structures.mkName "t_atom" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
+  let nused_roots = Structures.mkName "used_roots" in
+  let nd = Structures.mkName "d" in
 
-  let v = Term.mkRel in
+  let v = Structures.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = make_t_func ro (v 1 (*t_i*)) in
@@ -230,50 +226,50 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
   let theorem_proof_cast =
-    Term.mkCast (
-        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-        Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-        Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-        Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-        Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-        Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-        Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+    Structures.mkCast (
+        Structures.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+        Structures.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+        Structures.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+        Structures.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+        Structures.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+        Structures.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+        Structures.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
 	         vm_cast_true_no_check
 	           (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))),
-        Term.VMcast,
+        Structures.vmcast,
         theorem_concl)
   in
   let theorem_proof_nocast =
-        Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-        Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-        Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-        Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-        Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-        Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-        Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+        Structures.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+        Structures.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+        Structures.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+        Structures.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+        Structures.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+        Structures.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+        Structures.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])))))))
   in
 
   let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_concl in
-  let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
+  let _ = Structures.declare_constant name ce in
   ()
 
 
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
 let checker (rt, ro, ra, rf, roots, max_id, confl) =
-  let nti = mkName "t_i" in
-  let ntfunc = mkName "t_func" in
-  let ntatom = mkName "t_atom" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
-  let nused_roots = mkName "used_roots" in
-  let nd = mkName "d" in
+  let nti = Structures.mkName "t_i" in
+  let ntfunc = Structures.mkName "t_func" in
+  let ntatom = Structures.mkName "t_atom" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
+  let nused_roots = Structures.mkName "used_roots" in
+  let nd = Structures.mkName "d" in
 
-  let v = Term.mkRel in
+  let v = Structures.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = make_t_func ro (v 1 (*t_i*)) in
@@ -306,18 +302,18 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     Structures.mkArray (Lazy.force cint, res) in
 
   let tm =
-   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-   Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-   Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-   Term.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-   Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+   Structures.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+   Structures.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+   Structures.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   Structures.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   Structures.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+   Structures.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+   Structures.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
    mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
 
   let res = Structures.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   Format.eprintf "     = %s\n     : bool@."
-    (if Term.eq_constr res (Lazy.force CoqTerms.ctrue) then
+    (if Structures.eq_constr res (Lazy.force CoqTerms.ctrue) then
         "true" else "false")
 
 let count_used confl =
@@ -333,15 +329,15 @@ let count_used confl =
 
 
 let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
-  let nti = mkName "t_i" in
-  let ntfunc = mkName "t_func" in
-  let ntatom = mkName "t_atom" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
-  let nused_roots = mkName "used_roots" in
-  let nd = mkName "d" in
+  let nti = Structures.mkName "t_i" in
+  let ntfunc = Structures.mkName "t_func" in
+  let ntatom = Structures.mkName "t_atom" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
+  let nused_roots = Structures.mkName "used_roots" in
+  let nd = Structures.mkName "d" in
 
-  let v = Term.mkRel in
+  let v = Structures.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = make_t_func ro (v 1 (*t_i*)) in
@@ -376,16 +372,16 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
     Structures.mkArray (Lazy.force cint, res) in
 
   let tm =
-   Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-   Term.mkLetIn (ntfunc, t_func,
+   Structures.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+   Structures.mkLetIn (ntfunc, t_func,
                  mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-   Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-   Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-   Term.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*);
+   Structures.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   Structures.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   Structures.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*);
                                               v 2 (*t_atom*); v 1 (*t_form*)|],
-   Term.mkLetIn (nused_roots, used_rootsCstr,
+   Structures.mkLetIn (nused_roots, used_rootsCstr,
                  mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-   Term.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+   Structures.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
    mklApp cchecker_debug [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*);
        v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
 
@@ -394,54 +390,54 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
          [|mklApp cprod
              [|Lazy.force cnat; Lazy.force cname_step|]|]) in
 
-  match Term.decompose_app res with
-  | c, _ when Term.eq_constr c (Lazy.force cNone) ->
+  match Structures.decompose_app res with
+  | c, _ when Structures.eq_constr c (Lazy.force cNone) ->
     Structures.error ("Debug checker is only meant to be used for certificates \
                        that fail to be checked by SMTCoq.")
-  | c, [_; n] when Term.eq_constr c (Lazy.force cSome) ->
-    (match Term.decompose_app n with
-     | c, [_; _; cnb; cn] when Term.eq_constr c (Lazy.force cpair) ->
-       let n = fst (Term.decompose_app cn) in
+  | c, [_; n] when Structures.eq_constr c (Lazy.force cSome) ->
+    (match Structures.decompose_app n with
+     | c, [_; _; cnb; cn] when Structures.eq_constr c (Lazy.force cpair) ->
+       let n = fst (Structures.decompose_app cn) in
        let name =
-         if Term.eq_constr n (Lazy.force cName_Res ) then "Res"
-         else if Term.eq_constr n (Lazy.force cName_Weaken) then "Weaken"
-         else if Term.eq_constr n (Lazy.force cName_ImmFlatten) then "ImmFlatten"
-         else if Term.eq_constr n (Lazy.force cName_CTrue) then "CTrue"
-         else if Term.eq_constr n (Lazy.force cName_CFalse ) then "CFalse"
-         else if Term.eq_constr n (Lazy.force cName_BuildDef) then "BuildDef"
-         else if Term.eq_constr n (Lazy.force cName_BuildDef2) then "BuildDef2"
-         else if Term.eq_constr n (Lazy.force cName_BuildProj ) then "BuildProj"
-         else if Term.eq_constr n (Lazy.force cName_ImmBuildDef) then "ImmBuildDef"
-         else if Term.eq_constr n (Lazy.force cName_ImmBuildDef2) then "ImmBuildDef2"
-         else if Term.eq_constr n (Lazy.force cName_ImmBuildProj ) then "ImmBuildProj"
-         else if Term.eq_constr n (Lazy.force cName_EqTr ) then "EqTr"
-         else if Term.eq_constr n (Lazy.force cName_EqCgr ) then "EqCgr"
-         else if Term.eq_constr n (Lazy.force cName_EqCgrP) then "EqCgrP"
-         else if Term.eq_constr n (Lazy.force cName_LiaMicromega ) then "LiaMicromega"
-         else if Term.eq_constr n (Lazy.force cName_LiaDiseq) then "LiaDiseq"
-         else if Term.eq_constr n (Lazy.force cName_SplArith) then "SplArith"
-         else if Term.eq_constr n (Lazy.force cName_SplDistinctElim ) then "SplDistinctElim"
-         else if Term.eq_constr n (Lazy.force cName_BBVar) then "BBVar"
-         else if Term.eq_constr n (Lazy.force cName_BBConst) then "BBConst"
-         else if Term.eq_constr n (Lazy.force cName_BBOp) then "BBOp"
-         else if Term.eq_constr n (Lazy.force cName_BBNot) then "BBNot"
-         else if Term.eq_constr n (Lazy.force cName_BBNeg) then "BBNeg"
-         else if Term.eq_constr n (Lazy.force cName_BBAdd) then "BBAdd"
-         else if Term.eq_constr n (Lazy.force cName_BBConcat) then "BBConcat"
-         else if Term.eq_constr n (Lazy.force cName_BBMul) then "BBMul"
-         else if Term.eq_constr n (Lazy.force cName_BBUlt) then "BBUlt"
-         else if Term.eq_constr n (Lazy.force cName_BBSlt) then "BBSlt"
-         else if Term.eq_constr n (Lazy.force cName_BBEq) then "BBEq"
-         else if Term.eq_constr n (Lazy.force cName_BBDiseq) then "BBDiseq"
-         else if Term.eq_constr n (Lazy.force cName_BBExtract) then "BBExtract"
-         else if Term.eq_constr n (Lazy.force cName_BBZextend) then "BBZextend"
-         else if Term.eq_constr n (Lazy.force cName_BBSextend) then "BBSextend"
-         else if Term.eq_constr n (Lazy.force cName_BBShl) then "BBShl"
-         else if Term.eq_constr n (Lazy.force cName_BBShr) then "BBShr"
-         else if Term.eq_constr n (Lazy.force cName_RowEq) then "RowEq"
-         else if Term.eq_constr n (Lazy.force cName_RowNeq) then "RowNeq"
-         else if Term.eq_constr n (Lazy.force cName_Ext) then "Ext"
-         else if Term.eq_constr n (Lazy.force cName_Hole) then "Hole"
+         if Structures.eq_constr n (Lazy.force cName_Res ) then "Res"
+         else if Structures.eq_constr n (Lazy.force cName_Weaken) then "Weaken"
+         else if Structures.eq_constr n (Lazy.force cName_ImmFlatten) then "ImmFlatten"
+         else if Structures.eq_constr n (Lazy.force cName_CTrue) then "CTrue"
+         else if Structures.eq_constr n (Lazy.force cName_CFalse ) then "CFalse"
+         else if Structures.eq_constr n (Lazy.force cName_BuildDef) then "BuildDef"
+         else if Structures.eq_constr n (Lazy.force cName_BuildDef2) then "BuildDef2"
+         else if Structures.eq_constr n (Lazy.force cName_BuildProj ) then "BuildProj"
+         else if Structures.eq_constr n (Lazy.force cName_ImmBuildDef) then "ImmBuildDef"
+         else if Structures.eq_constr n (Lazy.force cName_ImmBuildDef2) then "ImmBuildDef2"
+         else if Structures.eq_constr n (Lazy.force cName_ImmBuildProj ) then "ImmBuildProj"
+         else if Structures.eq_constr n (Lazy.force cName_EqTr ) then "EqTr"
+         else if Structures.eq_constr n (Lazy.force cName_EqCgr ) then "EqCgr"
+         else if Structures.eq_constr n (Lazy.force cName_EqCgrP) then "EqCgrP"
+         else if Structures.eq_constr n (Lazy.force cName_LiaMicromega ) then "LiaMicromega"
+         else if Structures.eq_constr n (Lazy.force cName_LiaDiseq) then "LiaDiseq"
+         else if Structures.eq_constr n (Lazy.force cName_SplArith) then "SplArith"
+         else if Structures.eq_constr n (Lazy.force cName_SplDistinctElim ) then "SplDistinctElim"
+         else if Structures.eq_constr n (Lazy.force cName_BBVar) then "BBVar"
+         else if Structures.eq_constr n (Lazy.force cName_BBConst) then "BBConst"
+         else if Structures.eq_constr n (Lazy.force cName_BBOp) then "BBOp"
+         else if Structures.eq_constr n (Lazy.force cName_BBNot) then "BBNot"
+         else if Structures.eq_constr n (Lazy.force cName_BBNeg) then "BBNeg"
+         else if Structures.eq_constr n (Lazy.force cName_BBAdd) then "BBAdd"
+         else if Structures.eq_constr n (Lazy.force cName_BBConcat) then "BBConcat"
+         else if Structures.eq_constr n (Lazy.force cName_BBMul) then "BBMul"
+         else if Structures.eq_constr n (Lazy.force cName_BBUlt) then "BBUlt"
+         else if Structures.eq_constr n (Lazy.force cName_BBSlt) then "BBSlt"
+         else if Structures.eq_constr n (Lazy.force cName_BBEq) then "BBEq"
+         else if Structures.eq_constr n (Lazy.force cName_BBDiseq) then "BBDiseq"
+         else if Structures.eq_constr n (Lazy.force cName_BBExtract) then "BBExtract"
+         else if Structures.eq_constr n (Lazy.force cName_BBZextend) then "BBZextend"
+         else if Structures.eq_constr n (Lazy.force cName_BBSextend) then "BBSextend"
+         else if Structures.eq_constr n (Lazy.force cName_BBShl) then "BBShl"
+         else if Structures.eq_constr n (Lazy.force cName_BBShr) then "BBShr"
+         else if Structures.eq_constr n (Lazy.force cName_RowEq) then "RowEq"
+         else if Structures.eq_constr n (Lazy.force cName_RowNeq) then "RowNeq"
+         else if Structures.eq_constr n (Lazy.force cName_Ext) then "Ext"
+         else if Structures.eq_constr n (Lazy.force cName_Hole) then "Hole"
          else string_coq_constr n
        in
        let nb = mk_nat cnb + List.length roots + (confl.id + 1 - count_used confl) in
@@ -454,9 +450,9 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 
 
 (* let rec of_coq_list cl =
- *   match Term.decompose_app cl with
- *   | c, _ when Term.eq_constr c (Lazy.force cnil) -> []
- *   | c, [_; x; cr] when Term.eq_constr c (Lazy.force ccons) ->
+ *   match Structures.decompose_app cl with
+ *   | c, _ when Structures.eq_constr c (Lazy.force cnil) -> []
+ *   | c, [_; x; cr] when Structures.eq_constr c (Lazy.force ccons) ->
  *     x :: of_coq_list cr
  *   | _ -> assert false *)
 
@@ -466,26 +462,22 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  * 
  *   let t_i' = make_t_i rt in
  *   let ce5 = Structures.mkUConst t_i' in
- *   let ct_i = Term.mkConst (declare_constant t_i
- *                              (DefinitionEntry ce5, IsDefinition Definition)) in
+ *   let ct_i = Structures.mkConst (Structures.declare_constant t_i ce5) in
  * 
  *   let t_func' = make_t_func ro ct_i in
  *   let ce6 = Structures.mkUConst t_func' in
  *   let ct_func =
- *     Term.mkConst (declare_constant t_func
- *                     (DefinitionEntry ce6, IsDefinition Definition)) in
+ *     Structures.mkConst (Structures.declare_constant t_func ce6) in
  * 
  *   let t_atom' = Atom.interp_tbl ra in
  *   let ce1 = Structures.mkUConst t_atom' in
  *   let ct_atom =
- *     Term.mkConst (declare_constant t_atom
- *                     (DefinitionEntry ce1, IsDefinition Definition)) in
+ *     Structures.mkConst (Structures.declare_constant t_atom ce1) in
  * 
  *   let t_form' = snd (Form.interp_tbl rf) in
  *   let ce2 = Structures.mkUConst t_form' in
  *   let ct_form =
- *     Term.mkConst (declare_constant t_form
- *                     (DefinitionEntry ce2, IsDefinition Definition)) in
+ *     Structures.mkConst (Structures.declare_constant t_form ce2) in
  * 
  *   let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
  *       (interp_conseq_uf ct_i)
@@ -509,18 +501,15 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *     mklApp cSome [|mklApp carray [|Lazy.force cint|];
  *                    Structures.mkArray (Lazy.force cint, res)|] in
  *   let ce3 = Structures.mkUConst croots in
- *   let _ = declare_constant root
- *       (DefinitionEntry ce3, IsDefinition Definition) in
+ *   let _ = Structures.declare_constant root ce3 in
  *   let ce3' = Structures.mkUConst cused_roots in
- *   let _ = declare_constant used_root
- *       (DefinitionEntry ce3', IsDefinition Definition) in
+ *   let _ = Structures.declare_constant used_root ce3' in
  * 
  *   let certif =
  *     mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1);
  *                      tres;mkInt (get_pos confl)|] in
  *   let ce4 = Structures.mkUConst certif in
- *   let _ = declare_constant trace
- *       (DefinitionEntry ce4, IsDefinition Definition) in
+ *   let _ = Structures.declare_constant trace ce4 in
  * 
  *   let setup =
  *    mklApp csetup_checker_step_debug
@@ -532,8 +521,8 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *            mklApp clist [|mklApp cstep
  *                             [|ct_i; ct_func; ct_atom; ct_form|]|]|]) in
  * 
- *   let s, steps = match Term.decompose_app setup with
- *     | c, [_; _; s; csteps] when Term.eq_constr c (Lazy.force cpair) ->
+ *   let s, steps = match Structures.decompose_app setup with
+ *     | c, [_; _; s; csteps] when Structures.eq_constr c (Lazy.force cpair) ->
  *       s, of_coq_list csteps
  *     | _ -> assert false
  *   in
@@ -550,12 +539,12 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *       Structures.cbv_vm (Global.env ()) tm
  *           (mklApp cprod [|Lazy.force cState_S_t; Lazy.force cbool|]) in
  * 
- *     match Term.decompose_app res with
- *     | c, [_; _; s; cbad] when Term.eq_constr c (Lazy.force cpair) ->
+ *     match Structures.decompose_app res with
+ *     | c, [_; _; s; cbad] when Structures.eq_constr c (Lazy.force cpair) ->
  *       if not (mk_bool cbad) then s
  *       else Structures.error ("Step number " ^ string_of_int !cpt ^
  *                              " (" ^ string_coq_constr
- *                                (fst (Term.decompose_app step)) ^ ")" ^
+ *                                (fst (Structures.decompose_app step)) ^ ")" ^
  *                              " of the certificate likely failed." )
  *     | _ -> assert false
  *   in
@@ -570,13 +559,13 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 (* Tactic *)
 
 let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
-  let nti = mkName "t_i" in
-  let ntfunc = mkName "t_func" in
-  let ntatom = mkName "t_atom" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
+  let nti = Structures.mkName "t_i" in
+  let ntfunc = Structures.mkName "t_func" in
+  let ntatom = Structures.mkName "t_atom" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
 
-  let v = Term.mkRel in
+  let v = Structures.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
@@ -594,11 +583,11 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
         mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
   let add_lets t =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
-    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, mklApp ccertif
+    Structures.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+    Structures.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
+    Structures.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    Structures.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    Structures.mkLetIn (nc, certif, mklApp ccertif
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
@@ -625,13 +614,13 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
 
 
 let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
-  let nti = mkName "t_i" in
-  let ntfunc = mkName "t_func" in
-  let ntatom = mkName "t_atom" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
+  let nti = Structures.mkName "t_i" in
+  let ntfunc = Structures.mkName "t_func" in
+  let ntatom = Structures.mkName "t_atom" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
 
-  let v = Term.mkRel in
+  let v = Structures.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = Structures.lift 1 (make_t_func ro (v 0 (*t_i*))) in
@@ -644,11 +633,11 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
   let add_lets t =
-    Term.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    Term.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
-    Term.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    Term.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, mklApp ccertif
+    Structures.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+    Structures.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
+    Structures.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    Structures.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    Structures.mkLetIn (nc, certif, mklApp ccertif
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
@@ -676,10 +665,10 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
 
 
 let get_arguments concl =
-  let f, args = Term.decompose_app concl in
+  let f, args = Structures.decompose_app concl in
   match args with
-  | [ty;a;b] when (Term.eq_constr f (Lazy.force ceq)) && (Term.eq_constr ty (Lazy.force cbool)) -> a, b
-  | [a] when (Term.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
+  | [ty;a;b] when (Structures.eq_constr f (Lazy.force ceq)) && (Structures.eq_constr ty (Lazy.force cbool)) -> a, b
+  | [a] when (Structures.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
@@ -699,18 +688,18 @@ let of_coq_lemma rt ro ra' rf' env sigma solver_logic clemma =
   let env_lemma = List.fold_right Environ.push_rel rel_context env in
   let forall_args =
     let fmap r = let n, t = Structures.destruct_rel_decl r in
-                 string_of_name n, SmtBtype.of_coq rt solver_logic t in
+                 Structures.string_of_name n, SmtBtype.of_coq rt solver_logic t in
     List.map fmap rel_context in
-  let f, args = Term.decompose_app qf_lemma in
+  let f, args = Structures.decompose_app qf_lemma in
   let core_f =
-    if Term.eq_constr f (Lazy.force cis_true) then
+    if Structures.eq_constr f (Lazy.force cis_true) then
       match args with
       | [a] -> a
       | _ -> raise Axiom_form_unsupported
-    else if Term.eq_constr f (Lazy.force ceq) then
+    else if Structures.eq_constr f (Lazy.force ceq) then
       match args with
-      | [ty; arg1; arg2] when Term.eq_constr ty (Lazy.force cbool) &&
-                                Term.eq_constr arg2 (Lazy.force ctrue) ->
+      | [ty; arg1; arg2] when Structures.eq_constr ty (Lazy.force cbool) &&
+                                Structures.eq_constr arg2 (Lazy.force ctrue) ->
          arg1
       | _ -> raise Axiom_form_unsupported
     else raise Axiom_form_unsupported in
@@ -730,7 +719,7 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
   let lsmt  = List.map (of_coq_lemma rt ro ra' rf' env sigma solver_logic) lcl in
   let l_pl_ls = List.combine (List.combine lcl lcpl) lsmt in
 
-  let lem_tbl : (int, Term.constr * Term.constr) Hashtbl.t =
+  let lem_tbl : (int, Structures.constr * Structures.constr) Hashtbl.t =
     Hashtbl.create 100 in
   let new_ref ((l, pl), ls) =
     Hashtbl.add lem_tbl (Form.index ls) (l, pl) in
@@ -752,10 +741,10 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
       | _ -> failwith "unexpected form of root" in
 
   let (body_cast, body_nocast, cuts) =
-    if ((Term.eq_constr b (Lazy.force ctrue)) ||
-        (Term.eq_constr b (Lazy.force cfalse))) then
+    if ((Structures.eq_constr b (Lazy.force ctrue)) ||
+        (Structures.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let nl = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+      let nl = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let lsmt = Form.flatten rf nl :: lsmt in
       let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
@@ -776,7 +765,7 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
 
   List.fold_right (fun (eqn, eqt) tac ->
       Structures.tclTHENLAST
-        (Structures.assert_before (Names.Name eqn) eqt)
+        (Structures.assert_before (Structures.name_of_id eqn) eqt)
         tac
     ) cuts
     (Structures.tclTHEN
@@ -804,7 +793,7 @@ let string_index_of_constr env i cf =
   try
     let s = string_coq_constr cf in
     let nc = Environ.named_context env in
-    let nd = Environ.lookup_named (Names.id_of_string s) env in
+    let nd = Environ.lookup_named (Structures.mkId s) env in
     let cpt = ref 0 in
     (try List.iter (fun n -> incr cpt; if n == nd then raise Exit) nc
      with Exit -> ());
@@ -814,14 +803,13 @@ let string_index_of_constr env i cf =
 
 let vstring_i env i =
   let cf = SmtAtom.Atom.get_coq_term_op i in
-  if Term.isRel cf then
-    let dbi = Term.destRel cf in
+  if Structures.isRel cf then
+    let dbi = Structures.destRel cf in
     let s =
       Environ.lookup_rel dbi env
       |> Structures.get_rel_dec_name
-      |> function
-      | Names.Name id -> Names.string_of_id id
-      | Names.Anonymous -> "?" in
+      |> SmtMisc.string_of_name_def "?"
+    in
     s, dbi
   else
     string_index_of_constr env i cf

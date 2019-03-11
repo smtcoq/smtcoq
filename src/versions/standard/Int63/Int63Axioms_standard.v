@@ -300,7 +300,7 @@ Axiom diveucl_def_spec : forall x y, diveucl x y = diveucl_def x y.
 
 Axiom diveucl_21_spec :  forall a1 a2 b,
    let (q,r) := diveucl_21 a1 a2 b in
-   ([|q|],[|r|]) = Zdiv_eucl ([|a1|] * wB + [|a2|]) [|b|].
+   ([|q|],[|r|]) = Z.div_eucl ([|a1|] * wB + [|a2|]) [|b|].
 
 Axiom addmuldiv_def_spec : forall p x y,
   addmuldiv p x y = addmuldiv_def p x y.

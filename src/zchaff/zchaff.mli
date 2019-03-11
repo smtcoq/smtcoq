@@ -11,9 +11,9 @@
 
 
 val pp_trace : Format.formatter -> SatAtom.Form.t SmtCertif.clause -> unit
-val parse_certif : Structures.names_id -> Structures.names_id -> string -> string -> unit
+val parse_certif : Structures.id -> Structures.id -> string -> string -> unit
 val checker : string -> string -> unit
-val theorem : Structures.names_id -> string -> string -> unit
-val theorem_abs : Structures.names_id -> string -> string -> unit
+val theorem : Structures.id -> string -> string -> unit
+val theorem_abs : Structures.id -> string -> string -> unit
 val tactic : unit -> Structures.tactic
 val tactic_no_check : unit -> Structures.tactic

@@ -12,10 +12,10 @@
 
 open SmtMisc
 
-module type ATOM = 
-  sig 
+module type ATOM =
+  sig
 
-    type t 
+    type t
     val index : t -> int
 
     val equal : t -> t -> bool
@@ -25,7 +25,7 @@ module type ATOM =
     val to_smt : Format.formatter -> t -> unit
     val logic : t -> logic
 
-  end 
+  end
 
 
 type fop =
@@ -38,16 +38,16 @@ type fop =
   | Fiff
   | Fite
   | Fnot2 of int
-  | Fforall of (string * SmtBtype.btype) list 
- 
-type ('a,'f) gen_pform = 
+  | Fforall of (string * SmtBtype.btype) list
+
+type ('a,'f) gen_pform =
   | Fatom of 'a
   | Fapp of fop * 'f array
   | FbbT of 'a * 'f list
 
 module type FORM =
-  sig 
-    type hatom 
+  sig
+    type hatom
     type t
     type pform = (hatom, t) gen_pform
 
@@ -72,16 +72,16 @@ module type FORM =
 
       (* Building formula from positive formula *)
       exception NotWellTyped of pform
-      type reify 
+      type reify
       val create : unit -> reify
       val clear : reify -> unit
       val get : ?declare:bool -> reify -> pform -> t
-      
-      (** Given a coq term, build the corresponding formula *)  
-      val of_coq : (Term.constr -> hatom) -> reify -> Term.constr -> t
+
+      (** Given a coq term, build the corresponding formula *)
+      val of_coq : (Structures.constr -> hatom) -> reify -> Structures.constr -> t
 
       val hash_hform : (hatom -> hatom) -> reify -> t -> t
-                                             
+
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
 
@@ -89,24 +89,22 @@ module type FORM =
           counter-parts *)
       val right_assoc : reify -> t -> t
 
-      (** Producing Coq terms *) 
+      (** Producing Coq terms *)
 
-      val to_coq : t -> Term.constr
+      val to_coq : t -> Structures.constr
 
       val pform_tbl : reify -> pform array
 
       val to_array : reify -> 'a -> (pform -> 'a) -> int * 'a array
-      val interp_tbl : reify -> Term.constr * Term.constr
-      val nvars : reify -> int 
-      (** Producing a Coq term corresponding to the interpretation 
+      val interp_tbl : reify -> Structures.constr * Structures.constr
+      val nvars : reify -> int
+      (** Producing a Coq term corresponding to the interpretation
           of a formula *)
       (** [interp_atom] map [hatom] to coq term, it is better if it produce
           shared terms. *)
-      val interp_to_coq : 
-	  (hatom -> Term.constr) -> (int, Term.constr) Hashtbl.t -> 
-	    t -> Term.constr
+      val interp_to_coq :
+	  (hatom -> Structures.constr) -> (int, Structures.constr) Hashtbl.t ->
+	    t -> Structures.constr
   end
 
 module Make (Atom:ATOM) : FORM with type hatom = Atom.t
-
-	

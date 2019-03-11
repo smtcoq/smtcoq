@@ -25,27 +25,15 @@ type 'a gen_hashed = { index : int; hval : 'a }
 
 (** Functions over constr *)
 
-let mklApp f args = Term.mkApp (Lazy.force f, args)
+let mklApp f args = Structures.mkApp (Lazy.force f, args)
 
-(* TODO : Set -> Type *)
-let declare_new_type = Structures.declare_new_type
-let declare_new_variable = Structures.declare_new_variable
-
-let mkName s =
-  let id = Names.id_of_string s in
-  Names.Name id
-
+let string_of_name_def d n = try Structures.string_of_name n with | _ -> d
 
 let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in
   let pr = fix
       Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
   Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
-
-
-let string_of_name = function
-    Names.Name id -> Names.string_of_id id
-  | _ -> failwith "unnamed rel"
 
 
 (** Logics *)

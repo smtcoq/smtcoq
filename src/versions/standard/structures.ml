@@ -14,70 +14,42 @@ open Entries
 
 
 (* Constr generation and manipulation *)
-
-let mklApp f args = Term.mkApp (Lazy.force f, args)
-let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
-let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+type id = Names.variable
+let mkId = Names.Id.of_string
 
 
-(* Int63 *)
-let int63_modules = [["SMTCoq";"versions";"standard";"Int63";"Int63Native"]]
-
-let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
-let cD0 = gen_constant int31_module "D0"
-let cD1 = gen_constant int31_module "D1"
-let cI31 = gen_constant int31_module "I31"
-
-let mkInt : int -> Term.constr = fun i ->
-  let a = Array.make 31 (Lazy.force cD0) in
-  let j = ref i in
-  let k = ref 30 in
-  while !j <> 0 do
-    if !j land 1 = 1 then a.(!k) <- Lazy.force cD1;
-    j := !j lsr 1;
-    decr k
-  done;
-  mklApp cI31 a
-
-let cint = gen_constant int31_module "int31"
+type name = Names.Name.t
+let name_of_id i = Names.Name i
+let mkName s =
+  let id = mkId s in
+  name_of_id id
+let string_of_name = function
+    Names.Name id -> Names.Id.to_string id
+  | _ -> failwith "unnamed rel"
 
 
-(* PArray *)
-let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
+type constr = Constr.t
+type types = Constr.types
+let eq_constr = Constr.equal
+let hash_constr = Constr.hash
+let mkProp = Constr.mkProp
+let mkConst = Constr.mkConst
+let mkVar = Constr.mkVar
+let mkRel = Constr.mkRel
+let isRel = Constr.isRel
+let destRel = Constr.destRel
+let lift = Vars.lift
+let mkApp = Constr.mkApp
+let decompose_app = Constr.decompose_app
+let mkLambda = Constr.mkLambda
+let mkProd = Constr.mkProd
+let mkLetIn = Constr.mkLetIn
 
-let cmake = gen_constant parray_modules "make"
-let cset = gen_constant parray_modules "set"
-
-let max_array_size : int = 4194302
-let mkArray : Term.types * Term.constr array -> Term.constr =
-  fun (ty, a) ->
-  let l = (Array.length a) - 1 in
-  snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' =
-                          if i = l then
-                            acc
-                          else
-                            mklApp cset [|ty; acc; mkInt i; c|] in
-                        (i+1,acc')
-                       ) (0,mklApp cmake [|ty; mkInt l; a.(l)|]) a)
-
-
-(* Traces *)
-(* WARNING: side effect on r! *)
-let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
-  let rec mkTrace s =
-    if s = size then
-      mklApp cnil [|step|]
-    else (
-      r := next !r;
-      let st = step_to_coq !r in
-      mklApp ccons [|step; st; mkTrace (s+1)|]
-    ) in
-  mklApp cpair [|mklApp clist [|step|]; step; mkTrace 0; def_step|]
+let pr_constr_env env = Printer.pr_constr_env env Evd.empty
+let pr_constr = pr_constr_env Environ.empty_env
 
 
-(* Differences between the two versions of Coq *)
-let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_entry = fun c ->
+let mkUConst : Constr.t -> Safe_typing.private_constants Entries.definition_entry = fun c ->
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, ty = Typing.type_of env evd (EConstr.of_constr c) in
@@ -85,9 +57,8 @@ let mkUConst : Term.constr -> Safe_typing.private_constants Entries.definition_e
                                                Safe_typing.empty_private_constants);
     const_entry_secctx      = None;
     const_entry_feedback    = None;
-    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Term.constr *)
-    const_entry_polymorphic = false;
-    const_entry_universes   = snd (Evd.universe_context evd);
+    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Constr.t *)
+    const_entry_universes   = Evd.const_univ_entry ~poly:false evd;
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
@@ -100,74 +71,97 @@ let mkTConst c noc ty =
     const_entry_secctx      = None;
     const_entry_feedback    = None;
     const_entry_type        = Some ty;
-    const_entry_polymorphic = false;
-    const_entry_universes   = snd (Evd.universe_context evd);
+    const_entry_universes   = Evd.const_univ_entry ~poly:false evd;
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
-let error s = CErrors.user_err (Pp.str s)
-
-let coqtype = Future.from_val Term.mkSet
-
+(* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Future.force coqtype, Univ.ContextSet.empty) [] [] false Vernacexpr.NoInline (None, t) in
-  Term.mkVar t
+  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Constr.mkSet, Entries.Monomorphic_const_entry Univ.ContextSet.empty) Universes.empty_binders [] false Vernacexpr.NoInline (CAst.make t) in
+  Constr.mkVar t
 
 let declare_new_variable v constr_t =
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
-  let _ = Command.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.universe_context_set evd) [] [] false Vernacexpr.NoInline (None, v) in
-  Term.mkVar v
+  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.const_univ_entry ~poly:false evd) Universes.empty_binders [] false Vernacexpr.NoInline (CAst.make v) in
+  Constr.mkVar v
 
-let extern_constr c = Constrextern.extern_constr true Environ.empty_env Evd.empty (EConstr.of_constr c)
+let declare_constant n c =
+  Declare.declare_constant n (DefinitionEntry c, Decl_kinds.IsDefinition Decl_kinds.Definition)
 
-let vernacentries_interp expr =
-  Vernacentries.interp (None, Vernacexpr.VernacCheckMayEval (Some (Genredexpr.CbvVm None), None, expr))
 
-let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 
-let lift = Vars.lift
+type cast_kind = Constr.cast_kind
+let vmcast = Constr.VMcast
+let mkCast = Constr.mkCast
 
-let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
-                          Context.Rel.Declaration.get_type r
 
-let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst
+(* EConstr *)
+type econstr = EConstr.t
+let econstr_of_constr = EConstr.of_constr
 
-let tclTHEN = Tacticals.New.tclTHEN
-let tclTHENLAST = Tacticals.New.tclTHENLAST
-let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
-let vm_conv = Vconv.vm_conv
-let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
-(* Cannot contain evars since it comes from a Term.constr *)
-let cbv_vm env c t = EConstr.Unsafe.to_constr (Vnorm.cbv_vm env Evd.empty (EConstr.of_constr c) (EConstr.of_constr t))
+(* Modules *)
+let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
+let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
-let mk_tactic tac =
-  Proofview.Goal.nf_enter (fun gl ->
-    let env = Proofview.Goal.env gl in
-    let sigma = Tacmach.New.project gl in
-    let t = Proofview.Goal.concl gl in
-    let t = EConstr.to_constr sigma t in (* The goal should not contain uninstanciated evars *)
-    tac env sigma t
-  )
-let set_evars_tac noc =
-  mk_tactic (
-      fun env sigma _ ->
-      let sigma, _ = Typing.type_of env sigma (EConstr.of_constr noc) in
-      Proofview.Unsafe.tclEVARS sigma)
 
-let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
-let constrextern_extern_constr c =
-  let env = Global.env () in
-  Constrextern.extern_constr false env (Evd.from_env env) (EConstr.of_constr c)
+(* Int63 *)
+let int63_modules = [["SMTCoq";"versions";"standard";"Int63";"Int63Native"]]
 
-let get_rel_dec_name = function
-  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
+(* 31-bits integers are "called" 63 bits (this is sound) *)
+let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
+let cD0 = gen_constant int31_module "D0"
+let cD1 = gen_constant int31_module "D1"
+let cI31 = gen_constant int31_module "I31"
 
-let retyping_get_type_of env sigma c =
-  (* Cannot contain evars since it comes from a Term.constr *)
-  EConstr.Unsafe.to_constr (Retyping.get_type_of env sigma (EConstr.of_constr c))
+let mkInt : int -> constr = fun i ->
+  let a = Array.make 31 (Lazy.force cD0) in
+  let j = ref i in
+  let k = ref 30 in
+  while !j <> 0 do
+    if !j land 1 = 1 then a.(!k) <- Lazy.force cD1;
+    j := !j lsr 1;
+    decr k
+  done;
+  mkApp (Lazy.force cI31, a)
+
+let cint = gen_constant int31_module "int31"
+
+
+(* PArray *)
+let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
+
+let cmake = gen_constant parray_modules "make"
+let cset = gen_constant parray_modules "set"
+
+let max_array_size : int = 4194302
+let mkArray : Constr.types * Constr.t array -> Constr.t =
+  fun (ty, a) ->
+  let l = (Array.length a) - 1 in
+  snd (Array.fold_left (fun (i,acc) c ->
+                        let acc' =
+                          if i = l then
+                            acc
+                          else
+                            mkApp (Lazy.force cset, [|ty; acc; mkInt i; c|]) in
+                        (i+1,acc')
+                       ) (0, mkApp (Lazy.force cmake, [|ty; mkInt l; a.(l)|])) a)
+
+
+(* Traces *)
+(* WARNING: side effect on r! *)
+let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
+  let rec mkTrace s =
+    if s = size then
+      mkApp (Lazy.force cnil, [|step|])
+    else (
+      r := next !r;
+      let st = step_to_coq !r in
+      mkApp (Lazy.force ccons, [|step; st; mkTrace (s+1)|])
+    ) in
+  mkApp (Lazy.force cpair, [|mkApp (Lazy.force clist, [|step|]); step; mkTrace 0; def_step|])
 
 
 (* Micromega *)
@@ -185,11 +179,55 @@ let micromega_dump_proof_term p =
   EConstr.Unsafe.to_constr (Micromega_plugin.Coq_micromega.dump_proof_term p)
 
 
-(* Types in the Coq source code *)
+(* Tactics *)
 type tactic = unit Proofview.tactic
-type names_id = Names.Id.t
-type constr_expr = Constrexpr.constr_expr
+let tclTHEN = Tacticals.New.tclTHEN
+let tclTHENLAST = Tacticals.New.tclTHENLAST
+let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
-(* EConstr *)
-type econstr = EConstr.t
-let econstr_of_constr = EConstr.of_constr
+let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
+
+let mk_tactic tac =
+  Proofview.Goal.nf_enter (fun gl ->
+    let env = Proofview.Goal.env gl in
+    let sigma = Tacmach.New.project gl in
+    let t = Proofview.Goal.concl gl in
+    let t = EConstr.to_constr sigma t in (* The goal should not contain uninstanciated evars *)
+    tac env sigma t
+  )
+let set_evars_tac noc =
+  mk_tactic (
+      fun env sigma _ ->
+      let sigma, _ = Typing.type_of env sigma (EConstr.of_constr noc) in
+      Proofview.Unsafe.tclEVARS sigma)
+
+
+(* Other differences between the two versions of Coq *)
+type constr_expr = Constrexpr.constr_expr
+let error s = CErrors.user_err (Pp.str s)
+
+let extern_constr c = Constrextern.extern_constr true Environ.empty_env Evd.empty (EConstr.of_constr c)
+
+let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
+                          Context.Rel.Declaration.get_type r
+
+(* Cannot contain evars since it comes from a Constr.t *)
+let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst |> EConstr.Unsafe.to_constr
+
+let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
+
+let constrextern_extern_constr c =
+  let env = Global.env () in
+  Constrextern.extern_constr false env (Evd.from_env env) (EConstr.of_constr c)
+
+let get_rel_dec_name = function
+  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
+
+let retyping_get_type_of env sigma c =
+  (* Cannot contain evars since it comes from a Constr.t *)
+  EConstr.Unsafe.to_constr (Retyping.get_type_of env sigma (EConstr.of_constr c))
+
+let vm_conv = Vconv.vm_conv
+
+(* Cannot contain evars since it comes from a Constr.t *)
+let cbv_vm env c t = EConstr.Unsafe.to_constr (Vnorm.cbv_vm env Evd.empty (EConstr.of_constr c) (EConstr.of_constr t))

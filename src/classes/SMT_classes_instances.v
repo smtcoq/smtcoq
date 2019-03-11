@@ -10,9 +10,9 @@
 (**************************************************************************)
 
 
-Require Import Bool OrderedType BinPos ZArith.
+Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
 Require Import Int63.
-Require Import State BVList.
+Require Import State BVList FArray.
 Require Structures.
 Require Export SMT_classes.
 
@@ -118,8 +118,6 @@ End Bool.
 
 
 Section Z.
-
-  Require Import OrderedTypeEx.
 
   Instance Z_ord : OrdType Z.
   Proof.
@@ -252,8 +250,6 @@ End Z.
 
 Section Nat.
 
-  Require Import OrderedTypeEx.
-
   Instance Nat_ord : OrdType nat.
   Proof.
     
@@ -290,9 +286,6 @@ End Nat.
 
 
 Section Positive.
-
-  
-  Require Import OrderedTypeEx.
 
   Instance Positive_ord : OrdType positive.
   Proof.
@@ -412,8 +405,6 @@ End BV.
 
 Section FArray.
 
-  Require Import FArray.
-  
   Instance FArray_ord key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}

@@ -68,7 +68,7 @@ type nop =
 type op_def = {
     tparams : btype array;
     tres : btype;
-    op_val : Term.constr }
+    op_val : Structures.constr }
 
 type index = Index of int
            | Rel_name of string
@@ -80,14 +80,14 @@ let destruct s (i, hval) = match i with
     | Rel_name _ -> failwith s
 
 let dummy_indexed_op i dom codom =
-  (i, {tparams = dom; tres = codom; op_val = Term.mkProp})
+  (i, {tparams = dom; tres = codom; op_val = Structures.mkProp})
 
 let indexed_op_index i =
   let index, _ = destruct "destruct on a Rel: called by indexed_op_index" i in
   index
 
 let debruijn_indexed_op i ty =
-  (Index i, {tparams = [||]; tres = ty; op_val = Term.mkRel i})
+  (Index i, {tparams = [||]; tres = ty; op_val = Structures.mkRel i})
 
 module Op =
   struct
@@ -339,7 +339,7 @@ module Op =
     (* reify table *)
     type reify_tbl =
       { mutable count : int;
-	        tbl : (Term.constr, indexed_op) Hashtbl.t
+	        tbl : (Structures.constr, indexed_op) Hashtbl.t
       }
 
     let create () =
@@ -692,7 +692,7 @@ module Atom =
         Array.iter (fun bt -> SmtBtype.to_smt fmt bt; Format.fprintf fmt " ") bta;
         Format.fprintf fmt ") ( ";
         SmtBtype.to_smt fmt bt;
-        Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (Printer.pr_constr t))
+        Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (Structures.pr_constr t))
 
       and to_smt_bop op h1 h2 =
         let s = match op with
@@ -1019,8 +1019,8 @@ module Atom =
           else CCunknown_deps (gobble_of_coq_cst cc)
         with Not_found -> CCunknown
       in
-      let rec mk_hatom (h : Term.constr) =
-        let c, args = Term.decompose_app h in
+      let rec mk_hatom (h : Structures.constr) =
+        let c, args = Structures.decompose_app h in
 	match get_cst c with
         | CCxH -> mk_cop CCxH args
         | CCZ0 -> mk_cop CCZ0 args
@@ -1248,10 +1248,10 @@ module Atom =
           with | Not_found ->
             let targs = Array.map type_of hargs in
             let tres = SmtBtype.of_coq rt known_logic ty in
-            let os = if Term.isRel c then
-                       let i = Term.destRel c in
+            let os = if Structures.isRel c then
+                       let i = Structures.destRel c in
                        let n, _ = Structures.destruct_rel_decl (Environ.lookup_rel i env) in
-                       Some (string_of_name n)
+                       Some (Structures.string_of_name n)
                      else
                        None
             in
@@ -1267,7 +1267,7 @@ module Atom =
          [gobble] *)
       and mk_unknown_deps c args ty gobble =
         let deps, args = split_list_at gobble args in
-        let c = Term.mkApp (c, Array.of_list deps) in
+        let c = Structures.mkApp (c, Array.of_list deps) in
         mk_unknown c args ty
 
       in
@@ -1320,12 +1320,12 @@ module Atom =
 	  let pc =
 	    match atom a with
               | Acop c -> Op.interp_cop c
-              | Auop (op,h) -> Term.mkApp (Op.interp_uop op, [|interp_atom h|])
+              | Auop (op,h) -> Structures.mkApp (Op.interp_uop op, [|interp_atom h|])
               | Abop (op,h1,h2) ->
-                Term.mkApp (Op.interp_bop t_i op,
+                Structures.mkApp (Op.interp_bop t_i op,
                             [|interp_atom h1; interp_atom h2|])
               | Atop (op,h1,h2,h3) ->
-                Term.mkApp (Op.interp_top t_i op,
+                Structures.mkApp (Op.interp_top t_i op,
                             [|interp_atom h1; interp_atom h2; interp_atom h3|])
               | Anop (NO_distinct ty as op,ha) ->
                 let cop = Op.interp_nop t_i op in
@@ -1333,9 +1333,9 @@ module Atom =
                 let cargs = Array.fold_right (fun h l ->
                     mklApp ccons [|typ; interp_atom h; l|])
                     ha (mklApp cnil [|typ|]) in
-                Term.mkApp (cop,[|cargs|])
+                Structures.mkApp (cop,[|cargs|])
               | Aapp (op,t) ->
-                Term.mkApp ((snd op).op_val, Array.map interp_atom t) in
+                Structures.mkApp ((snd op).op_val, Array.map interp_atom t) in
 	  Hashtbl.add atom_tbl l pc;
 	  pc in
       interp_atom a

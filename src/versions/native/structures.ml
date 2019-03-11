@@ -14,9 +14,80 @@ open Entries
 open Coqlib
 
 
+(* Constr generation and manipulation *)
+type id = Names.id
+let mkId = Names.id_of_string
 
+
+type name = Names.name
+let name_of_id i = Names.Name i
+let mkName s =
+  let id = mkId s in
+  name_of_id id
+let string_of_name = function
+    Names.Name id -> Names.string_of_id id
+  | _ -> failwith "unnamed rel"
+
+
+type constr = Term.constr
+type types = Term.types
+let eq_constr = Term.eq_constr
+let hash_constr = Term.hash_constr
+let mkProp = Term.mkProp
+let mkConst = Constr.mkConst
+let mkVar = Term.mkVar
+let mkRel = Term.mkRel
+let isRel = Term.isRel
+let destRel = Term.destRel
+let lift = Term.lift
+let mkApp = Term.mkApp
+let decompose_app = Term.decompose_app
+let mkLambda = Term.mkLambda
+let mkProd = Term.mkProd
+let mkLetIn = Term.mkLetIn
+
+let pr_constr_env = Printer.pr_constr_env
+let pr_constr = Printer.pr_constr
+
+let mkUConst c =
+  { const_entry_body = c;
+    const_entry_type = None;
+    const_entry_secctx = None;
+    const_entry_opaque = false;
+    const_entry_inline_code = false}
+
+let mkTConst c _ ty =
+  { const_entry_body = c;
+    const_entry_type = Some ty;
+    const_entry_secctx = None;
+    const_entry_opaque = false;
+    const_entry_inline_code = false}
+
+(* TODO : Set -> Type *)
+let declare_new_type t =
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force Term.mkSet) [] false None (dummy_loc, t);
+  Term.mkVar t
+
+let declare_new_variable v constr_t =
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (dummy_loc, v);
+  Term.mkVar v
+
+let declare_constant n c =
+  Declare.declare_constant n (DefinitionEntry c, Decl_kinds.IsDefinition Decl_kinds.Definition)
+
+
+type cast_kind = Term.cast_kind
+let vmcast = Term.VMcast
+let mkCast = Term.mkCast
+
+
+(* EConstr *)
+type econstr = Term.constr
+let econstr_of_constr e = e
+
+
+(* Modules *)
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
-
 
 
 (* Int63 *)
@@ -64,76 +135,6 @@ let mkTrace step_to_coq next carray _ _ _ _ size step def_step r =
   mkArray (Term.mkApp (Lazy.force carray, [|step|]), trace)
 
 
-(* Differences between the two versions of Coq *)
-type names_id_t = Names.identifier
-
-let dummy_loc = Pp.dummy_loc
-
-let mkUConst c =
-  { const_entry_body = c;
-    const_entry_type = None;
-    const_entry_secctx = None;
-    const_entry_opaque = false;
-    const_entry_inline_code = false}
-
-let mkTConst c _ ty =
-  { const_entry_body = c;
-    const_entry_type = Some ty;
-    const_entry_secctx = None;
-    const_entry_opaque = false;
-    const_entry_inline_code = false}
-
-let error = Errors.error
-
-let coqtype = lazy Term.mkSet
-
-let declare_new_type t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force coqtype) [] false None (dummy_loc, t);
-  Term.mkVar t
-
-let declare_new_variable v constr_t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) constr_t [] false None (dummy_loc, v);
-  Term.mkVar v
-
-let extern_constr = Constrextern.extern_constr true Environ.empty_env
-
-let vernacentries_interp expr =
-  Vernacentries.interp (Vernacexpr.VernacCheckMayEval (Some (Glob_term.CbvVm None), None, expr))
-
-let pr_constr_env = Printer.pr_constr_env
-
-let lift = Term.lift
-
-let destruct_rel_decl (n, _, t) = n, t
-
-let interp_constr env sigma = Constrintern.interp_constr sigma env
-
-let tclTHEN = Tacticals.tclTHEN
-let tclTHENLAST = Tacticals.tclTHENLAST
-let assert_before = Tactics.assert_tac
-
-let vm_conv = Reduction.vm_conv
-let vm_cast_no_check = Tactics.vm_cast_no_check
-let cbv_vm = Vnorm.cbv_vm
-
-let mk_tactic tac gl =
-  let env = Tacmach.pf_env gl in
-  let sigma = Tacmach.project gl in
-  let t = Tacmach.pf_concl gl in
-  tac env sigma t gl
-let set_evars_tac _ = Tacticals.tclIDTAC
-
-let ppconstr_lsimpleconstr = Ppconstr.lsimple
-let constrextern_extern_constr =
-  let env = Global.env () in
-  Constrextern.extern_constr false env
-
-let get_rel_dec_name = fun _ -> Names.Anonymous
-
-(* Eta-expanded to get rid of optional arguments *)
-let retyping_get_type_of env = Retyping.get_type_of env
-
-
 (* Micromega *)
 module Micromega_plugin_Certificate = Certificate
 module Micromega_plugin_Coq_micromega = Coq_micromega
@@ -147,11 +148,35 @@ let micromega_dump_proof_term p =
   Coq_micromega.dump_proof_term p
 
 
-(* Types in the Coq source code *)
-type tactic = Proof_type.tactic
-type names_id = Names.identifier
-type constr_expr = Topconstr.constr_expr
+(* Tactics *)
+let tclTHEN = Tacticals.tclTHEN
+let tclTHENLAST = Tacticals.tclTHENLAST
+let assert_before = Tactics.assert_tac
+let vm_cast_no_check = Tactics.vm_cast_no_check
+let mk_tactic tac gl =
+  let env = Tacmach.pf_env gl in
+  let sigma = Tacmach.project gl in
+  let t = Tacmach.pf_concl gl in
+  tac env sigma t gl
+let set_evars_tac _ = Tacticals.tclIDTAC
 
-(* EConstr *)
-type econstr = Term.constr
-let econstr_of_constr e = e
+
+(* Other differences between the two versions of Coq *)
+let error = Errors.error
+let extern_constr = Constrextern.extern_constr true Environ.empty_env
+let destruct_rel_decl (n, _, t) = n, t
+let interp_constr env sigma = Constrintern.interp_constr sigma env
+let ppconstr_lsimpleconstr = Ppconstr.lsimple
+let constrextern_extern_constr =
+  let env = Global.env () in
+  Constrextern.extern_constr false env
+
+let get_rel_dec_name = fun _ -> Names.Anonymous
+
+(* Eta-expanded to get rid of optional arguments *)
+let retyping_get_type_of env = Retyping.get_type_of env
+
+let vm_conv = Reduction.vm_conv
+let cbv_vm = Vnorm.cbv_vm
+
+

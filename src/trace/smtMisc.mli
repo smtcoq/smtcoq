@@ -10,15 +10,12 @@
 (**************************************************************************)
 
 
-val cInt_tbl : (int, Term.constr) Hashtbl.t
-val mkInt : int -> Term.constr
+val cInt_tbl : (int, Structures.constr) Hashtbl.t
+val mkInt : int -> Structures.constr
 type 'a gen_hashed = { index : int; hval : 'a; }
-val mklApp : Term.constr Lazy.t -> Term.constr array -> Term.constr
-val declare_new_type : Names.variable -> Term.constr
-val declare_new_variable : Names.variable -> Term.types -> Term.constr
-val mkName : string -> Names.name
-val string_coq_constr : Term.constr -> string
-val string_of_name : Names.name -> string
+val mklApp : Structures.constr Lazy.t -> Structures.constr array -> Structures.constr
+val string_of_name_def : string -> Structures.name -> string
+val string_coq_constr : Structures.constr -> string
 type logic_item = LUF | LLia | LBitvectors | LArrays
 module SL : Set.S with type elt = logic_item
 type logic = SL.t
