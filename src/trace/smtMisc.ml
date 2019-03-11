@@ -25,15 +25,7 @@ type 'a gen_hashed = { index : int; hval : 'a }
 
 (** Functions over constr *)
 
-let mklApp = Structures.mklApp
-
-(* TODO : Set -> Type *)
-let declare_new_type = Structures.declare_new_type
-let declare_new_variable = Structures.declare_new_variable
-
-let mkName = Structures.mkName
-let string_of_name = Structures.string_of_name
-
+let mklApp f args = Structures.mkApp (Lazy.force f, args)
 
 let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in

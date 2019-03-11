@@ -98,10 +98,10 @@ let rec sort_of_sort = function
 
 let declare_sort rt sym =
   let s = string_of_symbol sym in
-  let cons_t = declare_new_type (Names.id_of_string ("Smt_sort_"^s)) in
+  let cons_t = Structures.declare_new_type (Structures.mkId ("Smt_sort_"^s)) in
   let compdec_type = mklApp cCompDec [| cons_t |] in
   let compdec_var =
-    declare_new_variable (Names.id_of_string ("CompDec_"^s)) compdec_type in
+    Structures.declare_new_variable (Structures.mkId ("CompDec_"^s)) compdec_type in
   let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
   let res = SmtBtype.declare rt cons_t ce in
   VeritSyntax.add_btype s res;
@@ -113,9 +113,9 @@ let declare_fun rt ro sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
   let coqTy = List.fold_right (fun typ c ->
-      Term.mkArrow (interp_to_coq rt typ) c)
+      Structures.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
-  let cons_v = declare_new_variable (Names.id_of_string ("Smt_var_"^s)) coqTy in
+  let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
   VeritSyntax.add_fun s op;
   op

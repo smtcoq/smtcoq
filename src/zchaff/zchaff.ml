@@ -10,10 +10,6 @@
 (**************************************************************************)
 
 
-open Entries
-open Declare
-open Decl_kinds
-
 open CoqTerms
 open SmtForm
 open SmtCertif
@@ -168,7 +164,7 @@ let interp_roots first last =
     let h = if Form.is_pos l then ph else ph lxor 1 in
     try Hashtbl.find tbl h
     with Not_found ->
-      let p = Term.mkApp (Term.mkRel 1, [|mkInt (x+1)|]) in
+      let p = Structures.mkApp (Structures.mkRel 1, [|mkInt (x+1)|]) in
       let np = mklApp cnegb [|p|] in
       Hashtbl.add tbl ph p;
       Hashtbl.add tbl (ph lxor 1) np;
@@ -199,14 +195,14 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
   let ce1 = Structures.mkUConst d in
-  let _ = declare_constant dimacs (DefinitionEntry ce1, IsDefinition Definition) in
+  let _ = Structures.declare_constant dimacs ce1 in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
   let ce2 = Structures.mkUConst certif in
-  let _ = declare_constant trace (DefinitionEntry ce2, IsDefinition Definition) in
+  let _ = Structures.declare_constant trace ce2 in
   ()
 
 let cdimacs = gen_constant sat_checker_modules "dimacs"
@@ -226,36 +222,36 @@ let theorems interp name fdimacs ftrace =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
-  let vtype = Term.mkProd(Names.Anonymous, Lazy.force cint, Lazy.force cbool) in
+  let vtype = Structures.mkArrow (Lazy.force cint) (Lazy.force cbool) in
   let theorem_type =
-    Term.mkProd (mkName "v", vtype, theorem_concl) in
+    Structures.mkProd (Structures.mkName "v", vtype, theorem_concl) in
   let theorem_proof_cast =
-    Term.mkCast (
-        Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
-        Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
-        Term.mkLambda (mkName "v", vtype,
+    Structures.mkCast (
+        Structures.mkLetIn (Structures.mkName "d", d, Lazy.force cdimacs,
+        Structures.mkLetIn (Structures.mkName "c", certif, Lazy.force ccertif,
+        Structures.mkLambda (Structures.mkName "v", vtype,
         mklApp ctheorem_checker
-               [| Term.mkRel 3(*d*); Term.mkRel 2(*c*);
+               [| Structures.mkRel 3(*d*); Structures.mkRel 2(*c*);
 		  vm_cast_true_no_check
-		    (mklApp cchecker [|Term.mkRel 3(*d*); Term.mkRel 2(*c*)|]);
-                  Term.mkRel 1(*v*)|]))),
-      Term.VMcast,
+		    (mklApp cchecker [|Structures.mkRel 3(*d*); Structures.mkRel 2(*c*)|]);
+                  Structures.mkRel 1(*v*)|]))),
+      Structures.vmcast,
       theorem_type)
   in
   let theorem_proof_nocast =
-    Term.mkLetIn (mkName "d", d, Lazy.force cdimacs,
-    Term.mkLetIn (mkName "c", certif, Lazy.force ccertif,
-    Term.mkLambda (mkName "v", vtype,
+    Structures.mkLetIn (Structures.mkName "d", d, Lazy.force cdimacs,
+    Structures.mkLetIn (Structures.mkName "c", certif, Lazy.force ccertif,
+    Structures.mkLambda (Structures.mkName "v", vtype,
     mklApp ctheorem_checker
-           [| Term.mkRel 3(*d*); Term.mkRel 2(*c*)|])))
+           [| Structures.mkRel 3(*d*); Structures.mkRel 2(*c*)|])))
   in
   let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_type in
-  let _ = declare_constant name (DefinitionEntry ce, IsDefinition Definition) in
+  let _ = Structures.declare_constant name ce in
   ()
 
 let theorem = theorems (fun _ -> interp_roots)
 let theorem_abs =
-  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|Term.mkRel 1(*v*)|]; d|])
+  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|Structures.mkRel 1(*v*)|]; d|])
 
 
 let checker fdimacs ftrace =
@@ -273,7 +269,7 @@ let checker fdimacs ftrace =
 
   let res = Structures.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   Format.eprintf "     = %s\n     : bool@."
-    (if Term.eq_constr res (Lazy.force CoqTerms.ctrue) then
+    (if Structures.eq_constr res (Lazy.force CoqTerms.ctrue) then
         "true" else "false")
 
 
@@ -362,22 +358,22 @@ let cchecker_eq_correct =
 let cchecker_eq = gen_constant cnf_checker_modules "checker_eq"
 
 let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
-  let ntvar = mkName "t_var" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
+  let ntvar = Structures.mkName "t_var" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
     SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
-  let vtvar = Term.mkRel 3 in
-  let vtform = Term.mkRel 2 in
-  let vc = Term.mkRel 1 in
+  let vtvar = Structures.mkRel 3 in
+  let vtform = Structures.mkRel 2 in
+  let vc = Structures.mkRel 1 in
   let add_lets t =
-    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    Structures.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Structures.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Structures.mkLetIn (nc, certif, Lazy.force ccertif,
     t)))
   in
   let cbc =
@@ -395,22 +391,22 @@ let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
 
 
 let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) vm_cast =
-  let ntvar = mkName "t_var" in
-  let ntform = mkName "t_form" in
-  let nc = mkName "c" in
+  let ntvar = Structures.mkName "t_var" in
+  let ntform = Structures.mkName "t_form" in
+  let nc = Structures.mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
     SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
-  let vtvar = Term.mkRel 3 in
-  let vtform = Term.mkRel 2 in
-  let vc = Term.mkRel 1 in
+  let vtvar = Structures.mkRel 3 in
+  let vtform = Structures.mkRel 2 in
+  let vc = Structures.mkRel 1 in
   let add_lets t =
-    Term.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Term.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Term.mkLetIn (nc, certif, Lazy.force ccertif,
+    Structures.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    Structures.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    Structures.mkLetIn (nc, certif, Lazy.force ccertif,
     t)))
   in
   let ceqc = add_lets (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])
@@ -425,10 +421,10 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) vm_cast =
   (proof_cast, proof_nocast)
 
 let get_arguments concl =
-  let f, args = Term.decompose_app concl in
+  let f, args = Structures.decompose_app concl in
   match args with
-  | [ty;a;b] when (Term.eq_constr f (Lazy.force ceq)) && (Term.eq_constr ty (Lazy.force cbool)) -> a, b
-  | [a] when (Term.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
+  | [ty;a;b] when (Structures.eq_constr f (Lazy.force ceq)) && (Structures.eq_constr ty (Lazy.force cbool)) -> a, b
+  | [a] when (Structures.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
   | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
 
 
@@ -527,14 +523,14 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 let core_tactic vm_cast env sigma concl =
   SmtTrace.clear ();
 
-  let (forall_let, concl) = Term.decompose_prod_assum concl in
+  let (forall_let, concl) = Structures.decompose_prod_assum concl in
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
   let (body_cast, body_nocast) =
-    if ((Term.eq_constr b (Lazy.force ctrue)) || (Term.eq_constr b (Lazy.force cfalse))) then
+    if ((Structures.eq_constr b (Lazy.force ctrue)) || (Structures.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.get reify_atom) reify_form a in
-      let l' = if (Term.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+      let l' = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
@@ -551,7 +547,7 @@ let core_tactic vm_cast env sigma concl =
   in
 
   let compose_lam_assum forall_let body =
-    List.fold_left (fun t rd -> Term.mkLambda_or_LetIn rd t) body forall_let in
+    List.fold_left (fun t rd -> Structures.mkLambda_or_LetIn rd t) body forall_let in
   let res_cast = compose_lam_assum forall_let body_cast in
   let res_nocast = compose_lam_assum forall_let body_nocast in
 

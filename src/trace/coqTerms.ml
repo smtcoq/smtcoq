@@ -11,6 +11,7 @@
 
 
 open Coqlib
+open SmtMisc
 
 
 let gen_constant = Structures.gen_constant
@@ -274,7 +275,7 @@ let cinterp_var_sat_checker = gen_constant [["SMTCoq";"Trace";"Sat_Checker"]] "i
 let make_certif_ops modules args =
   let gen_constant c =
     match args with
-      | Some args -> lazy (SmtMisc.mklApp (gen_constant modules c) args)
+      | Some args -> lazy (mklApp (gen_constant modules c) args)
       | None -> gen_constant modules c in
  (gen_constant "step",
   gen_constant "Res", gen_constant "Weaken", gen_constant "ImmFlatten",
@@ -300,14 +301,14 @@ let make_certif_ops modules args =
 (** Useful constructions *)
 
 let ceq_refl_true =
-  lazy (SmtMisc.mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])
+  lazy (mklApp crefl_equal [|Lazy.force cbool;Lazy.force ctrue|])
 
 let eq_refl_true () = Lazy.force ceq_refl_true
 
 let vm_cast_true_no_check t =
   Structures.mkCast(eq_refl_true (),
               Structures.vmcast,
-              SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+              mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
 
 (* This version checks convertibility right away instead of delaying it at
    Qed. This allows to report issues to the user as soon as he/she runs one of
@@ -315,9 +316,9 @@ let vm_cast_true_no_check t =
 let vm_cast_true env t =
   try
     Structures.vm_conv Reduction.CUMUL env
-      (SmtMisc.mklApp ceq
+      (mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
-      (SmtMisc.mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
+      (mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
     vm_cast_true_no_check t
   with Reduction.NotConvertible ->
     Structures.error ("SMTCoq was not able to check the proof certificate.")
@@ -326,19 +327,19 @@ let vm_cast_true env t =
 (* Compute a nat *)
 let rec mkNat = function
   | 0 -> Lazy.force cO
-  | i -> SmtMisc.mklApp cS [|mkNat (i-1)|]
+  | i -> mklApp cS [|mkNat (i-1)|]
 
 (* Compute a positive *)
 let rec mkPositive = function
   | 1 -> Lazy.force cxH
   | i ->
      let c = if (i mod 2) = 0 then cxO else cxI in
-     SmtMisc.mklApp c [|mkPositive (i / 2)|]
+     mklApp c [|mkPositive (i / 2)|]
 
 (* Compute a N *)
 let mkN = function
   | 0 -> Lazy.force cN0
-  | i -> SmtMisc.mklApp cNpos [|mkPositive i|]
+  | i -> mklApp cNpos [|mkPositive i|]
 
 (* Compute a Boolean *)
 let mkBool = function
@@ -347,9 +348,9 @@ let mkBool = function
 
 (* Compute a Boolean list *)
 let rec mk_bv_list = function
-  | [] -> SmtMisc.mklApp cnil [|Lazy.force cbool|]
+  | [] -> mklApp cnil [|Lazy.force cbool|]
   | b :: bv ->
-    SmtMisc.mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
+    mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
 
 
 (* Reification *)
