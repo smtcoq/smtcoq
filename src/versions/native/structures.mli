@@ -11,7 +11,7 @@
 
 
 (* Constr generation and manipulation *)
-type id
+type id = Names.variable
 val mkId : string -> id
 
 type name
@@ -24,26 +24,26 @@ type types = constr
 val eq_constr : constr -> constr -> bool
 val hash_constr : constr -> int
 val mkProp : types
-val mkConst : Names.Constant.t -> constr
+val mkConst : Names.constant -> constr
 val mkVar : id -> constr
 val mkRel : int -> constr
 val isRel : constr -> bool
 val destRel : constr -> int
 val lift : int -> constr -> constr
-val mkApp : constr -> constr array -> constr
+val mkApp : constr * constr array -> constr
 val decompose_app : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
 val mkProd : name * types * types -> types
 val mkLetIn : name * constr * types * constr -> constr
 
-val pr_constr_env : Environ.env -> constr -> Pp.t
-val pr_constr : constr -> Pp.t
+val pr_constr_env : Environ.env -> constr -> Pp.std_ppcmds
+val pr_constr : constr -> Pp.std_ppcmds
 
 val mkUConst : constr -> Entries.definition_entry
 val mkTConst : constr -> 'a -> types -> Entries.definition_entry
 val declare_new_type : id -> types
 val declare_new_variable : id -> types -> constr
-val declare_constant : id -> Safe_typing.private_constants Entries.definition_entry -> Names.Constant.t
+val declare_constant : id -> Entries.definition_entry -> Names.constant
 
 type cast_kind
 val vmcast : cast_kind

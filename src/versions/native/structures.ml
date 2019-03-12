@@ -15,7 +15,7 @@ open Coqlib
 
 
 (* Constr generation and manipulation *)
-type id = Names.id
+type id = Names.identifier
 let mkId = Names.id_of_string
 
 
@@ -34,7 +34,7 @@ type types = Term.types
 let eq_constr = Term.eq_constr
 let hash_constr = Term.hash_constr
 let mkProp = Term.mkProp
-let mkConst = Constr.mkConst
+let mkConst = Term.mkConst
 let mkVar = Term.mkVar
 let mkRel = Term.mkRel
 let isRel = Term.isRel
@@ -48,6 +48,9 @@ let mkLetIn = Term.mkLetIn
 
 let pr_constr_env = Printer.pr_constr_env
 let pr_constr = Printer.pr_constr
+
+
+let dummy_loc = Pp.dummy_loc
 
 let mkUConst c =
   { const_entry_body = c;
@@ -65,7 +68,7 @@ let mkTConst c _ ty =
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) (Lazy.force Term.mkSet) [] false None (dummy_loc, t);
+  Command.declare_assumption false (Decl_kinds.Local,Decl_kinds.Definitional) Term.mkSet [] false None (dummy_loc, t);
   Term.mkVar t
 
 let declare_new_variable v constr_t =
@@ -149,6 +152,7 @@ let micromega_dump_proof_term p =
 
 
 (* Tactics *)
+type tactic = Proof_type.tactic
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before = Tactics.assert_tac
@@ -162,6 +166,7 @@ let set_evars_tac _ = Tacticals.tclIDTAC
 
 
 (* Other differences between the two versions of Coq *)
+type constr_expr = Topconstr.constr_expr
 let error = Errors.error
 let extern_constr = Constrextern.extern_constr true Environ.empty_env
 let destruct_rel_decl (n, _, t) = n, t
