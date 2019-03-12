@@ -239,4 +239,4 @@ and 'hform resolution = {
 }
 val used_clauses : 'a rule -> 'a clause list
 val to_string : 'a clause_kind -> string
-val print_certif : ('a -> Format.formatter -> 'b -> 'c) -> 'a -> 'b clause -> string -> unit
+val print_certif : ('a -> Format.formatter -> 'b -> unit) -> 'a -> 'b clause -> string -> unit

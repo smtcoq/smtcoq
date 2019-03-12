@@ -324,7 +324,7 @@ let to_string r =
 
 
 (* To use <print_certif>, pass, as first and second argument, <Form.to_smt> and <Atom.to_string> *)
-let print_certif form_to_smt atom_to_string c where=
+let print_certif form_to_smt atom_to_string c where =
   let rec start c =
     match c.prev with
     | None -> c

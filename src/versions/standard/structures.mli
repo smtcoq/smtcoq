@@ -87,13 +87,13 @@ val mkTrace :
 
 
 (* Micromega *)
-module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
-module Micromega_plugin_Micromega = Micromega_plugin.Micromega
-module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+module Micromega_plugin_Certificate = Certificate
+module Micromega_plugin_Coq_micromega = Coq_micromega_full
+module Micromega_plugin_Micromega = Micromega
+module Micromega_plugin_Mutils = Mutils
 
 val micromega_coq_proofTerm : constr lazy_t
-val micromega_dump_proof_term : Micromega_plugin_Certificate.Mc.zArithProof -> constr
+val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
 
 
 (* Tactics *)
@@ -110,11 +110,11 @@ val set_evars_tac : constr -> tactic
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
 val extern_constr : constr -> constr_expr
-val destruct_rel_decl : Context.Rel.Declaration.t -> name * constr
+val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
-val ppconstr_lsimpleconstr : Notation_term.tolerability
+val ppconstr_lsimpleconstr : Notation_gram.tolerability
 val constrextern_extern_constr : constr -> constr_expr
-val get_rel_dec_name : Context.Rel.Declaration.t -> name
+val get_rel_dec_name : (constr, types) Context.Rel.Declaration.pt -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
 
 val vm_conv : Reduction.conv_pb -> types Reduction.kernel_conversion_function

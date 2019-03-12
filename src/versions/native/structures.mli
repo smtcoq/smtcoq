@@ -107,7 +107,7 @@ val set_evars_tac : 'a -> Proof_type.tactic
 type constr_expr = Topconstr.constr_expr
 val error : string -> 'a
 val extern_constr : constr -> Topconstr.constr_expr
-val destruct_rel_decl : Term.rel_declaration -> name * constr
+val destruct_rel_decl : Term.rel_declaration -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> Topconstr.constr_expr -> constr
 val ppconstr_lsimpleconstr : Ppconstr.precedence
 val constrextern_extern_constr : constr -> Topconstr.constr_expr
