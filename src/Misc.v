@@ -996,7 +996,7 @@ Section Forall2.
 
 End Forall2.
 
-Implicit Arguments forallb2 [A B].
+Arguments forallb2 {A B} f l1 l2.
 
 
 (* Compatibility between native-coq and Coq 8.5 *)
