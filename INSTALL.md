@@ -15,7 +15,7 @@ changes](#setting-up-environment-for-smtcoq).
 
 ## Requirements
 
-You need to have OCaml version >= 4.04.0 and Coq version 8.7.*.
+You need to have OCaml version >= 4.04.0 and Coq version 8.8.*.
 The easiest way to install these two pieces of software is through opam.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
@@ -23,10 +23,10 @@ The easiest way to install these two pieces of software is through opam.
 > SMTCoq. In particular this means you want a version of Coq that was compiled
 > with OCaml version >= 4.04.0.
 
-If you want to use SMTCoq with high performance, you need to use the
-[version of Coq with native
+If you want to use SMTCoq with high performance to check large proof
+certificates, you need to use the [version of Coq with native
 data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.7.
+Coq-8.8.
 
 
 ### Installation with Coq and OCaml opam packages
@@ -63,16 +63,16 @@ opam switch 4.04.0
 
 #### Install Coq
 
-After OCaml is installed, you can install Coq through opam (we recommend 8.7.2).
+After OCaml is installed, you can install Coq through opam (we recommend 8.8.2).
 
 ```bash
-opam install coq.8.7.2
+opam install coq.8.8.2
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.7.2 coqide.8.7.2
+opam install coq.8.8.2 coqide.8.8.2
 ```
 
 but you might need to install some extra packages and libraries for your system
@@ -90,11 +90,11 @@ make install
 ```
 
 
-### Installation with official Coq 8.7 release
+### Installation with official Coq 8.8 release
 
-1. Download the last stable version of Coq 8.7:
+1. Download the last stable version of Coq 8.8:
 ```bash
-wget https://coq.inria.fr/distrib/8.7.2/files/coq-8.7.2.tar.gz
+wget https://github.com/coq/coq/archive/V8.8.2.tar.gz
 ```
    and compile it by following the instructions available in the
    repository (make sure you use OCaml 4.04.0 for that). We recommand
@@ -107,7 +107,7 @@ make
 2. Set an environment variable COQBIN to the directory where Coq's
    binaries are; for instance:
 ```bash
-export COQBIN=/home/jdoe/coq-8.7.2/bin/
+export COQBIN=/home/jdoe/coq-8.8.2/bin/
 ```
    (the final slash is mandatory).
 
