@@ -33,6 +33,6 @@ else
     cp ${pre}versions/standard/Int63/Int63Properties_standard.v ${pre}versions/standard/Int63/Int63Properties.v
     cp ${pre}versions/standard/Array/PArray_standard.v ${pre}versions/standard/Array/PArray.v
     cp ${pre}versions/standard/Structures_standard.v ${pre}versions/standard/Structures.v
-    coq_makefile -f _CoqProject -o CoqMakefile
-    sed -i CoqMakefile -e "s/ocamldep/ocamldep -native/" -e "s/	\$(HIDE)\$(MAKE) --no-print-directory -f \"\$(SELF)\" post-all//"
+    coq_makefile -f _CoqProject -o Makefile
+    sed -i Makefile -e "s/ocamldep/ocamldep -native/" -e "s/	\$(HIDE)\$(MAKE) --no-print-directory -f \"\$(SELF)\" post-all//"
 fi
