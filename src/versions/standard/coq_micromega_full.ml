@@ -26,8 +26,14 @@
 open Pp
 open Names
 open Goptions
+open Micromega_plugin.Mutils
 open Constr
 open Tactypes
+
+module Micromega = Micromega_plugin.Micromega
+module Certificate = Micromega_plugin.Certificate
+module Sos_types = Micromega_plugin.Sos_types
+module Mfourier = Micromega_plugin.Mfourier
 
 (**
   * Debug flag
@@ -83,7 +89,7 @@ let _ =
   * Initialize a tag type to the Tag module declaration (see Mutils).
   *)
 
-type tag = Micromega_plugin.Mutils.Tag.t
+type tag = Tag.t
 
 (**
   * An atom is of the form:
@@ -92,7 +98,7 @@ type tag = Micromega_plugin.Mutils.Tag.t
   * parametrized by 'cst, which is used as the type of constants.
   *)
 
-type 'cst atom = 'cst Micromega_plugin.Micromega.formula
+type 'cst atom = 'cst Micromega.formula
 
 (**
   * Micromega's encoding of formulas.
@@ -119,7 +125,7 @@ let rec pp_formula o f =
     | TT -> output_string  o "tt"
     | FF -> output_string  o "ff"
     | X c -> output_string o "X "
-    | A(_,t,_) -> Printf.fprintf o "A(%a)" Micromega_plugin.Mutils.Tag.pp t
+    | A(_,t,_) -> Printf.fprintf o "A(%a)" Tag.pp t
     | C(f1,f2) -> Printf.fprintf o "C(%a,%a)" pp_formula f1 pp_formula f2
     | D(f1,f2) -> Printf.fprintf o "D(%a,%a)" pp_formula f1 pp_formula f2
     | I(f1,n,f2) -> Printf.fprintf o "I(%a%s,%a)"
@@ -169,7 +175,7 @@ let rec ids_of_formula f =
   * with cPol compact polynomials (see the Pol inductive type in EnvRing.v).
   *)
 
-type 'cst clause = ('cst Micromega_plugin.Micromega.nFormula * tag) list
+type 'cst clause = ('cst Micromega.nFormula * tag) list
 
 (**
   * A CNF is a list of clauses.
@@ -191,15 +197,15 @@ let ff : 'cst cnf = [ [] ]
   * and the freeform formulas ('cst formula) that is retrieved from Coq.
   *)
 
-module Mc = Micromega_plugin.Micromega
+module Mc = Micromega
 
 type 'cst mc_cnf = ('cst Mc.nFormula) list list
 
 (**
   * From a freeform formula, build a cnf.
   * The parametric functions negate and normalize are theory-dependent, and
-  * originate in micromega.ml (extracted, e.g. for rnegate, from RMicromega_plugin.Micromega.v
-  * and RingMicromega_plugin.Micromega.v).
+  * originate in micromega.ml (extracted, e.g. for rnegate, from RMicromega.v
+  * and RingMicromega.v).
   *)
 
 type 'a tagged_option = T of tag list |  S of 'a
@@ -361,7 +367,7 @@ struct
 
   (**
     * Initialization : a large amount of Caml symbols are derived from
-    * ZMicromega_plugin.Micromega.v
+    * ZMicromega.v
     *)
 
   let gen_constant_in_modules s m n = EConstr.of_constr (UnivGen.constr_of_global @@ Coqlib.gen_reference_in_modules s m n)
@@ -520,7 +526,7 @@ struct
 
   (**
     * Initialization : a few Caml symbols are derived from other libraries;
-    * QMicromega, ZArithRing, RingMicromega_plugin.Micromega.
+    * QMicromega, ZArithRing, RingMicromega.
     *)
 
   let coq_QWitness = lazy
@@ -569,7 +575,7 @@ struct
      | 2 -> Mc.S (parse_nat sigma (c.(0)))
      | i -> raise ParseError
 
-  let pp_nat o n = Printf.fprintf o "%i" (Micromega_plugin.Mutils.CoqToCaml.nat n)
+  let pp_nat o n = Printf.fprintf o "%i" (CoqToCaml.nat n)
 
   let rec dump_nat x =
    match x with
@@ -590,7 +596,7 @@ struct
     | Mc.XO p -> EConstr.mkApp(Lazy.force coq_xO,[| dump_positive p |])
     | Mc.XI p -> EConstr.mkApp(Lazy.force coq_xI,[| dump_positive p |])
 
-  let pp_positive o x = Printf.fprintf o "%i" (Micromega_plugin.Mutils.CoqToCaml.positive x)
+  let pp_positive o x = Printf.fprintf o "%i" (CoqToCaml.positive x)
 
   let dump_n x =
    match x with
@@ -611,14 +617,11 @@ struct
     | Mc.Zpos p -> EConstr.mkApp(Lazy.force coq_POS,[| dump_positive p|])
     | Mc.Zneg p -> EConstr.mkApp(Lazy.force coq_NEG,[| dump_positive p|])
 
-  let z_big_int : Micromega_plugin.Micromega.z -> Big_int.big_int =
-    fun x -> Micromega_plugin.Mutils.CoqToCaml.z_big_int x
-
-  let pp_z o (x:Micromega_plugin.Micromega.z) = Printf.fprintf o "%s" (Big_int.string_of_big_int (Micromega_plugin.Mutils.CoqToCaml.z_big_int x))
+  let pp_z o x = Printf.fprintf o "%s" (Big_int.string_of_big_int (CoqToCaml.z_big_int x))
 
   let dump_q q =
    EConstr.mkApp(Lazy.force coq_Qmake,
-                 [| dump_z q.Micromega_plugin.Micromega.qnum ; dump_positive q.Micromega_plugin.Micromega.qden|])
+                 [| dump_z q.Micromega.qnum ; dump_positive q.Micromega.qden|])
 
   let parse_q sigma term =
      match EConstr.kind sigma term with
@@ -704,7 +707,7 @@ struct
       pp_pol o e
 
   let pp_cnf pp_c o f =
-    let pp_clause o l = List.iter (fun ((p,_),t) -> Printf.fprintf o "(%a @%a)" (pp_pol pp_c)  p Micromega_plugin.Mutils.Tag.pp t) l in
+    let pp_clause o l = List.iter (fun ((p,_),t) -> Printf.fprintf o "(%a @%a)" (pp_pol pp_c)  p Tag.pp t) l in
       List.iter (fun l -> Printf.fprintf o "[%a]" pp_clause l) f
 
   let dump_psatz typ dump_z e =
@@ -838,7 +841,7 @@ struct
           let (env,n) = _add l ( n+1) v in
            (e::env,n) in
     let (env, n) =  _add env 1 v in
-     (env, Micromega_plugin.Mutils.CamlToCoq.positive n)
+     (env, CamlToCoq.positive n)
 
    let get_rank env sigma v =
 
@@ -1066,7 +1069,7 @@ struct
     let parse_atom env tg t =
       try
         let (at,env) = parse_atom env t gl in
-        (A(at,tg,t), env,Micromega_plugin.Mutils.Tag.next tg)
+        (A(at,tg,t), env,Tag.next tg)
       with e when CErrors.noncritical e -> (X(t),env,tg) in
 
     let is_prop term =
@@ -1130,7 +1133,7 @@ struct
   let var_env_of_formula form =
 
     let rec vars_of_expr  = function
-      | Mc.PEX n -> ISet.singleton (Micromega_plugin.Mutils.CoqToCaml.positive n)
+      | Mc.PEX n -> ISet.singleton (CoqToCaml.positive n)
       | Mc.PEc z -> ISet.empty
       | Mc.PEadd(e1,e2) | Mc.PEmul(e1,e2) | Mc.PEsub(e1,e2) ->
         ISet.union (vars_of_expr e1) (vars_of_expr e2)
@@ -1173,7 +1176,7 @@ let dump_zexpr = lazy
     dump_opp = Lazy.force coq_Zopp;
     dump_mul = Lazy.force coq_Zmult;
     dump_pow = Lazy.force coq_Zpower;
-    dump_pow_arg = (fun n -> dump_z (Micromega_plugin.Mutils.CamlToCoq.z (Micromega_plugin.Mutils.CoqToCaml.n n)));
+    dump_pow_arg = (fun n -> dump_z (CamlToCoq.z (CoqToCaml.n n)));
     dump_op  = List.map (fun (x,y) -> (y,Lazy.force x)) zop_table
   }
 
@@ -1186,7 +1189,7 @@ let dump_qexpr = lazy
     dump_opp = Lazy.force coq_Qopp;
     dump_mul = Lazy.force coq_Qmult;
     dump_pow = Lazy.force coq_Qpower;
-    dump_pow_arg = (fun n -> dump_z (Micromega_plugin.Mutils.CamlToCoq.z (Micromega_plugin.Mutils.CoqToCaml.n n)));
+    dump_pow_arg = (fun n -> dump_z (CamlToCoq.z (CoqToCaml.n n)));
     dump_op  = List.map (fun (x,y) -> (y,Lazy.force x)) qop_table
   }
 
@@ -1212,7 +1215,7 @@ let dump_rexpr = lazy
     dump_opp = Lazy.force coq_Ropp;
     dump_mul = Lazy.force coq_Rmult;
     dump_pow = Lazy.force coq_Rpower;
-    dump_pow_arg = (fun n -> dump_nat (Micromega_plugin.Mutils.CamlToCoq.nat (Micromega_plugin.Mutils.CoqToCaml.n n)));
+    dump_pow_arg = (fun n -> dump_nat (CamlToCoq.nat (CoqToCaml.n n)));
     dump_op  = List.map (fun (x,y) -> (y,Lazy.force x)) rop_table
   }
 
@@ -1250,7 +1253,7 @@ let make_goal_of_formula sigma dexpr form =
 
   let  dump_expr i e =
     let rec dump_expr  = function
-    | Mc.PEX n -> EConstr.mkRel (i+(List.assoc (Micromega_plugin.Mutils.CoqToCaml.positive n)  vars_idx))
+    | Mc.PEX n -> EConstr.mkRel (i+(List.assoc (CoqToCaml.positive n)  vars_idx))
     | Mc.PEc z -> dexpr.dump_cst z
     | Mc.PEadd(e1,e2) -> EConstr.mkApp(dexpr.dump_add,
                                [| dump_expr e1;dump_expr e2|])
@@ -1351,35 +1354,35 @@ let vm_of_list env =
   | [] -> Mc.Empty
   | (d,_)::_ ->
     List.fold_left (fun vm (c,i) ->
-      Mc.vm_add d (Micromega_plugin.Mutils.CamlToCoq.positive i) c vm) Mc.Empty env
+      Mc.vm_add d (CamlToCoq.positive i) c vm) Mc.Empty env
 
 let rec dump_proof_term = function
-  | Micromega_plugin.Micromega.DoneProof -> Lazy.force coq_doneProof
-  | Micromega_plugin.Micromega.RatProof(cone,rst) ->
+  | Micromega.DoneProof -> Lazy.force coq_doneProof
+  | Micromega.RatProof(cone,rst) ->
     EConstr.mkApp(Lazy.force coq_ratProof, [| dump_psatz coq_Z dump_z cone; dump_proof_term rst|])
- | Micromega_plugin.Micromega.CutProof(cone,prf) ->
+ | Micromega.CutProof(cone,prf) ->
     EConstr.mkApp(Lazy.force coq_cutProof,
 	      [| dump_psatz coq_Z dump_z cone ;
 		 dump_proof_term prf|])
- | Micromega_plugin.Micromega.EnumProof(c1,c2,prfs) ->
+ | Micromega.EnumProof(c1,c2,prfs) ->
     EConstr.mkApp (Lazy.force coq_enumProof,
 	           [|  dump_psatz coq_Z dump_z c1 ; dump_psatz coq_Z dump_z c2 ;
 		       dump_list (Lazy.force coq_proofTerm) dump_proof_term prfs |])
 
 
 let rec size_of_psatz = function
-  | Micromega_plugin.Micromega.PsatzIn _ -> 1
-  | Micromega_plugin.Micromega.PsatzSquare _ -> 1
-  | Micromega_plugin.Micromega.PsatzMulC(_,p) -> 1 + (size_of_psatz p)
-  | Micromega_plugin.Micromega.PsatzMulE(p1,p2) | Micromega_plugin.Micromega.PsatzAdd(p1,p2) -> size_of_psatz p1 + size_of_psatz p2
-  | Micromega_plugin.Micromega.PsatzC _ -> 1
-  | Micromega_plugin.Micromega.PsatzZ   -> 1
+  | Micromega.PsatzIn _ -> 1
+  | Micromega.PsatzSquare _ -> 1
+  | Micromega.PsatzMulC(_,p) -> 1 + (size_of_psatz p)
+  | Micromega.PsatzMulE(p1,p2) | Micromega.PsatzAdd(p1,p2) -> size_of_psatz p1 + size_of_psatz p2
+  | Micromega.PsatzC _ -> 1
+  | Micromega.PsatzZ   -> 1
 
 let rec size_of_pf = function
-  | Micromega_plugin.Micromega.DoneProof -> 1
-  | Micromega_plugin.Micromega.RatProof(p,a) -> (size_of_pf a) + (size_of_psatz p)
-  | Micromega_plugin.Micromega.CutProof(p,a) -> (size_of_pf a) + (size_of_psatz p)
-  | Micromega_plugin.Micromega.EnumProof(p1,p2,l) -> (size_of_psatz p1) + (size_of_psatz p2) + (List.fold_left (fun acc p -> size_of_pf p + acc) 0 l)
+  | Micromega.DoneProof -> 1
+  | Micromega.RatProof(p,a) -> (size_of_pf a) + (size_of_psatz p)
+  | Micromega.CutProof(p,a) -> (size_of_pf a) + (size_of_psatz p)
+  | Micromega.EnumProof(p1,p2,l) -> (size_of_psatz p1) + (size_of_psatz p2) + (List.fold_left (fun acc p -> size_of_pf p + acc) 0 l)
 
 let dump_proof_term t =
   if debug then  Printf.printf "dump_proof_term %i\n" (size_of_pf t) ;
@@ -1387,14 +1390,14 @@ let dump_proof_term t =
 
 
 
-let pp_q o q = Printf.fprintf o "%a/%a" pp_z q.Micromega_plugin.Micromega.qnum pp_positive q.Micromega_plugin.Micromega.qden
+let pp_q o q = Printf.fprintf o "%a/%a" pp_z q.Micromega.qnum pp_positive q.Micromega.qden
 
 
 let rec pp_proof_term o = function
-  | Micromega_plugin.Micromega.DoneProof -> Printf.fprintf o "D"
-  | Micromega_plugin.Micromega.RatProof(cone,rst) -> Printf.fprintf o "R[%a,%a]" (pp_psatz  pp_z) cone pp_proof_term rst
-  | Micromega_plugin.Micromega.CutProof(cone,rst) -> Printf.fprintf o "C[%a,%a]" (pp_psatz  pp_z) cone pp_proof_term rst
-  | Micromega_plugin.Micromega.EnumProof(c1,c2,rst) ->
+  | Micromega.DoneProof -> Printf.fprintf o "D"
+  | Micromega.RatProof(cone,rst) -> Printf.fprintf o "R[%a,%a]" (pp_psatz  pp_z) cone pp_proof_term rst
+  | Micromega.CutProof(cone,rst) -> Printf.fprintf o "C[%a,%a]" (pp_psatz  pp_z) cone pp_proof_term rst
+  | Micromega.EnumProof(c1,c2,rst) ->
       Printf.fprintf o "EP[%a,%a,%a]"
 	(pp_psatz pp_z) c1 (pp_psatz pp_z) c2
      (pp_list "[" "]" pp_proof_term) rst
@@ -1415,7 +1418,7 @@ let rec parse_hyps gl parse_arith env tg hyps =
 
 let parse_goal gl parse_arith env hyps term =
  (*  try*)
- let (f,env,tg) = parse_formula gl parse_arith env (Micromega_plugin.Mutils.Tag.from 0) term in
+ let (f,env,tg) = parse_formula gl parse_arith env (Tag.from 0) term in
  let (lhyps,env,tg) = parse_hyps gl parse_arith env tg hyps in
   (lhyps,f,env)
    (*  with Failure x -> raise ParseError*)
@@ -1666,12 +1669,12 @@ let micromega_tauto negate normalise unsat deduce spec prover env polys1 polys2 
   | Some res -> (*Printf.printf "\nList %i" (List.length `res); *)
   let hyps = List.fold_left (fun s (cl,(prf,p)) ->
     let tags = ISet.fold (fun i s -> let t = snd (List.nth cl i) in
-                                     if debug then (Printf.fprintf stdout "T : %i -> %a" i Micromega_plugin.Mutils.Tag.pp t) ;
+                                     if debug then (Printf.fprintf stdout "T : %i -> %a" i Tag.pp t) ;
       (*try*) TagSet.add t s (* with Invalid_argument _ -> s*)) (p.hyps prf) TagSet.empty in
     TagSet.union s tags) (List.fold_left (fun s i -> TagSet.add i s) TagSet.empty cnf_ff_tags) (List.combine cnf_ff res) in
 
   if debug then (Printf.printf "TForm : %a\n" pp_formula ff ; flush stdout;
-                 Printf.printf "Hyps : %a\n" (fun o s -> TagSet.fold (fun i _ -> Printf.fprintf o "%a " Micromega_plugin.Mutils.Tag.pp i) s ()) hyps) ;
+                 Printf.printf "Hyps : %a\n" (fun o s -> TagSet.fold (fun i _ -> Printf.fprintf o "%a " Tag.pp i) s ()) hyps) ;
 
   let ff'     = abstract_formula hyps ff in
   let cnf_ff',_ = cnf negate normalise unsat deduce ff' in
@@ -1835,8 +1838,8 @@ let micromega_genr prover tac =
        let env = Env.elements env in
        let spec = Lazy.force spec in
 
-       let hyps' = List.map (fun (n,f) -> (n, map_atoms (Micromega_plugin.Micromega.map_Formula Micromega_plugin.Micromega.q_of_Rcst) f)) hyps in
-       let concl' = map_atoms (Micromega_plugin.Micromega.map_Formula Micromega_plugin.Micromega.q_of_Rcst) concl in
+       let hyps' = List.map (fun (n,f) -> (n, map_atoms (Micromega.map_Formula Micromega.q_of_Rcst) f)) hyps in
+       let concl' = map_atoms (Micromega.map_Formula Micromega.q_of_Rcst) concl in
 
        match micromega_tauto  negate normalise unsat deduce spec prover env hyps' concl' gl0 with
        | None -> Tacticals.New.tclFAIL 0 (Pp.str " Cannot find witness")
@@ -1901,7 +1904,7 @@ let lift_ratproof  prover l =
   | None -> None
   | Some c -> Some (Mc.RatProof( c,Mc.DoneProof))
 
-type micromega_polys = (Micromega_plugin.Micromega.q Mc.pol * Mc.op1) list
+type micromega_polys = (Micromega.q Mc.pol * Mc.op1) list
 
 [@@@ocaml.warning "-37"]
 type csdp_certificate = S of Sos_types.positivstellensatz option | F of string
@@ -1913,7 +1916,7 @@ type provername = string * int option
   * The caching mechanism.
   *)
 
-open Persistent_cache
+open Micromega_plugin.Persistent_cache
 
 module Cache = PHashtable(struct
   type t = (provername * micromega_polys)
@@ -1989,7 +1992,7 @@ let xhyps_of_cone base acc prf =
   let rec xtract e acc =
     match e with
     | Mc.PsatzC _ | Mc.PsatzZ | Mc.PsatzSquare _ -> acc
-    | Mc.PsatzIn n -> let n = (Micromega_plugin.Mutils.CoqToCaml.nat n) in
+    | Mc.PsatzIn n -> let n = (CoqToCaml.nat n) in
 			if n >= base
 			then  ISet.add (n-base) acc
 			else acc
@@ -2001,7 +2004,7 @@ let xhyps_of_cone base acc prf =
 let hyps_of_cone prf = xhyps_of_cone 0 ISet.empty prf
 
 let compact_cone prf f  =
-  let np n = Micromega_plugin.Mutils.CamlToCoq.nat (f (Micromega_plugin.Mutils.CoqToCaml.nat n)) in
+  let np n = CamlToCoq.nat (f (CoqToCaml.nat n)) in
 
   let rec xinterp prf =
     match prf with
@@ -2067,16 +2070,16 @@ module CacheQ = PHashtable(struct
   let hash  = Hashtbl.hash
 end)
 
-let memo_zlinear_prover = CacheZ.memo ".lia.cache" (fun ((ce,b),s) -> lift_pexpr_prover (Micromega_plugin.Certificate.lia ce b) s)
-let memo_nlia = CacheZ.memo ".nia.cache" (fun ((ce,b),s) -> lift_pexpr_prover (Micromega_plugin.Certificate.nlia ce b) s)
-let memo_nra = CacheQ.memo ".nra.cache" (fun (o,s) -> lift_pexpr_prover (Micromega_plugin.Certificate.nlinear_prover o) s)
+let memo_zlinear_prover = CacheZ.memo ".lia.cache" (fun ((ce,b),s) -> lift_pexpr_prover (Certificate.lia ce b) s)
+let memo_nlia = CacheZ.memo ".nia.cache" (fun ((ce,b),s) -> lift_pexpr_prover (Certificate.nlia ce b) s)
+let memo_nra = CacheQ.memo ".nra.cache" (fun (o,s) -> lift_pexpr_prover (Certificate.nlinear_prover o) s)
 
 
 
 let linear_prover_Q = {
  name    = "linear prover";
  get_option = get_lra_option ;
- prover  = (fun (o,l) -> lift_pexpr_prover (Micromega_plugin.Certificate.linear_prover_with_cert o Micromega_plugin.Certificate.q_spec) l) ;
+ prover  = (fun (o,l) -> lift_pexpr_prover (Certificate.linear_prover_with_cert o Certificate.q_spec) l) ;
  hyps    = hyps_of_cone ;
  compact = compact_cone ;
  pp_prf  = pp_psatz pp_q ;
@@ -2087,7 +2090,7 @@ let linear_prover_Q = {
 let linear_prover_R = {
   name    = "linear prover";
  get_option = get_lra_option ;
- prover  = (fun (o,l) -> lift_pexpr_prover (Micromega_plugin.Certificate.linear_prover_with_cert o Micromega_plugin.Certificate.q_spec) l) ;
+ prover  = (fun (o,l) -> lift_pexpr_prover (Certificate.linear_prover_with_cert o Certificate.q_spec) l) ;
   hyps    = hyps_of_cone ;
   compact = compact_cone ;
   pp_prf  = pp_psatz pp_q ;
