@@ -76,12 +76,12 @@ let _ =
   {
    optdepr = false;
    optname = "Lia Enum";
-   optkey  = ["Lia";"Enum"];
+   optkey  = ["Lia2";"Enum"];
    optread = (fun () -> !lia_enum);
    optwrite = (fun x -> lia_enum := x)
   } in
- let _ = declare_int_option (int_opt ["Lra"; "Depth"] lra_proof_depth) in
- let _ = declare_int_option (int_opt ["Lia"; "Depth"] lia_proof_depth) in
+ let _ = declare_int_option (int_opt ["Lra2"; "Depth"] lra_proof_depth) in
+ let _ = declare_int_option (int_opt ["Lia2"; "Depth"] lia_proof_depth) in
  let _ = declare_bool_option lia_enum_opt in
  ()
 
