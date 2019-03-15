@@ -10,8 +10,7 @@ For now you have to install it from the sources. (We plan on releasing
 an updated opam package soon with the latest additions.)
 
 You will also need to [install the provers](#installation-of-the-provers)
-you want to use and make some [small configuration
-changes](#setting-up-environment-for-smtcoq).
+you want to use.
 
 ## Requirements
 
@@ -26,7 +25,8 @@ The easiest way to install these two pieces of software is through opam.
 If you want to use SMTCoq with high performance to check large proof
 certificates, you need to use the [version of Coq with native
 data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.9.
+Coq-8.9 (warning: this allows one to use the vernacular commands but not
+the tactics).
 
 
 ### Installation with Coq and OCaml opam packages
@@ -121,6 +121,10 @@ make install
 
 ### Installation with native-coq
 
+> **Warning**: this installation procedure is recommended only to use
+> the vernacular commands efficiently (in particular, to check very
+> large proof certificates). It does not allow one to use the tactics.
+
 1. Download the git version of Coq with native compilation:
 ```bash
 git clone https://github.com/smtcoq/native-coq.git
@@ -162,14 +166,15 @@ opam install coq-smtcoq
 
 ## Installation of the provers
 
-To use SMTCoq, you need one or more solvers supported by SMTCoq.
-Currently, these solvers are:
+To use SMTCoq, we recommend installing the following two SMT solvers:
+
+- [CVC4](http://cvc4.cs.nyu.edu)
 
 - [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 
-- [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
+SMTCoq also supports the following SAT solver for propositional reasoning:
 
-- [CVC4](http://cvc4.cs.nyu.edu)
+- [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
 
 Please download the solvers you would like to use via the above links
 (since SMTCoq might not support other versions), and follow the
