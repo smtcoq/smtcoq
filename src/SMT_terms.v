@@ -489,8 +489,8 @@ Module Typ.
     | Cast (k: forall P, P A -> P B)
     | NoCast.
 
-    Implicit Arguments Cast [A B].
-    Implicit Arguments NoCast [A B].
+    Arguments Cast {A B} k.
+    Arguments NoCast {A B}.
 
     Notation idcast := (Cast (fun P x => x)).
     (* La fonction cast calcule cast_result *)

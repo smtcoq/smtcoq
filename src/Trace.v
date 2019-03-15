@@ -528,7 +528,7 @@ Inductive step :=
     Form.check_form t_form && Atom.check_atom t_atom &&
     Atom.wt t_i t_func t_atom &&
     euf_checker (* t_atom t_form *) C.is_false (add_roots (S.make nclauses) d used_roots) t confl.
-  Implicit Arguments checker [].
+  Arguments checker d used_roots c : clear implicits.
 
 
   Definition setup_checker_step_debug d used_roots (c:certif) :=
@@ -772,3 +772,10 @@ End Euf_Checker.
 
 
 Unset Implicit Arguments.
+
+
+(*
+   Local Variables:
+   coq-load-path: ((rec "." "SMTCoq"))
+   End:
+*)

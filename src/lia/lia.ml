@@ -193,6 +193,15 @@ let binop_list tbl op def l =
 let smt_clause_to_coq_micromega_formula tbl cl =
   binop_list tbl (fun x y -> C(x,y)) TT (List.map Form.neg cl)
 
+(* backported from Coq-8.8.2 *)
+(* val tauto_lia : Mc.z formula -> Certificate.Mc.zArithProof list option *)
+let tauto_lia ff =
+  let prover = linear_Z in
+  let cnf_ff,_ = cnf Mc.negate Mc.normalise Mc.zunsat Mc.zdeduce  ff in
+  match witness_list_tags [prover] cnf_ff with
+    | None -> None
+    | Some l -> Some (List.map fst l)
+
 (* call to micromega solver *)
 let build_lia_certif cl =
   let tbl = create_tbl 13 in

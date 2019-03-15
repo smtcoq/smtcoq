@@ -1,0 +1,33 @@
+########################################################################
+##   This file is intended to developers: please do not use it        ##
+## directly, rather use the "configure.sh" script.                    ##
+########################################################################
+
+
+test :
+	cd ../unit-tests; make
+
+ztest :
+	cd ../unit-tests; make zchaff
+
+vtest :
+	cd ../unit-tests; make verit
+
+lfsctest :
+	cd ../unit-tests; make lfsc
+
+clean::
+	cd ../unit-tests; make clean; rm *vo *glob
+
+
+CAMLLEX = $(CAMLBIN)ocamllex
+CAMLYACC = $(CAMLBIN)ocamlyacc
+
+%.ml :  %.mll
+	$(CAMLLEX) $<
+
+%.ml %.mli :  %.mly
+	$(CAMLYACC) $<
+
+.PHONY: smtcoq_plugin.mlpack.d
+smtcoq_plugin.mlpack.d :  verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/smtlib2_lex.ml smtlib2/sExprParser.ml smtlib2/sExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml

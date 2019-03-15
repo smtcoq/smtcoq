@@ -21,9 +21,10 @@ setup.log
 .nia.cache
 
 # cp targets of src/configure.sh:
-src/Make
+src/_CoqProject
 src/Makefile
 src/Makefile.conf
+src/Makefile.local
 src/smtcoq_plugin.ml4
 src/versions/native/Structures.v
 src/g_smtcoq.ml4

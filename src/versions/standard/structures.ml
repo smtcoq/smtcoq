@@ -77,14 +77,14 @@ let mkTConst c noc ty =
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Constr.mkSet, Entries.Monomorphic_const_entry Univ.ContextSet.empty) Universes.empty_binders [] false Vernacexpr.NoInline (CAst.make t) in
+  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Constr.mkSet, Entries.Monomorphic_const_entry Univ.ContextSet.empty) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make t) in
   Constr.mkVar t
 
 let declare_new_variable v constr_t =
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
-  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.const_univ_entry ~poly:false evd) Universes.empty_binders [] false Vernacexpr.NoInline (CAst.make v) in
+  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.const_univ_entry ~poly:false evd) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make v) in
   Constr.mkVar v
 
 let declare_constant n c =
@@ -103,7 +103,7 @@ let econstr_of_constr = EConstr.of_constr
 
 
 (* Modules *)
-let gen_constant_in_modules s m n = Universes.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
+let gen_constant_in_modules s m n = UnivGen.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 
 
@@ -165,18 +165,18 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Micromega *)
-module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
-module Micromega_plugin_Mutils = Micromega_plugin.Mutils
+module Micromega_plugin_Mutils = Mutils_full
+module Micromega_plugin_Certificate = Micromega_plugin.Certificate
+module Micromega_plugin_Coq_micromega = Coq_micromega_full
 
 let micromega_coq_proofTerm =
   (* Cannot contain evars *)
-  lazy (EConstr.Unsafe.to_constr (Lazy.force (Micromega_plugin.Coq_micromega.M.coq_proofTerm)))
+  lazy (EConstr.Unsafe.to_constr (Lazy.force (Micromega_plugin_Coq_micromega.M.coq_proofTerm)))
 
 let micromega_dump_proof_term p =
   (* Cannot contain evars *)
-  EConstr.Unsafe.to_constr (Micromega_plugin.Coq_micromega.dump_proof_term p)
+  EConstr.Unsafe.to_constr (Micromega_plugin_Coq_micromega.dump_proof_term p)
 
 
 (* Tactics *)
