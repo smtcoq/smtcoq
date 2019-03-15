@@ -186,6 +186,23 @@ the latest version available).
 
 The `cvc4` binary must be present in your PATH to use it through SMTCoq.
 
+In your `.bashrc` (or `.bash_profile`, or any other initialization file read by
+your shell), export the following environment variable to make it point at the
+`signatures` directory distributed with SMTCoq.
+
+> Don't use `~` in the path but rather `$HOME`.
+
+```bash
+export LFSCSIGS="$HOME/path/to/smtcoq/src/lfsc/tests/signatures/"
+```
+
+If you don't want SMTCoq to spit the translated proof in your proof environment
+window, add the following optional definition (in the same file).
+
+```bash
+export DONTSHOWVERIT="yes"
+```
+
 
 ### veriT
 
@@ -219,27 +236,6 @@ The `zchaff` binary must be present in your PATH to use it through SMTCoq.
 
 
 ## Setting up environment for SMTCoq
-
-To use the latest features of SMTCoq, you need to make these configuration
-changes:
-
-In your `.bashrc` (or `.bash_profile`, or any other initialization file read by
-your shell), export the following environment variable to make it point at the
-`signatures` directory distributed with SMTCoq.
-
-> Don't use `~` in the path but rather `$HOME`.
-
-```bash
-export LFSCSIGS="$HOME/path/to/smtcoq/src/lfsc/tests/signatures/"
-```
-
-If you don't want SMTCoq to spit the translated proof in your proof environment
-window, add the following optional definition (in the same file).
-
-```bash
-export DONTSHOWVERIT="yes"
-```
-
 ### Using SMTCoq without installing
 
 If you want to use SMTCoq without installing it your Coq installation, you can
