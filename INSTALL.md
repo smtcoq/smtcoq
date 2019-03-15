@@ -170,13 +170,13 @@ To use SMTCoq, we recommend installing the following two SMT solvers:
 
 - [CVC4](http://cvc4.cs.nyu.edu)
 
-- [veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
+- [veriT](https://verit.loria.fr)
 
 SMTCoq also supports the following SAT solver for propositional reasoning:
 
 - [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
 
-Please download the solvers you would like to use via the above links
+Please download the solvers you would like to use via the links below
 (since SMTCoq might not support other versions), and follow the
 instructions available for each solver in order to compile them **in a
 proof production mode**, as detailed below.
@@ -215,11 +215,11 @@ export DONTSHOWVERIT="yes"
 
 ### veriT
 
-The
-[above link](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
-points to a snapshot of veriT which is known to be compatible with
-SMTCoq, and is already in proof production mode. To compile it, unpack
-the archive and use the following commands:
+Download this [snapshot of
+veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
+which is known compatible with SMTCoq, and is already in proof
+production mode. To compile it, unpack the archive and use the following
+commands:
 ```
 autoconf
 ./configure
@@ -232,9 +232,11 @@ issue.
 
 ### zChaff
 
-zChaff is not actively maintained, so you might encounter problems to
-compile it on modern platforms.
-[This patch](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/zchaff64.patch)
+zChaff can be downloaded
+[here](http://www.princeton.edu/~chaff/zchaff.html). It is not actively
+maintained, so you might encounter problems to compile it on modern
+platforms. [This
+patch](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/zchaff64.patch)
 might solve your problems (thanks to Sylvain Boulmé for it); if not,
 please report an issue.
 
