@@ -184,12 +184,16 @@ proof production mode**, as detailed below.
 
 ### CVC4
 
-Use the version of CVC4 that is available in the master branch of its
-[git repository](https://github.com/CVC4/CVC4) or one of the **development**
-versions available at [http://cvc4.cs.stanford.edu/downloads] (we recommend using
-the latest version available).
-
-The `cvc4` binary must be present in your PATH to use it through SMTCoq.
+Use the stable version 1.6 of CVC4 that is available in the **stable
+versions** column at [http://cvc4.cs.stanford.edu/downloads]. You can
+either get a binary (recommended) or compile it from the sources using
+the following commands:
+```
+./configure
+make
+```
+Whatever solution you choose, a binary called `cvc4` must be present in
+your PATH to use it through SMTCoq.
 
 In your `.bashrc` (or `.bash_profile`, or any other initialization file read by
 your shell), export the following environment variable to make it point at the
