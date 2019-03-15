@@ -26,7 +26,7 @@
 open Pp
 open Names
 open Goptions
-open Micromega_plugin.Mutils
+open Mutils_full
 open Constr
 open Tactypes
 

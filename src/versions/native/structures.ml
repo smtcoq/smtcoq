@@ -139,10 +139,10 @@ let mkTrace step_to_coq next carray _ _ _ _ size step def_step r =
 
 
 (* Micromega *)
-module Micromega_plugin_Certificate = Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega
 module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
+module Micromega_plugin_Certificate = Certificate
+module Micromega_plugin_Coq_micromega = Coq_micromega
 
 let micromega_coq_proofTerm =
   Coq_micromega.M.coq_proofTerm

@@ -81,10 +81,10 @@ val mkTrace :
 
 
 (* Micromega *)
-module Micromega_plugin_Certificate = Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega
 module Micromega_plugin_Micromega = Micromega
 module Micromega_plugin_Mutils = Mutils
+module Micromega_plugin_Certificate = Certificate
+module Micromega_plugin_Coq_micromega = Coq_micromega
 
 val micromega_coq_proofTerm : constr lazy_t
 val micromega_dump_proof_term : Micromega_plugin_Certificate.Mc.zArithProof -> constr

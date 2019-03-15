@@ -36,5 +36,4 @@ else
     cp ${pre}versions/standard/Array/PArray_standard.v ${pre}versions/standard/Array/PArray.v
     cp ${pre}versions/standard/Structures_standard.v ${pre}versions/standard/Structures.v
     coq_makefile -f _CoqProject -o Makefile
-    sed -i Makefile -e "s/ocamldep/ocamldep -native/"
 fi
