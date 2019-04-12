@@ -10,6 +10,7 @@ rm -f ${pre}smtcoq_plugin.ml4
 rm -f ${pre}versions/native/Structures.v
 rm -f ${pre}g_smtcoq.ml4
 rm -f ${pre}smtcoq_plugin.mlpack
+rm -f ${pre}Tactics.v
 rm -f ${pre}versions/standard/Int63/Int63.v
 rm -f ${pre}versions/standard/Int63/Int63Native.v
 rm -f ${pre}versions/standard/Int63/Int63Op.v
@@ -23,6 +24,7 @@ if [ $@ -a $@ = -native ]; then
     cp ${pre}versions/native/Makefile ${pre}Makefile
     cp ${pre}versions/native/smtcoq_plugin_native.ml4 ${pre}smtcoq_plugin.ml4
     cp ${pre}versions/native/Structures_native.v ${pre}versions/native/Structures.v
+    cp ${pre}versions/native/Tactics_native.v ${pre}Tactics.v
 else
     cp ${pre}versions/standard/_CoqProject ${pre}_CoqProject
     cp ${pre}versions/standard/Makefile.local ${pre}Makefile.local
@@ -35,5 +37,6 @@ else
     cp ${pre}versions/standard/Int63/Int63Properties_standard.v ${pre}versions/standard/Int63/Int63Properties.v
     cp ${pre}versions/standard/Array/PArray_standard.v ${pre}versions/standard/Array/PArray.v
     cp ${pre}versions/standard/Structures_standard.v ${pre}versions/standard/Structures.v
+    cp ${pre}versions/standard/Tactics_standard.v ${pre}Tactics.v
     coq_makefile -f _CoqProject -o Makefile
 fi
