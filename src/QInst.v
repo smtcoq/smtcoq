@@ -11,6 +11,7 @@
 
 
 Require Import Bool ZArith.
+Require Import State.
 
 
 (** Handling quantifiers with veriT **)

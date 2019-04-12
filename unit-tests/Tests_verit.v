@@ -1281,7 +1281,7 @@ Section list.
   Lemma coqhammer_example l1 l2 x y1 y2 y3:
     implb (orb (inlist x l1) (orb (inlist x l2) (orb (x =? y1) (inlist x (y2 ::y3::nil)))))
           (inlist x (y1::(l1 ++ (y2 :: (l2 ++ (y3 :: nil)))))).
-  Proof. verit. Qed.
+  Proof. verit_no_check. Qed.
 
   Clear_lemmas.
 End list.
