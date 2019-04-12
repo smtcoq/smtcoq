@@ -205,6 +205,7 @@ let set_evars_tac noc =
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
 let error s = CErrors.user_err (Pp.str s)
+let warning n s = CWarnings.create ~name:n ~category:"SMTCoq plugin" Pp.str s
 
 let extern_constr c = Constrextern.extern_constr true Environ.empty_env Evd.empty (EConstr.of_constr c)
 
