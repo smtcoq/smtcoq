@@ -62,7 +62,10 @@ Proof.
   zchaff.
 Qed.
 
-Goal forall a b c,
+Goal forall (i j k : Z),
+    let a := Z.eqb i j in
+    let b := Z.eqb j k in
+    let c := Z.eqb k i in
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof.
   zchaff.
@@ -73,7 +76,8 @@ Qed.
    variable), which handle
    - propositional logic
    - theory of equality
-   - linear integer arithmetic *)
+   - linear integer arithmetic
+   - universally quantified hypotheses *)
 
 Goal forall a b c, ((a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a)) = false.
 Proof.
@@ -105,6 +109,57 @@ Goal forall
 Proof.
   verit.
 Qed.
+
+
+(*Some examples of using verit with lemmas. Use <verit H1 .. Hn>
+  to temporarily add the lemmas H1 .. Hn to the verit environment. *)
+
+Lemma const_fun_is_eq_val_0 :
+  forall f : Z -> Z,
+    (forall a b, f a =? f b) ->
+    forall x, f x =? f 0.
+Proof.
+  intros f Hf.
+  verit Hf.
+Qed.
+
+Section With_lemmas.
+  Variable f : Z -> Z.
+  Variable k : Z.
+  Hypothesis f_k_linear : forall x, f (x + 1) =? f x + k.
+
+  Lemma fSS2:
+    forall x, f (x + 2) =? f x + 2 * k.
+  Proof. verit_no_check f_k_linear. Qed.
+End With_lemmas.
+
+(* Instantiating a lemma with multiple quantifiers *)
+Section NonLinear.
+  Lemma distr_right_inst a b (mult : Z -> Z -> Z) :
+    (forall x y z, mult (x + y)  z =? mult x z + mult y z) ->
+    (mult (3 + a) b =? mult 3 b + mult a b).
+  Proof.
+    intro H.
+    verit H.
+  Qed.
+End NonLinear.
+
+(* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
+   the environment. If you did so in a section then, at the end of the section,
+   you should use <Clear_lemmas> to empty the globally added lemmas because
+   those lemmas won't be available outside of the section. *)
+
+Section mult3.
+  Variable mult3 : Z -> Z.
+  Hypothesis mult3_0 : mult3 0 =? 0.
+  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
+  Add_lemmas mult3_0 mult3_Sn.
+
+  Lemma mult_3_4_12 : mult3 4 =? 12.
+  Proof. verit. Qed.
+
+  Clear_lemmas.
+End mult3.
 
 
 (* Examples of the smt tactic (requires verit and cvc4 in your PATH environment
@@ -188,7 +243,9 @@ Proof.
 Qed.
 
 
-(** Examples of using the conversion tactics **)
+(** SMTCoq also provides conversion tactics, to inject various integer
+    types into the type Z supported by SMTCoq. They can be called before
+    the standard SMTCoq tactics. **)
 
 Local Open Scope positive_scope.
 
@@ -197,8 +254,8 @@ Goal forall (f : positive -> positive) (x y : positive),
         ((f (x + 3)) <=? (f y))
   = true.
 Proof.
-pos_convert.
-verit.
+  pos_convert.
+  verit.
 Qed.
 
 Goal forall (f : positive -> positive) (x y : positive),
@@ -206,8 +263,8 @@ Goal forall (f : positive -> positive) (x y : positive),
         ((3 <? y) && ((f (x + 3)) <=? (f y)))
   = true.
 Proof.
-pos_convert.
-verit.
+  pos_convert.
+  verit.
 Qed.
 
 Local Close Scope positive_scope.
@@ -215,21 +272,21 @@ Local Close Scope positive_scope.
 Local Open Scope N_scope.
 
 Goal forall (f : N -> N) (x y : N),
-  implb ((x + 3) =? y)
-        ((f (x + 3)) <=? (f y))
-  = true.
+    implb ((x + 3) =? y)
+          ((f (x + 3)) <=? (f y))
+    = true.
 Proof.
-N_convert.
-verit.
+  N_convert.
+  verit.
 Qed.
 
 Goal forall (f : N -> N) (x y : N),
-  implb ((x + 3) =? y)
-        ((2 <? y) && ((f (x + 3)) <=? (f y)))
-  = true.
+    implb ((x + 3) =? y)
+          ((2 <? y) && ((f (x + 3)) <=? (f y)))
+    = true.
 Proof.
-N_convert.
-verit.
+  N_convert.
+  verit.
 Qed.
 
 Local Close Scope N_scope.
@@ -238,21 +295,21 @@ Require Import NPeano.
 Local Open Scope nat_scope.
 
 Goal forall (f : nat -> nat) (x y : nat),
-  implb (Nat.eqb (x + 3) y)
-        ((f (x + 3)) <=? (f y))
-  = true.
+    implb (Nat.eqb (x + 3) y)
+          ((f (x + 3)) <=? (f y))
+    = true.
 Proof.
-nat_convert.
-verit.
+  nat_convert.
+  verit.
 Qed.
 
 Goal forall (f : nat -> nat) (x y : nat),
-  implb (Nat.eqb (x + 3) y)
-        ((2 <? y) && ((f (x + 3)) <=? (f y)))
-  = true.
+    implb (Nat.eqb (x + 3) y)
+          ((2 <? y) && ((f (x + 3)) <=? (f y)))
+    = true.
 Proof.
-nat_convert.
-verit.
+  nat_convert.
+  verit.
 Qed.
 
 Local Close Scope nat_scope.
@@ -263,75 +320,17 @@ Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat),
     (implb (Nat.eqb y 7)
       (implb (f 3%positive 7%nat =? 12)%N
         (f x y =? 12)%N)) = true.
-pos_convert.
-nat_convert.
-N_convert.
-verit.
+  pos_convert.
+  nat_convert.
+  N_convert.
+  verit.
 Qed.
 
 Open Scope Z_scope.
 
 
-(** Some examples of using verit with lemmas. Use <verit H1 .. Hn>
-   to temporarily add the lemmas H1 .. Hn to the verit environment. **)
-
-Lemma const_fun_is_eq_val_0 :
-  forall f : Z -> Z,
-    (forall a b, f a =? f b) ->
-    forall x, f x =? f 0.
-Proof.
-  intros f Hf.
-  verit Hf.
-Qed.
-
-Section With_lemmas.
-  Variable f : Z -> Z.
-  Variable k : Z.
-  Hypothesis f_k_linear : forall x, f (x + 1) =? f x + k.
-
-  Lemma fSS2:
-    forall x, f (x + 2) =? f x + 2 * k.
-  Proof. verit_no_check f_k_linear. Qed.
-End With_lemmas.
-
-(* Can't express the k-linearity of a function without lemmas *)
-Section Without_lemmas.
-  Lemma fSS:
-    forall (f : Z -> Z) (k : Z) (x : Z),
-      implb (f (x+1) =? f x + k)
-            (implb (f (x+2) =? f (x+1) + k)
-                   (f (x+2) =? f x + 2 * k)).
-  Proof. verit. Qed.
-End Without_lemmas.
-
-(* Instantiating a lemma with multiple quantifiers *)
-Section NonLinear.
-  Lemma distr_right_inst a b (mult : Z -> Z -> Z) :
-    (forall x y z, mult (x + y)  z =? mult x z + mult y z) ->
-    (mult (3 + a) b =? mult 3 b + mult a b).
-  Proof.
-    intro H.
-    verit H.
-  Qed.
-End NonLinear.
-
-
-(** You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
-   the environment. If you did so in a section then, at the end of the section,
-   you should use <Clear_lemmas> to empty the globally added lemmas because
-   those lemmas won't be available outside of the section. **)
-
-Section mult3.
-  Variable mult3 : Z -> Z.
-  Hypothesis mult3_0 : mult3 0 =? 0.
-  Hypothesis mult3_Sn : forall n, mult3 (n+1) =? mult3 n + 3.
-  Add_lemmas mult3_0 mult3_Sn.
-
-  Lemma mult_3_4_12 : mult3 4 =? 12.
-  Proof. verit_no_check. Qed.
-
-  Clear_lemmas.
-End mult3.
+(** Now more insightful examples. The first one automatically proves
+    properties in group theory. **)
 
 Section group.
   Variable op : Z -> Z -> Z.
@@ -375,7 +374,7 @@ Section group.
 End group.
 
 
-(* Example coming from CompCert, slightly revisited.
+(* A full example coming from CompCert, slightly revisited.
    See: https://hal.inria.fr/inria-00289542
         https://xavierleroy.org/memory-model/doc/Memory.html (Section 3)
  *)

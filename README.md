@@ -108,6 +108,10 @@ forall l, b1 = b2
 where `l` is a quantifier-free list of variables and `b1` and `b2` are
 expressions of type `bool`.
 
+A more efficient version of this tactic, called `zchaff_no_check`,
+performs only the check at `Qed`. (Thus it is safe, but a proof may fail
+at `Qed` even if everything went through during proof elaboration.)
+
 
 #### veriT
 
@@ -156,12 +160,14 @@ The theories that are currently supported by these commands are `QF_UF`
 
 ##### veriT as a Coq decision procedure
 
-The `verit_bool` tactic can be used to solve any goal of the form:
+The `verit_bool [h1 ...]` tactic can be used to solve any goal of the form:
 ```coq
 forall l, b1 = b2
 ```
 where `l` is a quantifier-free list of variables and `b1` and `b2` are
-expressions of type `bool`.
+expressions of type `bool`. This tactic *supports quantifiers*: it takes
+optional arguments which are names of universally quantified
+lemmas/hypotheses that can be used to solve the goal.
 
 In addition, the `verit` tactic applies to Coq goals of sort `Prop`: it
 first converts the goal into a term of type `bool` (thanks to the
@@ -171,6 +177,10 @@ first converts the goal into a term of type `bool` (thanks to the
 The theories that are currently supported by these tactics are `QF_UF`
 (theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
 (integer difference logic), and their combinations.
+
+A more efficient version of this tactic, called `verit_no_check`,
+performs only the check at `Qed`. (Thus it is safe, but a proof may fail
+at `Qed` even if everything went through during proof elaboration.)
 
 
 #### CVC4
@@ -242,6 +252,10 @@ The theories that are currently supported by these tactics are `QF_UF`
 (integer difference logic), `QF_BV` (theory of fixed-size bit vectors),
 `QF_A` (theory of arrays), and their combinations.
 
+A more efficient version of this tactic, called `cvc4_no_check`,
+performs only the check at `Qed`. (Thus it is safe, but a proof may fail
+at `Qed` even if everything went through during proof elaboration.)
+
 
 ### The smt tactic
 
@@ -251,3 +265,15 @@ first converts the goal to a term of type `bool` (thanks to the
 `cvc4_bool` and `verit_bool` tactics, and it finally converts any
 unsolved subgoals back to `Prop`, thus offering to the user the
 possibility to solve these (usually simpler) subgoals.
+
+A more efficient version of this tactic, called `smt_no_check`,
+performs only the check at `Qed`. (Thus it is safe, but a proof may fail
+at `Qed` even if everything went through during proof elaboration.)
+
+
+### Conversion tactics
+
+SMTCoq provides conversion tactics, to inject various integer types into
+the type Z supported by SMTCoq. They can be called before the other
+SMTCoq tactics. These tactics are named `nat_convert`, `N_convert` and
+`pos_convert`. They can be combined.
