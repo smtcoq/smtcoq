@@ -86,12 +86,14 @@ VERNAC COMMAND EXTEND Add_lemma
 END
 
 
+let error () = Structures.error "Tactics are not supported with native-coq"
+
 TACTIC EXTEND Tactic_verit
-| [ "verit_bool_base" constr_list(lpl) ] -> [ Verit.tactic lpl !lemmas_list ]
-| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ Verit.tactic_no_check lpl !lemmas_list ]
+| [ "verit_bool_base" constr_list(lpl) ] -> [ error () ]
+| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ error () ]
 END
 
 TACTIC EXTEND Tactic_cvc4
-| [ "cvc4_bool" ] -> [ Lfsc.tactic () ]
-| [ "cvc4_bool_no_check" ] -> [ Lfsc.tactic_no_check () ]
+| [ "cvc4_bool" ] -> [ error () ]
+| [ "cvc4_bool_no_check" ] -> [ error () ]
 END
