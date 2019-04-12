@@ -249,13 +249,17 @@ The `zchaff` binary must be present in your PATH to use it through SMTCoq.
 ## Setting up environment for SMTCoq
 ### Using SMTCoq without installing
 
-If you want to use SMTCoq without installing it your Coq installation, you can
+If you want to use SMTCoq without adding it to your Coq installation, you can
 tell Coq where to find SMTCoq by adding the following line in the file
 `~/.config/coqrc`:
 
 ```coq
 Add Rec LoadPath "~/path/to/smtcoq/src" as SMTCoq.
 ```
+
+See [this
+documentation](https://coq.inria.fr/refman/practical-tools/coq-commands.html#by-resource-file)
+if it does not work.
 
 
 ### Emacs and ProofGeneral
