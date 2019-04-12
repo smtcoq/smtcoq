@@ -11,9 +11,19 @@ COQC?=$(COQBIN)coqc
 
 
 all: zchaff verit lfsc
-zchaff: $(ZCHAFFLOG) Tests_zchaff.vo
-verit: $(VERITLOG) Tests_verit.vo
-lfsc: Tests_lfsc.vo
+vernac: zchaffv veritv
+tactics: zchafft veritt lfsc
+
+zchaff: zchaffv zchafft
+zchaffv: $(ZCHAFFLOG) Tests_zchaff_vernac.vo
+zchafft: Tests_zchaff_tactics.vo
+
+verit: veritv veritt
+veritv: $(VERITLOG) Tests_verit_vernac.vo
+veritt: Tests_verit_tactics.vo
+
+lfsc: Tests_lfsc_tactics.vo
+
 logs: $(OBJ)
 
 
@@ -30,4 +40,4 @@ logs: $(OBJ)
 
 
 clean:
-	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG)
+	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG) *.vo *.glob

@@ -339,17 +339,14 @@ ml: verit/veritParser.ml verit/veritLexer.ml smtlib2/smtlib2_parse.ml smtlib2/sm
 %.ml: %.mll
 	$(CAMLLEX) $<
 
-lfsctest: 
-	cd ../unit-tests; make lfsc
-
 vtest: 
-	cd ../unit-tests; make verit
+	cd ../unit-tests; make veritv
 
 ztest: 
-	cd ../unit-tests; make zchaff
+	cd ../unit-tests; make zchaffv
 
 test: 
-	cd ../unit-tests; make
+	cd ../unit-tests; make vernac
 
 ####################
 #                  #
@@ -417,7 +414,6 @@ clean:
 	- rm -rf $(CMXS)
 	- rm -rf $(CMXA)
 	- rm -rf ml
-	- rm -rf lfsctest
 	- rm -rf vtest
 	- rm -rf ztest
 	- rm -rf test

@@ -37,10 +37,9 @@
 -I versions/native
 
 
--custom "cd ../unit-tests; make" "" "test"
--custom "cd ../unit-tests; make zchaff" "" "ztest"
--custom "cd ../unit-tests; make verit" "" "vtest"
--custom "cd ../unit-tests; make lfsc" "" "lfsctest"
+-custom "cd ../unit-tests; make vernac" "" "test"
+-custom "cd ../unit-tests; make zchaffv" "" "ztest"
+-custom "cd ../unit-tests; make veritv" "" "vtest"
 
 -custom "$(CAMLLEX) $<" "%.mll" "%.ml"
 -custom "$(CAMLYACC) $<" "%.mly" "%.ml %.mli"

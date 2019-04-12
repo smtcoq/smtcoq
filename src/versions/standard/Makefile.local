@@ -17,7 +17,7 @@ lfsctest :
 	cd ../unit-tests; make lfsc
 
 clean::
-	cd ../unit-tests; make clean; rm *vo *glob
+	cd ../unit-tests; make clean
 
 
 CAMLLEX = $(CAMLBIN)ocamllex
