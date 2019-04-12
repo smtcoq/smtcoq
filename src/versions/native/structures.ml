@@ -168,6 +168,7 @@ let set_evars_tac _ = Tacticals.tclIDTAC
 (* Other differences between the two versions of Coq *)
 type constr_expr = Topconstr.constr_expr
 let error = Errors.error
+let warning _ s = Pp.warning s
 let extern_constr = Constrextern.extern_constr true Environ.empty_env
 let destruct_rel_decl (n, _, t) = n, t
 let interp_constr env sigma = Constrintern.interp_constr sigma env

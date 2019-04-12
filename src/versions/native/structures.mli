@@ -106,6 +106,7 @@ val set_evars_tac : 'a -> Proof_type.tactic
 (* Other differences between the two versions of Coq *)
 type constr_expr = Topconstr.constr_expr
 val error : string -> 'a
+val warning : string -> string -> unit
 val extern_constr : constr -> Topconstr.constr_expr
 val destruct_rel_decl : Term.rel_declaration -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> Topconstr.constr_expr -> constr

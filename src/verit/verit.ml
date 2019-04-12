@@ -166,7 +166,7 @@ let export out_channel rt ro lsmt =
 
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
-exception Non_empty_warnings
+exception Unknown
 
 let call_verit _ rt ro ra' rf' first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
@@ -184,21 +184,25 @@ let call_verit _ rt ro ra' rf' first lsmt =
 
   let win = open_in wname in
 
-  let assert_empty_warnings () =
-    try let _ = input_line win in raise Non_empty_warnings
+  let raise_warnings () =
+    try
+      while true do
+        let l = input_line win in
+        if l = "warning : proof_done: status is still open" then
+          raise Unknown
+        else
+          Structures.warning "verit-warning" ("Verit.call_verit: command " ^ command ^ " outputs the warning: " ^ l);
+      done
     with End_of_file -> () in
 
   try
-    assert (exit_code = 0);
-    assert_empty_warnings ();
+    if exit_code <> 0 then Structures.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
+    raise_warnings ();
     let res = import_trace ra' rf' logfilename (Some first) lsmt in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
             match x with
-            | Assert_failure _ ->
-                failwith ("Verit.call_verit: command " ^ command ^
-	                    " exited with code " ^ string_of_int exit_code)
-            | Non_empty_warnings -> Structures.error "veriT returns 'unknown'"
+            | Unknown -> Structures.error "veriT returns 'unknown'"
             | VeritSyntax.Sat -> Structures.error "veriT found a counter-example"
             | _ -> raise x
 
