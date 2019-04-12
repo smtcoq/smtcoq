@@ -189,7 +189,7 @@ let call_verit _ rt ro ra' rf' first lsmt =
     with End_of_file -> () in
 
   try
-    (* assert (exit_code = 0); *)
+    assert (exit_code = 0);
     assert_empty_warnings ();
     let res = import_trace ra' rf' logfilename (Some first) lsmt in
     close_in win; Sys.remove wname; res
