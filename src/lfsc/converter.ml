@@ -1052,10 +1052,10 @@ module Make (T : Translator_sig.S) = struct
              in
              let clauses = List.rev env.clauses in
              let id = mk_inter_resolution clauses in
-             (* eprintf "remaining assumptions:"; *)
-             (* List.iter (eprintf "%s, ") env.assu; *)
-             (* eprintf "@."; *)
-             (* if env.assum = [] then id else *) 
+             (* eprintf "remaining assumptions:";
+              * List.iter (fun s -> eprintf "%s, " (Hstring.view s)) env.assum;
+              * eprintf "@."; *)
+             (* if env.assum = [] then id else *)
              let satlem_id = mk_clause Weak cl [id] in
              register_clause_id cl satlem_id;
              register_decl_id lem_name satlem_id;

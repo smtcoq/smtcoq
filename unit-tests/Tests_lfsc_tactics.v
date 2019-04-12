@@ -21,6 +21,21 @@ Local Open Scope Z_scope.
 Infix "-->" := implb (at level 60, right associativity) : bool_scope.
 
 
+Section BugFix.
+
+  Local Open Scope Z_scope.
+  Goal forall (a b c d: farray Z Z),
+      b[0 <- 4] = c  ->
+      d = b[0 <- 4][1 <- 4]  ->
+      a = d[1 <- b[1]]  ->
+      a = c.
+  Proof.
+    prop2bool. cvc4_bool_no_check.
+  Qed.
+
+End BugFix.
+
+
 Section BV.
 
 Import BVList.BITVECTOR_LIST.
