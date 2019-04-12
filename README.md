@@ -165,11 +165,12 @@ The `verit_bool [h1 ...]` tactic can be used to solve any goal of the form:
 forall l, b1 = b2
 ```
 where `l` is a quantifier-free list of terms and `b1` and `b2` are
-expressions of type `bool`. This tactic *supports quantifiers*: it takes
+expressions of type `bool`. This tactic **supports quantifiers**: it takes
 optional arguments which are names of universally quantified
 lemmas/hypotheses that can be used to solve the goal. These lemmas can
 also be given once and for all using the `Add_lemmas` command (see
-examples/Example.v for details).
+[examples/Example.v](https://github.com/smtcoq/smtcoq/blob/master/examples/Example.v)
+for details).
 
 In addition, the `verit` tactic applies to Coq goals of sort `Prop`: it
 first converts the goal into a term of type `bool` (thanks to the
@@ -239,7 +240,7 @@ The `cvc4_bool` tactic can be used to solve any goal of the form:
 forall l, b1 = b2
 ```
 
-where `l` is a quantifier-free list of variables and `b1` and `b2` are
+where `l` is a quantifier-free list of terms and `b1` and `b2` are
 expressions of type `bool`.
 
 In addition, the `cvc4` tactic applies to Coq goals of sort `Prop`: it
