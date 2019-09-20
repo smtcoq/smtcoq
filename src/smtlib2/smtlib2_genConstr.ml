@@ -96,8 +96,7 @@ let rec sort_of_sort = function
     sort_of_string (string_of_identifier id) (List.map sort_of_sort l)
 
 
-let declare_sort rt sym =
-  let s = string_of_symbol sym in
+let declare_sort_from_name rt s =
   let cons_t = Structures.declare_new_type (Structures.mkId ("Smt_sort_"^s)) in
   let compdec_type = mklApp cCompDec [| cons_t |] in
   let compdec_var =
@@ -107,11 +106,10 @@ let declare_sort rt sym =
   VeritSyntax.add_btype s res;
   res
 
+let declare_sort rt sym = declare_sort_from_name rt (string_of_symbol sym)
 
-let declare_fun rt ro sym arg cod =
-  let s = string_of_symbol sym in
-  let tyl = List.map sort_of_sort arg in
-  let ty = sort_of_sort cod in
+
+let declare_fun_from_name rt ro s tyl ty =
   let coqTy = List.fold_right (fun typ c ->
       Term.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
@@ -119,6 +117,11 @@ let declare_fun rt ro sym arg cod =
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
   VeritSyntax.add_fun s op;
   op
+
+let declare_fun rt ro sym arg cod =
+  let tyl = List.map sort_of_sort arg in
+  let ty = sort_of_sort cod in
+  declare_fun_from_name rt ro (string_of_symbol sym) tyl ty
 
 
 
