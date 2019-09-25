@@ -68,8 +68,7 @@ module type FORM =
     val is_pos : t -> bool
     val is_neg : t -> bool
 
-    val to_smt : ?pi:bool ->
-                 (Format.formatter -> hatom -> unit) ->
+    val to_smt : ?debug:bool ->
                  Format.formatter -> t -> unit
 
     val logic : t -> logic
@@ -108,6 +107,13 @@ module type FORM =
     val interp_to_coq :
       (hatom -> Structures.constr) -> (int, Structures.constr) Hashtbl.t ->
       t -> Structures.constr
+
+    (* Unstratified terms *)
+    type atom_form_lit =
+      | Atom of hatom
+      | Form of pform
+      | Lit of t
+    val lit_of_atom_form_lit : reify -> bool * atom_form_lit -> t
   end
 
 module Make (Atom:ATOM) =
@@ -157,29 +163,29 @@ module Make (Atom:ATOM) =
       | Neg hp -> hp.hval
 
 
-    let rec to_smt ?pi:(pi=false) atom_to_smt fmt = function
+    let rec to_smt ?debug:(debug=false) fmt = function
       | Pos hp ->
-         if pi then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
-         to_smt_pform atom_to_smt fmt hp.hval
+         if debug then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
+         to_smt_pform fmt hp.hval
       | Neg hp ->
-         if pi then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
+         if debug then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
          Format.fprintf fmt "(not ";
-         to_smt_pform atom_to_smt fmt hp.hval;
+         to_smt_pform fmt hp.hval;
          Format.fprintf fmt ")"
 
-    and to_smt_pform atom_to_smt fmt = function
-      | Fatom a -> atom_to_smt fmt a
-      | Fapp (op,args) -> to_smt_op atom_to_smt fmt op args
+    and to_smt_pform fmt = function
+      | Fatom a -> Atom.to_smt fmt a
+      | Fapp (op,args) -> to_smt_op fmt op args
       (* This is an intermediate object of proofs, it correspond to nothing in SMT *)
       | FbbT (a, l) ->
-        Format.fprintf fmt "(bbT %a [" atom_to_smt a;
+        Format.fprintf fmt "(bbT %a [" Atom.to_smt a;
         let fi = ref true in
         List.iter (fun f -> Format.fprintf fmt "%s%a"
                       (if !fi then "" else "; ")
-                      (to_smt atom_to_smt) f; fi := false) l;
+                      (to_smt ~debug:false) f; fi := false) l;
         Format.fprintf fmt "])"
 
-    and to_smt_op atom_to_smt fmt op args =
+    and to_smt_op fmt op args =
       let (s1,s2) = if ((Array.length args = 0) || (match op with Fnot2 _ -> true | _ -> false)) then ("","") else ("(",")") in
       Format.fprintf fmt "%s" s1;
       (match op with
@@ -198,7 +204,7 @@ module Make (Atom:ATOM) =
              Format.fprintf fmt  ")")
       );
 
-      Array.iter (fun h -> Format.fprintf fmt " "; to_smt atom_to_smt fmt h) args;
+      Array.iter (fun h -> Format.fprintf fmt " "; to_smt fmt h) args;
       Format.fprintf fmt "%s" s2
 
     and to_smt_args fmt = function
@@ -275,6 +281,7 @@ module Make (Atom:ATOM) =
 		| a0::a1::a2::_ ->
                    (to_lit a2) lsl 4 + (to_lit a1) lsl 2 + to_lit a0 in
               (hash_args * 10 + Atom.index ha) * 2 + 1
+
       end
 
     module HashForm = Hashtbl.Make (HashedForm)
@@ -289,34 +296,34 @@ module Make (Atom:ATOM) =
     let check pf =
       match pf with
       | Fatom ha ->  if not (Atom.is_bool_type ha) then
-          raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+          raise (Format.eprintf "nwt: %a" to_smt_pform pf;
                  NotWellTyped pf)
       | Fapp (op, args) ->
 	(match op with
 	 | Ftrue | Ffalse ->
            if Array.length args <> 0 then
-             raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+             raise (Format.eprintf "nwt: %a" to_smt_pform pf;
                     NotWellTyped pf)
 	 | Fnot2 _ ->
            if Array.length args <> 1 then
-             raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+             raise (Format.eprintf "nwt: %a" to_smt_pform pf;
                     NotWellTyped pf)
 	 | Fand | For -> ()
 	 | Fxor | Fimp | Fiff ->
            if Array.length args <> 2 then
-             raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+             raise (Format.eprintf "nwt: %a" to_smt_pform pf;
                     NotWellTyped pf)
 
           | Fite ->
             if Array.length args <> 3 then
-              raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+              raise (Format.eprintf "nwt: %a" to_smt_pform pf;
                      NotWellTyped pf)
 
          | Fforall l -> ()
        )
 
       | FbbT (ha, l) -> if not (Atom.is_bv_type ha) then
-          raise (Format.eprintf "nwt: %a" (to_smt_pform Atom.to_smt) pf;
+          raise (Format.eprintf "nwt: %a" to_smt_pform pf;
                  NotWellTyped pf)
 
     let declare reify pf =
@@ -639,4 +646,17 @@ module Make (Atom:ATOM) =
 	  done;
 	  !r in
         interp_form f
+
+    (* Unstratified terms *)
+    type atom_form_lit =
+      | Atom of hatom
+      | Form of pform
+      | Lit of t
+
+    let lit_of_atom_form_lit rf = function
+      | decl, Atom a -> get ~declare:decl rf (Fatom a)
+      | decl, Form f -> begin match f with
+                          | Fapp (Fforall _, _) when decl -> failwith "decl is true on a forall"
+                          | _ -> get ~declare:decl rf f end
+      | decl, Lit l -> l
 end

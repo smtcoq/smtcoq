@@ -134,7 +134,9 @@ let import_trace_from_file first filename =
 
 let clear_all () =
   SmtTrace.clear ();
+  SmtMaps.clear ();
   VeritSyntax.clear ();
+  Tosmtcoq.clear ();
   C.clear ()
 
 
@@ -142,8 +144,8 @@ let import_all fsmt fproof =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
+  let ra = Tosmtcoq.ra in
+  let rf = Tosmtcoq.rf in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
   let (max_id, confl) = import_trace_from_file None fproof in
   (rt, ro, ra, rf, roots, max_id, confl)
@@ -362,13 +364,13 @@ let call_cvc4 env rt ro ra rf root _ =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    VeritSyntax.add_btype s (SmtBtype.Tindex t);
+    SmtMaps.add_btype s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
   ) (SmtBtype.to_list rt);
   
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
-    VeritSyntax.add_fun s op;
+    SmtMaps.add_fun s op;
     let args =
       Array.fold_right
         (fun t acc -> asprintf "%a" SmtBtype.to_smt t :: acc) cod [] in
@@ -376,7 +378,7 @@ let call_cvc4 env rt ro ra rf root _ =
     declare_fun cvc4 s args ret
   ) (Op.to_list ro);
 
-  assume cvc4 (asprintf "%a" (Form.to_smt Atom.to_smt) fl);
+  assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) fl);
 
   let proof =
     match check_sat cvc4 with
@@ -407,13 +409,13 @@ let export out_channel rt ro l =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    VeritSyntax.add_btype s (SmtBtype.Tindex t);
+    SmtMaps.add_btype s (SmtBtype.Tindex t);
     fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
-    VeritSyntax.add_fun s op;
+    SmtMaps.add_fun s op;
     fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t ->
@@ -424,7 +426,7 @@ let export out_channel rt ro l =
   ) (Op.to_list ro);
 
   fprintf fmt "(assert %a)@\n(check-sat)@\n(exit)@."
-    (Form.to_smt Atom.to_smt) l
+    (Form.to_smt ~debug:false) l
 
 
 
@@ -488,14 +490,12 @@ let tactic_gen vm_cast =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
-  let ra' = VeritSyntax.ra in
-  let rf' = VeritSyntax.rf in
+  let ra = Tosmtcoq.ra in
+  let rf = Tosmtcoq.rf in
+  let ra' = Tosmtcoq.ra in
+  let rf' = Tosmtcoq.rf in
   SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
-  (* let ra = VeritSyntax.ra in
-   * let rf = VeritSyntax.rf in
-   * (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
+  (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
    *    the same ra and rf twice to have everything reifed *\)
    * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
 let tactic () = tactic_gen vm_cast_true

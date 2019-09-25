@@ -735,8 +735,8 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
              with Not_found ->
                let oc = open_out "/tmp/find_lemma.log" in
                let fmt = Format.formatter_of_out_channel oc in
-               List.iter (fun u -> Format.fprintf fmt "%a\n" VeritSyntax.hform_to_smt u) lsmt;
-               Format.fprintf fmt "\n%a\n" VeritSyntax.hform_to_smt hl;
+               List.iter (fun u -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) u) lsmt;
+               Format.fprintf fmt "\n%a\n" (Form.to_smt ~debug:true) hl;
                flush oc; close_out oc; failwith "find_lemma" end
       | _ -> failwith "unexpected form of root" in
 
