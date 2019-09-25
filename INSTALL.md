@@ -28,7 +28,6 @@ certificates, you need to use the [version of Coq with native
 data-structures](https://github.com/smtcoq/native-coq) instead of
 Coq-8.9 (warning: this allows one to use the vernacular commands but not
 the tactics).
-```
 
 
 ### Installation via opam (recommended)
