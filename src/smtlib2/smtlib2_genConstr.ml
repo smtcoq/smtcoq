@@ -45,7 +45,7 @@ let string_type s =
   | "Array" -> (function [ti;te] -> TFArray (ti, te) | _ -> assert false)
   | _ ->
     try Scanf.sscanf s "BitVec_%d%!" (fun size -> fun _ -> TBV size)
-    with _ -> fun _ -> VeritSyntax.get_btype s
+    with _ -> fun _ -> SmtMaps.get_btype s
 
 let sort_of_string s = string_type s
 
@@ -103,7 +103,7 @@ let declare_sort_from_name rt s =
     Structures.declare_new_variable (Structures.mkId ("CompDec_"^s)) compdec_type in
   let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
   let res = SmtBtype.declare rt cons_t ce in
-  VeritSyntax.add_btype s res;
+  SmtMaps.add_btype s res;
   res
 
 let declare_sort rt sym = declare_sort_from_name rt (string_of_symbol sym)
@@ -115,7 +115,7 @@ let declare_fun_from_name rt ro s tyl ty =
       tyl (interp_to_coq rt ty) in
   let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
-  VeritSyntax.add_fun s op;
+  SmtMaps.add_fun s op;
   op
 
 let declare_fun rt ro sym arg cod =
@@ -408,7 +408,7 @@ let make_root ra rf t =
          with _ -> assert false)
 
       | _, _ ->
-        let op = VeritSyntax.get_fun v in
+        let op = SmtMaps.get_fun v in
         let l' = List.map (fun t ->
             match make_root_term t with
             | Atom h -> h | Form _ -> assert false) l in

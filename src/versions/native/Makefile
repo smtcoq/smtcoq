@@ -215,6 +215,7 @@ MLFILES:=lia/lia.ml\
   ../3rdparty/alt-ergo/smtlib2_parse.ml\
   trace/smtTrace.ml\
   trace/smtMisc.ml\
+  trace/smtMaps.ml\
   trace/smtForm.ml\
   trace/smtCommands.ml\
   trace/smtCnf.ml\
@@ -252,6 +253,7 @@ MLIFILES:=lia/lia.mli\
   ../3rdparty/alt-ergo/smtlib2_parse.mli\
   trace/smtTrace.mli\
   trace/smtMisc.mli\
+  trace/smtMaps.mli\
   trace/smtForm.mli\
   trace/smtCommands.mli\
   trace/smtCnf.mli\
@@ -329,7 +331,7 @@ beautify: $(VFILES:=.beautified)
 $(CMXS): $(CMXA)
 	$(CAMLOPTLINK) $(ZFLAGS) -o $@ -linkall -shared $^
 
-$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtBtype.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx ../3rdparty/alt-ergo/smtlib2_util.cmx ../3rdparty/alt-ergo/smtlib2_ast.cmx ../3rdparty/alt-ergo/smtlib2_parse.cmx ../3rdparty/alt-ergo/smtlib2_lex.cmx smtlib2/sExpr.cmx smtlib2/sExprParser.cmx smtlib2/sExprLexer.cmx smtlib2/smtlib2_solver.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
+$(CMXA): versions/native/structures.cmx trace/smtMisc.cmx trace/coqTerms.cmx trace/smtBtype.cmx trace/smtForm.cmx trace/smtCertif.cmx trace/smtTrace.cmx trace/smtCnf.cmx trace/satAtom.cmx trace/smtAtom.cmx trace/smtMaps.cmx zchaff/satParser.cmx zchaff/zchaffParser.cmx zchaff/cnfParser.cmx zchaff/zchaff.cmx ../3rdparty/alt-ergo/smtlib2_util.cmx ../3rdparty/alt-ergo/smtlib2_ast.cmx ../3rdparty/alt-ergo/smtlib2_parse.cmx ../3rdparty/alt-ergo/smtlib2_lex.cmx smtlib2/sExpr.cmx smtlib2/sExprParser.cmx smtlib2/sExprLexer.cmx smtlib2/smtlib2_solver.cmx lia/lia.cmx verit/veritSyntax.cmx verit/veritParser.cmx verit/veritLexer.cmx lfsc/shashcons.cmx lfsc/hstring.cmx lfsc/type.cmx lfsc/ast.cmx lfsc/builtin.cmx lfsc/tosmtcoq.cmx lfsc/converter.cmx lfsc/lfscParser.cmx lfsc/lfscLexer.cmx smtlib2/smtlib2_genConstr.cmx trace/smtCommands.cmx verit/verit.cmx lfsc/lfsc.cmx smtcoq_plugin.cmx
 	$(CAMLOPTLINK) $(ZFLAGS) -a -o $@ $^
 
 ml: verit/veritParser.ml verit/veritLexer.ml ../3rdparty/alt-ergo/smtlib2_parse.ml ../3rdparty/alt-ergo/smtlib2_lex.ml smtlib2/sExprParser.ml smtlib2/sExprLexer.ml lfsc/lfscParser.ml lfsc/lfscLexer.ml
@@ -370,11 +372,11 @@ install-natdynlink:
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \
 	done
-	for i in $(VCMXS); do \
+	for i in $(CMXA); do \
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \
 	done
-	for i in $(CMXA); do \
+	for i in $(VCMXS); do \
 	 install -d `dirname $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i`; \
 	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/SMTCoq/$$i; \
 	done

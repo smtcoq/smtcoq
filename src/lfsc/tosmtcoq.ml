@@ -12,18 +12,20 @@
 
 open SmtAtom
 open SmtForm
-open VeritSyntax
 open Ast
 open Builtin
 open Format
 open Translator_sig
 open SmtBtype
 
+let ra = Atom.create ()
+let rf = Form.create ()
+
 type lit = SmtAtom.Form.t
 
 type clause = lit list
 
-let lit_of_atom_form_lit rf af = lit_of_atom_form_lit rf (true, af)
+let lit_of_atom_form_lit rf af = Form.lit_of_atom_form_lit rf (true, af)
 
 let show_veritproof =
   try ignore (Sys.getenv "DONTSHOWVERIT"); false
@@ -213,44 +215,44 @@ let rec const_bv_aux acc t = match name t with
 
 let const_bv t =
   let bv_list = const_bv_aux [] t in
-  Atom (Atom.mk_bvconst ra bv_list)
+  Form.Atom (Atom.mk_bvconst ra bv_list)
 
 
 let rec term_smtcoq_old t =
   match value t with
-  | Const {sname=Name n} when n == H.ttrue -> Form Form.pform_true
-  | Const {sname=Name n} when n == H.tfalse -> Form Form.pform_false
+  | Const {sname=Name n} when n == H.ttrue -> Form.Form Form.pform_true
+  | Const {sname=Name n} when n == H.tfalse -> Form.Form Form.pform_false
   | Const {sname=Name n} when n == H.bvn -> const_bv t
   | Const {sname=Name n} ->
     begin
       try
         term_smtcoq  (HS.find alias_tbl n)
       with Not_found ->
-        Atom (Atom.get ra (Aapp (get_fun (Hstring.view n),[||])))
+        Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun (Hstring.view n),[||])))
     end
-  | Int bi -> Atom (Atom.hatom_Z_of_bigint ra bi)
+  | Int bi -> Form.Atom (Atom.hatom_Z_of_bigint ra bi)
   | App _ ->
     begin match app_name t with
       | Some (n, [f]) when n == H.not_ ->
-        Lit (Form.neg (lit_of_atom_form_lit rf (term_smtcoq f)))
-      | Some (n, args) when n == H.and_ -> Form (Fapp (Fand, args_smtcoq args))
-      | Some (n, args) when n == H.or_ -> Form (Fapp (For, args_smtcoq args))
-      | Some (n, args) when n == H.impl_ -> Form (Fapp (Fimp, args_smtcoq args))
-      | Some (n, args) when n == H.xor_ -> Form (Fapp (Fxor, args_smtcoq args))
+        Form.Lit (Form.neg (lit_of_atom_form_lit rf (term_smtcoq f)))
+      | Some (n, args) when n == H.and_ -> Form.Form (Fapp (Fand, args_smtcoq args))
+      | Some (n, args) when n == H.or_ -> Form.Form (Fapp (For, args_smtcoq args))
+      | Some (n, args) when n == H.impl_ -> Form.Form (Fapp (Fimp, args_smtcoq args))
+      | Some (n, args) when n == H.xor_ -> Form.Form (Fapp (Fxor, args_smtcoq args))
       | Some (n, args) when n == H.ite || n == H.ifte_ ->
-        Form (Fapp (Fite, args_smtcoq args))
-      | Some (n, args) when n == H.iff -> Form (Fapp (Fiff, args_smtcoq args))
+        Form.Form (Fapp (Fite, args_smtcoq args))
+      | Some (n, args) when n == H.iff -> Form.Form (Fapp (Fiff, args_smtcoq args))
       | Some (n, [_; a; b]) when n == H.eq ->
         let h1, h2 = term_smtcoq_atom a, term_smtcoq_atom b in
-        Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
+        Form.Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
       | Some (n, _) when n == H.apply -> uncurry [] t
       | Some (n, [p]) when n == H.p_app -> term_smtcoq p
       | Some (n, [{value = Int bi}]) when n == H.a_int ->
-        Atom (Atom.hatom_Z_of_bigint ra bi)
+        Form.Atom (Atom.hatom_Z_of_bigint ra bi)
       | Some (n, [ni]) when n == H.a_int ->
         begin match app_name ni with
           | Some (n, [{value = Int bi}]) when n == H.uminus ->
-            Atom (Atom.hatom_Z_of_bigint ra (Big_int.minus_big_int bi))
+            Form.Atom (Atom.hatom_Z_of_bigint ra (Big_int.minus_big_int bi))
           | _ -> assert false
         end
       | Some (n, [_; v]) when n == H.a_var_bv -> term_smtcoq v
@@ -259,83 +261,83 @@ let rec term_smtcoq_old t =
       | Some (b, [a; {value = Int n}]) when b == H.bitof ->
          (let ha = term_smtcoq_atom a in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bitof ra s (Big_int.int_of_big_int n) ha)
+            | TBV s -> Form.Atom (Atom.mk_bitof ra s (Big_int.int_of_big_int n) ha)
             | _ -> assert false)
       | Some (n, [_; a; bb]) when n == H.bblast_term ->
-        Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
+        Form.Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
       | Some (n, [_; a]) when n == H.bvnot ->
          (let ha = term_smtcoq_atom a in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvnot ra s ha)
+            | TBV s -> Form.Atom (Atom.mk_bvnot ra s ha)
             | _ -> assert false)
       | Some (n, [_; a]) when n == H.bvneg ->
          (let ha = term_smtcoq_atom a in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvneg ra s ha)
+            | TBV s -> Form.Atom (Atom.mk_bvneg ra s ha)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvand ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvand ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvand ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvor ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvor ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvor ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvxor ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvxor ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvxor ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvadd ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvadd ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvadd ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvmul ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvmult ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvmult ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvult ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvult ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvult ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvslt ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvslt ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvslt ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvule ->
         (let ha = term_smtcoq_atom a in
          let hb = term_smtcoq_atom b in
          match Atom.type_of ha with
          | TBV s ->
-           let a = Atom (Atom.mk_bvult ra s hb ha) in
-           Lit (Form.neg (lit_of_atom_form_lit rf a))
+           let a = Form.Atom (Atom.mk_bvult ra s hb ha) in
+           Form.Lit (Form.neg (lit_of_atom_form_lit rf a))
          | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvsle ->
         (let ha = term_smtcoq_atom a in
          let hb = term_smtcoq_atom b in
          match Atom.type_of ha with
          | TBV s ->
-           let a = Atom (Atom.mk_bvslt ra s hb ha) in
-           Lit (Form.neg (lit_of_atom_form_lit rf a))
+           let a = Form.Atom (Atom.mk_bvslt ra s hb ha) in
+           Form.Lit (Form.neg (lit_of_atom_form_lit rf a))
          | _ -> assert false)         
       | Some (n, [_; _; _; a; b]) when n == H.concat ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha, Atom.type_of hb with
-            | TBV s1, TBV s2 -> Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
+            | TBV s1, TBV s2 -> Form.Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
             | _ -> assert false)
       | Some (n, [_; {value = Int bj}; {value = Int bi}; _; a])
         when n == H.extract ->
@@ -343,51 +345,51 @@ let rec term_smtcoq_old t =
          let i = Big_int.int_of_big_int bi in
          let j = Big_int.int_of_big_int bj in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) ha)
+            | TBV s -> Form.Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) ha)
             | _ -> assert false)
       | Some (n, [_; {value = Int bi}; _; a])
         when n == H.zero_extend ->
         (let ha = term_smtcoq_atom a in
          let n = Big_int.int_of_big_int bi in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvzextn ra ~s ~n ha)
+            | TBV s -> Form.Atom (Atom.mk_bvzextn ra ~s ~n ha)
             | _ -> assert false)
       | Some (n, [_; {value = Int bi}; _; a])
         when n == H.sign_extend ->
         (let ha = term_smtcoq_atom a in
          let n = Big_int.int_of_big_int bi in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvsextn ra ~s ~n ha)
+            | TBV s -> Form.Atom (Atom.mk_bvsextn ra ~s ~n ha)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvshl ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvshl ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvshl ra s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvlshr ->
          (let ha = term_smtcoq_atom a in
           let hb = term_smtcoq_atom b in
           match Atom.type_of ha with
-            | TBV s -> Atom (Atom.mk_bvshr ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvshr ra s ha hb)
             | _ -> assert false)
 
       | Some (n, [a; b]) when n == H.lt_Int ->
-        Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.le_Int ->
-        Atom (Atom.mk_le ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_le ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.gt_Int ->
-        Atom (Atom.mk_gt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_gt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.ge_Int ->
-        Atom (Atom.mk_ge ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_ge ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.plus_Int ->
-        Atom (Atom.mk_plus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_plus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.minus_Int ->
-        Atom (Atom.mk_minus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_minus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a; b]) when n == H.times_Int ->
-        Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a]) when n == H.uminus_Int ->
-        Atom (Atom.mk_opp ra (term_smtcoq_atom a))
+        Form.Atom (Atom.mk_opp ra (term_smtcoq_atom a))
       | Some (n, _) ->
         Format.eprintf "\nTerm: %a\n@." print_term t;
         failwith ("LFSC function symbol "^Hstring.view n^" not supported.")
@@ -416,7 +418,7 @@ and term_smtcoq t =
 
 
 and term_smtcoq_atom a = match term_smtcoq a with
-  | Atom h -> h
+  | Form.Atom h -> h
   | _ ->  assert false
 
 and args_smtcoq args =
@@ -428,21 +430,21 @@ and uncurry acc t = match app_name t, acc with
     uncurry (term_smtcoq_atom a :: acc) f
   | Some (n, [_; _]) , [h1; h2] when n == H.read ->
     (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Atom (Atom.mk_select ra ti te h1 h2)
+     | TFArray (ti,te) -> Form.Atom (Atom.mk_select ra ti te h1 h2)
      | _ -> assert false)
   | Some (n, [_; _]) , [h1; h2; h3] when n == H.write ->
     (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Atom (Atom.mk_store ra ti te h1 h2 h3)
+     | TFArray (ti,te) -> Form.Atom (Atom.mk_store ra ti te h1 h2 h3)
      | _ -> assert false)
   | Some (n, [_; _]) , [h1; h2] when n == H.diff ->
     (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Atom (Atom.mk_diffarray ra ti te h1 h2)
+     | TFArray (ti,te) -> Form.Atom (Atom.mk_diffarray ra ti te h1 h2)
      | _ -> assert false)
   | None, _ ->
     (match name t with
      | Some n ->
        let args = Array.of_list acc in
-       Atom (Atom.get ra (Aapp (get_fun (Hstring.view n), args)))
+       Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun (Hstring.view n), args)))
      | _ -> assert false)
   | _ ->
     eprintf "uncurry fail: %a@." Ast.print_term t;
@@ -484,7 +486,7 @@ let to_clause = clause_smtcoq []
 
 let print_clause fmt cl =
   fprintf fmt "(";
-  List.iter (fprintf fmt "%a " (Form.to_smt Atom.to_smt)) cl;
+  List.iter (fprintf fmt "%a " (Form.to_smt ~debug:false)) cl;
   fprintf fmt ")"
 
 
@@ -581,6 +583,8 @@ let register_decl_id name id =
 
 
 let clear () =
+  Atom.clear ra;
+  Form.clear rf;
   HCl.clear clauses_ids;
   Hashtbl.clear ids_clauses;
   HT.clear propvars;

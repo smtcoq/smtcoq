@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+(* Traces *)
 val notUsed : int
 val clear : unit -> unit
 val next_id : unit -> SmtCertif.clause_id
@@ -67,40 +68,10 @@ val to_coq :
   ('a SmtCertif.clause -> Structures.types * Structures.constr) option ->
   Structures.constr * 'a SmtCertif.clause *
     (Structures.id * Structures.types) list
+
+
 module MakeOpt :
   functor (Form : SmtForm.FORM) ->
     sig
-      val share_value : Form.t SmtCertif.clause -> unit
-      module HashedHeadRes :
-        sig
-          type t = Form.t SmtCertif.resolution
-          val equal :
-            'a SmtCertif.resolution -> 'b SmtCertif.resolution -> bool
-          val hash : 'a SmtCertif.resolution -> int
-        end
-      module HRtbl :
-        sig
-          type key = HashedHeadRes.t
-          type 'a t = 'a Hashtbl.Make(HashedHeadRes).t
-          val create : int -> 'a t
-          val clear : 'a t -> unit
-          val reset : 'a t -> unit
-          val copy : 'a t -> 'a t
-          val add : 'a t -> key -> 'a -> unit
-          val remove : 'a t -> key -> unit
-          val find : 'a t -> key -> 'a
-          val find_all : 'a t -> key -> 'a list
-          val replace : 'a t -> key -> 'a -> unit
-          val mem : 'a t -> key -> bool
-          val iter : (key -> 'a -> unit) -> 'a t -> unit
-          val fold : (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
-          val length : 'a t -> int
-          val stats : 'a t -> Hashtbl.statistics
-        end
-      val common_head :
-        'a SmtCertif.clause list ->
-        'b SmtCertif.clause list ->
-        'a SmtCertif.clause list * 'a SmtCertif.clause list *
-        'b SmtCertif.clause list
       val share_prefix : Form.t SmtCertif.clause -> int -> unit
     end

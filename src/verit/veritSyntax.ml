@@ -496,20 +496,6 @@ let mk_clause cl =
     Structures.error ("SMTCoq was not able to check the certificate \
                        for the following reason.\n"^f)
 
-type atom_form_lit =
-  | Atom of SmtAtom.Atom.t
-  | Form of SmtAtom.Form.pform
-  | Lit of SmtAtom.Form.t
-
-(* functions for applying on a pair with a boolean when the boolean indicates
-   if the entire term should be declared in the tables *)
-let lit_of_atom_form_lit rf = function
-  | decl, Atom a -> Form.get ~declare:decl rf (Fatom a)
-  | decl, Form f -> begin match f with
-                    | Fapp (Fforall _, _) when decl -> failwith "decl is true on a forall"
-                    | _ -> Form.get ~declare:decl rf f end
-  | decl, Lit l -> l
-
 let apply_dec f (decl, a) = decl, f a
 
 let rec list_dec = function
@@ -519,53 +505,36 @@ let rec list_dec = function
      decl_h && decl_t, h :: l_t
 
 let apply_dec_atom (f:?declare:bool -> SmtAtom.hatom -> SmtAtom.hatom) = function
-  | decl, Atom h -> decl, Atom (f ~declare:decl h)
+  | decl, Form.Atom h -> decl, Form.Atom (f ~declare:decl h)
   | _ -> assert false
 
 let apply_bdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) o1 o2 =
   match o1, o2 with
-  | (decl1, Atom h1), (decl2, Atom h2) ->
+  | (decl1, Form.Atom h1), (decl2, Form.Atom h2) ->
      let decl = decl1 && decl2 in
-     decl, Atom (f ~declare:decl h1 h2)
+     decl, Form.Atom (f ~declare:decl h1 h2)
   | _ -> assert false
 
 let apply_tdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtAtom.Atom.t) o1 o2 o3 =
   match o1, o2, o3 with
-  | (decl1, Atom h1), (decl2, Atom h2), (decl3, Atom h3) ->
+  | (decl1, Form.Atom h1), (decl2, Form.Atom h2), (decl3, Form.Atom h3) ->
      let decl = decl1 && decl2 && decl3 in
-     decl, Atom (f ~declare:decl h1 h2 h3)
+     decl, Form.Atom (f ~declare:decl h1 h2 h3)
   | _ -> assert false
 
 
-let solver : (int, (bool * atom_form_lit)) Hashtbl.t = Hashtbl.create 17
+let solver : (int, (bool * Form.atom_form_lit)) Hashtbl.t = Hashtbl.create 17
 let get_solver id =
   try Hashtbl.find solver id
   with | Not_found -> failwith ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n")
 let add_solver id cl = Hashtbl.add solver id cl
 let clear_solver () = Hashtbl.clear solver
 
-let btypes : (string, SmtBtype.btype) Hashtbl.t = Hashtbl.create 17
-let get_btype id =
-  try Hashtbl.find btypes id
-  with | Not_found -> failwith ("VeritSyntax.get_btype : sort symbol \""^id^"\" not found\n")
-let add_btype id cl = Hashtbl.add btypes id cl
-let clear_btypes () = Hashtbl.clear btypes
-
-let funs : (string,indexed_op) Hashtbl.t = Hashtbl.create 17
-let get_fun id =
-  try Hashtbl.find funs id
-  with | Not_found -> failwith ("VeritSyntax.get_fun : function symbol \""^id^"\" not found\n")
-let add_fun id cl = Hashtbl.add funs id cl
-let remove_fun id = Hashtbl.remove funs id
-let clear_funs () = Hashtbl.clear funs
-
 let qvar_tbl : (string, SmtBtype.btype) Hashtbl.t = Hashtbl.create 10
 let find_opt_qvar s = try Some (Hashtbl.find qvar_tbl s)
                       with Not_found -> None
 let add_qvar s bt = Hashtbl.add qvar_tbl s bt
 let clear_qvar () = Hashtbl.clear qvar_tbl
-
-let hform_to_smt = Form.to_smt ~pi:true Atom.to_smt
 
 (* Finding the index of a root in <lsmt> modulo the <re_hash> function.
    This function is used by SmtTrace.order_roots *)
@@ -583,8 +552,8 @@ let init_index lsmt re_hash =
             with Not_found ->
               let oc = open_out "/tmp/input_not_found.log" in
               let fmt = Format.formatter_of_out_channel oc in
-              List.iter (fun h -> Format.fprintf fmt "%a\n" hform_to_smt (re_hash h)) lsmt;
-              Format.fprintf fmt "\n%a\n@." hform_to_smt re_hf;
+              List.iter (fun h -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) (re_hash h)) lsmt;
+              Format.fprintf fmt "\n%a\n@." (Form.to_smt ~debug:true) re_hf;
               flush oc; close_out oc;
               failwith "not found: log available"
 
@@ -604,7 +573,7 @@ let rf = Form.create ()
 let ra' = Atom.create ()
 let rf' = Form.create ()
 
-let hlets : (string, atom_form_lit) Hashtbl.t = Hashtbl.create 17
+let hlets : (string, Form.atom_form_lit) Hashtbl.t = Hashtbl.create 17
 
 let clear_mk_clause () =
   to_add := [];
@@ -615,8 +584,6 @@ let clear () =
   clear_mk_clause ();
   clear_clauses ();
   clear_solver ();
-  clear_btypes ();
-  clear_funs ();
   Atom.clear ra;
   Form.clear rf;
   Atom.clear ra';

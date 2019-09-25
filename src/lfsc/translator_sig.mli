@@ -19,7 +19,7 @@ open Ast
 open Format
 
 
-(** The type of destination rules that are currently supported byt the
+(** The type of destination rules that are currently supported by the
     converter *)
 type rule =
   | Reso

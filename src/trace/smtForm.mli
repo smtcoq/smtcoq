@@ -64,8 +64,7 @@ module type FORM =
       val is_pos : t -> bool
       val is_neg : t -> bool
 
-      val to_smt : ?pi:bool ->
-                   (Format.formatter -> hatom -> unit) ->
+      val to_smt : ?debug:bool ->
                    Format.formatter -> t -> unit
 
       val logic : t -> logic
@@ -105,6 +104,13 @@ module type FORM =
       val interp_to_coq :
 	  (hatom -> Structures.constr) -> (int, Structures.constr) Hashtbl.t ->
 	    t -> Structures.constr
+
+      (* Unstratified terms *)
+      type atom_form_lit =
+        | Atom of hatom
+        | Form of pform
+        | Lit of t
+      val lit_of_atom_form_lit : reify -> bool * atom_form_lit -> t
   end
 
 module Make (Atom:ATOM) : FORM with type hatom = Atom.t

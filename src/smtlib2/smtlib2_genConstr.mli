@@ -26,4 +26,6 @@ val declare_sort_from_name : SmtBtype.reify_tbl -> string -> SmtBtype.btype
 val declare_fun_from_name :
   SmtBtype.reify_tbl -> SmtAtom.Op.reify_tbl -> string ->
   SmtBtype.btype list -> SmtBtype.btype -> SmtAtom.indexed_op
+
+(* Lower level function, to build an assertion *)
 val make_root : SmtAtom.Atom.reify_tbl -> SmtAtom.Form.reify -> Smtlib2_ast.term -> SmtAtom.Form.t

@@ -10,7 +10,16 @@
 (**************************************************************************)
 
 
-include Translator_sig.S
+(** Maps that store SMT objects **)
 
-val ra : SmtAtom.Atom.reify_tbl
-val rf : SmtAtom.Form.reify
+(* SMT types *)
+val get_btype : string -> SmtBtype.btype
+val add_btype : string -> SmtBtype.btype -> unit
+
+(* SMT function symbols *)
+val get_fun : string -> SmtAtom.indexed_op
+val add_fun : string -> SmtAtom.indexed_op -> unit
+val remove_fun : string -> unit
+
+(* Clean-up of all the maps *)
+val clear : unit -> unit

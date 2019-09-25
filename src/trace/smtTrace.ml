@@ -14,11 +14,14 @@ open SmtMisc
 open CoqTerms
 open SmtCertif
 
+
+(** Steps identifiers **)
+
 let notUsed = 0
 
 let next_id = ref 0
 
-let clear () = next_id := 0
+let clear_id () = next_id := 0
 
 let next_id () =
   let id = !next_id in
@@ -170,7 +173,7 @@ let order_roots init_index first =
 the following clauses reference those clauses instead of the roots *)
 let add_scertifs to_add c =
   let r = ref c in
-  clear (); ignore (next_id ());
+  clear_id (); ignore (next_id ());
   while isRoot !r.kind do
     ignore (next_id ());
     r := next !r;
@@ -498,25 +501,25 @@ let to_coq to_lit interp (cstep,
 module MakeOpt (Form:SmtForm.FORM) =
   struct
     (* Share the certificate building a common clause *)
-    let share_value c =
-      let tbl = Hashtbl.create 17 in
-      let to_lits v = List.map (Form.to_lit) v in
-      let process c =
-	match c.value with
-	| None -> ()
-	| Some v ->
-	    let lits = to_lits v in
-	    try
-	      let c' = Hashtbl.find tbl lits in
-	      set_same c c'
-	    with Not_found  -> Hashtbl.add tbl lits c in
-      let r = ref c in
-      while !r.next <> None do
-	let next = next !r in
-	process !r;
-	r := next
-      done;
-      process !r
+    (* let share_value c =
+     *   let tbl = Hashtbl.create 17 in
+     *   let to_lits v = List.map (Form.to_lit) v in
+     *   let process c =
+     *     match c.value with
+     *     | None -> ()
+     *     | Some v ->
+     *         let lits = to_lits v in
+     *         try
+     *           let c' = Hashtbl.find tbl lits in
+     *           set_same c c'
+     *         with Not_found  -> Hashtbl.add tbl lits c in
+     *   let r = ref c in
+     *   while !r.next <> None do
+     *     let next = next !r in
+     *     process !r;
+     *     r := next
+     *   done;
+     *   process !r *)
 
    (* Sharing of the common prefix *)
 
@@ -593,3 +596,6 @@ module MakeOpt (Form:SmtForm.FORM) =
       done
 
   end
+
+
+let clear () = clear_id ()

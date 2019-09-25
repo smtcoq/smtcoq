@@ -104,6 +104,7 @@ let import_trace ra' rf' filename first lsmt =
 
 let clear_all () =
   SmtTrace.clear ();
+  SmtMaps.clear ();
   VeritSyntax.clear ()
 
 
@@ -145,13 +146,13 @@ let export out_channel rt ro lsmt =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    VeritSyntax.add_btype s (Tindex t);
+    SmtMaps.add_btype s (Tindex t);
     Format.fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->
     let s = "op_"^(string_of_int i) in
-    VeritSyntax.add_fun s op;
+    SmtMaps.add_fun s op;
     Format.fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;
@@ -161,7 +162,7 @@ let export out_channel rt ro lsmt =
   ) (Op.to_list ro);
 
   List.iter (fun u -> Format.fprintf fmt "(assert ";
-                      Form.to_smt Atom.to_smt fmt u;
+                      Form.to_smt fmt u;
                       Format.fprintf fmt ")\n") lsmt;
 
   Format.fprintf fmt "(check-sat)\n(exit)@."

@@ -6,8 +6,9 @@ SMTCoq is designed to work on computers equipped with a POSIX (Unix or a
 clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64) and Mac OS X.
 
-For now you have to install it from the sources. (We plan on releasing
-an updated opam package soon with the latest additions.)
+The simplest way is to install it using opam. You can also install it
+from the sources (this is mandatory if you want to use the native
+version, see below).
 
 You will also need to [install the provers](#installation-of-the-provers)
 you want to use.
@@ -29,7 +30,19 @@ Coq-8.9 (warning: this allows one to use the vernacular commands but not
 the tactics).
 
 
-### Installation with Coq and OCaml opam packages
+### Installation via opam (recommended)
+
+Simply add the coq-extra-dev repo to opam:
+```bash
+opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+```
+and install SMTCoq:
+```bash
+opam install coq-smtcoq
+```
+
+
+### Installation from the sources, using opam (not recommended)
 
 #### Install opam
 
@@ -90,7 +103,7 @@ make install
 ```
 
 
-### Installation with official Coq 8.9 release
+### Installation from the sources, with official Coq 8.9 release (not recommended)
 
 1. Download the last stable version of Coq 8.9:
 ```bash
@@ -119,7 +132,7 @@ make install
 ```
 
 
-### Installation with native-coq
+### Installation with native-coq (not recommended except for high performances)
 
 > **Warning**: this installation procedure is recommended only to use
 > the vernacular commands efficiently (in particular, to check very
@@ -149,18 +162,6 @@ export COQBIN=/home/jdoe/native-coq/bin/
 ./configure.sh -native
 make
 make install
-```
-
-
-### Deprecated: installation via opam (uses Coq-8.5)
-
-Simply add the coq-extra-dev repo to opam:
-```bash
-opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
-```
-and install SMTCoq:
-```bash
-opam install coq-smtcoq
 ```
 
 

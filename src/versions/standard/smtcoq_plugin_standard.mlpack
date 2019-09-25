@@ -11,6 +11,7 @@ SmtTrace
 SmtCnf
 SatAtom
 SmtAtom
+SmtMaps
 
 SatParser
 ZchaffParser
