@@ -39,6 +39,7 @@ opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
 and install SMTCoq:
 ```bash
 opam install coq-smtcoq
+```
 
 
 ### Installation from the sources, using opam (not recommended)
