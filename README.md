@@ -13,27 +13,35 @@ SMTCoq also provides an extracted version of the checker, that can be
 run outside Coq.
 --->
 
-The current stable version is version 1.3.
+<!--- The current stable version is version 1.3. --->
 
 
-### Installation
+## Installation
 
 See the INSTALL.md file for instructions.
 
 
-### License
+## License
 
 SMTCoq is released under the CeCILL-C license; see LICENSE for more
 details.
 
 
-### Use
+## Want to participate?
+
+SMTCoq is an ambitious, collaborative project: everyone is welcome!
+There are many and varied enhancement to do. You can have a look at the
+[task list](https://github.com/smtcoq/smtcoq/issues/40) or propose your
+own improvements!
+
+
+## Use
 
 Examples are given in the file examples/Example.v. They are meant to be
 easily re-usable for your own usage.
 
 
-#### Overview
+### Overview
 
 After installation, the SMTCoq module can be used in Coq files via the
 `Require Import SMTCoq.` command. For each supported solver, it
@@ -65,14 +73,14 @@ extraction.
 --->
 
 
-#### zChaff
+### zChaff
 
 Compile and install zChaff as explained in the installation
 instructions. In the following, we consider that the command `zchaff` is
 in your `PATH` environment variable.
 
 
-##### Checking zChaff answers of unsatisfiability and importing theorems
+#### Checking zChaff answers of unsatisfiability and importing theorems
 
 To check the result given by zChaff on an unsatisfiable dimacs file
 `file.cnf`:
@@ -99,7 +107,7 @@ will produce a Coq term `theo` whose type is the theorem stated in
 `file.cnf`.
 
 
-##### zChaff as a Coq decision procedure
+#### zChaff as a Coq decision procedure
 
 The `zchaff` tactic can be used to solve any goal of the form:
 ```coq
@@ -113,14 +121,14 @@ performs only the check at `Qed`. (Thus it is safe, but a proof may fail
 at `Qed` even if everything went through during proof elaboration.)
 
 
-#### veriT
+### veriT
 
 Compile and install veriT as explained in the installation instructions.
 In the following, we consider that the command `veriT` is in your `PATH`
 environment variable.
 
 
-##### Checking veriT answers of unsatisfiability and importing theorems
+#### Checking veriT answers of unsatisfiability and importing theorems
 
 To check the result given by veriT on an unsatisfiable SMT-LIB2 file
 `file.smt2`:
@@ -158,7 +166,7 @@ The theories that are currently supported by these commands are `QF_UF`
 (integer difference logic), and their combinations.
 
 
-##### veriT as a Coq decision procedure
+#### veriT as a Coq decision procedure
 
 The `verit_bool [h1 ...]` tactic can be used to solve any goal of the form:
 ```coq
@@ -186,14 +194,14 @@ performs only the check at `Qed`. (Thus it is safe, but a proof may fail
 at `Qed` even if everything went through during proof elaboration.)
 
 
-#### CVC4
+### CVC4
 
 Compile and install `CVC4` as explained in the installation
 instructions. In the following, we consider that the command `cvc4` is
 in your `PATH` environment variable.
 
 
-##### Checking CVC4 answers of unsatisfiability and importing theorems
+#### Checking CVC4 answers of unsatisfiability and importing theorems
 
 To check the result given by CVC4 on an unsatisfiable SMT-LIB2 file
 `name.smt2`:
@@ -233,7 +241,7 @@ The theories that are currently supported by these commands are `QF_UF`
 `QF_A` (theory of arrays), and their combinations.
 
 
-##### CVC4 as a Coq decision procedure
+#### CVC4 as a Coq decision procedure
 
 The `cvc4_bool` tactic can be used to solve any goal of the form:
 ```coq
