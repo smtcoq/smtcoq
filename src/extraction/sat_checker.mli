@@ -18,6 +18,8 @@ type 'a list =
 
 val existsb : ('a1 -> bool) -> 'a1 list -> bool
 
+val forallb : ('a1 -> bool) -> 'a1 list -> bool
+
 type int = ExtrNative.uint
 
 val lsl0 : int -> int -> int
@@ -66,6 +68,9 @@ val fold_left : ('a1 -> 'a2 -> 'a1) -> 'a1 -> 'a2 array -> 'a1
 
 val foldi_right : (int -> 'a1 -> 'a2 -> 'a2) -> 'a1 array -> 'a2 -> 'a2
 
+val afold_left :
+  'a1 -> ('a1 -> 'a1 -> 'a1) -> ('a2 -> 'a1) -> 'a2 array -> 'a1
+
 module Valuation : 
  sig 
   type t = int -> bool
@@ -111,6 +116,8 @@ module C :
   
   val is_false : t -> bool
   
+  val has_true : t -> bool
+  
   val or_aux : (t -> t -> t) -> int -> t -> t -> int list
   
   val coq_or : t -> t -> t
@@ -132,17 +139,34 @@ module S :
   
   val insert : int -> int list -> int list
   
+  val insert_no_simpl : int -> int list -> int list
+  
+  val insert_keep : int -> int list -> int list
+  
+  val sort : int list -> int list
+  
   val sort_uniq : int list -> int list
+  
+  val sort_keep : int list -> int list
   
   val set_clause : t -> int -> C.t -> t
   
+  val set_clause_keep : t -> int -> C.t -> t
+  
   val set_resolve : t -> int -> int array -> t
+  
+  val subclause : int list -> int list -> bool
+  
+  val check_weaken : t -> int -> int list -> C.t
+  
+  val set_weaken : t -> int -> int -> int list -> t
  end
 
-val afold_left :
-  'a1 -> ('a1 -> 'a1 -> 'a1) -> ('a2 -> 'a1) -> 'a2 array -> 'a1
+type 'step trace = 'step array array
 
-type 'step _trace_ = 'step array array
+val trace_fold : ('a1 -> 'a2 -> 'a1) -> 'a1 -> 'a2 trace -> 'a1
+
+type 'step _trace_ = 'step trace
 
 val _checker_ :
   (S.t -> 'a1 -> S.t) -> (C.t -> bool) -> S.t -> 'a1 _trace_ -> int -> bool

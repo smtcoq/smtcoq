@@ -25,7 +25,7 @@ val to_coq :
   'a SmtCertif.clause ->
   Smt_checker.Euf_Checker.step ExtrNative.parray ExtrNative.parray *
   'a SmtCertif.clause
-val btype_to_coq : SmtAtom.btype -> Smt_checker.Typ.coq_type
+val btype_to_coq : SmtBtype.btype -> Smt_checker.Typ.coq_type
 val c_to_coq : SmtAtom.cop -> Smt_checker.Atom.cop
 val u_to_coq : SmtAtom.uop -> Smt_checker.Atom.unop
 val b_to_coq : SmtAtom.bop -> Smt_checker.Atom.binop
@@ -42,7 +42,7 @@ val form_interp_tbl :
   SmtAtom.Form.reify -> Smt_checker.Form.form ExtrNative.parray
 val count_btype : int ref
 val count_op : int ref
-val declare_sort : Smtlib2_ast.symbol -> SmtAtom.btype
+val declare_sort : Smtlib2_ast.symbol -> SmtBtype.btype
 val declare_fun :
   Smtlib2_ast.symbol ->
   Smtlib2_ast.sort list -> Smtlib2_ast.sort -> SmtAtom.indexed_op

@@ -26,6 +26,12 @@ let rec existsb f = function
 | Nil -> false
 | Cons (a, l0) -> if f a then true else existsb f l0
 
+(** val forallb : ('a1 -> bool) -> 'a1 list -> bool **)
+
+let rec forallb f = function
+| Nil -> true
+| Cons (a, l0) -> if f a then forallb f l0 else false
+
 type int = ExtrNative.uint
 
 (** val lsl0 : int -> int -> int **)
@@ -67,12 +73,12 @@ let foldi_down_cont = ExtrNative.foldi_down_cont
 (** val is_zero : int -> bool **)
 
 let is_zero i =
-  eqb i (ExtrNative.of_uint(0))
+  eqb i (Uint63.of_int (0))
 
 (** val is_even : int -> bool **)
 
 let is_even i =
-  is_zero (land0 i (ExtrNative.of_uint(1)))
+  is_zero (land0 i (Uint63.of_int (1)))
 
 (** val compare : int -> int -> ExtrNative.comparison **)
 
@@ -113,29 +119,39 @@ let length = ExtrNative.parray_length
 
 let to_list t0 =
   let len = length t0 in
-  if eqb (ExtrNative.of_uint(0)) len
+  if eqb (Uint63.of_int (0)) len
   then Nil
   else foldi_down (fun i l -> Cons ((get t0 i), l))
-         (sub len (ExtrNative.of_uint(1))) (ExtrNative.of_uint(0)) Nil
+         (sub len (Uint63.of_int (1))) (Uint63.of_int (0)) Nil
 
 (** val fold_left : ('a1 -> 'a2 -> 'a1) -> 'a1 -> 'a2 array -> 'a1 **)
 
 let fold_left f a t0 =
   let len = length t0 in
-  if eqb (ExtrNative.of_uint(0)) len
+  if eqb (Uint63.of_int (0)) len
   then a
-  else foldi (fun i a0 -> f a0 (get t0 i)) (ExtrNative.of_uint(0))
-         (sub (length t0) (ExtrNative.of_uint(1))) a
+  else foldi (fun i a0 -> f a0 (get t0 i)) (Uint63.of_int (0))
+         (sub (length t0) (Uint63.of_int (1))) a
 
 (** val foldi_right :
     (int -> 'a1 -> 'a2 -> 'a2) -> 'a1 array -> 'a2 -> 'a2 **)
 
 let foldi_right f t0 b =
   let len = length t0 in
-  if eqb (ExtrNative.of_uint(0)) len
+  if eqb (Uint63.of_int (0)) len
   then b
   else foldi_down (fun i b0 -> f i (get t0 i) b0)
-         (sub len (ExtrNative.of_uint(1))) (ExtrNative.of_uint(0)) b
+         (sub len (Uint63.of_int (1))) (Uint63.of_int (0)) b
+
+(** val afold_left :
+    'a1 -> ('a1 -> 'a1 -> 'a1) -> ('a2 -> 'a1) -> 'a2 array -> 'a1 **)
+
+let afold_left default oP f v =
+  let n = length v in
+  if eqb n (Uint63.of_int (0))
+  then default
+  else foldi (fun i a -> oP a (f (get v i))) (Uint63.of_int (1))
+         (sub n (Uint63.of_int (1))) (f (get v (Uint63.of_int (0))))
 
 module Valuation = 
  struct 
@@ -147,12 +163,12 @@ module Var =
   (** val _true : int **)
   
   let _true =
-    (ExtrNative.of_uint(0))
+    (Uint63.of_int (0))
   
   (** val _false : int **)
   
   let _false =
-    (ExtrNative.of_uint(1))
+    (Uint63.of_int (1))
   
   (** val interp : Valuation.t -> int -> bool **)
   
@@ -170,17 +186,17 @@ module Lit =
   (** val blit : int -> int **)
   
   let blit l =
-    lsr0 l (ExtrNative.of_uint(1))
+    lsr0 l (Uint63.of_int (1))
   
   (** val lit : int -> int **)
   
   let lit x =
-    lsl0 x (ExtrNative.of_uint(1))
+    lsl0 x (Uint63.of_int (1))
   
   (** val neg : int -> int **)
   
   let neg l =
-    lxor0 l (ExtrNative.of_uint(1))
+    lxor0 l (Uint63.of_int (1))
   
   (** val nlit : int -> int **)
   
@@ -190,12 +206,12 @@ module Lit =
   (** val _true : int **)
   
   let _true =
-    (ExtrNative.of_uint(0))
+    (Uint63.of_int (0))
   
   (** val _false : int **)
   
   let _false =
-    (ExtrNative.of_uint(2))
+    (Uint63.of_int (2))
   
   (** val eqb : int -> int -> bool **)
   
@@ -230,6 +246,12 @@ module C =
   | Nil -> true
   | Cons (i, l) -> false
   
+  (** val has_true : t -> bool **)
+  
+  let rec has_true = function
+  | Nil -> false
+  | Cons (l, c0) -> if eqb l Lit._true then true else has_true c0
+  
   (** val or_aux : (t -> t -> t) -> int -> t -> t -> int list **)
   
   let rec or_aux or0 l1 c1 c2 = match c2 with
@@ -262,11 +284,11 @@ module C =
     (match compare l1 l2 with
      | ExtrNative.Eq -> Cons (l1, (resolve0 c1 c2'))
      | ExtrNative.Lt ->
-       if eqb (lxor0 l1 l2) (ExtrNative.of_uint(1))
+       if eqb (lxor0 l1 l2) (Uint63.of_int (1))
        then coq_or c1 c2'
        else Cons (l1, (resolve0 c1 c2))
      | ExtrNative.Gt ->
-       if eqb (lxor0 l1 l2) (ExtrNative.of_uint(1))
+       if eqb (lxor0 l1 l2) (Uint63.of_int (1))
        then coq_or c1 c2'
        else Cons (l2, (resolve_aux resolve0 l1 c1 c2')))
   
@@ -282,11 +304,11 @@ module C =
          (match compare l1 l2 with
           | ExtrNative.Eq -> Cons (l1, (resolve c3 c2'))
           | ExtrNative.Lt ->
-            if eqb (lxor0 l1 l2) (ExtrNative.of_uint(1))
+            if eqb (lxor0 l1 l2) (Uint63.of_int (1))
             then coq_or c3 c2'
             else Cons (l1, (resolve c3 c2))
           | ExtrNative.Gt ->
-            if eqb (lxor0 l1 l2) (ExtrNative.of_uint(1))
+            if eqb (lxor0 l1 l2) (Uint63.of_int (1))
             then coq_or c3 c2'
             else Cons (l2, (resolve_aux resolve l1 c3 c2'))))
  end
@@ -318,13 +340,38 @@ module S =
     (match compare l1 l2 with
      | ExtrNative.Eq -> c
      | ExtrNative.Lt ->
-       if eqb (lxor0 l1 l2) (ExtrNative.of_uint(1))
+       if eqb (lxor0 l1 l2) (Uint63.of_int (1))
        then C._true
        else Cons (l1, c)
      | ExtrNative.Gt ->
-       if eqb (lxor0 l1 l2) (ExtrNative.of_uint(1))
+       if eqb (lxor0 l1 l2) (Uint63.of_int (1))
        then C._true
        else Cons (l2, (insert l1 c')))
+  
+  (** val insert_no_simpl : int -> int list -> int list **)
+  
+  let rec insert_no_simpl l1 c = match c with
+  | Nil -> Cons (l1, Nil)
+  | Cons (l2, c') ->
+    (match compare l1 l2 with
+     | ExtrNative.Eq -> c
+     | ExtrNative.Lt -> Cons (l1, c)
+     | ExtrNative.Gt -> Cons (l2, (insert_no_simpl l1 c')))
+  
+  (** val insert_keep : int -> int list -> int list **)
+  
+  let rec insert_keep l1 c = match c with
+  | Nil -> Cons (l1, Nil)
+  | Cons (l2, c') ->
+    (match compare l1 l2 with
+     | ExtrNative.Gt -> Cons (l2, (insert_keep l1 c'))
+     | _ -> Cons (l1, c))
+  
+  (** val sort : int list -> int list **)
+  
+  let rec sort = function
+  | Nil -> Nil
+  | Cons (l1, c0) -> insert_no_simpl l1 (sort c0)
   
   (** val sort_uniq : int list -> int list **)
   
@@ -332,43 +379,68 @@ module S =
   | Nil -> Nil
   | Cons (l1, c0) -> insert l1 (sort_uniq c0)
   
+  (** val sort_keep : int list -> int list **)
+  
+  let rec sort_keep = function
+  | Nil -> Nil
+  | Cons (l1, c0) -> insert_keep l1 (sort_keep c0)
+  
   (** val set_clause : t -> int -> C.t -> t **)
   
   let set_clause s pos c =
-    set s pos (sort_uniq c)
+    set s pos (sort c)
+  
+  (** val set_clause_keep : t -> int -> C.t -> t **)
+  
+  let set_clause_keep s pos c =
+    set s pos (sort_keep c)
   
   (** val set_resolve : t -> int -> int array -> t **)
   
   let set_resolve s pos r =
     let len = length r in
-    if eqb len (ExtrNative.of_uint(0))
+    if eqb len (Uint63.of_int (0))
     then s
     else let c =
-           foldi (fun i c -> C.resolve (get s (Coq__1.get r i)) c)
-             (ExtrNative.of_uint(1)) (sub len (ExtrNative.of_uint(1)))
-             (get s (Coq__1.get r (ExtrNative.of_uint(0))))
+           foldi (fun i c' -> C.resolve (get s (Coq__1.get r i)) c')
+             (Uint63.of_int (1)) (sub len (Uint63.of_int (1)))
+             (get s (Coq__1.get r (Uint63.of_int (0))))
          in
          internal_set s pos c
+  
+  (** val subclause : int list -> int list -> bool **)
+  
+  let subclause cl1 cl2 =
+    forallb (fun l1 ->
+      if if eqb l1 Lit._false then true else eqb l1 (Lit.neg Lit._true)
+      then true
+      else existsb (fun l2 -> eqb l1 l2) cl2) cl1
+  
+  (** val check_weaken : t -> int -> int list -> C.t **)
+  
+  let check_weaken s cid cl =
+    if subclause (get s cid) cl then cl else C._true
+  
+  (** val set_weaken : t -> int -> int -> int list -> t **)
+  
+  let set_weaken s pos cid cl =
+    set_clause_keep s pos (check_weaken s cid cl)
  end
 
-(** val afold_left :
-    'a1 -> ('a1 -> 'a1 -> 'a1) -> ('a2 -> 'a1) -> 'a2 array -> 'a1 **)
+type 'step trace = 'step array array
 
-let afold_left default oP f v =
-  let n = length v in
-  if eqb n (ExtrNative.of_uint(0))
-  then default
-  else foldi (fun i a -> oP a (f (get v i))) (ExtrNative.of_uint(1))
-         (sub n (ExtrNative.of_uint(1))) (f (get v (ExtrNative.of_uint(0))))
+(** val trace_fold : ('a1 -> 'a2 -> 'a1) -> 'a1 -> 'a2 trace -> 'a1 **)
 
-type 'step _trace_ = 'step array array
+let trace_fold transition s0 t0 =
+  fold_left (fold_left transition) s0 t0
+
+type 'step _trace_ = 'step trace
 
 (** val _checker_ :
     (S.t -> 'a1 -> S.t) -> (C.t -> bool) -> S.t -> 'a1 _trace_ -> int -> bool **)
 
 let _checker_ check_step is_false0 s t0 confl =
-  let s' = fold_left (fun s0 a -> fold_left check_step s0 a) s t0 in
-  is_false0 (S.get s' confl)
+  let s' = trace_fold check_step s t0 in is_false0 (S.get s' confl)
 
 module Sat_Checker = 
  struct 
@@ -435,9 +507,9 @@ module Sat_Checker =
   (** val interp_var : (int -> bool) -> int -> bool **)
   
   let interp_var rho x =
-    match compare x (ExtrNative.of_uint(1)) with
+    match compare x (Uint63.of_int (1)) with
     | ExtrNative.Eq -> false
     | ExtrNative.Lt -> true
-    | ExtrNative.Gt -> rho (sub x (ExtrNative.of_uint(1)))
+    | ExtrNative.Gt -> rho (sub x (Uint63.of_int (1)))
  end
 

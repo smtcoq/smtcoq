@@ -750,21 +750,23 @@ Inductive step :=
      TODO: show that there always exists a well-typed evaluation
      context. *)
 
-  (*
-  Definition checker_ext t_atom t_form d used_roots (c:certif) :=
+  Definition checker_ext d used_roots (c:certif) :=
     let (nclauses, t, confl) := c in
     Form.check_form t_form && Atom.check_atom t_atom &&
-    euf_checker t_atom t_form C.is_false (add_roots (S.make nclauses) d used_roots) t confl.
-  Implicit Arguments checker_ext [].
+    euf_checker C.is_false (add_roots (S.make nclauses) d used_roots) t confl.
+  Arguments checker_ext.
 
-  Lemma checker_ext_correct : forall t_atom t_form d used_roots c,
-    checker_ext t_atom t_form d used_roots c = true ->
-    forall t_i t_func, Atom.wt t_i t_func t_atom ->
-                       ~ valid t_func t_atom t_form d.
+  Lemma checker_ext_correct : forall d used_roots c,
+    checker_ext d used_roots c = true ->
+    Atom.wt t_i t_func t_atom -> ~ valid t_func t_atom t_form d.
   Proof.
-    unfold checker_ext; intros t_atom t_form d used_roots (nclauses, t, confl); rewrite !andb_true_iff; intros [[H1 H2] H3]; intros t_i t_func H10 H; eelim euf_checker_correct; try eassumption; apply add_roots_correct; try eassumption; apply S.valid_make; destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) _ H1) as [_ H4]; auto.
+    unfold checker_ext. intros d used_roots (nclauses, t, confl).
+    rewrite !andb_true_iff. intros [[H1 H2] H3] H10 H.
+    eelim euf_checker_correct; try eassumption.
+    apply add_roots_correct; try eassumption.
+    apply S.valid_make.
+    destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [_ H4]; auto.
   Qed.
-  *)
 
   End Checker.
 
