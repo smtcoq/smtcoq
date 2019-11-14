@@ -16,8 +16,8 @@ Import BVList.BITVECTOR_LIST.
 
 Local Coercion is_true : bool >-> Sortclass.
 
-Infix "-->" := implb (at level 60, right associativity) : bool_scope.
-Infix "<-->" := Bool.eqb (at level 60, right associativity) : bool_scope.
+Infix "--->" := implb (at level 60, right associativity) : bool_scope.
+Infix "<--->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 Ltac bool2prop :=
   repeat
@@ -43,8 +43,8 @@ Ltac bool2prop :=
     | [ |- context[ Z.geb _ _ ] ]  => unfold is_true; rewrite Z.geb_le
     | [ |- context[ Z.eqb _ _ ] ]  => unfold is_true; rewrite Z.eqb_eq
 
-    | [ |- context[?G0 --> ?G1 ] ] =>
-      unfold is_true; rewrite <- (@reflect_iff (G0 = true -> G1 = true)  (G0 --> G1)); 
+    | [ |- context[?G0 ---> ?G1 ] ] =>
+      unfold is_true; rewrite <- (@reflect_iff (G0 = true -> G1 = true)  (G0 ---> G1)); 
       [ | apply implyP]
 
     | [ |- context[?G0 || ?G1 ] ] =>
@@ -55,8 +55,8 @@ Ltac bool2prop :=
       unfold is_true; rewrite <- (@reflect_iff (G0 = true /\ G1 = true) (G0 && G1)); 
       [ | apply andP]
 
-    | [ |- context[?G0 <--> ?G1 ] ] =>
-      unfold is_true; rewrite <- (@reflect_iff (G0 = true <-> G1 = true) (G0 <--> G1)); 
+    | [ |- context[?G0 <---> ?G1 ] ] =>
+      unfold is_true; rewrite <- (@reflect_iff (G0 = true <-> G1 = true) (G0 <---> G1)); 
       [ | apply iffP]
 
     | [ |- context[ negb ?G ] ] =>
