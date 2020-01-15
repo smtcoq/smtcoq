@@ -1,0 +1,44 @@
+# To be run on https://builds.sr.ht
+
+# Testing the opam package with the veriT and CVC4 provers
+
+
+image: debian/sid
+packages:
+- screen
+- opam
+- atool
+- autoconf
+- bison
+- flex
+sources:
+- https://github.com/smtcoq/smtcoq.git
+tasks:
+- opam: |
+    opam init --no-setup
+    opam switch create ocaml-base-compiler.4.09.0
+- smtcoq: |
+    eval $(opam env)
+    opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+    opam install camlp5 conf-findutils conf-m4 ocamlfind num coq coq-smtcoq
+- cvc4: |
+    wget http://cvc4.cs.stanford.edu/downloads/builds/x86_64-linux-opt/cvc4-1.6-x86_64-linux-opt
+    chmod ugo+x cvc4-1.6-x86_64-linux-opt
+- verit: |
+    wget https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz
+    aunpack veriT9f48a98.tar.gz
+    cd veriT9f48a98
+    autoconf
+    ./configure
+    make
+- bin: |
+    mkdir bin
+    cd bin
+    ln -s ~/cvc4-1.6-x86_64-linux-opt cvc4
+    ln -s ~/veriT9f48a98/veriT veriT
+- test: |
+    eval $(opam env)
+    export PATH=~/bin:$PATH
+    cd smtcoq/unit-tests
+    make verit
+    make lfsc
