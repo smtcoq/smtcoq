@@ -1,1 +1,3 @@
+title: SMTCoq
+description: Communication between Coq and SAT/SMT solvers
 theme: jekyll-theme-slate
