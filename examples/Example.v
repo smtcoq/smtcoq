@@ -11,7 +11,7 @@
 
 
 (* [Require Import SMTCoq.SMTCoq.] loads the SMTCoq library.
-   If you are using native-coq instead of Coq 8.6, replace it with:
+   If you are using native-coq instead of Coq 8.9, replace it with:
      Require Import SMTCoq.
    *)
 
@@ -389,11 +389,11 @@ Section CompCert.
 
   Hypothesis alloc_valid_block_1:
     forall m lo hi b,
-      valid_block (alloc_mem m lo hi) b --> ((b =? (alloc_block m lo hi)) || valid_block m b).
+      valid_block (alloc_mem m lo hi) b ---> ((b =? (alloc_block m lo hi)) || valid_block m b).
 
   Hypothesis alloc_valid_block_2:
     forall m lo hi b,
-      ((b =? (alloc_block m lo hi)) || valid_block m b) --> valid_block (alloc_mem m lo hi) b.
+      ((b =? (alloc_block m lo hi)) || valid_block m b) ---> valid_block (alloc_mem m lo hi) b.
 
   Hypothesis alloc_not_valid_block:
     forall m lo hi,
