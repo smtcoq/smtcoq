@@ -337,8 +337,8 @@ Section group.
   Variable inv : Z -> Z.
   Variable e : Z.
 
-  (* We can prove automatically that we have a group if we only have the "left" versions
-     of the axioms of a group *)
+  (* We can prove automatically that we have a group if we only have the
+     "left" versions of the axioms of a group *)
   Hypothesis associative :
     forall a b c : Z, op a (op b c) =? op (op a b) c.
   Hypothesis inverse :
@@ -350,25 +350,25 @@ Section group.
   (* The "right" version of inverse *)
   Lemma inverse' :
     forall a : Z, (op a (inv a) =? e).
-  Proof. verit_no_check. Qed.
-  Add_lemmas inverse'.
+  Proof. smt. Qed.
+
   (* The "right" version of identity *)
   Lemma identity' :
     forall a : Z, (op a e =? a).
-  Proof. verit_no_check. Qed.
-  Add_lemmas identity'.
+  Proof. smt inverse'. Qed.
 
   (* Some other interesting facts about groups *)
   Lemma unique_identity e':
     (forall z, op e' z =? z) -> e' =? e.
-  Proof. intros pe'. verit pe'. Qed.
+  Proof. intros pe'; smt pe'. Qed.
+
   Lemma simplification_right x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
-  Proof. intro H. verit_no_check H. Qed.
+  Proof. intro H. smt_no_check H inverse'. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
-  Proof. intro H. verit_no_check H. Qed.
+  Proof. intro H. smt_no_check H inverse'. Qed.
 
   Clear_lemmas.
 End group.
