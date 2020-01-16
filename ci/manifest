@@ -36,9 +36,12 @@ tasks:
     cd bin
     ln -s ~/cvc4-1.6-x86_64-linux-opt cvc4
     ln -s ~/veriT9f48a98/veriT veriT
-- test: |
+- unit: |
     eval $(opam env)
     export PATH=~/bin:$PATH
+    export LFSCSIGS="/home/build/smtcoq/src/lfsc/tests/signatures/"
+    export DONTSHOWVERIT="yes"
     cd smtcoq/unit-tests
+    sed -i "s/..\/src/~\/.opam\/ocaml-base-compiler.4.09.0\/lib\/coq\/user-contrib\/SMTCoq/g" Makefile
     make verit
     make lfsc
