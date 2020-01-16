@@ -156,5 +156,5 @@ SMT_terms.v
 State.v
 Trace.v
 
-g_smtcoq.ml4
+g_smtcoq.mlg
 smtcoq_plugin.mlpack

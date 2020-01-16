@@ -8,7 +8,7 @@ rm -f ${pre}Makefile.conf
 rm -f ${pre}Makefile.local
 rm -f ${pre}smtcoq_plugin.ml4
 rm -f ${pre}versions/native/Structures.v
-rm -f ${pre}g_smtcoq.ml4
+rm -f ${pre}g_smtcoq.mlg
 rm -f ${pre}smtcoq_plugin.mlpack
 rm -f ${pre}Tactics.v
 rm -f ${pre}versions/standard/Int63/Int63.v
@@ -28,7 +28,7 @@ if [ $@ -a $@ = -native ]; then
 else
     cp ${pre}versions/standard/_CoqProject ${pre}_CoqProject
     cp ${pre}versions/standard/Makefile.local ${pre}Makefile.local
-    cp ${pre}versions/standard/g_smtcoq_standard.ml4 ${pre}g_smtcoq.ml4
+    cp ${pre}versions/standard/g_smtcoq_standard.mlg ${pre}g_smtcoq.mlg
     cp ${pre}versions/standard/smtcoq_plugin_standard.mlpack ${pre}smtcoq_plugin.mlpack
     cp ${pre}versions/standard/Int63/Int63_standard.v ${pre}versions/standard/Int63/Int63.v
     cp ${pre}versions/standard/Int63/Int63Native_standard.v ${pre}versions/standard/Int63/Int63Native.v
