@@ -10,31 +10,39 @@
 (**************************************************************************)
 
 
+(* This file provides:
+   - a generic way to inject, via tactics, types of natural numbers into
+     the type Z, which is the type known by SMT solvers and, thus, by
+     SMTCoq
+   - an instanciation for the types nat, positive and N.
+*)
+
+
 
 Require Import ZArith.
 
-(* Ce module représente la structure que l'on souhaite convertir vers Z *)
+(* This module represents the structure to be injected into Z *)
 Module Type convert_type.
 
-(* Le type que l'on souhaite convertir *)
+(* The type to be injected *)
 Parameter T : Type.
 
-(* Les conversion dans les deux sens *)
+(* Mapping both ways *)
 Parameter Z2T : Z -> T.
 Parameter T2Z : T -> Z.
-(* T2Z est une injection *)
+(* T2Z is an injection *)
 Axiom T2Z_id : forall x : T, Z2T (T2Z x) = x.
 
-(* Une propriété décrivant les éléments de Z qui viennent d'éléments de T.
-   Par exemple, pour nat il s'agit de (0 <=? z)%Z *)
+(* A property about elements of Z coming from elements of T.
+   For instance, for nat, all elements are non-negative: (0 <=? z)%Z *)
 Parameter inT : Z -> bool.
-(* L'image de l'injection satisfait cette propriété *)
+(* The image of the injection satisfies this property *)
 Axiom T2Z_pres : forall x : T, inT (T2Z x) = true.
-(* Il est toujours possible de définir inT par <fun z => Z.eqb z (T2Z (Z2T z))>.
-    Dans ce cas la preuve de l'axiome ci-dessus est essentiellement :
+(* It is always possible to define inT as <fun z => Z.eqb z (T2Z (Z2T z))>.
+   In this case, the proof of the axiom is simply:
     <rewrite T2Z_id, Z.eqb_eq>. *)
 
-(* On demande que cette injection soit un morphisme pour chacun des symboles suivants *)
+(* We ask this injection to be a morphism for all the following symbols *)
 
 (* Addition *)
 Parameter add : T -> T -> T.
@@ -57,28 +65,28 @@ Parameter eqb : T -> T -> bool.
 Axiom t2z_eqb_morph : forall x' y', Z.eqb (T2Z x') (T2Z y') = eqb x' y'.
 End convert_type.
 
-(* Ce foncteur construit une tactique de conversion à partir d'un module du type ci-dessus *)
+(* This fonctor builds a conversion tactic from a module of the signature above *)
 Module convert (M : convert_type).
 
 Import M.
 
-(* SMTCoq travaille avec les booléens *)
+(* SMTCoq uses Booleans *)
 Lemma implb_impl : forall a b : bool, (implb a b = true -> a = true -> b = true).
 Proof.
 intros a b H.
 destruct a; destruct b; try reflexivity; discriminate.
 Qed.
 
-(* Récupère le symbole de tête d'une application *)
+(* Get the head symbol of an application *)
 Ltac get_head x := lazymatch x with ?x _ => get_head x | _ => x end.
 
-(* inverse_tactic tactic réussit là où tactic échoue et inversement *)
+(* [inverse_tactic tactic] succceds when [tactic] fails, and the other way round *)
 Ltac inverse_tactic tactic := try (tactic; fail 1).
 
-(* constr_neq t u échoue si et seulement si t et u sont convertibles *)
+(* [constr_neq t u] fails if and only if [t] and [u] are convertible *)
 Ltac constr_neq t u := inverse_tactic ltac:(constr_eq t u).
 
-(* is_not_constructor U sym échoue si et seulement si sym est un symbole de constructeur de U *)
+(* [is_not_constructor U sym] fails if and only if [sym] is a constructor of [U] *)
 Ltac is_not_constructor U sym :=
 let H := fresh in
 assert (U -> True) as H by
@@ -92,50 +100,51 @@ assert (U -> True) as H by
         constr_neq sym c;
         exact I); clear H.
 
-(* is_constructor U sym réussit si et seulement si sym est un symbole de constructeur de U *)
+(* [is_constructor U sym] succeeds if and only if [sym] is a constructor of [U] *)
 Ltac is_constructor U sym := inverse_tactic ltac:(is_not_constructor U sym).
 
-(* Remplace les sous-termes x de type T qui ne sont pas en-dessous d'un symbole connu
-   par Z2T (T2Z x) *)
+(* Replaces the sub-terms [x] of type [T] which are not under a known
+   symbol by Z2T (T2Z x) *)
 Ltac converting :=
-  (* Coeur de la tactique *)
+  (* The heart of the tactic *)
   repeat
     match goal with
-    (* On capture chaque sous-terme x avec son contexte, i.e. le but est C[x] *)
+    (* We capture each subèterm [x] together with its context, i.e. the goal is C[x] *)
     | |- context C[?x]  =>
-      (* Si x est de type T *)
+      (* If [x] has type [T] *)
       let U := type of x in
       lazymatch eval fold T in U with
       | T =>
         lazymatch x with
-        (* Si x est de la forme Z2T (T2Z _) on abandonne le match car x est déjà réécrit *)
+        (* If x is of the shape Z2T (T2Z _) we stop since [x] is already in the expected shape *)
         | Z2T (T2Z _) => fail
         | _ =>
-          (* On crée une variable fraîche de type T *)
+          (* We generate a fresh variable of type T *)
           let var := fresh in
           pose proof x as var;
-          (* Sinon, on analyse la formule obtenue en remplaçant x par notre variable fraîche dans le but *)
+          (* Otherwise, we analyze the formula obtained by replacing [x] by the fresh variable in the goal *)
           lazymatch context C[var] with
           | context [?h var] =>
             let h := get_head h in
             lazymatch h with
-            (* x est déjà réécrit *)
+            (* [x] is already in the expected shape *)
             | T2Z => fail
-            (* Pas nécessaire de réécrire en-dessous des symboles qui commutent avec T2Z *)
+            (* Not necessary to rewrite under symbols commuting with T2Z *)
             | add => fail | mul => fail | ltb => fail | leb => fail | eqb => fail
-            (* Ne pas réécrire à l'intérieur d'une constante *)
+            (* Do not rewrite inside a constant *)
             | Zpos => fail | Zneg => fail
             | _ =>
-            (* Idem: si le contexte contient un constructeur de T et que x commence par un
-               constructeur de T, c'est qu'on est à l'intérieur d'une constante *)
+            (* Idem: if the context contains a constructor of [T], and
+               [x] starts with a constructor of [T], we are inside a
+               constant *)
             let hx := get_head x in
             try (is_constructor T h; is_constructor T hx; fail 1);
-            (* Sinon, on réécrit *)
+            (* Otherwise, we rewrite *)
             let old_goal := context C[x] in
             let new_goal := context C[Z2T (T2Z x)] in
             replace old_goal with new_goal by (rewrite (T2Z_id x); reflexivity) end
           end;
-          (* On efface notre variable fraîche *)
+          (* We clear the fresh variable *)
           clear var
         end
       end
@@ -182,57 +191,57 @@ Fixpoint expand_fun (l : list Type) (T : Type) (U : Type) : expand_type l T -> (
   end.
 (* expand (f (t1:T1) (t2:T2) ... (tn:Tn) : T) (g : T->U) = fun x1 x2 ... xn => g (f x1 x2 ... xn) *)
 Ltac expand X g :=
-  (* Soit argsX = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
+  (* Let argsX = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
   let argsX := get_args X in
-  (* Soit argsXtypes = [Tn;...;T2;T1] *)
+  (* Let argsXtypes = [Tn;...;T2;T1] *)
   let argsXtypes := constr:(get_args_types argsX) in
-  (* Soit typeX = T *)
+  (* Let typeX = T *)
   let typeX := type of X in
-  (* Soit h = f *)
+  (* Let h = f *)
   let h := get_head X in
-  (* soit typeg = U *)
+  (* Let typeg = U *)
   let typeg := match type of g with _ -> ?U => U end in
-  (* On renvoie expand_fun [Tn;...;T2;T1] T Z f T2Z = fun x1 x2 ... xn => g (f x1 x2 ... xn) *)
+  (* We return expand_fun [Tn;...;T2;T1] T Z f T2Z = fun x1 x2 ... xn => g (f x1 x2 ... xn) *)
   constr:(expand_fun argsXtypes typeX typeg h g).
 
-(* Remplace les symbole de fonction et de variables à valeurs dans T
-   par des versions à valeurs dans Z et ajoute les hypothèses de positivité *)
+(* Replaces function symbols with return type in T, and variables in T,
+   by their counterparts in Z, adding the positivity hypotheses *)
 Ltac renaming :=
   repeat
     match goal with
-      (* S'il y a un terme de la forme (T2Z (f t1 ... tn)) *)
+      (* If there is a term of the shape (T2Z (f t1 ... tn)) *)
       | |- context [T2Z ?X] =>
-        (* On récupère le symbole de tête *)
+        (* Get the head symbol *)
         let f := get_head X in
-        (* S'il s'agit d'un constructeur on ne fait rien *)
+        (* Nothing to do if it is a constructor *)
         is_not_constructor T f;
-        (* Sinon, soit fe = fun x1 ... xn => T2Z (f x1 ... xn) *)
+        (* Otherwise, let fe = fun x1 ... xn => T2Z (f x1 ... xn) *)
         let fe := expand X T2Z in
         let fe := eval cbv in fe in
-        (* On pose dans le contexte fe_id := fun x1 ... xn => T2Z (f x1 ... xn) *)
+        (* Pose fe_id := fun x1 ... xn => T2Z (f x1 ... xn) *)
         let fe_id := fresh in pose (fe_id := fe);
         repeat
           match goal with
-            (* Pour chaque terme de la forme (T2Z (f' t'1 ... t'n)) *)
+            (* For each term of the shape (T2Z (f' t'1 ... t'n)) *)
             | |- context [T2Z ?X'] =>
-              (* On récupère le symbole de tête *)
+              (* Get the head symbol *)
               let f' := get_head X' in
-              (* Si f' = f *)
+              (* If f' = f *)
               constr_eq f f';
-              (* On ajoute l'hypothèse inT (T2Z X') *)
+              (* Add the hypothesis inT (T2Z X') *)
               generalize (T2Z_pres X'); apply implb_impl;
-              (* Soit args = [t'1;...;t'n] *)
+              (* Let args = [t'1;...;t'n] *)
               let args := get_args X' in
-              (* Soit Y = fe_id t'1 ... t'n *)
+              (* Let Y = fe_id t'1 ... t'n *)
               let Y := apply_args fe_id args in
-              (* Et remplaçons (T2Z (f' t'1 ... t'n)) par Y *)
+              (* Replace [T2Z (f' t'1 ... t'n)] by [Y] *)
               change (T2Z X') with Y
           end;
-        (* On abstrait sur (fe_id := fun x1 ... xn => T2Z (f x1 ... xn)) *)
+        (* Abstract over [fe_id := fun x1 ... xn => T2Z (f x1 ... xn)] *)
         generalize fe_id;
-        (* On efface l'ancien f ainsi que notre fe_id temporaire *)
+        (* Erase the old f and the temporary fe_id *)
         clear f fe_id;
-        (* Et on introduit le nouveau f avec le même nom *)
+        (* Introduce the new f with the same name *)
         let f := fresh f in
         intro f
     end.
@@ -245,63 +254,63 @@ Fixpoint expand_fun' (l : list Type) : forall T U : Type, expand_type l T -> (T 
   end.
 (* expand' (f (t1:T1) (t2:T2) ... (tn:Tn) : T) (g : U->Tn) = fun x1 x2 ... xn => f x1 x2 ... (g xn) *)
 Ltac expand' X g :=
-  (* Soit argsX = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
+  (* Let argsX = [(Tn,tn);...;(T2,t2);(T1,t1)] *)
   let argsX := get_args X in
-  (* Soit argsXtypes = [Tn;...;T2;T1] *)
+  (* Let argsXtypes = [Tn;...;T2;T1] *)
   let argsXtypes := constr:(get_args_types argsX) in
   let argsXtypes := eval cbv in argsXtypes in
-  (* Soit Tn = Tn *)
+  (* Let Tn = Tn *)
   let Tn := match argsXtypes with cons ?T _ => T end in
-  (* Soit argsXtypes = [Tn-1;...;T2;T1] *)
+  (* Let argsXtypes = [Tn-1;...;T2;T1] *)
   let argsXtypes := match argsXtypes with cons _ ?args => args end in
-  (* Soit typeX = T *)
+  (* Let typeX = T *)
   let typeX := type of X in
-  (* Soit h = f *)
+  (* Let h = f *)
   let h := get_head X in
-  (* soit typeg = U *)
+  (* Let typeg = U *)
   let typeg := match type of g with ?U -> _ => U end in
-  (* On renvoie expand_fun' [Tn-1;...;T2;T1] (Tn->T) (Z->T) f (fun b x => b (g x))) = fun x1 x2 ... xn => f x1 x2 ... (g xn) *)
+  (* Return expand_fun' [Tn-1;...;T2;T1] (Tn->T) (Z->T) f (fun b x => b (g x))) = fun x1 x2 ... xn => f x1 x2 ... (g xn) *)
   constr:(expand_fun' argsXtypes (Tn -> typeX) (typeg -> typeX) h (fun b x => b (g x))).
 
-(* Remplace les symbole de fonction et à paramètres dans T
-   par des versions à paramètres dans Z *)
+(* Replaces function symbols with parameters in T, with their
+   counterparts with parameters in Z *)
 Ltac renaming' :=
   repeat
     match goal with
-      (* S'il y a un terme de la forme (f t1 ... (Z2T tn)) *)
+      (* If there is a term of the shape (f t1 ... (Z2T tn)) *)
       | |- context [?X (Z2T ?Y)] =>
-        (* On récupère le symbole de tête *)
+        (* Get the head symbol *)
         let f := get_head X in
-        (* S'il s'agit d'un constructeur on ne fait rien *)
+        (* Nothing to do if it is a constructor *)
         is_not_constructor T f;
-        (* Sinon, soit fe = fun x1 ... xn => f x1 ... (Z2T xn) *)
+        (* Otherwise, let fe = fun x1 ... xn => f x1 ... (Z2T xn) *)
         let fe := expand' (X (Z2T Y)) Z2T in
         let fe := eval simpl in fe in
         repeat
           match goal with
-            (* Pour chaque terme de la forme (f' t'1 ... (Z2T t'n)) *)
+            (* For each term of the shape (f' t'1 ... (Z2T t'n)) *)
             | |- context [?X' (Z2T ?Y')] =>
-              (* On récupère le symbole de tête *)
+              (* Get the head symbol *)
               let f' := get_head X' in
-              (* Si f' = f *)
+              (* If f' = f *)
               constr_eq f f';
-              (* Soit args = [t'1;...;t'(n-1)] *)
+              (* Let args = [t'1;...;t'(n-1)] *)
               let args := get_args X' in
-              (* Soit Z = (fun x1 ... xn => f x1 ... (Z2T xn)) t'1 ... t'(n-1) *)
+              (* Let Z = (fun x1 ... xn => f x1 ... (Z2T xn)) t'1 ... t'(n-1) *)
               let Z := apply_args fe args in
-              (* Et remplaçons (f' t'1 ... (Z2T t'n)) par (Z t'n) *)
+              (* Replace (f' t'1 ... (Z2T t'n)) with (Z t'n) *)
               change (X' (Z2T Y')) with (Z Y')
           end;
-        (* On abstrait sur (fun x1 ... xn => (f x1 ... (Z2T xn)) *)
+        (* Abstract over (fun x1 ... xn => (f x1 ... (Z2T xn)) *)
         generalize fe;
-        (* On efface l'ancien f *)
+        (* Erase the old f *)
         clear f;
-        (* Et on introduit le nouveau f avec le même nom *)
+        (* Introduce the new f with the same name *)
         let f := fresh f in
         intro f
     end.
 
-(* La tactique complète *)
+(* The whole tactic *)
 Ltac convert :=
 fold T add mul ltb leb eqb;
 intros;
@@ -315,6 +324,7 @@ simpl.
 
 End convert.
 
+(* Instanciation for the type [positive] *)
 Module pos_convert_type <: convert_type.
 
 Definition T : Type := positive.
@@ -357,6 +367,8 @@ Module pos_convert_mod := convert pos_convert_type.
 
 Ltac pos_convert := pos_convert_mod.convert.
 
+
+(* Instanciation for the type [N] *)
 Module N_convert_type <: convert_type.
 
 Definition T : Type := N.
@@ -395,6 +407,7 @@ Module N_convert_mod := convert N_convert_type.
 
 Ltac N_convert := N_convert_mod.convert.
 
+(* Instanciation for the type [nat] *)
 Require Import NPeano.
 Module nat_convert_type <: convert_type.
 
