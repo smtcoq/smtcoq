@@ -1,7 +1,8 @@
 # Proofs
 ## Axioms
 
-No axiom should be added. No library adding axioms should be imported.
+No axiom should be added. No library adding axioms should be imported
+(except Int63 and Array).
 
 
 # Code organization
