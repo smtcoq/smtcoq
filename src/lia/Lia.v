@@ -113,7 +113,7 @@ Section certif.
         | Some z => (vm, PEc z)
         | None =>
           let (vm,p) := find_var vm h in
-          (vm,PEX Z p)
+          (vm,PEX p)
         end
       end.
 
@@ -157,7 +157,7 @@ Section certif.
   Section Build_form.
 
     Definition build_not2 i f :=
-      fold (fun f' => N (N (A:=Formula Z) f')) 1 i f.
+      fold (fun f' : BFormula (Formula Z) => N (N f')) 1 i f.
 
     Variable build_var : vmap -> var -> option (vmap*BFormula (Formula Z)).
 
@@ -166,11 +166,11 @@ Section certif.
       match f with
         | Form.Fatom h =>
           match build_formula vm h with
-            | Some (vm,f) => Some (vm, A f)
+            | Some (vm,f) => Some (vm, A f tt)
             | None => None
           end
-        | Form.Ftrue => Some (vm, TT (Formula Z))
-        | Form.Ffalse => Some (vm, FF (Formula Z))
+        | Form.Ftrue => Some (vm, TT)
+        | Form.Ffalse => Some (vm, FF)
         | Form.Fnot2 i l =>
           match build_var vm (Lit.blit l) with
             | Some (vm, f) =>
@@ -181,7 +181,7 @@ Section certif.
           end
         | Form.Fand args =>
           let n := length args in
-          if n == 0 then Some (vm,TT (Formula Z))
+          if n == 0 then Some (vm,TT)
           else
             foldi (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,Cj f1' f2') | None => None end | None => None end) 1 (n-1) (let l := args.[0] in
               match build_var vm (Lit.blit l) with
@@ -190,7 +190,7 @@ Section certif.
               end)
         | Form.For args =>
           let n := length args in
-          if n == 0 then Some (vm,FF (Formula Z))
+          if n == 0 then Some (vm,FF)
           else
             foldi (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,D f1' f2') | None => None end | None => None end) 1 (n-1) (let l := args.[0] in
               match build_var vm (Lit.blit l) with
@@ -211,7 +211,7 @@ Section certif.
           end
         | Form.Fimp args =>
           let n := length args in
-          if n == 0 then Some (vm,TT (Formula Z))
+          if n == 0 then Some (vm,TT)
           else if n <= 1 then
             let l := args.[0] in
             match build_var vm (Lit.blit l) with
@@ -219,7 +219,7 @@ Section certif.
               | None => None
             end
           else
-            foldi_down (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,I f2' f1') | None => None end | None => None end) (n-2) 0 (let l := args.[n-1] in
+            foldi_down (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,I f2' None f1') | None => None end | None => None end) (n-2) 0 (let l := args.[n-1] in
               match build_var vm (Lit.blit l) with
                 | Some (vm',f) => if Lit.is_pos l then Some (vm',f) else Some (vm',N f)
                 | None => None
@@ -295,7 +295,7 @@ Section certif.
 
   Definition build_clause vm cl :=
     match build_clause_aux vm cl with
-    | Some (vm, bf) => Some (vm, I bf (FF _))
+    | Some (vm, bf) => Some (vm, I bf None FF)
     | None => None
     end.
 
@@ -479,11 +479,11 @@ Section certif.
 
     Fixpoint bounded_bformula (p:positive) (bf:BFormula (Formula Z)) :=
       match bf with
-      | @TT _ | @FF _ | @X _ _ => true
-      | A f => bounded_formula p f
+      | @TT _ | @FF _ | @X _ _ _ _ _ => true
+      | A f _ => bounded_formula p f
       | Cj bf1 bf2
       | D bf1 bf2
-      | I bf1 bf2 => bounded_bformula p bf1 && bounded_bformula p bf2
+      | I bf1 _ bf2 => bounded_bformula p bf1 && bounded_bformula p bf2
       | N bf => bounded_bformula p bf
       end.
 
@@ -523,7 +523,7 @@ Section certif.
        check_atom h Typ.TZ ->
        match build_z_atom h with
        | Some z => (vm, PEc z)
-       | None => let (vm0, p) := find_var vm h in (vm0, PEX Z p)
+       | None => let (vm0, p) := find_var vm h in (vm0, PEX p)
        end = (vm', pe) ->
        wf_vmap vm ->
        wf_vmap vm' /\
@@ -1020,12 +1020,14 @@ Transparent build_z_atom.
       intros;apply build_formula_atom_correct with
         (get_type t_i t_func t_atom h);trivial.
       unfold wt, is_true in wt_t_atom;rewrite forallbi_spec in wt_t_atom.
-      case_eq (h < length t_atom);intros Heq;unfold get_type;auto.
+      case_eq (h < length t_atom);intros Heq;unfold get_type;auto with smtcoq_core.
       unfold get_type'.
       rewrite !PArray.get_outofbound, default_t_interp, def_t_atom;trivial; try reflexivity.
       rewrite length_t_interp;trivial.
     Qed.
 
+
+    Local Notation eval_f := (eval_f (fun x => x)).
 
     Lemma build_not2_pos_correct : forall vm f l i,
       bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l -> bounded_bformula (fst vm) (build_not2 i f) /\ (Form.interp interp_form_hatom interp_form_hatom_bv t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (build_not2 i f)).
@@ -1083,7 +1085,7 @@ Transparent build_z_atom.
     Proof.
       intros vm vm' Hnth.
       unfold is_true;induction bf;simpl;try tauto.
-      destruct a;unfold bounded_formula;simpl.
+      destruct t;unfold bounded_formula;simpl.
       rewrite andb_true_iff;intros (H1, H2).
       rewrite !(interp_pexpr_le _ _ Hnth);tauto.
       rewrite andb_true_iff;intros (H1,H2);rewrite IHbf1, IHbf2;tauto.
@@ -1123,12 +1125,12 @@ Transparent build_z_atom.
       (* Ftrue *)
       intros H H1; inversion H; subst vm'; subst bf; split; auto; split; [omega| ]; do 4 split; auto.
       (* Ffalse *)
-      intros H H1; inversion H; subst vm'; subst bf; split; auto; split; [omega| ]; do 3 (split; auto); discriminate.
+      intros H H1; inversion H; subst vm'; subst bf; split; auto; split; [omega| ]; do 3 (split; auto with smtcoq_core); discriminate.
       (* Fnot2 *)
       case_eq (build_var vm (Lit.blit l)); try discriminate; intros [vm0 f] Heq H H1; inversion H; subst vm0; subst bf; destruct (Hbv _ _ _ _ Heq H1) as [H2 [H3 [H4 [H5 H6]]]]; do 3 (split; auto); case_eq (Lit.is_pos l); [apply build_not2_pos_correct|apply build_not2_neg_correct]; auto.
       (* Fand *)
       simpl; unfold afold_left; case (length l == 0).
-      intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto; split; [omega| ]; do 3 (split; auto).
+      intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [omega| ]; do 3 (split; auto with smtcoq_core).
       revert vm' bf; apply (foldi_ind2 _ _ (fun f1 b => forall vm' bf, f1 = Some (vm', bf) -> wf_vmap vm -> wf_vmap vm' /\ (Pos.to_nat (fst vm) <= Pos.to_nat (fst vm'))%nat /\ (forall p : positive, (Pos.to_nat p < Pos.to_nat (fst vm))%nat -> nth_error (snd vm) (Pos.to_nat (fst vm - p) - 1) = nth_error (snd vm') (Pos.to_nat (fst vm' - p) - 1)) /\ bounded_bformula (fst vm') bf /\ (b = true <-> eval_f (Zeval_formula (interp_vmap vm')) bf))).
       intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto); unfold Lit.interp; rewrite Heq2; auto; simpl; split.
       intros H3 H4; rewrite <- H14 in H4; rewrite H4 in H3; discriminate.
@@ -1136,104 +1138,76 @@ Transparent build_z_atom.
       intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto; split; [eauto with arith| ]; split.
       intros p H15; rewrite H7; auto; apply H12; eauto with arith.
       split.
-      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto.
-      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite andb_true_r; try rewrite andb_false_r; try (intros; split; auto); try discriminate; intros [H20 H21]; auto.
+      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite andb_true_r; try rewrite andb_false_r; try (intros; split; auto with smtcoq_core); try discriminate; intros [H20 H21]; auto with smtcoq_core.
       (* For *)
       simpl; unfold afold_left; case (length l == 0).
-      intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto; split; [omega| ]; do 3 (split; auto); discriminate.
+      intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [omega| ]; do 3 (split; auto with smtcoq_core); discriminate.
       revert vm' bf; apply (foldi_ind2 _ _ (fun f1 b => forall vm' bf, f1 = Some (vm', bf) -> wf_vmap vm -> wf_vmap vm' /\ (Pos.to_nat (fst vm) <= Pos.to_nat (fst vm'))%nat /\ (forall p : positive, (Pos.to_nat p < Pos.to_nat (fst vm))%nat -> nth_error (snd vm) (Pos.to_nat (fst vm - p) - 1) = nth_error (snd vm') (Pos.to_nat (fst vm' - p) - 1)) /\ bounded_bformula (fst vm') bf /\ (b = true <-> eval_f (Zeval_formula (interp_vmap vm')) bf))).
-      intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto); unfold Lit.interp; rewrite Heq2; auto; simpl; split.
+      intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto with smtcoq_core); unfold Lit.interp; rewrite Heq2; auto with smtcoq_core; simpl; split.
       intros H3 H4; rewrite <- H14 in H4; rewrite H4 in H3; discriminate.
-      intro H3; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto; intro H4; elim H3; rewrite <- H14; auto.
-      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto; split; [eauto with arith| ]; split.
-      intros p H15; rewrite H7; auto; apply H12; eauto with arith.
+      intro H3; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto with smtcoq_core; intro H4; elim H3; rewrite <- H14; auto with smtcoq_core.
+      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros p H15; rewrite H7; auto with smtcoq_core; apply H12; eauto with smtcoq_core arith.
       split.
-      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto.
-      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite orb_false_r; try rewrite orb_true_r; auto; try (intros [H20|H20]; auto; discriminate); right; intro H20; discriminate.
+      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite orb_false_r; try rewrite orb_true_r; auto with smtcoq_core; try (intros [H20|H20]; auto with smtcoq_core; discriminate); right; intro H20; discriminate.
       (* Fimp *)
       simpl; unfold afold_right; case (length l == 0).
-      intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto; split; [omega| ]; do 3 (split; auto).
+      intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [omega| ]; do 3 (split; auto with smtcoq_core).
       case (length l <= 1).
-      case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H3 [H4 [H5 [H6 H7]]]]; do 4 (split; auto); unfold Lit.interp; rewrite Heq2; auto; simpl; split.
+      case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H3 [H4 [H5 [H6 H7]]]]; do 4 (split; auto with smtcoq_core); unfold Lit.interp; rewrite Heq2; auto with smtcoq_core; simpl; split.
       intros H8 H9; rewrite <- H7 in H9; rewrite H9 in H8; discriminate.
-      intro H8; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto; intro H9; rewrite H7 in H9; elim H8; auto.
+      intro H8; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto with smtcoq_core; intro H9; rewrite H7 in H9; elim H8; auto with smtcoq_core.
       revert vm' bf; apply (foldi_down_ind2 _ _ (fun f1 b => forall vm' bf, f1 = Some (vm', bf) -> wf_vmap vm -> wf_vmap vm' /\ (Pos.to_nat (fst vm) <= Pos.to_nat (fst vm'))%nat /\ (forall p : positive, (Pos.to_nat p < Pos.to_nat (fst vm))%nat -> nth_error (snd vm) (Pos.to_nat (fst vm - p) - 1) = nth_error (snd vm') (Pos.to_nat (fst vm' - p) - 1)) /\ bounded_bformula (fst vm') bf /\ (b = true <-> eval_f (Zeval_formula (interp_vmap vm')) bf))).
-      intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ length l - 1]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ length l - 1])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto); unfold Lit.interp; rewrite Heq2; auto; simpl; split.
+      intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ length l - 1]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ length l - 1])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto with smtcoq_core); unfold Lit.interp; rewrite Heq2; auto with smtcoq_core; simpl; split.
       intros H3 H4; rewrite <- H14 in H4; rewrite H4 in H3; discriminate.
-      intro H3; case_eq (Var.interp rho (Lit.blit (l .[ length l - 1]))); auto; intro H4; elim H3; rewrite <- H14; auto.
-      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto; split; [eauto with arith| ]; split.
-      intros p H15; rewrite H7; auto; apply H12; eauto with arith.
+      intro H3; case_eq (Var.interp rho (Lit.blit (l .[ length l - 1]))); auto with smtcoq_core; intro H4; elim H3; rewrite <- H14; auto with smtcoq_core.
+      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros p H15; rewrite H7; auto with smtcoq_core; apply H12; eauto with smtcoq_core arith.
       split.
-      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto.
-      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); auto; try discriminate; simpl; intro H; apply H; discriminate.
+      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); auto with smtcoq_core; try discriminate; simpl; intro H; apply H; discriminate.
       (* Fxor *)
-      simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; split; auto; split; [eauto with arith| ]; split.
-      intros p H18; rewrite H5; auto; rewrite H10; eauto with arith.
+      simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
       split.
-      case (Lit.is_pos a); case (Lit.is_pos b); simpl; rewrite H11; rewrite (bounded_bformula_le _ _ H9 _ H6); auto.
-      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto; try discriminate; simpl.
-      intros [_ [H20|H20]]; elim H20; reflexivity.
-      intros _; split; [left; reflexivity|right; intro H20; discriminate].
-      intros _; split; [right; reflexivity|left; intro H20; discriminate].
-      intros [[H20|H20] _]; discriminate.
-      intros [_ [H20|H20]]; elim H20; [reflexivity|discriminate].
-      intros [[H20|H20] _]; [discriminate|elim H20; reflexivity].
-      intros _; split; [right|left]; discriminate.
-      intros [[H20|H20] _]; [elim H20; reflexivity|discriminate].
-      intros [_ [H20|H20]]; elim H20; [discriminate|reflexivity].
-      intros _; split; [left|right]; discriminate.
-      intros [[H20|H20] _]; elim H20; reflexivity.
-      intros _; split; [right; discriminate|left; intro H21; apply H21; reflexivity].
-      intros _; split; [left; discriminate|right; intro H21; apply H21; reflexivity].
-      intros [_ [H20|H20]]; elim H20; discriminate.
+      case (Lit.is_pos a); case (Lit.is_pos b); simpl; rewrite H11; rewrite (bounded_bformula_le _ _ H9 _ H6); auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto with smtcoq_core; try discriminate; simpl; intuition.
       (* Fiff *)
-      simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; split; auto; split; [eauto with arith| ]; split.
-      intros p H18; rewrite H5; auto; rewrite H10; eauto with arith.
+      simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
       split.
-      case (Lit.is_pos a); case (Lit.is_pos b); simpl; rewrite H11; rewrite (bounded_bformula_le _ _ H9 _ H6); auto.
-      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto; try discriminate; simpl.
-      intros [_ [H20|H20]]; [elim H20; reflexivity|discriminate].
-      intros [[H20|H20] _]; [discriminate|elim H20; reflexivity].
-      intros _; split; [right|left]; discriminate.
-      intros [_ [H20|H20]]; elim H20; reflexivity.
-      intros _; split; [left; reflexivity|right; discriminate].
-      intros _; split; [right; intro H20; apply H20; reflexivity|left; discriminate].
-      intros [[H20|H20] _]; [ |elim H20]; discriminate.
-      intros [[H20|H20] _]; elim H20; reflexivity.
-      intros _; split; [right; discriminate|left; intro H20; apply H20; reflexivity].
-      intros _; split; [left; discriminate|right; reflexivity].
-      intros [_ [H20|H20]]; [elim H20| ]; discriminate.
-      intros [[H20|H20] _]; elim H20; [reflexivity|discriminate].
-      intros [_ [H20|H20]]; elim H20; [discriminate|reflexivity].
-      intros _; split; [left|right]; discriminate.
+      case (Lit.is_pos a); case (Lit.is_pos b); simpl; rewrite H11; rewrite (bounded_bformula_le _ _ H9 _ H6); auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto with smtcoq_core; try discriminate; simpl; intuition.
       (* Fite *)
-      simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2; case_eq (build_var vm2 (Lit.blit c)); try discriminate; intros [vm3 f3] Heq3 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; destruct (Hbv _ _ _ _ Heq3 H8) as [H13 [H14 [H15 [H16 H17]]]]; split; auto; split; [eauto with arith| ]; split.
-      intros p H18; rewrite H5; auto; rewrite H10; eauto with arith.
-      assert (H18: (Pos.to_nat (fst vm1) <= Pos.to_nat (fst vm3))%nat) by eauto with arith.
+      simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2; case_eq (build_var vm2 (Lit.blit c)); try discriminate; intros [vm3 f3] Heq3 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; destruct (Hbv _ _ _ _ Heq3 H8) as [H13 [H14 [H15 [H16 H17]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
+      assert (H18: (Pos.to_nat (fst vm1) <= Pos.to_nat (fst vm3))%nat) by eauto with smtcoq_core arith.
       split.
-      case (Lit.is_pos a); case (Lit.is_pos b); case (Lit.is_pos c); simpl; rewrite H16; rewrite (bounded_bformula_le _ _ H14 _ H11); rewrite (bounded_bformula_le _ _ H18 _ H6); auto.
-      simpl; rewrite (interp_bformula_le _ _ H15 _ H11) in H12; rewrite (interp_bformula_le _ vm3) in H7; [ |intros p Hp; rewrite H10; eauto with arith|auto]; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; case_eq (Lit.is_pos c); intro Hc; unfold Lit.interp; rewrite Ha, Hb, Hc; simpl; rewrite <- H17; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); [case (Var.interp rho (Lit.blit b))|case (Var.interp rho (Lit.blit c))]); split; auto; try discriminate; try (intros [[H20 H21]|[H20 H21]]; auto); try (intros _; left; split; auto; discriminate); try (intros _; right; split; auto; discriminate); try (elim H20; discriminate); try (elim H21; discriminate); try (simpl; intro H; left; split; auto; discriminate); try (revert H; case (Var.interp rho (Lit.blit c)); discriminate); try (revert H; case (Var.interp rho (Lit.blit b)); discriminate); try (intro H20; rewrite H20 in H; discriminate); simpl.
-      intro H; right; split; auto.
-      intro H; right; split; auto.
-      intro H; right; split; auto.
+      case (Lit.is_pos a); case (Lit.is_pos b); case (Lit.is_pos c); simpl; rewrite H16; rewrite (bounded_bformula_le _ _ H14 _ H11); rewrite (bounded_bformula_le _ _ H18 _ H6); auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H15 _ H11) in H12; rewrite (interp_bformula_le _ vm3) in H7; [ |intros p Hp; rewrite H10; eauto with smtcoq_core arith|auto with smtcoq_core]; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; case_eq (Lit.is_pos c); intro Hc; unfold Lit.interp; rewrite Ha, Hb, Hc; simpl; rewrite <- H17; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); [case (Var.interp rho (Lit.blit b))|case (Var.interp rho (Lit.blit c))]); split; auto with smtcoq_core; try discriminate; try (intros [[H20 H21]|[H20 H21]]; auto with smtcoq_core); try (intros _; left; split; auto with smtcoq_core; discriminate); try (intros _; right; split; auto with smtcoq_core; discriminate); try (elim H20; discriminate); try (elim H21; discriminate); try (simpl; intro H; left; split; auto with smtcoq_core; discriminate); try (revert H; case (Var.interp rho (Lit.blit c)); discriminate); try (revert H; case (Var.interp rho (Lit.blit b)); discriminate); try (intro H20; rewrite H20 in H; discriminate); simpl.
+      intro H; right; split; auto with smtcoq_core.
+      intro H; right; split; auto with smtcoq_core.
+      intro H; right; split; auto with smtcoq_core.
       intro H20; rewrite H20 in H; discriminate.
-      revert H21; case (Var.interp rho (Lit.blit c)); auto.
-      right; split; auto; intro H20; rewrite H20 in H; discriminate.
-      revert H21; case (Var.interp rho (Lit.blit c)); auto.
-      intro H; right; split; auto.
-      intro H; right; split; auto.
+      revert H21; case (Var.interp rho (Lit.blit c)); auto with smtcoq_core.
+      right; split; auto with smtcoq_core; intro H20; rewrite H20 in H; discriminate.
+      revert H21; case (Var.interp rho (Lit.blit c)); auto with smtcoq_core.
+      intro H; right; split; auto with smtcoq_core.
+      intro H; right; split; auto with smtcoq_core.
       intro H; left; split; try discriminate; revert H; case (Var.interp rho (Lit.blit b)); discriminate.
-      revert H21; case (Var.interp rho (Lit.blit b)); auto.
+      revert H21; case (Var.interp rho (Lit.blit b)); auto with smtcoq_core.
       intro H; left; split; try discriminate; revert H; case (Var.interp rho (Lit.blit b)); discriminate.
-      revert H21; case (Var.interp rho (Lit.blit b)); auto.
-      intro H; right; split; auto; revert H; case (Var.interp rho (Lit.blit c)); discriminate.
-      revert H21; case (Var.interp rho (Lit.blit c)); auto.
-      intro H; right; split; auto; revert H; case (Var.interp rho (Lit.blit c)); discriminate.
-      revert H21; case (Var.interp rho (Lit.blit c)); auto.
-      intro H; left; split; auto; revert H; case (Var.interp rho (Lit.blit b)); discriminate.
-      revert H21; case (Var.interp rho (Lit.blit b)); auto.
-      intro H; left; split; auto; revert H; case (Var.interp rho (Lit.blit b)); discriminate.
-      revert H21; case (Var.interp rho (Lit.blit b)); auto.
+      revert H21; case (Var.interp rho (Lit.blit b)); auto with smtcoq_core.
+      intro H; right; split; auto with smtcoq_core; revert H; case (Var.interp rho (Lit.blit c)); discriminate.
+      revert H21; case (Var.interp rho (Lit.blit c)); auto with smtcoq_core.
+      intro H; right; split; auto with smtcoq_core; revert H; case (Var.interp rho (Lit.blit c)); discriminate.
+      revert H21; case (Var.interp rho (Lit.blit c)); auto with smtcoq_core.
+      intro H; left; split; auto with smtcoq_core; revert H; case (Var.interp rho (Lit.blit b)); discriminate.
+      revert H21; case (Var.interp rho (Lit.blit b)); auto with smtcoq_core.
+      intro H; left; split; auto with smtcoq_core; revert H; case (Var.interp rho (Lit.blit b)); discriminate.
+      revert H21; case (Var.interp rho (Lit.blit b)); auto with smtcoq_core.
     Qed.
 
 
@@ -1251,8 +1225,8 @@ Transparent build_z_atom.
     Proof.
       unfold build_var; apply foldi_down_cont_ind; try discriminate.
       intros i cont _ Hlen Hrec v vm vm' bf; unfold is_true; intros H1 H2; replace (Var.interp rho v) with (Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[v])).
-      apply (build_hform_correct cont); auto.
-      unfold Var.interp; rewrite <- wf_interp_form; auto.
+      apply (build_hform_correct cont); auto with smtcoq_core.
+      unfold Var.interp; rewrite <- wf_interp_form; auto with smtcoq_core.
     Qed.
 
 
@@ -1285,17 +1259,17 @@ Transparent build_z_atom.
       unfold build_nlit; intros l vm vm' bf; case_eq (build_form vm (t_form .[ Lit.blit (Lit.neg l)])); try discriminate.
       intros [vm1 f] Heq H1 H2; inversion H1; subst vm1; subst bf; case_eq (Lit.is_pos (Lit.neg l)); intro Heq2.
       replace (negb (Lit.interp rho l)) with (Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form .[ Lit.blit (Lit.neg l)])).
-      apply build_form_correct; auto.
+      apply build_form_correct; auto with smtcoq_core.
       unfold Lit.interp; replace (Lit.is_pos l) with false.
-      rewrite negb_involutive; unfold Var.interp; rewrite <- wf_interp_form; auto; rewrite Lit.blit_neg; auto.
-      rewrite Lit.is_pos_neg in Heq2; case_eq (Lit.is_pos l); auto; intro H; rewrite H in Heq2; discriminate.
-      simpl; destruct (build_form_correct (t_form .[ Lit.blit (Lit.neg l)]) vm vm' f Heq H2) as [H3 [H4 [H5 [H6 [H7 H8]]]]]; do 4 (split; auto); split.
+      rewrite negb_involutive; unfold Var.interp; rewrite <- wf_interp_form; auto with smtcoq_core; rewrite Lit.blit_neg; auto with smtcoq_core.
+      rewrite Lit.is_pos_neg in Heq2; case_eq (Lit.is_pos l); auto with smtcoq_core; intro H; rewrite H in Heq2; discriminate.
+      simpl; destruct (build_form_correct (t_form .[ Lit.blit (Lit.neg l)]) vm vm' f Heq H2) as [H3 [H4 [H5 [H6 [H7 H8]]]]]; do 4 (split; auto with smtcoq_core); split.
       intros H9 H10; pose (H11 := H8 H10); unfold Lit.interp in H9; replace (Lit.is_pos l) with true in H9.
-      unfold Var.interp in H9; rewrite <- wf_interp_form in H11; auto; rewrite Lit.blit_neg in H11; rewrite H11 in H9; discriminate.
-       rewrite Lit.is_pos_neg in Heq2; case_eq (Lit.is_pos l); auto; intro H; rewrite H in Heq2; discriminate.
-       intro H9; case_eq (Lit.interp rho l); intro Heq3; auto; elim H9; apply H7; unfold Lit.interp in Heq3; replace (Lit.is_pos l) with true in Heq3.
-       unfold Var.interp in Heq3; rewrite <- wf_interp_form; auto; rewrite Lit.blit_neg; auto.
-       rewrite Lit.is_pos_neg in Heq2; case_eq (Lit.is_pos l); auto; intro H; rewrite H in Heq2; discriminate.
+      unfold Var.interp in H9; rewrite <- wf_interp_form in H11; auto with smtcoq_core; rewrite Lit.blit_neg in H11; rewrite H11 in H9; discriminate.
+       rewrite Lit.is_pos_neg in Heq2; case_eq (Lit.is_pos l); auto with smtcoq_core; intro H; rewrite H in Heq2; discriminate.
+       intro H9; case_eq (Lit.interp rho l); intro Heq3; auto with smtcoq_core; elim H9; apply H7; unfold Lit.interp in Heq3; replace (Lit.is_pos l) with true in Heq3.
+       unfold Var.interp in Heq3; rewrite <- wf_interp_form; auto with smtcoq_core; rewrite Lit.blit_neg; auto with smtcoq_core.
+       rewrite Lit.is_pos_neg in Heq2; case_eq (Lit.is_pos l); auto with smtcoq_core; intro H; rewrite H in Heq2; discriminate.
     Qed.
 
 
@@ -1403,7 +1377,7 @@ Transparent build_z_atom.
      rewrite H0, def_t_atom;discriminate.
      apply H1 in H2;clear H1;rewrite H0 in H2;simpl in H2.
      rewrite !andb_true_iff in H2;decompose [and] H2;clear H2.
-     apply Hf with (2:= H0);trivial. auto.
+     apply Hf with (2:= H0);trivial. auto with smtcoq_core.
      rewrite wf_interp_form, H;simpl.
      unfold Atom.interp_form_hatom, Atom.interp_hatom at 1;simpl.
      rewrite Atom.t_interp_wf, H0;simpl;trivial.
@@ -1434,7 +1408,7 @@ Transparent build_z_atom.
      rewrite H0, def_t_atom;discriminate.
      apply H1 in H2;clear H1;rewrite H0 in H2;simpl in H2.
      rewrite !andb_true_iff in H2;decompose [and] H2;clear H2.
-     simpl; apply Hf with (2:= H0);trivial. auto.
+     simpl; apply Hf with (2:= H0);trivial. auto with smtcoq_core.
      rewrite wf_interp_form, H;simpl.
      unfold Atom.interp_form_hatom, Atom.interp_hatom at 1;simpl.
      rewrite Atom.t_interp_wf, H0;simpl;trivial.
@@ -1480,7 +1454,7 @@ Transparent build_z_atom.
      case_eq (build_clause empty_vmap cl).
      intros (vm1, bf) Heq.
      destruct (build_clause_correct _ _ _ _ Heq).
-      red;simpl;auto.
+      red;simpl;auto with smtcoq_core.
      decompose [and] H0.
      case_eq (ZTautoChecker bf c);intros Heq2.
      unfold C.valid;rewrite H5.
@@ -1512,11 +1486,11 @@ Transparent build_z_atom.
      rewrite wf_interp_form, H;simpl.
      case_eq (Lit.interp rho (a.[0]) || Lit.interp rho (a.[1]) || Lit.interp rho (a.[2])).
      intros;repeat (rewrite orb_true_iff in H19);destruct H19. destruct H19.
-     apply (afold_left_orb_true int 0); subst; auto.
+     apply (afold_left_orb_true int 0); subst; auto with smtcoq_core.
      apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 1); auto.
+     apply (afold_left_orb_true int 1); auto with smtcoq_core.
      apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 2); auto.
+     apply (afold_left_orb_true int 2); auto with smtcoq_core.
      apply ltb_spec;rewrite H0;compute;trivial.
      intros; repeat (rewrite orb_false_iff in H19);destruct H19. destruct H19.
      unfold Lit.interp in H19.
@@ -1534,7 +1508,7 @@ Transparent build_z_atom.
      destruct (Typ.reflect_eqb (get_type t_i t_func t_atom b0) Typ.TZ) as [H12|H12]; [intros _|discriminate].
      generalize H6. clear H6.
      destruct (Typ.reflect_eqb (get_type t_i t_func t_atom b0) t) as [H6|H6]; [intros _|discriminate].
-     rewrite <- H6. auto.
+     rewrite <- H6. auto with smtcoq_core.
      rewrite H26 in H19.
      case_eq (interp_atom (t_atom .[ b1])); intros t1 v1 Heq1.
      assert (H50: t1 = Typ.TZ).
@@ -1560,11 +1534,11 @@ Transparent build_z_atom.
      rewrite wf_interp_form, H;simpl.
      case_eq (Lit.interp rho (a.[0]) || Lit.interp rho (a.[1]) || Lit.interp rho (a.[2])).
      intros;repeat (rewrite orb_true_iff in H19);destruct H19. destruct H19.
-     apply (afold_left_orb_true int 0); auto.
+     apply (afold_left_orb_true int 0); auto with smtcoq_core.
      apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 1); auto.
+     apply (afold_left_orb_true int 1); auto with smtcoq_core.
      apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 2); auto.
+     apply (afold_left_orb_true int 2); auto with smtcoq_core.
      apply ltb_spec;rewrite H0;compute;trivial.
      intros; repeat (rewrite orb_false_iff in H19);destruct H19. destruct H19.
      unfold Lit.interp in H19.
@@ -1581,7 +1555,7 @@ Transparent build_z_atom.
      unfold Var.interp in H23; rewrite H10 in H23.
      rewrite <-H22, <- H20 in H21.
      assert (t = Typ.TZ).
-       rewrite Typ.eqb_spec in H6; rewrite Typ.eqb_spec in H18; subst; auto.
+       rewrite Typ.eqb_spec in H6; rewrite Typ.eqb_spec in H18; subst; auto with smtcoq_core.
      rewrite H26 in H19.
      case_eq (interp_atom (t_atom .[ b0])); intros t1 v1 Heq1.
      assert (H50: t1 = Typ.TZ).

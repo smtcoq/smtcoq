@@ -14,6 +14,8 @@
    trees *)
 
 
+Declare Scope array_scope.
+
 Require Import Int31.
 Require Export Int63.
 Require FMapAVL.

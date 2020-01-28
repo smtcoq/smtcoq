@@ -1554,7 +1554,7 @@ Proof. intros l a H.
 
        rewrite H.
        unfold RAWBITVECTOR_LIST.bv_eq, RAWBITVECTOR_LIST.size, RAWBITVECTOR_LIST.bits in *.
-       rewrite RAWBITVECTOR_LIST.List_eq_refl; auto.
+       rewrite RAWBITVECTOR_LIST.List_eq_refl; auto with smtcoq_core.
        apply inj_iff in wf0. now do 2 rewrite id' in wf0.
 
 Qed.

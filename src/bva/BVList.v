@@ -2684,6 +2684,8 @@ Qed.
 
 End RAWBITVECTOR_LIST.
 
+Declare Scope bv_scope.
+
 Module BITVECTOR_LIST <: BITVECTOR.
 
   Include RAW2BITVECTOR(RAWBITVECTOR_LIST).

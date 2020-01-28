@@ -763,26 +763,26 @@ Section List2.
   | In2_hd : forall l, In j l -> In2 i j (i::l)
   | In2_tl : forall k l, In2 i j l -> In2 i j (k::l).
 
-  Local Hint Constructors In2.
+  Local Hint Constructors In2 : smtcoq_in2.
 
 
   Lemma In2_app : forall i j l m, In2 i j (l ++ m) <->
     In2 i j l \/ (In i l /\ In j m) \/ In2 i j m.
   Proof.
-    intros i j; induction l as [ |t l IHl]; simpl; intro m; split; auto.
-    intros [H|[[H _]|H]]; auto.
+    intros i j; induction l as [ |t l IHl]; simpl; intro m; split; auto with smtcoq_in2.
+    intros [H|[[H _]|H]]; auto with smtcoq_in2.
     inversion H.
     elim H.
     intro H; inversion H; clear H.
-    subst i l0; rewrite in_app_iff in H1; destruct H1 as [H1|H1]; auto.
-    subst k l0; rewrite IHl in H1; destruct H1 as [H1|[[H1 H2]|H1]]; auto.
+    subst i l0; rewrite in_app_iff in H1; destruct H1 as [H1|H1]; auto with smtcoq_in2.
+    subst k l0; rewrite IHl in H1; destruct H1 as [H1|[[H1 H2]|H1]]; auto with smtcoq_in2.
     intros [H|[[[H|H] H1]|H]].
     inversion H; clear H.
-    subst i l0; constructor 1; rewrite in_app_iff; auto.
-    subst k l0; constructor 2; rewrite IHl; left; auto.
-    subst t; constructor 1; rewrite in_app_iff; auto.
-    constructor 2; rewrite IHl; right; left; auto.
-    constructor 2; rewrite IHl; right; right; auto.
+    subst i l0; constructor 1; rewrite in_app_iff; auto with smtcoq_in2.
+    subst k l0; constructor 2; rewrite IHl; left; auto with smtcoq_in2.
+    subst t; constructor 1; rewrite in_app_iff; auto with smtcoq_in2.
+    constructor 2; rewrite IHl; right; left; auto with smtcoq_in2.
+    constructor 2; rewrite IHl; right; right; auto with smtcoq_in2.
   Qed.
 
 
@@ -796,17 +796,17 @@ Section List2.
   Lemma In2_rev_aux : forall i j l acc, In2 i j (rev_aux acc l) <->
     In2 i j acc \/ (In i l /\ In j acc) \/ In2 j i l.
   Proof.
-    intros i j; induction l as [ |t q IHq]; simpl; intro acc; split; auto.
-    intros [H|[[H _]|H]]; auto.
+    intros i j; induction l as [ |t q IHq]; simpl; intro acc; split; auto with smtcoq_in2.
+    intros [H|[[H _]|H]]; auto with smtcoq_in2.
     elim H.
     inversion H.
-    rewrite IHq; clear IHq; intros [H|[[H1 H2]|H]]; auto.
-    inversion H; auto.
-    inversion H2; auto; clear H2; subst t; right; right; auto.
-    intros [H|[[[H1|H1] H2]|H]]; rewrite IHq; clear IHq; auto.
-    subst t; auto.
-    right; left; split; auto; constructor 2; auto.
-    inversion H; clear H; auto; subst j l; right; left; split; auto; constructor 1; auto.
+    rewrite IHq; clear IHq; intros [H|[[H1 H2]|H]]; auto with smtcoq_in2.
+    inversion H; auto with smtcoq_in2.
+    inversion H2; auto with smtcoq_in2; clear H2; subst t; right; right; auto with smtcoq_in2.
+    intros [H|[[[H1|H1] H2]|H]]; rewrite IHq; clear IHq; auto with smtcoq_in2.
+    subst t; auto with smtcoq_in2.
+    right; left; split; auto with smtcoq_in2; constructor 2; auto with smtcoq_in2.
+    inversion H; clear H; auto with smtcoq_in2; subst j l; right; left; split; auto with smtcoq_in2; constructor 1; auto with smtcoq_in2.
   Qed.
 
 
@@ -815,7 +815,7 @@ Section List2.
 
   Lemma In2_rev : forall i j l, In2 i j (rev l) <-> In2 j i l.
   Proof.
-    intros i j l; unfold rev; rewrite In2_rev_aux; split; auto; intros [H|[[_ H]|H]]; auto; inversion H.
+    intros i j l; unfold rev; rewrite In2_rev_aux; split; auto with smtcoq_in2; intros [H|[[_ H]|H]]; auto with smtcoq_in2; inversion H.
   Qed.
 
 
@@ -825,15 +825,15 @@ Section List2.
     intros [H1 H2]; generalize H1 H2; clear H1 H2; induction l as [ |t q IHq].
     intro H1; inversion H1.
     intros H1 H2; inversion H1; clear H1.
-    subst t; inversion H2; auto; elim H; auto.
+    subst t; inversion H2; auto with smtcoq_in2; elim H; auto with smtcoq_in2.
     inversion H2; clear H2.
-    subst t; auto.
-    destruct (IHq H0 H1) as [H2|H2]; auto.
+    subst t; auto with smtcoq_in2.
+    destruct (IHq H0 H1) as [H2|H2]; auto with smtcoq_in2.
     intros [H1|H1]; induction H1 as [H1|t q H1 [IH1 IH2]].
-    split; [constructor 1|constructor 2]; auto.
-    split; constructor 2; auto.
-    split; [constructor 2|constructor 1]; auto.
-    split; constructor 2; auto.
+    split; [constructor 1|constructor 2]; auto with smtcoq_in2.
+    split; constructor 2; auto with smtcoq_in2.
+    split; [constructor 2|constructor 1]; auto with smtcoq_in2.
+    split; constructor 2; auto with smtcoq_in2.
   Qed.
 
 End List2.
@@ -892,32 +892,32 @@ Section Distinct.
         distinct_aux acc' q
     end.
 
-  Local Hint Constructors In2.
+  Local Hint Constructors In2 : smtcoq_in2.
 
   Lemma distinct_aux_spec : forall l acc, distinct_aux acc l = true <->
     acc = true /\ (forall i j, In2 i j l -> eq i j = false).
   Proof.
     induction l as [ |t q IHq]; simpl.
     intro acc; split.
-    intro H; split; auto; intros i j H1; inversion H1.
-    intros [H _]; auto.
+    intro H; split; auto with smtcoq_in2; intros i j H1; inversion H1.
+    intros [H _]; auto with smtcoq_in2.
     intro acc; rewrite (IHq (distinct_aux2 acc t q)), distinct_aux2_spec; split.
-    intros [[H1 H2] H3]; split; auto; intros i j H; inversion H; auto.
-    intros [H1 H2]; repeat split; auto.
+    intros [[H1 H2] H3]; split; auto with smtcoq_in2; intros i j H; inversion H; auto with smtcoq_in2.
+    intros [H1 H2]; repeat split; auto with smtcoq_in2.
   Qed.
 
   Lemma distinct_aux_spec_neg : forall l acc, distinct_aux acc l = false <->
     acc = false \/ (exists i j, In2 i j l /\ eq i j = true).
   Proof.
     induction l as [ |t q IHq]; simpl.
-    intro acc; split; auto; intros [H|[i [j [H _]]]]; auto; inversion H.
+    intro acc; split; auto with smtcoq_in2; intros [H|[i [j [H _]]]]; auto with smtcoq_in2; inversion H.
     intro acc; rewrite (IHq (distinct_aux2 acc t q)), distinct_aux2_spec_neg; split.
-    intros [[H|[i [H1 H2]]]|[i [j [H1 H2]]]]; auto.
-    right; exists t; exists i; auto.
-    right; exists i; exists j; auto.
-    intros [H|[i [j [H1 H2]]]]; auto; inversion H1; clear H1.
-    subst i l; left; right; exists j; auto.
-    subst k l; right; exists i; exists j; auto.
+    intros [[H|[i [H1 H2]]]|[i [j [H1 H2]]]]; auto with smtcoq_in2.
+    right; exists t; exists i; auto with smtcoq_in2.
+    right; exists i; exists j; auto with smtcoq_in2.
+    intros [H|[i [j [H1 H2]]]]; auto with smtcoq_in2; inversion H1; clear H1.
+    subst i l; left; right; exists j; auto with smtcoq_in2.
+    subst k l; right; exists i; exists j; auto with smtcoq_in2.
   Qed.
 
   Definition distinct := distinct_aux true.
@@ -925,13 +925,13 @@ Section Distinct.
   Lemma distinct_spec : forall l, distinct l = true <->
     (forall i j, In2 i j l -> eq i j = false).
   Proof.
-    unfold distinct; intro l; rewrite distinct_aux_spec; split; auto; intros [_ H]; auto.
+    unfold distinct; intro l; rewrite distinct_aux_spec; split; auto with smtcoq_in2; intros [_ H]; auto with smtcoq_in2.
   Qed.
 
   Lemma distinct_false_spec : forall l, distinct l = false <->
     (exists i j, In2 i j l /\ eq i j = true).
   Proof.
-    unfold distinct; intro l; rewrite distinct_aux_spec_neg; split; auto; intros [H|H]; auto; discriminate.
+    unfold distinct; intro l; rewrite distinct_aux_spec_neg; split; auto with smtcoq_in2; intros [H|H]; auto with smtcoq_in2; discriminate.
   Qed.
 
 End Distinct.

@@ -18,7 +18,7 @@ Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
 
-Hint Unfold is_true.
+Hint Unfold is_true : smtcoq_core.
 
 
 (* Remark: I use Notation instead of Definition du eliminate conversion check during the type checking *)
@@ -125,11 +125,11 @@ Module Form.
         destruct h;simpl;intros;trivial;
           try (apply afold_left_eq;unfold is_true in H0;
             rewrite PArray.forallb_spec in H0;intros;
-              auto using Lit.interp_eq_compat).
+              auto using Lit.interp_eq_compat with smtcoq_core).
         - f_equal;auto using Lit.interp_eq_compat.
         - apply afold_right_eq;unfold is_true in H0;
             rewrite PArray.forallb_spec in H0;intros;
-              auto using Lit.interp_eq_compat.
+              auto using Lit.interp_eq_compat with smtcoq_core.
         - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
             rewrite !(Lit.interp_eq_compat f1 f2);auto.
         - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
@@ -138,7 +138,7 @@ Module Form.
             rewrite !(Lit.interp_eq_compat f1 f2);auto.
         - replace (List.map (Lit.interp f2) l) with (List.map (Lit.interp f1) l); auto.
           unfold is_true in H0. rewrite List.forallb_forall in H0.
-          apply List_map_ext_in. intros x Hx. apply Lit.interp_eq_compat; auto.
+          apply List_map_ext_in. intros x Hx. apply Lit.interp_eq_compat; auto with smtcoq_core.
       Qed.
 
       Definition wf := PArray.forallbi lt_form t_form.
@@ -589,11 +589,11 @@ Module Typ.
     (* TODO : Move this *)
     Lemma not_false : ~ false.
     Proof. intro;discriminate. Qed.
-    Hint Resolve not_false.
+    Hint Resolve not_false : smtcoq_core.
 
     Lemma is_true_true : true.
     Proof. reflexivity. Qed.
-    Hint Resolve is_true_true.
+    Hint Resolve is_true_true : smtcoq_core.
 
     Lemma not_is_true_eq_false : forall b:bool, ~ b <-> b = false.
     Proof. exact not_true_iff_false. Qed.
@@ -1231,8 +1231,8 @@ Qed.
         intros [op|op h|op h1 h2|op ha i i0|f args | i e ]; simpl.
         (* Constants *)
         left; destruct op; simpl.
-        exists Typ.Tpositive; auto.
-        exists Typ.TZ; auto.
+        exists Typ.Tpositive; auto with smtcoq_core.
+        exists Typ.TZ; auto with smtcoq_core.
         exists (Typ.TBV n); now rewrite N.eqb_refl.
         (* Unary operators *)
         destruct op; simpl;
@@ -1440,7 +1440,7 @@ Qed.
           right. intros. rewrite andb_false_r. easy.
         (* N-ary operators *)
         destruct f as [ty]; simpl; case (List.forallb (fun t1 : int => Typ.eqb (get_type t1) ty) args).
-        left; exists Typ.Tbool; auto.
+        left; exists Typ.Tbool; auto with smtcoq_core.
         right; intro T; rewrite andb_false_r; auto.
         (* Application *)
         case (v_type Typ.ftype interp_ft (t_func .[ i])); intros; apply check_args_dec.

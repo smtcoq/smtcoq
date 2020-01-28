@@ -279,28 +279,28 @@ intros. destruct H0; now contradict H0.
     Lemma wf_t_form : wf t_form.
     Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[_ H] _]; auto. Qed.
 
-    Local Hint Immediate wf_t_atom default_t_atom default_t_form wf_t_form.
+    Local Hint Immediate wf_t_atom default_t_atom default_t_form wf_t_form : smtcoq_spl_op.
 
     Lemma interp_check_distinct : forall ha diseq,
       check_distinct ha diseq = true ->
       interp_form_hatom ha = afold_left bool int true andb (Lit.interp rho) diseq.
     Proof.
-      intros ha diseq; rewrite check_distinct_spec; intros [A [dist [H1 H2]]]; rewrite check_diseqs_spec in H2; destruct H2 as [H2 H3]; unfold Atom.interp_form_hatom, Atom.interp_bool, Atom.interp_hatom; rewrite Atom.t_interp_wf; auto; rewrite H1; simpl; generalize (Atom.compute_interp_spec_rev t_i (get (Atom.t_interp t_i t_func t_atom)) A dist); case (Atom.compute_interp t_i (get (Atom.t_interp t_i t_func t_atom)) A nil); simpl.
+      intros ha diseq; rewrite check_distinct_spec; intros [A [dist [H1 H2]]]; rewrite check_diseqs_spec in H2; destruct H2 as [H2 H3]; unfold Atom.interp_form_hatom, Atom.interp_bool, Atom.interp_hatom; rewrite Atom.t_interp_wf; auto with smtcoq_spl_op; rewrite H1; simpl; generalize (Atom.compute_interp_spec_rev t_i (get (Atom.t_interp t_i t_func t_atom)) A dist); case (Atom.compute_interp t_i (get (Atom.t_interp t_i t_func t_atom)) A nil); simpl.
       intros l H4; case_eq (distinct (Typ.i_eqb t_i A) (rev l)).
-      rewrite distinct_spec; intro H5; symmetry; apply afold_left_andb_true; intros i Hi; destruct (H2 _ Hi) as [H9 [a [H10 [h1 [h2 [H6 [H7 H8]]]]]]]; unfold Lit.interp; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto); unfold Var.interp; rewrite Form.wf_interp_form; auto; rewrite H10; simpl; rewrite Atom.t_interp_wf; auto; rewrite H6; simpl; unfold Atom.apply_binop; unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; assert (H11: a < length t_atom).
-      case_eq (a < length t_atom); auto; intro H11; rewrite (get_outofbound _ _ _ H11) in H6; rewrite default_t_atom in H6; inversion H6.
-      generalize (wt_t_atom _ H11); rewrite H6; simpl; rewrite !andb_true_iff; change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h1) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h1) A)); change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h2) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h2) A)); rewrite !Typ.eqb_spec; intros [[_ H13] H12]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h1); rewrite H13; intros [v1 HH1]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h2); rewrite H12; intros [v2 HH2]; rewrite HH1, HH2; simpl; rewrite Typ.cast_refl; simpl; destruct H8 as [H8|H8]; [ |rewrite Typ.i_eqb_sym]; rewrite H5; auto; rewrite H4; [exists h2; exists h1|exists h1; exists h2]; auto.
-      rewrite distinct_false_spec; intros [v2 [v1 [H5 H6]]]; rewrite H4 in H5; destruct H5 as [a [b [H5 [H7 H8]]]]; clear H4; change (Typ.i_eqb t_i A v2 v1 = true) with (is_true (Typ.i_eqb t_i A v2 v1)) in H6; rewrite Typ.i_eqb_spec in H6; subst v2; clear H2; destruct (H3 _ _ H5) as [i [H2 [H4 [hb [H6 [H9 H10]]]]]]; clear H3; symmetry; apply (afold_left_andb_false _ i); auto; unfold Lit.interp; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto); unfold Var.interp; rewrite Form.wf_interp_form; auto; rewrite H6; simpl; rewrite Atom.t_interp_wf; auto; destruct H10 as [H10|H10]; rewrite H10; simpl; rewrite H7, H8; simpl; rewrite Typ.cast_refl; simpl; replace (Typ.i_eqb t_i A v1 v1) with true; auto; symmetry; change (is_true (Typ.i_eqb t_i A v1 v1)); rewrite Typ.i_eqb_spec; auto.
+      rewrite distinct_spec; intro H5; symmetry; apply afold_left_andb_true; intros i Hi; destruct (H2 _ Hi) as [H9 [a [H10 [h1 [h2 [H6 [H7 H8]]]]]]]; unfold Lit.interp; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto with smtcoq_spl_op smtcoq_core); unfold Var.interp; rewrite Form.wf_interp_form; auto with smtcoq_spl_op smtcoq_core; rewrite H10; simpl; rewrite Atom.t_interp_wf; auto with smtcoq_spl_op smtcoq_core; rewrite H6; simpl; unfold Atom.apply_binop; unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; assert (H11: a < length t_atom).
+      case_eq (a < length t_atom); auto with smtcoq_spl_op smtcoq_core; intro H11; rewrite (get_outofbound _ _ _ H11) in H6; rewrite default_t_atom in H6; inversion H6.
+      generalize (wt_t_atom _ H11); rewrite H6; simpl; rewrite !andb_true_iff; change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h1) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h1) A)); change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h2) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) h2) A)); rewrite !Typ.eqb_spec; intros [[_ H13] H12]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h1); rewrite H13; intros [v1 HH1]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h2); rewrite H12; intros [v2 HH2]; rewrite HH1, HH2; simpl; rewrite Typ.cast_refl; simpl; destruct H8 as [H8|H8]; [ |rewrite Typ.i_eqb_sym]; rewrite H5; auto with smtcoq_spl_op smtcoq_core; rewrite H4; [exists h2; exists h1|exists h1; exists h2]; auto with smtcoq_spl_op smtcoq_core.
+      rewrite distinct_false_spec; intros [v2 [v1 [H5 H6]]]; rewrite H4 in H5; destruct H5 as [a [b [H5 [H7 H8]]]]; clear H4; change (Typ.i_eqb t_i A v2 v1 = true) with (is_true (Typ.i_eqb t_i A v2 v1)) in H6; rewrite Typ.i_eqb_spec in H6; subst v2; clear H2; destruct (H3 _ _ H5) as [i [H2 [H4 [hb [H6 [H9 H10]]]]]]; clear H3; symmetry; apply (afold_left_andb_false _ i); auto with smtcoq_spl_op smtcoq_core; unfold Lit.interp; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto with smtcoq_spl_op smtcoq_core); unfold Var.interp; rewrite Form.wf_interp_form; auto with smtcoq_spl_op smtcoq_core; rewrite H6; simpl; rewrite Atom.t_interp_wf; auto with smtcoq_spl_op smtcoq_core; destruct H10 as [H10|H10]; rewrite H10; simpl; rewrite H7, H8; simpl; rewrite Typ.cast_refl; simpl; replace (Typ.i_eqb t_i A v1 v1) with true; auto with smtcoq_spl_op smtcoq_core; symmetry; change (is_true (Typ.i_eqb t_i A v1 v1)); rewrite Typ.i_eqb_spec; auto with smtcoq_spl_op smtcoq_core.
       intros [a [H20 H21]]; assert (H4: ha < length t_atom).
-      case_eq (ha < length t_atom); auto; intro Heq; generalize H1; rewrite get_outofbound; auto; rewrite default_t_atom; discriminate.
-      unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; generalize (wt_t_atom _ H4); rewrite H1; simpl; rewrite andb_true_iff, forallb_forall; intros [_ H5]; assert (H6 := H5 _ H20); generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a); intros [va Ha]; rewrite Ha in H21; simpl in H21; elim H21; apply Typ.eqb_spec; auto.
+      case_eq (ha < length t_atom); auto with smtcoq_spl_op smtcoq_core; intro Heq; generalize H1; rewrite get_outofbound; auto with smtcoq_spl_op smtcoq_core; rewrite default_t_atom; discriminate.
+      unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; generalize (wt_t_atom _ H4); rewrite H1; simpl; rewrite andb_true_iff, forallb_forall; intros [_ H5]; assert (H6 := H5 _ H20); generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a); intros [va Ha]; rewrite Ha in H21; simpl in H21; elim H21; apply Typ.eqb_spec; auto with smtcoq_spl_op smtcoq_core.
     Qed.
 
     Lemma interp_check_distinct_two_args : forall f1 f2,
       check_distinct_two_args f1 f2 = true ->
       rho f1 = negb (rho f2).
     Proof.
-      intros f1 f2; rewrite check_distinct_two_args_spec; intros [ha [hb [A [x [y [H1 [H2 [H3 [H4|H4]]]]]]]]]; unfold Form.interp_state_var; assert (H5: f1 < length t_form) by (case_eq (f1 < length t_form); auto; intro Heq; generalize H1; rewrite get_outofbound; auto; rewrite default_t_form; discriminate); assert (H6: f2 < length t_form) by (case_eq (f2 < length t_form); auto; intro Heq; generalize H2; rewrite get_outofbound; auto; rewrite default_t_form; discriminate); rewrite !Form.t_interp_wf; auto; rewrite H1, H2; simpl; unfold Atom.interp_form_hatom, Atom.interp_hatom; rewrite !Atom.t_interp_wf; auto; rewrite H3, H4; simpl; unfold Atom.wt,is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; assert (H7: hb < length t_atom) by (case_eq (hb < length t_atom); auto; intro Heq; generalize H4; rewrite get_outofbound; auto; rewrite default_t_atom; discriminate); generalize (wt_t_atom _ H7); rewrite H4; simpl; case (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) hb); try discriminate; simpl; rewrite andb_true_iff; change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) x) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) x) A)); change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) y) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) y) A)); rewrite !Typ.eqb_spec; intros [H8 H9]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom x), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom y); rewrite H8, H9; intros [v1 HH1] [v2 HH2]; rewrite HH1, HH2; simpl; rewrite Typ.cast_refl; auto; rewrite Typ.i_eqb_sym; auto.
+      intros f1 f2; rewrite check_distinct_two_args_spec; intros [ha [hb [A [x [y [H1 [H2 [H3 [H4|H4]]]]]]]]]; unfold Form.interp_state_var; assert (H5: f1 < length t_form) by (case_eq (f1 < length t_form); auto with smtcoq_spl_op smtcoq_core; intro Heq; generalize H1; rewrite get_outofbound; auto with smtcoq_spl_op smtcoq_core; rewrite default_t_form; discriminate); assert (H6: f2 < length t_form) by (case_eq (f2 < length t_form); auto with smtcoq_spl_op smtcoq_core; intro Heq; generalize H2; rewrite get_outofbound; auto with smtcoq_spl_op smtcoq_core; rewrite default_t_form; discriminate); rewrite !Form.t_interp_wf; auto with smtcoq_spl_op smtcoq_core; rewrite H1, H2; simpl; unfold Atom.interp_form_hatom, Atom.interp_hatom; rewrite !Atom.t_interp_wf; auto with smtcoq_spl_op smtcoq_core; rewrite H3, H4; simpl; unfold Atom.wt,is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; assert (H7: hb < length t_atom) by (case_eq (hb < length t_atom); auto with smtcoq_spl_op smtcoq_core; intro Heq; generalize H4; rewrite get_outofbound; auto with smtcoq_spl_op smtcoq_core; rewrite default_t_atom; discriminate); generalize (wt_t_atom _ H7); rewrite H4; simpl; case (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) hb); try discriminate; simpl; rewrite andb_true_iff; change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) x) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) x) A)); change (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) y) A = true) with (is_true (Typ.eqb (Atom.get_type' t_i (Atom.t_interp t_i t_func t_atom) y) A)); rewrite !Typ.eqb_spec; intros [H8 H9]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom x), (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom y); rewrite H8, H9; intros [v1 HH1] [v2 HH2]; rewrite HH1, HH2; simpl; rewrite Typ.cast_refl; auto with smtcoq_spl_op smtcoq_core; rewrite Typ.i_eqb_sym; auto with smtcoq_spl_op smtcoq_core.
     Qed.
 
 
@@ -308,13 +308,13 @@ intros. destruct H0; now contradict H0.
     (*   check_distinct ha diseq -> *)
     (*   interp_form_hatom ha -> afold_left bool int true andb (Lit.interp rho) diseq. *)
     (* Proof. *)
-  (*     intros ha diseq; rewrite check_distinct_spec; intros [A [dist [H1 H]]]; rewrite check_diseqs_spec in H; unfold Atom.interp_form_hatom, Atom.interp_bool, Atom.interp_hatom; rewrite Atom.t_interp_wf; auto; rewrite H1; simpl; generalize (Atom.compute_interp_spec_rev t_i (get (Atom.t_interp t_i t_func t_atom)) A dist); case (Atom.compute_interp t_i (get (Atom.t_interp t_i t_func t_atom)) A nil); simpl. *)
-  (*     intros l H2; unfold is_true; rewrite distinct_spec; intro H3; apply afold_left_andb_true; intros i Hi; destruct (H _ Hi) as [H4 [a [H5 [h1 [h2 [H6 [H7 H8]]]]]]]; unfold Lit.interp; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto); unfold Var.interp; rewrite Form.wf_interp_form; auto; rewrite H5; simpl; rewrite Atom.t_interp_wf; auto; rewrite H6; simpl; unfold Atom.apply_binop; unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; assert (H10: a < length t_atom). *)
-  (*     case_eq (a < length t_atom); auto; intro H10; rewrite (get_outofbound _ _ _ H10) in H6; rewrite default_t_atom in H6; inversion H6. *)
-  (*     generalize (wt_t_atom _ H10); rewrite H6; simpl; rewrite !andb_true_iff. change (Typ.eqb (Atom.get_type t_i t_func t_atom h1) A = true) with (is_true (Typ.eqb (Atom.get_type t_i t_func t_atom h1) A)); change (Typ.eqb (Atom.get_type t_i t_func t_atom h2) A = true) with (is_true (Typ.eqb (Atom.get_type t_i t_func t_atom h2) A)); rewrite !Typ.eqb_spec; intros [[_ H11] H12]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h1); rewrite H11; intros [v1 HH1]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h2); rewrite H12; intros [v2 HH2]; rewrite HH1, HH2; simpl; rewrite Typ.cast_refl; simpl; destruct H8 as [H8|H8]; [ |rewrite Typ.i_eqb_sym]; rewrite H3; auto; rewrite H2; [exists h2; exists h1|exists h1; exists h2]; auto. *)
+  (*     intros ha diseq; rewrite check_distinct_spec; intros [A [dist [H1 H]]]; rewrite check_diseqs_spec in H; unfold Atom.interp_form_hatom, Atom.interp_bool, Atom.interp_hatom; rewrite Atom.t_interp_wf; auto with smtcoq_spl_op smtcoq_core; rewrite H1; simpl; generalize (Atom.compute_interp_spec_rev t_i (get (Atom.t_interp t_i t_func t_atom)) A dist); case (Atom.compute_interp t_i (get (Atom.t_interp t_i t_func t_atom)) A nil); simpl. *)
+  (*     intros l H2; unfold is_true; rewrite distinct_spec; intro H3; apply afold_left_andb_true; intros i Hi; destruct (H _ Hi) as [H4 [a [H5 [h1 [h2 [H6 [H7 H8]]]]]]]; unfold Lit.interp; replace (Lit.is_pos (diseq .[ i])) with false by (case_eq (Lit.is_pos (diseq .[ i])); auto with smtcoq_spl_op smtcoq_core); unfold Var.interp; rewrite Form.wf_interp_form; auto with smtcoq_spl_op smtcoq_core; rewrite H5; simpl; rewrite Atom.t_interp_wf; auto with smtcoq_spl_op smtcoq_core; rewrite H6; simpl; unfold Atom.apply_binop; unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; assert (H10: a < length t_atom). *)
+  (*     case_eq (a < length t_atom); auto with smtcoq_spl_op smtcoq_core; intro H10; rewrite (get_outofbound _ _ _ H10) in H6; rewrite default_t_atom in H6; inversion H6. *)
+  (*     generalize (wt_t_atom _ H10); rewrite H6; simpl; rewrite !andb_true_iff. change (Typ.eqb (Atom.get_type t_i t_func t_atom h1) A = true) with (is_true (Typ.eqb (Atom.get_type t_i t_func t_atom h1) A)); change (Typ.eqb (Atom.get_type t_i t_func t_atom h2) A = true) with (is_true (Typ.eqb (Atom.get_type t_i t_func t_atom h2) A)); rewrite !Typ.eqb_spec; intros [[_ H11] H12]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h1); rewrite H11; intros [v1 HH1]; generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom h2); rewrite H12; intros [v2 HH2]; rewrite HH1, HH2; simpl; rewrite Typ.cast_refl; simpl; destruct H8 as [H8|H8]; [ |rewrite Typ.i_eqb_sym]; rewrite H3; auto with smtcoq_spl_op smtcoq_core; rewrite H2; [exists h2; exists h1|exists h1; exists h2]; auto with smtcoq_spl_op smtcoq_core. *)
   (*     intros [a [H2 H3]] _; assert (H4: ha < length t_atom). *)
-  (*     case_eq (ha < length t_atom); auto; intro Heq; generalize H1; rewrite get_outofbound; auto; rewrite default_t_atom; discriminate. *)
-  (*     unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; generalize (wt_t_atom _ H4); rewrite H1; simpl; rewrite andb_true_iff, forallb_forall; intros [_ H5]; assert (H6 := H5 _ H2); generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a); intros [va Ha]; rewrite Ha in H3; simpl in H3; elim H3; apply Typ.eqb_spec; auto. *)
+  (*     case_eq (ha < length t_atom); auto with smtcoq_spl_op smtcoq_core; intro Heq; generalize H1; rewrite get_outofbound; auto with smtcoq_spl_op smtcoq_core; rewrite default_t_atom; discriminate. *)
+  (*     unfold Atom.wt in wt_t_atom; unfold is_true in wt_t_atom; rewrite forallbi_spec in wt_t_atom; generalize (wt_t_atom _ H4); rewrite H1; simpl; rewrite andb_true_iff, forallb_forall; intros [_ H5]; assert (H6 := H5 _ H2); generalize (Atom.check_aux_interp_hatom _ t_func _ wf_t_atom a); intros [va Ha]; rewrite Ha in H3; simpl in H3; elim H3; apply Typ.eqb_spec; auto with smtcoq_spl_op smtcoq_core. *)
   (*   Qed. *)
 
   End Valid1.
@@ -382,18 +382,18 @@ intros. destruct H0; now contradict H0.
       check_lit l1 l2 -> Lit.interp rho l1 = Lit.interp rho l2.
     Proof.
       unfold check_lit; intros l1 l2; unfold is_true; rewrite !orb_true_iff, !andb_true_iff; intros [[H1|[H1 H2]]|[H1 H2]].
-      rewrite eqb_spec in H1; rewrite H1; auto.
-      rewrite Bool.eqb_true_iff in H1; unfold Lit.interp; rewrite H1, (interp_check_var _ _ H2); auto.
-      generalize H1; unfold Lit.interp; case (Lit.is_pos l1); case (Lit.is_pos l2); try discriminate; intros _; unfold Var.interp; rewrite (interp_check_distinct_two_args _ t_func ch_atom ch_form wt_t_atom _ _ H2); auto; case (rho (Lit.blit l2)); auto.
+      rewrite eqb_spec in H1; rewrite H1; auto with smtcoq_core.
+      rewrite Bool.eqb_true_iff in H1; unfold Lit.interp; rewrite H1, (interp_check_var _ _ H2); auto with smtcoq_core.
+      generalize H1; unfold Lit.interp; case (Lit.is_pos l1); case (Lit.is_pos l2); try discriminate; intros _; unfold Var.interp; rewrite (interp_check_distinct_two_args _ t_func ch_atom ch_form wt_t_atom _ _ H2); auto with smtcoq_core; case (rho (Lit.blit l2)); auto with smtcoq_core.
     Qed.
 
     (* Lemma interp_check_lit : forall l1 l2, *)
     (*   check_lit l1 l2 -> Lit.interp rho l1 -> Lit.interp rho l2 = true. *)
     (* Proof. *)
     (*   unfold check_lit; intros l1 l2; unfold is_true; rewrite !orb_true_iff, !andb_true_iff; intros [[H1|[[H1 H2] H3]]|[[H1 H2] H3]]. *)
-    (*   rewrite Int63Properties.eqb_spec in H1; subst l1; auto. *)
-    (*   unfold Lit.interp; rewrite H1, H2; apply interp_check_var; auto. *)
-    (*   unfold Lit.interp; case_eq (Lit.is_pos l1); intro Heq; rewrite Heq in H1; try discriminate; clear Heq H1; case_eq (Lit.is_pos l2); intro Heq; rewrite Heq in H2; try discriminate; clear Heq H2; case_eq (Var.interp rho (Lit.blit l1)); try discriminate; intros H4 _; case_eq (Var.interp rho (Lit.blit l2)); auto; intro H5; rewrite (interp_check_var _ _ H3 H5) in H4; discriminate. *)
+    (*   rewrite Int63Properties.eqb_spec in H1; subst l1; auto with smtcoq_core. *)
+    (*   unfold Lit.interp; rewrite H1, H2; apply interp_check_var; auto with smtcoq_core. *)
+    (*   unfold Lit.interp; case_eq (Lit.is_pos l1); intro Heq; rewrite Heq in H1; try discriminate; clear Heq H1; case_eq (Lit.is_pos l2); intro Heq; rewrite Heq in H2; try discriminate; clear Heq H2; case_eq (Var.interp rho (Lit.blit l1)); try discriminate; intros H4 _; case_eq (Var.interp rho (Lit.blit l2)); auto with smtcoq_core; intro H5; rewrite (interp_check_var _ _ H3 H5) in H4; discriminate. *)
     (* Qed. *)
 
     (* Local Hint Resolve interp_check_lit. *)
@@ -402,72 +402,72 @@ intros. destruct H0; now contradict H0.
       check_form_aux a b ->
       Form.interp interp_form_hatom interp_form_hatom_bv t_form a = Form.interp interp_form_hatom interp_form_hatom_bv t_form b.
     Proof.
-      intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3|a l1] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3|b m1]; simpl; try discriminate;auto.
+      intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3|a l1] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3|b m1]; simpl; try discriminate;auto with smtcoq_core.
       (* Atom *)
-      unfold is_true; rewrite Int63Properties.eqb_spec; intro; subst a; auto.
+      unfold is_true; rewrite Int63Properties.eqb_spec; intro; subst a; auto with smtcoq_core.
       (* Interesting case *)
-      apply interp_check_distinct; auto.
+      apply interp_check_distinct; auto with smtcoq_core.
       (* Double negation *)
-      unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; subst j1. rewrite (interp_check_lit _ _ H2). auto.
+      unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; subst j1. rewrite (interp_check_lit _ _ H2). auto with smtcoq_core.
       (* Conjunction *)
-      unfold is_true; rewrite andb_true_iff, eqb_spec, forallbi_spec; intros [H1 H2]; apply afold_left_eq; auto; intros i Hi; apply interp_check_lit; auto.
+      unfold is_true; rewrite andb_true_iff, eqb_spec, forallbi_spec; intros [H1 H2]; apply afold_left_eq; auto with smtcoq_core; intros i Hi; apply interp_check_lit; auto with smtcoq_core.
       (* Disjunction *)
-      unfold is_true; rewrite andb_true_iff, eqb_spec, forallbi_spec; intros [H1 H2]; apply afold_left_eq; auto; intros i Hi; apply interp_check_lit; auto.
+      unfold is_true; rewrite andb_true_iff, eqb_spec, forallbi_spec; intros [H1 H2]; apply afold_left_eq; auto with smtcoq_core; intros i Hi; apply interp_check_lit; auto with smtcoq_core.
       (* Implication *)
-      unfold is_true; rewrite andb_true_iff, eqb_spec, forallbi_spec; intros [H1 H2]; apply afold_right_eq; auto; intros i Hi; apply interp_check_lit; auto.
+      unfold is_true; rewrite andb_true_iff, eqb_spec, forallbi_spec; intros [H1 H2]; apply afold_right_eq; auto with smtcoq_core; intros i Hi; apply interp_check_lit; auto with smtcoq_core.
       (* Xor *)
-      unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (interp_check_lit _ _ H1), (interp_check_lit _ _ H2); auto.
+      unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (interp_check_lit _ _ H1), (interp_check_lit _ _ H2); auto with smtcoq_core.
       (* Iff *)
-      unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (interp_check_lit _ _ H1), (interp_check_lit _ _ H2); auto.
+      unfold is_true; rewrite andb_true_iff; intros [H1 H2]; rewrite (interp_check_lit _ _ H1), (interp_check_lit _ _ H2); auto with smtcoq_core.
       (* Ite *)
-      unfold is_true; rewrite !andb_true_iff; intros [[H1 H2] H3]; rewrite (interp_check_lit _ _ H1), (interp_check_lit _ _ H2), (interp_check_lit _ _ H3); auto.
+      unfold is_true; rewrite !andb_true_iff; intros [[H1 H2] H3]; rewrite (interp_check_lit _ _ H1), (interp_check_lit _ _ H2), (interp_check_lit _ _ H3); auto with smtcoq_core.
     Qed.
 
     (* Lemma interp_check_lit_equiv : forall l1 l2, *)
     (*   check_lit l1 l2 -> check_lit l2 l1 -> *)
     (*   Lit.interp rho l1 = Lit.interp rho l2. *)
     (* Proof. *)
-    (*   intros l1 l2 H1 H2; generalize (interp_check_lit _ _ H1) (interp_check_lit _ _ H2); case (Lit.interp rho l1); case (Lit.interp rho l2); auto; symmetry; auto. *)
+    (*   intros l1 l2 H1 H2; generalize (interp_check_lit _ _ H1) (interp_check_lit _ _ H2); case (Lit.interp rho l1); case (Lit.interp rho l2); auto with smtcoq_core; symmetry; auto with smtcoq_core. *)
     (* Qed. *)
 
     (* Lemma interp_check_form_aux : forall a b, *)
     (*   check_form_aux a b -> *)
     (*   Form.interp interp_form_hatom t_form a -> Form.interp interp_form_hatom t_form b. *)
     (* Proof. *)
-    (*   intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3]; simpl; try discriminate;auto. *)
+    (*   intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3]; simpl; try discriminate;auto with smtcoq_core. *)
     (*   (* Atom *) *)
-    (*   unfold is_true; rewrite Int63Properties.eqb_spec; intro; subst a; auto. *)
+    (*   unfold is_true; rewrite Int63Properties.eqb_spec; intro; subst a; auto with smtcoq_core. *)
     (*   (* Interesting case *) *)
-    (*   apply interp_check_distinct; auto. *)
+    (*   apply interp_check_distinct; auto with smtcoq_core. *)
     (*   (* Double negation *) *)
     (*   unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; subst j1; apply (fold_ind2 _ _ (fun x y => x = true -> y = true)). *)
-    (*   apply interp_check_lit; auto. *)
-    (*   intros a b; case a; try discriminate; intros H _; rewrite H; auto. *)
+    (*   apply interp_check_lit; auto with smtcoq_core. *)
+    (*   intros a b; case a; try discriminate; intros H _; rewrite H; auto with smtcoq_core. *)
     (*   (* Conjunction *) *)
-    (*   unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; rewrite forallbi_spec in H2; intro H3; assert (H4 := afold_left_andb_true_inv _ _ _ H3); clear H3; apply afold_left_andb_true; rewrite <- H1; intros i Hi; eapply interp_check_lit; eauto. *)
+    (*   unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; rewrite forallbi_spec in H2; intro H3; assert (H4 := afold_left_andb_true_inv _ _ _ H3); clear H3; apply afold_left_andb_true; rewrite <- H1; intros i Hi; eapply interp_check_lit; eauto with smtcoq_core. *)
     (*   (* Disjunction *) *)
     (*   unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; rewrite forallbi_spec in H2; intro H3; assert (H4 := afold_left_orb_true_inv _ _ _ H3); clear H3; destruct H4 as [i [H3 H4]]; eapply afold_left_orb_true. *)
-    (*   rewrite <- H1; eauto. *)
-    (*   eapply interp_check_lit; eauto. *)
+    (*   rewrite <- H1; eauto with smtcoq_core. *)
+    (*   eapply interp_check_lit; eauto with smtcoq_core. *)
     (*   (* Implication *) *)
     (*   unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H1 H2]; rewrite forallbi_spec in H2; intro H3; apply afold_right_implb_true; case_eq (length a1 == 0); intro Heq. *)
-    (*   left; rewrite eqb_spec in Heq; rewrite <- H1; auto. *)
+    (*   left; rewrite eqb_spec in Heq; rewrite <- H1; auto with smtcoq_core. *)
     (*   destruct (afold_right_implb_true_inv _ _ _ H3) as [H4|[[i [H4 H5]]|H4]]. *)
     (*   rewrite H4 in Heq; discriminate. *)
-    (*   right; left; exists i; rewrite <- H1; split; auto; case_eq (Lit.interp rho (a2 .[ i])); auto; intro H6; assert (H7: i < length a1 = true). *)
-    (*   rewrite ltb_spec in *; rewrite eqb_false_spec in Heq; rewrite to_Z_sub_1_diff in H4; auto; omega. *)
-    (*   generalize (H2 _ H7); rewrite H4; intro H8; rewrite (interp_check_lit _ _ H8 H6) in H5; auto. *)
+    (*   right; left; exists i; rewrite <- H1; split; auto with smtcoq_core; case_eq (Lit.interp rho (a2 .[ i])); auto with smtcoq_core; intro H6; assert (H7: i < length a1 = true). *)
+    (*   rewrite ltb_spec in *; rewrite eqb_false_spec in Heq; rewrite to_Z_sub_1_diff in H4; auto with smtcoq_core; omega. *)
+    (*   generalize (H2 _ H7); rewrite H4; intro H8; rewrite (interp_check_lit _ _ H8 H6) in H5; auto with smtcoq_core. *)
     (*   right; case_eq (existsbi (fun i l => (i < length a2 - 1) && (negb (Lit.interp rho l))) a2). *)
-    (*   rewrite existsbi_spec; intros [i [_ H5]]; rewrite andb_true_iff in H5; destruct H5 as [H5 H6]; left; exists i; split; auto; generalize H6; case (Lit.interp rho (a2 .[ i])); auto; discriminate. *)
+    (*   rewrite existsbi_spec; intros [i [_ H5]]; rewrite andb_true_iff in H5; destruct H5 as [H5 H6]; left; exists i; split; auto with smtcoq_core; generalize H6; case (Lit.interp rho (a2 .[ i])); auto with smtcoq_core; discriminate. *)
     (*   rewrite existsbi_false_spec; intro H; right; intros i Hi; assert (Hi' := Hi); rewrite <- H1 in Hi'; generalize (H2 _ Hi') (H _ Hi); rewrite <- H1; case (i < length a1 - 1); simpl. *)
-    (*   intros _; case (Lit.interp rho (a2 .[ i])); auto; discriminate. *)
-    (*   intros H5 _; apply (interp_check_lit _ _ H5); apply H4; auto. *)
+    (*   intros _; case (Lit.interp rho (a2 .[ i])); auto with smtcoq_core; discriminate. *)
+    (*   intros H5 _; apply (interp_check_lit _ _ H5); apply H4; auto with smtcoq_core. *)
     (*   (* Xor *) *)
-    (*   unfold is_true; rewrite !andb_true_iff; intros [[[H1 H2] H3] H4]; rewrite (interp_check_lit_equiv _ _ H1 H2), (interp_check_lit_equiv _ _ H3 H4); auto. *)
+    (*   unfold is_true; rewrite !andb_true_iff; intros [[[H1 H2] H3] H4]; rewrite (interp_check_lit_equiv _ _ H1 H2), (interp_check_lit_equiv _ _ H3 H4); auto with smtcoq_core. *)
     (*   (* Iff *) *)
-    (*   unfold is_true; rewrite !andb_true_iff; intros [[[H1 H2] H3] H4]; rewrite (interp_check_lit_equiv _ _ H1 H2), (interp_check_lit_equiv _ _ H3 H4); auto. *)
+    (*   unfold is_true; rewrite !andb_true_iff; intros [[[H1 H2] H3] H4]; rewrite (interp_check_lit_equiv _ _ H1 H2), (interp_check_lit_equiv _ _ H3 H4); auto with smtcoq_core. *)
     (*   (* Ite *) *)
-    (*   unfold is_true; rewrite !andb_true_iff; intros [[[H1 H2] H3] H4]; rewrite (interp_check_lit_equiv _ _ H1 H2); case (Lit.interp rho j1); apply interp_check_lit; auto. *)
+    (*   unfold is_true; rewrite !andb_true_iff; intros [[[H1 H2] H3] H4]; rewrite (interp_check_lit_equiv _ _ H1 H2); case (Lit.interp rho j1); apply interp_check_lit; auto with smtcoq_core. *)
     (* Qed. *)
 
   End AUX.
@@ -505,50 +505,46 @@ intros. destruct H0; now contradict H0.
 
 
     Let wf_rho : Valuation.wf rho.
-    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto with smtcoq_core. Qed.
 
     Let default_t_form : default t_form = Ftrue.
-    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[H _] _]; auto. Qed.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[H _] _]; auto with smtcoq_core. Qed.
 
     Let wf_t_form : wf t_form.
-    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[_ H] _]; auto. Qed.
-
-    Local Hint Immediate wf_rho default_t_form wf_t_form.
+    Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[_ H] _]; auto with smtcoq_core. Qed.
 
 
     Lemma interp_check_hform : forall h1 h2,
       check_hform h1 h2 -> Var.interp rho h1 = Var.interp rho h2.
     Proof.
       unfold check_hform; apply foldi_down_cont_ind; try discriminate. intros i cont _ _ Hrec h1 h2. unfold is_true; rewrite orb_true_iff; intros [H|H].
-      rewrite Int63Properties.eqb_spec in H; rewrite H; auto.
-      unfold Var.interp; rewrite !wf_interp_form; auto; eapply interp_check_form_aux; eauto.
+      rewrite Int63Properties.eqb_spec in H; rewrite H; auto with smtcoq_core.
+      unfold Var.interp; rewrite !wf_interp_form; auto with smtcoq_core; eapply interp_check_form_aux; eauto with smtcoq_core.
     Qed.
-
-    Local Hint Resolve interp_check_hform.
 
 
     Lemma interp_check_form : forall a b,
       check_form a b ->
       Form.interp interp_form_hatom interp_form_hatom_bv t_form a = Form.interp interp_form_hatom interp_form_hatom_bv t_form b.
-    Proof. apply interp_check_form_aux, interp_check_hform; auto. Qed.
+    Proof. apply interp_check_form_aux, interp_check_hform; auto with smtcoq_core. Qed.
 
 
     Lemma interp_check_lit' : forall l res,
       check_lit' l res -> Lit.interp rho l = Lit.interp rho res.
-    Proof. apply interp_check_lit, interp_check_hform; auto. Qed.
+    Proof. apply interp_check_lit, interp_check_hform; auto with smtcoq_core. Qed.
 
 
     Lemma valid_check_distinct_elim :
       forall input, C.valid rho input ->
         forall res, C.valid rho (check_distinct_elim input res).
     Proof.
-      induction input as [ |l c IHc]; auto; simpl; unfold C.valid; simpl; rewrite orb_true_iff; intros [H|H] res.
+      induction input as [ |l c IHc]; auto with smtcoq_core; simpl; unfold C.valid; simpl; rewrite orb_true_iff; intros [H|H] res.
       case_eq (check_lit' l res); intro Heq; simpl.
-      rewrite <- (interp_check_lit' _ _ Heq), H; auto.
-      rewrite H; auto.
+      rewrite <- (interp_check_lit' _ _ Heq), H; auto with smtcoq_core.
+      rewrite H; auto with smtcoq_core.
       case (check_lit' l res).
-      simpl; rewrite H, orb_true_r; auto.
-      simpl; rewrite (IHc H), orb_true_r; auto.
+      simpl; rewrite H, orb_true_r; auto with smtcoq_core.
+      simpl; rewrite (IHc H), orb_true_r; auto with smtcoq_core.
     Qed.
 
   End Valid.

@@ -44,7 +44,7 @@ Module Raw.
   Lemma eqb_elt_eq x y : eqb_elt x y = true <-> x = y.
   Proof. unfold eqb_elt. case (eq_dec x y); split; easy. Qed.
 
-  Hint Immediate eqb_key_eq eqb_elt_eq.
+  Hint Immediate eqb_key_eq eqb_elt_eq : smtcoq_array.
 
   Definition farray := list (key * elt).
 
@@ -57,8 +57,8 @@ Module Raw.
   (* Definition ltke (a b : (key * elt)) := *)
   (*   lt (fst a) (fst b) \/ ( (fst a) = (fst b) /\ lt (snd a) (snd b)). *)
 
-  Hint Unfold ltk (* ltke *) eqk eqke.
-  Hint Extern 2 (eqke ?a ?b) => split.
+  Hint Unfold ltk (* ltke *) eqk eqke : smtcoq_array.
+  Hint Extern 2 (eqke ?a ?b) => split : smtcoq_array.
 
   Global Instance lt_key_strorder : StrictOrder (lt : key -> key -> Prop).
   Proof. apply StrictOrder_OrdType. Qed.
@@ -95,7 +95,7 @@ Module Raw.
 
    Lemma ltk_right_l : forall x k e e', ltk (k,e) x -> ltk (k,e') x.
    Proof. auto. Qed.
-   Hint Immediate ltk_right_r ltk_right_l.
+   Hint Immediate ltk_right_r ltk_right_l : smtcoq_array.
 
   Notation Sort := (sort ltk).
   Notation Inf := (lelistA (ltk)).
@@ -105,7 +105,7 @@ Module Raw.
 
   Notation NoDupA := (NoDupA eqk).
 
-  Hint Unfold MapsTo In.
+  Hint Unfold MapsTo In : smtcoq_array.
 
   (* Instance ke_ord: OrdType (key * elt). *)
   (* Proof. *)
@@ -154,52 +154,52 @@ Module Raw.
   (* eqk, eqke are equalities *)
 
   Lemma eqk_refl : forall e, eqk e e.
-  Proof. auto. Qed.
+  Proof. auto with smtcoq_array. Qed.
 
   Lemma eqke_refl : forall e, eqke e e.
-  Proof. auto. Qed.
+  Proof. auto with smtcoq_array. Qed.
 
   Lemma eqk_sym : forall e e', eqk e e' -> eqk e' e.
-  Proof. auto. Qed.
+  Proof. auto with smtcoq_array. Qed.
 
   Lemma eqke_sym : forall e e', eqke e e' -> eqke e' e.
   Proof. unfold eqke; intuition. Qed.
 
   Lemma eqk_trans : forall e e' e'', eqk e e' -> eqk e' e'' -> eqk e e''.
-  Proof. eauto. Qed.
+  Proof. eauto with smtcoq_array. Qed.
 
   Lemma eqke_trans : forall e e' e'', eqke e e' -> eqke e' e'' -> eqke e e''.
   Proof.
-    unfold eqke; intuition; [ eauto | congruence ].
+    unfold eqke; intuition; [ eauto with smtcoq_array | congruence ].
   Qed.
 
   Lemma ltk_trans : forall e e' e'', ltk e e' -> ltk e' e'' -> ltk e e''.
-  Proof. eauto. Qed.
+  Proof. eauto with smtcoq_array. Qed.
 
   Lemma ltk_not_eqk : forall e e', ltk e e' -> ~ eqk e e'.
-  Proof. unfold ltk, eqk. intros. apply lt_not_eq; auto. Qed.
+  Proof. unfold ltk, eqk. intros. apply lt_not_eq; auto with smtcoq_array. Qed.
 
   Lemma ltk_not_eqke : forall e e', ltk e e' -> ~eqke e e'.
   Proof.
     unfold eqke, ltk; intuition; simpl in *; subst.
-    apply lt_not_eq in H. auto.
+    apply lt_not_eq in H. auto with smtcoq_array.
   Qed.
 
-  Hint Resolve eqk_trans eqke_trans eqk_refl eqke_refl.
-  Hint Resolve ltk_trans ltk_not_eqk ltk_not_eqke.
-  Hint Immediate eqk_sym eqke_sym.
+  Hint Resolve eqk_trans eqke_trans eqk_refl eqke_refl : smtcoq_array.
+  Hint Resolve ltk_trans ltk_not_eqk ltk_not_eqke : smtcoq_array.
+  Hint Immediate eqk_sym eqke_sym : smtcoq_array.
 
   Global Instance eqk_equiv : Equivalence eqk.
-  Proof. split; eauto. Qed.
+  Proof. split; eauto with smtcoq_array. Qed.
 
   Global Instance eqke_equiv : Equivalence eqke.
-  Proof. split; eauto. Qed.
+  Proof. split; eauto with smtcoq_array. Qed.
 
   Global Instance ltk_strorder : StrictOrder ltk.
   Proof.
     split.
     unfold Irreflexive, Reflexive, complement.
-    intros. apply lt_not_eq in H; auto.
+    intros. apply lt_not_eq in H; auto with smtcoq_array.
     unfold Transitive. intros x y z. apply lt_trans.
   Qed.
 
@@ -207,13 +207,13 @@ Module Raw.
   (* Proof. *)
   (*   split. *)
   (*   unfold Irreflexive, Reflexive, complement. *)
-  (*   intros. apply lt_not_eq in H; auto. *)
+  (*   intros. apply lt_not_eq in H; auto with smtcoq_array. *)
   (*   unfold Transitive. apply lt_trans. *)
   (* Qed. *)
 
   Global Instance eq_equiv : @Equivalence (key * elt) eq.
   Proof.
-    split; auto.
+    split; auto with smtcoq_array.
     unfold Transitive. apply eq_trans.
   Qed.
 
@@ -230,13 +230,13 @@ Module Raw.
   Global Instance ltk_compatk : Proper (eqk==>eqk==>iff) ltk.
   Proof.
   intros (x,e) (x',e') Hxx' (y,f) (y',f') Hyy'; compute.
-   compute in Hxx'; compute in Hyy'. rewrite Hxx', Hyy'; auto.
+   compute in Hxx'; compute in Hyy'. rewrite Hxx', Hyy'; auto with smtcoq_array.
   Qed.
 
   Global Instance ltk_compat' : Proper (eqke==>eqke==>iff) ltk.
   Proof.
   intros (x,e) (x',e') (Hxx',_) (y,f) (y',f') (Hyy',_); compute.
-   compute in Hxx'; compute in Hyy'. rewrite Hxx', Hyy'; auto.
+   compute in Hxx'; compute in Hyy'. rewrite Hxx', Hyy'; auto with smtcoq_array.
   Qed.
 
   Global Instance ltk_asym : Asymmetric ltk.
@@ -251,8 +251,8 @@ Module Raw.
     destruct x, x'. simpl in *.
     intro.
     symmetry in H.
-    apply lt_not_eq in H. auto.
-    subst. auto.
+    apply lt_not_eq in H. auto with smtcoq_array.
+    subst. auto with smtcoq_array.
   Qed.
 
   Lemma ltk_eqk : forall e e' e'', ltk e e' -> eqk e' e'' -> ltk e e''.
@@ -265,8 +265,8 @@ Module Raw.
     intros (k,e) (k',e') (k'',e'').
     unfold ltk, eqk; simpl; intros; subst; trivial.
   Qed.
-  Hint Resolve eqk_not_ltk.
-  Hint Immediate ltk_eqk eqk_ltk.
+  Hint Resolve eqk_not_ltk : smtcoq_array.
+  Hint Immediate ltk_eqk eqk_ltk : smtcoq_array.
   
   Lemma InA_eqke_eqk :
      forall x m, InA eqke x m -> InA eqk x m.
@@ -274,19 +274,19 @@ Module Raw.
     unfold eqke; induction 1; intuition.
   Qed.
 
-  Hint Resolve InA_eqke_eqk.
+  Hint Resolve InA_eqke_eqk : smtcoq_array.
 
   (* Lemma InA_eqk : forall p q m, eqk p q -> InA eqk p m -> InA eqk q m. *)
   (* Proof. *)
-  (*  intros; apply InA_eqA with p; auto with *. *)
+  (*  intros; apply InA_eqA with p; auto with smtcoq_array with *. *)
   (* Qed. *)
 
   (* Lemma In_eq : forall l x y, eq x y -> InA eqke x l -> InA eqke y l. *)
-  (* Proof. intros. rewrite <- H; auto. Qed. *)
+  (* Proof. intros. rewrite <- H; auto with smtcoq_array. Qed. *)
 
   (* Lemma ListIn_In : forall l x, List.In x l -> InA eqk x l. *)
-  (* Proof. apply In_InA. split; auto. unfold Transitive. *)
-  (*   unfold eqk; intros. rewrite H, <- H0. auto. *)
+  (* Proof. apply In_InA. split; auto with smtcoq_array. unfold Transitive. *)
+  (*   unfold eqk; intros. rewrite H, <- H0. auto with smtcoq_array. *)
   (* Qed. *)
   
   (* Lemma Inf_lt : forall l x y, ltk x y -> Inf y l -> Inf x l. *)
@@ -300,12 +300,12 @@ Module Raw.
   Lemma In_alt : forall k l, In k l <-> exists e, InA eqk (k,e) l.
   Proof.
   firstorder.
-  exists x; auto.
+  exists x; auto with smtcoq_array.
   induction H.
   destruct y.
-  exists e; auto.
+  exists e; auto with smtcoq_array.
   destruct IHInA as [e H0].
-  exists e; auto.
+  exists e; auto with smtcoq_array.
   Qed.
 
   Lemma MapsTo_eq : forall l x y e, eq x y -> MapsTo x e l -> MapsTo y e l.
@@ -315,7 +315,7 @@ Module Raw.
 
   Lemma In_eq : forall l x y, eq x y -> In x l -> In y l.
   Proof.
-  destruct 2 as (e,E); exists e; eapply MapsTo_eq; eauto.
+  destruct 2 as (e,E); exists e; eapply MapsTo_eq; eauto with smtcoq_array.
   Qed.
 
   Lemma Inf_eq : forall l x x', eqk x x' -> Inf x' l -> Inf x l.
@@ -324,8 +324,8 @@ Module Raw.
   Lemma Inf_lt : forall l x x', ltk x x' -> Inf x' l -> Inf x l.
   Proof. exact (InfA_ltA ltk_strorder). Qed.
 
-  Hint Immediate Inf_eq.
-  Hint Resolve Inf_lt.
+  Hint Immediate Inf_eq : smtcoq_array.
+  Hint Resolve Inf_lt : smtcoq_array.
 
   Lemma Sort_Inf_In :
     forall l p q, Sort l -> Inf q l -> InA eqk p l -> ltk q p.
@@ -339,11 +339,11 @@ Module Raw.
     intros; red; intros.
     destruct H1 as [e' H2].
     elim (@ltk_not_eqk (k,e) (k,e')).
-    eapply Sort_Inf_In; eauto.
-    red; simpl; auto.
+    eapply Sort_Inf_In; eauto with smtcoq_array.
+    red; simpl; auto with smtcoq_array.
   Qed.
 
-  Hint Resolve Sort_Inf_NotIn.
+  Hint Resolve Sort_Inf_NotIn : smtcoq_array.
 
   Lemma Sort_NoDupA: forall l, Sort l -> NoDupA l.
   Proof.
@@ -352,14 +352,14 @@ Module Raw.
 
   Lemma Sort_In_cons_1 : forall e l e', Sort (e::l) -> InA eqk e' l -> ltk e e'.
   Proof.
-    inversion 1; intros; eapply Sort_Inf_In; eauto.
+    inversion 1; intros; eapply Sort_Inf_In; eauto with smtcoq_array.
   Qed.
 
   Lemma Sort_In_cons_2 : forall l e e', Sort (e::l) -> InA eqk e' (e::l) ->
                                    ltk e e' \/ eqk e e'.
   Proof.
-    inversion_clear 2; auto.
-    left; apply Sort_In_cons_1 with l; auto.
+    inversion_clear 2; auto with smtcoq_array.
+    left; apply Sort_In_cons_1 with l; auto with smtcoq_array.
   Qed.
 
   Lemma Sort_In_cons_3 :
@@ -372,7 +372,7 @@ Module Raw.
   Lemma In_inv : forall k k' e l, In k ((k',e) :: l) -> eq k k' \/ In k l.
   Proof.
     inversion 1.
-    inversion_clear H0; eauto.
+    inversion_clear H0; eauto with smtcoq_array.
     destruct H1; simpl in *; intuition.
   Qed.
 
@@ -388,7 +388,7 @@ Module Raw.
     inversion_clear 1; compute in H0; intuition.
   Qed.
 
-  Hint Resolve In_inv_2 In_inv_3.
+  Hint Resolve In_inv_2 In_inv_3 : smtcoq_array.
 
   (** * FMAPLIST interface implementaion  *)
 
@@ -405,11 +405,11 @@ Module Raw.
     intro abs.
     inversion abs.
   Qed.
-  Hint Resolve empty_1.
+  Hint Resolve empty_1 : smtcoq_array.
 
   Lemma empty_sorted : Sort empty.
   Proof.
-    unfold empty; auto.
+    unfold empty; auto with smtcoq_array.
   Qed.
 
   Lemma MapsTo_inj : forall x e e' l (Hl:Sort l),
@@ -441,7 +441,7 @@ Module Raw.
       + unfold eqk in H, H0. simpl in *. subst.
         inversion_clear HH.
         inversion_clear HH0.
-        unfold eqke in *. simpl in *. destruct H, H1; subst; auto.
+        unfold eqke in *. simpl in *. destruct H, H1; subst; auto with smtcoq_array.
         apply InA_eqke_eqk in H1.
         inversion_clear Hl.
         specialize (Sort_Inf_In H2 H3 H1).
@@ -460,15 +460,15 @@ Module Raw.
   Proof.
     unfold Empty, MapsTo.
     intros m.
-    case m;auto.
+    case m;auto with smtcoq_array.
     intros (k,e) l inlist.
-    absurd (InA eqke (k, e) ((k, e) :: l));auto.
+    absurd (InA eqke (k, e) ((k, e) :: l));auto with smtcoq_array.
   Qed.
 
   Lemma is_empty_2 : forall m, is_empty m = true -> Empty m.
   Proof.
     intros m.
-    case m;auto.
+    case m;auto with smtcoq_array.
     intros p l abs.
     inversion abs.
   Qed.
@@ -494,15 +494,15 @@ Module Raw.
     - simpl. case_eq (compare x k'); trivial.
       + intros _x0 e0.
         absurd (In x ((k', _x) :: l));try assumption.
-        apply Sort_Inf_NotIn with _x;auto.
+        apply Sort_Inf_NotIn with _x;auto with smtcoq_array.
       + intros _x0 e0.
         apply IHb.
-        elim (sort_inv sorted);auto.
-        elim (In_inv belong1);auto.
+        elim (sort_inv sorted);auto with smtcoq_array.
+        elim (In_inv belong1);auto with smtcoq_array.
         intro abs.
-        absurd (eq x k'); auto.
+        absurd (eq x k'); auto with smtcoq_array.
         symmetry in abs.
-        apply lt_not_eq in abs; auto.
+        apply lt_not_eq in abs; auto with smtcoq_array.
   Qed.
 
   Lemma mem_2 : forall m (Hm:Sort m) x, mem x m = true -> In x m.
@@ -510,10 +510,10 @@ Module Raw.
     intros m Hm x; generalize Hm; clear Hm; unfold In,MapsTo.
     induction m as [ |[k' _x] l IHb]; intros sorted hyp;try ((inversion hyp);fail).
     revert hyp. simpl. case_eq (compare x k'); intros _x0 e0 hyp;try ((inversion hyp);fail).
-    - exists _x; auto.
-    - induction IHb; auto.
-      + exists x0; auto.
-      + inversion_clear sorted; auto.
+    - exists _x; auto with smtcoq_array.
+    - induction IHb; auto with smtcoq_array.
+      + exists x0; auto with smtcoq_array.
+      + inversion_clear sorted; auto with smtcoq_array.
   Qed.
 
   Lemma mem_3 : forall m (Hm:Sort m) x, mem x m = false -> ~ In x m.
@@ -539,8 +539,8 @@ Module Raw.
   Lemma find_2 :  forall m x e, find x m = Some e -> MapsTo x e m.
   Proof.
     intros m x. unfold MapsTo.
-    induction m as [ |[k' _x] l IHb];simpl; intro e';try now (intro eqfind; inversion eqfind; auto).
-    case_eq (compare x k'); intros _x0 e0 eqfind; inversion eqfind; auto.
+    induction m as [ |[k' _x] l IHb];simpl; intro e';try now (intro eqfind; inversion eqfind; auto with smtcoq_array).
+    case_eq (compare x k'); intros _x0 e0 eqfind; inversion eqfind; auto with smtcoq_array.
   Qed.
 
   Lemma find_1 :  forall m (Hm:Sort m) x e, MapsTo x e m -> find x m = Some e.
@@ -551,11 +551,11 @@ Module Raw.
     - case_eq (compare x k'); intros _x0 e1; subst.
       + inversion_clear 2.
         * clear e1;compute in H0; destruct H0.
-          apply lt_not_eq in H; auto. now contradict H.
+          apply lt_not_eq in H; auto with smtcoq_array. now contradict H.
         * clear e1;generalize (Sort_In_cons_1 Hm (InA_eqke_eqk H0)); compute.
           (* order. *)
           intros.
-          apply (lt_trans k') in _x0; auto.
+          apply (lt_trans k') in _x0; auto with smtcoq_array.
           apply lt_not_eq in _x0.
           now contradict _x0.
       + clear e1;inversion_clear 2.
@@ -564,7 +564,7 @@ Module Raw.
           (* order. *)
           intros.
           apply lt_not_eq in H. now contradict H.
-      + clear e1; do 2 inversion_clear 1; auto.
+      + clear e1; do 2 inversion_clear 1; auto with smtcoq_array.
         compute in H2; destruct H2.
         (* order. *)
         subst. apply lt_not_eq in _x0. now contradict _x0.
@@ -587,7 +587,7 @@ Module Raw.
   Proof.
     intros m x y e; generalize y; clear y.
     unfold MapsTo.
-    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1]; simpl; auto.
+    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1]; simpl; auto with smtcoq_array.
   Qed.
 
   Lemma add_2 : forall m x y e e',
@@ -595,14 +595,14 @@ Module Raw.
   Proof.
     intros m x  y e e'.
     generalize y e; clear y e; unfold MapsTo.
-    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e0];simpl;auto;  clear e0.
-    subst;auto.
+    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e0];simpl;auto with smtcoq_array;  clear e0.
+    subst;auto with smtcoq_array.
 
     intros y' e'' eqky';  inversion_clear 1;  destruct H0; simpl in *.
     (* order. *)
     subst. now contradict eqky'.
-    auto.
-    auto.
+    auto with smtcoq_array.
+    auto with smtcoq_array.
     intros y' e'' eqky'; inversion_clear 1; intuition.
   Qed.
 
@@ -611,10 +611,10 @@ Module Raw.
   Proof.
     intros m x y e e'. generalize y e; clear y e; unfold MapsTo.
     induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];simpl; intros.
-    apply (In_inv_3 H0); compute; auto.
-    apply (In_inv_3 H0); compute; auto.
-    constructor 2; apply (In_inv_3 H0); compute; auto.
-    inversion_clear H0; auto.
+    apply (In_inv_3 H0); compute; auto with smtcoq_array.
+    apply (In_inv_3 H0); compute; auto with smtcoq_array.
+    constructor 2; apply (In_inv_3 H0); compute; auto with smtcoq_array.
+    inversion_clear H0; auto with smtcoq_array.
   Qed.
 
   Lemma add_Inf : forall (m:farray)(x x':key)(e e':elt),
@@ -628,7 +628,7 @@ Module Raw.
     compute in H0,H1.
     simpl; case (compare x x''); intuition.
   Qed.
-  Hint Resolve add_Inf.
+  Hint Resolve add_Inf : smtcoq_array.
 
   Lemma add_sorted : forall m (Hm:Sort m) x e, Sort (add x e m).
   Proof.
@@ -636,9 +636,9 @@ Module Raw.
     simpl; intuition.
     intros.
     destruct a as (x',e').
-    simpl; case (compare x x'); intuition; inversion_clear Hm; auto.
-    constructor; auto.
-    apply Inf_eq with (x',e'); auto.
+    simpl; case (compare x x'); intuition; inversion_clear Hm; auto with smtcoq_array.
+    constructor; auto with smtcoq_array.
+    apply Inf_eq with (x',e'); auto with smtcoq_array.
   Qed.
 
   (** * [remove] *)
@@ -661,22 +661,22 @@ Module Raw.
 
     red; inversion 1; inversion H0.
 
-    apply Sort_Inf_NotIn with x0; auto.
+    apply Sort_Inf_NotIn with x0; auto with smtcoq_array.
 
     clear e0. inversion Hm. subst.
-    apply Sort_Inf_NotIn with x0; auto.
+    apply Sort_Inf_NotIn with x0; auto with smtcoq_array.
 
     (* clear e0;inversion_clear Hm. *)
-    (* apply Sort_Inf_NotIn with x0; auto. *)
-    (* apply Inf_eq with (k',x0);auto; compute; apply eq_trans with x; auto. *)
+    (* apply Sort_Inf_NotIn with x0; auto with smtcoq_array. *)
+    (* apply Inf_eq with (k',x0);auto with smtcoq_array; compute; apply eq_trans with x; auto with smtcoq_array. *)
 
     clear e0;inversion_clear Hm.
-    assert (notin:~ In y (remove y l)) by auto.
+    assert (notin:~ In y (remove y l)) by auto with smtcoq_array.
     intros (x1,abs).
     inversion_clear abs.
     compute in H1; destruct H1.
     subst. apply lt_not_eq in _x; now contradict _x.
-    apply notin; exists x1; auto.
+    apply notin; exists x1; auto with smtcoq_array.
   Qed.
 
 
@@ -684,41 +684,41 @@ Module Raw.
       ~ eq x y -> MapsTo y e m -> MapsTo y e (remove x m).
   Proof.
     intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
-    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];subst;auto;
+    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];subst;auto with smtcoq_array;
       match goal with
       | [H: compare _ _ = _ |- _ ] => clear H
       | _ => idtac
       end.
 
-    inversion_clear 3; auto.
+    inversion_clear 3; auto with smtcoq_array.
     compute in H1; destruct H1.
     subst; now contradict H.
-    inversion_clear 1; inversion_clear 2; auto.
+    inversion_clear 1; inversion_clear 2; auto with smtcoq_array.
   Qed.
 
   Lemma remove_3 : forall m (Hm:Sort m) x y e,
       MapsTo y e (remove x m) -> MapsTo y e m.
   Proof.
     intros m Hm x y e; generalize Hm; clear Hm; unfold MapsTo.
-    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];subst;auto.
-    inversion_clear 1; inversion_clear 1; auto.
+    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];subst;auto with smtcoq_array.
+    inversion_clear 1; inversion_clear 1; auto with smtcoq_array.
   Qed.
 
   Lemma remove_4_aux : forall m (Hm:Sort m) x y,
       ~ eq x y -> In y m -> In y (remove x m).
   Proof.
     intros m Hm x y; generalize Hm; clear Hm.
-    induction m as [ |[k' x0] l IHf]; simpl; [ |case_eq (compare x k'); intros _x e1];subst;auto;
+    induction m as [ |[k' x0] l IHf]; simpl; [ |case_eq (compare x k'); intros _x e1];subst;auto with smtcoq_array;
       match goal with
       | [H: compare _ _ = _ |- _ ] => clear H
       | _ => idtac
       end.
     rewrite In_alt.
-    inversion_clear 3; auto.
+    inversion_clear 3; auto with smtcoq_array.
     inversion H2.
     unfold eqk in H3. simpl in H3. subst. now contradict H0.
     apply In_alt.
-    exists x. auto.
+    exists x. auto with smtcoq_array.
     apply lt_not_eq in _x.
     intros.
     inversion_clear Hm.
@@ -729,27 +729,27 @@ Module Raw.
     destruct (eq_dec k' y).
     exists x0.
     apply InA_cons_hd.
-    split; simpl; auto.
+    split; simpl; auto with smtcoq_array.
     inversion H3.
     unfold eqk in H4. simpl in H4; subst. now contradict n.
     assert ((exists e : elt, MapsTo y e (remove x l)) -> (exists e : elt, MapsTo y e ((k', x0) :: remove x l))).
     intros.
     destruct H6. exists x2.
-    apply InA_cons_tl. auto.
+    apply InA_cons_tl. auto with smtcoq_array.
     apply H6.
-    apply IHf; auto.
+    apply IHf; auto with smtcoq_array.
     apply In_alt.
-    exists x1. auto.
+    exists x1. auto with smtcoq_array.
   Qed.
 
   Lemma remove_4 : forall m (Hm:Sort m) x y,
       ~ eq x y -> In y m <-> In y (remove x m).
   Proof.
     split.
-    apply remove_4_aux; auto.
+    apply remove_4_aux; auto with smtcoq_array.
     revert H.
     generalize Hm; clear Hm.
-    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];subst;auto;
+    induction m as [ |[k' _x] l IHb]; simpl; [ |case_eq (compare x k'); intros _x0 e1];subst;auto with smtcoq_array;
       match goal with
       | [H: compare _ _ = _ |- _ ] => clear H
       | _ => idtac
@@ -758,7 +758,7 @@ Module Raw.
     (* rewrite In_alt in *. *)
     destruct H0 as (e, H0).
     exists e.
-    apply InA_cons_tl. auto.
+    apply InA_cons_tl. auto with smtcoq_array.
     intros.
     apply lt_not_eq in _x0.
     inversion_clear Hm.
@@ -766,11 +766,11 @@ Module Raw.
     destruct H0.
     (* destruct (eq_dec k' y). *)
     exists _x.
-    apply InA_cons_hd. split; simpl; auto.
+    apply InA_cons_hd. split; simpl; auto with smtcoq_array.
     specialize (IHb H1 H H0).
     inversion IHb.
     exists x0.
-    apply InA_cons_tl. auto.
+    apply InA_cons_tl. auto with smtcoq_array.
   Qed.
 
   Lemma remove_Inf : forall (m:farray)(Hm : Sort m)(x x':key)(e':elt),
@@ -784,9 +784,9 @@ Module Raw.
     compute in H0.
     simpl; case (compare x x''); intuition.
     inversion_clear Hm.
-    apply Inf_lt with (x'',e''); auto.
+    apply Inf_lt with (x'',e''); auto with smtcoq_array.
   Qed.
-  Hint Resolve remove_Inf.
+  Hint Resolve remove_Inf : smtcoq_array.
 
   Lemma remove_sorted : forall m (Hm:Sort m) x, Sort (remove x m).
   Proof.
@@ -794,7 +794,7 @@ Module Raw.
     simpl; intuition.
     intros.
     destruct a as (x',e').
-    simpl; case (compare x x'); intuition; inversion_clear Hm; auto.
+    simpl; case (compare x x'); intuition; inversion_clear Hm; auto with smtcoq_array.
   Qed.
 
   (** * [elements] *)
@@ -804,25 +804,25 @@ Module Raw.
   Lemma elements_1 : forall m x e,
       MapsTo x e m -> InA eqke (x,e) (elements m).
   Proof.
-    auto.
+    auto with smtcoq_array.
   Qed.
 
   Lemma elements_2 : forall m x e,
       InA eqke (x,e) (elements m) -> MapsTo x e m.
   Proof.
-    auto.
+    auto with smtcoq_array.
   Qed.
 
   Lemma elements_3 : forall m (Hm:Sort m), sort ltk (elements m).
   Proof.
-    auto.
+    auto with smtcoq_array.
   Qed.
 
   Lemma elements_3w : forall m (Hm:Sort m), NoDupA (elements m).
   Proof.
     intros.
     apply Sort_NoDupA.
-    apply elements_3; auto.
+    apply elements_3; auto with smtcoq_array.
   Qed.
 
   (** * [fold] *)
@@ -836,7 +836,7 @@ Module Raw.
   Lemma fold_1 : forall m (A:Type)(i:A)(f:key->elt->A->A),
       fold f m i = fold_left (fun a p => f (fst p) (snd p) a) (elements m) i.
   Proof.
-    intros; revert i; induction m as [ |[k e]]; simpl; auto.
+    intros; revert i; induction m as [ |[k e]]; simpl; auto with smtcoq_array.
   Qed.
 
   (** * [equal] *)
@@ -860,7 +860,7 @@ Module Raw.
       Equivb cmp m m' -> equal cmp m m' = true.
   Proof.
     intros m Hm m' Hm' cmp; generalize Hm Hm'; clear Hm Hm'.
-    revert m'; induction m as [ |[x e] l IHl]; intros [ |[x' e'] l']; simpl; auto; unfold Equivb; intuition; subst.
+    revert m'; induction m as [ |[x e] l IHl]; intros [ |[x' e'] l']; simpl; auto with smtcoq_array; unfold Equivb; intuition; subst.
     - destruct (H0 x') as [_ H3].
       assert (H2: In x' nil).
       {
@@ -873,53 +873,53 @@ Module Raw.
         apply H3. exists e. now constructor.
       }
       elim H2. intros x0 Hx0. inversion Hx0.
-    - case_eq (compare x x'); simpl; subst;auto; unfold Equivb;
+    - case_eq (compare x x'); simpl; subst;auto with smtcoq_array; unfold Equivb;
       intuition; subst.
       + destruct (H0 x).
         assert (In x ((x',e')::l')).
-        apply H2; auto.
-        exists e; auto.
+        apply H2; auto with smtcoq_array.
+        exists e; auto with smtcoq_array.
         destruct (In_inv H4).
         (* order. *)
         clear H. apply lt_not_eq in l0; now contradict l0.
         inversion_clear Hm'.
         assert (Inf (x,e) l').
-        apply Inf_lt with (x',e'); auto.
+        apply Inf_lt with (x',e'); auto with smtcoq_array.
         elim (Sort_Inf_NotIn H6 H8 H5).
       + match goal with H: compare _ _ = _ |- _ => clear H end.
         assert (cmp_e_e':cmp e e' = true).
-        apply H1 with x'; auto.
+        apply H1 with x'; auto with smtcoq_array.
         rewrite cmp_e_e'; simpl.
-        apply IHl; auto.
-        inversion_clear Hm; auto.
-        inversion_clear Hm'; auto.
+        apply IHl; auto with smtcoq_array.
+        inversion_clear Hm; auto with smtcoq_array.
+        inversion_clear Hm'; auto with smtcoq_array.
         unfold Equivb; intuition.
         destruct (H0 k).
         assert (In k ((x',e) ::l)).
-        destruct H as (e'', hyp); exists e''; auto.
-        destruct (In_inv (H2 H4)); auto.
+        destruct H as (e'', hyp); exists e''; auto with smtcoq_array.
+        destruct (In_inv (H2 H4)); auto with smtcoq_array.
         inversion_clear Hm.
         elim (Sort_Inf_NotIn H6 H7).
-        destruct H as (e'', hyp); exists e''; auto.
-        apply MapsTo_eq with k; auto.
+        destruct H as (e'', hyp); exists e''; auto with smtcoq_array.
+        apply MapsTo_eq with k; auto with smtcoq_array.
         destruct (H0 k).
         assert (In k ((x',e') ::l')).
-        destruct H as (e'', hyp); exists e''; auto.
-        destruct (In_inv (H3 H4)); auto.
+        destruct H as (e'', hyp); exists e''; auto with smtcoq_array.
+        destruct (In_inv (H3 H4)); auto with smtcoq_array.
         subst.
         inversion_clear Hm'.
         now elim (Sort_Inf_NotIn H5 H6).
-        apply H1 with k; destruct (eq_dec x' k); auto.
+        apply H1 with k; destruct (eq_dec x' k); auto with smtcoq_array.
       + destruct (H0 x').
         assert (In x' ((x,e)::l)).
-        apply H3; auto.
-        exists e'; auto.
+        apply H3; auto with smtcoq_array.
+        exists e'; auto with smtcoq_array.
         destruct (In_inv H4).
         (* order. *)
         clear H; subst; apply lt_not_eq in l0; now contradict l0.
         inversion_clear Hm.
         assert (Inf (x',e') l).
-        apply Inf_lt with (x,e); auto.
+        apply Inf_lt with (x,e); auto with smtcoq_array.
         elim (Sort_Inf_NotIn H6 H8 H5).
   Qed.
 
@@ -927,7 +927,7 @@ Module Raw.
       equal cmp m m' = true -> Equivb cmp m m'.
   Proof.
     intros m Hm m' Hm' cmp; generalize Hm Hm'; clear Hm Hm'.
-    revert m'; induction m as [ |[x e] l IHl]; intros [ |[x' e'] l']; simpl; subst;auto; unfold Equivb;
+    revert m'; induction m as [ |[x e] l IHl]; intros [ |[x' e'] l']; simpl; subst;auto with smtcoq_array; unfold Equivb;
       intuition; try discriminate; subst;
         try match goal with H: compare _ _ = _ |- _ => clear H end.
     - inversion H0.
@@ -936,19 +936,19 @@ Module Raw.
       destruct (andb_prop _ _ H); clear H.
       destruct (IHl _ H1 H4 H7).
       destruct (In_inv H0).
-      exists e'; constructor; split; trivial; apply eq_trans with x; auto.
+      exists e'; constructor; split; trivial; apply eq_trans with x; auto with smtcoq_array.
       destruct (H k).
       destruct (H10 H9) as (e'',hyp).
-      exists e''; auto.
+      exists e''; auto with smtcoq_array.
     - revert H; case_eq (compare x x'); intros _x _ H; try inversion H.
       inversion_clear Hm;inversion_clear Hm'.
       destruct (andb_prop _ _ H); clear H.
       destruct (IHl _ H1 H4 H7).
       destruct (In_inv H0).
-      exists e; constructor; split; trivial; apply eq_trans with x'; auto.
+      exists e; constructor; split; trivial; apply eq_trans with x'; auto with smtcoq_array.
       destruct (H k).
       destruct (H11 H9) as (e'',hyp).
-      exists e''; auto.
+      exists e''; auto with smtcoq_array.
     - revert H; case_eq (compare x x'); intros _x _ H; [inversion H| |inversion H].
       inversion_clear Hm;inversion_clear Hm'.
       destruct (andb_prop _ _ H); clear H.
@@ -956,16 +956,16 @@ Module Raw.
       inversion_clear H0.
       + destruct H9; simpl in *; subst.
         inversion_clear H1.
-        * destruct H0; simpl in *; subst; auto.
+        * destruct H0; simpl in *; subst; auto with smtcoq_array.
         * elim (Sort_Inf_NotIn H4 H5).
-          exists e'0; apply MapsTo_eq with x'; auto.
+          exists e'0; apply MapsTo_eq with x'; auto with smtcoq_array.
       (* order. *)
       + inversion_clear H1.
-        * destruct H0; simpl in *; subst; auto.
+        * destruct H0; simpl in *; subst; auto with smtcoq_array.
           elim (Sort_Inf_NotIn H2 H3).
-          exists e0; apply MapsTo_eq with x'; auto.
+          exists e0; apply MapsTo_eq with x'; auto with smtcoq_array.
         (* order. *)
-        * apply H8 with k; auto.
+        * apply H8 with k; auto with smtcoq_array.
   Qed.
 
   (** This lemma isn't part of the spec of [Equivb], but is used in [FMapAVL] *)
@@ -979,18 +979,18 @@ Module Raw.
     inversion H0; subst.
     destruct x; destruct y; compute in H1, H2.
     split; intros.
-    apply equal_2; auto.
+    apply equal_2; auto with smtcoq_array.
     simpl.
     case (compare k k0);
     subst; intro HH; try (apply lt_not_eq in HH; now contradict HH).
     rewrite H2; simpl.
-    apply equal_1; auto.
-    apply equal_2; auto.
+    apply equal_1; auto with smtcoq_array.
+    apply equal_2; auto with smtcoq_array.
     generalize (equal_1 H H0 H3).
     simpl.
     case (compare k k0);
     subst; intro HH; try (apply lt_not_eq in HH; now contradict HH).
-    rewrite H2; simpl; auto.
+    rewrite H2; simpl; auto with smtcoq_array.
   Qed.
 
 End Array.
@@ -1580,7 +1580,7 @@ Section FArray.
     intros. rewrite eq_option_alt. intro e'. rewrite <- 2 find_mapsto_iff.
     apply add_neq_mapsto_iff; auto.
   Qed.
-  Hint Resolve add_neq_o.
+  Hint Resolve add_neq_o : smtcoq_array.
 
   Lemma MapsTo_fun : forall m x (e e':elt),
       MapsTo x e m -> MapsTo x e' m -> e=e'.
@@ -1837,6 +1837,8 @@ Arguments extensionnality {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments extensionnality2 {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments select_at_diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 
+
+Declare Scope farray_scope.
 
 Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.
 Notation "a '[' i '<-' v ']'" := (store a i v)

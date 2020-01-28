@@ -20,6 +20,7 @@ Definition size := size.
 
 Notation int := int31.
 
+Declare Scope int63_scope.
 Delimit Scope int63_scope with int.
 Bind Scope int63_scope with int.
 
