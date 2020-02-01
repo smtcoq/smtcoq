@@ -6,6 +6,9 @@ No axiom should be added. No library adding axioms should be imported
 
 
 # Code organization
+## Documentation
+Every OCaml module comes with a documented interface.
+
 ## Theories
 
 Theories are organized in sub-directories whose names are the names of
