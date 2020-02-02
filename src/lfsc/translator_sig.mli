@@ -103,7 +103,7 @@ module type S = sig
 
   (** Transform a term in LFSC to the chosen clause representation. (This
       eliminates top-level dijunctions and implications.) *)
-  val to_clause : term -> clause
+  val to_clause : term -> VeritSyntax.verit_state -> clause
 
   (** Print a clause (for debugging purposes) *)
   val print_clause : formatter -> clause -> unit
@@ -119,18 +119,18 @@ module type S = sig
       clauses that were previously deduced, in this case the rule application
       will not be created and it returns the identifier of this pre-existing
       clause. *)
-  val mk_clause : ?reuse:bool -> rule -> clause -> int list -> int
+  val mk_clause : ?reuse:bool -> rule -> clause -> int list -> VeritSyntax.verit_state -> int
 
   (** Same as {!mk_clause} but with an hybrid representation for clauses. This
       is just used to avoid creating unecessary terms for these clauses when
       they are built by hand. *)
-  val mk_clause_cl : ?reuse:bool -> rule -> term list -> int list -> int
+  val mk_clause_cl : ?reuse:bool -> rule -> term list -> int list -> VeritSyntax.verit_state -> int
 
   (** Create an input unit clause. It is given an identifier that is not
       returned. *)
-  val mk_input : Hstring.t -> term -> unit
+  val mk_input : Hstring.t -> term -> VeritSyntax.verit_state -> unit
 
-  val mk_admit_preproc : Hstring.t -> term -> unit
+  val mk_admit_preproc : Hstring.t -> term -> VeritSyntax.verit_state -> unit
     
   (** [register_prop_abstr v p] register the term [v] as being a propositional
       abstraction of the term [p]. *)
@@ -143,7 +143,7 @@ module type S = sig
       intoduced by the proprocessor of CVC4 in the LFSC proof. *)
   val get_input_id : Hstring.t -> int
 
-  val register_decl : Hstring.t -> term -> unit
+  val register_decl : Hstring.t -> term -> VeritSyntax.verit_state -> unit
 
   val register_decl_id : Hstring.t -> int -> unit
 

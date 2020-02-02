@@ -6,6 +6,13 @@ No axiom should be added. No library adding axioms should be imported
 
 
 # Code organization
+## No global references
+
+The code should not contain global references (or hash tables). If you
+want to implement a vernacular command that does side effects, follow
+[tuto2](https://github.com/coq/coq/tree/master/doc/plugin_tutorial) in
+the plugin tutorial.
+
 ## Theories
 
 Theories are organized in sub-directories whose names are the names of

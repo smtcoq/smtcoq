@@ -11,6 +11,3 @@
 
 
 include Translator_sig.S
-
-val ra : SmtAtom.Atom.reify_tbl
-val rf : SmtAtom.Form.reify

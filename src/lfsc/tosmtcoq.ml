@@ -18,9 +18,6 @@ open Format
 open Translator_sig
 open SmtBtype
 
-let ra = Atom.create ()
-let rf = Form.create ()
-
 type lit = SmtAtom.Form.t
 
 type clause = lit list
@@ -213,183 +210,183 @@ let rec const_bv_aux acc t = match name t with
     | Some (n, [b; t]) when n == H.bvc -> const_bv_aux (bit_to_bool b :: acc) t
     | _ -> assert false
 
-let const_bv t =
+let const_bv t st =
   let bv_list = const_bv_aux [] t in
-  Form.Atom (Atom.mk_bvconst ra bv_list)
+  Form.Atom (Atom.mk_bvconst (VeritSyntax.get_atom_tbl_to_add st) bv_list)
 
 
-let rec term_smtcoq_old t =
+let rec term_smtcoq_old t st =
   match value t with
   | Const {sname=Name n} when n == H.ttrue -> Form.Form Form.pform_true
   | Const {sname=Name n} when n == H.tfalse -> Form.Form Form.pform_false
-  | Const {sname=Name n} when n == H.bvn -> const_bv t
+  | Const {sname=Name n} when n == H.bvn -> const_bv t st
   | Const {sname=Name n} ->
     begin
       try
-        term_smtcoq  (HS.find alias_tbl n)
+        term_smtcoq (HS.find alias_tbl n) st
       with Not_found ->
-        Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun (Hstring.view n),[||])))
+        Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (SmtMaps.get_fun (Hstring.view n),[||])))
     end
-  | Int bi -> Form.Atom (Atom.hatom_Z_of_bigint ra bi)
+  | Int bi -> Form.Atom (Atom.hatom_Z_of_bigint (VeritSyntax.get_atom_tbl_to_add st) bi)
   | App _ ->
     begin match app_name t with
       | Some (n, [f]) when n == H.not_ ->
-        Form.Lit (Form.neg (lit_of_atom_form_lit rf (term_smtcoq f)))
-      | Some (n, args) when n == H.and_ -> Form.Form (Fapp (Fand, args_smtcoq args))
-      | Some (n, args) when n == H.or_ -> Form.Form (Fapp (For, args_smtcoq args))
-      | Some (n, args) when n == H.impl_ -> Form.Form (Fapp (Fimp, args_smtcoq args))
-      | Some (n, args) when n == H.xor_ -> Form.Form (Fapp (Fxor, args_smtcoq args))
+        Form.Lit (Form.neg (lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (term_smtcoq f st)))
+      | Some (n, args) when n == H.and_ -> Form.Form (Fapp (Fand, args_smtcoq args st))
+      | Some (n, args) when n == H.or_ -> Form.Form (Fapp (For, args_smtcoq args st))
+      | Some (n, args) when n == H.impl_ -> Form.Form (Fapp (Fimp, args_smtcoq args st))
+      | Some (n, args) when n == H.xor_ -> Form.Form (Fapp (Fxor, args_smtcoq args st))
       | Some (n, args) when n == H.ite || n == H.ifte_ ->
-        Form.Form (Fapp (Fite, args_smtcoq args))
-      | Some (n, args) when n == H.iff -> Form.Form (Fapp (Fiff, args_smtcoq args))
+        Form.Form (Fapp (Fite, args_smtcoq args st))
+      | Some (n, args) when n == H.iff -> Form.Form (Fapp (Fiff, args_smtcoq args st))
       | Some (n, [_; a; b]) when n == H.eq ->
-        let h1, h2 = term_smtcoq_atom a, term_smtcoq_atom b in
-        Form.Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
-      | Some (n, _) when n == H.apply -> uncurry [] t
-      | Some (n, [p]) when n == H.p_app -> term_smtcoq p
+        let h1, h2 = term_smtcoq_atom a st, term_smtcoq_atom b st in
+        Form.Atom (Atom.mk_eq (VeritSyntax.get_atom_tbl_to_add st) (Atom.type_of h1) h1 h2)
+      | Some (n, _) when n == H.apply -> uncurry [] t st
+      | Some (n, [p]) when n == H.p_app -> term_smtcoq p st
       | Some (n, [{value = Int bi}]) when n == H.a_int ->
-        Form.Atom (Atom.hatom_Z_of_bigint ra bi)
+        Form.Atom (Atom.hatom_Z_of_bigint (VeritSyntax.get_atom_tbl_to_add st) bi)
       | Some (n, [ni]) when n == H.a_int ->
         begin match app_name ni with
           | Some (n, [{value = Int bi}]) when n == H.uminus ->
-            Form.Atom (Atom.hatom_Z_of_bigint ra (Big_int.minus_big_int bi))
+            Form.Atom (Atom.hatom_Z_of_bigint (VeritSyntax.get_atom_tbl_to_add st) (Big_int.minus_big_int bi))
           | _ -> assert false
         end
-      | Some (n, [_; v]) when n == H.a_var_bv -> term_smtcoq v
-      | Some (n, _) when n == H.bvc -> const_bv t
-      | Some (n, [_; v]) when n == H.a_bv -> term_smtcoq v
+      | Some (n, [_; v]) when n == H.a_var_bv -> term_smtcoq v st
+      | Some (n, _) when n == H.bvc -> const_bv t st
+      | Some (n, [_; v]) when n == H.a_bv -> term_smtcoq v st
       | Some (b, [a; {value = Int n}]) when b == H.bitof ->
-         (let ha = term_smtcoq_atom a in
+         (let ha = term_smtcoq_atom a st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bitof ra s (Big_int.int_of_big_int n) ha)
+            | TBV s -> Form.Atom (Atom.mk_bitof (VeritSyntax.get_atom_tbl_to_add st) s (Big_int.int_of_big_int n) ha)
             | _ -> assert false)
       | Some (n, [_; a; bb]) when n == H.bblast_term ->
-        Form.Form (FbbT ((term_smtcoq_atom a), bblt_lits [] bb))
+        Form.Form (FbbT ((term_smtcoq_atom a st), bblt_lits [] bb st))
       | Some (n, [_; a]) when n == H.bvnot ->
-         (let ha = term_smtcoq_atom a in
+         (let ha = term_smtcoq_atom a st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvnot ra s ha)
+            | TBV s -> Form.Atom (Atom.mk_bvnot (VeritSyntax.get_atom_tbl_to_add st) s ha)
             | _ -> assert false)
       | Some (n, [_; a]) when n == H.bvneg ->
-         (let ha = term_smtcoq_atom a in
+         (let ha = term_smtcoq_atom a st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvneg ra s ha)
+            | TBV s -> Form.Atom (Atom.mk_bvneg (VeritSyntax.get_atom_tbl_to_add st) s ha)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvand ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvand ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvand (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvor ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvor ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvor (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvxor ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvxor ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvxor (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvadd ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvadd ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvadd (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvmul ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvmult ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvmult (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvult ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvult ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvult (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvslt ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvslt ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvslt (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvule ->
-        (let ha = term_smtcoq_atom a in
-         let hb = term_smtcoq_atom b in
+        (let ha = term_smtcoq_atom a st in
+         let hb = term_smtcoq_atom b st in
          match Atom.type_of ha with
          | TBV s ->
-           let a = Form.Atom (Atom.mk_bvult ra s hb ha) in
-           Form.Lit (Form.neg (lit_of_atom_form_lit rf a))
+           let a = Form.Atom (Atom.mk_bvult (VeritSyntax.get_atom_tbl_to_add st) s hb ha) in
+           Form.Lit (Form.neg (lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) a))
          | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvsle ->
-        (let ha = term_smtcoq_atom a in
-         let hb = term_smtcoq_atom b in
+        (let ha = term_smtcoq_atom a st in
+         let hb = term_smtcoq_atom b st in
          match Atom.type_of ha with
          | TBV s ->
-           let a = Form.Atom (Atom.mk_bvslt ra s hb ha) in
-           Form.Lit (Form.neg (lit_of_atom_form_lit rf a))
+           let a = Form.Atom (Atom.mk_bvslt (VeritSyntax.get_atom_tbl_to_add st) s hb ha) in
+           Form.Lit (Form.neg (lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) a))
          | _ -> assert false)         
       | Some (n, [_; _; _; a; b]) when n == H.concat ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha, Atom.type_of hb with
-            | TBV s1, TBV s2 -> Form.Atom (Atom.mk_bvconcat ra s1 s2 ha hb)
+            | TBV s1, TBV s2 -> Form.Atom (Atom.mk_bvconcat (VeritSyntax.get_atom_tbl_to_add st) s1 s2 ha hb)
             | _ -> assert false)
       | Some (n, [_; {value = Int bj}; {value = Int bi}; _; a])
         when n == H.extract ->
-        (let ha = term_smtcoq_atom a in
+        (let ha = term_smtcoq_atom a st in
          let i = Big_int.int_of_big_int bi in
          let j = Big_int.int_of_big_int bj in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvextr ra ~s ~i ~n:(j-i+1) ha)
+            | TBV s -> Form.Atom (Atom.mk_bvextr (VeritSyntax.get_atom_tbl_to_add st) ~s ~i ~n:(j-i+1) ha)
             | _ -> assert false)
       | Some (n, [_; {value = Int bi}; _; a])
         when n == H.zero_extend ->
-        (let ha = term_smtcoq_atom a in
+        (let ha = term_smtcoq_atom a st in
          let n = Big_int.int_of_big_int bi in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvzextn ra ~s ~n ha)
+            | TBV s -> Form.Atom (Atom.mk_bvzextn (VeritSyntax.get_atom_tbl_to_add st) ~s ~n ha)
             | _ -> assert false)
       | Some (n, [_; {value = Int bi}; _; a])
         when n == H.sign_extend ->
-        (let ha = term_smtcoq_atom a in
+        (let ha = term_smtcoq_atom a st in
          let n = Big_int.int_of_big_int bi in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvsextn ra ~s ~n ha)
+            | TBV s -> Form.Atom (Atom.mk_bvsextn (VeritSyntax.get_atom_tbl_to_add st) ~s ~n ha)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvshl ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvshl ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvshl (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
       | Some (n, [_; a; b]) when n == H.bvlshr ->
-         (let ha = term_smtcoq_atom a in
-          let hb = term_smtcoq_atom b in
+         (let ha = term_smtcoq_atom a st in
+          let hb = term_smtcoq_atom b st in
           match Atom.type_of ha with
-            | TBV s -> Form.Atom (Atom.mk_bvshr ra s ha hb)
+            | TBV s -> Form.Atom (Atom.mk_bvshr (VeritSyntax.get_atom_tbl_to_add st) s ha hb)
             | _ -> assert false)
 
       | Some (n, [a; b]) when n == H.lt_Int ->
-        Form.Atom (Atom.mk_lt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_lt (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a; b]) when n == H.le_Int ->
-        Form.Atom (Atom.mk_le ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_le (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a; b]) when n == H.gt_Int ->
-        Form.Atom (Atom.mk_gt ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_gt (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a; b]) when n == H.ge_Int ->
-        Form.Atom (Atom.mk_ge ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_ge (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a; b]) when n == H.plus_Int ->
-        Form.Atom (Atom.mk_plus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_plus (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a; b]) when n == H.minus_Int ->
-        Form.Atom (Atom.mk_minus ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_minus (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a; b]) when n == H.times_Int ->
-        Form.Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
+        Form.Atom (Atom.mk_mult (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st) (term_smtcoq_atom b st))
       | Some (n, [a]) when n == H.uminus_Int ->
-        Form.Atom (Atom.mk_opp ra (term_smtcoq_atom a))
+        Form.Atom (Atom.mk_opp (VeritSyntax.get_atom_tbl_to_add st) (term_smtcoq_atom a st))
       | Some (n, _) ->
         Format.eprintf "\nTerm: %a\n@." print_term t;
         failwith ("LFSC function symbol "^Hstring.view n^" not supported.")
@@ -409,79 +406,79 @@ let rec term_smtcoq_old t =
   | _ -> assert false
 
 
-and term_smtcoq t =
+and term_smtcoq t st =
   try HT.find memo_terms t
   with Not_found ->
-    let v = term_smtcoq_old t in
+    let v = term_smtcoq_old t st in
     HT.add memo_terms t v;
     v
 
 
-and term_smtcoq_atom a = match term_smtcoq a with
+and term_smtcoq_atom a st = match term_smtcoq a st with
   | Form.Atom h -> h
   | _ ->  assert false
 
-and args_smtcoq args =
-  List.map (fun t -> lit_of_atom_form_lit rf (term_smtcoq t)) args
+and args_smtcoq args st =
+  List.map (fun t -> lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (term_smtcoq t st)) args
   |> Array.of_list
 
-and uncurry acc t = match app_name t, acc with
+and uncurry acc t st = match app_name t, acc with
   | Some (n, [_; _; f; a]), _ when n == H.apply ->
-    uncurry (term_smtcoq_atom a :: acc) f
+    uncurry (term_smtcoq_atom a st :: acc) f st
   | Some (n, [_; _]) , [h1; h2] when n == H.read ->
     (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Form.Atom (Atom.mk_select ra ti te h1 h2)
+     | TFArray (ti,te) -> Form.Atom (Atom.mk_select (VeritSyntax.get_atom_tbl_to_add st) ti te h1 h2)
      | _ -> assert false)
   | Some (n, [_; _]) , [h1; h2; h3] when n == H.write ->
     (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Form.Atom (Atom.mk_store ra ti te h1 h2 h3)
+     | TFArray (ti,te) -> Form.Atom (Atom.mk_store (VeritSyntax.get_atom_tbl_to_add st) ti te h1 h2 h3)
      | _ -> assert false)
   | Some (n, [_; _]) , [h1; h2] when n == H.diff ->
     (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Form.Atom (Atom.mk_diffarray ra ti te h1 h2)
+     | TFArray (ti,te) -> Form.Atom (Atom.mk_diffarray (VeritSyntax.get_atom_tbl_to_add st) ti te h1 h2)
      | _ -> assert false)
   | None, _ ->
     (match name t with
      | Some n ->
        let args = Array.of_list acc in
-       Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun (Hstring.view n), args)))
+       Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (SmtMaps.get_fun (Hstring.view n), args)))
      | _ -> assert false)
   | _ ->
     eprintf "uncurry fail: %a@." Ast.print_term t;
     assert false
 
 (* Endianness dependant: LFSC big endian -> SMTCoq little endian *)
-and bblt_lits acc t = match name t with
+and bblt_lits acc t st = match name t with
   | Some n when n == H.bbltn -> acc
   | _ -> match app_name t with
     | Some (n, [f; r]) when n == H.bbltc ->
-      bblt_lits (lit_of_atom_form_lit rf (term_smtcoq f) :: acc) r
+      bblt_lits (lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (term_smtcoq f st) :: acc) r st
     | _ -> assert false
 
 
-let term_smtcoq t =
+let term_smtcoq t st =
   (* eprintf "translate term %a@." Ast.print_term t; *)
-  lit_of_atom_form_lit rf (term_smtcoq t)
+  lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (term_smtcoq t st)
 
 
-let rec clause_smtcoq acc t = match name t with
+let rec clause_smtcoq acc t st = match name t with
   | Some n when n == H.cln || n == H.tfalse -> acc
-  | Some _ -> term_smtcoq t :: acc
+  | Some _ -> term_smtcoq t st :: acc
   | None ->
     match app_name t with
     | Some (n, [v]) when n == H.pos ->
       let t = HT.find propvars (deref v) in
-      term_smtcoq t :: acc
+      term_smtcoq t st :: acc
     | Some (n, [v]) when n == H.neg ->
       let t = HT.find propvars (deref v) in
-      Form.neg (term_smtcoq t) :: acc
+      Form.neg (term_smtcoq t st) :: acc
     | Some (n, [a; cl]) when n == H.clc ->
-      clause_smtcoq (clause_smtcoq acc a) cl
-    | Some (n, [a; b]) when n == H.or_ -> clause_smtcoq (clause_smtcoq acc a) b
-    | _ -> term_smtcoq t :: acc
+      clause_smtcoq (clause_smtcoq acc a st) cl st
+    | Some (n, [a; b]) when n == H.or_ -> clause_smtcoq (clause_smtcoq acc a st) b st
+    | _ -> term_smtcoq t st :: acc
 
 
-let to_clause = clause_smtcoq [] 
+let to_clause st = clause_smtcoq [] st
 
 
 let print_clause fmt cl =
@@ -514,42 +511,42 @@ let new_clause_id ?(reuse=true) cl =
     NewCl id
 
 
-let mk_clause ?(reuse=true) rule cl args =
+let mk_clause ?(reuse=true) rule cl args st =
   match new_clause_id ~reuse cl with
   | NewCl id ->
     if show_veritproof then
       eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
         print_clause cl
         (fun fmt -> List.iter (fprintf fmt " %d")) args;
-    VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
+    VeritSyntax.mk_clause (id, (get_rule rule), cl, args) st
   | OldCl id ->
     (* Format.eprintf "old_clause %d@." id; *)
     id
 
 
-let mk_clause_cl ?(reuse=true) rule cl args =
-  mk_clause ~reuse rule (List.map term_smtcoq cl) args
+let mk_clause_cl ?(reuse=true) rule cl args st =
+  mk_clause ~reuse rule (List.map (fun c -> term_smtcoq c st) cl) args st
 
 
-let mk_input name formula =
-  let cl = [term_smtcoq formula] in
+let mk_input name formula st =
+  let cl = [term_smtcoq formula st] in
   match new_clause_id cl with
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
      if show_veritproof then eprintf "%d:input  %a@." id print_clause cl;
-     VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
+     VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) st |> ignore
    | OldCl _ -> ()
 
 
-let mk_admit_preproc name formula =
-  let cl = [term_smtcoq formula] in
+let mk_admit_preproc name formula st =
+  let cl = [term_smtcoq formula st] in
   match new_clause_id cl with
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
      if show_veritproof then eprintf "%d:hole  %a@." id print_clause cl;
-     VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
+     VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) st |> ignore
    | OldCl _ -> ()
 
 
@@ -569,8 +566,8 @@ let get_clause_id cl =
 let get_input_id h = HS.find inputs h
 
 
-let register_decl name formula =
-  let cl = [term_smtcoq formula] in
+let register_decl name formula st =
+  let cl = [term_smtcoq formula st] in
   match new_clause_id cl with
   | NewCl id | OldCl id ->
     (* eprintf "register decl %d@." id; *)
@@ -583,8 +580,6 @@ let register_decl_id name id =
 
 
 let clear () =
-  Atom.clear ra;
-  Form.clear rf;
   HCl.clear clauses_ids;
   Hashtbl.clear ids_clauses;
   HT.clear propvars;

@@ -46,24 +46,38 @@
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR ATVAR BITV
 
-/* type de "retour" du parseur : une clause */
-%type <int> line
-/*
-%type <VeritSyntax.atom_form_lit> term
-%start term
-*/
+/* return type of the parser: a clause (given a state) */
+%type <VeritSyntax.verit_state -> SmtCertif.clause_id> line
 %start line
+
+/* Types of non-terminals */
+%type <VeritSyntax.typ> typ
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> SmtAtom.Form.t list> clause
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> (bool * SmtAtom.Form.t) list> lit_list
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> bool * SmtAtom.Form.t> lit
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> bool * SmtAtom.Form.t> nlit
+%type <string> var_atvar
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> bool * Form.atom_form_lit> name_term
+%type <SmtBtype.btype> tvar
+%type <VeritSyntax.quant_state -> (string * SmtBtype.btype) list> var_decl_list
+%type <VeritSyntax.verit_state -> bool * SmtAtom.Form.atom_form_lit> forall_decl
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> bool * Form.atom_form_lit> term
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> bool * Form.atom_form_lit> blit
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> unit> bindlist
+%type <VeritSyntax.verit_state -> VeritSyntax.quant_state -> (bool * Atom.t) list> args
+%type <int list> clause_ids_params
+%type <int list> int_list
 
 
 %%
 
 line:
-  | SAT                                                    { raise Sat }
-  | INT COLON LPAR typ clause                   RPAR EOL   { mk_clause ($1,$4,$5,[]) }
-  | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { mk_clause ($1,$4,$5,$6) }
-  | INT COLON LPAR TPQT LPAR SHARPINT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $6 $9; add_ref $6 $1; mk_clause ($1, Tpqt, [], [$12]) }
-  | INT COLON LPAR FINS LPAR SHARPINT COLON LPAR OR LPAR NOT SHARPINT RPAR lit RPAR RPAR RPAR EOL
-  { mk_clause ($1, Fins, [snd $14], [get_ref $12]) }
+  | SAT                                                    { fun _ -> raise Sat }
+  | INT COLON LPAR typ clause                   RPAR EOL   { fun st -> mk_clause ($1,$4,$5 st (VeritSyntax.create_quant_state ()),[]) st }  /* The clause should not contain quantified variables */
+  | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { fun st -> mk_clause ($1,$4,$5 st (VeritSyntax.create_quant_state ()),$6) st }  /* The clause should not contain quantified variables */
+  | INT COLON LPAR TPQT LPAR SHARPINT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { fun st -> add_solver $6 ($9 st) st; add_ref $6 $1 st; mk_clause ($1, Tpqt, [], [$12]) st }
+  | INT COLON LPAR FINS LPAR SHARPINT COLON LPAR OR LPAR NOT SHARPINT RPAR lit RPAR RPAR RPAR EOL  /* "forall_inst" rule. The literal should not contain quantified variables */
+  { fun st -> mk_clause ($1, Fins, [snd ($14 st (VeritSyntax.create_quant_state ()))], [get_ref $12 st]) st }
 ;
 
 typ:
@@ -165,22 +179,22 @@ typ:
 ;
 
 clause:
-  | LPAR          RPAR                                     { [] }
-  | LPAR lit_list RPAR                                     { let _, l = list_dec $2 in l }
+  | LPAR          RPAR                                     { fun _ _ -> [] }
+  | LPAR lit_list RPAR                                     { fun st qst -> let _, l = list_dec ($2 st qst) in l }
 ;
 
 lit_list:
-  | lit                                                    { [$1] }
-  | lit lit_list                                           { $1::$2 }
+  | lit                                                    { fun st qst -> [$1 st qst] }
+  | lit lit_list                                           { fun st qst -> ($1 st qst)::($2 st qst) }
 ;
 
-lit:   /* returns a SmtAtom.Form.t option */
-  | name_term                                              { let decl, t = $1 in decl, Form.lit_of_atom_form_lit rf (decl, t) }
-  | LPAR NOT lit RPAR                                      { apply_dec Form.neg $3 }
+lit:   /* returns a SmtAtom.Form.t (given a state) */
+  | name_term                                              { fun st qst -> let (decl, t) = $1 st qst in (decl, Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (decl, t)) }
+  | LPAR NOT lit RPAR                                      { fun st qst -> apply_dec Form.neg ($3 st qst) }
 ;
 
 nlit:
-  | LPAR NOT lit RPAR                                      { apply_dec Form.neg $3 }
+  | LPAR NOT lit RPAR                                      { fun st qst -> apply_dec Form.neg ($3 st qst) }
 ;
 
 var_atvar:
@@ -188,18 +202,18 @@ var_atvar:
   | ATVAR			                           { $1 }
 ;
 
-name_term:   /* returns a bool * (SmtAtom.Form.pform or a SmtAtom.hatom), the boolean indicates if we should declare the term or not */
-  | SHARPINT                                              { get_solver $1 }
-  | SHARPINT COLON LPAR term RPAR                         { let res = $4 in add_solver $1 res; res }
-  | BITV                                                   { true, Form.Atom (Atom.mk_bvconst ra (parse_bv $1)) }
-  | TRUE                                                   { true, Form.Form Form.pform_true }
-  | FALS                                                   { true, Form.Form Form.pform_false }
-  | var_atvar						   { let x = $1 in match find_opt_qvar x with
-    					                   | Some bt -> false, Form.Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
-							   | None -> true, Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun $1, [||]))) }
-  | BINDVAR                                                { true, Hashtbl.find hlets $1 }
-  | INT                                                    { true, Form.Atom (Atom.hatom_Z_of_int ra $1) }
-  | BIGINT                                                 { true, Form.Atom (Atom.hatom_Z_of_bigint ra $1) }
+name_term:   /* returns a bool * (SmtAtom.Form.pform or a SmtAtom.hatom) (give a state), the boolean indicates if we should declare the term or not */
+  | SHARPINT                                               { fun st _ -> get_solver $1 st }
+  | SHARPINT COLON LPAR term RPAR                          { fun st qst -> let res = $4 st qst in add_solver $1 res st; res }
+  | BITV                                                   { fun st _ -> true, Form.Atom (Atom.mk_bvconst (VeritSyntax.get_atom_tbl_to_add st) (parse_bv $1)) }
+  | TRUE                                                   { fun _ _ -> true, Form.Form Form.pform_true }
+  | FALS                                                   { fun _ _ -> true, Form.Form Form.pform_false }
+  | var_atvar						   { fun st qst -> let x = $1 in match find_opt_qvar x qst with
+    					                   | Some bt -> false, Form.Atom (Atom.get ~declare:false (VeritSyntax.get_atom_tbl_to_add st) (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||])))
+							   | None -> true, Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (SmtMaps.get_fun $1, [||]))) }
+  | BINDVAR                                                { fun st _ -> true, VeritSyntax.get_hlet $1 st }
+  | INT                                                    { fun st _ -> true, Form.Atom (Atom.hatom_Z_of_int (VeritSyntax.get_atom_tbl_to_add st) $1) }
+  | BIGINT                                                 { fun st _ -> true, Form.Atom (Atom.hatom_Z_of_bigint (VeritSyntax.get_atom_tbl_to_add st) $1) }
 ;
 
 tvar:
@@ -209,88 +223,90 @@ tvar:
 ;
 
 var_decl_list:
-  | LPAR var_atvar tvar RPAR				   { add_qvar $2 $3; [$2, $3] }
-  | LPAR var_atvar tvar RPAR var_decl_list		   { add_qvar $2 $3; ($2, $3)::$5 }
+  | LPAR var_atvar tvar RPAR				   { fun qst -> add_qvar $2 $3 qst; [($2, $3)] }
+  | LPAR var_atvar tvar RPAR var_decl_list		   { fun qst -> add_qvar $2 $3 qst; ($2, $3)::($5 qst) }
 ;
 
 forall_decl:
-  | FORALL LPAR var_decl_list RPAR blit		   { clear_qvar (); false, Form.Form (Fapp (Fforall $3, [|Form.lit_of_atom_form_lit rf $5|])) }
-; 
+  | FORALL LPAR var_decl_list RPAR blit		   { fun st -> let qst = VeritSyntax.create_quant_state () in
+                                                               let ff = $3 qst in
+                                                               false, Form.Form (Fapp (Fforall ff, [|Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) ($5 st qst)|])) }
+;
 
 term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean indicates if we should declare the term or not */
-  | LPAR term RPAR                                         { $2 }
+  | LPAR term RPAR                                         { fun st qst -> $2 st qst }
 
   /* Formulae */
-  | TRUE                                                   { true, Form.Form Form.pform_true }
-  | FALS                                                   { true, Form.Form Form.pform_false }
-  | AND lit_list                                           { apply_dec (fun x -> Form.Form (Fapp (Fand, Array.of_list x))) (list_dec $2) }
-  | OR lit_list                                            { apply_dec (fun x -> Form.Form (Fapp (For, Array.of_list x))) (list_dec $2) }
-  | IMP lit_list                                           { apply_dec (fun x -> Form.Form (Fapp (Fimp, Array.of_list x))) (list_dec $2) }
-  | XOR lit_list                                           { apply_dec (fun x -> Form.Form (Fapp (Fxor, Array.of_list x))) (list_dec $2) }
-  | ITE lit_list                                           { apply_dec (fun x -> Form.Form (Fapp (Fite, Array.of_list x))) (list_dec $2) }
-  | forall_decl                                            { $1 }
-  | BBT name_term LBRACKET lit_list RBRACKET               { let (decl, t) = $2 in let (decll, l) = list_dec $4 in (decl && decll, match t with | Form.Atom a -> Form.Form (FbbT (a, l)) | _ -> assert false) }
+  | TRUE                                                   { fun _ _ -> true, Form.Form Form.pform_true }
+  | FALS                                                   { fun _ _ -> true, Form.Form Form.pform_false }
+  | AND lit_list                                           { fun st qst -> apply_dec (fun x -> Form.Form (Fapp (Fand, Array.of_list x))) (list_dec ($2 st qst)) }
+  | OR lit_list                                            { fun st qst -> apply_dec (fun x -> Form.Form (Fapp (For, Array.of_list x))) (list_dec ($2 st qst)) }
+  | IMP lit_list                                           { fun st qst -> apply_dec (fun x -> Form.Form (Fapp (Fimp, Array.of_list x))) (list_dec ($2 st qst)) }
+  | XOR lit_list                                           { fun st qst -> apply_dec (fun x -> Form.Form (Fapp (Fxor, Array.of_list x))) (list_dec ($2 st qst)) }
+  | ITE lit_list                                           { fun st qst -> apply_dec (fun x -> Form.Form (Fapp (Fite, Array.of_list x))) (list_dec ($2 st qst)) }
+  | forall_decl                                            { fun st _ -> $1 st }
+  | BBT name_term LBRACKET lit_list RBRACKET               { fun st qst -> let (decl, t) = $2 st qst in let (decll, l) = list_dec ($4 st qst) in (decl && decll, match t with | Form.Atom a -> Form.Form (FbbT (a, l)) | _ -> assert false) }
 
   /* Atoms */
-  | INT                                                    { true, Form.Atom (Atom.hatom_Z_of_int ra $1) }
-  | BIGINT                                                 { true, Form.Atom (Atom.hatom_Z_of_bigint ra $1) }
-  | BITV                                                   { true, Form.Atom (Atom.mk_bvconst ra (parse_bv $1)) }
-  | LT name_term name_term                                 { apply_bdec_atom (Atom.mk_lt ra) $2 $3 }
-  | LEQ name_term name_term                                { apply_bdec_atom (Atom.mk_le ra) $2 $3 }
-  | GT name_term name_term                                 { apply_bdec_atom (Atom.mk_gt ra) $2 $3 }
-  | GEQ name_term name_term                                { apply_bdec_atom (Atom.mk_ge ra) $2 $3 }
-  | PLUS name_term name_term                               { apply_bdec_atom (Atom.mk_plus ra) $2 $3 }
-  | MULT name_term name_term                               { apply_bdec_atom (Atom.mk_mult ra) $2 $3 }
-  | MINUS name_term name_term                              { apply_bdec_atom (Atom.mk_minus ra) $2 $3}
-  | MINUS name_term                                        { apply_dec_atom (fun ?declare:d a -> Atom.mk_neg ra a) $2 }
-  | OPP name_term                                          { apply_dec_atom (Atom.mk_opp ra) $2 }
-  | DIST args                                              { let da, la = list_dec $2 in
+  | INT                                                    { fun st _ -> true, Form.Atom (Atom.hatom_Z_of_int (VeritSyntax.get_atom_tbl_to_add st) $1) }
+  | BIGINT                                                 { fun st _ -> true, Form.Atom (Atom.hatom_Z_of_bigint (VeritSyntax.get_atom_tbl_to_add st) $1) }
+  | BITV                                                   { fun st _ -> true, Form.Atom (Atom.mk_bvconst (VeritSyntax.get_atom_tbl_to_add st) (parse_bv $1)) }
+  | LT name_term name_term                                 { fun st qst -> apply_bdec_atom (Atom.mk_lt (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst) }
+  | LEQ name_term name_term                                { fun st qst -> apply_bdec_atom (Atom.mk_le (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst) }
+  | GT name_term name_term                                 { fun st qst -> apply_bdec_atom (Atom.mk_gt (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst) }
+  | GEQ name_term name_term                                { fun st qst -> apply_bdec_atom (Atom.mk_ge (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst) }
+  | PLUS name_term name_term                               { fun st qst -> apply_bdec_atom (Atom.mk_plus (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst) }
+  | MULT name_term name_term                               { fun st qst -> apply_bdec_atom (Atom.mk_mult (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst) }
+  | MINUS name_term name_term                              { fun st qst -> apply_bdec_atom (Atom.mk_minus (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) ($3 st qst)}
+  | MINUS name_term                                        { fun st qst -> apply_dec_atom (fun ?declare:d a -> Atom.mk_neg (VeritSyntax.get_atom_tbl_to_add st) a) ($2 st qst) }
+  | OPP name_term                                          { fun st qst -> apply_dec_atom (Atom.mk_opp (VeritSyntax.get_atom_tbl_to_add st)) ($2 st qst) }
+  | DIST args                                              { fun st qst -> let da, la = list_dec ($2 st qst) in
     	 						     let a = Array.of_list la in
-                                                             da, Form.Atom (Atom.mk_distinct ra ~declare:da (Atom.type_of a.(0)) a) }
-  | BITOF INT name_term                                    { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bitof ra ~declare:d s $2 h | _ -> assert false) $3 }
-  | BVNOT name_term                                        { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvnot ra ~declare:d s h | _ -> assert false) $2 }
-  | BVAND name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvand ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVOR name_term name_term                               { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvor ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVXOR name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvxor ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVNEG name_term                                        { apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvneg ra ~declare:d s h | _ -> assert false) $2 }
-  | BVADD name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvadd ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVMUL name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvmult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVULT name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVSLT name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVULE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 in (decl, Form.Lit (Form.neg (Form.lit_of_atom_form_lit rf a))) }
-  | BVSLE name_term name_term                              { let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 in (decl, Form.Lit (Form.neg (Form.lit_of_atom_form_lit rf a))) }
-  | BVSHL name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshl ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVSHR name_term name_term                              { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshr ra ~declare:d s h1 h2 | _ -> assert false) $2 $3 }
-  | BVCONC name_term name_term                             { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1, Atom.type_of h2 with TBV s1, TBV s2 -> Atom.mk_bvconcat ra ~declare:d s1 s2 h1 h2 | _, _ -> assert false) $2 $3 }
-  | BVEXTR INT INT name_term                               { let j, i = $2, $3 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvextr ra ~declare:d ~s ~i ~n:(j-i+1) h | _ -> assert false) $4 }
-  | BVZEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvzextn ra ~declare:d ~s ~n h | _ -> assert false) $3 }
-  | BVSEXT INT name_term                                   { let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvsextn ra ~declare:d ~s ~n h | _ -> assert false) $3 }
-  | SELECT name_term name_term                             { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_select ra ~declare:d ti te h1 h2 | _ -> assert false) $2 $3 }
-  | DIFF name_term name_term                               { apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_diffarray ra ~declare:d ti te h1 h2 | _ -> assert false) $2 $3 }
-  | STORE name_term name_term name_term                    { apply_tdec_atom (fun ?declare:(d=true) h1 h2 h3 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_store ra ~declare:d ti te h1 h2 h3 | _ -> assert false) $2 $3 $4 }
-  | VAR                                                    { let x = $1 in match find_opt_qvar x with | Some bt -> false, Form.Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||]))) | None -> true, Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun $1, [||]))) }
-  | VAR args                                               { let f = $1 in let a = $2 in match find_opt_qvar f with | Some bt -> let op = dummy_indexed_op (Rel_name f) [||] bt in false, Form.Atom (Atom.get ~declare:false ra (Aapp (op, Array.of_list (snd (list_dec a))))) | None -> let dl, l = list_dec $2 in dl, Form.Atom (Atom.get ra ~declare:dl (Aapp (SmtMaps.get_fun f, Array.of_list l))) }
+                                                             da, Form.Atom (Atom.mk_distinct (VeritSyntax.get_atom_tbl_to_add st) ~declare:da (Atom.type_of a.(0)) a) }
+  | BITOF INT name_term                                    { fun st qst -> apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bitof (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s $2 h | _ -> assert false) ($3 st qst) }
+  | BVNOT name_term                                        { fun st qst -> apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvnot (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h | _ -> assert false) ($2 st qst) }
+  | BVAND name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvand (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVOR name_term name_term                               { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvor (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVXOR name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvxor (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVNEG name_term                                        { fun st qst -> apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvneg (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h | _ -> assert false) ($2 st qst) }
+  | BVADD name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvadd (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVMUL name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvmult (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVULT name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVSLT name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVULE name_term name_term                              { fun st qst -> let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvult (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) in (decl, Form.Lit (Form.neg (Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) a))) }
+  | BVSLE name_term name_term                              { fun st qst -> let (decl,_) as a = apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvslt (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) in (decl, Form.Lit (Form.neg (Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) a))) }
+  | BVSHL name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshl (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVSHR name_term name_term                              { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TBV s -> Atom.mk_bvshr (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVCONC name_term name_term                             { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1, Atom.type_of h2 with TBV s1, TBV s2 -> Atom.mk_bvconcat (VeritSyntax.get_atom_tbl_to_add st) ~declare:d s1 s2 h1 h2 | _, _ -> assert false) ($2 st qst) ($3 st qst) }
+  | BVEXTR INT INT name_term                               { fun st qst -> let j, i = $2, $3 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvextr (VeritSyntax.get_atom_tbl_to_add st) ~declare:d ~s ~i ~n:(j-i+1) h | _ -> assert false) ($4 st qst) }
+  | BVZEXT INT name_term                                   { fun st qst -> let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvzextn (VeritSyntax.get_atom_tbl_to_add st) ~declare:d ~s ~n h | _ -> assert false) ($3 st qst) }
+  | BVSEXT INT name_term                                   { fun st qst -> let n = $2 in apply_dec_atom (fun ?declare:(d=true) h -> match Atom.type_of h with TBV s -> Atom.mk_bvsextn (VeritSyntax.get_atom_tbl_to_add st) ~declare:d ~s ~n h | _ -> assert false) ($3 st qst) }
+  | SELECT name_term name_term                             { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_select (VeritSyntax.get_atom_tbl_to_add st) ~declare:d ti te h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | DIFF name_term name_term                               { fun st qst -> apply_bdec_atom (fun ?declare:(d=true) h1 h2 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_diffarray (VeritSyntax.get_atom_tbl_to_add st) ~declare:d ti te h1 h2 | _ -> assert false) ($2 st qst) ($3 st qst) }
+  | STORE name_term name_term name_term                    { fun st qst -> apply_tdec_atom (fun ?declare:(d=true) h1 h2 h3 -> match Atom.type_of h1 with TFArray (ti, te) -> Atom.mk_store (VeritSyntax.get_atom_tbl_to_add st) ~declare:d ti te h1 h2 h3 | _ -> assert false) ($2 st qst) ($3 st qst) ($4 st qst) }
+  | VAR                                                    { fun st qst -> let x = $1 in match find_opt_qvar x qst with | Some bt -> false, Form.Atom (Atom.get ~declare:false (VeritSyntax.get_atom_tbl_to_add st) (Aapp (dummy_indexed_op (Rel_name x) [||] bt, [||]))) | None -> true, Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (SmtMaps.get_fun $1, [||]))) }
+  | VAR args                                               { fun st qst -> let f = $1 in let a = $2 st qst in match find_opt_qvar f qst with | Some bt -> let op = dummy_indexed_op (Rel_name f) [||] bt in false, Form.Atom (Atom.get ~declare:false (VeritSyntax.get_atom_tbl_to_add st) (Aapp (op, Array.of_list (snd (list_dec a))))) | None -> let dl, l = list_dec ($2 st qst) in dl, Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) ~declare:dl (Aapp (SmtMaps.get_fun f, Array.of_list l))) }
 
   /* Both */
-  | EQ name_term name_term                                 { let t1 = $2 in let t2 = $3 in match t1,t2 with | (decl1, Form.Atom h1), (decl2, Form.Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Form.Atom (Atom.mk_eq ra ~declare:decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|Form.lit_of_atom_form_lit rf (decl1, t1); Form.lit_of_atom_form_lit rf (decl2, t2)|])) }
-  | EQ nlit lit                                            { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|t1; t2|])) }
-  | EQ name_term nlit                                      { match $2, $3 with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|Form.lit_of_atom_form_lit rf (decl1, t1); t2|])) }
-  | LET LPAR bindlist RPAR name_term                       { $3; $5 }
-  | BINDVAR                                                { true, Hashtbl.find hlets $1 }
+  | EQ name_term name_term                                 { fun st qst -> let t1 = ($2 st qst) in let t2 = ($3 st qst) in match t1,t2 with | (decl1, Form.Atom h1), (decl2, Form.Atom h2) when (match Atom.type_of h1 with | SmtBtype.Tbool -> false | _ -> true) -> let decl = decl1 && decl2 in decl, Form.Atom (Atom.mk_eq (VeritSyntax.get_atom_tbl_to_add st) ~declare:decl (Atom.type_of h1) h1 h2) | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (decl1, t1); Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (decl2, t2)|])) }
+  | EQ nlit lit                                            { fun st qst -> match ($2 st qst), ($3 st qst) with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|t1; t2|])) }
+  | EQ name_term nlit                                      { fun st qst -> match ($2 st qst), ($3 st qst) with (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|Form.lit_of_atom_form_lit (VeritSyntax.get_form_tbl_to_add st) (decl1, t1); t2|])) }
+  | LET LPAR bindlist RPAR name_term                       { fun st qst -> $3 st qst; $5 st qst }
+  | BINDVAR                                                { fun st _ -> true, VeritSyntax.get_hlet $1 st }
 ;
 
 blit:
-  | name_term                                              { $1 }
-  | LPAR NOT lit RPAR                                      { apply_dec (fun l -> Form.Lit (Form.neg l)) $3 }
+  | name_term                                              { fun st qst -> $1 st qst }
+  | LPAR NOT lit RPAR                                      { fun st qst -> apply_dec (fun l -> Form.Lit (Form.neg l)) ($3 st qst) }
 ;
 
 bindlist:
-  | LPAR BINDVAR blit RPAR	                           { Hashtbl.add hlets $2 (snd $3) }
-  | LPAR BINDVAR blit RPAR bindlist                        { Hashtbl.add hlets $2 (snd $3); $5 }
+  | LPAR BINDVAR blit RPAR	                           { fun st qst -> VeritSyntax.add_hlet $2 (snd ($3 st qst)) st }
+  | LPAR BINDVAR blit RPAR bindlist                        { fun st qst -> VeritSyntax.add_hlet $2 (snd ($3 st qst)) st; $5 st qst }
 
 args:
-  | name_term                                              { match $1 with decl, Form.Atom h -> [decl, h] | _ -> assert false }
-  | name_term args                                         { match $1 with decl, Form.Atom h -> (decl, h)::$2 | _ -> assert false }
+  | name_term                                              { fun st qst -> match $1 st qst with decl, Form.Atom h -> [(decl, h)] | _ -> assert false }
+  | name_term args                                         { fun st qst -> match $1 st qst with decl, Form.Atom h -> (decl, h)::($2 st qst) | _ -> assert false }
 ;
 
 clause_ids_params:

@@ -207,50 +207,111 @@ let mkDistinctElim old value =
  *   r *)
 
 
+(* The state of the veriT pre-processor:
+   - clauses_tbl : the clauses associated to the ids in the veriT certificate
+   - ref_cl_tbl : maps solver integers to id integers
+   - to_add_list : the terms to add in the deep embedding (for quantifiers)
+   - solver_tbl : the terms associated to names in the veriT certificate
+   - hlets_tbl
+   - atom_tbl_to_add : hash-consed atoms to be added in the deep embedding
+   - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
+   - atom_tbl_no_add : hash-consed atoms no to be added in the deep embedding (for quantifiers)
+   - form_tbl_no_add : hash-consed formulas no to be added in the deep embedding (for quantifiers)
+
+ *)
+
+type clauses_tbl = (int,Form.t clause) Hashtbl.t
+type ref_cl_tbl = (int, int) Hashtbl.t
+type to_add_list = (int * SmtAtom.Form.t list) list ref
+type solver_tbl = (int, (bool * Form.atom_form_lit)) Hashtbl.t
+type hlets_tbl = (string, Form.atom_form_lit) Hashtbl.t
+type atom_tbl_to_add = SmtAtom.Atom.reify_tbl
+type form_tbl_to_add = SmtAtom.Form.reify
+type atom_tbl_no_add = SmtAtom.Atom.reify_tbl
+type form_tbl_no_add = SmtAtom.Form.reify
+
+type verit_state =
+  clauses_tbl
+  * ref_cl_tbl
+  * to_add_list
+  * solver_tbl
+  * hlets_tbl
+  * atom_tbl_to_add
+  * form_tbl_to_add
+  * atom_tbl_no_add
+  * form_tbl_no_add
+
+let get_atom_tbl_to_add st =
+  let (_, _, _, _, _, ra, _, _, _) = st in
+  ra
+let get_form_tbl_to_add st =
+  let (_, _, _, _, _, _, rf, _, _) = st in
+  rf
+let get_atom_tbl_no_add st =
+  let (_, _, _, _, _, _, _, ra', _) = st in
+  ra'
+let get_form_tbl_no_add st =
+  let (_, _, _, _, _, _, _, _, rf') = st in
+  rf'
+
+let create_verit_state () : verit_state =
+  (Hashtbl.create 17,
+   Hashtbl.create 17,
+   ref [],
+   Hashtbl.create 17,
+   Hashtbl.create 17,
+   Atom.create (),
+   Form.create (),
+   Atom.create (),
+   Form.create ()
+  )
+
 
 (* Generating clauses *)
 
-let clauses : (int,Form.t clause) Hashtbl.t = Hashtbl.create 17
-let get_clause id =
+let get_clause id st =
+  let (clauses, _, _, _, _, _, _, _, _) = st in
   try Hashtbl.find clauses id
   with | Not_found -> failwith ("VeritSyntax.get_clause : clause number "^(string_of_int id)^" not found\n")
-let add_clause id cl = Hashtbl.add clauses id cl
-let clear_clauses () = Hashtbl.clear clauses
+let add_clause id cl st =
+  let (clauses, _, _, _, _, _, _, _, _) = st in
+  Hashtbl.add clauses id cl
 
 
 (* <ref_cl> maps solver integers to id integers. *)
-let ref_cl : (int, int) Hashtbl.t = Hashtbl.create 17
-let get_ref i = Hashtbl.find ref_cl i
-let add_ref i j = Hashtbl.add ref_cl i j
-let clear_ref () = Hashtbl.clear ref_cl
+let get_ref i st =
+  let (_, ref_cl, _, _, _, _, _, _, _) = st in
+  Hashtbl.find ref_cl i
+let add_ref i j st =
+  let (_, ref_cl, _, _, _, _, _, _, _) = st in
+  Hashtbl.add ref_cl i j
 
 (* Recognizing and modifying clauses depending on a forall_inst clause. *)
 
-let rec fins_lemma ids_params =
+let rec fins_lemma (ids_params:int list) (st:verit_state) : SmtAtom.Form.t SmtCertif.clause =
   match ids_params with
     [] -> raise Not_found
-  | h :: t -> let cl_target = repr (get_clause h) in
-              match cl_target.kind with
-                Other (Forall_inst (lemma, _)) -> lemma
-              | _ -> fins_lemma t
+  | h :: t ->
+     let cl_target = get_clause h st in
+     match cl_target.kind with
+         Other (Forall_inst (lemma, _)) -> lemma
+       | _ -> fins_lemma t st
 
-let find_remove_lemma lemma ids_params =
-  let eq_lemma h = eq_clause lemma (get_clause h) in
+let find_remove_lemma (lemma:SmtAtom.Form.t SmtCertif.clause) (ids_params:int list) (st:verit_state) : int * int list =
+  let eq_lemma h =
+    let cl = get_clause h st in
+    eq_clause lemma cl
+  in
   list_find_remove eq_lemma ids_params
 
 (* Removes the lemma in a list of ids containing an instance of this lemma *)
-let rec merge ids_params =
-  let rest_opt = try let lemma = fins_lemma ids_params in
-                     let _, rest = find_remove_lemma lemma ids_params in
-                     Some rest
-                 with Not_found -> None in
-  match rest_opt with
-    None -> ids_params
-  | Some r -> merge r
+let rec merge (ids_params:int list) (st:verit_state) : int list =
+  try let lemma = fins_lemma ids_params st in
+      let (_, rest) = find_remove_lemma lemma ids_params st in
+      merge rest st
+  with Not_found -> ids_params
 
-let to_add = ref []
-
-let mk_clause (id,typ,value,ids_params) =
+let mk_clause (id,typ,value,ids_params) st =
   let kind =
     match typ with
       (* Roots *)
@@ -280,31 +341,33 @@ let mk_clause (id,typ,value,ids_params) =
           | _ -> assert false)
       | Nand | Imp | Xor1 | Nxor1 | Equ2 | Nequ2 | Ite1 | Nite1 ->
         (match ids_params with
-          | [id] -> Other (ImmBuildDef (get_clause id))
+          | [id] ->
+             let cl = get_clause id st in
+             Other (ImmBuildDef cl)
           | _ -> assert false)
       | Or ->
          (match ids_params with
             | [id_target] ->
-               let cl_target = get_clause id_target in
+               let cl_target = get_clause id_target st in
                begin match cl_target.kind with
                  | Other (Forall_inst _) -> Same cl_target
                  | _ -> Other (ImmBuildDef cl_target) end
             | _ -> assert false)
       | Xor2 | Nxor2 | Equ1 | Nequ1 | Ite2 | Nite2 ->
         (match ids_params with
-          | [id] -> Other (ImmBuildDef2 (get_clause id))
+          | [id] -> Other (ImmBuildDef2 (get_clause id st))
           | _ -> assert false)
       | And | Nor ->
         (match ids_params with
-          | [id;p] -> Other (ImmBuildProj (get_clause id,p))
+          | [id;p] -> Other (ImmBuildProj (get_clause id st,p))
           | _ -> assert false)
       | Nimp1 ->
         (match ids_params with
-          | [id] -> Other (ImmBuildProj (get_clause id,0))
+          | [id] -> Other (ImmBuildProj (get_clause id st,0))
           | _ -> assert false)
       | Nimp2 ->
         (match ids_params with
-          | [id] -> Other (ImmBuildProj (get_clause id,1))
+          | [id] -> Other (ImmBuildProj (get_clause id st,1))
           | _ -> assert false)
       (* Equality *)
       | Eqre -> mkTrans value
@@ -320,18 +383,18 @@ let mk_clause (id,typ,value,ids_params) =
           | _ -> assert false)
       (* Resolution *)
       | Reso ->
-         let ids_params = merge ids_params in
+         let ids_params = merge ids_params st in
          (match ids_params with
             | cl1::cl2::q ->
-               let res = {rc1 = get_clause cl1; rc2 = get_clause cl2; rtail = List.map get_clause q} in
+               let res = {rc1 = get_clause cl1 st; rc2 = get_clause cl2 st; rtail = List.map (fun h -> get_clause h st) q} in
                Res res
-            | [fins_id] -> Same (get_clause fins_id)
+            | [fins_id] -> Same (get_clause fins_id st)
             | [] -> assert false)
       (* Clause weakening *)
       | Weak ->
         (match ids_params with
-         | [id] -> (* Other (Weaken (get_clause id, value)) *)
-           let cid = get_clause id in
+         | [id] -> (* Other (Weaken (get_clause id state, value)) *)
+           let cid = get_clause id st in
            (match cid.value with
            | None -> Other (Weaken (cid, value))
            | Some c -> Other (Weaken (cid, value))
@@ -342,23 +405,23 @@ let mk_clause (id,typ,value,ids_params) =
       (* Simplifications *)
       | Tpal ->
         (match ids_params with
-          | id::_ -> Same (get_clause id)
+          | id::_ -> Same (get_clause id st)
           | _ -> assert false)
       | Tple ->
         (match ids_params with
-          | id::_ -> Same (get_clause id)
+          | id::_ -> Same (get_clause id st)
           | _ -> assert false)
       | Tpde ->
         (match ids_params with
-          | id::_ -> mkDistinctElim (get_clause id) value
+          | id::_ -> mkDistinctElim (get_clause id st) value
           | _ -> assert false)
       | Tpsa | Tlap ->
         (match ids_params with
-          | id::_ -> mkSplArith (get_clause id) value
+          | id::_ -> mkSplArith (get_clause id st) value
           | _ -> assert false)
       | Flat ->
         (match ids_params, value with
-         | id::_, f :: _ -> Other (ImmFlatten(get_clause id, f))
+         | id::_, f :: _ -> Other (ImmFlatten(get_clause id st, f))
          | _ -> assert false)
       (* Bit blasting *)
       | Bbva ->
@@ -371,7 +434,7 @@ let mk_clause (id,typ,value,ids_params) =
            | _ -> assert false)
       | Bbeq ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBEq (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBEq (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbdis ->
          (match value with
@@ -379,56 +442,56 @@ let mk_clause (id,typ,value,ids_params) =
            | __ -> assert false)
       | Bbop ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBOp (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBOp (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbadd ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBAdd (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBAdd (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbmul ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBMul (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBMul (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbult ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBUlt (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBUlt (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbslt ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBSlt (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBSlt (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbconc ->
          (match ids_params, value with
            | [id1;id2], [f] ->
-             Other (BBConc (get_clause id1, get_clause id2, f))
+             Other (BBConc (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbextr ->
          (match ids_params, value with
-           | [id], [f] -> Other (BBExtr (get_clause id, f))
+           | [id], [f] -> Other (BBExtr (get_clause id st, f))
            | _, _ -> assert false)
       | Bbzext ->
          (match ids_params, value with
-           | [id], [f] -> Other (BBZextn (get_clause id, f))
+           | [id], [f] -> Other (BBZextn (get_clause id st, f))
            | _, _ -> assert false)
       | Bbsext ->
          (match ids_params, value with
-           | [id], [f] -> Other (BBSextn (get_clause id, f))
+           | [id], [f] -> Other (BBSextn (get_clause id st, f))
            | _, _ -> assert false)
       | Bbshl ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBShl (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBShl (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbshr ->
          (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBShr (get_clause id1, get_clause id2, f))
+           | [id1;id2], [f] -> Other (BBShr (get_clause id1 st, get_clause id2 st, f))
            | _, _ -> assert false)
       | Bbnot ->
          (match ids_params, value with
-           | [id], [f] -> Other (BBNot (get_clause id, f))
+           | [id], [f] -> Other (BBNot (get_clause id st, f))
            | _, _ -> assert false)
       | Bbneg ->
          (match ids_params, value with
-           | [id], [f] -> Other (BBNeg (get_clause id, f))
+           | [id], [f] -> Other (BBNeg (get_clause id st, f))
            | _, _ -> assert false)
 
       | Row1 ->
@@ -444,24 +507,24 @@ let mk_clause (id,typ,value,ids_params) =
       | Row2 -> Other (RowNeq value)
 
       (* Holes in proofs *)
-      | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
+      | Hole -> Other (SmtCertif.Hole (List.map (fun h -> get_clause h st) ids_params, value))
 
       (* Quantifier instanciation *)
       | Fins ->
          begin match value, ids_params with
            | [inst], [ref_th] ->
-              let cl_th = get_clause ref_th in
+              let cl_th = get_clause ref_th st in
               Other (Forall_inst (repr cl_th, inst))
            | _ -> failwith "unexpected form of forall_inst" end
       | Tpbr ->
          begin match ids_params with
            | [id] ->
-              Same (get_clause id)
+              Same (get_clause id st)
            | _ -> failwith "unexpected form of tmp_betared" end
       | Tpqt ->
          begin match ids_params with
            | [id] ->
-              Same (get_clause id)
+              Same (get_clause id st)
            | _ -> failwith "unexpected form of tmp_qnt_tidy" end
 
       (* Not implemented *)
@@ -485,8 +548,8 @@ let mk_clause (id,typ,value,ids_params) =
     (* TODO: change this into flatten when necessary *)
     if SmtTrace.isRoot kind then SmtTrace.mkRootV value
     else SmtTrace.mk_scertif kind (Some value) in
-  add_clause id cl;
-  if id > 1 then SmtTrace.link (get_clause (id-1)) cl;
+  add_clause id cl st;
+  if id > 1 then SmtTrace.link (get_clause (id-1) st) cl;
   id
 
 
@@ -523,18 +586,13 @@ let apply_tdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtA
   | _ -> assert false
 
 
-let solver : (int, (bool * Form.atom_form_lit)) Hashtbl.t = Hashtbl.create 17
-let get_solver id =
+let get_solver id st =
+  let (_, _, _, solver, _, _, _, _, _) = st in
   try Hashtbl.find solver id
   with | Not_found -> failwith ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n")
-let add_solver id cl = Hashtbl.add solver id cl
-let clear_solver () = Hashtbl.clear solver
-
-let qvar_tbl : (string, SmtBtype.btype) Hashtbl.t = Hashtbl.create 10
-let find_opt_qvar s = try Some (Hashtbl.find qvar_tbl s)
-                      with Not_found -> None
-let add_qvar s bt = Hashtbl.add qvar_tbl s bt
-let clear_qvar () = Hashtbl.clear qvar_tbl
+let add_solver id cl st =
+  let (_, _, _, solver, _, _, _, _, _) = st in
+  Hashtbl.add solver id cl
 
 (* Finding the index of a root in <lsmt> modulo the <re_hash> function.
    This function is used by SmtTrace.order_roots *)
@@ -568,24 +626,25 @@ let qf_to_add lr =
     | _::t -> qf_lemmas t in
   qf_lemmas lr
 
-let ra = Atom.create ()
-let rf = Form.create ()
-let ra' = Atom.create ()
-let rf' = Form.create ()
 
-let hlets : (string, Form.atom_form_lit) Hashtbl.t = Hashtbl.create 17
+(* Let bindings *)
+let get_hlet s st =
+  let (_, _, _, _, hlets, _, _, _, _) = st in
+  Hashtbl.find hlets s
+let add_hlet s l st =
+  let (_, _, _, _, hlets, _, _, _, _) = st in
+  Hashtbl.add hlets s l
 
-let clear_mk_clause () =
-  to_add := [];
-  clear_ref ()
 
-let clear () =
-  clear_qvar ();
-  clear_mk_clause ();
-  clear_clauses ();
-  clear_solver ();
-  Atom.clear ra;
-  Form.clear rf;
-  Atom.clear ra';
-  Form.clear rf';
-  Hashtbl.clear hlets
+(* Local state memorizing quantified variables when parsing *one* quantified clause *)
+type qvar_tbl = (string, SmtBtype.btype) Hashtbl.t
+type quant_state = qvar_tbl
+let create_quant_state () : quant_state = Hashtbl.create 17
+
+let find_opt_qvar s qst =
+  let qvars = qst in
+  try Some (Hashtbl.find qvars s)
+  with Not_found -> None
+let add_qvar s bt qst =
+  let qvars = qst in
+  Hashtbl.add qvars s bt

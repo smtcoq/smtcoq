@@ -76,14 +76,14 @@ module Make (T : Translator_sig.S) = struct
   (** Produce input clauses from the result of CVC4's pre-processing. This may
       not match the actual inputs in the original SMT2 file but they correspond
       to what the proof uses. *)
-  let rec produce_inputs_preproc p = match app_name p with
+  let rec produce_inputs_preproc p st = match app_name p with
     | Some (n, [_; _; p]) when n == H.th_let_pf ->
       begin match value p with
         | Lambda ({sname = Name h; stype}, p) ->
           begin match app_name stype with
             | Some (n, [formula]) when n == H.th_holds ->
-              mk_input h formula;
-              produce_inputs_preproc p
+              mk_input h formula st;
+              produce_inputs_preproc p st
             | _ -> assert false
           end
         | _ -> assert false
@@ -92,7 +92,7 @@ module Make (T : Translator_sig.S) = struct
 
 
   (** Produce inputs from the assumptions *)
-  let rec produce_inputs p = match value p with
+  let rec produce_inputs p st = match value p with
     | Lambda ({sname = Name h; stype}, p) ->
       begin match app_name stype with
         | Some (n, [formula])
@@ -100,9 +100,9 @@ module Make (T : Translator_sig.S) = struct
                (match name formula with
                 | Some f when f == H.ttrue -> false | _ -> true)
           ->
-          mk_input h formula;
-          produce_inputs p
-        | _ -> produce_inputs p
+          mk_input h formula st;
+          produce_inputs p st
+        | _ -> produce_inputs p st
       end
     | _ -> p
 
@@ -120,7 +120,7 @@ module Make (T : Translator_sig.S) = struct
     | _ -> false
 
   
-  let rec admit_preproc p = match app_name p with
+  let rec admit_preproc p st = match app_name p with
     | Some (n, [_; tr; p]) when n == H.th_let_pf ->
       begin match app_name tr with
         | Some (n, _) when n == H.trust_f ->
@@ -133,8 +133,8 @@ module Make (T : Translator_sig.S) = struct
       begin match value p with
         | Lambda ({sname = Name h}, p) ->
           if not (trust_vareq_as_alias formula) then
-            mk_admit_preproc h formula;
-          admit_preproc p
+            mk_admit_preproc h formula st;
+          admit_preproc p st
         | _ -> assert false
       end
     | _ -> p
@@ -142,7 +142,7 @@ module Make (T : Translator_sig.S) = struct
 
 
   (** Handle deferred declarations in LFSC (for extensionality rule atm.) *)
-  let rec deferred p = match app_name p with
+  let rec deferred p st = match app_name p with
     | Some (n, [ty_i; ty_e; a; b; p]) when n == H.ext ->
       begin match value p with
         | Lambda ({sname = Name index_diff}, p) ->
@@ -155,9 +155,9 @@ module Make (T : Translator_sig.S) = struct
                   (not_ (eq ty_e
                            (apply_read ty_i ty_e a diff_a_b)
                            (apply_read ty_i ty_e b diff_a_b))) in
-              let cid = mk_clause_cl Exte [f] [] in
+              let cid = mk_clause_cl Exte [f] [] st in
               register_decl_id h cid;
-              deferred p
+              deferred p st
             | _ -> assert false
           end
         | _ -> assert false
@@ -214,12 +214,12 @@ module Make (T : Translator_sig.S) = struct
   (** Create an intermediate resolution step in [satlem] with the accumulated
       clauses. {!Reso} ignores the resulting clause so we can just give the
       empty clause here. *)
-  let mk_inter_resolution clauses = match clauses with
+  let mk_inter_resolution clauses st = match clauses with
     | [] -> (* not false *)
-      mk_clause_cl Fals [not_ tfalse] []
+      mk_clause_cl Fals [not_ tfalse] [] st
       (* assert false *)
     | [id] -> id
-    | _ -> mk_clause ~reuse:false Reso [] clauses
+    | _ -> mk_clause ~reuse:false Reso [] clauses st
 
 
 
@@ -230,23 +230,23 @@ module Make (T : Translator_sig.S) = struct
 
   (** Accumulates equalities for congruence. This is useful for when [f] takes
       multiples arguments. *)
-  let rec cong neqs env p = match app_name p with
+  let rec cong neqs env p st = match app_name p with
     | Some (n, [ty; rty; f; f'; x; y; p_f_eq_f'; r]) when n == H.cong ->
 
       let ne = not_ (eq ty x y) in
       let neqs, env =
         if List.exists (Term.equal ne) neqs then neqs, env
-        else ne :: neqs, lem env r in
+        else ne :: neqs, lem env r st in
 
       begin match name f, name f' with
         | Some n, Some n' when n == n' -> neqs, env
-        | None, None -> cong neqs env p_f_eq_f'
+        | None, None -> cong neqs env p_f_eq_f' st
         | _ -> assert false
       end
 
     | Some (n, [_; _; _; r])
       when n == H.symm || n == H.negsymm ->
-      cong neqs (rm_used env r) r
+      cong neqs (rm_used env r) r st
 
     (* | Some (n, [t; x; y; z; r1; r2]) when n == H.trans *)
     (* | Some (n, [t; x; z; y; r1; r2]) when n == H.negtrans || n == H.negtrans1 *)
@@ -269,16 +269,16 @@ module Make (T : Translator_sig.S) = struct
         | Some (n, [t; _; _; x]) when n == H.apply ->
           let x_x = eq t x x in
           not_ x_x :: neqs,
-          { env with clauses = mk_clause_cl Eqre [x_x] [] :: env.clauses }
+          { env with clauses = mk_clause_cl Eqre [x_x] [] st :: env.clauses }
         | _ ->
           let x_x = eq t x x in
           not_ x_x :: neqs,
-          { env with clauses = mk_clause_cl Eqre [x_x] [] :: env.clauses }
-      else if term_equal x y then cong neqs (rm_used env r2) r2
-      else if term_equal y z then cong neqs (rm_used env r1) r1
+          { env with clauses = mk_clause_cl Eqre [x_x] [] st :: env.clauses }
+      else if term_equal x y then cong neqs (rm_used env r2) r2 st
+      else if term_equal y z then cong neqs (rm_used env r1) r1 st
       else
-        let neqs1, env1 = cong neqs (rm_used env r1) r1 in
-        cong neqs1 (rm_used env1 r2) r2
+        let neqs1, env1 = cong neqs (rm_used env r1) r1 st in
+        cong neqs1 (rm_used env1 r2) r2 st
 
     (* | Some ("refl", [_; r]) -> neqs, rm_used env r *)
 
@@ -288,7 +288,7 @@ module Make (T : Translator_sig.S) = struct
 
 
   (** Accumulates equalities for transitivity to chain them together. *)
-  and trans neqs env p = match app_name p with
+  and trans neqs env p st = match app_name p with
 
     | Some (n, [ty; x; y; z; p1; p2]) when n == H.trans ->
     (* | Some (("negtrans"|"negtrans1") as r, [ty; x; z; y; p1; p2]) *)
@@ -305,8 +305,8 @@ module Make (T : Translator_sig.S) = struct
       let n_x_y = not_ (eq ty x y) in
       let n_y_z = not_ (eq ty y z) in
 
-      let neqs2, env = if merge then trans neqs env p2 else [], lem env p2 in
-      let neqs1, env = if merge then trans neqs env p1 else [], lem env p1 in
+      let neqs2, env = if merge then trans neqs env p2 st else [], lem env p2 st in
+      let neqs1, env = if merge then trans neqs env p1 st else [], lem env p1 st in
 
       let neqs = match neqs1, neqs2 with
         | [], [] -> [n_x_y; n_y_z]
@@ -319,19 +319,19 @@ module Make (T : Translator_sig.S) = struct
       neqs, env
 
     | Some (n, [_; _; _; r]) when n == H.symm || n == H.negsymm ->
-      let neqs, env = trans neqs (rm_used env r) r in
+      let neqs, env = trans neqs (rm_used env r) r st in
       List.rev neqs, env
       
     | Some (n, [_; r]) when n == H.refl -> neqs, rm_used env r
   
-    | _ -> neqs, lem env p
+    | _ -> neqs, lem env p st
 
 
   
 
   (** Convert the local proof of a [satlem]. We use decductive style rules when
       possible but revert to axiomatic ones when the context forces us to. *)
-  and lem ?(toplevel=false) env p = match app_name p with
+  and lem ?(toplevel=false) env p st = match app_name p with
     | Some (n, [l1; l2; x; r])
       when (n == H.or_elim_1 || n == H.or_elim_2) &&
         (match app_name r with
@@ -341,11 +341,11 @@ module Make (T : Translator_sig.S) = struct
 
       let el, rem = if n == H.or_elim_1 then l1, l2 else l2, l1 in
       
-      let env = lem env r in
-      let env = lem env x in
+      let env = lem env r st in
+      let env = lem env x st in
       (match env.clauses with
        | ci1 :: ci2 :: cls ->
-         { env with clauses = mk_clause_cl Reso [rem] [ci1; ci2] :: cls }
+         { env with clauses = mk_clause_cl Reso [rem] [ci1; ci2] st :: cls }
        | _ -> env
       )
 
@@ -367,146 +367,146 @@ module Make (T : Translator_sig.S) = struct
           | _ -> false)
       ->
       let env = rm_used env x in
-      let env = lem env r in
+      let env = lem env r st in
       { env with ax = true }
 
     | Some (n, [a; b; x; r]) when n == H.or_elim_1 || n == H.or_elim_2 ->
       let env = rm_used env x in
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
-        | [_] when not env.ax -> mk_clause_cl Or [a; b] env.clauses :: []
+        | [_] when not env.ax -> mk_clause_cl Or [a; b] env.clauses st :: []
         | _ ->
           let a_or_b = th_res r in
-          mk_clause_cl Orp [not_ a_or_b; a; b] [] :: env.clauses
+          mk_clause_cl Orp [not_ a_or_b; a; b] [] st :: env.clauses
       in
       { env with clauses; ax = true }
 
     | Some (n, [a; b; r]) when n == H.impl_elim ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
-        | [_] when not env.ax -> mk_clause_cl Imp [not_ a; b] env.clauses :: []
+        | [_] when not env.ax -> mk_clause_cl Imp [not_ a; b] env.clauses st :: []
         | _ ->
           let a_impl_b = th_res r in
-          mk_clause_cl Impp [not_ a_impl_b; not_ a; b] [] :: env.clauses
+          mk_clause_cl Impp [not_ a_impl_b; not_ a; b] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; r]) when n == H.xor_elim_1 ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Xor2 [not_ a; not_ b] env.clauses :: []
+          mk_clause_cl Xor2 [not_ a; not_ b] env.clauses st :: []
         | _ ->
           let a_xor_b = xor_ a b in
-          mk_clause_cl Xorp2 [not_ a_xor_b; not_ a; not_ b] [] :: env.clauses
+          mk_clause_cl Xorp2 [not_ a_xor_b; not_ a; not_ b] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; r]) when n == H.xor_elim_2 ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Xor1 [a; b] env.clauses :: []
+          mk_clause_cl Xor1 [a; b] env.clauses st :: []
         | _ ->
           let a_xor_b = xor_ a b in
-          mk_clause_cl Xorp1 [not_ a_xor_b; a; b] [] :: env.clauses
+          mk_clause_cl Xorp1 [not_ a_xor_b; a; b] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; c; r]) when n == H.ite_elim_1 ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Ite2 [not_ a; b] env.clauses :: []
+          mk_clause_cl Ite2 [not_ a; b] env.clauses st :: []
         | _ ->
           let ite_a_b_c = ifte_ a b c in
-          mk_clause_cl Itep2 [not_ ite_a_b_c; not_ a; b] [] :: env.clauses
+          mk_clause_cl Itep2 [not_ ite_a_b_c; not_ a; b] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; c; r]) when n == H.ite_elim_2 ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Ite1 [a; c] env.clauses :: []
+          mk_clause_cl Ite1 [a; c] env.clauses st :: []
         | _ ->
           let ite_a_b_c = ifte_ a b c in
-          mk_clause_cl Itep1 [not_ ite_a_b_c; a; c] [] :: env.clauses
+          mk_clause_cl Itep1 [not_ ite_a_b_c; a; c] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; c; r]) when n == H.not_ite_elim_1 ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Nite2 [not_ a; not_ b] env.clauses :: []
+          mk_clause_cl Nite2 [not_ a; not_ b] env.clauses st :: []
         | _ ->
           let ite_a_b_c = ifte_ a b c in
-          mk_clause_cl Iten2 [ite_a_b_c; not_ a; not_ b] [] :: env.clauses
+          mk_clause_cl Iten2 [ite_a_b_c; not_ a; not_ b] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; c; r]) when n == H.not_ite_elim_2 ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Nite1 [a; not_ c] env.clauses :: []
+          mk_clause_cl Nite1 [a; not_ c] env.clauses st :: []
         | _ ->
           let ite_a_b_c = ifte_ a b c in
-          mk_clause_cl Iten1 [ite_a_b_c; a; not_ c] [] :: env.clauses
+          mk_clause_cl Iten1 [ite_a_b_c; a; not_ c] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; b; c; r]) when n == H.ite_elim_3 ->
-      let env = lem env r in
+      let env = lem env r st in
       let ite_a_b_c = ifte_ a b c in
       { env with
         clauses =
-          mk_clause_cl Itep1 [not_ ite_a_b_c; a; c] [] ::
-          mk_clause_cl Itep2 [not_ ite_a_b_c; not_ a; b] [] ::
+          mk_clause_cl Itep1 [not_ ite_a_b_c; a; c] [] st ::
+          mk_clause_cl Itep2 [not_ ite_a_b_c; not_ a; b] [] st ::
           env.clauses;
         ax = true }
 
     | Some (n, [a; b; c; r]) when n == H.not_ite_elim_3 ->
-      let env = lem env r in
+      let env = lem env r st in
       let ite_a_b_c = ifte_ a b c in
       { env with
         clauses =
-          mk_clause_cl Iten1 [ite_a_b_c; a; not_ c] [] ::
-          mk_clause_cl Iten2 [ite_a_b_c; not_ a; not_ b] [] ::
+          mk_clause_cl Iten1 [ite_a_b_c; a; not_ c] [] st ::
+          mk_clause_cl Iten2 [ite_a_b_c; not_ a; not_ b] [] st ::
           env.clauses;
         ax = true }
 
     | Some (n, [a; b; r]) when n == H.iff_elim_1 ->
       begin match app_name r with
         | Some (n, [a; b; r]) when n == H.not_iff_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Nequ2 [not_ a; not_ b] env.clauses :: []
+              mk_clause_cl Nequ2 [not_ a; not_ b] env.clauses st :: []
             | _ ->
               let a_iff_b = iff_ a b in
-              mk_clause_cl Equn1 [a_iff_b; not_ a; not_ b] [] :: env.clauses
+              mk_clause_cl Equn1 [a_iff_b; not_ a; not_ b] [] st :: env.clauses
           in
           { env with clauses }
         | Some (n, [a; b; r]) when n == H.not_xor_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Nxor2 [not_ a; b] env.clauses :: []
+              mk_clause_cl Nxor2 [not_ a; b] env.clauses st :: []
             | _ ->
               let a_xor_b = xor_ a b in
-              mk_clause_cl Xorn2 [a_xor_b; not_ a; b] [] :: env.clauses
+              mk_clause_cl Xorn2 [a_xor_b; not_ a; b] [] st :: env.clauses
           in
           { env with clauses }
         | _ ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Equ1 [not_ a; b] env.clauses :: []
+              mk_clause_cl Equ1 [not_ a; b] env.clauses st :: []
             | _ ->
               let a_iff_b = th_res r in
-              mk_clause_cl Equp2 [not_ a_iff_b; not_ a; b] [] :: env.clauses
+              mk_clause_cl Equp2 [not_ a_iff_b; not_ a; b] [] st :: env.clauses
           in
           { env with clauses }
       end
@@ -514,77 +514,77 @@ module Make (T : Translator_sig.S) = struct
       | Some (n, [a; b; r]) when n == H.iff_elim_2 ->
       begin match app_name r with
         | Some (n, [a; b; r]) when n == H.not_iff_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Nequ1 [a; b] env.clauses :: []
+              mk_clause_cl Nequ1 [a; b] env.clauses st :: []
             | _ ->
               let a_iff_b = iff_ a b in
-              mk_clause_cl Equn2 [a_iff_b; a; b] [] :: env.clauses
+              mk_clause_cl Equn2 [a_iff_b; a; b] [] st :: env.clauses
           in
           { env with clauses }
         | Some (n, [a; b; r]) when n == H.not_xor_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Nxor1 [a; not_ b] env.clauses :: []
+              mk_clause_cl Nxor1 [a; not_ b] env.clauses st :: []
             | _ ->
               let a_xor_b = xor_ a b in
-              mk_clause_cl Xorn1 [a_xor_b; a; not_ b] [] :: env.clauses
+              mk_clause_cl Xorn1 [a_xor_b; a; not_ b] [] st :: env.clauses
           in
           { env with clauses }
         | _ ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Equ2 [a; not_ b] env.clauses :: []
+              mk_clause_cl Equ2 [a; not_ b] env.clauses st :: []
             | _ ->
               let a_iff_b = th_res r in
-              mk_clause_cl Equp1 [not_ a_iff_b; a; not_ b] [] :: env.clauses
+              mk_clause_cl Equp1 [not_ a_iff_b; a; not_ b] [] st :: env.clauses
           in
           { env with clauses }
       end
 
     | Some (n, [a; b; r]) when n == H.not_and_elim ->
-      let env = lem env r in
+      let env = lem env r st in
       let clauses = match env.clauses with
         | [_] when not env.ax ->
-          mk_clause_cl Nand [not_ a; not_ b] env.clauses :: []
+          mk_clause_cl Nand [not_ a; not_ b] env.clauses st :: []
         | _ ->
           let a_and_b = and_ a b in
-          mk_clause_cl Andn [a_and_b; not_ a; not_ b] [] :: env.clauses
+          mk_clause_cl Andn [a_and_b; not_ a; not_ b] [] st :: env.clauses
       in
       { env with clauses }
 
     | Some (n, [a; _; r]) when n == H.and_elim_1 ->
       begin match app_name r with
         | Some (n, [a; b; r]) when n == H.not_impl_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
-            | [_] when not env.ax -> mk_clause_cl Nimp1 [a] env.clauses :: []
+            | [_] when not env.ax -> mk_clause_cl Nimp1 [a] env.clauses st :: []
             | _ ->
               let a_impl_b = impl_ a b in
-              mk_clause_cl Impn1 [a_impl_b; a] [] :: env.clauses
+              mk_clause_cl Impn1 [a_impl_b; a] [] st :: env.clauses
           in
           { env with clauses }
 
         | Some (n, [a; b; r]) when n == H.not_or_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
-            | [id] when not env.ax -> mk_clause_cl Nor [not_ a] [id; 0] :: []
+            | [id] when not env.ax -> mk_clause_cl Nor [not_ a] [id; 0] st :: []
             | _ ->
               let a_or_b = or_ a b in
-              mk_clause_cl Orn [a_or_b; not_ a] [0] :: env.clauses
+              mk_clause_cl Orn [a_or_b; not_ a] [0] st :: env.clauses
           in
           { env with clauses }
 
         | _ ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
-            | [id] when not env.ax -> mk_clause_cl And [a] [id; 0] :: []
+            | [id] when not env.ax -> mk_clause_cl And [a] [id; 0] st :: []
             | _ ->
               let a_and_b = th_res r in
-              mk_clause_cl Andp [not_ a_and_b; a] [0] :: env.clauses
+              mk_clause_cl Andp [not_ a_and_b; a] [0] st :: env.clauses
           in
           { env with clauses }
       end
@@ -592,33 +592,33 @@ module Make (T : Translator_sig.S) = struct
     | Some (n, [a; b; r]) when n == H.and_elim_2 ->
       begin match app_name r with
         | Some (n, [a; b; r]) when n == H.not_impl_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
             | [_] when not env.ax ->
-              mk_clause_cl Nimp2 [not_ b] env.clauses :: []
+              mk_clause_cl Nimp2 [not_ b] env.clauses st :: []
             | _ ->
               let a_impl_b = impl_ a b in
-              mk_clause_cl Impn2 [a_impl_b; not_ b] [] :: env.clauses
+              mk_clause_cl Impn2 [a_impl_b; not_ b] [] st :: env.clauses
           in
           { env with clauses }
 
         | Some (n, [a; b; r]) when n == H.not_or_elim ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
-            | [id] when not env.ax -> mk_clause_cl Nor [not_ b] [id; 1] :: []
+            | [id] when not env.ax -> mk_clause_cl Nor [not_ b] [id; 1] st :: []
             | _ ->
               let a_or_b = or_ a b in
-              mk_clause_cl Orn [a_or_b; not_ b] [1] :: env.clauses
+              mk_clause_cl Orn [a_or_b; not_ b] [1] st :: env.clauses
           in
           { env with clauses }
 
         | _ ->
-          let env = lem env r in
+          let env = lem env r st in
           let clauses = match env.clauses with
-            | [id] when not env.ax -> mk_clause_cl And [b] [id; 1] :: []
+            | [id] when not env.ax -> mk_clause_cl And [b] [id; 1] st :: []
             | _ ->
               let a_and_b = th_res r in
-              mk_clause_cl Andp [not_ a_and_b; b] [1] :: env.clauses
+              mk_clause_cl Andp [not_ a_and_b; b] [1] st :: env.clauses
           in
           { env with clauses }
       end
@@ -627,35 +627,35 @@ module Make (T : Translator_sig.S) = struct
       
     | Some (n, [ty; a; b; r])
       when n == H.symm && toplevel && name r <> None ->
-      let env = lem env r in
+      let env = lem env r st in
       let a_b = eq ty a b in
       let b_a = eq ty b a in
 
       { env with
-        clauses = mk_clause_cl Eqtr [not_ a_b; b_a] [] :: env.clauses;
+        clauses = mk_clause_cl Eqtr [not_ a_b; b_a] [] st :: env.clauses;
         ax = true }
 
     | Some (n, [ty; a; b; r])
       when n == H.negsymm && toplevel && name r <> None ->
-      let env = lem env r in
+      let env = lem env r st in
       let a_b = eq ty a b in
       let b_a = eq ty b a in
 
       { env with
-        clauses = mk_clause_cl Eqtr [a_b; not_ b_a] [] :: env.clauses;
+        clauses = mk_clause_cl Eqtr [a_b; not_ b_a] [] st :: env.clauses;
         ax = true }
 
     (* Ignore other symmetry of equlity rules *)
     | Some (n, [_; _; _; r]) when n == H.symm || n == H.negsymm ->
-      lem (rm_used env r) r
+      lem (rm_used env r) r st
 
     (* Ignore double negation *)
     | Some (n, [_; r]) when n == H.not_not_elim || n == H.not_not_intro ->
-      lem env r
+      lem env r st
 
     (* Should not be traversed anyway *)
     | Some (n, [_; r]) when n == H.pred_eq_t || n == H.pred_eq_f ->
-      lem env r
+      lem env r st
 
 
     | Some (n, [f]) when n == H.trust_f ->
@@ -664,17 +664,17 @@ module Make (T : Translator_sig.S) = struct
           when n == H.eq &&
                (match name ty with Some i -> i == H.tInt | None -> false) ->
           (* trust are for lia lemma if equality between integers *)
-          { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses }
+          { env with clauses = mk_clause_cl Lage [f] [] st :: env.clauses }
         | Some (n, [x]) when n == H.not_ ->
           begin match app_name x with
             | Some (n, ty :: _)
               when n == H.eq &&
                    (match name ty with Some i -> i == H.tInt | None -> false) ->
               (* trust are for lia lemma if disequality between integers *)
-              { env with clauses = mk_clause_cl Lage [f] [] :: env.clauses }
-            | _ -> { env with clauses = mk_clause_cl Hole [f] [] :: env.clauses }
+              { env with clauses = mk_clause_cl Lage [f] [] st :: env.clauses }
+            | _ -> { env with clauses = mk_clause_cl Hole [f] [] st :: env.clauses }
           end
-        | _ -> { env with clauses = mk_clause_cl Hole [f] [] :: env.clauses }
+        | _ -> { env with clauses = mk_clause_cl Hole [f] [] st :: env.clauses }
       end
       
     | Some (n, [_; _; _; _; r; w])
@@ -695,7 +695,7 @@ module Make (T : Translator_sig.S) = struct
         | _ -> assert false
       in
 
-      lem env r
+      lem env r st
 
 
     | Some (n, [ty; x; y; z; p1; p2])
@@ -703,30 +703,30 @@ module Make (T : Translator_sig.S) = struct
 
       if term_equal x y || term_equal x z || term_equal y z then env
       else 
-        let env = lem env p2 in
-        let env = lem env p1 in
+        let env = lem env p2 st in
+        let env = lem env p1 st in
 
         let x_y = eq ty x y in
         let y_z = eq ty y z in
         let x_z = eq ty x z in
 
         { env with
-          clauses = mk_clause_cl Eqtr [x_y; not_ y_z; not_ x_z] [] :: env.clauses;
+          clauses = mk_clause_cl Eqtr [x_y; not_ y_z; not_ x_z] [] st :: env.clauses;
           ax = true }
 
     | Some (n, [ty; x; y; z; p1; p2]) when n == H.negtrans2 ->
 
       if term_equal x y || term_equal x z || term_equal y z then env
       else 
-        let env = lem env p2 in
-        let env = lem env p1 in
+        let env = lem env p2 st in
+        let env = lem env p1 st in
 
         let x_y = eq ty x y in
         let y_z = eq ty y z in
         let x_z = eq ty x z in
 
         { env with
-          clauses = mk_clause_cl Eqtr [not_ x_y; y_z; not_ x_z] [] :: env.clauses;
+          clauses = mk_clause_cl Eqtr [not_ x_y; y_z; not_ x_z] [] st :: env.clauses;
           ax = true }
 
     | Some (n, [ty; x; y; z; p1; p2]) when n == H.trans ->
@@ -736,11 +736,11 @@ module Make (T : Translator_sig.S) = struct
       (* if Term.equal x y || Term.equal x z || Term.equal y z then env *)
       (* else  *)
       
-      let neqs, env = trans [] env p in
+      let neqs, env = trans [] env p st in
       let x_z = eq ty x z in
       let cl = (neqs @ [x_z]) in
-      let id = mk_clause_cl Eqtr cl [] in
-      let id = mk_clause_cl ~reuse:false Weak cl [id] in
+      let id = mk_clause_cl Eqtr cl [] st in
+      let id = mk_clause_cl ~reuse:false Weak cl [id] st in
       { env with 
         clauses = id :: env.clauses;
         ax = true }
@@ -772,7 +772,7 @@ module Make (T : Translator_sig.S) = struct
     | Some (n, [_; rty; pp; _; x; y; _; _])
       when n == H.cong && is_ty_Bool rty ->
       
-      let neqs, env = cong [] env p in
+      let neqs, env = cong [] env p st in
       let cptr, cpfa = match app_name (th_res p) with
         | Some (n, [_; apx; apy]) when n == H.eq ->
           (match MTerm.find apx env.mpred, MTerm.find apy env.mpred with
@@ -785,57 +785,57 @@ module Make (T : Translator_sig.S) = struct
       in
       let cl = neqs @ [cpfa; cptr] in
       { env with
-        clauses = mk_clause_cl Eqcp cl [] :: env.clauses;
+        clauses = mk_clause_cl Eqcp cl [] st :: env.clauses;
         ax = true }
 
     (* Congruence *)
     | Some (n, [_; _; _; _; _; _; _; _]) when n == H.cong ->
-      let neqs, env = cong [] env p in
+      let neqs, env = cong [] env p st in
       let fx_fy = th_res p in
       let cl = neqs @ [fx_fy] in
       { env with
-        clauses = mk_clause_cl Eqco cl [] :: env.clauses;
+        clauses = mk_clause_cl Eqco cl [] st :: env.clauses;
         ax = true }
 
     | Some (n, [_; _]) when n == H.refl ->
       let x_x = th_res p in
-      { env with clauses = mk_clause_cl Eqre [x_x] [] :: env.clauses }
+      { env with clauses = mk_clause_cl Eqre [x_x] [] st :: env.clauses }
 
     | Some (n, [_; _; a; i; v]) when n == H.row1 ->
       let raiwaiv = th_res p in
-      { env with clauses = mk_clause_cl Row1 [raiwaiv] [] :: env.clauses }
+      { env with clauses = mk_clause_cl Row1 [raiwaiv] [] st :: env.clauses }
 
     | Some (n, [ti; _; i; j; a; v; r]) when n == H.row ->
-      let env = lem env r in
+      let env = lem env r st in
       let i_eq_j = eq ti i j in
       let pr1 = th_res p in
       { env with
-        clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses;
+        clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] st :: env.clauses;
         ax = true}
 
     | Some (n, [ti; _; i; j; a; v; npr1]) when n == H.negativerow ->
-      let env = lem env npr1 in
+      let env = lem env npr1 st in
       let i_eq_j = eq ti i j in
       let pr1 = match app_name (th_res p) with
         | Some (n, [pr1]) when n == H.not_ -> pr1
         | _ -> assert false
       in
-      { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] :: env.clauses }
+      { env with clauses = mk_clause_cl Row2 [i_eq_j; pr1] [] st :: env.clauses }
 
     | Some (n, [_; x; y]) when n == H.bv_disequal_constants ->
-      { env with clauses = mk_clause_cl Bbdis [th_res p] [] :: env.clauses }
+      { env with clauses = mk_clause_cl Bbdis [th_res p] [] st :: env.clauses }
   
     | Some (rule, args) ->
       eprintf "Warning: Introducing hole for unsupported rule %a@."
         Hstring.print rule;
-      { env with clauses = mk_clause_cl Hole [th_res p] [] :: env.clauses }
+      { env with clauses = mk_clause_cl Hole [th_res p] [] st :: env.clauses }
 
     | None ->
 
       match name p with
 
       | Some n when n == H.truth ->
-        { env with clauses = mk_clause_cl True [ttrue] [] :: env.clauses }
+        { env with clauses = mk_clause_cl True [ttrue] [] st :: env.clauses }
       
       | Some h ->
         (* should be an input clause *)
@@ -863,14 +863,14 @@ module Make (T : Translator_sig.S) = struct
 
 
   (** Returns the clause used in a resolution step *)
-  let clause_qr p =
+  let clause_qr p st =
     try match name p with
       | Some n -> get_input_id n
       | _ -> raise Not_found
     with Not_found -> match app_name (deref p).ttype with
       | Some (n, [cl]) when n == H.holds ->
         (* eprintf "get_clause id : %a@." print_term cl; *)
-        get_clause_id (to_clause cl)
+        get_clause_id (to_clause cl st)
       | _ -> raise Not_found
              
 
@@ -888,48 +888,48 @@ module Make (T : Translator_sig.S) = struct
    *     reso_of_QR u1 @ reso_of_QR u2
    *   | _ -> [clause_qr qr] *)
 
-  let rec reso_of_QR depth acc qr = match app_name qr with
+  let rec reso_of_QR depth acc qr st : ('a * int) list = match app_name qr with
     | Some (n, [_; _; u1; u2; _]) when n == H.q || n == H.r ->
       let depth = depth + 1 in
-      reso_of_QR depth (reso_of_QR depth acc u1) u2
-    | _ -> (depth, clause_qr qr) :: acc
+      reso_of_QR depth (reso_of_QR depth acc u1 st) u2 st
+    | _ -> (depth, clause_qr qr st) :: acc
 
   (** Returns clauses used in a linear resolution chain *)
-  let reso_of_QR qr =
-    reso_of_QR 0 [] qr
+  let reso_of_QR qr st : int list =
+    reso_of_QR 0 [] qr st
     |> List.rev
     |> List.stable_sort (fun (d1, _) (d2, _) -> d2 - d1)
     |> List.map snd
   
   
   (** convert resolution proofs of [satlem_simplify] *)
-  let satlem_simplify p = match app_name p with
+  let satlem_simplify p st = match app_name p with
     | Some (n, [_; _; _; qr; p]) when n == H.satlem_simplify ->
-      let clauses = reso_of_QR qr in
+      let clauses = reso_of_QR qr st in
       let lem_name, res, p = result_satlem p in
-      let cl_res = to_clause res in
-      let id = mk_clause ~reuse:false Reso cl_res clauses in
+      let cl_res = to_clause res st in
+      let id = mk_clause ~reuse:false Reso cl_res clauses st in
       register_clause_id cl_res id;
       register_decl_id lem_name id;
       Some id, p
     | _ -> raise Exit
 
   
-  let rec many_satlem_simplify lastid p =
+  let rec many_satlem_simplify lastid p st =
     try
-      let lastid, p = satlem_simplify p in
-      many_satlem_simplify lastid p
+      let lastid, p = satlem_simplify p st in
+      many_satlem_simplify lastid p st
     with Exit -> lastid, p
 
 
   (* can be empty, returns continuation *)
-  let satlem_simplifies_c p =
-    many_satlem_simplify None p |> snd
+  let satlem_simplifies_c p st =
+    many_satlem_simplify None p st |> snd
 
 
   (* There must be at least one, returns id of last deduced clause *)
-  let reso_of_satlem_simplify p =
-    match many_satlem_simplify None p with
+  let reso_of_satlem_simplify p st =
+    match many_satlem_simplify None p st with
     | Some id, _ -> id
     | _ -> assert false
 
@@ -953,19 +953,19 @@ module Make (T : Translator_sig.S) = struct
     | _ -> false
 
 
-  let rec bb_lem_res lastid p =
+  let rec bb_lem_res lastid p st =
     try
       if is_last_bbres p then raise Exit;
-      let lastid, p = satlem_simplify p in
-      bb_lem_res lastid p
+      let lastid, p = satlem_simplify p st in
+      bb_lem_res lastid p st
     with Exit -> match lastid with
       | Some id -> id
       | None -> assert false
 
 
-  let bb_lem env p =
+  let bb_lem env p st =
     let env, p = bb_trim_intro_unit env p in
-    let id = bb_lem_res None p in
+    let id = bb_lem_res None p st in
     { env with clauses = id :: env.clauses }
   
 
@@ -1017,7 +1017,7 @@ module Make (T : Translator_sig.S) = struct
   (** Convert [satlem]. Clauses are chained together with an intermediate
       resolution step when needed, and when CVC4 uses superfluous local
       assumption, the clause is weakened. *)
-  let rec satlem ?(prefix_cont) p =
+  let rec satlem ?(prefix_cont) p st =
     let old_p = p in
     match app_name p with
 
@@ -1027,7 +1027,7 @@ module Make (T : Translator_sig.S) = struct
       begin match prefix_cont with
         | Some pref when not (has_prefix pref (Hstring.view lem_name)) -> old_p
         | _ ->
-          let cl = to_clause c in
+          let cl = to_clause c st in
           (try
              let assumptions, l = get_assumptions [] l in
              let l = trim_junk_satlem l in
@@ -1043,7 +1043,7 @@ module Make (T : Translator_sig.S) = struct
                        ax = false;
                        mpred = MTerm.empty;
                      } in
-                   let local_env = lem local_env p in
+                   let local_env = lem local_env p st in
                    { env with
                      clauses = List.rev_append local_env.clauses env.clauses;
                      assum = local_env.assum
@@ -1051,23 +1051,23 @@ module Make (T : Translator_sig.S) = struct
                  ) env l
              in
              let clauses = List.rev env.clauses in
-             let id = mk_inter_resolution clauses in
+             let id = mk_inter_resolution clauses st in
              (* eprintf "remaining assumptions:"; *)
              (* List.iter (eprintf "%s, ") env.assu; *)
              (* eprintf "@."; *)
              (* if env.assum = [] then id else *) 
-             let satlem_id = mk_clause Weak cl [id] in
+             let satlem_id = mk_clause Weak cl [id] st in
              register_clause_id cl satlem_id;
              register_decl_id lem_name satlem_id;
              (* eprintf "--- SATLEM@."; *)
 
            with ArithLemma ->
-             let satlem_id = mk_clause Lage cl [] in
+             let satlem_id = mk_clause Lage cl [] st in
              register_clause_id cl satlem_id
 
           );
 
-          satlem ?prefix_cont lem_cont
+          satlem ?prefix_cont lem_cont st
       end
 
     | Some (n, [_; _; _; _; l]) when n == H.satlem_simplify ->
@@ -1080,20 +1080,20 @@ module Make (T : Translator_sig.S) = struct
             | _ ->
               (* Intermediate satlem_simplify *)
               (* eprintf ">>>>>> intermediate satlemsimplify@."; *)
-              snd (satlem_simplify p) |> satlem ?prefix_cont
+              (snd (satlem_simplify p st) |> satlem ?prefix_cont) st
          )
        | _ -> p)
 
     | _ -> p
 
 
-  let rec bbt p = match app_name p with
+  let rec bbt p st = match app_name p with
     | Some (b, [n; v; bb]) when b == H.bv_bbl_var ->
       let res = bblast_term n (a_var_bv n v) bb in
-      Some (mk_clause_cl Bbva [res] [])
+      Some (mk_clause_cl Bbva [res] [] st)
     | Some (b, [n; bb; bv]) when b == H.bv_bbl_const ->
       let res = bblast_term n (a_bv n bv) bb in
-      Some (mk_clause_cl Bbconst [res] [])
+      Some (mk_clause_cl Bbconst [res] [] st)
     | Some (rop, [n; x; y; _; _; rb; xbb; ybb])
       when rop == H.bv_bbl_bvand ||
            rop == H.bv_bbl_bvor ||
@@ -1114,60 +1114,60 @@ module Make (T : Translator_sig.S) = struct
         else assert false
       in
       let res = bblast_term n (bvop n x y) rb in
-      (match bbt xbb, bbt ybb with
+      (match bbt xbb st, bbt ybb st with
        | Some idx, Some idy ->
-         Some (mk_clause_cl rule [res] [idx; idy])
+         Some (mk_clause_cl rule [res] [idx; idy] st)
        | _ -> assert false
       )
       
     | Some (c, [n; x; _; rb; xbb]) when c == H.bv_bbl_bvnot ->
       let res = bblast_term n (bvnot n x) rb in
-      (match bbt xbb with
+      (match bbt xbb st with
        | Some idx ->
-         Some (mk_clause_cl Bbnot [res] [idx])
+         Some (mk_clause_cl Bbnot [res] [idx] st)
        | _ -> assert false
       )
     | Some (c, [n; x; _; rb; xbb]) when c == H.bv_bbl_bvneg ->
       let res = bblast_term n (bvneg n x) rb in
-      (match bbt xbb with
+      (match bbt xbb st with
        | Some idx ->
-         Some (mk_clause_cl Bbneg [res] [idx])
+         Some (mk_clause_cl Bbneg [res] [idx] st)
        | _ -> assert false
       )
         
     | Some (c, [n; m; m'; x; y; _; _; rb; xbb; ybb])
       when c == H.bv_bbl_concat ->
       let res = bblast_term n (concat n m m' x y) rb in
-      (match bbt xbb, bbt ybb with
+      (match bbt xbb st, bbt ybb st with
        | Some idx, Some idy ->
-         Some (mk_clause_cl Bbconc [res] [idx; idy])
+         Some (mk_clause_cl Bbconc [res] [idx; idy] st)
        | _ -> assert false
       )
         
     | Some (c, [n; i; j; m; x; _; rb; xbb])
       when c == H.bv_bbl_extract ->
       let res = bblast_term n (extract n i j m x) rb in
-      (match bbt xbb with
+      (match bbt xbb st with
        | Some idx ->
-         Some (mk_clause_cl Bbextr [res] [idx])
+         Some (mk_clause_cl Bbextr [res] [idx] st)
        | _ -> assert false
       )
 
     | Some (c, [n; k; m; x; _; rb; xbb])
       when c == H.bv_bbl_zero_extend ->
       let res = bblast_term n (zero_extend n k m x) rb in
-      (match bbt xbb with
+      (match bbt xbb st with
        | Some idx ->
-         Some (mk_clause_cl Bbzext [res] [idx])
+         Some (mk_clause_cl Bbzext [res] [idx] st)
        | _ -> assert false
       )
 
     | Some (c, [n; k; m; x; _; rb; xbb])
       when c == H.bv_bbl_sign_extend ->
       let res = bblast_term n (sign_extend n k m x) rb in
-      (match bbt xbb with
+      (match bbt xbb st with
        | Some idx ->
-         Some (mk_clause_cl Bbsext [res] [idx])
+         Some (mk_clause_cl Bbsext [res] [idx] st)
        | _ -> assert false
       )
         
@@ -1181,18 +1181,18 @@ module Make (T : Translator_sig.S) = struct
     | Some (rule, args) ->
       eprintf "Warning: Introducing hole for unsupported rule %a@."
         Hstring.print rule;
-      Some (mk_clause_cl Hole [ttype p] [])
+      Some (mk_clause_cl Hole [ttype p] [] st)
 
   
 
-  let rec bblast_decls p = match app_name p with
+  let rec bblast_decls p st = match app_name p with
     | Some (d, [n; b; t; bb; l]) when d == H.decl_bblast ->
       (* let res = bblast_term n t b in *)
-      let id = match bbt bb with Some id -> id | None -> assert false in
+      let id = match bbt bb st with Some id -> id | None -> assert false in
       begin match value l with
         | Lambda ({sname = Name h}, p) ->
           register_decl_id h id;
-          bblast_decls p
+          bblast_decls p st
         | _ -> assert false
       end
       
@@ -1202,11 +1202,11 @@ module Make (T : Translator_sig.S) = struct
       (*   | Some n -> register_alias n t *)
       (*   | None -> () *)
       (* end; *)
-      let id = match bbt bb with Some id -> id | None -> assert false in
+      let id = match bbt bb st with Some id -> id | None -> assert false in
       begin match value l with
         | Lambda ({sname = Name h}, p) ->
           register_decl_id h id;
-          bblast_decls p
+          bblast_decls p st
         | _ -> assert false
       end
 
@@ -1221,7 +1221,7 @@ module Make (T : Translator_sig.S) = struct
     else assert false
 
   
-  let rec bblast_eqs p = match app_name p with
+  let rec bblast_eqs p st = match app_name p with
     | Some (n, [f; pf; l]) when n == H.th_let_pf ->
       begin match app_name pf with
         | Some (rule_name, [_; _; _; _; _; _; a; b]) ->
@@ -1230,11 +1230,11 @@ module Make (T : Translator_sig.S) = struct
             let id1, id2 =
               try get_input_id na, get_input_id nb
               with Not_found -> assert false in
-            let clid = mk_clause_cl (bv_pred rule_name) [f] [id1; id2] in
+            let clid = mk_clause_cl (bv_pred rule_name) [f] [id1; id2] st in
             begin match value l with
               | Lambda ({sname = Name h}, p) ->
                 register_decl_id h clid;
-                bblast_eqs p
+                bblast_eqs p st
               | _ -> assert false
             end
           | _ -> assert false
@@ -1247,37 +1247,36 @@ module Make (T : Translator_sig.S) = struct
   
   (** Bit-blasting and bitvector proof conversion (returns rest of the sat
       proof) *)
-  let bb_proof p = match app_name p with
+  let bb_proof p st = match app_name p with
     | Some (n, _) when n == H.decl_bblast || n == H.decl_bblast_with_alias ->
-      p
-      |> bblast_decls
-      |> bblast_eqs
-      |> register_prop_vars
-      |> satlem ~prefix_cont:"bb."
-      |> satlem_simplifies_c
-      |> satlem
-      
+       let p = bblast_decls p st in
+       let p = bblast_eqs p st in
+       let p = register_prop_vars p in
+       let p = satlem ~prefix_cont:"bb." p st in
+       let p = satlem_simplifies_c p st in
+       let p = satlem p st in
+       p
     | _ -> p
   
 
   (** Convert an LFSC proof (this is the entry point) *)
-  let convert p =
+  let convert p st =
     p
       
     (* |> ignore_all_decls *)
     (* |> produce_inputs_preproc *)
 
     |> ignore_decls
-    |> produce_inputs
+    |> (fun p -> produce_inputs p st)
 
-    |> deferred
+    |> (fun p -> deferred p st)
   
-    |> admit_preproc
+    |> (fun p -> admit_preproc p st)
 
     |> register_prop_vars
-    |> satlem
+    |> (fun p -> satlem p st)
 
-    |> bb_proof
+    |> (fun p -> bb_proof p st)
     
     |> reso_of_satlem_simplify
 

@@ -55,7 +55,9 @@ open SmtCertif
  *   done;
  *   Format.fprintf fmt "@."; close_out out_channel *)
 
-let import_trace ra' rf' filename first lsmt =
+let import_trace filename first lsmt st =
+  let ra' = VeritSyntax.get_atom_tbl_no_add st in
+  let rf' = VeritSyntax.get_form_tbl_no_add st in
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let confl_num = ref (-1) in
@@ -65,7 +67,7 @@ let import_trace ra' rf' filename first lsmt =
   (* let _ = Parsing.set_trace true in *)
   try
     while true do
-      confl_num := VeritParser.line VeritLexer.token lexbuf;
+      confl_num := VeritParser.line VeritLexer.token lexbuf st;
       if !is_first then (
         is_first := false;
         first_num := !confl_num
@@ -76,8 +78,8 @@ let import_trace ra' rf' filename first lsmt =
   with
     | VeritLexer.Eof ->
        close_in chan;
-       let cfirst = ref (VeritSyntax.get_clause !first_num) in
-       let confl = ref (VeritSyntax.get_clause !confl_num) in
+       let cfirst = ref (VeritSyntax.get_clause !first_num st) in
+       let confl = ref (VeritSyntax.get_clause !confl_num st) in
        let re_hash = Form.hash_hform (Atom.hash_hatom ra') rf' in
        begin match first with
        | None -> ()
@@ -104,20 +106,18 @@ let import_trace ra' rf' filename first lsmt =
 
 let clear_all () =
   SmtTrace.clear ();
-  SmtMaps.clear ();
-  VeritSyntax.clear ()
+  SmtMaps.clear ()
 
 
 let import_all fsmt fproof =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
-  let ra' = VeritSyntax.ra' in
-  let rf' = VeritSyntax.rf' in
+  let st = VeritSyntax.create_verit_state () in
+  let ra = VeritSyntax.get_atom_tbl_to_add st in
+  let rf = VeritSyntax.get_form_tbl_to_add st in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace ra' rf' fproof None [] in
+  let (max_id, confl) = import_trace fproof None [] st in
   (rt, ro, ra, rf, roots, max_id, confl)
 
 
