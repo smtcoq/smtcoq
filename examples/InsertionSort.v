@@ -21,19 +21,19 @@
        definitions
      - it requires too much from uninterpreted functions even when it is
        not needed
-     - it sometimes fails? (may be realted to the previous item)
+     - it sometimes fails (may be realted to the previous item)
  *)
 
 
-Add Rec LoadPath "../src" as SMTCoq.
-
-Require Import SMTCoq.
+Require Import SMTCoq.SMTCoq.
 Require Import ZArith List Bool.
 
+Local Open Scope Z_scope.
 
-(* We should really make SMTCoq work with SSReflect! *)
 
-Lemma impl_implb (a b:bool) : (a -> b) <-> (a --> b).
+(* This will improve when SMTCoq works with SSReflect! *)
+
+Lemma impl_implb (a b:bool) : (a -> b) <-> (a ---> b).
 Proof. auto using (reflect_iff _ _ (ReflectFacts.implyP a b)). Qed.
 
 
@@ -76,20 +76,20 @@ Section InsertionSort.
 
 
     Lemma is_sorted_smaller x y ys :
-      (((x <=? y) && is_sorted (y :: ys)) --> is_sorted (x :: ys)).
+      (((x <=? y)%Z && is_sorted (y :: ys)) ---> is_sorted (x :: ys)).
     Proof.
       destruct ys as [ |z zs].
       - simpl. smt.
       - change (is_sorted (y :: z :: zs)) with ((y <=? z)%Z && (is_sorted (z::zs))).
         change (is_sorted (x :: z :: zs)) with ((x <=? z)%Z && (is_sorted (z::zs))).
         (* [smt] or [verit] fail? *)
-        assert (H:forall b, (x <=? y) && ((y <=? z) && b) --> (x <=? z) && b) by smt.
+        assert (H:forall b, (x <=? y)%Z && ((y <=? z) && b) ---> (x <=? z) && b) by smt.
         apply H.
     Qed.
 
 
     Lemma is_sorted_cons x xs :
-      (is_sorted (x::xs)) <--> (is_sorted xs && smaller x xs).
+      (is_sorted (x::xs)) <---> (is_sorted xs && smaller x xs).
     Proof.
       induction xs as [ |y ys IHys].
       - reflexivity.
@@ -97,27 +97,27 @@ Section InsertionSort.
         change (smaller x (y :: ys)) with ((x <=? y)%Z && (smaller x ys)).
         generalize (is_sorted_smaller x y ys). revert IHys. rewrite !impl_implb.
         (* Idem *)
-        assert (H:forall a b c d, (a <--> b && c) -->
-                                  ((x <=? y) && d --> a) -->
-                                  ((x <=? y) && d <-->
+        assert (H:forall a b c d, (a <---> b && c) --->
+                                  ((x <=? y) && d ---> a) --->
+                                  ((x <=? y) && d <--->
                                   d && ((x <=? y) && c))) by smt.
         apply H.
     Qed.
 
 
     Lemma insert_keeps_smaller x y ys :
-      smaller y ys --> (y <=? x) --> smaller y (insert x ys).
+      smaller y ys ---> (y <=? x) ---> smaller y (insert x ys).
     Proof.
       induction ys as [ |z zs IHzs].
       - simpl. smt.
       - simpl. case (x <=? z).
         + simpl.
           (* [smt] or [verit] require [Compec (list Z)] but they should not *)
-          assert (H:forall a, (y <=? z) && a --> (y <=? x) --> (y <=? x) && ((y <=? z) && a)) by smt.
+          assert (H:forall a, (y <=? z) && a ---> (y <=? x) ---> (y <=? x) && ((y <=? z) && a)) by smt.
           apply H.
         + simpl. revert IHzs. rewrite impl_implb.
           (* Idem *)
-          assert (H:forall a b, (a --> (y <=? x) --> b) --> (y <=? z) && a --> (y <=? x) --> (y <=? z) && b) by smt.
+          assert (H:forall a b, (a ---> (y <=? x) ---> b) ---> (y <=? z) && a ---> (y <=? x) ---> (y <=? z) && b) by smt.
           apply H.
     Qed.
 
@@ -134,7 +134,7 @@ Section InsertionSort.
           generalize (insert_keeps_smaller x y ys).
           revert IHys H Heq. rewrite !impl_implb.
           (* Idem *)
-          assert (H: forall a b c d, (a --> b) --> a && c --> negb (x <=? y) --> (c --> (y <=? x) --> d) --> b && d) by smt.
+          assert (H: forall a b c d, (a ---> b) ---> a && c ---> negb (x <=? y) ---> (c ---> (y <=? x) ---> d) ---> b && d) by smt.
           apply H.
     Qed.
 
