@@ -117,7 +117,7 @@ let smt_Atom_to_micromega_formula tbl ha =
 
 (* specialized fold *)
 
-let default_constr = Structures.econstr_of_constr (mkInt 0)
+let default_constr = lazy (Structures.econstr_of_constr (mkInt 0))
 let default_tag = Structures.Micromega_plugin_Mutils.Tag.from 0
 (* morphism for general formulas *)
 
@@ -137,7 +137,7 @@ let rec smt_Form_to_coq_micromega_formula tbl l =
     match Form.pform l with
       | Fatom ha ->
 	A (smt_Atom_to_micromega_formula tbl ha,
-	   default_tag,default_constr)
+	   default_tag, Lazy.force default_constr)
       | Fapp (Ftrue, _) -> TT
       | Fapp (Ffalse, _) -> FF
       | Fapp (Fand, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> C (x,y)) TT l
