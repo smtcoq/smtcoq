@@ -22,6 +22,10 @@ clean::
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
+CAMLPKGS += -package num
+
+merlin-hook::
+	$(HIDE)echo 'PKG num' >> .merlin
 
 %.ml :  %.mll
 	$(CAMLLEX) $<
