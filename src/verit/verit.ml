@@ -185,20 +185,25 @@ let call_verit _ rt ro ra' rf' first lsmt =
 
   let win = open_in wname in
 
-  let raise_warnings () =
+  let raise_warnings_errors () =
     try
       while true do
         let l = input_line win in
+        let n = String.length l in
         if l = "warning : proof_done: status is still open" then
           raise Unknown
+        else if n >= 7 && String.sub l 0 7 = "warning" then
+          Structures.warning "verit-warning" ("veriT outputted the warning: " ^ (String.sub l 7 (n-7)))
+        else if n >= 8 && String.sub l 0 8 = "error : " then
+          Structures.error ("veriT failed with the error: " ^ (String.sub l 8 (n-8)))
         else
-          Structures.warning "verit-warning" ("Verit.call_verit: command " ^ command ^ " outputs the warning: " ^ l);
+          Structures.error ("veriT failed with the error: " ^ l)
       done
     with End_of_file -> () in
 
   try
     if exit_code <> 0 then Structures.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
-    raise_warnings ();
+    raise_warnings_errors ();
     let res = import_trace ra' rf' logfilename (Some first) lsmt in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
