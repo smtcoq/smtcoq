@@ -457,4 +457,4 @@ End nat_convert_type.
 
 Module nat_convert_mod := convert nat_convert_type.
 
-Ltac nat_convert := fold Nat.add Nat.mul Nat.leb Nat.ltb Nat.eqb; nat_convert_mod.convert.
+Ltac nat_convert := nat_convert_mod.convert.
