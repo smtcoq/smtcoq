@@ -192,6 +192,8 @@ let call_verit _ rt ro ra' rf' first lsmt =
         let n = String.length l in
         if l = "warning : proof_done: status is still open" then
           raise Unknown
+        else if l = "Invalid memory reference" then
+          Structures.warning "verit-warning" ("veriT outputted the warning: " ^ l)
         else if n >= 7 && String.sub l 0 7 = "warning" then
           Structures.warning "verit-warning" ("veriT outputted the warning: " ^ (String.sub l 7 (n-7)))
         else if n >= 8 && String.sub l 0 8 = "error : " then
