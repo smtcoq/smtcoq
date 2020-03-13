@@ -114,11 +114,10 @@ let import_all fsmt fproof =
   let rt = SmtBtype.create () in
   let ro = Op.create () in
   let st = VeritSyntax.create_verit_state () in
-  let ra = VeritSyntax.get_atom_tbl_to_add st in
-  let rf = VeritSyntax.get_form_tbl_to_add st in
-  let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
+  let smt_st = VeritSyntax.get_smt_state st in
+  let roots = Smtlib2_genConstr.import_smtlib2 rt ro smt_st fsmt in
   let (max_id, confl) = import_trace fproof None [] st in
-  (rt, ro, ra, rf, roots, max_id, confl)
+  (rt, ro, smt_st, roots, max_id, confl)
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
@@ -169,7 +168,7 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let call_verit _ rt ro ra' rf' first lsmt =
+let call_verit rt ro st _ first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
   close_out outchan;
@@ -199,7 +198,7 @@ let call_verit _ rt ro ra' rf' first lsmt =
   try
     if exit_code <> 0 then Structures.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings ();
-    let res = import_trace ra' rf' logfilename (Some first) lsmt in
+    let res = import_trace logfilename (Some first) lsmt st in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
             match x with
@@ -214,10 +213,8 @@ let tactic_gen vm_cast lcpl lcepl =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
-  let ra' = VeritSyntax.ra' in
-  let rf' = VeritSyntax.rf' in
-  SmtCommands.tactic call_verit verit_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl
+  let st = VeritSyntax.create_verit_state () in
+  let smt_st = VeritSyntax.get_smt_state st in
+  SmtCommands.tactic (call_verit rt ro st) verit_logic rt ro smt_st vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)

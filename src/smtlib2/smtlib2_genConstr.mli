@@ -18,8 +18,7 @@ val bigint_bv : Big_int.big_int -> int -> string
 val import_smtlib2 :
   SmtBtype.reify_tbl ->
   SmtAtom.Op.reify_tbl ->
-  SmtAtom.Atom.reify_tbl ->
-  SmtAtom.Form.reify -> string -> SmtAtom.Form.t list
+  State.smt_state -> string -> SmtAtom.Form.t list
 
 (* Lower level functions, to build types and terms *)
 val declare_sort_from_name : SmtBtype.reify_tbl -> string -> SmtBtype.btype

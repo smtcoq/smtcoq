@@ -124,7 +124,10 @@ let print_assm ty =
     (string_coq_constr ty)
 
 
-let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
+let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, st, roots, max_id, confl) =
+
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
 
   let t_i' = make_t_i rt in
   let ce5 = Structures.mkUConst t_i' in
@@ -183,7 +186,10 @@ let interp_roots t_i roots =
     | [] -> Lazy.force ctrue
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
-let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
+let theorem name (rt, ro, st, roots, max_id, confl) =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
   let ntatom = Structures.mkName "t_atom" in
@@ -260,7 +266,10 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
 
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
-let checker (rt, ro, ra, rf, roots, max_id, confl) =
+let checker (rt, ro, st, roots, max_id, confl) =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
   let ntatom = Structures.mkName "t_atom" in
@@ -328,7 +337,10 @@ let count_used confl =
   count confl
 
 
-let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
+let checker_debug (rt, ro, st, roots, max_id, confl) =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
   let ntatom = Structures.mkName "t_atom" in
@@ -558,7 +570,10 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 
 (* Tactic *)
 
-let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
+let build_body rt ro st l b (max_id, confl) vm_cast find =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
   let ntatom = Structures.mkName "t_atom" in
@@ -613,7 +628,10 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
   (proof_cast, proof_nocast, cuts)
 
 
-let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
+let build_body_eq rt ro st l1 l2 l (max_id, confl) vm_cast find =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
   let ntatom = Structures.mkName "t_atom" in
@@ -672,9 +690,9 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver env rt ro ra' rf' l ls_smtc =
+let make_proof call_solver env l ls_smtc =
   let root = SmtTrace.mkRootV [l] in
-  call_solver env rt ro ra' rf' (root,l) ls_smtc
+  call_solver env (root,l) ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
 (* <of_coq_lemma> reifies the coq lemma given, we can then easily print it in a
@@ -683,7 +701,10 @@ let make_proof call_solver env rt ro ra' rf' l ls_smtc =
  the new objects may contain bound (by forall of the lemma) variables. *)
 exception Axiom_form_unsupported
 
-let of_coq_lemma rt ro ra' rf' env sigma solver_logic clemma =
+let of_coq_lemma rt ro st env sigma solver_logic clemma =
+  let ra' = State.get_atom_tbl_no_add st in
+  let rf' = State.get_form_tbl_no_add st in
+
   let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
   let env_lemma = List.fold_right Environ.push_rel rel_context env in
   let forall_args =
@@ -709,14 +730,19 @@ let of_coq_lemma rt ro ra' rf' env sigma solver_logic clemma =
     [] -> core_smt
   | _ -> Form.get rf' (Fapp (Fforall forall_args, [|core_smt|]))
 
-let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl env sigma concl =
+let core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl env sigma concl =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+  let ra' = State.get_atom_tbl_no_add st in
+  let rf' = State.get_form_tbl_no_add st in
+
   let a, b = get_arguments concl in
 
   let tlcepl = List.map (Structures.interp_constr env sigma) lcepl in
   let lcpl = lcpl @ tlcepl in
   let lcl = List.map (Structures.retyping_get_type_of env sigma) lcpl in
 
-  let lsmt  = List.map (of_coq_lemma rt ro ra' rf' env sigma solver_logic) lcl in
+  let lsmt  = List.map (of_coq_lemma rt ro st env sigma solver_logic) lcl in
   let l_pl_ls = List.combine (List.combine lcl lcpl) lsmt in
 
   let lem_tbl : (int, Structures.constr * Structures.constr) Hashtbl.t =
@@ -747,8 +773,8 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
       let nl = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+      let max_id_confl = make_proof call_solver env nl lsmt in
+      build_body rt ro st (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
@@ -757,8 +783,8 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
       let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
       let nl = Form.neg l in
       let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+      let max_id_confl = make_proof call_solver env nl lsmt in
+      build_body_eq rt ro st (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) in
 
       let cuts = (SmtBtype.get_cuts rt) @ cuts in
@@ -773,10 +799,10 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
        (Structures.vm_cast_no_check body_cast))
 
 
-let tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl =
+let tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl =
   Structures.tclTHEN
     Tactics.intros
-    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl))
+    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl))
 
 
 (**********************************************)
@@ -821,7 +847,7 @@ let sstring_i env i v =
   (s^"#"^v, idx)
 
 
-let smt2_id_to_coq_string env t_i ra rf name =
+let smt2_id_to_coq_string env name =
   try
     let l = String.split_on_char '_' name in
     match l with
@@ -858,7 +884,7 @@ let is_bvint bs =
   with _ -> false
 
 
-let rec smt2_sexpr_to_coq_string env t_i ra rf =
+let rec smt2_sexpr_to_coq_string env =
   let open SExpr in function
   | Atom "true" -> "true"
   | Atom "false" -> "false"
@@ -867,47 +893,47 @@ let rec smt2_sexpr_to_coq_string env t_i ra rf =
      with Failure _ ->
      try coq_bv_string s
      with Failure _ ->
-     try fst (smt2_id_to_coq_string env t_i ra rf s)
+     try fst (smt2_id_to_coq_string env s)
      with _ -> s)
   | List [Atom "as"; Atom "const"; _] -> "const_farray"
-  | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env t_i ra rf s
+  | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env s
   | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
     Scanf.sscanf bs "bv%s" (fun i ->
         coq_bv_string (bigint_bv (Big_int.big_int_of_string i)
                          (int_of_string s)))
   | List [Atom "-"; Atom _ as s] ->
     sprintf "-%s"
-      (smt2_sexpr_to_coq_string env t_i ra rf s)
+      (smt2_sexpr_to_coq_string env s)
   | List [Atom "-"; s] ->
     sprintf "(- %s)"
-      (smt2_sexpr_to_coq_string env t_i ra rf s)
+      (smt2_sexpr_to_coq_string env s)
   | List [Atom (("+"|"-"|"*"|"/"|"or"|"and"|"=") as op); s1; s2] ->
     sprintf "%s %s %s"
-      (smt2_sexpr_to_coq_string env t_i ra rf s1)
+      (smt2_sexpr_to_coq_string env s1)
       (op_to_coq_string op)
-      (smt2_sexpr_to_coq_string env t_i ra rf s2)
+      (smt2_sexpr_to_coq_string env s2)
   | List [Atom (("xor"|"=>"|"") as op); s1; s2] ->
     sprintf "(%s %s %s)"
       (op_to_coq_string op)
-      (smt2_sexpr_to_coq_string env t_i ra rf s1)
-      (smt2_sexpr_to_coq_string env t_i ra rf s2)
+      (smt2_sexpr_to_coq_string env s1)
+      (smt2_sexpr_to_coq_string env s2)
   | List [Atom "select"; a; i] ->
     sprintf "%s[%s]"
-      (smt2_sexpr_to_coq_string env t_i ra rf a)
-      (smt2_sexpr_to_coq_string env t_i ra rf i)
+      (smt2_sexpr_to_coq_string env a)
+      (smt2_sexpr_to_coq_string env i)
   | List [Atom "store"; a; i; v] ->
     sprintf "%s[%s <- %s]"
-      (smt2_sexpr_to_coq_string env t_i ra rf a)
-      (smt2_sexpr_to_coq_string env t_i ra rf i)
-      (smt2_sexpr_to_coq_string env t_i ra rf v)
+      (smt2_sexpr_to_coq_string env a)
+      (smt2_sexpr_to_coq_string env i)
+      (smt2_sexpr_to_coq_string env v)
   | List [Atom "ite"; c; s1; s2] ->
     sprintf "if %s then %s else %s"
-      (smt2_sexpr_to_coq_string env t_i ra rf c)
-      (smt2_sexpr_to_coq_string env t_i ra rf s1)
-      (smt2_sexpr_to_coq_string env t_i ra rf s2)
+      (smt2_sexpr_to_coq_string env c)
+      (smt2_sexpr_to_coq_string env s1)
+      (smt2_sexpr_to_coq_string env s2)
   | List l ->
     sprintf "(%s)"
-      (String.concat " " (List.map (smt2_sexpr_to_coq_string env t_i ra rf) l))
+      (String.concat " " (List.map (smt2_sexpr_to_coq_string env) l))
 
 
 let str_contains s1 s2 =
@@ -928,17 +954,16 @@ type model =
   | Fun of ((string * int) * string)
   | Sort
 
-let model_item env rt ro ra rf =
-  let t_i = make_t_i rt in
+let model_item env =
   function
   | List [Atom "define-fun"; Atom n; List []; _; expr] ->
-     Fun (smt2_id_to_coq_string env t_i ra rf n,
-           smt2_sexpr_to_coq_string env t_i ra rf expr)
+     Fun (smt2_id_to_coq_string env n,
+           smt2_sexpr_to_coq_string env expr)
 
   | List [Atom "define-fun"; Atom n; List l; _; expr] ->
-     Fun (smt2_id_to_coq_string env t_i ra rf n,
+     Fun (smt2_id_to_coq_string env n,
            lambda_to_coq_string l
-             (smt2_sexpr_to_coq_string env t_i ra rf expr))
+             (smt2_sexpr_to_coq_string env expr))
 
   | List [Atom "declare-sort"; Atom n; _] ->
      Sort
@@ -951,14 +976,14 @@ let model_item env rt ro ra rf =
      Structures.error ("Could not reconstruct model")
 
 
-let model env rt ro ra rf = function
+let model env = function
   | List (Atom "model" :: l) ->
-     List.fold_left (fun acc m -> match model_item env rt ro ra rf m with Fun m -> m::acc | Sort -> acc) [] l
+     List.fold_left (fun acc m -> match model_item env m with Fun m -> m::acc | Sort -> acc) [] l
      |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
   | _ -> Structures.error ("No model")
 
 
-let model_string env rt ro ra rf s =
+let model_string env s =
   String.concat "\n"
     (List.map (fun ((x, _) ,v) -> Format.sprintf "%s := %s" x v)
-       (model env rt ro ra rf s))
+       (model env s))

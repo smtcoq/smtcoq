@@ -12,6 +12,7 @@ SmtCnf
 SatAtom
 SmtAtom
 SmtMaps
+State
 
 SatParser
 ZchaffParser

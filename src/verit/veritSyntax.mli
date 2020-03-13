@@ -16,16 +16,15 @@ exception Sat
 
 type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2 | Xorn1 | Xorn2 | Impp | Impn1 | Impn2 | Equp1 | Equp2 | Equn1 | Equn2 | Itep1 | Itep2 | Iten1 | Iten2 | Eqre | Eqtr | Eqco | Eqcp | Dlge | Lage | Lata | Dlde | Lade | Fins | Eins | Skea | Skaa | Qnts | Qntm | Reso | Weak | And | Nor | Or | Nand | Xor1 | Xor2 | Nxor1 | Nxor2 | Imp | Nimp1 | Nimp2 | Equ1 | Equ2 | Nequ1 | Nequ2 | Ite1 | Ite2 | Nite1 | Nite2 | Tpal | Tlap | Tple | Tpne | Tpde | Tpsa | Tpie | Tpma | Tpbr | Tpbe | Tpsc | Tppp | Tpqt | Tpqs | Tpsk | Subp | Flat | Hole | Bbva | Bbconst | Bbeq | Bbdis | Bbop | Bbadd | Bbmul | Bbult | Bbslt | Bbnot | Bbneg | Bbconc | Bbextr | Bbzext | Bbsext | Bbshl | Bbshr | Row1 | Row2 | Exte
 
-type atom_tbl_to_add = SmtAtom.Atom.reify_tbl
-type form_tbl_to_add = SmtAtom.Form.reify
-type atom_tbl_no_add = SmtAtom.Atom.reify_tbl
-type form_tbl_no_add = SmtAtom.Form.reify
 type verit_state
-val get_atom_tbl_to_add : verit_state -> atom_tbl_to_add
-val get_form_tbl_to_add : verit_state -> form_tbl_to_add
-val get_atom_tbl_no_add : verit_state -> atom_tbl_no_add
-val get_form_tbl_no_add : verit_state -> form_tbl_no_add
 val create_verit_state : unit -> verit_state
+
+val get_smt_state : verit_state -> State.smt_state
+
+val get_atom_tbl_to_add : verit_state -> State.atom_tbl_to_add
+val get_form_tbl_to_add : verit_state -> State.form_tbl_to_add
+val get_atom_tbl_no_add : verit_state -> State.atom_tbl_no_add
+val get_form_tbl_no_add : verit_state -> State.form_tbl_no_add
 
 val get_clause : int -> verit_state -> SmtAtom.Form.t SmtCertif.clause
 val add_clause : int -> SmtAtom.Form.t SmtCertif.clause -> verit_state -> unit

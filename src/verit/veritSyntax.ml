@@ -213,11 +213,7 @@ let mkDistinctElim old value =
    - to_add_list : the terms to add in the deep embedding (for quantifiers)
    - solver_tbl : the terms associated to names in the veriT certificate
    - hlets_tbl
-   - atom_tbl_to_add : hash-consed atoms to be added in the deep embedding
-   - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
-   - atom_tbl_no_add : hash-consed atoms no to be added in the deep embedding (for quantifiers)
-   - form_tbl_no_add : hash-consed formulas no to be added in the deep embedding (for quantifiers)
-
+   - smt_state : the state of all preprocessors
  *)
 
 type clauses_tbl = (int,Form.t clause) Hashtbl.t
@@ -225,10 +221,7 @@ type ref_cl_tbl = (int, int) Hashtbl.t
 type to_add_list = (int * SmtAtom.Form.t list) list ref
 type solver_tbl = (int, (bool * Form.atom_form_lit)) Hashtbl.t
 type hlets_tbl = (string, Form.atom_form_lit) Hashtbl.t
-type atom_tbl_to_add = SmtAtom.Atom.reify_tbl
-type form_tbl_to_add = SmtAtom.Form.reify
-type atom_tbl_no_add = SmtAtom.Atom.reify_tbl
-type form_tbl_no_add = SmtAtom.Form.reify
+type smt_state = State.smt_state
 
 type verit_state =
   clauses_tbl
@@ -236,23 +229,14 @@ type verit_state =
   * to_add_list
   * solver_tbl
   * hlets_tbl
-  * atom_tbl_to_add
-  * form_tbl_to_add
-  * atom_tbl_no_add
-  * form_tbl_no_add
+  * smt_state
 
-let get_atom_tbl_to_add st =
-  let (_, _, _, _, _, ra, _, _, _) = st in
-  ra
-let get_form_tbl_to_add st =
-  let (_, _, _, _, _, _, rf, _, _) = st in
-  rf
-let get_atom_tbl_no_add st =
-  let (_, _, _, _, _, _, _, ra', _) = st in
-  ra'
-let get_form_tbl_no_add st =
-  let (_, _, _, _, _, _, _, _, rf') = st in
-  rf'
+let get_smt_state st = let (_, _, _, _, _, s) = st in s
+
+let get_atom_tbl_to_add st = State.get_atom_tbl_to_add (get_smt_state st)
+let get_form_tbl_to_add st = State.get_form_tbl_to_add (get_smt_state st)
+let get_atom_tbl_no_add st = State.get_atom_tbl_no_add (get_smt_state st)
+let get_form_tbl_no_add st = State.get_form_tbl_no_add (get_smt_state st)
 
 let create_verit_state () : verit_state =
   (Hashtbl.create 17,
@@ -260,30 +244,27 @@ let create_verit_state () : verit_state =
    ref [],
    Hashtbl.create 17,
    Hashtbl.create 17,
-   Atom.create (),
-   Form.create (),
-   Atom.create (),
-   Form.create ()
+   State.create_smt_state()
   )
 
 
 (* Generating clauses *)
 
 let get_clause id st =
-  let (clauses, _, _, _, _, _, _, _, _) = st in
+  let (clauses, _, _, _, _, _) = st in
   try Hashtbl.find clauses id
   with | Not_found -> failwith ("VeritSyntax.get_clause : clause number "^(string_of_int id)^" not found\n")
 let add_clause id cl st =
-  let (clauses, _, _, _, _, _, _, _, _) = st in
+  let (clauses, _, _, _, _, _) = st in
   Hashtbl.add clauses id cl
 
 
 (* <ref_cl> maps solver integers to id integers. *)
 let get_ref i st =
-  let (_, ref_cl, _, _, _, _, _, _, _) = st in
+  let (_, ref_cl, _, _, _, _) = st in
   Hashtbl.find ref_cl i
 let add_ref i j st =
-  let (_, ref_cl, _, _, _, _, _, _, _) = st in
+  let (_, ref_cl, _, _, _, _) = st in
   Hashtbl.add ref_cl i j
 
 (* Recognizing and modifying clauses depending on a forall_inst clause. *)
@@ -587,11 +568,11 @@ let apply_tdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtA
 
 
 let get_solver id st =
-  let (_, _, _, solver, _, _, _, _, _) = st in
+  let (_, _, _, solver, _, _) = st in
   try Hashtbl.find solver id
   with | Not_found -> failwith ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n")
 let add_solver id cl st =
-  let (_, _, _, solver, _, _, _, _, _) = st in
+  let (_, _, _, solver, _, _) = st in
   Hashtbl.add solver id cl
 
 (* Finding the index of a root in <lsmt> modulo the <re_hash> function.
@@ -629,10 +610,10 @@ let qf_to_add lr =
 
 (* Let bindings *)
 let get_hlet s st =
-  let (_, _, _, _, hlets, _, _, _, _) = st in
+  let (_, _, _, _, hlets, _) = st in
   Hashtbl.find hlets s
 let add_hlet s l st =
-  let (_, _, _, _, hlets, _, _, _, _) = st in
+  let (_, _, _, _, hlets, _) = st in
   Hashtbl.add hlets s l
 
 

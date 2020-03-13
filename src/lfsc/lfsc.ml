@@ -80,7 +80,7 @@ let lfsc_parse_one lb =
   r
   
 
-let import_trace first parse lexbuf =
+let import_trace first parse lexbuf st =
   Printexc.record_backtrace true;
   process_signatures_once ();
   try
@@ -88,11 +88,11 @@ let import_trace first parse lexbuf =
 
     | Some (Ast.Check p) ->
       (* Ast.flatten_term p; *)
-      let confl_num = C.convert_pt p in
+      let confl_num = C.convert_pt p st in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)
       let first =
-        let aux = VeritSyntax.get_clause 1 in
+        let aux = VeritSyntax.get_clause 1 st in
         match first, aux.value with
         | Some (root,l), Some (fl::nil) ->
           (* Format.eprintf "Root: %a ,,,,,,\n\ *)
@@ -107,7 +107,7 @@ let import_trace first parse lexbuf =
             root
           )
         | _,_ -> aux in
-      let confl = VeritSyntax.get_clause confl_num in
+      let confl = VeritSyntax.get_clause confl_num st in
       SmtTrace.select confl;
       occur confl;
       (alloc first, confl)
@@ -135,7 +135,6 @@ let import_trace_from_file first filename =
 let clear_all () =
   SmtTrace.clear ();
   SmtMaps.clear ();
-  VeritSyntax.clear ();
   Tosmtcoq.clear ();
   C.clear ()
 
@@ -144,11 +143,11 @@ let import_all fsmt fproof =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = Tosmtcoq.ra in
-  let rf = Tosmtcoq.rf in
-  let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace_from_file None fproof in
-  (rt, ro, ra, rf, roots, max_id, confl)
+  let st = VeritSyntax.create_verit_state () in
+  let smt_st = VeritSyntax.get_smt_state st in
+  let roots = Smtlib2_genConstr.import_smtlib2 rt ro smt_st fsmt in
+  let (max_id, confl) = import_trace_from_file None fproof st in
+  (rt, ro, smt_st, roots, max_id, confl)
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
@@ -346,7 +345,7 @@ let string_logic ro f =
 
 
 
-let call_cvc4 env rt ro ra rf root _ =
+let call_cvc4 rt ro st env root _ =
   let open Smtlib2_solver in
   let fl = snd root in
 
@@ -384,7 +383,7 @@ let call_cvc4 env rt ro ra rf root _ =
     match check_sat cvc4 with
     | Unsat ->
       begin
-        try get_proof cvc4 (import_trace (Some root) lfsc_parse_one)
+        try get_proof cvc4 (import_trace (Some root) lfsc_parse_one) st
         with
         | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
         | No_proof -> Structures.error "CVC4 did not generate a proof"
@@ -394,7 +393,7 @@ let call_cvc4 env rt ro ra rf root _ =
       let smodel = get_model cvc4 in
       Structures.error
         ("CVC4 returned sat. Here is the model:\n\n" ^
-         SmtCommands.model_string env rt ro ra rf smodel)
+         SmtCommands.model_string env smodel)
         (* (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel) *)
   in
 
@@ -438,7 +437,7 @@ let get_model_from_file filename =
   | _ -> Structures.error "CVC4 returned SAT but no model"
 
 
-let call_cvc4_file env rt ro ra rf root =
+let call_cvc4_file env rt ro st root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
   export outchan rt ro fl;
@@ -479,7 +478,7 @@ let call_cvc4_file env rt ro ra rf root =
     let smodel = get_model_from_file prooffilename in
     Structures.error
       ("CVC4 returned sat. Here is the model:\n\n" ^
-       SmtCommands.model_string env rt ro ra rf smodel)
+       SmtCommands.model_string env smodel)
 
 
 let cvc4_logic = 
@@ -490,11 +489,9 @@ let tactic_gen vm_cast =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = Tosmtcoq.ra in
-  let rf = Tosmtcoq.rf in
-  let ra' = Tosmtcoq.ra in
-  let rf' = Tosmtcoq.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+  let st = VeritSyntax.create_verit_state () in
+  let smt_st = VeritSyntax.get_smt_state st in
+  SmtCommands.tactic (call_cvc4 rt ro st) cvc4_logic rt ro smt_st vm_cast [] []
   (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
    *    the same ra and rf twice to have everything reifed *\)
    * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)

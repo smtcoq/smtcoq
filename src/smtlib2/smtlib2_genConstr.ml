@@ -421,17 +421,20 @@ let make_root ra rf t =
   make_root t
 
 
-let declare_commands rt ro ra rf acc = function
-  | CDeclareSort (_,sym,_) -> let _ = declare_sort rt sym in acc
-  | CDeclareFun (_,sym, (_, arg), cod) ->
-    let _ = declare_fun rt ro sym arg cod in acc
-  | CAssert (_, t) -> (make_root ra rf t)::acc
-  | _ -> acc
+let declare_commands rt ro st acc decl =
+  let ra = State.get_atom_tbl_to_add st in
+  let rf = State.get_form_tbl_to_add st in
+  match decl with
+    | CDeclareSort (_,sym,_) -> let _ = declare_sort rt sym in acc
+    | CDeclareFun (_,sym, (_, arg), cod) ->
+       let _ = declare_fun rt ro sym arg cod in acc
+    | CAssert (_, t) -> (make_root ra rf t)::acc
+    | _ -> acc
 
 
 (* Import function *)
 
-let import_smtlib2 rt ro ra rf filename =
+let import_smtlib2 rt ro st filename =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let commands = Smtlib2_parse.main Smtlib2_lex.token lexbuf in
@@ -439,4 +442,4 @@ let import_smtlib2 rt ro ra rf filename =
   match commands with
     | None -> []
     | Some (Smtlib2_ast.Commands (_,(_,res))) ->
-      List.rev (List.fold_left (declare_commands rt ro ra rf) [] res)
+      List.rev (List.fold_left (declare_commands rt ro st) [] res)

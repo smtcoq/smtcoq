@@ -1278,7 +1278,7 @@ module Make (T : Translator_sig.S) = struct
 
     |> (fun p -> bb_proof p st)
     
-    |> reso_of_satlem_simplify
+    |> (fun p -> reso_of_satlem_simplify p st)
 
   
 
