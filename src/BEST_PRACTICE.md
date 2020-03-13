@@ -13,6 +13,9 @@ want to implement a vernacular command that does side effects, follow
 [tuto2](https://github.com/coq/coq/tree/master/doc/plugin_tutorial) in
 the plugin tutorial.
 
+## Documentation
+Every OCaml module comes with a documented interface.
+
 ## Theories
 
 Theories are organized in sub-directories whose names are the names of
