@@ -244,7 +244,7 @@ let create_verit_state () : verit_state =
    ref [],
    Hashtbl.create 17,
    Hashtbl.create 17,
-   State.create_smt_state()
+   State.create_smt_state ()
   )
 
 
