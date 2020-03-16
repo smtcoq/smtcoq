@@ -185,7 +185,7 @@ clause:
 
 lit_list:
   | lit                                                    { fun st qst -> [$1 st qst] }
-  | lit lit_list                                           { fun st qst -> ($1 st qst)::($2 st qst) }
+  | lit lit_list                                           { fun st qst -> let l1 = $1 st qst in let l2 = $2 st qst in l1::l2 }
 ;
 
 lit:   /* returns a SmtAtom.Form.t (given a state) */
