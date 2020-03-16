@@ -273,7 +273,7 @@ let rec fins_lemma (ids_params:int list) (st:verit_state) : SmtAtom.Form.t SmtCe
   match ids_params with
     [] -> raise Not_found
   | h :: t ->
-     let cl_target = get_clause h st in
+     let cl_target = repr (get_clause h st) in
      match cl_target.kind with
          Other (Forall_inst (lemma, _)) -> lemma
        | _ -> fins_lemma t st

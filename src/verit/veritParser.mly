@@ -77,7 +77,11 @@ line:
   | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { fun st -> mk_clause ($1,$4,$5 st (VeritSyntax.create_quant_state ()),$6) st }  /* The clause should not contain quantified variables */
   | INT COLON LPAR TPQT LPAR SHARPINT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { fun st -> add_solver $6 ($9 st) st; add_ref $6 $1 st; mk_clause ($1, Tpqt, [], [$12]) st }
   | INT COLON LPAR FINS LPAR SHARPINT COLON LPAR OR LPAR NOT SHARPINT RPAR lit RPAR RPAR RPAR EOL  /* "forall_inst" rule. The literal should not contain quantified variables */
-  { fun st -> mk_clause ($1, Fins, [snd ($14 st (VeritSyntax.create_quant_state ()))], [get_ref $12 st]) st }
+  { fun st ->
+    let qst = VeritSyntax.create_quant_state () in
+    let l = $14 st qst in
+    let cl = get_ref $12 st in
+    mk_clause ($1, Fins, [snd l], [cl]) st }
 ;
 
 typ:
@@ -223,8 +227,8 @@ tvar:
 ;
 
 var_decl_list:
-  | LPAR var_atvar tvar RPAR				   { fun qst -> add_qvar $2 $3 qst; [($2, $3)] }
-  | LPAR var_atvar tvar RPAR var_decl_list		   { fun qst -> add_qvar $2 $3 qst; ($2, $3)::($5 qst) }
+  | LPAR var_atvar tvar RPAR				   { fun qst -> let () = add_qvar $2 $3 qst in [($2, $3)] }
+  | LPAR var_atvar tvar RPAR var_decl_list		   { fun qst -> let () = add_qvar $2 $3 qst in let r5 = $5 qst in ($2, $3)::r5 }
 ;
 
 forall_decl:
