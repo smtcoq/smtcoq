@@ -141,13 +141,11 @@ let clear_all () =
 
 let import_all fsmt fproof =
   clear_all ();
-  let rt = SmtBtype.create () in
-  let ro = Op.create () in
   let st = VeritSyntax.create_verit_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  let roots = Smtlib2_genConstr.import_smtlib2 rt ro smt_st fsmt in
+  let roots = Smtlib2_genConstr.import_smtlib2 smt_st fsmt in
   let (max_id, confl) = import_trace_from_file None fproof st in
-  (rt, ro, smt_st, roots, max_id, confl)
+  (smt_st, roots, max_id, confl)
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
@@ -345,7 +343,10 @@ let string_logic ro f =
 
 
 
-let call_cvc4 rt ro st env root _ =
+let call_cvc4 st env root _ =
+  let rt = VeritSyntax.get_type_tbl st in
+  let ro = VeritSyntax.get_op_tbl st in
+
   let open Smtlib2_solver in
   let fl = snd root in
 
@@ -402,7 +403,10 @@ let call_cvc4 rt ro st env root _ =
 
 
 
-let export out_channel rt ro l =
+let export out_channel st l =
+  let rt = VeritSyntax.get_type_tbl st in
+  let ro = VeritSyntax.get_op_tbl st in
+
   let fmt = formatter_of_out_channel out_channel in
   fprintf fmt "(set-logic %s)@." (string_logic ro l);
 
@@ -437,10 +441,10 @@ let get_model_from_file filename =
   | _ -> Structures.error "CVC4 returned SAT but no model"
 
 
-let call_cvc4_file env rt ro st root =
+let call_cvc4_file env st root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
-  export outchan rt ro fl;
+  export outchan st fl;
   close_out outchan;
   let bf = Filename.chop_extension filename in
   let prooffilename = bf ^ ".lfsc" in
@@ -487,13 +491,8 @@ let cvc4_logic =
 
 let tactic_gen vm_cast =
   clear_all ();
-  let rt = SmtBtype.create () in
-  let ro = Op.create () in
   let st = VeritSyntax.create_verit_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  SmtCommands.tactic (call_cvc4 rt ro st) cvc4_logic rt ro smt_st vm_cast [] []
-  (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
-   *    the same ra and rf twice to have everything reifed *\)
-   * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
+  SmtCommands.tactic (call_cvc4 st) cvc4_logic smt_st vm_cast [] []
 let tactic () = tactic_gen vm_cast_true
 let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)

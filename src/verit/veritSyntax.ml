@@ -233,6 +233,8 @@ type verit_state =
 
 let get_smt_state st = let (_, _, _, _, _, s) = st in s
 
+let get_type_tbl st = State.get_type_tbl (get_smt_state st)
+let get_op_tbl st = State.get_op_tbl (get_smt_state st)
 let get_atom_tbl_to_add st = State.get_atom_tbl_to_add (get_smt_state st)
 let get_form_tbl_to_add st = State.get_form_tbl_to_add (get_smt_state st)
 let get_atom_tbl_no_add st = State.get_atom_tbl_no_add (get_smt_state st)

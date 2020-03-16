@@ -124,8 +124,9 @@ let print_assm ty =
     (string_coq_constr ty)
 
 
-let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, st, roots, max_id, confl) =
-
+let parse_certif t_i t_func t_atom t_form root used_root trace (st, roots, max_id, confl) =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
 
@@ -186,7 +187,9 @@ let interp_roots t_i roots =
     | [] -> Lazy.force ctrue
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
-let theorem name (rt, ro, st, roots, max_id, confl) =
+let theorem name (st, roots, max_id, confl) =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
 
@@ -266,7 +269,9 @@ let theorem name (rt, ro, st, roots, max_id, confl) =
 
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
-let checker (rt, ro, st, roots, max_id, confl) =
+let checker (st, roots, max_id, confl) =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
 
@@ -337,7 +342,9 @@ let count_used confl =
   count confl
 
 
-let checker_debug (rt, ro, st, roots, max_id, confl) =
+let checker_debug (st, roots, max_id, confl) =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
 
@@ -460,117 +467,11 @@ let checker_debug (rt, ro, st, roots, max_id, confl) =
   | _ -> assert false
 
 
-
-(* let rec of_coq_list cl =
- *   match Structures.decompose_app cl with
- *   | c, _ when Structures.eq_constr c (Lazy.force cnil) -> []
- *   | c, [_; x; cr] when Structures.eq_constr c (Lazy.force ccons) ->
- *     x :: of_coq_list cr
- *   | _ -> assert false *)
-
-
-(* let checker_debug_step t_i t_func t_atom t_form root used_root trace
- *     (rt, ro, ra, rf, roots, max_id, confl) =
- * 
- *   let t_i' = make_t_i rt in
- *   let ce5 = Structures.mkUConst t_i' in
- *   let ct_i = Structures.mkConst (Structures.declare_constant t_i ce5) in
- * 
- *   let t_func' = make_t_func ro ct_i in
- *   let ce6 = Structures.mkUConst t_func' in
- *   let ct_func =
- *     Structures.mkConst (Structures.declare_constant t_func ce6) in
- * 
- *   let t_atom' = Atom.interp_tbl ra in
- *   let ce1 = Structures.mkUConst t_atom' in
- *   let ct_atom =
- *     Structures.mkConst (Structures.declare_constant t_atom ce1) in
- * 
- *   let t_form' = snd (Form.interp_tbl rf) in
- *   let ce2 = Structures.mkUConst t_form' in
- *   let ct_form =
- *     Structures.mkConst (Structures.declare_constant t_form ce2) in
- * 
- *   let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
- *       (interp_conseq_uf ct_i)
- *       (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl None in
- *   List.iter (fun (v,ty) ->
- *     let _ = Structures.declare_new_variable v ty in
- *     print_assm ty
- *   ) cuts;
- * 
- *   let used_roots = compute_roots roots last_root in
- *   let croots =
- *     let res = Array.make (List.length roots + 1) (mkInt 0) in
- *     let i = ref 0 in
- *     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
- *     Structures.mkArray (Lazy.force cint, res) in
- *   let cused_roots =
- *     let l = List.length used_roots in
- *     let res = Array.make (l + 1) (mkInt 0) in
- *     let i = ref (l-1) in
- *     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
- *     mklApp cSome [|mklApp carray [|Lazy.force cint|];
- *                    Structures.mkArray (Lazy.force cint, res)|] in
- *   let ce3 = Structures.mkUConst croots in
- *   let _ = Structures.declare_constant root ce3 in
- *   let ce3' = Structures.mkUConst cused_roots in
- *   let _ = Structures.declare_constant used_root ce3' in
- * 
- *   let certif =
- *     mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1);
- *                      tres;mkInt (get_pos confl)|] in
- *   let ce4 = Structures.mkUConst certif in
- *   let _ = Structures.declare_constant trace ce4 in
- * 
- *   let setup =
- *    mklApp csetup_checker_step_debug
- *      [| ct_i; ct_func; ct_atom; ct_form; croots; cused_roots; certif |] in
- * 
- *   let setup = Structures.cbv_vm (Global.env ()) setup
- *       (mklApp cprod
- *          [|Lazy.force cState_S_t;
- *            mklApp clist [|mklApp cstep
- *                             [|ct_i; ct_func; ct_atom; ct_form|]|]|]) in
- * 
- *   let s, steps = match Structures.decompose_app setup with
- *     | c, [_; _; s; csteps] when Structures.eq_constr c (Lazy.force cpair) ->
- *       s, of_coq_list csteps
- *     | _ -> assert false
- *   in
- * 
- *   let cpt = ref (List.length roots) in
- *   let debug_step s step =
- *     incr cpt;
- *     Format.eprintf "%d@." !cpt;
- *     let tm =
- *       mklApp cchecker_step_debug
- *         [| ct_i; ct_func; ct_atom; ct_form; s; step |] in
- * 
- *     let res =
- *       Structures.cbv_vm (Global.env ()) tm
- *           (mklApp cprod [|Lazy.force cState_S_t; Lazy.force cbool|]) in
- * 
- *     match Structures.decompose_app res with
- *     | c, [_; _; s; cbad] when Structures.eq_constr c (Lazy.force cpair) ->
- *       if not (mk_bool cbad) then s
- *       else Structures.error ("Step number " ^ string_of_int !cpt ^
- *                              " (" ^ string_coq_constr
- *                                (fst (Structures.decompose_app step)) ^ ")" ^
- *                              " of the certificate likely failed." )
- *     | _ -> assert false
- *   in
- * 
- *   List.fold_left debug_step s steps |> ignore;
- * 
- *   Structures.error ("Debug checker is only meant to be used for certificates \
- *                      that fail to be checked by SMTCoq.") *)
-
-
-
 (* Tactic *)
 
-let build_body rt ro st l b (max_id, confl) vm_cast find =
+let build_body st l b (max_id, confl) vm_cast find =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
 
@@ -628,7 +529,9 @@ let build_body rt ro st l b (max_id, confl) vm_cast find =
   (proof_cast, proof_nocast, cuts)
 
 
-let build_body_eq rt ro st l1 l2 l (max_id, confl) vm_cast find =
+let build_body_eq st l1 l2 l (max_id, confl) vm_cast find =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
 
@@ -701,7 +604,9 @@ let make_proof call_solver env l ls_smtc =
  the new objects may contain bound (by forall of the lemma) variables. *)
 exception Axiom_form_unsupported
 
-let of_coq_lemma rt ro st env sigma solver_logic clemma =
+let of_coq_lemma st env sigma solver_logic clemma =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra' = State.get_atom_tbl_no_add st in
   let rf' = State.get_form_tbl_no_add st in
 
@@ -730,7 +635,9 @@ let of_coq_lemma rt ro st env sigma solver_logic clemma =
     [] -> core_smt
   | _ -> Form.get rf' (Fapp (Fforall forall_args, [|core_smt|]))
 
-let core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl env sigma concl =
+let core_tactic call_solver solver_logic st vm_cast lcpl lcepl env sigma concl =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
   let ra' = State.get_atom_tbl_no_add st in
@@ -742,7 +649,7 @@ let core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl env sigma c
   let lcpl = lcpl @ tlcepl in
   let lcl = List.map (Structures.retyping_get_type_of env sigma) lcpl in
 
-  let lsmt  = List.map (of_coq_lemma rt ro st env sigma solver_logic) lcl in
+  let lsmt  = List.map (of_coq_lemma st env sigma solver_logic) lcl in
   let l_pl_ls = List.combine (List.combine lcl lcpl) lsmt in
 
   let lem_tbl : (int, Structures.constr * Structures.constr) Hashtbl.t =
@@ -774,7 +681,7 @@ let core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl env sigma c
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let lsmt = Form.flatten rf nl :: lsmt in
       let max_id_confl = make_proof call_solver env nl lsmt in
-      build_body rt ro st (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+      build_body st (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
@@ -784,7 +691,7 @@ let core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl env sigma c
       let nl = Form.neg l in
       let lsmt = Form.flatten rf nl :: lsmt in
       let max_id_confl = make_proof call_solver env nl lsmt in
-      build_body_eq rt ro st (Form.to_coq l1) (Form.to_coq l2)
+      build_body_eq st (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) in
 
       let cuts = (SmtBtype.get_cuts rt) @ cuts in
@@ -799,10 +706,10 @@ let core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl env sigma c
        (Structures.vm_cast_no_check body_cast))
 
 
-let tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl =
+let tactic call_solver solver_logic st vm_cast lcpl lcepl =
   Structures.tclTHEN
     Tactics.intros
-    (Structures.mk_tactic (core_tactic call_solver solver_logic rt ro st vm_cast lcpl lcepl))
+    (Structures.mk_tactic (core_tactic call_solver solver_logic st vm_cast lcpl lcepl))
 
 
 (**********************************************)

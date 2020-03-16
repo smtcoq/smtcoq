@@ -21,6 +21,8 @@ val create_verit_state : unit -> verit_state
 
 val get_smt_state : verit_state -> State.smt_state
 
+val get_type_tbl : verit_state -> State.type_tbl
+val get_op_tbl : verit_state -> State.op_tbl
 val get_atom_tbl_to_add : verit_state -> State.atom_tbl_to_add
 val get_form_tbl_to_add : verit_state -> State.form_tbl_to_add
 val get_atom_tbl_no_add : verit_state -> State.atom_tbl_no_add

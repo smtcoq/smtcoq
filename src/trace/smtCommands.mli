@@ -18,32 +18,28 @@ val parse_certif :
   Structures.id ->
   Structures.id ->
   Structures.id ->
-  SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl * State.smt_state *
-  SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
-  unit
+  State.smt_state * SmtAtom.Form.t list * int *
+  SmtAtom.Form.t SmtCertif.clause -> unit
+
 
 val checker_debug :
-  SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl * State.smt_state *
-  SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause -> 'a
+  State.smt_state * SmtAtom.Form.t list * int *
+  SmtAtom.Form.t SmtCertif.clause -> 'a
 
 val theorem :
   Structures.id ->
-  SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl * State.smt_state *
-  SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
-  unit
+  State.smt_state * SmtAtom.Form.t list * int *
+  SmtAtom.Form.t SmtCertif.clause -> unit
 
 val checker :
-  SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl * State.smt_state *
-  SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
-  unit
+  State.smt_state * SmtAtom.Form.t list * int *
+  SmtAtom.Form.t SmtCertif.clause -> unit
 
 val tactic :
   (Environ.env ->
    SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t ->
    SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause) ->
   SmtMisc.logic ->
-  SmtBtype.reify_tbl ->
-  SmtAtom.Op.reify_tbl ->
   State.smt_state ->
   (Environ.env -> Structures.constr -> Structures.constr) ->
   Structures.constr list ->

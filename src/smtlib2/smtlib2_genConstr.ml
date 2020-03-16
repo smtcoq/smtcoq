@@ -96,7 +96,9 @@ let rec sort_of_sort = function
     sort_of_string (string_of_identifier id) (List.map sort_of_sort l)
 
 
-let declare_sort_from_name rt s =
+let declare_sort_from_name st s =
+  let rt = State.get_type_tbl st in
+
   let cons_t = Structures.declare_new_type (Structures.mkId ("Smt_sort_"^s)) in
   let compdec_type = mklApp cCompDec [| cons_t |] in
   let compdec_var =
@@ -106,10 +108,13 @@ let declare_sort_from_name rt s =
   SmtMaps.add_btype s res;
   res
 
-let declare_sort rt sym = declare_sort_from_name rt (string_of_symbol sym)
+let declare_sort st sym = declare_sort_from_name st (string_of_symbol sym)
 
 
-let declare_fun_from_name rt ro s tyl ty =
+let declare_fun_from_name st s tyl ty =
+  let rt = State.get_type_tbl st in
+  let ro = State.get_op_tbl st in
+
   let coqTy = List.fold_right (fun typ c ->
       Term.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
@@ -118,10 +123,10 @@ let declare_fun_from_name rt ro s tyl ty =
   SmtMaps.add_fun s op;
   op
 
-let declare_fun rt ro sym arg cod =
+let declare_fun st sym arg cod =
   let tyl = List.map sort_of_sort arg in
   let ty = sort_of_sort cod in
-  declare_fun_from_name rt ro (string_of_symbol sym) tyl ty
+  declare_fun_from_name st (string_of_symbol sym) tyl ty
 
 
 
@@ -421,20 +426,20 @@ let make_root ra rf t =
   make_root t
 
 
-let declare_commands rt ro st acc decl =
+let declare_commands st acc decl =
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
   match decl with
-    | CDeclareSort (_,sym,_) -> let _ = declare_sort rt sym in acc
+    | CDeclareSort (_,sym,_) -> let _ = declare_sort st sym in acc
     | CDeclareFun (_,sym, (_, arg), cod) ->
-       let _ = declare_fun rt ro sym arg cod in acc
+       let _ = declare_fun st sym arg cod in acc
     | CAssert (_, t) -> (make_root ra rf t)::acc
     | _ -> acc
 
 
 (* Import function *)
 
-let import_smtlib2 rt ro st filename =
+let import_smtlib2 st filename =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let commands = Smtlib2_parse.main Smtlib2_lex.token lexbuf in
@@ -442,4 +447,4 @@ let import_smtlib2 rt ro st filename =
   match commands with
     | None -> []
     | Some (Smtlib2_ast.Commands (_,(_,res))) ->
-      List.rev (List.fold_left (declare_commands rt ro st) [] res)
+      List.rev (List.fold_left (declare_commands st) [] res)

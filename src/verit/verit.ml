@@ -111,13 +111,11 @@ let clear_all () =
 
 let import_all fsmt fproof =
   clear_all ();
-  let rt = SmtBtype.create () in
-  let ro = Op.create () in
   let st = VeritSyntax.create_verit_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  let roots = Smtlib2_genConstr.import_smtlib2 rt ro smt_st fsmt in
+  let roots = Smtlib2_genConstr.import_smtlib2 smt_st fsmt in
   let (max_id, confl) = import_trace fproof None [] st in
-  (rt, ro, smt_st, roots, max_id, confl)
+  (smt_st, roots, max_id, confl)
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace fsmt fproof =
@@ -139,7 +137,10 @@ let checker fsmt fproof =
 (** Given a Coq formula build the proof                                       *)
 (******************************************************************************)
 
-let export out_channel rt ro lsmt =
+let export out_channel st lsmt =
+  let rt = VeritSyntax.get_type_tbl st in
+  let ro = VeritSyntax.get_op_tbl st in
+
   let fmt = Format.formatter_of_out_channel out_channel in
   Format.fprintf fmt "(set-logic UFLIA)@.";
 
@@ -168,9 +169,9 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let call_verit rt ro st _ first lsmt =
+let call_verit st _ first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
-  export outchan rt ro lsmt;
+  export outchan st lsmt;
   close_out outchan;
   let logfilename = Filename.chop_extension filename ^ ".vtlog" in
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
@@ -218,10 +219,8 @@ let verit_logic =
 
 let tactic_gen vm_cast lcpl lcepl =
   clear_all ();
-  let rt = SmtBtype.create () in
-  let ro = Op.create () in
   let st = VeritSyntax.create_verit_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  SmtCommands.tactic (call_verit rt ro st) verit_logic rt ro smt_st vm_cast lcpl lcepl
+  SmtCommands.tactic (call_verit st) verit_logic smt_st vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)
