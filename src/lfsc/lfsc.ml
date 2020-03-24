@@ -80,7 +80,7 @@ let lfsc_parse_one lb =
   r
   
 
-let import_trace first parse lexbuf st =
+let import_trace first parse lexbuf st stl =
   Printexc.record_backtrace true;
   process_signatures_once ();
   try
@@ -88,7 +88,7 @@ let import_trace first parse lexbuf st =
 
     | Some (Ast.Check p) ->
       (* Ast.flatten_term p; *)
-      let confl_num = C.convert_pt p st in
+      let confl_num = C.convert_pt p st stl in
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)
       let first =
@@ -134,7 +134,6 @@ let import_trace_from_file first filename =
 
 let clear_all () =
   SmtTrace.clear ();
-  SmtMaps.clear ();
   Tosmtcoq.clear ();
   C.clear ()
 
@@ -142,9 +141,10 @@ let clear_all () =
 let import_all fsmt fproof =
   clear_all ();
   let st = VeritSyntax.create_verit_state () in
+  let stl = State.create_smtlib_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  let roots = Smtlib2_genConstr.import_smtlib2 smt_st fsmt in
-  let (max_id, confl) = import_trace_from_file None fproof st in
+  let roots = Smtlib2_genConstr.import_smtlib2 smt_st stl fsmt in
+  let (max_id, confl) = import_trace_from_file None fproof st stl in
   (smt_st, roots, max_id, confl)
 
 
@@ -343,7 +343,7 @@ let string_logic ro f =
 
 
 
-let call_cvc4 st env root _ =
+let call_cvc4 st stl env root _ =
   let rt = VeritSyntax.get_type_tbl st in
   let ro = VeritSyntax.get_op_tbl st in
 
@@ -364,13 +364,13 @@ let call_cvc4 st env root _ =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    SmtMaps.add_btype s (SmtBtype.Tindex t);
+    State.add_btype stl s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
   ) (SmtBtype.to_list rt);
   
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
-    SmtMaps.add_fun s op;
+    State.add_fun stl s op;
     let args =
       Array.fold_right
         (fun t acc -> asprintf "%a" SmtBtype.to_smt t :: acc) cod [] in
@@ -384,7 +384,7 @@ let call_cvc4 st env root _ =
     match check_sat cvc4 with
     | Unsat ->
       begin
-        try get_proof cvc4 (import_trace (Some root) lfsc_parse_one) st
+        try get_proof cvc4 (import_trace (Some root) lfsc_parse_one) st stl
         with
         | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
         | No_proof -> Structures.error "CVC4 did not generate a proof"
@@ -403,7 +403,7 @@ let call_cvc4 st env root _ =
 
 
 
-let export out_channel st l =
+let export out_channel st stl l =
   let rt = VeritSyntax.get_type_tbl st in
   let ro = VeritSyntax.get_op_tbl st in
 
@@ -412,13 +412,13 @@ let export out_channel st l =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    SmtMaps.add_btype s (SmtBtype.Tindex t);
+    State.add_btype stl s (SmtBtype.Tindex t);
     fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
-    SmtMaps.add_fun s op;
+    State.add_fun stl s op;
     fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t ->
@@ -441,10 +441,10 @@ let get_model_from_file filename =
   | _ -> Structures.error "CVC4 returned SAT but no model"
 
 
-let call_cvc4_file env st root =
+let call_cvc4_file env st stl root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
-  export outchan st fl;
+  export outchan st stl fl;
   close_out outchan;
   let bf = Filename.chop_extension filename in
   let prooffilename = bf ^ ".lfsc" in
@@ -492,7 +492,8 @@ let cvc4_logic =
 let tactic_gen vm_cast =
   clear_all ();
   let st = VeritSyntax.create_verit_state () in
+  let stl = State.create_smtlib_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  SmtCommands.tactic (call_cvc4 st) cvc4_logic smt_st vm_cast [] []
+  SmtCommands.tactic (call_cvc4 st stl) cvc4_logic smt_st vm_cast [] []
 let tactic () = tactic_gen vm_cast_true
 let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)

@@ -55,7 +55,7 @@ open SmtCertif
  *   done;
  *   Format.fprintf fmt "@."; close_out out_channel *)
 
-let import_trace filename first lsmt st =
+let import_trace filename first lsmt st stl =
   let ra' = VeritSyntax.get_atom_tbl_no_add st in
   let rf' = VeritSyntax.get_form_tbl_no_add st in
   let chan = open_in filename in
@@ -67,7 +67,7 @@ let import_trace filename first lsmt st =
   (* let _ = Parsing.set_trace true in *)
   try
     while true do
-      confl_num := VeritParser.line VeritLexer.token lexbuf st;
+      confl_num := VeritParser.line VeritLexer.token lexbuf st stl;
       if !is_first then (
         is_first := false;
         first_num := !confl_num
@@ -105,16 +105,15 @@ let import_trace filename first lsmt st =
 
 
 let clear_all () =
-  SmtTrace.clear ();
-  SmtMaps.clear ()
-
+  SmtTrace.clear ()
 
 let import_all fsmt fproof =
   clear_all ();
   let st = VeritSyntax.create_verit_state () in
+  let stl = State.create_smtlib_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  let roots = Smtlib2_genConstr.import_smtlib2 smt_st fsmt in
-  let (max_id, confl) = import_trace fproof None [] st in
+  let roots = Smtlib2_genConstr.import_smtlib2 smt_st stl fsmt in
+  let (max_id, confl) = import_trace fproof None [] st stl in
   (smt_st, roots, max_id, confl)
 
 
@@ -137,7 +136,7 @@ let checker fsmt fproof =
 (** Given a Coq formula build the proof                                       *)
 (******************************************************************************)
 
-let export out_channel st lsmt =
+let export out_channel st stl lsmt =
   let rt = VeritSyntax.get_type_tbl st in
   let ro = VeritSyntax.get_op_tbl st in
 
@@ -146,13 +145,13 @@ let export out_channel st lsmt =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    SmtMaps.add_btype s (Tindex t);
+    State.add_btype stl s (Tindex t);
     Format.fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->
     let s = "op_"^(string_of_int i) in
-    SmtMaps.add_fun s op;
+    State.add_fun stl s op;
     Format.fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;
@@ -169,9 +168,9 @@ let export out_channel st lsmt =
 
 exception Unknown
 
-let call_verit st _ first lsmt =
+let call_verit st stl _ first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
-  export outchan st lsmt;
+  export outchan st stl lsmt;
   close_out outchan;
   let logfilename = Filename.chop_extension filename ^ ".vtlog" in
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
@@ -206,7 +205,7 @@ let call_verit st _ first lsmt =
   try
     if exit_code <> 0 then Structures.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();
-    let res = import_trace logfilename (Some first) lsmt st in
+    let res = import_trace logfilename (Some first) lsmt st stl in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
             match x with
@@ -220,7 +219,8 @@ let verit_logic =
 let tactic_gen vm_cast lcpl lcepl =
   clear_all ();
   let st = VeritSyntax.create_verit_state () in
+  let stl = State.create_smtlib_state () in
   let smt_st = VeritSyntax.get_smt_state st in
-  SmtCommands.tactic (call_verit st) verit_logic smt_st vm_cast lcpl lcepl
+  SmtCommands.tactic (call_verit st stl) verit_logic smt_st vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)

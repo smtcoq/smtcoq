@@ -70,8 +70,6 @@ trace/smtCommands.ml
 trace/smtCommands.mli
 trace/smtForm.ml
 trace/smtForm.mli
-trace/smtMaps.ml
-trace/smtMaps.mli
 trace/smtMisc.ml
 trace/smtMisc.mli
 trace/smtTrace.ml

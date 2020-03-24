@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-(* The state shared by all pre-processors:
-   - type_tbl : uninterpreted types
+(* The state shared by all pre-processors, containing:
+   - type_tbl : uninterpreted sorts
    - op_tbl : uninterpreted function symbols
    - atom_tbl_to_add : hash-consed atoms to be added in the deep embedding
    - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
@@ -35,3 +35,21 @@ val get_atom_tbl_to_add : smt_state -> atom_tbl_to_add
 val get_form_tbl_to_add : smt_state -> form_tbl_to_add
 val get_atom_tbl_no_add : smt_state -> atom_tbl_no_add
 val get_form_tbl_no_add : smt_state -> form_tbl_no_add
+
+
+(* The state shared by SMT-LIB parsers and printers, containing:
+   - the names of uninterpreted sorts
+   - the names of uninterpreted function symbols
+ *)
+
+type smtlib_state
+val create_smtlib_state : unit -> smtlib_state
+
+(* Names of uninterpreted sorts *)
+val get_btype : smtlib_state -> string -> SmtBtype.btype
+val add_btype : smtlib_state -> string -> SmtBtype.btype -> unit
+
+(* Names of uninterpreted function symbols *)
+val get_fun : smtlib_state -> string -> SmtAtom.indexed_op
+val add_fun : smtlib_state -> string -> SmtAtom.indexed_op -> unit
+val remove_fun : smtlib_state -> string -> unit
