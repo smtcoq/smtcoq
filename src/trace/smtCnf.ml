@@ -24,18 +24,28 @@ module MakeCnf (Form:FORM) =
 
     let info = Hashtbl.create 17 
 
-    let init_last = 
-      let last = SmtTrace.mk_scertif Root None in
-      SmtTrace.clear ();
-      last
+    type cnf_state =
+      { stt : trace_state;
+        mutable last : Form.t SmtCertif.clause
+      }
+    let create_cnf_state (st:trace_state) : cnf_state =
+      let last = SmtTrace.mk_scertif st Root None in
+      { stt = st; last = last }
+    let get_trace_state (st:cnf_state) = st.stt
+    let get_last (st:cnf_state) = st.last
+    let set_last (st:cnf_state) (cl:Form.t SmtCertif.clause) = st.last <- cl
 
-    let last = ref init_last
+    (* let init_last st =
+     *   let last = SmtTrace.mk_scertif st Root None in
+     *   last *)
+
+    (* let last = ref init_last *)
 
     let cnf_todo = ref [] 
 
-    let clear () = 
+    let clear () =
       Hashtbl.clear info;
-      last := init_last;
+      (* last := init_last; *)
       cnf_todo := []
 
     let push_cnf args = cnf_todo := args :: !cnf_todo
@@ -58,11 +68,11 @@ module MakeCnf (Form:FORM) =
     let check_trivial cl =
       List.exists test_immediate cl 
 
-    let link_Other other cl =
+    let link_Other st other cl =
       if not (check_trivial cl) then 
-	let c = mkOther other (Some cl) in
-	link !last c;
-	last := c
+        let c = mkOther (get_trace_state st) other (Some cl) in
+        link (get_last st) c;
+        set_last st c
 
     let both_lit l = if Form.is_pos l then Form.neg l,l else l, Form.neg l 
 
@@ -70,7 +80,7 @@ module MakeCnf (Form:FORM) =
       Array.mapi (fun i l -> 
 	if i = Array.length args - 1 then l else Form.neg l) args 
 
-    let rec cnf l =
+    let rec cnf st l =
       match get_info l with
       | Immediate _ | Done -> ()
       | Todo -> 
@@ -84,79 +94,79 @@ module MakeCnf (Form:FORM) =
 	      | Fand ->
 		  let nl,pl = both_lit l in
 		  let nargs = Array.map Form.neg args in
-		  link_Other (BuildDef pl) (pl::Array.to_list nargs);
+                  link_Other st (BuildDef pl) (pl::Array.to_list nargs);
 		  Array.iteri (fun i l' -> 
-		    link_Other (BuildProj (nl,i)) [nl;l']) args;
+		    link_Other st (BuildProj (nl,i)) [nl;l']) args;
 		  set_done l;
-		  Array.iter cnf args
+		  Array.iter (cnf st) args
 
 	      | For ->
 		  let nl,pl = both_lit l in
-		  link_Other (BuildDef nl) (nl::Array.to_list args);
+		  link_Other st (BuildDef nl) (nl::Array.to_list args);
 		  Array.iteri (fun i l' -> 
-		    link_Other (BuildProj(pl,i)) [pl;Form.neg l']) args;
+		    link_Other st (BuildProj(pl,i)) [pl;Form.neg l']) args;
 		  set_done l;
-		  Array.iter cnf args
+		  Array.iter (cnf st) args
 
 	      | Fimp ->
 		  let args = or_of_imp args in
 		  let nl,pl = both_lit l in
-		  link_Other (BuildDef nl) (nl::Array.to_list args);
+		  link_Other st (BuildDef nl) (nl::Array.to_list args);
 		  Array.iteri (fun i l' -> 
-		    link_Other (BuildProj(pl,i)) [pl;Form.neg l']) args;
+		    link_Other st (BuildProj(pl,i)) [pl;Form.neg l']) args;
 		  set_done l;
-		  Array.iter cnf args
+		  Array.iter (cnf st) args
 	
 	      | Fxor -> 
 		  let nl,pl = both_lit l in
 		  let a, b = args.(0), args.(1) in
 		  let na, nb = Form.neg a, Form.neg b in
-		  link_Other (BuildDef nl) [nl;a;b];
-		  link_Other (BuildDef pl) [pl;a;nb];
-		  link_Other (BuildDef2 nl) [nl;na;nb];
-		  link_Other (BuildDef2 pl) [pl;na;b];
+		  link_Other st (BuildDef nl) [nl;a;b];
+		  link_Other st (BuildDef pl) [pl;a;nb];
+		  link_Other st (BuildDef2 nl) [nl;na;nb];
+		  link_Other st (BuildDef2 pl) [pl;na;b];
 		  set_done l;
-		  cnf a;
-		  cnf b
+		  cnf st a;
+		  cnf st b
 		
 	      | Fiff ->
 		  let nl,pl = both_lit l in
 		  let a, b = args.(0), args.(1) in
 		  let na, nb = Form.neg a, Form.neg b in
-		  link_Other (BuildDef nl) [nl;a;nb];
-		  link_Other (BuildDef pl) [pl;na;nb];
-		  link_Other (BuildDef2 nl) [nl;na;b];
-		  link_Other (BuildDef2 pl) [pl;a;b];
+		  link_Other st (BuildDef nl) [nl;a;nb];
+		  link_Other st (BuildDef pl) [pl;na;nb];
+		  link_Other st (BuildDef2 nl) [nl;na;b];
+		  link_Other st (BuildDef2 pl) [pl;a;b];
 		  set_done l;
-		  cnf a;
-		  cnf b
+		  cnf st a;
+		  cnf st b
 
 	      | Fite ->
 		  let nl,pl = both_lit l in
 		  let a, b, c = args.(0), args.(1), args.(2) in
 		  let na, nb, nc = Form.neg a, Form.neg b, Form.neg c in
-		  link_Other (BuildDef nl) [nl;a;c];
-		  link_Other (BuildDef pl) [pl;a;nc];
-		  link_Other (BuildDef2 nl) [nl;na;b];
-		  link_Other (BuildDef2 pl) [pl;na;nb];
+		  link_Other st (BuildDef nl) [nl;a;c];
+		  link_Other st (BuildDef pl) [pl;a;nc];
+		  link_Other st (BuildDef2 nl) [nl;na;b];
+		  link_Other st (BuildDef2 pl) [pl;na;nb];
 		  set_done l;
-		  cnf a;
-		  cnf b;
-		  cnf c
+		  cnf st a;
+		  cnf st b;
+		  cnf st c
 
-	      | Fnot2 _ -> cnf args.(0)
+	      | Fnot2 _ -> cnf st args.(0)
               | Fforall _ -> assert false
 
     exception Cnf_done
 
-    let rec imm_link_Other other l =
+    let rec imm_link_Other st other l =
       if not (test_immediate l) then
-	let c = mkOther other (Some [l]) in
-	link !last c;
-	last := c;
-	imm_cnf c
+	let c = mkOther (get_trace_state st) other (Some [l]) in
+	link (get_last st) c;
+	set_last st c;
+	imm_cnf st c
 
-    and imm_cnf c =
+    and imm_cnf st c =
       let l = 
 	match c.value with
 	| Some [l] -> 
@@ -184,29 +194,29 @@ module MakeCnf (Form:FORM) =
 	      | Fand ->
 		  if Form.is_pos l then 
 		    Array.iteri (fun i l' -> 
-		      imm_link_Other (ImmBuildProj(c,i)) l') args
+                        imm_link_Other st (ImmBuildProj(c,i)) l') args
 		  else begin
 		    let nargs = Array.map Form.neg args in
-		    link_Other (ImmBuildDef c) (Array.to_list nargs);
+		    link_Other st (ImmBuildDef c) (Array.to_list nargs);
 		    push_cnf args
 		  end
 
 	      | For ->
 		  if Form.is_pos l then begin
-		    link_Other (ImmBuildDef c) (Array.to_list args);
+		    link_Other st (ImmBuildDef c) (Array.to_list args);
 		    push_cnf args
 		  end else 
 		    Array.iteri (fun i l' ->
-		      imm_link_Other (ImmBuildProj(c,i)) (Form.neg l')) args
+		      imm_link_Other st (ImmBuildProj(c,i)) (Form.neg l')) args
 
 	      | Fimp ->
 		  let args = or_of_imp args in
 		  if Form.is_pos l then begin
-		    link_Other (ImmBuildDef c) (Array.to_list args);
+		    link_Other st (ImmBuildDef c) (Array.to_list args);
 		    push_cnf args
 		  end else 
 		    Array.iteri (fun i l' ->
-		      imm_link_Other (ImmBuildProj(c,i)) (Form.neg l')) args
+		      imm_link_Other st (ImmBuildProj(c,i)) (Form.neg l')) args
 
 	      | Fxor -> 
 		  let args1 = 
@@ -215,8 +225,8 @@ module MakeCnf (Form:FORM) =
 		  let args2 =
 		    if Form.is_pos l then [Form.neg args.(0);Form.neg args.(1)] 
 		    else  [Form.neg args.(0); args.(1)] in
-		  link_Other (ImmBuildDef c) args1;
-		  link_Other (ImmBuildDef2 c) args2;
+		  link_Other st (ImmBuildDef c) args1;
+		  link_Other st (ImmBuildDef2 c) args2;
 		  push_cnf args
 		
 	      | Fiff ->
@@ -226,8 +236,8 @@ module MakeCnf (Form:FORM) =
 		  let args2 =
 		    if Form.is_pos l then [Form.neg args.(0);args.(1)] 
 		    else  [args.(0); args.(1)] in
-		  link_Other (ImmBuildDef c) args1;
-		  link_Other (ImmBuildDef2 c) args2;
+		  link_Other st (ImmBuildDef c) args1;
+		  link_Other st (ImmBuildDef2 c) args2;
 		  push_cnf args
 
 	      | Fite ->
@@ -237,24 +247,25 @@ module MakeCnf (Form:FORM) =
 		  let args2 =
 		    if Form.is_pos l then [Form.neg args.(0);args.(1)] 
 		    else  [Form.neg args.(0); Form.neg args.(1)] in
-		  link_Other (ImmBuildDef c) args1;
-		  link_Other (ImmBuildDef2 c) args2;
+		  link_Other st (ImmBuildDef c) args1;
+		  link_Other st (ImmBuildDef2 c) args2;
 		  push_cnf args
 
               | Fnot2 _ -> assert false
               | Fforall _ -> assert false
 
-    let make_cnf reify c =
+    let make_cnf (stt:trace_state) reify c =
       let ftrue = Form.get reify (Fapp(Ftrue, [||])) in
       let ffalse = Form.get reify (Fapp(Ffalse, [||])) in
-      last := c;
-      link_Other True [ftrue];
-      link_Other False [Form.neg ffalse];
+      let st = create_cnf_state stt in
+      set_last st c;
+      link_Other st True [ftrue];
+      link_Other st False [Form.neg ffalse];
       (try 
-	imm_cnf c;
-	List.iter (Array.iter cnf) !cnf_todo
+	imm_cnf st c;
+        List.iter (Array.iter (cnf st)) !cnf_todo
       with Cnf_done -> ());
-      let res = !last in
+      let res = get_last st in
       clear ();
       res
 

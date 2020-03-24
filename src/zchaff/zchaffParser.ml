@@ -26,8 +26,8 @@ let _EQ = "=="
 
 (** Parsing of zchaff proof *)
 
-let alloc_res last c1 c2 tail =
-  let c = mkRes c1 c2 tail in
+let alloc_res st last c1 c2 tail =
+  let c = mkRes st c1 c2 tail in
   link last c;
   c
 
@@ -37,20 +37,20 @@ let rec parse_tailres reloc lb =
     cl_id :: parse_tailres reloc lb
   else []
 
-let parse_resolution reloc lb last =
+let parse_resolution st reloc lb last =
   let id = input_blank_int lb in
   blank_match_string lb _INF;
   let c1 = Hashtbl.find reloc (input_blank_int lb) in
   let c2 =  Hashtbl.find reloc (input_blank_int lb) in
   let tl = parse_tailres reloc lb in
-  let c = alloc_res last c1 c2 tl in
+  let c = alloc_res st last c1 c2 tl in
   Hashtbl.add reloc id c;
   c
 
-let parse_CL reloc lb last =
+let parse_CL st reloc lb last =
   let last = ref last in
   while blank_check_string lb _CL do
-    last := parse_resolution reloc lb !last 
+    last := parse_resolution st reloc lb !last 
   done;
   !last
 
@@ -81,7 +81,7 @@ let parse_zclause lb =
   done;
   !zc
 
-let parse_VAR_CONF reloc lb last =
+let parse_VAR_CONF st reloc lb last =
   let max_level = ref (-1) in
   let vartbl = Hashtbl.create 100 in
   (* parsing of the VAR part *)
@@ -133,7 +133,7 @@ let parse_VAR_CONF reloc lb last =
 	match build_res1 vd.var vd.ante_val with
 	| [] -> vd.ante
 	| c2::tl -> 
-	    last := alloc_res !last vd.ante c2 tl; !last in
+	    last := alloc_res st !last vd.ante c2 tl; !last in
       vd.vclause <- Some c;
     with Not_found -> ()
   done;
@@ -146,13 +146,13 @@ let parse_VAR_CONF reloc lb last =
   let conf_val = parse_zclause lb in
   match build_res0 conf_val with
   | [] -> assert false
-  | c2::tl -> alloc_res !last conf c2 tl
+  | c2::tl -> alloc_res st !last conf c2 tl
 
 
-let parse_proof reloc filename last =
+let parse_proof st reloc filename last =
   let lb = open_file "Proof" filename in
-  let last = parse_CL reloc lb last in
-  let last = parse_VAR_CONF reloc lb last in
+  let last = parse_CL st reloc lb last in
+  let last = parse_VAR_CONF st reloc lb last in
   close lb;
   last
 

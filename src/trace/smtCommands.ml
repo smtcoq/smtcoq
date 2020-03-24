@@ -593,8 +593,8 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver env l ls_smtc =
-  let root = SmtTrace.mkRootV [l] in
+let make_proof st call_solver env l ls_smtc =
+  let root = SmtTrace.mkRootV (State.get_trace_state st) [l] in
   call_solver env (root,l) ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
@@ -680,7 +680,7 @@ let core_tactic call_solver solver_logic st vm_cast lcpl lcepl env sigma concl =
       let nl = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env nl lsmt in
+      let max_id_confl = make_proof st call_solver env nl lsmt in
       build_body st (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
@@ -690,7 +690,7 @@ let core_tactic call_solver solver_logic st vm_cast lcpl lcepl env sigma concl =
       let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
       let nl = Form.neg l in
       let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env nl lsmt in
+      let max_id_confl = make_proof st call_solver env nl lsmt in
       build_body_eq st (Form.to_coq l1) (Form.to_coq l2)
         (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) in
 

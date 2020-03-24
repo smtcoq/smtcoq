@@ -36,19 +36,18 @@ let rec parse_clause nvars reify lb =
   if i = 0 then []
   else mklit nvars reify i :: parse_clause nvars reify lb
 
-let rec parse_clauses nvars reify lb last =
+let rec parse_clauses st nvars reify lb last =
   if is_start_int lb then
-    let c = SmtTrace.mkRootV (parse_clause nvars reify lb) in
+    let c = SmtTrace.mkRootV st (parse_clause nvars reify lb) in
     SmtTrace.link last c;
-    parse_clauses nvars reify lb c
+    parse_clauses st nvars reify lb c
   else last 
 
-let parse_cnf filename =
+let parse_cnf st filename =
   let reify = SatAtom.Form.create () in
   let lb = open_file "CNF" filename in
   let nvars = parse_p_cnf lb in
-  let first = SmtTrace.mkRootV (parse_clause nvars reify lb) in
-  let last = parse_clauses nvars reify lb first in
+  let first = SmtTrace.mkRootV st (parse_clause nvars reify lb) in
+  let last = parse_clauses st nvars reify lb first in
   close lb;
   nvars, first, last
-

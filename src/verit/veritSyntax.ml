@@ -224,14 +224,15 @@ type hlets_tbl = (string, Form.atom_form_lit) Hashtbl.t
 type smt_state = State.smt_state
 
 type verit_state =
-  clauses_tbl
-  * ref_cl_tbl
-  * to_add_list
-  * solver_tbl
-  * hlets_tbl
-  * smt_state
+  { clauses_tbl : clauses_tbl;
+    ref_cl_tbl : ref_cl_tbl;
+    to_add_list : to_add_list;
+    solver_tbl : solver_tbl;
+    hlets_tbl : hlets_tbl;
+    smt_state : smt_state
+  }
 
-let get_smt_state st = let (_, _, _, _, _, s) = st in s
+let get_smt_state st = st.smt_state
 
 let get_type_tbl st = State.get_type_tbl (get_smt_state st)
 let get_op_tbl st = State.get_op_tbl (get_smt_state st)
@@ -239,34 +240,35 @@ let get_atom_tbl_to_add st = State.get_atom_tbl_to_add (get_smt_state st)
 let get_form_tbl_to_add st = State.get_form_tbl_to_add (get_smt_state st)
 let get_atom_tbl_no_add st = State.get_atom_tbl_no_add (get_smt_state st)
 let get_form_tbl_no_add st = State.get_form_tbl_no_add (get_smt_state st)
+let get_trace_state st = State.get_trace_state (get_smt_state st)
 
 let create_verit_state () : verit_state =
-  (Hashtbl.create 17,
-   Hashtbl.create 17,
-   ref [],
-   Hashtbl.create 17,
-   Hashtbl.create 17,
-   State.create_smt_state ()
-  )
+  { clauses_tbl = Hashtbl.create 17;
+    ref_cl_tbl = Hashtbl.create 17;
+    to_add_list = ref [];
+    solver_tbl = Hashtbl.create 17;
+    hlets_tbl = Hashtbl.create 17;
+    smt_state = State.create_smt_state ()
+  }
 
 
 (* Generating clauses *)
 
 let get_clause id st =
-  let (clauses, _, _, _, _, _) = st in
+  let clauses = st.clauses_tbl in
   try Hashtbl.find clauses id
   with | Not_found -> failwith ("VeritSyntax.get_clause : clause number "^(string_of_int id)^" not found\n")
 let add_clause id cl st =
-  let (clauses, _, _, _, _, _) = st in
+  let clauses = st.clauses_tbl in
   Hashtbl.add clauses id cl
 
 
 (* <ref_cl> maps solver integers to id integers. *)
 let get_ref i st =
-  let (_, ref_cl, _, _, _, _) = st in
+  let ref_cl = st.ref_cl_tbl in
   Hashtbl.find ref_cl i
 let add_ref i j st =
-  let (_, ref_cl, _, _, _, _) = st in
+  let ref_cl = st.ref_cl_tbl in
   Hashtbl.add ref_cl i j
 
 (* Recognizing and modifying clauses depending on a forall_inst clause. *)
@@ -529,15 +531,15 @@ let mk_clause (id,typ,value,ids_params) st =
   in
   let cl =
     (* TODO: change this into flatten when necessary *)
-    if SmtTrace.isRoot kind then SmtTrace.mkRootV value
-    else SmtTrace.mk_scertif kind (Some value) in
+    if SmtTrace.isRoot kind then SmtTrace.mkRootV (get_trace_state st) value
+    else SmtTrace.mk_scertif (get_trace_state st) kind (Some value) in
   add_clause id cl st;
   if id > 1 then SmtTrace.link (get_clause (id-1) st) cl;
   id
 
 
-let mk_clause cl =
-  try mk_clause cl
+let mk_clause cl st =
+  try mk_clause cl st
   with Failure f ->
     Structures.error ("SMTCoq was not able to check the certificate \
                        for the following reason.\n"^f)
@@ -570,11 +572,11 @@ let apply_tdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtA
 
 
 let get_solver id st =
-  let (_, _, _, solver, _, _) = st in
+  let solver = st.solver_tbl in
   try Hashtbl.find solver id
   with | Not_found -> failwith ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n")
 let add_solver id cl st =
-  let (_, _, _, solver, _, _) = st in
+  let solver = st.solver_tbl in
   Hashtbl.add solver id cl
 
 (* Finding the index of a root in <lsmt> modulo the <re_hash> function.
@@ -612,10 +614,10 @@ let qf_to_add lr =
 
 (* Let bindings *)
 let get_hlet s st =
-  let (_, _, _, _, hlets, _) = st in
+  let hlets = st.hlets_tbl in
   Hashtbl.find hlets s
 let add_hlet s l st =
-  let (_, _, _, _, hlets, _) = st in
+  let hlets = st.hlets_tbl in
   Hashtbl.add hlets s l
 
 

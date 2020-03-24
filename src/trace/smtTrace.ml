@@ -19,20 +19,19 @@ open SmtCertif
 
 let notUsed = 0
 
-let next_id = ref 0
+type trace_state = int ref
+let create_trace_state () : trace_state = ref 0
 
-let clear_id () = next_id := 0
-
-let next_id () =
-  let id = !next_id in
-  incr next_id;
+let next_id (st:trace_state) =
+  let id = !st in
+  incr st;
   id
 
 (** Basic functions over small certificates *)
 
-let mk_scertif kind ov =
+let mk_scertif st kind ov =
   {
-   id   = next_id ();
+   id   = next_id st;
    kind = kind;
    pos  = None;
    used = notUsed;
@@ -43,9 +42,8 @@ let mk_scertif kind ov =
 
 (** Roots *)
 
-
-let mkRootGen ov =
-  let pos = next_id () in
+let mkRootGen st ov =
+  let pos = next_id st in
   {
    id   = pos;
    kind = Root;
@@ -57,14 +55,14 @@ let mkRootGen ov =
  }
 
 (* let mkRoot = mkRootGen None *)
-let mkRootV v = mkRootGen (Some v)
+let mkRootV st v = mkRootGen st (Some v)
 
 let isRoot k = k == Root
 
 (** Resolutions *)
 
-let mkRes c1 c2 tl =
-  mk_scertif (Res { rc1 = c1; rc2 = c2; rtail = tl }) None
+let mkRes st c1 c2 tl =
+  mk_scertif st (Res { rc1 = c1; rc2 = c2; rtail = tl }) None
 
 let isRes k =
   match k with
@@ -74,7 +72,7 @@ let isRes k =
 
 (** Other *)
 
-let mkOther r ov = mk_scertif (Other r) ov
+let mkOther st r ov = mk_scertif st (Other r) ov
 
 
 (** Moving into the trace *)
@@ -173,9 +171,10 @@ let order_roots init_index first =
 the following clauses reference those clauses instead of the roots *)
 let add_scertifs to_add c =
   let r = ref c in
-  clear_id (); ignore (next_id ());
+  let st = create_trace_state () in
+  ignore (next_id st);
   while isRoot !r.kind do
-    ignore (next_id ());
+    ignore (next_id st);
     r := next !r;
   done;
   let after_roots = !r in
@@ -184,7 +183,7 @@ let add_scertifs to_add c =
     Hashtbl.create 17 in
   let rec push_all = function
     | [] -> ()
-    | (kind, ov, t_cl)::t -> let cl = mk_scertif kind ov in
+    | (kind, ov, t_cl)::t -> let cl = mk_scertif st kind ov in
                              Hashtbl.add tbl t_cl.id cl;
                              link !r cl;
                              r := next !r;
@@ -215,8 +214,8 @@ let add_scertifs to_add c =
   let continue = ref true in
   while !continue do
     !r.kind <- update_kind !r.kind;
-    !r.id <- next_id ();
-    match !r.next with 
+    !r.id <- next_id st;
+    match !r.next with
     | None -> continue := false
     | Some n -> r := n
   done;
@@ -547,7 +546,7 @@ module MakeOpt (Form:SmtForm.FORM) =
 	    else List.rev rhd, tl1, tl2
       in aux [] tl1 tl2
 
-    let share_prefix first_c n =
+    let share_prefix st first_c n =
       let tbl = HRtbl.create (min n Sys.max_array_length) in
       let rec share c2 =
 	if isRes c2.kind then (
@@ -574,7 +573,7 @@ module MakeOpt (Form:SmtForm.FORM) =
 		res1.rtail <- tl1';
 		share c1
             | c1'::tl1', c2'::tl2' ->
-		let c = mkRes res1.rc1 res1.rc2 head in
+		let c = mkRes st res1.rc1 res1.rc2 head in
 		HRtbl.remove tbl res1;
 		insert_before c1 c;
 		res1.rc1 <- c;
@@ -596,6 +595,3 @@ module MakeOpt (Form:SmtForm.FORM) =
       done
 
   end
-
-
-let clear () = clear_id ()

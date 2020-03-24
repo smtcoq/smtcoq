@@ -133,7 +133,6 @@ let import_trace_from_file first filename =
 
 
 let clear_all () =
-  SmtTrace.clear ();
   Tosmtcoq.clear ();
   C.clear ()
 

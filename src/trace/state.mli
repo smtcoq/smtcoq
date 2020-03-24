@@ -17,6 +17,7 @@
    - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
    - atom_tbl_no_add : hash-consed atoms no to be added in the deep embedding (for quantifiers)
    - form_tbl_no_add : hash-consed formulas no to be added in the deep embedding (for quantifiers)
+   - SmtTrace.trace_state : the state of the optimizer
  *)
 
 type type_tbl = SmtBtype.reify_tbl
@@ -35,6 +36,7 @@ val get_atom_tbl_to_add : smt_state -> atom_tbl_to_add
 val get_form_tbl_to_add : smt_state -> form_tbl_to_add
 val get_atom_tbl_no_add : smt_state -> atom_tbl_no_add
 val get_form_tbl_no_add : smt_state -> form_tbl_no_add
+val get_trace_state : smt_state -> SmtTrace.trace_state
 
 
 (* The state shared by SMT-LIB parsers and printers, containing:

@@ -197,8 +197,9 @@ module Atom :
 
 
 module Form : SmtForm.FORM with type hatom = hatom
+
 module Trace : sig
-  val share_prefix : Form.t SmtCertif.clause -> int -> unit
+  val share_prefix : SmtTrace.trace_state -> Form.t SmtCertif.clause -> int -> unit
 end
 
 

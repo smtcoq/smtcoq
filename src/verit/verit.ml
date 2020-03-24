@@ -104,11 +104,7 @@ let import_trace filename first lsmt st stl =
     | Parsing.Parse_error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
 
 
-let clear_all () =
-  SmtTrace.clear ()
-
 let import_all fsmt fproof =
-  clear_all ();
   let st = VeritSyntax.create_verit_state () in
   let stl = State.create_smtlib_state () in
   let smt_st = VeritSyntax.get_smt_state st in
@@ -217,7 +213,6 @@ let verit_logic =
   SL.of_list [LUF; LLia]
 
 let tactic_gen vm_cast lcpl lcepl =
-  clear_all ();
   let st = VeritSyntax.create_verit_state () in
   let stl = State.create_smtlib_state () in
   let smt_st = VeritSyntax.get_smt_state st in

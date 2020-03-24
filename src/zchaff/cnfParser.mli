@@ -16,10 +16,13 @@ val mklit : int -> SatAtom.Form.reify -> int -> SatAtom.Form.t
 val parse_clause :
   int -> SatAtom.Form.reify -> SatParser.lex_buff -> SatAtom.Form.t list
 val parse_clauses :
+  SmtTrace.trace_state ->
   int ->
   SatAtom.Form.reify ->
   SatParser.lex_buff ->
   SatAtom.Form.t SmtCertif.clause -> SatAtom.Form.t SmtCertif.clause
 val parse_cnf :
+  SmtTrace.trace_state ->
   string ->
-  int * SatAtom.Form.t SmtCertif.clause * SatAtom.Form.t SmtCertif.clause
+  int * SatAtom.Form.t SmtCertif.clause *
+  SatAtom.Form.t SmtCertif.clause

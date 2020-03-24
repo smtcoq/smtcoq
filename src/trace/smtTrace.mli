@@ -11,19 +11,23 @@
 
 
 (* Traces *)
-val notUsed : int
-val clear : unit -> unit
-val next_id : unit -> SmtCertif.clause_id
+type trace_state
+val create_trace_state : unit -> trace_state
+val next_id : trace_state -> SmtCertif.clause_id
+
 val mk_scertif :
+  trace_state ->
   'a SmtCertif.clause_kind -> 'a list option -> 'a SmtCertif.clause
-val mkRootGen : 'a list option -> 'a SmtCertif.clause
-val mkRootV : 'a list -> 'a SmtCertif.clause
+val mkRootGen : trace_state -> 'a list option -> 'a SmtCertif.clause
+val mkRootV : trace_state -> 'a list -> 'a SmtCertif.clause
 val isRoot : 'a SmtCertif.clause_kind -> bool
 val mkRes :
+  trace_state ->
   'a SmtCertif.clause ->
   'a SmtCertif.clause -> 'a SmtCertif.clause list -> 'a SmtCertif.clause
 val isRes : 'a SmtCertif.clause_kind -> bool
-val mkOther : 'a SmtCertif.rule -> 'a list option -> 'a SmtCertif.clause
+val mkOther : trace_state -> 'a SmtCertif.rule -> 'a list option -> 'a SmtCertif.clause
+
 val next : 'a SmtCertif.clause -> 'a SmtCertif.clause
 val has_prev : 'a SmtCertif.clause -> bool
 val prev : 'a SmtCertif.clause -> 'a SmtCertif.clause
@@ -73,5 +77,5 @@ val to_coq :
 module MakeOpt :
   functor (Form : SmtForm.FORM) ->
     sig
-      val share_prefix : Form.t SmtCertif.clause -> int -> unit
+      val share_prefix : trace_state -> Form.t SmtCertif.clause -> int -> unit
     end

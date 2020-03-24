@@ -100,8 +100,8 @@ let rec pp_trace fmt c =
 (******************************************************************************)
 
 
-let import_cnf filename =
-  let nvars, first, last = CnfParser.parse_cnf filename in
+let import_cnf st filename =
+  let nvars, first, last = CnfParser.parse_cnf st filename in
   let reloc = Hashtbl.create 17 in
   let count = ref 0 in
   let r = ref first in
@@ -115,16 +115,16 @@ let import_cnf filename =
   if not (is_trivial (get_val !r)) then Hashtbl.add reloc !count !r;
   nvars,first,last,reloc
 
-let import_cnf_trace reloc filename first last =
+let import_cnf_trace st reloc filename first last =
   (* Format.fprintf Format.err_formatter "init@."; *)
   (* pp_trace Format.err_formatter first; *)
-  let confl = ZchaffParser.parse_proof reloc filename last in
+  let confl = ZchaffParser.parse_proof st reloc filename last in
   (* Format.fprintf Format.err_formatter "zchaff@."; *)
   (* pp_trace Format.err_formatter first; *)
   SmtTrace.select confl;
   (* Format.fprintf Format.err_formatter "select@."; *)
   (* pp_trace Format.err_formatter first; *)
-  Trace.share_prefix first (2 * last.id);
+  Trace.share_prefix st first (2 * last.id);
   (* Format.fprintf Format.err_formatter "share_prefix@."; *)
   (* pp_trace Format.err_formatter first; *)
   occur confl;
@@ -191,13 +191,13 @@ let certif_ops = CoqTerms.make_certif_ops sat_checker_modules None
 let cCertif = gen_constant sat_checker_modules "Certif"
 
 let parse_certif dimacs trace fdimacs ftrace =
-  SmtTrace.clear ();
-  let _,first,last,reloc = import_cnf fdimacs in
+  let st = SmtTrace.create_trace_state () in
+  let _,first,last,reloc = import_cnf st fdimacs in
   let d = make_roots first last in
   let ce1 = Structures.mkUConst d in
   let _ = Structures.declare_constant dimacs ce1 in
 
-  let max_id, confl = import_cnf_trace reloc ftrace first last in
+  let max_id, confl = import_cnf_trace st reloc ftrace first last in
   let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
@@ -211,11 +211,11 @@ let ctheorem_checker = gen_constant sat_checker_modules "theorem_checker"
 let cchecker = gen_constant sat_checker_modules "checker"
 
 let theorems interp name fdimacs ftrace =
-  SmtTrace.clear ();
-  let _,first,last,reloc = import_cnf fdimacs in
+  let st = SmtTrace.create_trace_state () in
+  let _,first,last,reloc = import_cnf st fdimacs in
   let d = make_roots first last in
 
-  let max_id, confl = import_cnf_trace reloc ftrace first last in
+  let max_id, confl = import_cnf_trace st reloc ftrace first last in
   let (tres,_,_) =
     SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
@@ -255,11 +255,11 @@ let theorem_abs =
 
 
 let checker fdimacs ftrace =
-  SmtTrace.clear ();
-  let _,first,last,reloc = import_cnf fdimacs in
+  let st = SmtTrace.create_trace_state () in
+  let _,first,last,reloc = import_cnf st fdimacs in
   let d = make_roots first last in
 
-  let max_id, confl = import_cnf_trace reloc ftrace first last in
+  let max_id, confl = import_cnf_trace st reloc ftrace first last in
   let (tres,_,_) =
     SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
@@ -487,15 +487,15 @@ let check_unsat filename =
 
 (* Pre-process the proof given by zchaff *)
 
-let make_proof pform_tbl atom_tbl env reify_form l =
+let make_proof st pform_tbl atom_tbl env reify_form l =
   let fl = Form.flatten reify_form l in
-  let root = SmtTrace.mkRootV [l] in
+  let root = SmtTrace.mkRootV st [l] in
   let _ =
-    if Form.equal l fl then Cnf.make_cnf reify_form root
+    if Form.equal l fl then Cnf.make_cnf st reify_form root
     else
-      let first_c = SmtTrace.mkOther (ImmFlatten(root,fl)) (Some [fl]) in
+      let first_c = SmtTrace.mkOther st (ImmFlatten(root,fl)) (Some [fl]) in
       SmtTrace.link root first_c;
-      Cnf.make_cnf reify_form first_c in
+      Cnf.make_cnf st reify_form first_c in
   let (reloc, resfilename, logfilename, last) =
     call_zchaff (Form.nvars reify_form) root in
   (try check_unsat resfilename with
@@ -515,13 +515,13 @@ let make_proof pform_tbl atom_tbl env reify_form l =
       ) with | Invalid_argument _ -> acc (* Because cnf computation does not put the new formulas in the table... Perhaps it should? *)
     ) "zchaff found a counterexample:\n" model)
   );
-  import_cnf_trace reloc logfilename root last
+  import_cnf_trace st reloc logfilename root last
 
 
 (* The whole tactic *)
 
 let core_tactic vm_cast env sigma concl =
-  SmtTrace.clear ();
+  let st = SmtTrace.create_trace_state () in
 
   let (forall_let, concl) = Term.decompose_prod_assum concl in
   let a, b = get_arguments concl in
@@ -533,7 +533,7 @@ let core_tactic vm_cast env sigma concl =
       let l' = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
-      let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
+      let max_id_confl = make_proof st pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
       build_body reify_atom reify_form (Form.to_coq l) b max_id_confl (vm_cast env)
     else
       let l1 = Form.of_coq (Atom.get reify_atom) reify_form a in
@@ -541,7 +541,7 @@ let core_tactic vm_cast env sigma concl =
       let l = Form.neg (Form.get reify_form (Fapp(Fiff,[|l1;l2|]))) in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
-      let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l in
+      let max_id_confl = make_proof st pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l in
       build_body_eq reify_atom reify_form
 	(Form.to_coq l1) (Form.to_coq l2) (Form.to_coq l) max_id_confl (vm_cast env)
   in
