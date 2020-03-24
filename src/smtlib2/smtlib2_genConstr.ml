@@ -38,16 +38,16 @@ let identifier_of_qualidentifier = function
   | QualIdentifierId (_,id) | QualIdentifierAs (_,id,_) -> id
 
 
-let string_type stl s =
+let string_type st s =
   match s with
   | "Bool" -> fun _ -> Tbool
   | "Int" -> fun _ -> TZ
   | "Array" -> (function [ti;te] -> TFArray (ti, te) | _ -> assert false)
   | _ ->
     try Scanf.sscanf s "BitVec_%d%!" (fun size -> fun _ -> TBV size)
-    with _ -> fun _ -> State.get_btype stl s
+    with _ -> fun _ -> State.get_btype st s
 
-let sort_of_string stl s = string_type stl s
+let sort_of_string st s = string_type st s
 
 
 (* let sort_of_symbol s = sort_of_string (string_of_symbol s) *)
@@ -90,13 +90,13 @@ let string_of_identifier = function
 let string_of_qualidentifier id = string_of_identifier (identifier_of_qualidentifier id)
 
 
-let rec sort_of_sort stl = function
-  | SortIdentifier (_,id) -> sort_of_string stl (string_of_identifier id) []
+let rec sort_of_sort st = function
+  | SortIdentifier (_,id) -> sort_of_string st (string_of_identifier id) []
   | SortIdSortMulti (_,id,(_,l)) ->
-    sort_of_string stl (string_of_identifier id) (List.map (sort_of_sort stl) l)
+    sort_of_string st (string_of_identifier id) (List.map (sort_of_sort st) l)
 
 
-let declare_sort_from_name st stl s =
+let declare_sort_from_name st s =
   let rt = State.get_type_tbl st in
 
   let cons_t = Structures.declare_new_type (Structures.mkId ("Smt_sort_"^s)) in
@@ -105,13 +105,13 @@ let declare_sort_from_name st stl s =
     Structures.declare_new_variable (Structures.mkId ("CompDec_"^s)) compdec_type in
   let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
   let res = SmtBtype.declare rt cons_t ce in
-  State.add_btype stl s res;
+  State.add_btype st s res;
   res
 
-let declare_sort st stl sym = declare_sort_from_name st stl (string_of_symbol sym)
+let declare_sort st sym = declare_sort_from_name st (string_of_symbol sym)
 
 
-let declare_fun_from_name st stl s tyl ty =
+let declare_fun_from_name st s tyl ty =
   let rt = State.get_type_tbl st in
   let ro = State.get_op_tbl st in
 
@@ -120,13 +120,13 @@ let declare_fun_from_name st stl s tyl ty =
       tyl (interp_to_coq rt ty) in
   let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
-  State.add_fun stl s op;
+  State.add_fun st s op;
   op
 
-let declare_fun st stl sym arg cod =
-  let tyl = List.map (sort_of_sort stl) arg in
-  let ty = sort_of_sort stl cod in
-  declare_fun_from_name st stl (string_of_symbol sym) tyl ty
+let declare_fun st sym arg cod =
+  let tyl = List.map (sort_of_sort st) arg in
+  let ty = sort_of_sort st cod in
+  declare_fun_from_name st (string_of_symbol sym) tyl ty
 
 
 
@@ -163,7 +163,7 @@ type atom_form = | Atom of SmtAtom.Atom.t | Form of SmtAtom.Form.t
 let startwith prefix s =
   try Scanf.sscanf s (prefix ^^ "%_s") true with _ -> false
 
-let make_root ra rf stl t =
+let make_root ra rf st t =
 
   let hlets = Hashtbl.create 17 in
 
@@ -413,7 +413,7 @@ let make_root ra rf stl t =
          with _ -> assert false)
 
       | _, _ ->
-        let op = State.get_fun stl v in
+        let op = State.get_fun st v in
         let l' = List.map (fun t ->
             match make_root_term t with
             | Atom h -> h | Form _ -> assert false) l in
@@ -426,20 +426,20 @@ let make_root ra rf stl t =
   make_root t
 
 
-let declare_commands st stl acc decl =
+let declare_commands st acc decl =
   let ra = State.get_atom_tbl_to_add st in
   let rf = State.get_form_tbl_to_add st in
   match decl with
-    | CDeclareSort (_,sym,_) -> let _ = declare_sort st stl sym in acc
+    | CDeclareSort (_,sym,_) -> let _ = declare_sort st sym in acc
     | CDeclareFun (_,sym, (_, arg), cod) ->
-       let _ = declare_fun st stl sym arg cod in acc
-    | CAssert (_, t) -> (make_root ra rf stl t)::acc
+       let _ = declare_fun st sym arg cod in acc
+    | CAssert (_, t) -> (make_root ra rf st t)::acc
     | _ -> acc
 
 
 (* Import function *)
 
-let import_smtlib2 st stl filename =
+let import_smtlib2 st filename =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let commands = Smtlib2_parse.main Smtlib2_lex.token lexbuf in
@@ -447,4 +447,4 @@ let import_smtlib2 st stl filename =
   match commands with
     | None -> []
     | Some (Smtlib2_ast.Commands (_,(_,res))) ->
-      List.rev (List.fold_left (declare_commands st stl) [] res)
+      List.rev (List.fold_left (declare_commands st) [] res)

@@ -16,11 +16,11 @@ val bigint_bv : Big_int.big_int -> int -> string
 
 (* Import from an SMTLIB2 file *)
 val import_smtlib2 :
-  State.smt_state -> State.smtlib_state -> string -> SmtAtom.Form.t list
+  State.smt_state -> string -> SmtAtom.Form.t list
 
 (* Lower level functions, to build types and terms *)
-val declare_sort_from_name : State.smt_state -> State.smtlib_state -> string -> SmtBtype.btype
+val declare_sort_from_name : State.smt_state -> string -> SmtBtype.btype
 val declare_fun_from_name :
-  State.smt_state -> State.smtlib_state ->
+  State.smt_state ->
   string ->
   SmtBtype.btype list -> SmtBtype.btype -> SmtAtom.indexed_op

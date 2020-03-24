@@ -17,7 +17,9 @@
    - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
    - atom_tbl_no_add : hash-consed atoms no to be added in the deep embedding (for quantifiers)
    - form_tbl_no_add : hash-consed formulas no to be added in the deep embedding (for quantifiers)
-   - SmtTrace.trace_state : the state of the optimizer
+   - trace_state : the state of the optimizer
+   - type_names : the names of uninterpreted sorts
+   - op_names : the names of uninterpreted function symbols
  *)
 
 type type_tbl = SmtBtype.reify_tbl
@@ -38,20 +40,11 @@ val get_atom_tbl_no_add : smt_state -> atom_tbl_no_add
 val get_form_tbl_no_add : smt_state -> form_tbl_no_add
 val get_trace_state : smt_state -> SmtTrace.trace_state
 
-
-(* The state shared by SMT-LIB parsers and printers, containing:
-   - the names of uninterpreted sorts
-   - the names of uninterpreted function symbols
- *)
-
-type smtlib_state
-val create_smtlib_state : unit -> smtlib_state
-
 (* Names of uninterpreted sorts *)
-val get_btype : smtlib_state -> string -> SmtBtype.btype
-val add_btype : smtlib_state -> string -> SmtBtype.btype -> unit
+val get_btype : smt_state -> string -> SmtBtype.btype
+val add_btype : smt_state -> string -> SmtBtype.btype -> unit
 
 (* Names of uninterpreted function symbols *)
-val get_fun : smtlib_state -> string -> SmtAtom.indexed_op
-val add_fun : smtlib_state -> string -> SmtAtom.indexed_op -> unit
-val remove_fun : smtlib_state -> string -> unit
+val get_fun : smt_state -> string -> SmtAtom.indexed_op
+val add_fun : smt_state -> string -> SmtAtom.indexed_op -> unit
+val remove_fun : smt_state -> string -> unit
