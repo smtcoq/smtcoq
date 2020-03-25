@@ -39,5 +39,9 @@ logs: $(OBJ)
 	$(COQC) $(COQDEBUG) $(COQFLAGS) $*
 
 
-clean:
-	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG) *.vo *.glob
+clean: cleanvo
+	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG)
+
+
+cleanvo:
+	rm -rf *~ *.vo *.glob
