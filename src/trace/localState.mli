@@ -10,16 +10,19 @@
 (**************************************************************************)
 
 
-(* The state shared by all pre-processors, containing:
-   - type_tbl : uninterpreted sorts
-   - op_tbl : uninterpreted function symbols
-   - atom_tbl_to_add : hash-consed atoms to be added in the deep embedding
-   - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
-   - atom_tbl_no_add : hash-consed atoms no to be added in the deep embedding (for quantifiers)
-   - form_tbl_no_add : hash-consed formulas no to be added in the deep embedding (for quantifiers)
-   - trace_state : the state of the optimizer
-   - type_names : the names of uninterpreted sorts
-   - op_names : the names of uninterpreted function symbols
+(* The state shared by pre-processors, SMT-LIB parsers and printers, containing:
+   - type_tbl : reified uninterpreted sorts
+   - type_names : names of uninterpreted sorts
+
+   - op_tbl : reified uninterpreted function symbols
+   - op_names : names of uninterpreted function symbols
+
+   - atom_tbl_to_add : reified, hash-consed atoms to be added in the deep embedding
+   - form_tbl_to_add : reified, hash-consed formulas to be added in the deep embedding
+   - atom_tbl_no_add : reified, hash-consed atoms no to be added in the deep embedding (for quantifiers)
+   - form_tbl_no_add : reified, hash-consed formulas no to be added in the deep embedding (for quantifiers)
+
+   - trace_state : state of the optimizer
  *)
 
 type type_tbl = SmtBtype.reify_tbl

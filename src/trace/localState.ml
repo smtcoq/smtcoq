@@ -14,15 +14,18 @@ open SmtAtom
 
 
 (* The state shared by pre-processors, SMT-LIB parsers and printers, containing:
-   - type_tbl : uninterpreted sorts
-   - op_tbl : uninterpreted function symbols
-   - atom_tbl_to_add : hash-consed atoms to be added in the deep embedding
-   - form_tbl_to_add : hash-consed formulas to be added in the deep embedding
-   - atom_tbl_no_add : hash-consed atoms no to be added in the deep embedding (for quantifiers)
-   - form_tbl_no_add : hash-consed formulas no to be added in the deep embedding (for quantifiers)
-   - trace_state : the state of the optimizer
-   - type_names : the names of uninterpreted sorts
-   - op_names : the names of uninterpreted function symbols
+   - type_tbl : reified uninterpreted sorts
+   - type_names : names of uninterpreted sorts
+
+   - op_tbl : reified uninterpreted function symbols
+   - op_names : names of uninterpreted function symbols
+
+   - atom_tbl_to_add : reified, hash-consed atoms to be added in the deep embedding
+   - form_tbl_to_add : reified, hash-consed formulas to be added in the deep embedding
+   - atom_tbl_no_add : reified, hash-consed atoms no to be added in the deep embedding (for quantifiers)
+   - form_tbl_no_add : reified, hash-consed formulas no to be added in the deep embedding (for quantifiers)
+
+   - trace_state : state of the optimizer
  *)
 
 type type_tbl = SmtBtype.reify_tbl
@@ -34,14 +37,14 @@ type form_tbl_no_add = SmtAtom.Form.reify
 
 type smt_state =
   { type_tbl : type_tbl;
+    type_names : (string, SmtBtype.btype) Hashtbl.t;
     op_tbl : op_tbl;
+    op_names : (string, SmtAtom.indexed_op) Hashtbl.t;
     atom_tbl_to_add : atom_tbl_to_add;
     form_tbl_to_add : form_tbl_to_add;
     atom_tbl_no_add : atom_tbl_no_add;
     form_tbl_no_add : form_tbl_no_add;
-    trace_state : SmtTrace.trace_state;
-    type_names : (string, SmtBtype.btype) Hashtbl.t;
-    op_names : (string, SmtAtom.indexed_op) Hashtbl.t
+    trace_state : SmtTrace.trace_state
   }
 
 let get_type_tbl st = st.type_tbl
