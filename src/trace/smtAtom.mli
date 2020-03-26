@@ -127,8 +127,6 @@ module Atom :
 
       val create : unit -> reify_tbl
 
-      val clear : reify_tbl -> unit
-
       val get : ?declare:bool -> reify_tbl -> atom -> t
 
       val mk_neg : reify_tbl -> t -> t

@@ -784,11 +784,6 @@ module Atom =
 
     let op_coq_terms = Hashtbl.create 17
 
-    let clear reify =
-      Hashtbl.clear op_coq_terms;
-      reify.count <- 0;
-      HashAtom.clear reify.tbl
-
     let declare reify a =
       check a;
       let res = {index = reify.count; hval = a} in

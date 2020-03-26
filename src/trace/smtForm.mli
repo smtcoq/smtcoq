@@ -73,7 +73,6 @@ module type FORM =
       exception NotWellTyped of pform
       type reify
       val create : unit -> reify
-      val clear : reify -> unit
       val get : ?declare:bool -> reify -> pform -> t
 
       (** Given a coq term, build the corresponding formula *)

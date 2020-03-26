@@ -77,7 +77,6 @@ module type FORM =
     exception NotWellTyped of pform
     type reify
     val create : unit -> reify
-    val clear : reify -> unit
     val get : ?declare:bool -> reify -> pform -> t
 
     (** Give a coq term, build the corresponding formula *)
@@ -340,13 +339,6 @@ module Make (Atom:ATOM) =
       let _ = declare reify pform_true in
       let _ = declare reify pform_false in
       reify
-
-    let clear r =
-      r.count <- 0;
-      HashForm.clear r.tbl;
-      let _ = declare r pform_true in
-      let _ = declare r pform_false in
-      ()
 
     let get ?declare:(decl=true) reify pf =
       if decl then
