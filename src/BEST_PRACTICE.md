@@ -21,8 +21,10 @@ Every OCaml module comes with a documented interface.
 Theories are organized in sub-directories whose names are the names of
 each theory.
 
-
 ## Compilation
 
-Before pushing or making a pull request to the master branch, make sure
-that the project compiles with both standard and native Coq.
+Before pushing or making a pull request to the master branch:
+- make sure that the project compiles (`make`) and that the unit tests
+  pass (`make test`) with **both** standard and native Coq;
+- make sure that the unit tests pass in asynchronous mode with standard
+  Coq (`make asynctest`).

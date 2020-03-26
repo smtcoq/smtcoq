@@ -16,8 +16,8 @@ vtest :
 lfsctest :
 	cd ../unit-tests; make cleanvo; make lfsc
 
-paralleltest :
-	cd ../unit-tests; make parallel
+asynctest :
+	cd ../unit-tests; make async
 
 clean::
 	cd ../unit-tests; make clean
