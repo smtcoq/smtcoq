@@ -45,7 +45,7 @@ logs: $(OBJ)
 
 
 parallel: Tests_zchaff_tactics.vio Tests_verit_tactics.vio Tests_lfsc_tactics.vio
-	coqtop -schedule-vio-checking 1 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics
+	coqtop -schedule-vio-checking 3 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics
 
 
 clean: cleanvo
