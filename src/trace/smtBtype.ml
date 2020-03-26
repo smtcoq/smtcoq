@@ -29,14 +29,7 @@ type btype =
   | TFArray of btype * btype
   | Tindex of indexed_type
 
-let index_tbl = Hashtbl.create 17
-
-let index_to_coq i =
-  try Hashtbl.find index_tbl i
-  with Not_found ->
-    let interp = mklApp cTindex [|mkInt i|] in
-    Hashtbl.add index_tbl i interp;
-    interp
+let index_to_coq i = mklApp cTindex [|mkInt i|]
 
 let indexed_type_of_int i =
   {index = i; hval = index_to_coq i }
