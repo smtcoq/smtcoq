@@ -27,12 +27,12 @@ Proof using.
   verit.
 Qed.
 
-(* Lemma fun_const2 : *)
-(*   forall f (g : Z -> Z -> bool), *)
-(*     (forall x, g (f x) 2) -> g (f 3) 2. *)
-(* Proof using. *)
-(*   intros f g Hf. verit Hf. *)
-(* Qed. *)
+Lemma fun_const2 :
+  forall f (g : Z -> Z -> bool),
+    (forall x, g (f x) 2) -> g (f 3) 2.
+Proof using.
+  intros f g Hf. verit Hf.
+Qed.
 
 
 (* Simple connectives *)
