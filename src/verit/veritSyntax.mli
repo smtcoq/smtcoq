@@ -19,14 +19,14 @@ type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2
 type verit_state
 val create_verit_state : unit -> verit_state
 
-val get_smt_state : verit_state -> State.smt_state
+val get_smt_state : verit_state -> LocalState.smt_state
 
-val get_type_tbl : verit_state -> State.type_tbl
-val get_op_tbl : verit_state -> State.op_tbl
-val get_atom_tbl_to_add : verit_state -> State.atom_tbl_to_add
-val get_form_tbl_to_add : verit_state -> State.form_tbl_to_add
-val get_atom_tbl_no_add : verit_state -> State.atom_tbl_no_add
-val get_form_tbl_no_add : verit_state -> State.form_tbl_no_add
+val get_type_tbl : verit_state -> LocalState.type_tbl
+val get_op_tbl : verit_state -> LocalState.op_tbl
+val get_atom_tbl_to_add : verit_state -> LocalState.atom_tbl_to_add
+val get_form_tbl_to_add : verit_state -> LocalState.form_tbl_to_add
+val get_atom_tbl_no_add : verit_state -> LocalState.atom_tbl_no_add
+val get_form_tbl_no_add : verit_state -> LocalState.form_tbl_no_add
 
 val get_clause : int -> verit_state -> SmtAtom.Form.t SmtCertif.clause
 val add_clause : int -> SmtAtom.Form.t SmtCertif.clause -> verit_state -> unit

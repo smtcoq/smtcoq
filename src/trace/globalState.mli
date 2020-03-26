@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2019                                          *)
+(*     Copyright (C) 2011 - 2020                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,17 +10,9 @@
 (**************************************************************************)
 
 
-val pp_symbol : Smtlib2_ast.symbol -> string
-val parse_smt2bv : string -> bool list
-val bigint_bv : Big_int.big_int -> int -> string
+(* The global state contains the theorems that will be sent to the
+   provers, added using the [Add_lemma] vernacular command *)
 
-(* Import from an SMTLIB2 file *)
-val import_smtlib2 :
-  LocalState.smt_state -> string -> SmtAtom.Form.t list
-
-(* Lower level functions, to build types and terms *)
-val declare_sort_from_name : LocalState.smt_state -> string -> SmtBtype.btype
-val declare_fun_from_name :
-  LocalState.smt_state ->
-  string ->
-  SmtBtype.btype list -> SmtBtype.btype -> SmtAtom.indexed_op
+val add_lemmas : Structures.constr_expr list -> unit
+val clear_lemmas : unit -> unit
+val get_lemmas : unit -> Structures.constr_expr list

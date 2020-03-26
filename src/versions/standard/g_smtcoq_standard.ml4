@@ -80,37 +80,17 @@ TACTIC EXTEND Tactic_zchaff
 | [ "zchaff_bool_no_check" ] -> [ Zchaff.tactic_no_check () ]
 END
 
-let lemmas_list = Summary.ref ~name:"Selected lemmas" []
 
-let cache_lemmas (_, lems) =
-  lemmas_list := lems
-
-let declare_lemmas : Structures.constr_expr list -> Libobject.obj =
-  let open Libobject in
-  declare_object
-    {
-      (default_object "LEMMAS") with
-      cache_function = cache_lemmas;
-      load_function = (fun _ -> cache_lemmas);
-    }
-
-let add_lemmas lems =
-  Lib.add_anonymous_leaf (declare_lemmas (lems @ !lemmas_list))
-
-let clear_lemmas () =
-  Lib.add_anonymous_leaf (declare_lemmas [])
-
-let get_lemmas () = !lemmas_list
 
 VERNAC COMMAND EXTEND Add_lemma CLASSIFIED AS SIDEFF
-| [ "Add_lemmas" constr_list(lems) ] -> [ add_lemmas lems ]
-| [ "Clear_lemmas" ] -> [ clear_lemmas () ]
+| [ "Add_lemmas" constr_list(lems) ] -> [ GlobalState.add_lemmas lems ]
+| [ "Clear_lemmas" ] -> [ GlobalState.clear_lemmas () ]
 END
 
 
 TACTIC EXTEND Tactic_verit
-| [ "verit_bool_base" constr_list(lpl) ] -> [ Verit.tactic (List.map EConstr.Unsafe.to_constr lpl) (get_lemmas ()) ]
-| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ Verit.tactic_no_check (List.map EConstr.Unsafe.to_constr lpl) (get_lemmas ()) ]
+| [ "verit_bool_base" constr_list(lpl) ] -> [ Verit.tactic (List.map EConstr.Unsafe.to_constr lpl) (GlobalState.get_lemmas ()) ]
+| [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ Verit.tactic_no_check (List.map EConstr.Unsafe.to_constr lpl) (GlobalState.get_lemmas ()) ]
 END
 
 TACTIC EXTEND Tactic_cvc4

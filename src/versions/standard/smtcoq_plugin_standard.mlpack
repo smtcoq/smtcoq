@@ -11,7 +11,8 @@ SmtTrace
 SmtCnf
 SatAtom
 SmtAtom
-State
+LocalState
+GlobalState
 
 SatParser
 ZchaffParser

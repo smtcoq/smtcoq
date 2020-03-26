@@ -125,10 +125,10 @@ let print_assm ty =
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace (st, roots, max_id, confl) =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
 
   let t_i' = make_t_i rt in
   let ce5 = Structures.mkUConst t_i' in
@@ -188,10 +188,10 @@ let interp_roots t_i roots =
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
 let theorem name (st, roots, max_id, confl) =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
 
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
@@ -270,10 +270,10 @@ let theorem name (st, roots, max_id, confl) =
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
 let checker (st, roots, max_id, confl) =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
 
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
@@ -343,10 +343,10 @@ let count_used confl =
 
 
 let checker_debug (st, roots, max_id, confl) =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
 
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
@@ -470,10 +470,10 @@ let checker_debug (st, roots, max_id, confl) =
 (* Tactic *)
 
 let build_body st l b (max_id, confl) vm_cast find =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
 
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
@@ -530,10 +530,10 @@ let build_body st l b (max_id, confl) vm_cast find =
 
 
 let build_body_eq st l1 l2 l (max_id, confl) vm_cast find =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
 
   let nti = Structures.mkName "t_i" in
   let ntfunc = Structures.mkName "t_func" in
@@ -594,7 +594,7 @@ let get_arguments concl =
 
 
 let make_proof st call_solver env l ls_smtc =
-  let root = SmtTrace.mkRootV (State.get_trace_state st) [l] in
+  let root = SmtTrace.mkRootV (LocalState.get_trace_state st) [l] in
   call_solver env (root,l) ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
@@ -605,10 +605,10 @@ let make_proof st call_solver env l ls_smtc =
 exception Axiom_form_unsupported
 
 let of_coq_lemma st env sigma solver_logic clemma =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra' = State.get_atom_tbl_no_add st in
-  let rf' = State.get_form_tbl_no_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra' = LocalState.get_atom_tbl_no_add st in
+  let rf' = LocalState.get_form_tbl_no_add st in
 
   let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
   let env_lemma = List.fold_right Environ.push_rel rel_context env in
@@ -636,12 +636,12 @@ let of_coq_lemma st env sigma solver_logic clemma =
   | _ -> Form.get rf' (Fapp (Fforall forall_args, [|core_smt|]))
 
 let core_tactic call_solver solver_logic st vm_cast lcpl lcepl env sigma concl =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
-  let ra' = State.get_atom_tbl_no_add st in
-  let rf' = State.get_form_tbl_no_add st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
+  let ra' = LocalState.get_atom_tbl_no_add st in
+  let rf' = LocalState.get_form_tbl_no_add st in
 
   let a, b = get_arguments concl in
 

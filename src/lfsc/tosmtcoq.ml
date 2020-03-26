@@ -225,7 +225,7 @@ let rec term_smtcoq_old t st =
          try
            term_smtcoq (HS.find alias_tbl n) st
          with Not_found ->
-           Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (State.get_fun (VeritSyntax.get_smt_state st) (Hstring.view n),[||])))
+           Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (LocalState.get_fun (VeritSyntax.get_smt_state st) (Hstring.view n),[||])))
        end
     | Int bi -> Form.Atom (Atom.hatom_Z_of_bigint (VeritSyntax.get_atom_tbl_to_add st) bi)
     | App _ ->
@@ -441,7 +441,7 @@ and uncurry acc t st = match app_name t, acc with
        (match name t with
           | Some n ->
              let args = Array.of_list acc in
-             Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (State.get_fun (VeritSyntax.get_smt_state st) (Hstring.view n), args)))
+             Form.Atom (Atom.get (VeritSyntax.get_atom_tbl_to_add st) (Aapp (LocalState.get_fun (VeritSyntax.get_smt_state st) (Hstring.view n), args)))
           | _ -> assert false)
     | _ ->
        eprintf "uncurry fail: %a@." Ast.print_term t;

@@ -6,10 +6,14 @@ No axiom should be added. No library adding axioms should be imported
 
 
 # Code organization
-## No global references
+## Side effects
 
-The code should not contain global references (or hash tables). If you
-want to implement a vernacular command that does side effects, follow
+Tactics and vernacular commands may have a local state, but it should
+not be shared between two calls of the tactic/command. See
+trace/localState.mli.
+
+When a global state is absolutely required, it should be put in
+trace/globalState.mli, and one should follow the instructions given in
 [tuto2](https://github.com/coq/coq/tree/master/doc/plugin_tutorial) in
 the plugin tutorial.
 

@@ -140,13 +140,13 @@ let export out_channel st lsmt =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    State.add_btype (VeritSyntax.get_smt_state st) s (Tindex t);
+    LocalState.add_btype (VeritSyntax.get_smt_state st) s (Tindex t);
     Format.fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->
     let s = "op_"^(string_of_int i) in
-    State.add_fun (VeritSyntax.get_smt_state st) s op;
+    LocalState.add_fun (VeritSyntax.get_smt_state st) s op;
     Format.fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;

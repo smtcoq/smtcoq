@@ -45,7 +45,7 @@ let string_type st s =
   | "Array" -> (function [ti;te] -> TFArray (ti, te) | _ -> assert false)
   | _ ->
     try Scanf.sscanf s "BitVec_%d%!" (fun size -> fun _ -> TBV size)
-    with _ -> fun _ -> State.get_btype st s
+    with _ -> fun _ -> LocalState.get_btype st s
 
 let sort_of_string st s = string_type st s
 
@@ -97,7 +97,7 @@ let rec sort_of_sort st = function
 
 
 let declare_sort_from_name st s =
-  let rt = State.get_type_tbl st in
+  let rt = LocalState.get_type_tbl st in
 
   let cons_t = Structures.declare_new_type (Structures.mkId ("Smt_sort_"^s)) in
   let compdec_type = mklApp cCompDec [| cons_t |] in
@@ -105,22 +105,22 @@ let declare_sort_from_name st s =
     Structures.declare_new_variable (Structures.mkId ("CompDec_"^s)) compdec_type in
   let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
   let res = SmtBtype.declare rt cons_t ce in
-  State.add_btype st s res;
+  LocalState.add_btype st s res;
   res
 
 let declare_sort st sym = declare_sort_from_name st (string_of_symbol sym)
 
 
 let declare_fun_from_name st s tyl ty =
-  let rt = State.get_type_tbl st in
-  let ro = State.get_op_tbl st in
+  let rt = LocalState.get_type_tbl st in
+  let ro = LocalState.get_op_tbl st in
 
   let coqTy = List.fold_right (fun typ c ->
       Term.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
   let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
-  State.add_fun st s op;
+  LocalState.add_fun st s op;
   op
 
 let declare_fun st sym arg cod =
@@ -413,7 +413,7 @@ let make_root ra rf st t =
          with _ -> assert false)
 
       | _, _ ->
-        let op = State.get_fun st v in
+        let op = LocalState.get_fun st v in
         let l' = List.map (fun t ->
             match make_root_term t with
             | Atom h -> h | Form _ -> assert false) l in
@@ -427,8 +427,8 @@ let make_root ra rf st t =
 
 
 let declare_commands st acc decl =
-  let ra = State.get_atom_tbl_to_add st in
-  let rf = State.get_form_tbl_to_add st in
+  let ra = LocalState.get_atom_tbl_to_add st in
+  let rf = LocalState.get_form_tbl_to_add st in
   match decl with
     | CDeclareSort (_,sym,_) -> let _ = declare_sort st sym in acc
     | CDeclareFun (_,sym, (_, arg), cod) ->

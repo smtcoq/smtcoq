@@ -221,7 +221,7 @@ type ref_cl_tbl = (int, int) Hashtbl.t
 type to_add_list = (int * SmtAtom.Form.t list) list ref
 type solver_tbl = (int, (bool * Form.atom_form_lit)) Hashtbl.t
 type hlets_tbl = (string, Form.atom_form_lit) Hashtbl.t
-type smt_state = State.smt_state
+type smt_state = LocalState.smt_state
 
 type verit_state =
   { clauses_tbl : clauses_tbl;
@@ -234,13 +234,13 @@ type verit_state =
 
 let get_smt_state st = st.smt_state
 
-let get_type_tbl st = State.get_type_tbl (get_smt_state st)
-let get_op_tbl st = State.get_op_tbl (get_smt_state st)
-let get_atom_tbl_to_add st = State.get_atom_tbl_to_add (get_smt_state st)
-let get_form_tbl_to_add st = State.get_form_tbl_to_add (get_smt_state st)
-let get_atom_tbl_no_add st = State.get_atom_tbl_no_add (get_smt_state st)
-let get_form_tbl_no_add st = State.get_form_tbl_no_add (get_smt_state st)
-let get_trace_state st = State.get_trace_state (get_smt_state st)
+let get_type_tbl st = LocalState.get_type_tbl (get_smt_state st)
+let get_op_tbl st = LocalState.get_op_tbl (get_smt_state st)
+let get_atom_tbl_to_add st = LocalState.get_atom_tbl_to_add (get_smt_state st)
+let get_form_tbl_to_add st = LocalState.get_form_tbl_to_add (get_smt_state st)
+let get_atom_tbl_no_add st = LocalState.get_atom_tbl_no_add (get_smt_state st)
+let get_form_tbl_no_add st = LocalState.get_form_tbl_no_add (get_smt_state st)
+let get_trace_state st = LocalState.get_trace_state (get_smt_state st)
 
 let create_verit_state () : verit_state =
   { clauses_tbl = Hashtbl.create 17;
@@ -248,7 +248,7 @@ let create_verit_state () : verit_state =
     to_add_list = ref [];
     solver_tbl = Hashtbl.create 17;
     hlets_tbl = Hashtbl.create 17;
-    smt_state = State.create_smt_state ()
+    smt_state = LocalState.create_smt_state ()
   }
 
 

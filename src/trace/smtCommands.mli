@@ -18,21 +18,21 @@ val parse_certif :
   Structures.id ->
   Structures.id ->
   Structures.id ->
-  State.smt_state * SmtAtom.Form.t list * int *
+  LocalState.smt_state * SmtAtom.Form.t list * int *
   SmtAtom.Form.t SmtCertif.clause -> unit
 
 
 val checker_debug :
-  State.smt_state * SmtAtom.Form.t list * int *
+  LocalState.smt_state * SmtAtom.Form.t list * int *
   SmtAtom.Form.t SmtCertif.clause -> 'a
 
 val theorem :
   Structures.id ->
-  State.smt_state * SmtAtom.Form.t list * int *
+  LocalState.smt_state * SmtAtom.Form.t list * int *
   SmtAtom.Form.t SmtCertif.clause -> unit
 
 val checker :
-  State.smt_state * SmtAtom.Form.t list * int *
+  LocalState.smt_state * SmtAtom.Form.t list * int *
   SmtAtom.Form.t SmtCertif.clause -> unit
 
 val tactic :
@@ -40,7 +40,7 @@ val tactic :
    SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t ->
    SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause) ->
   SmtMisc.logic ->
-  State.smt_state ->
+  LocalState.smt_state ->
   (Environ.env -> Structures.constr -> Structures.constr) ->
   Structures.constr list ->
   Structures.constr_expr list -> Structures.tactic

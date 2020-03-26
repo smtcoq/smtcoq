@@ -362,13 +362,13 @@ let call_cvc4 st env root _ =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    State.add_btype (VeritSyntax.get_smt_state st) s (SmtBtype.Tindex t);
+    LocalState.add_btype (VeritSyntax.get_smt_state st) s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
   ) (SmtBtype.to_list rt);
   
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
-    State.add_fun (VeritSyntax.get_smt_state st) s op;
+    LocalState.add_fun (VeritSyntax.get_smt_state st) s op;
     let args =
       Array.fold_right
         (fun t acc -> asprintf "%a" SmtBtype.to_smt t :: acc) cod [] in
@@ -410,13 +410,13 @@ let export out_channel st l =
 
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
-    State.add_btype (VeritSyntax.get_smt_state st) s (SmtBtype.Tindex t);
+    LocalState.add_btype (VeritSyntax.get_smt_state st) s (SmtBtype.Tindex t);
     fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
-    State.add_fun (VeritSyntax.get_smt_state st) s op;
+    LocalState.add_fun (VeritSyntax.get_smt_state st) s op;
     fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t ->
