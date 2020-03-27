@@ -35,18 +35,12 @@ let close lb =
 
 let eof lb = lb.buff_end == 0
 
-let curr_char lb =
-  if eof lb then raise End_of_file
-  else Bytes.get lb.buff lb.curr_char
-
 let refill lb =
   let ne = input lb.in_ch lb.buff 0 buff_length in
   lb.curr_char <- 0;
   lb.buff_end <- ne
 
 (* Unsafe function *)
-let is_space c = c == ' ' || c == '\t'
-
 let is_space_ret c = c == ' ' || c == '\n' || c == '\t'
 
 
@@ -58,7 +52,6 @@ let skip to_skip lb =
     if lb.curr_char = lb.buff_end then refill lb
   done
 
-let skip_space lb = skip is_space lb
 let skip_blank lb = skip is_space_ret lb
 
 

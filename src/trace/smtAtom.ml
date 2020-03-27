@@ -950,8 +950,6 @@ module Atom =
       | _ -> 0
 
 
-    (* This table is never updated so it does not need to belong to the
-       local state *)
     let op_tbl () =
       let tbl = Hashtbl.create 29 in
       let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
@@ -973,6 +971,8 @@ module Atom =
         ];
       tbl
 
+    (* This table is never updated so it does not need to belong to the
+       local state *)
     let op_tbl = lazy (op_tbl ())
 
 

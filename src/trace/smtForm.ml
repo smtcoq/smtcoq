@@ -376,6 +376,8 @@ module Make (Atom:ATOM) =
           ceqb,CCiff; cifb,CCifb ];
       tbl
 
+    (* This table is never updated so it does not need to belong to the
+       local state *)
     let op_tbl = lazy (op_tbl ())
 
     let empty_args = [||]

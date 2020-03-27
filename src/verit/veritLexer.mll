@@ -14,6 +14,8 @@
   open VeritParser
   exception Eof
 
+  (* This table is never updated so it does not need to belong to the
+     local state *)
   let typ_table = Hashtbl.create 53
   let _ =
     List.iter (fun (kwd, tok) -> Hashtbl.add typ_table kwd tok)
