@@ -11,6 +11,8 @@
 
 
 (** Sharing of coq Int *)
+(* This is a safe global table since it is coherent between multiple
+   executions of the tactics/commands *)
 let cInt_tbl = Hashtbl.create 17 
 
 let mkInt i = 

@@ -29,15 +29,7 @@ let rec pos_of_int i =
     then XO(pos_of_int (i lsr 1))
     else XI(pos_of_int (i lsr 1))
 
-let z_of_int i =
-  if i = 0
-  then Z0
-  else
-    if i > 0
-    then Zpos (pos_of_int i)
-    else Zneg (pos_of_int (-i))
-
-type my_tbl =
+type lia_state =
     {tbl:(hatom,int) Hashtbl.t; mutable count:int}
 
 let get_atom_var tbl ha =
@@ -163,33 +155,6 @@ let binop_list tbl op def l =
   | f::l -> List.fold_left (fun x y -> op x (smt_Form_to_coq_micromega_formula tbl y)) (smt_Form_to_coq_micromega_formula tbl f) l
 
 
-(* let rec binop_list tbl op def l = *)
-(*   match l with *)
-(*   | [] -> def *)
-(*   | [f] -> smt_Form_to_coq_micromega_formula tbl f *)
-(*   | f::l -> *)
-(*       op (smt_Form_to_coq_micromega_formula tbl f) (binop_list tbl op def l) *)
-
-(* and smt_Form_to_coq_micromega_formula tbl l = *)
-(*   let v = *)
-(*     match Form.pform l with *)
-(*       | Fatom ha -> *)
-(* 	A (smt_Atom_to_micromega_formula tbl ha, *)
-(* 	   default_tag,default_constr) *)
-(*       | Fapp (Ftrue, _) -> TT *)
-(*       | Fapp (Ffalse, _) -> FF *)
-(*       | Fapp (Fand, l) -> binop_list tbl (fun x y -> C (x,y)) TT l *)
-(*       | Fapp (For, l) -> binop_list tbl (fun x y -> D (x,y)) FF l *)
-(*       | Fapp (Fxor, l) -> failwith "todo:Fxor" *)
-(*       | Fapp (Fimp, l) -> binop_list tbl (fun x y -> I (x,None,y)) TT l *)
-(*       | Fapp (Fiff, l) -> failwith "todo:Fiff" *)
-(*       | Fapp (Fite, l) -> failwith "todo:Fite" *)
-(*       | Fapp (Fnot2 _, l) -> smt_Form_to_coq_micromega_formula tbl l *)
-(*   in *)
-(*   if Form.is_pos l then v *)
-(*   else N(v) *)
-
-
 let smt_clause_to_coq_micromega_formula tbl cl =
   binop_list tbl (fun x y -> C(x,y)) TT (List.map Form.neg cl)
 
@@ -206,5 +171,5 @@ let tauto_lia ff =
 let build_lia_certif cl =
   let tbl = create_tbl 13 in
   let f = I(smt_clause_to_coq_micromega_formula tbl cl, None, FF) in
-  tbl, f, tauto_lia f
+  tauto_lia f
 
