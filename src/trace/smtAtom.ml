@@ -149,38 +149,10 @@ module Op =
       | UO_BVzextn (s, n) -> mklApp cbv_zextn [|mkN s; mkN n|]
       | UO_BVsextn (s, n) -> mklApp cbv_sextn [|mkN s; mkN n|]
 
-    let eq_tbl = Hashtbl.create 17
-    let select_tbl = Hashtbl.create 17
-    let store_tbl = Hashtbl.create 17
-    let diffarray_tbl = Hashtbl.create 17
-
-    let eq_to_coq t =
-      try Hashtbl.find eq_tbl t
-      with Not_found ->
-	let op = mklApp cBO_eq [|SmtBtype.to_coq t|] in
-	Hashtbl.add eq_tbl t op;
-	op
-
-    let select_to_coq ti te =
-      try Hashtbl.find select_tbl (ti, te)
-      with Not_found ->
-        let op = mklApp cBO_select [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        Hashtbl.add select_tbl (ti, te) op;
-        op
-
-    let store_to_coq ti te =
-      try Hashtbl.find store_tbl (ti, te)
-      with Not_found ->
-        let op = mklApp cTO_store [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        Hashtbl.add store_tbl (ti, te) op;
-        op
-
-    let diffarray_to_coq ti te =
-      try Hashtbl.find diffarray_tbl (ti, te)
-      with Not_found ->
-        let op = mklApp cBO_diffarray [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        Hashtbl.add diffarray_tbl (ti, te) op;
-        op
+    let eq_to_coq t = mklApp cBO_eq [|SmtBtype.to_coq t|]
+    let select_to_coq ti te = mklApp cBO_select [|SmtBtype.to_coq ti; SmtBtype.to_coq te|]
+    let store_to_coq ti te = mklApp cTO_store [|SmtBtype.to_coq ti; SmtBtype.to_coq te|]
+    let diffarray_to_coq ti te = mklApp cBO_diffarray [|SmtBtype.to_coq ti; SmtBtype.to_coq te|]
 
     let b_to_coq = function
       | BO_Zplus -> Lazy.force cBO_Zplus
@@ -345,6 +317,18 @@ module Op =
     let create () =
       { count = 0;
 	tbl =  Hashtbl.create 17 }
+
+    let get_coq_term_op reify i =
+      let c =
+        Hashtbl.fold (fun c op acc -> match acc with
+                                        | Some _ -> acc
+                                        | None ->
+                                           (match fst op with Index ind when ind = i -> Some c | _ -> None)
+          ) reify.tbl None
+      in
+      match c with
+        | Some c -> c
+        | None -> raise Not_found
 
     let declare reify op tparams tres os =
       assert (not (Hashtbl.mem reify.tbl op));
@@ -782,8 +766,6 @@ module Atom =
       { count = 0;
 	tbl =  HashAtom.create 17 }
 
-    let op_coq_terms = Hashtbl.create 17
-
     let declare reify a =
       check a;
       let res = {index = reify.count; hval = a} in
@@ -968,6 +950,8 @@ module Atom =
       | _ -> 0
 
 
+    (* This table is never updated so it does not need to belong to the
+       local state *)
     let op_tbl () =
       let tbl = Hashtbl.create 29 in
       let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
@@ -999,10 +983,6 @@ module Atom =
         | _, x :: l -> aux (x :: acc) (n-1) l
       in
       aux [] n l
-
-
-    let get_coq_term_op =
-      Hashtbl.find op_coq_terms
 
 
     let of_coq ?hash:(hash=false) rt ro reify known_logic env sigma c =
@@ -1251,10 +1231,6 @@ module Atom =
                        None
             in
             Op.declare ro c targs tres os in
-        (try
-           let (i, _) = destruct "" op in
-           Hashtbl.add op_coq_terms i c (* Chantal: I think we should move it to "Not_found" (otherwise it is already in the table) *)
-         with | Failure _ -> ());
         get reify (Aapp (op,hargs))
 
       (* create an uninterpreted symbol for an unsupported symbol but fisrt do

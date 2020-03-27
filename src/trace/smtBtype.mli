@@ -43,7 +43,7 @@ val declare : reify_tbl -> Structures.constr -> Structures.constr -> btype
 
 val of_coq : reify_tbl -> logic -> Structures.constr -> btype
 
-val get_coq_type_op : int -> Structures.constr
+val get_coq_type_op : reify_tbl -> int -> Structures.constr
 
 val interp_tbl : reify_tbl -> Structures.constr
 

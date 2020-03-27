@@ -86,9 +86,17 @@ let create () =
   }
 
 
-(* Should we give a way to clear it? *)
-let op_coq_types = Hashtbl.create 17
-let get_coq_type_op = Hashtbl.find op_coq_types
+let get_coq_type_op reify i =
+  let c =
+    Hashtbl.fold (fun c bt acc -> match acc with
+                                   | Some _ -> acc
+                                   | None ->
+                                      (match bt with Tindex ind when ind.index = i -> Some c | _ -> None)
+      ) reify.tbl None
+  in
+  match c with
+    | Some c -> c
+    | None -> raise Not_found
 
 
 (* let logic_of_coq reify t = logic (of_coq reify t) *)
@@ -220,7 +228,6 @@ let rec of_coq reify known_logic t =
         reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
         let ce = mklApp cTyp_compdec [|t; compdec_var|] in
         let ty = declare reify t ce in
-        (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
         ty
 
   with Unknown_type ty ->

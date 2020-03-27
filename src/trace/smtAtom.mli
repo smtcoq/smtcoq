@@ -76,6 +76,8 @@ module Op :
 
     val create : unit -> reify_tbl
 
+    val get_coq_term_op : reify_tbl -> int -> Structures.constr
+
     val declare : reify_tbl -> Structures.constr -> btype array ->
                   btype -> string option -> indexed_op
 
@@ -142,8 +144,6 @@ module Atom :
       (** Given a coq term, build the corresponding atom *)
       val of_coq : ?hash:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
         reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> Structures.constr -> t
-
-      val get_coq_term_op : int -> Structures.constr
 
       val to_coq : t -> Structures.constr
 

@@ -734,8 +734,8 @@ let string_index_of_constr env i cf =
   with _ -> string_coq_constr cf, -i
 
 
-let vstring_i env i =
-  let cf = SmtAtom.Atom.get_coq_term_op i in
+let vstring_i st env i =
+  let cf = SmtAtom.Op.get_coq_term_op (LocalState.get_op_tbl st) i in
   if Structures.isRel cf then
     let dbi = Structures.destRel cf in
     let s =
@@ -748,18 +748,18 @@ let vstring_i env i =
     string_index_of_constr env i cf
 
 
-let sstring_i env i v =
-  let tf = SmtBtype.get_coq_type_op i in
+let sstring_i st env i v =
+  let tf = SmtBtype.get_coq_type_op (LocalState.get_type_tbl st) i in
   let (s, idx) = string_index_of_constr env i tf in
   (s^"#"^v, idx)
 
 
-let smt2_id_to_coq_string env name =
+let smt2_id_to_coq_string st env name =
   try
     let l = String.split_on_char '_' name in
     match l with
-      | ["op"; i] -> vstring_i env (int_of_string i)
-      | ["@uc"; "Tindex"; i; j] -> sstring_i env (int_of_string i) j
+      | ["op"; i] -> vstring_i st env (int_of_string i)
+      | ["@uc"; "Tindex"; i; j] -> sstring_i st env (int_of_string i) j
       | _ -> raise Not_found
   with _ -> (name, 0)
 
@@ -791,7 +791,7 @@ let is_bvint bs =
   with _ -> false
 
 
-let rec smt2_sexpr_to_coq_string env =
+let rec smt2_sexpr_to_coq_string st env =
   let open SExpr in function
   | Atom "true" -> "true"
   | Atom "false" -> "false"
@@ -800,47 +800,47 @@ let rec smt2_sexpr_to_coq_string env =
      with Failure _ ->
      try coq_bv_string s
      with Failure _ ->
-     try fst (smt2_id_to_coq_string env s)
+     try fst (smt2_id_to_coq_string st env s)
      with _ -> s)
   | List [Atom "as"; Atom "const"; _] -> "const_farray"
-  | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string env s
+  | List [Atom "as"; s; _] -> smt2_sexpr_to_coq_string st env s
   | List [Atom "_"; Atom bs; Atom s] when is_bvint bs ->
     Scanf.sscanf bs "bv%s" (fun i ->
         coq_bv_string (bigint_bv (Big_int.big_int_of_string i)
                          (int_of_string s)))
   | List [Atom "-"; Atom _ as s] ->
     sprintf "-%s"
-      (smt2_sexpr_to_coq_string env s)
+      (smt2_sexpr_to_coq_string st env s)
   | List [Atom "-"; s] ->
     sprintf "(- %s)"
-      (smt2_sexpr_to_coq_string env s)
+      (smt2_sexpr_to_coq_string st env s)
   | List [Atom (("+"|"-"|"*"|"/"|"or"|"and"|"=") as op); s1; s2] ->
     sprintf "%s %s %s"
-      (smt2_sexpr_to_coq_string env s1)
+      (smt2_sexpr_to_coq_string st env s1)
       (op_to_coq_string op)
-      (smt2_sexpr_to_coq_string env s2)
+      (smt2_sexpr_to_coq_string st env s2)
   | List [Atom (("xor"|"=>"|"") as op); s1; s2] ->
     sprintf "(%s %s %s)"
       (op_to_coq_string op)
-      (smt2_sexpr_to_coq_string env s1)
-      (smt2_sexpr_to_coq_string env s2)
+      (smt2_sexpr_to_coq_string st env s1)
+      (smt2_sexpr_to_coq_string st env s2)
   | List [Atom "select"; a; i] ->
     sprintf "%s[%s]"
-      (smt2_sexpr_to_coq_string env a)
-      (smt2_sexpr_to_coq_string env i)
+      (smt2_sexpr_to_coq_string st env a)
+      (smt2_sexpr_to_coq_string st env i)
   | List [Atom "store"; a; i; v] ->
     sprintf "%s[%s <- %s]"
-      (smt2_sexpr_to_coq_string env a)
-      (smt2_sexpr_to_coq_string env i)
-      (smt2_sexpr_to_coq_string env v)
+      (smt2_sexpr_to_coq_string st env a)
+      (smt2_sexpr_to_coq_string st env i)
+      (smt2_sexpr_to_coq_string st env v)
   | List [Atom "ite"; c; s1; s2] ->
     sprintf "if %s then %s else %s"
-      (smt2_sexpr_to_coq_string env c)
-      (smt2_sexpr_to_coq_string env s1)
-      (smt2_sexpr_to_coq_string env s2)
+      (smt2_sexpr_to_coq_string st env c)
+      (smt2_sexpr_to_coq_string st env s1)
+      (smt2_sexpr_to_coq_string st env s2)
   | List l ->
     sprintf "(%s)"
-      (String.concat " " (List.map (smt2_sexpr_to_coq_string env) l))
+      (String.concat " " (List.map (smt2_sexpr_to_coq_string st env) l))
 
 
 let str_contains s1 s2 =
@@ -861,16 +861,16 @@ type model =
   | Fun of ((string * int) * string)
   | Sort
 
-let model_item env =
+let model_item st env =
   function
   | List [Atom "define-fun"; Atom n; List []; _; expr] ->
-     Fun (smt2_id_to_coq_string env n,
-           smt2_sexpr_to_coq_string env expr)
+     Fun (smt2_id_to_coq_string st env n,
+           smt2_sexpr_to_coq_string st env expr)
 
   | List [Atom "define-fun"; Atom n; List l; _; expr] ->
-     Fun (smt2_id_to_coq_string env n,
+     Fun (smt2_id_to_coq_string st env n,
            lambda_to_coq_string l
-             (smt2_sexpr_to_coq_string env expr))
+             (smt2_sexpr_to_coq_string st env expr))
 
   | List [Atom "declare-sort"; Atom n; _] ->
      Sort
@@ -883,14 +883,14 @@ let model_item env =
      Structures.error ("Could not reconstruct model")
 
 
-let model env = function
+let model st env = function
   | List (Atom "model" :: l) ->
-     List.fold_left (fun acc m -> match model_item env m with Fun m -> m::acc | Sort -> acc) [] l
+     List.fold_left (fun acc m -> match model_item st env m with Fun m -> m::acc | Sort -> acc) [] l
      |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
   | _ -> Structures.error ("No model")
 
 
-let model_string env s =
+let model_string st env s =
   String.concat "\n"
     (List.map (fun ((x, _) ,v) -> Format.sprintf "%s := %s" x v)
-       (model env s))
+       (model st env s))

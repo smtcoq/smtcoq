@@ -45,4 +45,4 @@ val tactic :
   Structures.constr list ->
   Structures.constr_expr list -> Structures.tactic
 
-val model_string : Environ.env -> SExpr.t -> string
+val model_string : LocalState.smt_state -> Environ.env -> SExpr.t -> string

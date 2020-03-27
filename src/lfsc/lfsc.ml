@@ -392,7 +392,7 @@ let call_cvc4 st env root _ =
       let smodel = get_model cvc4 in
       Structures.error
         ("CVC4 returned sat. Here is the model:\n\n" ^
-         SmtCommands.model_string env smodel)
+         SmtCommands.model_string (VeritSyntax.get_smt_state st) env smodel)
         (* (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel) *)
   in
 
@@ -480,7 +480,7 @@ let call_cvc4_file env st root =
     let smodel = get_model_from_file prooffilename in
     Structures.error
       ("CVC4 returned sat. Here is the model:\n\n" ^
-       SmtCommands.model_string env smodel)
+       SmtCommands.model_string (VeritSyntax.get_smt_state st) env smodel)
 
 
 let cvc4_logic = 
