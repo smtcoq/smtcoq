@@ -69,7 +69,7 @@ Ltac vauto :=
          eapply impl_or_split_left; apply H
        end;
        apply H);
-  auto.
+  auto with smtcoq_core.
 
 
 

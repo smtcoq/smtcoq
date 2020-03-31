@@ -150,7 +150,7 @@ let mkCongrPred p =
 (* Linear arithmetic *)
 
 let mkMicromega cl =
-  let _tbl, _f, cert = Lia.build_lia_certif cl in
+  let cert = Lia.build_lia_certif cl in
   let c =
     match cert with
     | None -> failwith "VeritSyntax.mkMicromega: micromega can't solve this"
@@ -168,7 +168,7 @@ let mkSplArith orig cl =
       match orig.value with
       | Some [orig'] -> orig'
       | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the premise clause" in
-    let _tbl, _f, cert = Lia.build_lia_certif [Form.neg orig';res] in
+    let cert = Lia.build_lia_certif [Form.neg orig';res] in
     let c =
       match cert with
       | None -> failwith "VeritSyntax.mkSplArith: micromega can't solve this"

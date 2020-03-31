@@ -115,7 +115,7 @@ let interp_conseq_uf t_i (prem, concl) =
   let tf = Hashtbl.create 17 in
   let rec interp = function
     | [] -> mklApp cis_true [|interp_uf t_i ta tf concl|]
-    | c::prem -> Term.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
+    | c::prem -> Structures.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
   interp prem
 
 
