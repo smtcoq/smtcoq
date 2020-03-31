@@ -1,7 +1,8 @@
 # Proofs
 ## Axioms
 
-No axiom should be added. No library adding axioms should be imported.
+No axiom should be added. No library adding axioms should be imported
+(except Int63 and Array).
 
 
 ## Hints
@@ -13,6 +14,9 @@ the project is named `smtcoq_core`.
 
 
 # Code organization
+## Documentation
+Every OCaml module comes with a documented interface.
+
 ## Theories
 
 Theories are organized in sub-directories whose names are the names of

@@ -23,7 +23,7 @@ Local Open Scope int63_scope.
 
 Lemma check_univ (x1: bool):
   (x1 && (negb x1)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -31,55 +31,67 @@ Qed.
 (* zChaff tactic *)
 
 Goal forall a, a || negb a.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, negb (a || negb a) = false.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, negb (negb (a || negb a)).
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, (a && negb a) = false.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, negb (a && negb a).
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, implb a a.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, negb (implb a a) = false.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a , (xorb a a) || negb (xorb a a).
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, (a||negb a) || negb (a||negb a).
+Proof using.
   zchaff.
 Qed.
 
 Goal true.
+Proof using.
   zchaff.
 Qed.
 
 Goal negb false.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall a, Bool.eqb a a.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 Goal forall (a:bool), a = a.
+Proof using.
   zchaff.
 Qed.
 
@@ -88,7 +100,7 @@ Qed.
 (* ((a ∧ b) ∨ (b ∧ c)) ∧ ¬b = ⊥ *)
 
 Goal forall a b c, (((a && b) || (b && c)) && (negb b)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -97,7 +109,7 @@ Qed.
 (* (a ∨ a) ∧ ¬a = ⊥ *)
 
 Goal forall a, ((a || a) && (negb a)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -106,7 +118,7 @@ Qed.
 (* ¬(a ∨ ¬a) = ⊥ *)
 
 Goal forall a, (negb (a || (negb a))) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -116,7 +128,7 @@ Qed.
 
 Goal forall a b c,
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -125,7 +137,7 @@ Qed.
 
 Goal forall i j k,
   ((i == j) || (j == k) || (k == i)) && ((negb (i == j)) || (negb (j == k)) || (negb (k == i))) && ((negb (i == j)) || (j == k)) && ((negb (j == k)) || (k == i)) && ((negb (k == i)) || (i == j)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -134,7 +146,7 @@ Goal forall i j k,
   let b := j == k in
   let c := k == i in
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -143,7 +155,7 @@ Qed.
 (* (a ∧ b) ∧ (c ∨ d) ∧ ¬(c ∨ (a ∧ b ∧ d)) = ⊥ *)
 
 Goal forall a b c d, ((a && b) && (c || d) && (negb (c || (a && b && d)))) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -152,7 +164,7 @@ Qed.
 (* a ∧ b ∧ c ∧ (¬a ∨ ¬b ∨ d) ∧ (¬d ∨ ¬c) = ⊥ *)
 
 Goal forall a b c d, (a && b && c && ((negb a) || (negb b) || d) && ((negb d) || (negb c))) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -160,37 +172,37 @@ Qed.
 (* Other connectives *)
 
 Goal (false || true) && false = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 
 Goal negb true = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 
 Goal false = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 
 Goal forall x y, Bool.eqb (xorb x y) ((x && (negb y)) || ((negb x) && y)).
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 
 Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 
 Goal forall x y z, Bool.eqb (ifb x y z) ((x && y) || ((negb x) && z)).
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -198,7 +210,7 @@ Qed.
 (* Multiple negations *)
 
 Goal forall a, orb a (negb (negb (negb a))) = true.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -206,13 +218,13 @@ Qed.
 (* Polarities *)
 
 Goal forall a b, andb (orb a b) (negb (orb a b)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
 
 Goal forall a b, andb (orb a b) (andb (negb a) (negb b)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -307,7 +319,7 @@ Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 
   (orb (orb (orb x13 x23) x33) x43) &&
   (orb (orb (orb x14 x24) x34) x44) &&
   (orb (orb (orb x15 x25) x35) x45)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -316,12 +328,12 @@ Qed.
 
 (*
 Goal forall x, x && (negb x).
-Proof.
+Proof using.
   zchaff.
 Abort.
 
 Goal forall x y, (implb (implb x y) (implb y x)).
-Proof.
+Proof using.
   zchaff.
 Abort.
 
@@ -391,7 +403,7 @@ Goal forall x11 x12 x13 x14 x21 x22 x23 x24 x31 x32 x33 x34 x41 x42 x43 x44, (
   (orb (orb (orb x12 x22) x32) x42) &&
   (orb (orb (orb x13 x23) x33) x43) &&
   (orb (orb (orb x14 x24) x34) x44)) = false.
-Proof.
+Proof using.
   zchaff.
 Abort.
 *)
