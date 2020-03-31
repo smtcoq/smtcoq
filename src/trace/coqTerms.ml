@@ -10,7 +10,6 @@
 (**************************************************************************)
 
 
-open Coqlib
 open SmtMisc
 
 
@@ -25,9 +24,9 @@ let ceq63 = gen_constant Structures.int63_modules "eqb"
 let carray = gen_constant Structures.parray_modules "array"
 
 (* nat *)
-let cnat = gen_constant init_modules "nat"
-let cO = gen_constant init_modules "O"
-let cS = gen_constant init_modules "S"
+let cnat = gen_constant Structures.init_modules "nat"
+let cO = gen_constant Structures.init_modules "O"
+let cS = gen_constant Structures.init_modules "S"
 
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];
@@ -72,49 +71,49 @@ let ceqbZ = gen_constant z_modules "eqb"
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
 
-let cbool = gen_constant init_modules "bool"
-let ctrue = gen_constant init_modules "true"
-let cfalse = gen_constant init_modules "false"
-let candb = gen_constant init_modules "andb"
-let corb = gen_constant init_modules "orb"
-let cxorb = gen_constant init_modules "xorb"
-let cnegb = gen_constant init_modules "negb"
-let cimplb = gen_constant init_modules "implb"
+let cbool = gen_constant Structures.init_modules "bool"
+let ctrue = gen_constant Structures.init_modules "true"
+let cfalse = gen_constant Structures.init_modules "false"
+let candb = gen_constant Structures.init_modules "andb"
+let corb = gen_constant Structures.init_modules "orb"
+let cxorb = gen_constant Structures.init_modules "xorb"
+let cnegb = gen_constant Structures.init_modules "negb"
+let cimplb = gen_constant Structures.init_modules "implb"
 let ceqb = gen_constant  bool_modules "eqb"
 let cifb = gen_constant bool_modules "ifb"
-let ciff = gen_constant init_modules "iff"
+let ciff = gen_constant Structures.init_modules "iff"
 let creflect = gen_constant bool_modules "reflect"
 
 (* Lists *)
-let clist = gen_constant init_modules "list"
-let cnil = gen_constant init_modules "nil"
-let ccons = gen_constant init_modules "cons"
-let clength = gen_constant init_modules "length"
+let clist = gen_constant Structures.init_modules "list"
+let cnil = gen_constant Structures.init_modules "nil"
+let ccons = gen_constant Structures.init_modules "cons"
+let clength = gen_constant Structures.init_modules "length"
 
 (* Option *)
-let coption = gen_constant init_modules "option"
-let cSome = gen_constant init_modules "Some"
-let cNone = gen_constant init_modules "None"
+let coption = gen_constant Structures.init_modules "option"
+let cSome = gen_constant Structures.init_modules "Some"
+let cNone = gen_constant Structures.init_modules "None"
 
 (* Pairs *)
-let cpair = gen_constant init_modules "pair"
-let cprod = gen_constant init_modules "prod"
+let cpair = gen_constant Structures.init_modules "pair"
+let cprod = gen_constant Structures.init_modules "prod"
 
 (* Dependent pairs *)
-let csigT = gen_constant init_modules "sigT"
-(* let cprojT1 = gen_constant init_modules "projT1" *)
-(* let cprojT2 = gen_constant init_modules "projT2" *)
-(* let cprojT3 = gen_constant init_modules "projT3" *)
+let csigT = gen_constant Structures.init_modules "sigT"
+(* let cprojT1 = gen_constant Structures.init_modules "projT1" *)
+(* let cprojT2 = gen_constant Structures.init_modules "projT2" *)
+(* let cprojT3 = gen_constant Structures.init_modules "projT3" *)
 
-(* let csigT2 = gen_constant init_modules "sigT2" *)
-(* let csigT_of_sigT2 = gen_constant init_modules "sigT_of_sigT2" *)
+(* let csigT2 = gen_constant Structures.init_modules "sigT2" *)
+(* let csigT_of_sigT2 = gen_constant Structures.init_modules "sigT_of_sigT2" *)
 
 (* Logical Operators *)
-let cnot = gen_constant init_modules "not"
-let ceq = gen_constant init_modules "eq"
-let crefl_equal = gen_constant init_modules "eq_refl"
-let cconj = gen_constant init_modules "conj"
-let cand = gen_constant init_modules "and"
+let cnot = gen_constant Structures.init_modules "not"
+let ceq = gen_constant Structures.init_modules "eq"
+let crefl_equal = gen_constant Structures.init_modules "eq_refl"
+let cconj = gen_constant Structures.init_modules "conj"
+let cand = gen_constant Structures.init_modules "and"
 
 (* Bit vectors *)
 let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]

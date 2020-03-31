@@ -159,7 +159,7 @@ let order_roots init_index first =
                   r := n
     | _ -> failwith "root value has unexpected form" end
   done;
-  let _, lr = List.sort (fun (i1, _) (i2, _) -> Pervasives.compare i1 i2) !acc
+  let _, lr = List.sort (fun (i1, _) (i2, _) -> Stdlib.compare i1 i2) !acc
              |> List.split in
   let link_to c1 c2 =
     let curr_id = c2.id -1 in
@@ -476,7 +476,7 @@ let to_coq to_lit interp (cstep,
            let concl' = out_cl [concl] in
            let app_name = Structures.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
            let app_var = Structures.mkVar app_name in
-           let app_ty = Term.mkArrow clemma (interp ([], [concl])) in
+           let app_ty = Structures.mkArrow clemma (interp ([], [concl])) in
            cuts := (app_name, app_ty)::!cuts;
            mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
 	end

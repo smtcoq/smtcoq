@@ -80,11 +80,11 @@ module type FORM =
     val clear : reify -> unit
     val get : ?declare:bool -> reify -> pform -> t
 
-    (** Give a coq term, build the corresponding formula *)
+    (** Given a coq term, build the corresponding formula *)
     val of_coq : (Structures.constr -> hatom) -> reify -> Structures.constr -> t
 
     val hash_hform : (hatom -> hatom) -> reify -> t -> t
-    (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
+    (* Flattening of [Fand] and [For], removing of [Fnot2]  *)
     val flatten : reify -> t -> t
 
     (** Turn n-ary [Fand] and [For] into their right-associative
@@ -100,10 +100,10 @@ module type FORM =
     val to_array : reify -> 'a -> (pform -> 'a) -> int * 'a array
     val interp_tbl : reify -> Structures.constr * Structures.constr
     val nvars : reify -> int
-    (** Producing a Coq term corresponding to the interpretation
-          of a formula *)
-    (** [interp_atom] map [hatom] to coq term, it is better if it produce
-          shared terms. *)
+    (* Producing a Coq term corresponding to the interpretation
+       of a formula *)
+    (* [interp_atom] map [hatom] to coq term, it is better if it produce
+       shared terms. *)
     val interp_to_coq :
       (hatom -> Structures.constr) -> (int, Structures.constr) Hashtbl.t ->
       t -> Structures.constr
@@ -589,9 +589,9 @@ module Make (Atom:ATOM) =
       (mkInt i, Structures.mkArray (Lazy.force cform, t))
 
     let nvars reify = reify.count
-    (** Producing a Coq term corresponding to the interpretation of a formula *)
-    (** [interp_atom] map [Atom.t] to coq term, it is better if it produce
-	shared terms. *)
+    (* Producing a Coq term corresponding to the interpretation of a formula *)
+    (* [interp_atom] map [Atom.t] to coq term, it is better if it produce
+       shared terms. *)
     let interp_to_coq interp_atom form_tbl f =
       let rec interp_form f =
 	let l = to_lit f in

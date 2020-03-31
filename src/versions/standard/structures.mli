@@ -38,6 +38,7 @@ val decompose_app : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
 val mkProd : name * types * types -> types
 val mkLetIn : name * constr * types * constr -> constr
+val mkArrow : types -> types -> constr
 
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val pr_constr : constr -> Pp.t
@@ -60,6 +61,7 @@ val econstr_of_constr : constr -> econstr
 
 (* Modules *)
 val gen_constant : string list list -> string -> constr lazy_t
+val init_modules : string list list
 
 
 (* Int63 *)
@@ -88,9 +90,9 @@ val mkTrace :
 
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
-module Micromega_plugin_Mutils = Mutils_full
+module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega_full
+module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 
 val micromega_coq_proofTerm : constr lazy_t
 val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
