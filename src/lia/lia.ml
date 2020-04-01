@@ -181,57 +181,69 @@ end)
 let memo_zlinear_prover = CacheZ.memo ".lia.cache" (fun ((_,ce,b),s) -> lift_pexpr_prover (Structures.Micromega_plugin_Certificate.lia ce b) s)
 
 let xhyps_of_cone base acc prf =
+  let open Structures.Micromega_plugin_Micromega in
+
   let rec xtract e acc =
     match e with
-    | Structures.Micromega_plugin_Micromega.PsatzC _ | Structures.Micromega_plugin_Micromega.PsatzZ | Structures.Micromega_plugin_Micromega.PsatzSquare _ -> acc
-    | Structures.Micromega_plugin_Micromega.PsatzIn n -> let n = (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n) in
+    | PsatzC _ | PsatzZ | PsatzSquare _ -> acc
+    | PsatzIn n -> let n = (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n) in
                         if n >= base
                         then  Structures.Micromega_plugin_Mutils.ISet.add (n-base) acc
                         else acc
-    | Structures.Micromega_plugin_Micromega.PsatzMulC(_,c) -> xtract  c acc
-    | Structures.Micromega_plugin_Micromega.PsatzAdd(e1,e2) |  Structures.Micromega_plugin_Micromega.PsatzMulE(e1,e2) -> xtract e1 (xtract e2 acc) in
+    | PsatzMulC(_,c) -> xtract  c acc
+    | PsatzAdd(e1,e2) |  PsatzMulE(e1,e2) -> xtract e1 (xtract e2 acc) in
 
     xtract prf acc
 
 let hyps_of_pt pt =
+  let open Structures.Micromega_plugin_Micromega in
 
   let rec xhyps base pt acc =
     match pt with
-      | Structures.Micromega_plugin_Micromega.DoneProof -> acc
-      | Structures.Micromega_plugin_Micromega.RatProof(c,pt) ->  xhyps (base+1) pt (xhyps_of_cone base acc c)
-      | Structures.Micromega_plugin_Micromega.CutProof(c,pt) -> xhyps (base+1) pt (xhyps_of_cone base acc c)
-      | Structures.Micromega_plugin_Micromega.EnumProof(c1,c2,l) ->
-          let s = xhyps_of_cone base (xhyps_of_cone base acc c2) c1 in
-            List.fold_left (fun s x -> xhyps (base + 1) x s) s l in
+      | DoneProof -> acc
+      | RatProof (c, pt) -> xhyps (base + 1) pt (xhyps_of_cone base acc c)
+      | CutProof (c, pt) -> xhyps (base + 1) pt (xhyps_of_cone base acc c)
+      | EnumProof (c1, c2, l) ->
+         let s = xhyps_of_cone base (xhyps_of_cone base acc c2) c1 in
+         List.fold_left (fun s x -> xhyps (base + 1) x s) s l
+      | ExProof (_, pt) -> xhyps (base + 3) pt acc
+  in
 
-    xhyps 0 pt Structures.Micromega_plugin_Mutils.ISet.empty
+  xhyps 0 pt Structures.Micromega_plugin_Mutils.ISet.empty
 
 let compact_cone prf f  =
+  let open Structures.Micromega_plugin_Micromega in
+
   let np n = Structures.Micromega_plugin_Mutils.CamlToCoq.nat (f (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n)) in
 
   let rec xinterp prf =
     match prf with
-    | Structures.Micromega_plugin_Micromega.PsatzC _ | Structures.Micromega_plugin_Micromega.PsatzZ | Structures.Micromega_plugin_Micromega.PsatzSquare _ -> prf
-    | Structures.Micromega_plugin_Micromega.PsatzIn n -> Structures.Micromega_plugin_Micromega.PsatzIn (np n)
-    | Structures.Micromega_plugin_Micromega.PsatzMulC(e,c) -> Structures.Micromega_plugin_Micromega.PsatzMulC(e,xinterp c)
-    | Structures.Micromega_plugin_Micromega.PsatzAdd(e1,e2) -> Structures.Micromega_plugin_Micromega.PsatzAdd(xinterp e1,xinterp e2)
-    | Structures.Micromega_plugin_Micromega.PsatzMulE(e1,e2) -> Structures.Micromega_plugin_Micromega.PsatzMulE(xinterp e1,xinterp e2) in
+    | PsatzC _ | PsatzZ | PsatzSquare _ -> prf
+    | PsatzIn n -> PsatzIn (np n)
+    | PsatzMulC(e,c) -> PsatzMulC(e,xinterp c)
+    | PsatzAdd(e1,e2) -> PsatzAdd(xinterp e1,xinterp e2)
+    | PsatzMulE(e1,e2) -> PsatzMulE(xinterp e1,xinterp e2) in
 
     xinterp prf
 
 let compact_pt pt f =
-  let translate ofset x =
-    if x < ofset then x
-    else (f (x-ofset) + ofset) in
-
+  let open Structures.Micromega_plugin_Micromega in
+  let translate ofset x = if x < ofset then x else f (x - ofset) + ofset in
   let rec compact_pt ofset pt =
     match pt with
-      | Structures.Micromega_plugin_Micromega.DoneProof -> Structures.Micromega_plugin_Micromega.DoneProof
-      | Structures.Micromega_plugin_Micromega.RatProof(c,pt) -> Structures.Micromega_plugin_Micromega.RatProof(compact_cone c (translate (ofset)), compact_pt (ofset+1) pt )
-      | Structures.Micromega_plugin_Micromega.CutProof(c,pt) -> Structures.Micromega_plugin_Micromega.CutProof(compact_cone c (translate (ofset)), compact_pt (ofset+1) pt )
-      | Structures.Micromega_plugin_Micromega.EnumProof(c1,c2,l) -> Structures.Micromega_plugin_Micromega.EnumProof(compact_cone c1 (translate (ofset)), compact_cone c2 (translate (ofset)),
-                                                   Structures.Micromega_plugin_Micromega.map (fun x -> compact_pt (ofset+1) x) l) in
-    compact_pt 0 pt
+    | DoneProof -> DoneProof
+    | RatProof (c, pt) ->
+      RatProof (compact_cone c (translate ofset), compact_pt (ofset + 1) pt)
+    | CutProof (c, pt) ->
+      CutProof (compact_cone c (translate ofset), compact_pt (ofset + 1) pt)
+    | EnumProof (c1, c2, l) ->
+      EnumProof
+        ( compact_cone c1 (translate ofset)
+        , compact_cone c2 (translate ofset)
+        , map (fun x -> compact_pt (ofset + 1) x) l )
+    | ExProof (x, pt) -> ExProof (x, compact_pt (ofset + 3) pt)
+  in
+  compact_pt 0 pt
 
 let pp_nat o n = Printf.fprintf o "%i" (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n)
 
@@ -248,40 +260,48 @@ let pp_list op cl elt o l =
   Printf.fprintf o "%s%a%s" op _pp l cl
 
 let pp_pol pp_c o e =
+  let open Structures.Micromega_plugin_Micromega in
   let rec pp_pol o e =
     match e with
-      | Structures.Micromega_plugin_Micromega.Pc n -> Printf.fprintf o "Pc %a" pp_c n
-      | Structures.Micromega_plugin_Micromega.Pinj(p,pol) -> Printf.fprintf o "Pinj(%a,%a)" pp_positive p pp_pol pol
-      | Structures.Micromega_plugin_Micromega.PX(pol1,p,pol2) -> Printf.fprintf o "PX(%a,%a,%a)" pp_pol pol1 pp_positive p pp_pol pol2 in
+      | Pc n -> Printf.fprintf o "Pc %a" pp_c n
+      | Pinj(p,pol) -> Printf.fprintf o "Pinj(%a,%a)" pp_positive p pp_pol pol
+      | PX(pol1,p,pol2) -> Printf.fprintf o "PX(%a,%a,%a)" pp_pol pol1 pp_positive p pp_pol pol2 in
   pp_pol o e
 
 let pp_psatz pp_z o e =
+  let open Structures.Micromega_plugin_Micromega in
   let rec pp_cone o e =
     match e with
-      | Structures.Micromega_plugin_Micromega.PsatzIn n ->
+      | PsatzIn n ->
          Printf.fprintf o "(In %a)%%nat" pp_nat n
-      | Structures.Micromega_plugin_Micromega.PsatzMulC(e,c) ->
+      | PsatzMulC(e,c) ->
          Printf.fprintf o "( %a [*] %a)" (pp_pol pp_z) e pp_cone c
-      | Structures.Micromega_plugin_Micromega.PsatzSquare e ->
+      | PsatzSquare e ->
          Printf.fprintf o "(%a^2)" (pp_pol pp_z) e
-      | Structures.Micromega_plugin_Micromega.PsatzAdd(e1,e2) ->
+      | PsatzAdd(e1,e2) ->
          Printf.fprintf o "(%a [+] %a)" pp_cone e1 pp_cone e2
-      | Structures.Micromega_plugin_Micromega.PsatzMulE(e1,e2) ->
+      | PsatzMulE(e1,e2) ->
          Printf.fprintf o "(%a [*] %a)" pp_cone e1 pp_cone e2
-      | Structures.Micromega_plugin_Micromega.PsatzC p ->
+      | PsatzC p ->
          Printf.fprintf o "(%a)%%positive" pp_z p
-      | Structures.Micromega_plugin_Micromega.PsatzZ    ->
+      | PsatzZ    ->
          Printf.fprintf o "0" in
   pp_cone o e
 
-let rec pp_proof_term o = function
-  | Structures.Micromega_plugin_Micromega.DoneProof -> Printf.fprintf o "D"
-  | Structures.Micromega_plugin_Micromega.RatProof(cone,rst) -> Printf.fprintf o "R[%a,%a]" (pp_psatz pp_z) cone pp_proof_term rst
-  | Structures.Micromega_plugin_Micromega.CutProof(cone,rst) -> Printf.fprintf o "C[%a,%a]" (pp_psatz pp_z) cone pp_proof_term rst
-  | Structures.Micromega_plugin_Micromega.EnumProof(c1,c2,rst) ->
-      Printf.fprintf o "EP[%a,%a,%a]"
-        (pp_psatz pp_z) c1 (pp_psatz pp_z) c2
-     (pp_list "[" "]" pp_proof_term) rst
+let rec pp_proof_term o p =
+  let open Structures.Micromega_plugin_Micromega in
+  match p with
+    | DoneProof -> Printf.fprintf o "D"
+    | RatProof (cone, rst) ->
+       Printf.fprintf o "R[%a,%a]" (pp_psatz pp_z) cone pp_proof_term rst
+    | CutProof (cone, rst) ->
+       Printf.fprintf o "C[%a,%a]" (pp_psatz pp_z) cone pp_proof_term rst
+    | EnumProof (c1, c2, rst) ->
+       Printf.fprintf o "EP[%a,%a,%a]" (pp_psatz pp_z) c1 (pp_psatz pp_z) c2
+         (pp_list "[" "]" pp_proof_term)
+         rst
+    | ExProof (p, prf) ->
+       Printf.fprintf o "Ex[%a,%a]" pp_positive p pp_proof_term prf
 
 let linear_Z =   {
   name    = "lia";
@@ -294,25 +314,27 @@ let linear_Z =   {
 }
 
 let find_witness  p polys1 =
+  let open Structures.Micromega_plugin_Certificate in
   let polys1 = List.map fst polys1 in
   match p.prover (p.get_option (), polys1) with
-  | Structures.Micromega_plugin_Certificate.Model m -> Structures.Micromega_plugin_Certificate.Model m
-  | Structures.Micromega_plugin_Certificate.Unknown -> Structures.Micromega_plugin_Certificate.Unknown
-  | Structures.Micromega_plugin_Certificate.Prf prf -> Structures.Micromega_plugin_Certificate.Prf(prf,p)
+  | Model m -> Model m
+  | Unknown -> Unknown
+  | Prf prf -> Prf(prf,p)
 
 let witness_list prover l =
+  let open Structures.Micromega_plugin_Certificate in
  let rec xwitness_list l =
   match l with
-   | [] -> Structures.Micromega_plugin_Certificate.Prf []
+   | [] -> Prf []
    | e :: l ->
       match xwitness_list l with
-      | Structures.Micromega_plugin_Certificate.Model (m,e) -> Structures.Micromega_plugin_Certificate.Model (m,e)
-      | Structures.Micromega_plugin_Certificate.Unknown     -> Structures.Micromega_plugin_Certificate.Unknown
-      | Structures.Micromega_plugin_Certificate.Prf l ->
+      | Model (m,e) -> Model (m,e)
+      | Unknown     -> Unknown
+      | Prf l ->
          match find_witness  prover e  with
-         | Structures.Micromega_plugin_Certificate.Model m -> Structures.Micromega_plugin_Certificate.Model (m,e)
-         | Structures.Micromega_plugin_Certificate.Unknown -> Structures.Micromega_plugin_Certificate.Unknown
-         | Structures.Micromega_plugin_Certificate.Prf w ->  Structures.Micromega_plugin_Certificate.Prf (w::l) in
+         | Model m -> Model (m,e)
+         | Unknown -> Unknown
+         | Prf w ->  Prf (w::l) in
  xwitness_list l
 
 let witness_list_tags = witness_list

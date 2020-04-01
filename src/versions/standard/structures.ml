@@ -10,9 +10,6 @@
 (**************************************************************************)
 
 
-open Entries
-
-
 (* Constr generation and manipulation *)
 type id = Names.variable
 let mkId = Names.Id.of_string
@@ -50,47 +47,39 @@ let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 let pr_constr = pr_constr_env Environ.empty_env
 
 
-let mkUConst : Constr.t -> Safe_typing.private_constants Entries.definition_entry = fun c ->
+let mkUConst : Constr.t -> Evd.side_effects Declare.proof_entry = fun c ->
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, ty = Typing.type_of env evd (EConstr.of_constr c) in
-  { Entries.const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
-                                               Safe_typing.empty_private_constants);
-    const_entry_secctx      = None;
-    const_entry_feedback    = None;
-    const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Constr.t *)
-    const_entry_universes   = Evd.univ_entry ~poly:false evd;
-    const_entry_opaque      = false;
-    const_entry_inline_code = false }
+  Declare.definition_entry
+    ~opaque:false
+    ~inline:false
+    ~types:(EConstr.Unsafe.to_constr ty) (* Cannot contain evars since it comes from a Constr.t *)
+    ~univs:(Evd.univ_entry ~poly:false evd)
+    c
 
 let mkTConst c noc ty =
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, _ = Typing.type_of env evd (EConstr.of_constr noc) in
-  { const_entry_body        = Future.from_val ((c, Univ.ContextSet.empty),
-                                               Safe_typing.empty_private_constants);
-    const_entry_secctx      = None;
-    const_entry_feedback    = None;
-    const_entry_type        = Some ty;
-    const_entry_universes   = Evd.univ_entry ~poly:false evd;
-    const_entry_opaque      = false;
-    const_entry_inline_code = false }
+  Declare.definition_entry
+    ~opaque:false
+    ~inline:false
+    ~types:ty
+    ~univs:(Evd.univ_entry ~poly:false evd)
+    c
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = ComAssumption.declare_assumption ~pstate:None false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Constr.mkSet, Entries.Monomorphic_entry Univ.ContextSet.empty) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make t) in
+  let _ = ComAssumption.declare_variable false ~kind:Decls.Definitional Constr.mkSet [] Glob_term.Explicit (CAst.make t) in
   Constr.mkVar t
 
 let declare_new_variable v constr_t =
-  let env = Global.env () in
-  let evd = Evd.from_env env in
-  let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
-  let _ = ComAssumption.declare_assumption ~pstate:None false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.univ_entry ~poly:false evd) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make v) in
+  let _ = ComAssumption.declare_variable false ~kind:Decls.Definitional constr_t [] Glob_term.Explicit (CAst.make v) in
   Constr.mkVar v
 
 let declare_constant n c =
-  Declare.declare_constant n (DefinitionEntry c, Decl_kinds.IsDefinition Decl_kinds.Definition)
-
+  Declare.declare_constant ~name:n ~kind:(Decls.IsDefinition Decls.Definition) (Declare.DefinitionEntry c)
 
 
 type cast_kind = Constr.cast_kind

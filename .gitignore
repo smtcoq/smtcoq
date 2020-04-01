@@ -17,6 +17,8 @@ setup.log
 *.v.d
 *.aux
 *.vo
+*.vok
+*.vos
 *.d
 .lia.cache
 .nia.cache
