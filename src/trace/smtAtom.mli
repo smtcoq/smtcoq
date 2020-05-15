@@ -121,8 +121,6 @@ module Atom :
 
       val to_smt : Format.formatter -> t -> unit
 
-      exception NotWellTyped of atom
-
       type reify_tbl
 
       val create : unit -> reify_tbl

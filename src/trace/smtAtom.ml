@@ -761,8 +761,6 @@ module Atom =
       HashAtom.clear reify.tbl
 
 
-    exception NotWellTyped of atom
-
     let declare reify a =
       let res = {index = reify.count; hval = a} in
       HashAtom.add reify.tbl a res;
@@ -793,7 +791,7 @@ module Atom =
         else (
           Format.eprintf "Incorrect type: wanted %a, got %a@."
             SmtBtype.to_smt t SmtBtype.to_smt th;
-	  raise (NotWellTyped a)
+          failwith (Format.asprintf "Atom %a is not of the expected type" to_smt h)
         )
       in
 
