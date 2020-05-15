@@ -651,23 +651,7 @@ module Atom =
       and to_smt_atom = function
         | Acop (CO_BV bv) -> Format.fprintf fmt "#b%a" bv_to_smt bv
         | Acop _ as a -> to_smt_int fmt (compute_int a)
-        | Auop (UO_Zopp,h) ->
-           Format.fprintf fmt "(- ";
-           to_smt fmt h;
-           Format.fprintf fmt ")"
-        | Auop (UO_BVbitOf (_, i), h) ->
-           Format.fprintf fmt "(bitof %d %a)" i to_smt h
-        | Auop (UO_BVnot _, h) ->
-           Format.fprintf fmt "(bvnot %a)" to_smt h
-        | Auop (UO_BVneg _, h) ->
-           Format.fprintf fmt "(bvneg %a)" to_smt h
-        | Auop (UO_BVextr (i, n, _), h) ->
-           Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
-        | Auop (UO_BVzextn (_, n), h) ->
-           Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
-        | Auop (UO_BVsextn (_, n), h) ->
-           Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
-        | Auop _ as a -> to_smt_int fmt (compute_int a)
+        | Auop (op,h) -> to_smt_uop op h
         | Abop (op,h1,h2) -> to_smt_bop op h1 h2
         | Atop (op,h1,h2,h3) -> to_smt_top op h1 h2 h3
         | Anop (op,a) -> to_smt_nop op a
@@ -693,6 +677,28 @@ module Atom =
         Format.fprintf fmt ") ( ";
         SmtBtype.to_smt fmt bt;
         Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (Structures.pr_constr t))
+
+      and to_smt_uop op h =
+        match op with
+          | UO_Zpos ->
+             Format.fprintf fmt "%a" to_smt h
+          | UO_Zneg ->
+             Format.fprintf fmt "(- %a)" to_smt h
+          | UO_Zopp ->
+             Format.fprintf fmt "(- %a)" to_smt h
+          | UO_BVbitOf (_, i) ->
+             Format.fprintf fmt "(bitof %d %a)" i to_smt h
+          | UO_BVnot _ ->
+             Format.fprintf fmt "(bvnot %a)" to_smt h
+          | UO_BVneg _ ->
+             Format.fprintf fmt "(bvneg %a)" to_smt h
+          | UO_BVextr (i, n, _) ->
+             Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
+          | UO_BVzextn (_, n) ->
+             Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
+          | UO_BVsextn (_, n) ->
+             Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
+          | _ -> to_smt_int fmt (compute_int (Auop (op, h)))
 
       and to_smt_bop op h1 h2 =
         let s = match op with
