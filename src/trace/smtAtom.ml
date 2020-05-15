@@ -821,7 +821,6 @@ module Atom =
              let tparams = Op.i_type_args op in
              Aapp(op, Array.mapi (fun i -> check_one tparams.(i)) args)
       in
-      close_out outc;
       a
 
 
