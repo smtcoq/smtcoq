@@ -976,3 +976,21 @@ Qed.
 (* The tactic simpl does too much here : *)
 (* Goal forall x, 3 + x = x + 3. *)
 (*   nat_convert. *)
+
+
+(* Issue 10
+   https://github.com/smtcoq/smtcoq/issues/10
+*)
+
+Goal forall (x : positive), Zpos x <=? Zpos x.
+Proof using.
+  intros.
+  verit.
+Qed.
+
+
+Goal forall (x : positive) (a : Z), (Z.eqb a a) || negb (Zpos x <? Zpos x).
+Proof using.
+  intros.
+  verit.
+Qed.
