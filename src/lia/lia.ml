@@ -197,7 +197,7 @@ let smt_clause_to_coq_micromega_formula tbl cl =
 (* val tauto_lia : Mc.z formula -> Certificate.Mc.zArithProof list option *)
 let tauto_lia ff =
   let prover = linear_Z in
-  let cnf_ff,_ = cnf Mc.negate Mc.normalise Mc.zunsat Mc.zdeduce  ff in
+  let cnf_ff,_ = Structures.Micromega_plugin_Coq_micromega.cnf Mc.negate Mc.normalise Mc.zunsat Mc.zdeduce  ff in
   match witness_list_tags [prover] cnf_ff with
     | None -> None
     | Some l -> Some (List.map fst l)
