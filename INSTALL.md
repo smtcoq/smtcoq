@@ -15,7 +15,7 @@ you want to use.
 
 ## Requirements
 
-You need to have OCaml version >= 4.04.0 and Coq version 8.9.0.
+You need to have OCaml version >= 4.04.0 and Coq version 8.11.*.
 The easiest way to install these two pieces of software is through opam.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
@@ -26,7 +26,7 @@ The easiest way to install these two pieces of software is through opam.
 If you want to use SMTCoq with high performance to check large proof
 certificates, you need to use the [version of Coq with native
 data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.9 (warning: this allows one to use the vernacular commands but not
+Coq-8.11 (warning: this allows one to use the vernacular commands but not
 the tactics).
 
 
