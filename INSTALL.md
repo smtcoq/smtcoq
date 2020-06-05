@@ -6,9 +6,9 @@ SMTCoq is designed to work on computers equipped with a POSIX (Unix or a
 clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64) and Mac OS X.
 
-The simplest way is to install it using opam. You can also install it
-from the sources (this is mandatory if you want to use the native
-version, see below).
+<!-- The simplest way is to install it using opam. You can also install it -->
+<!-- from the sources (this is mandatory if you want to use the native -->
+<!-- version, see below). -->
 
 You will also need to [install the provers](#installation-of-the-provers)
 you want to use.
@@ -30,19 +30,19 @@ Coq-8.9 (warning: this allows one to use the vernacular commands but not
 the tactics).
 
 
-### Installation via opam (recommended)
+<!-- ### Installation via opam (recommended) -->
 
-Simply add the coq-extra-dev repo to opam:
-```bash
-opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
-```
-and install SMTCoq:
-```bash
-opam install coq-smtcoq
-```
+<!-- Simply add the coq-extra-dev repo to opam: -->
+<!-- ```bash -->
+<!-- opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev -->
+<!-- ``` -->
+<!-- and install SMTCoq: -->
+<!-- ```bash -->
+<!-- opam install coq-smtcoq -->
+<!-- ``` -->
 
 
-### Installation from the sources, using opam (not recommended)
+### Installation from the sources, using opam <!-- (not recommended) -->
 
 #### Install opam
 
@@ -67,25 +67,25 @@ eval `opam config env`
 
 #### Install OCaml
 
-Now you can install an OCaml compiler (we recommend 4.04.0 or the latest
+Now you can install an OCaml compiler (we recommend 4.08.1 or the latest
 release):
 
 ```bash
-opam switch 4.04.0
+opam switch 4.08.1
 ```
 
 #### Install Coq
 
-After OCaml is installed, you can install Coq-8.9.0 through opam.
+After OCaml is installed, you can install Coq-8.11.0 through opam.
 
 ```bash
-opam install coq.8.9.0
+opam install coq.8.11.0
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.9.0 coqide.8.9.0
+opam install coq.8.11.0 coqide.8.11.0
 ```
 
 but you might need to install some extra packages and libraries for your system
@@ -103,66 +103,66 @@ make install
 ```
 
 
-### Installation from the sources, with official Coq 8.9 release (not recommended)
+<!-- ### Installation from the sources, with official Coq 8.9 release (not recommended) -->
 
-1. Download the last stable version of Coq 8.9:
-```bash
-wget https://github.com/coq/coq/archive/V8.9.0.tar.gz
-```
-   and compile it by following the instructions available in the
-   repository (make sure you use OCaml 4.04.0 for that). We recommand
-   that you do not install it, but only compile it in local:
-```bash
-./configure -local
-make
-```
+<!-- 1. Download the last stable version of Coq 8.9: -->
+<!-- ```bash -->
+<!-- wget https://github.com/coq/coq/archive/V8.9.0.tar.gz -->
+<!-- ``` -->
+<!--    and compile it by following the instructions available in the -->
+<!--    repository (make sure you use OCaml 4.04.0 for that). We recommand -->
+<!--    that you do not install it, but only compile it in local: -->
+<!-- ```bash -->
+<!-- ./configure -local -->
+<!-- make -->
+<!-- ``` -->
 
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```bash
-export COQBIN=/home/jdoe/coq-8.9.0/bin/
-```
-   (the final slash is mandatory).
+<!-- 2. Set an environment variable COQBIN to the directory where Coq's -->
+<!--    binaries are; for instance: -->
+<!-- ```bash -->
+<!-- export COQBIN=/home/jdoe/coq-8.9.0/bin/ -->
+<!-- ``` -->
+<!--    (the final slash is mandatory). -->
 
-3. Compile and install SMTCoq by using the following commands in the src directory.
-```
-./configure.sh
-make
-make install
-```
+<!-- 3. Compile and install SMTCoq by using the following commands in the src directory. -->
+<!-- ``` -->
+<!-- ./configure.sh -->
+<!-- make -->
+<!-- make install -->
+<!-- ``` -->
 
 
-### Installation with native-coq (not recommended except for high performances)
+<!-- ### Installation with native-coq (not recommended except for high performances) -->
 
-> **Warning**: this installation procedure is recommended only to use
-> the vernacular commands efficiently (in particular, to check very
-> large proof certificates). It does not allow one to use the tactics.
+<!-- > **Warning**: this installation procedure is recommended only to use -->
+<!-- > the vernacular commands efficiently (in particular, to check very -->
+<!-- > large proof certificates). It does not allow one to use the tactics. -->
 
-1. Download the git version of Coq with native compilation:
-```bash
-git clone https://github.com/smtcoq/native-coq.git
-```
-   and compile it by following the instructions available in the
-   repository. We recommand that you do not install it, but only compile
-   it in local:
-```bash
-./configure -local
-make
-```
+<!-- 1. Download the git version of Coq with native compilation: -->
+<!-- ```bash -->
+<!-- git clone https://github.com/smtcoq/native-coq.git -->
+<!-- ``` -->
+<!--    and compile it by following the instructions available in the -->
+<!--    repository. We recommand that you do not install it, but only compile -->
+<!--    it in local: -->
+<!-- ```bash -->
+<!-- ./configure -local -->
+<!-- make -->
+<!-- ``` -->
 
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```bash
-export COQBIN=/home/jdoe/native-coq/bin/
-```
-   (the final slash is mandatory).
+<!-- 2. Set an environment variable COQBIN to the directory where Coq's -->
+<!--    binaries are; for instance: -->
+<!-- ```bash -->
+<!-- export COQBIN=/home/jdoe/native-coq/bin/ -->
+<!-- ``` -->
+<!--    (the final slash is mandatory). -->
 
-3. Compile and install SMTCoq by using the following commands in the src directory.
-```
-./configure.sh -native
-make
-make install
-```
+<!-- 3. Compile and install SMTCoq by using the following commands in the src directory. -->
+<!-- ``` -->
+<!-- ./configure.sh -native -->
+<!-- make -->
+<!-- make install -->
+<!-- ``` -->
 
 
 ## Installation of the provers
