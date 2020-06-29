@@ -39,4 +39,6 @@ else
     cp ${pre}versions/standard/Structures_standard.v ${pre}versions/standard/Structures.v
     cp ${pre}versions/standard/Tactics_standard.v ${pre}Tactics.v
     coq_makefile -f _CoqProject -o Makefile
+    # work around https://github.com/coq/coq/issues/12603
+    sed -i 's/^CAMLDONTLINK=unix,str$/CAMLDONTLINK=num,str,unix,dynlink,threads/' Makefile
 fi
