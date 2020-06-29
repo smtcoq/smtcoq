@@ -10,8 +10,6 @@
 (**************************************************************************)
 
 
-(* TODO: put here the list of lemmas from g_smtcoq... *)
-
 (* Since ZChaff does not allow to choose where the trace is outputted,
    we use a global mutex to prevent two parallel calls to ZChaff *)
 
@@ -35,3 +33,7 @@ let lock_zchaff_mutex () =
 
 let unlock_zchaff_mutex () =
   Lib.add_anonymous_leaf (declare_zchaff_mutex false)
+
+
+(* TODO: when native-coq is not supported anymore, put here the list of
+   lemmas from g_smtcoq *)

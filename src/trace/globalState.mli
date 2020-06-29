@@ -10,10 +10,12 @@
 (**************************************************************************)
 
 
-(* TODO: put here the list of lemmas from g_... *)
-
 (* Since ZChaff does not allow to choose where the trace is outputted,
    we use a global mutex to prevent two parallel calls to ZChaff *)
 
 val lock_zchaff_mutex : unit -> unit
 val unlock_zchaff_mutex : unit -> unit
+
+
+(* TODO: when native-coq is not supported anymore, put here the list of
+   lemmas from g_smtcoq *)
