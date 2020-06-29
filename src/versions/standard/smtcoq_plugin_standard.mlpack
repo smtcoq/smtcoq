@@ -2,6 +2,7 @@ Mutils_full
 Coq_micromega_full
 Structures
 
+GlobalState
 SmtMisc
 CoqTerms
 SmtBtype

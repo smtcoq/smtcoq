@@ -56,6 +56,8 @@ array/Array_checker.v
 
 trace/coqTerms.ml
 trace/coqTerms.mli
+trace/globalState.ml
+trace/globalState.mli
 trace/smtBtype.ml
 trace/smtBtype.mli
 trace/satAtom.ml

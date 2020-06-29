@@ -320,26 +320,32 @@ let export out_channel nvars first =
 
 let call_zchaff nvars root =
   let (filename, outchan) = Filename.open_temp_file "zchaff_coq" ".cnf" in
-  let resfilename = (Filename.chop_extension filename)^".zlog" in
+  let prefixname = Filename.chop_extension filename in
+  let resfilename = prefixname^".zlog" in
+  let logfilename = prefixname^".log" in
   let reloc, last = export outchan nvars root in
   close_out outchan;
-  let command = "zchaff " ^ filename ^ " > " ^ resfilename in
-  Format.eprintf "%s@." command;
+  let command_zchaff = "zchaff " ^ filename ^ " > " ^ resfilename in
+  Format.eprintf "%s@." command_zchaff;
   let t0 = Sys.time () in
-  let exit_code = Sys.command command in
+
+  (* Critical section *)
+  let () = GlobalState.lock_zchaff_mutex () in
+  let exit_code_zchaff = Sys.command command_zchaff in
   let t1 = Sys.time () in
+  if exit_code_zchaff <> 0 then
+    failwith ("Zchaff.call_zchaff: command " ^ command_zchaff ^
+	        " exited with code " ^ (string_of_int exit_code_zchaff));
+  let command_log = "mv resolve_trace "^logfilename in
+  let exit_code_log = Sys.command command_log in
+  let () = GlobalState.unlock_zchaff_mutex () in
+  (* End critical section *)
+
   Format.eprintf "Zchaff = %.5f@." (t1-.t0);
-  if exit_code <> 0 then
-    failwith ("Zchaff.call_zchaff: command " ^ command ^
-	        " exited with code " ^ (string_of_int exit_code));
-  let logfilename = (Filename.chop_extension filename) ^ ".log" in
-  let command2 = "mv resolve_trace "^logfilename in
-  let exit_code2 = Sys.command command2 in
-  if exit_code2 <> 0 then
-      failwith ("Zchaff.call_zchaff: command " ^ command2 ^
-                  " exited with code " ^ (string_of_int exit_code2) ^
+  if exit_code_log <> 0 then
+      failwith ("Zchaff.call_zchaff: command " ^ command_log ^
+                  " exited with code " ^ (string_of_int exit_code_log) ^
         "\nDid you forget to turn on Zchaff proof production?" );
-  (* import_cnf_trace reloc logfilename root last  *)
   (reloc, resfilename, logfilename, last)
 
 
