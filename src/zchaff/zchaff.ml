@@ -316,7 +316,24 @@ let export out_channel nvars first =
   reloc, !r
 
 
-(* Call zchaff *)
+(* Call ZChaff
+
+   Since ZChaff hard-codes the name of the output file, we use a lock to
+   prevent data races. See https://github.com/coq/coq/issues/11923.
+
+*)
+
+let mutex = Summary.ref ~name:"ZCHAFF-LOCK" (Filename.temp_file "zchaff" "lock")
+
+let lock_mutex () =
+  let fd = Unix.openfile !mutex [Unix.O_WRONLY] 0o600 in
+  let () = Unix.lockf fd Unix.F_LOCK 0 in
+  fd
+
+let unlock_mutex fd =
+  let () = Unix.lockf fd Unix.F_ULOCK 0 in
+  Unix.close fd
+
 
 let call_zchaff nvars root =
   let (filename, outchan) = Filename.open_temp_file "zchaff_coq" ".cnf" in
