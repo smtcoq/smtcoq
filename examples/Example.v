@@ -11,7 +11,7 @@
 
 
 (* [Require Import SMTCoq.SMTCoq.] loads the SMTCoq library.
-   If you are using native-coq instead of Coq 8.9, replace it with:
+   If you are using native-coq instead of Coq 8.11, replace it with:
      Require Import SMTCoq.
    *)
 
