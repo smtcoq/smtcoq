@@ -1926,10 +1926,6 @@ Qed.
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
 Proof. intros A a b l; split; [intros H; inversion H|intros ->]; auto. Qed.
 
-  Axiom afold_left_xor : forall a,
-    afold_left bool int false xorb (Lit.interp rho) a =
-    C.interp rho (to_list a).
-
 Lemma eqb_spec : forall x y, (x == y) = true <-> x = y.
 Proof.
  split;auto using eqb_correct, eqb_complete.
