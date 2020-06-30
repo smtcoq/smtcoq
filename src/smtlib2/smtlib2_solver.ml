@@ -95,7 +95,7 @@ let read_check_result s =
 
 let send_command s cmd read =
   eprintf "%s@." cmd;
-  let err_p1 = Unix.((fstat s.stderr).st_size) in
+  (* let err_p1 = Unix.((fstat s.stderr).st_size) in *)
   try
     let in_ch = Unix.out_channel_of_descr s.stdin in
     let fmt = formatter_of_out_channel in_ch in
@@ -103,16 +103,18 @@ let send_command s cmd read =
     pp_print_newline fmt ();
     read s
   with e ->
-    let err_p2 = Unix.((fstat s.stderr).st_size) in
-    let len = err_p2 - err_p1 in
-    (* Was something written to stderr? *)
-    if len <> 0 then begin
-      let buf = Bytes.create err_p2 in
-      Unix.read s.stderr buf 0 err_p2 |> ignore;
-      let err_msg = Bytes.sub_string buf err_p1 len in
-      Structures.error ("Solver error: "^err_msg);
-    end
-    else (kill s; raise e)
+    (* After the exception, the file descriptor is invalid *)
+    (* let err_p2 = Unix.((fstat s.stderr).st_size) in
+     * let len = err_p2 - err_p1 in
+     * (\* Was something written to stderr? *\)
+     * if len <> 0 then begin
+     *   let buf = Bytes.create err_p2 in
+     *   Unix.read s.stderr buf 0 err_p2 |> ignore;
+     *   let err_msg = Bytes.sub_string buf err_p1 len in
+     *   Structures.error ("Solver error: "^err_msg);
+     * end
+     * else (kill s; raise e) *)
+    kill s; raise e
 
 
 let set_option s name b =
