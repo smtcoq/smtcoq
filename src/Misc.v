@@ -59,6 +59,18 @@ Proof.
 Qed.
 
 
+Lemma minus_1_lt i : (i == 0) = false -> i - 1 < i = true.
+Proof.
+  intro Hl. rewrite ltb_spec, (to_Z_sub_1 _ 0).
+  - lia.
+  - rewrite ltb_spec. rewrite eqb_false_spec in Hl.
+    assert (0%Z <> [|i|])
+      by (change 0%Z with [|0|]; intro H; apply to_Z_inj in H; auto).
+    destruct (to_Z_bounded i) as [H1 _].
+    clear -H H1. change [|0|] with 0%Z. lia.
+Qed.
+
+
 Lemma foldi_down_ZInd2 :
    forall A (P: Z -> A -> Prop) (f:int -> A -> A) max min a,
    (max < min = true -> P ([|min|])%Z a) ->
@@ -140,6 +152,12 @@ Proof.
   right; constructor 2; assumption.
   destruct H2 as [H2|H2]; try assumption.
   unfold is_true in H2; rewrite ltb_spec, to_Z_0 in H2; pose (H3 := to_Z_bounded i); elimtype False; lia.
+Qed.
+
+Lemma to_list_In_eq : forall {A} (t: array A) i x,
+  i < length t = true -> x = t.[i] -> In x (to_list t).
+Proof.
+  intros A t i x Hi ->. now apply to_list_In.
 Qed.
 
 Lemma In_to_list : forall {A} (t: array A) x,
