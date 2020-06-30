@@ -495,6 +495,23 @@ Proof.
 Qed.
 
 
+Lemma afold_left_and p a :
+  afold_left bool int true andb p a =
+  List.forallb p (to_list a).
+Proof.
+  rewrite afold_left_spec; auto.
+  rewrite fold_left_to_list.
+  assert (H:forall l acc, List.fold_left (fun (a0 : bool) (v : int) => a0 && p v) l acc =
+  acc && List.forallb p l).
+  {
+    clear a. induction l; simpl.
+    - intros; now rewrite andb_true_r.
+    - intro acc. rewrite IHl. now rewrite andb_assoc.
+  }
+  now apply H.
+Qed.
+
+
 (* Case orb *)
 
 Lemma afold_left_orb_true : forall A i a f,
@@ -538,6 +555,23 @@ Proof.
   rewrite Int63Properties.eqb_spec in Heq; subst j; auto.
   apply H2; auto; rewrite eqb_false_spec in Heq; rewrite ltb_spec; rewrite ltb_spec in Hj; assert (H4: [|j|] <> [|i|]) by (intro H; apply Heq, to_Z_inj; auto); rewrite (to_Z_add_1 _ (length a)) in Hj; auto; lia.
   intros _ i H; eelim ltb_0; eassumption.
+Qed.
+
+
+Lemma afold_left_or p a :
+  afold_left bool int false orb p a =
+  List.existsb p (to_list a).
+Proof.
+  rewrite afold_left_spec; auto.
+  rewrite fold_left_to_list.
+  assert (H:forall l acc, List.fold_left (fun (a0 : bool) (v : int) => a0 || p v) l acc =
+  acc || List.existsb p l).
+  {
+    clear a. induction l; simpl.
+    - intros; now rewrite orb_false_r.
+    - intro acc. rewrite IHl. now rewrite orb_assoc.
+  }
+  now apply H.
 Qed.
 
 
