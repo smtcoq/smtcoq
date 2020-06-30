@@ -287,14 +287,6 @@ Section CHECKER.
      match goal with |- context [Lit.interp rho ?x] => 
      destruct (Lit.interp rho x);trivial end.
 
-  Axiom afold_left_and : forall a,
-    afold_left bool int true andb (Lit.interp rho) a =
-    List.forallb (Lit.interp rho) (to_list a).
-
-  Axiom afold_left_or : forall a,
-    afold_left bool int false orb (Lit.interp rho) a =
-    C.interp rho (to_list a).
-
   Axiom afold_right_impb : forall a,
     (afold_right bool int true implb (Lit.interp rho) a) =
     C.interp rho (to_list (or_of_imp a)).

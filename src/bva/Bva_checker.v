@@ -1926,13 +1926,6 @@ Qed.
 Lemma eq_head: forall {A: Type} a b (l: list A), (a :: l) = (b :: l) <-> a = b.
 Proof. intros A a b l; split; [intros H; inversion H|intros ->]; auto. Qed.
 
-Axiom afold_left_and : forall a, 
-      afold_left bool int true andb (Lit.interp rho) a = List.forallb (Lit.interp rho) (to_list a).
-
-  Axiom afold_left_or : forall a,
-    afold_left bool int false orb (Lit.interp rho) a =
-    C.interp rho (to_list a).
-
   Axiom afold_left_xor : forall a,
     afold_left bool int false xorb (Lit.interp rho) a =
     C.interp rho (to_list a).
