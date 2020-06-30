@@ -15,13 +15,13 @@ you want to use.
 
 ## Requirements
 
-You need to have OCaml version >= 4.04.0 and Coq version 8.9.0.
+You need to have OCaml version >= 4.09.0 and Coq version 8.9.0.
 The easiest way to install these two pieces of software is through opam.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
-> with OCaml version >= 4.04.0.
+> with OCaml version >= 4.09.0.
 
 If you want to use SMTCoq with high performance to check large proof
 certificates, you need to use the [version of Coq with native
@@ -67,11 +67,10 @@ eval `opam config env`
 
 #### Install OCaml
 
-Now you can install an OCaml compiler (we recommend 4.04.0 or the latest
-release):
+Now you can install an OCaml compiler (we recommend 4.09.0):
 
 ```bash
-opam switch 4.04.0
+opam switch create ocaml-base-compiler.4.09.0
 ```
 
 #### Install Coq
@@ -110,7 +109,7 @@ make install
 wget https://github.com/coq/coq/archive/V8.9.0.tar.gz
 ```
    and compile it by following the instructions available in the
-   repository (make sure you use OCaml 4.04.0 for that). We recommand
+   repository (make sure you use OCaml 4.09.0 for that). We recommand
    that you do not install it, but only compile it in local:
 ```bash
 ./configure -local
