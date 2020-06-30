@@ -345,9 +345,6 @@ Section CHECKER.
      match goal with |- context [Lit.interp rho ?x] => 
      destruct (Lit.interp rho x);trivial end.
 
-  Axiom Cinterp_neg : forall cl,
-     C.interp rho (map Lit.neg cl) = negb (forallb (Lit.interp rho) cl).  
-
   Lemma valid_check_BuildDef : forall l, C.valid rho (check_BuildDef l).
   Proof.
    unfold check_BuildDef,C.valid;intros l.
@@ -355,7 +352,7 @@ Section CHECKER.
      case_eq (Lit.is_pos l);intros Heq;auto using C.interp_true;simpl;
        try (unfold Lit.interp at 1;rewrite Heq;unfold Var.interp; rewrite rho_interp, H;simpl;
             tauto_check).
-   - rewrite afold_left_and, Cinterp_neg;apply orb_negb_r.
+   - rewrite afold_left_and, C.Cinterp_neg;apply orb_negb_r.
    - rewrite afold_left_or, orb_comm;apply orb_negb_r.
    - case_eq (PArray.length a == 0); auto using C.interp_true.
      intro Hl; simpl.
@@ -445,7 +442,7 @@ Section CHECKER.
    destruct (t_form.[Lit.blit l]);auto using C.interp_true;
    case_eq (Lit.is_pos l);intros Heq;auto using C.interp_true;simpl;
    tauto_check.
-   - rewrite afold_left_and, Cinterp_neg, orb_false_r;trivial.
+   - rewrite afold_left_and, C.Cinterp_neg, orb_false_r;trivial.
    - rewrite afold_left_or, orb_false_r;trivial.
    - case_eq (PArray.length a == 0); auto using C.interp_true.
      intro Hl. now rewrite orb_false_r, (afold_right_impb (Lit.interp_neg _) Hl).
