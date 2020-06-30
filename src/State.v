@@ -424,6 +424,13 @@ Module C.
     unfold valid, interp;destruct c;simpl; auto;discriminate.
   Qed.
 
+  Lemma Cinterp_neg rho cl :
+    interp rho (List.map Lit.neg cl) = negb (List.forallb (Lit.interp rho) cl).
+  Proof.
+    induction cl as [ |l cl IHcl]; auto.
+    simpl. now rewrite negb_andb, IHcl, Lit.interp_neg.
+  Qed.
+
 End C.
 
 
