@@ -19,6 +19,7 @@ Require Import Int63 Int63Properties PArray SMT_classes ZArith.
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity Nnat.
 Require Import BinPos BinNat Pnat Init.Peano.
+Require Import ProofIrrelevance.
 
 Require FArray.
 
@@ -1474,7 +1475,7 @@ Proof. intros. destruct a, b.
        unfold BITVECTOR_LIST.bv in H.
        revert wf0.
        rewrite H. intros.
-       now rewrite (proof_irrelevance wf0 wf1).
+       now rewrite (proof_irrelevance _ wf0 wf1).
 Qed.
 
 Lemma nth_eq0: forall i a b xs ys,
