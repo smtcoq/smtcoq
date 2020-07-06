@@ -893,10 +893,6 @@ Section certif.
             apply read_over_other_write; now auto.
     Qed.
 
-  Axiom afold_left_or : forall a,
-    afold_left bool int false orb (Lit.interp rho) a =
-    C.interp rho (to_list a).
-
   Lemma valid_check_ext lres : C.valid rho (check_ext lres).
     unfold check_ext, eq_sel_sym.
     case_eq (Lit.is_pos lres); intro Heq; simpl; try now apply C.interp_true.

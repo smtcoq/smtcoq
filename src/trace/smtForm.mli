@@ -97,10 +97,10 @@ module type FORM =
       val to_array : reify -> 'a -> (pform -> 'a) -> int * 'a array
       val interp_tbl : reify -> Structures.constr * Structures.constr
       val nvars : reify -> int
-      (** Producing a Coq term corresponding to the interpretation
-          of a formula *)
-      (** [interp_atom] map [hatom] to coq term, it is better if it produce
-          shared terms. *)
+      (* Producing a Coq term corresponding to the interpretation
+         of a formula *)
+      (* [interp_atom] map [hatom] to coq term, it is better if it produce
+         shared terms. *)
       val interp_to_coq :
 	  (hatom -> Structures.constr) -> (int, Structures.constr) Hashtbl.t ->
 	    t -> Structures.constr

@@ -222,7 +222,7 @@ let theorems interp name fdimacs ftrace =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
-  let vtype = Term.mkArrow (Lazy.force cint) (Lazy.force cbool) in
+  let vtype = Structures.mkArrow (Lazy.force cint) (Lazy.force cbool) in
   let theorem_type =
     Structures.mkProd (Structures.mkName "v", vtype, theorem_concl) in
   let theorem_proof_cast =

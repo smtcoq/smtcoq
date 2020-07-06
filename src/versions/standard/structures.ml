@@ -41,9 +41,10 @@ let destRel = Constr.destRel
 let lift = Vars.lift
 let mkApp = Constr.mkApp
 let decompose_app = Constr.decompose_app
-let mkLambda = Constr.mkLambda
-let mkProd = Constr.mkProd
-let mkLetIn = Constr.mkLetIn
+let mkLambda (n, t, c) = Constr.mkLambda (Context.make_annot n Sorts.Relevant, t, c)
+let mkProd (n, t, c) = Constr.mkProd (Context.make_annot n Sorts.Relevant, t, c)
+let mkLetIn (n, c1, t, c2) = Constr.mkLetIn (Context.make_annot n Sorts.Relevant, c1, t, c2)
+let mkArrow a b = Term.mkArrow a Sorts.Relevant b
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 let pr_constr = pr_constr_env Environ.empty_env
@@ -58,7 +59,7 @@ let mkUConst : Constr.t -> Safe_typing.private_constants Entries.definition_entr
     const_entry_secctx      = None;
     const_entry_feedback    = None;
     const_entry_type        = Some (EConstr.Unsafe.to_constr ty); (* Cannot contain evars since it comes from a Constr.t *)
-    const_entry_universes   = Evd.const_univ_entry ~poly:false evd;
+    const_entry_universes   = Evd.univ_entry ~poly:false evd;
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
@@ -71,20 +72,20 @@ let mkTConst c noc ty =
     const_entry_secctx      = None;
     const_entry_feedback    = None;
     const_entry_type        = Some ty;
-    const_entry_universes   = Evd.const_univ_entry ~poly:false evd;
+    const_entry_universes   = Evd.univ_entry ~poly:false evd;
     const_entry_opaque      = false;
     const_entry_inline_code = false }
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Constr.mkSet, Entries.Monomorphic_const_entry Univ.ContextSet.empty) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make t) in
+  let _ = ComAssumption.declare_assumption ~pstate:None false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (Constr.mkSet, Entries.Monomorphic_entry Univ.ContextSet.empty) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make t) in
   Constr.mkVar t
 
 let declare_new_variable v constr_t =
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, _ = Typing.type_of env evd (EConstr.of_constr constr_t) in
-  let _ = ComAssumption.declare_assumption false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.const_univ_entry ~poly:false evd) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make v) in
+  let _ = ComAssumption.declare_assumption ~pstate:None false (Decl_kinds.Discharge, false, Decl_kinds.Definitional) (constr_t, Evd.univ_entry ~poly:false evd) UnivNames.empty_binders [] false Declaremods.NoInline (CAst.make v) in
   Constr.mkVar v
 
 let declare_constant n c =
@@ -103,8 +104,11 @@ let econstr_of_constr = EConstr.of_constr
 
 
 (* Modules *)
-let gen_constant_in_modules s m n = UnivGen.constr_of_global @@ Coqlib.gen_reference_in_modules s m n
+let gen_constant_in_modules s m n =
+  (* UnivGen.constr_of_monomorphic_global will crash on universe polymorphic constants *)
+  UnivGen.constr_of_monomorphic_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
+let init_modules = Coqlib.init_modules
 
 
 (* Int63 *)
@@ -166,13 +170,14 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
-module Micromega_plugin_Mutils = Mutils_full
+module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega_full
+module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
+module Micromega_plugin_Persistent_cache = Micromega_plugin.Persistent_cache
 
 let micromega_coq_proofTerm =
   (* Cannot contain evars *)
-  lazy (EConstr.Unsafe.to_constr (Lazy.force (Micromega_plugin_Coq_micromega.M.coq_proofTerm)))
+  lazy (gen_constant_in_modules "ZMicromega" [["Coq"; "micromega";"ZMicromega"]] "ZArithProof")
 
 let micromega_dump_proof_term p =
   (* Cannot contain evars *)
@@ -188,7 +193,7 @@ let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
 
 let mk_tactic tac =
-  Proofview.Goal.nf_enter (fun gl ->
+  Proofview.Goal.enter (fun gl ->
     let env = Proofview.Goal.env gl in
     let sigma = Tacmach.New.project gl in
     let t = Proofview.Goal.concl gl in
@@ -222,7 +227,8 @@ let constrextern_extern_constr c =
   Constrextern.extern_constr false env (Evd.from_env env) (EConstr.of_constr c)
 
 let get_rel_dec_name = function
-  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) -> n
+  | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) ->
+     Context.binder_name n
 
 let retyping_get_type_of env sigma c =
   (* Cannot contain evars since it comes from a Constr.t *)

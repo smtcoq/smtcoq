@@ -198,7 +198,7 @@ let compare_symbol s1 s2 = match s1.sname, s2.sname with
   | Name n1, Name n2 -> Hstring.compare n1 n2
   | Name _, _ -> -1
   | _, Name _ -> 1
-  | S_Hole i1, S_Hole i2 -> Pervasives.compare i1 i2
+  | S_Hole i1, S_Hole i2 -> Stdlib.compare i1 i2
 
 
 let rec compare_term ?(mod_eq=false) t1 t2 = match t1.value, t2.value with
@@ -250,7 +250,7 @@ let rec compare_term ?(mod_eq=false) t1 t2 = match t1.value, t2.value with
   | SideCond (_, _, _, t), _ -> compare_term ~mod_eq t t2
   | _, SideCond (_, _, _, t) -> compare_term ~mod_eq t1 t
 
-  | Hole i1, Hole i2 -> Pervasives.compare i1 i2
+  | Hole i1, Hole i2 -> Stdlib.compare i1 i2
 
 
 and compare_term_list ?(mod_eq=false) l1 l2 = match l1, l2 with

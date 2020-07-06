@@ -649,25 +649,9 @@ module Atom =
         to_smt_atom (atom h)
 
       and to_smt_atom = function
-        | Acop (CO_BV bv) -> Format.fprintf fmt "#b%a" bv_to_smt bv
+        | Acop (CO_BV bv) -> if List.length bv = 0 then Structures.error "Empty bit-vectors are not valid in SMT" else Format.fprintf fmt "#b%a" bv_to_smt bv
         | Acop _ as a -> to_smt_int fmt (compute_int a)
-        | Auop (UO_Zopp,h) ->
-           Format.fprintf fmt "(- ";
-           to_smt fmt h;
-           Format.fprintf fmt ")"
-        | Auop (UO_BVbitOf (_, i), h) ->
-           Format.fprintf fmt "(bitof %d %a)" i to_smt h
-        | Auop (UO_BVnot _, h) ->
-           Format.fprintf fmt "(bvnot %a)" to_smt h
-        | Auop (UO_BVneg _, h) ->
-           Format.fprintf fmt "(bvneg %a)" to_smt h
-        | Auop (UO_BVextr (i, n, _), h) ->
-           Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
-        | Auop (UO_BVzextn (_, n), h) ->
-           Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
-        | Auop (UO_BVsextn (_, n), h) ->
-           Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
-        | Auop _ as a -> to_smt_int fmt (compute_int a)
+        | Auop (op,h) -> to_smt_uop op h
         | Abop (op,h1,h2) -> to_smt_bop op h1 h2
         | Atop (op,h1,h2,h3) -> to_smt_top op h1 h2 h3
         | Anop (op,a) -> to_smt_nop op a
@@ -693,6 +677,28 @@ module Atom =
         Format.fprintf fmt ") ( ";
         SmtBtype.to_smt fmt bt;
         Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (Structures.pr_constr t))
+
+      and to_smt_uop op h =
+        match op with
+          | UO_Zpos ->
+             Format.fprintf fmt "%a" to_smt h
+          | UO_Zneg ->
+             Format.fprintf fmt "(- %a)" to_smt h
+          | UO_Zopp ->
+             Format.fprintf fmt "(- %a)" to_smt h
+          | UO_BVbitOf (_, i) ->
+             Format.fprintf fmt "(bitof %d %a)" i to_smt h
+          | UO_BVnot _ ->
+             Format.fprintf fmt "(bvnot %a)" to_smt h
+          | UO_BVneg _ ->
+             Format.fprintf fmt "(bvneg %a)" to_smt h
+          | UO_BVextr (i, n, _) ->
+             Format.fprintf fmt "((_ extract %d %d) %a)" (i+n-1) i to_smt h
+          | UO_BVzextn (_, n) ->
+             Format.fprintf fmt "((_ zero_extend %d) %a)" n to_smt h
+          | UO_BVsextn (_, n) ->
+             Format.fprintf fmt "((_ sign_extend %d) %a)" n to_smt h
+          | _ -> to_smt_int fmt (compute_int (Auop (op, h)))
 
       and to_smt_bop op h1 h2 =
         let s = match op with
@@ -738,41 +744,6 @@ module Atom =
     let to_smt (fmt:Format.formatter) h = to_smt_named fmt h
 
 
-    exception NotWellTyped of atom
-
-    let check a =
-      (* Format.eprintf "Checking %a @." to_smt_atom a; *)
-      match a with
-      | Acop _ -> ()
-      | Auop(op,h) ->
-	if not (SmtBtype.equal (Op.u_type_arg op) (type_of h)) then
-	  raise (NotWellTyped a)
-      | Abop(op,h1,h2) ->
-	let (t1,t2) = Op.b_type_args op in
- 	if not (SmtBtype.equal t1 (type_of h1) && SmtBtype.equal t2 (type_of h2))
-        then (Format.eprintf "1. Wanted %a, got %a@.2. Wanted %a, got %a@."
-                SmtBtype.to_smt t1 SmtBtype.to_smt (type_of h1)
-                SmtBtype.to_smt t2 SmtBtype.to_smt (type_of h2);
-              raise (NotWellTyped a))
-      | Atop(op,h1,h2,h3) ->
-	let (t1,t2,t3) = Op.t_type_args op in
-        if not (SmtBtype.equal t1 (type_of h1) &&
-                SmtBtype.equal t2 (type_of h2) &&
-                SmtBtype.equal t3 (type_of h3))
-	then raise (NotWellTyped a)
-      | Anop(op,ha) ->
-        let ty = Op.n_type_args op in
-        Array.iter
-          (fun h -> if not (SmtBtype.equal ty (type_of h)) then
-              raise (NotWellTyped a)) ha
-      | Aapp(op,args) ->
-	let tparams = Op.i_type_args op in
-	Array.iteri (fun i t ->
-	    if not (SmtBtype.equal t (type_of args.(i))) then
-	      (Format.eprintf "Wanted %a, got %a@."
-                SmtBtype.to_smt t SmtBtype.to_smt (type_of args.(i));
-                      raise (NotWellTyped a))) tparams
-
     type reify_tbl =
       { mutable count : int;
 	tbl : hatom HashAtom.t
@@ -789,18 +760,67 @@ module Atom =
       reify.count <- 0;
       HashAtom.clear reify.tbl
 
+
     let declare reify a =
-      check a;
       let res = {index = reify.count; hval = a} in
       HashAtom.add reify.tbl a res;
       reify.count <- reify.count + 1;
       res
 
-    let get ?declare:(decl=true) reify a =
+    let rec get ?declare:(decl=true) reify a =
       if decl
       then try HashAtom.find reify.tbl a
-           with Not_found -> declare reify a
+           with Not_found ->
+             (let a = check reify a in
+              try HashAtom.find reify.tbl a
+              with Not_found ->
+                declare reify a)
       else {index = -1; hval = a}
+
+    and check reify a =
+      (* Format.eprintf "Checking %a @." to_smt_atom a; *)
+
+      let check_one t h =
+        let th = type_of h in
+        if SmtBtype.equal t th then
+          h
+        else if t == TZ && th == Tpositive then
+          (* Special case: the SMT solver cannot distinguish Z from
+             positive, we have to add the injection back *)
+          get reify (Auop(UO_Zpos, h))
+        else (
+          Format.eprintf "Incorrect type: wanted %a, got %a@."
+            SmtBtype.to_smt t SmtBtype.to_smt th;
+          failwith (Format.asprintf "Atom %a is not of the expected type" to_smt h)
+        )
+      in
+
+      let a =
+        match a with
+          | Acop _ -> a
+          | Auop(op,h) ->
+             let t = Op.u_type_arg op in
+             Auop(op, check_one t h)
+          | Abop(op,h1,h2) ->
+	     let (t1,t2) = Op.b_type_args op in
+             let h1 = check_one t1 h1 in
+             let h2 = check_one t2 h2 in
+             Abop(op, h1, h2)
+          | Atop(op,h1,h2,h3) ->
+	     let (t1,t2,t3) = Op.t_type_args op in
+             let h1 = check_one t1 h1 in
+             let h2 = check_one t2 h2 in
+             let h3 = check_one t3 h3 in
+             Atop(op, h1, h2, h3)
+          | Anop(op,ha) ->
+             let ty = Op.n_type_args op in
+             Anop(op, Array.map (check_one ty) ha)
+          | Aapp(op,args) ->
+             let tparams = Op.i_type_args op in
+             Aapp(op, Array.mapi (fun i -> check_one tparams.(i)) args)
+      in
+      a
+
 
     let mk_eq reify ?declare:(decl=true) ty h1 h2 =
       let op = BO_eq ty in

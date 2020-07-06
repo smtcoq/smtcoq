@@ -14,6 +14,9 @@ the project is named `smtcoq_core`.
 
 
 # Code organization
+## Documentation
+Every OCaml module comes with a documented interface.
+
 ## Theories
 
 Theories are organized in sub-directories whose names are the names of

@@ -5,16 +5,19 @@
 
 
 test :
-	cd ../unit-tests; make
+	cd ../unit-tests; make cleanvo; make
 
 ztest :
-	cd ../unit-tests; make zchaff
+	cd ../unit-tests; make cleanvo; make zchaff
 
 vtest :
-	cd ../unit-tests; make verit
+	cd ../unit-tests; make cleanvo; make verit
 
 lfsctest :
-	cd ../unit-tests; make lfsc
+	cd ../unit-tests; make cleanvo; make lfsc
+
+paralleltest :
+	cd ../unit-tests; make parallel
 
 clean::
 	cd ../unit-tests; make clean

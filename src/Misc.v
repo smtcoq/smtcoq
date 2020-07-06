@@ -59,6 +59,18 @@ Proof.
 Qed.
 
 
+Lemma minus_1_lt i : (i == 0) = false -> i - 1 < i = true.
+Proof.
+  intro Hl. rewrite ltb_spec, (to_Z_sub_1 _ 0).
+  - lia.
+  - rewrite ltb_spec. rewrite eqb_false_spec in Hl.
+    assert (0%Z <> [|i|])
+      by (change 0%Z with [|0|]; intro H; apply to_Z_inj in H; auto).
+    destruct (to_Z_bounded i) as [H1 _].
+    clear -H H1. change [|0|] with 0%Z. lia.
+Qed.
+
+
 Lemma foldi_down_ZInd2 :
    forall A (P: Z -> A -> Prop) (f:int -> A -> A) max min a,
    (max < min = true -> P ([|min|])%Z a) ->
@@ -140,6 +152,12 @@ Proof.
   right; constructor 2; assumption.
   destruct H2 as [H2|H2]; try assumption.
   unfold is_true in H2; rewrite ltb_spec, to_Z_0 in H2; pose (H3 := to_Z_bounded i); elimtype False; lia.
+Qed.
+
+Lemma to_list_In_eq : forall {A} (t: array A) i x,
+  i < length t = true -> x = t.[i] -> In x (to_list t).
+Proof.
+  intros A t i x Hi ->. now apply to_list_In.
 Qed.
 
 Lemma In_to_list : forall {A} (t: array A) x,
@@ -495,6 +513,23 @@ Proof.
 Qed.
 
 
+Lemma afold_left_and p a :
+  afold_left bool int true andb p a =
+  List.forallb p (to_list a).
+Proof.
+  rewrite afold_left_spec; auto.
+  rewrite fold_left_to_list.
+  assert (H:forall l acc, List.fold_left (fun (a0 : bool) (v : int) => a0 && p v) l acc =
+  acc && List.forallb p l).
+  {
+    clear a. induction l; simpl.
+    - intros; now rewrite andb_true_r.
+    - intro acc. rewrite IHl. now rewrite andb_assoc.
+  }
+  now apply H.
+Qed.
+
+
 (* Case orb *)
 
 Lemma afold_left_orb_true : forall A i a f,
@@ -538,6 +573,23 @@ Proof.
   rewrite Int63Properties.eqb_spec in Heq; subst j; auto.
   apply H2; auto; rewrite eqb_false_spec in Heq; rewrite ltb_spec; rewrite ltb_spec in Hj; assert (H4: [|j|] <> [|i|]) by (intro H; apply Heq, to_Z_inj; auto); rewrite (to_Z_add_1 _ (length a)) in Hj; auto; lia.
   intros _ i H; eelim ltb_0; eassumption.
+Qed.
+
+
+Lemma afold_left_or p a :
+  afold_left bool int false orb p a =
+  List.existsb p (to_list a).
+Proof.
+  rewrite afold_left_spec; auto.
+  rewrite fold_left_to_list.
+  assert (H:forall l acc, List.fold_left (fun (a0 : bool) (v : int) => a0 || p v) l acc =
+  acc || List.existsb p l).
+  {
+    clear a. induction l; simpl.
+    - intros; now rewrite orb_false_r.
+    - intro acc. rewrite IHl. now rewrite orb_assoc.
+  }
+  now apply H.
 Qed.
 
 

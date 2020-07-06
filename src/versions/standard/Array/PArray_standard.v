@@ -112,12 +112,14 @@ Axiom get_init : forall A f size (def:A) i,
 
 Axiom default_init : forall A f size (def:A), default (init size f def) = def.
 
-(* Rename this ? *)
+(* Not true in this implementation (see #71, many thanks to Andres Erbsen) *)
+(*
 Axiom get_ext : forall A (t1 t2:array A),
   length t1 = length t2 ->
   (forall i, i < length t1 = true -> t1.[i] = t2.[i]) ->
   default t1 = default t2 ->
   t1 = t2.
+*)
 
 (* Definition *)
 Definition to_list {A:Type} (t:array A) :=
@@ -366,6 +368,7 @@ Definition eqb {A:Type} (Aeqb: A->A->bool) (t1 t2:array A) :=
   Aeqb (default t1) (default t2) &&
   forallbi (fun i a1 => Aeqb a1 (t2.[i])) t1.
 
+(*
 Lemma reflect_eqb : forall (A:Type) (Aeqb:A->A->bool),
   (forall a1 a2, reflect (a1 = a2) (Aeqb a1 a2)) ->
   forall t1 t2, reflect (t1 = t2) (eqb Aeqb t1 t2).
@@ -385,6 +388,7 @@ Proof.
  intros i _; rewrite <- (reflect_iff _ _ (HA _ _));trivial.
  rewrite <- not_true_iff_false, <- (reflect_iff _ _ (HA _ _)) in H0;apply H0;trivial.
 Qed.
+*)
 
 
 (* 

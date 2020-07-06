@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import PArray List Bool ZArith.
+Require Import PArray List Bool ZArith Psatz.
 Require Import Misc State SMT_terms BVList.
 
 Import Form.
@@ -53,6 +53,62 @@ Proof.
   rewrite ltb_spec, (to_Z_sub_1 _ _ Heq); omega.
 Qed.
 
+Lemma afold_right_impb p a :
+  (forall x, p (Lit.neg x) = negb (p x)) ->
+  (PArray.length a == 0) = false ->
+  (afold_right bool int true implb p a) =
+  List.existsb p (to_list (or_of_imp a)).
+Proof.
+  intros Hp Hl.
+  case_eq (afold_right bool int true implb p a); intro Heq; symmetry.
+  - apply afold_right_implb_true_inv in Heq.
+    destruct Heq as [Heq|[[i [Hi Heq]]|Heq]].
+    + rewrite Heq in Hl. discriminate.
+    + rewrite existsb_exists. exists (Lit.neg (a .[ i])). split.
+      * {
+          apply (to_list_In_eq _ i).
+          - rewrite length_or_of_imp. apply (ltb_trans _ (PArray.length a - 1)); auto.
+            now apply minus_1_lt.
+          - now rewrite get_or_of_imp.
+        }
+      * now rewrite Hp, Heq.
+    + rewrite existsb_exists. exists (a.[(PArray.length a) - 1]). split.
+      * {
+          apply (to_list_In_eq _ (PArray.length a - 1)).
+          - rewrite length_or_of_imp.
+            now apply minus_1_lt.
+          - symmetry. apply get_or_of_imp2; auto.
+            unfold is_true. rewrite ltb_spec. rewrite eqb_false_spec in Hl.
+            assert (0%Z <> [|PArray.length a|])
+              by (change 0%Z with [|0|]; intro H; apply to_Z_inj in H; auto).
+            destruct (to_Z_bounded (PArray.length a)) as [H1 _].
+            clear -H H1. change [|0|] with 0%Z. lia.
+        }
+      * {
+          apply Heq. now apply minus_1_lt.
+        }
+  - apply afold_right_implb_false_inv in Heq.
+    destruct Heq as [H1 [H2 H3]].
+    case_eq (existsb p (to_list (or_of_imp a))); auto.
+    rewrite existsb_exists. intros [x [H4 H5]].
+    apply In_to_list in H4. destruct H4 as [i [H4 ->]].
+    case_eq (i < PArray.length a - 1); intro Heq.
+    + assert (H6 := H2 _ Heq). now rewrite (get_or_of_imp Heq), Hp, H6 in H5.
+    + assert (H6:i = PArray.length a - 1).
+      {
+        clear -H4 Heq H1.
+        rewrite length_or_of_imp in H4.
+        apply to_Z_inj. rewrite (to_Z_sub_1 _ 0); auto.
+        rewrite ltb_spec in H4; auto.
+        rewrite ltb_negb_geb in Heq.
+        case_eq (PArray.length a - 1 <= i); intro H2; rewrite H2 in Heq; try discriminate.
+        clear Heq. rewrite leb_spec in H2. rewrite (to_Z_sub_1 _ 0) in H2; auto.
+        lia.
+      }
+      rewrite get_or_of_imp2 in H5; auto.
+      rewrite H6, H3 in H5. discriminate.
+Qed.
+
 
 Section CHECKER.
 
@@ -91,6 +147,7 @@ Section CHECKER.
       else l :: PArray.to_list args
     | Fimp args =>
       if Lit.is_pos l then C._true
+      else if PArray.length args == 0 then C._true
       else
         let args := or_of_imp args in
         l :: PArray.to_list args
@@ -128,6 +185,7 @@ Section CHECKER.
         if Lit.is_pos l then PArray.to_list args
         else C._true
       | Fimp args =>
+        if PArray.length args == 0 then C._true else
         if Lit.is_pos l then 
           let args := or_of_imp args in
           PArray.to_list args
@@ -287,31 +345,19 @@ Section CHECKER.
      match goal with |- context [Lit.interp rho ?x] => 
      destruct (Lit.interp rho x);trivial end.
 
-  Axiom afold_left_and : forall a,
-    afold_left bool int true andb (Lit.interp rho) a =
-    List.forallb (Lit.interp rho) (to_list a).
-
-  Axiom afold_left_or : forall a,
-    afold_left bool int false orb (Lit.interp rho) a =
-    C.interp rho (to_list a).
-
-  Axiom afold_right_impb : forall a,
-    (afold_right bool int true implb (Lit.interp rho) a) =
-    C.interp rho (to_list (or_of_imp a)).
-
-  Axiom Cinterp_neg : forall cl,
-     C.interp rho (map Lit.neg cl) = negb (forallb (Lit.interp rho) cl).  
-
   Lemma valid_check_BuildDef : forall l, C.valid rho (check_BuildDef l).
   Proof.
    unfold check_BuildDef,C.valid;intros l.
    case_eq (t_form.[Lit.blit l]);intros;auto using C.interp_true;
-   case_eq (Lit.is_pos l);intros Heq;auto using C.interp_true;simpl;
-   unfold Lit.interp at 1;rewrite Heq;unfold Var.interp; rewrite rho_interp, H;simpl;
-   tauto_check.
-   rewrite afold_left_and, Cinterp_neg;apply orb_negb_r.
-   rewrite afold_left_or, orb_comm;apply orb_negb_r.
-   rewrite afold_right_impb, orb_comm;apply orb_negb_r.
+     case_eq (Lit.is_pos l);intros Heq;auto using C.interp_true;simpl;
+       try (unfold Lit.interp at 1;rewrite Heq;unfold Var.interp; rewrite rho_interp, H;simpl;
+            tauto_check).
+   - rewrite afold_left_and, C.Cinterp_neg;apply orb_negb_r.
+   - rewrite afold_left_or, orb_comm;apply orb_negb_r.
+   - case_eq (PArray.length a == 0); auto using C.interp_true.
+     intro Hl; simpl.
+     unfold Lit.interp at 1;rewrite Heq;unfold Var.interp; rewrite rho_interp, H;simpl.
+     rewrite (afold_right_impb (Lit.interp_neg _) Hl), orb_comm;try apply orb_negb_r.
   Qed.
 
   Lemma valid_check_BuildDef2 : forall l, C.valid rho (check_BuildDef2 l).
@@ -328,30 +374,60 @@ Section CHECKER.
    unfold check_BuildProj,C.valid;intros l i.
    case_eq (t_form.[Lit.blit l]);intros;auto using C.interp_true;
    case_eq (i < PArray.length a);intros Hlt;auto using C.interp_true;simpl.
-
-   rewrite Lit.interp_nlit;unfold Var.interp;rewrite rho_interp, orb_false_r, H.
-   simpl;rewrite afold_left_and.
-   case_eq (forallb (Lit.interp rho) (to_list a));trivial.
-   rewrite forallb_forall;intros Heq;rewrite Heq;trivial.
-   apply to_list_In; auto.
-   rewrite Lit.interp_lit;unfold Var.interp;rewrite rho_interp, orb_false_r, H.
-   simpl;rewrite afold_left_or.
-      
-   unfold C.interp;case_eq (existsb (Lit.interp rho) (to_list a));trivial.
-   rewrite <-not_true_iff_false, existsb_exists, Lit.interp_neg.
-   case_eq (Lit.interp rho (a .[ i]));trivial.
-   intros Heq Hex;elim Hex;exists (a.[i]);split;trivial.
-   apply to_list_In; auto.
-   case_eq (i == PArray.length a - 1);intros Heq;simpl;
-   rewrite Lit.interp_lit;unfold Var.interp;rewrite rho_interp, H;simpl;
-   rewrite afold_right_impb; case_eq (C.interp rho (to_list (or_of_imp a)));trivial;
-   unfold C.interp;rewrite <-not_true_iff_false, existsb_exists;
-   try rewrite Lit.interp_neg; case_eq (Lit.interp rho (a .[ i]));trivial;
-   intros Heq' Hex;elim Hex.
-   exists (a.[i]);split;trivial.
-   assert (H1: 0 < PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Int63Properties.eqb_spec in Heq; rewrite <- (get_or_of_imp2 H1 Heq); apply to_list_In; rewrite length_or_of_imp; auto.
-   exists (Lit.neg (a.[i]));rewrite Lit.interp_neg, Heq';split;trivial.
-   assert (H1: i < PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq, to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; omega); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
+   - rewrite Lit.interp_nlit;unfold Var.interp;rewrite rho_interp, orb_false_r, H.
+     simpl;rewrite afold_left_and.
+     case_eq (forallb (Lit.interp rho) (to_list a));trivial.
+     rewrite forallb_forall;intros Heq;rewrite Heq;trivial.
+     apply to_list_In; auto.
+   - rewrite Lit.interp_lit;unfold Var.interp;rewrite rho_interp, orb_false_r, H.
+     simpl;rewrite afold_left_or.
+     unfold C.interp;case_eq (existsb (Lit.interp rho) (to_list a));trivial.
+     rewrite <-not_true_iff_false, existsb_exists, Lit.interp_neg.
+     case_eq (Lit.interp rho (a .[ i]));trivial.
+     intros Heq Hex;elim Hex;exists (a.[i]);split;trivial.
+     apply to_list_In; auto.
+   - assert (Hl : (PArray.length a == 0) = false)
+       by (rewrite eqb_false_spec; intro H1; rewrite H1 in Hlt; now elim (ltb_0 i)).
+     case_eq (i == PArray.length a - 1);intros Heq;simpl;
+       rewrite Lit.interp_lit;unfold Var.interp;rewrite rho_interp, H;simpl.
+     + rewrite Lit.interp_neg, orb_false_r.
+       rewrite (afold_right_impb (Lit.interp_neg _) Hl).
+       case_eq (Lit.interp rho (a .[ i])); intro Hi.
+       * rewrite orb_false_r, existsb_exists.
+         exists (a .[ i]). split; auto.
+         {
+           apply (to_list_In_eq _ i).
+           - now rewrite length_or_of_imp.
+           - symmetry. apply get_or_of_imp2.
+             + clear -Hl. rewrite eqb_false_spec in Hl.
+               unfold is_true. rewrite ltb_spec. change [|0|] with 0%Z.
+               assert (H:[|PArray.length a|] <> 0%Z)
+                 by (intro H; apply Hl; now apply to_Z_inj).
+               destruct (to_Z_bounded (PArray.length a)) as [H1 _].
+               lia.
+             + now rewrite Int63Properties.eqb_spec in Heq.
+         }
+       * now rewrite orb_true_r.
+     + rewrite orb_false_r.
+       case_eq (Lit.interp rho (a .[ i])); intro Hi.
+       * now rewrite orb_true_r.
+       * rewrite (afold_right_impb (Lit.interp_neg _) Hl).
+         rewrite orb_false_r, existsb_exists.
+         exists (Lit.neg (a .[ i])).
+         {
+           split.
+           - apply (to_list_In_eq _ i).
+             + now rewrite length_or_of_imp.
+             + symmetry. apply get_or_of_imp.
+               clear -Hlt Heq.
+               unfold is_true. rewrite ltb_spec. rewrite (to_Z_sub_1 _ i); auto.
+               rewrite eqb_false_spec in Heq.
+               assert (H:[|i|] <> ([|PArray.length a|] - 1)%Z)
+                 by (intro H; apply Heq, to_Z_inj; rewrite (to_Z_sub_1 _ i); auto).
+               clear Heq.
+               rewrite ltb_spec in Hlt. lia.
+           - now rewrite Lit.interp_neg, Hi.
+         }
   Qed.
 
   Hypothesis Hs : S.valid rho s.
@@ -366,9 +442,11 @@ Section CHECKER.
    destruct (t_form.[Lit.blit l]);auto using C.interp_true;
    case_eq (Lit.is_pos l);intros Heq;auto using C.interp_true;simpl;
    tauto_check.
-   rewrite afold_left_and, Cinterp_neg, orb_false_r;trivial.
-   rewrite afold_left_or, orb_false_r;trivial.
-   rewrite afold_right_impb, orb_false_r;trivial.
+   - rewrite afold_left_and, C.Cinterp_neg, orb_false_r;trivial.
+   - rewrite afold_left_or, orb_false_r;trivial.
+   - case_eq (PArray.length a == 0); auto using C.interp_true.
+     intro Hl. now rewrite orb_false_r, (afold_right_impb (Lit.interp_neg _) Hl).
+   - case_eq (PArray.length a == 0); auto using C.interp_true.
   Qed.
 
   Lemma valid_check_ImmBuildDef2 : forall cid, C.valid rho (check_ImmBuildDef2 cid).
@@ -392,23 +470,26 @@ Section CHECKER.
        case_eq (i < PArray.length a); intros Hlt;auto using C.interp_true;
        case_eq (Lit.is_pos l);intros Heq;auto using C.interp_true;simpl;
        rewrite !orb_false_r.  
-   rewrite afold_left_and.
-   rewrite forallb_forall;intros H;apply H;auto.
-   apply to_list_In; auto.
-   rewrite negb_true_iff, <-not_true_iff_false, afold_left_or.
-   unfold C.interp;rewrite existsb_exists, Lit.interp_neg.
-   case_eq (Lit.interp rho (a .[ i]));trivial.
-   intros Heq' Hex;elim Hex;exists (a.[i]);split;trivial.
-   apply to_list_In; auto.
-   rewrite negb_true_iff, <-not_true_iff_false, afold_right_impb.
-   case_eq (i == PArray.length a - 1);intros Heq';simpl;
-     unfold C.interp;simpl;try rewrite Lit.interp_neg;rewrite orb_false_r,
-   existsb_exists;case_eq (Lit.interp rho (a .[ i]));trivial;
-   intros Heq2 Hex;elim Hex.
-   exists (a.[i]);split;trivial.
-   assert (H1: 0 < PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Int63Properties.eqb_spec in Heq'; rewrite <- (get_or_of_imp2 H1 Heq'); apply to_list_In; rewrite length_or_of_imp; auto.
-   exists (Lit.neg (a.[i]));rewrite Lit.interp_neg, Heq2;split;trivial.
-   assert (H1: i < PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq'; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; omega); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
+   - rewrite afold_left_and.
+     rewrite forallb_forall;intros H;apply H;auto.
+     apply to_list_In; auto.
+   - rewrite negb_true_iff, <-not_true_iff_false, afold_left_or.
+     unfold C.interp;rewrite existsb_exists, Lit.interp_neg.
+     case_eq (Lit.interp rho (a .[ i]));trivial.
+     intros Heq' Hex;elim Hex;exists (a.[i]);split;trivial.
+     apply to_list_In; auto.
+   - rewrite negb_true_iff, <-not_true_iff_false.
+     assert (Hl:(PArray.length a == 0) = false)
+       by (rewrite eqb_false_spec; intro H; rewrite H in Hlt; now apply (ltb_0 i)).
+     rewrite (afold_right_impb (Lit.interp_neg _) Hl).
+     case_eq (i == PArray.length a - 1);intros Heq';simpl;
+       unfold C.interp;simpl;try rewrite Lit.interp_neg;rewrite orb_false_r,
+                                                        existsb_exists;case_eq (Lit.interp rho (a .[ i]));trivial;
+         intros Heq2 Hex;elim Hex.
+     exists (a.[i]);split;trivial.
+     assert (H1: 0 < PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Int63Properties.eqb_spec in Heq'; rewrite <- (get_or_of_imp2 H1 Heq'); apply to_list_In; rewrite length_or_of_imp; auto.
+     exists (Lit.neg (a.[i]));rewrite Lit.interp_neg, Heq2;split;trivial.
+     assert (H1: i < PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq'; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; omega); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
   Qed.
 
 End CHECKER.

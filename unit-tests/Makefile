@@ -7,6 +7,7 @@ OBJ=$(ZCHAFFLOG) $(VERITLOG)
 COQLIBS?= -R ../src SMTCoq
 OPT?=
 COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
+VIOFLAG?=-quick
 COQC?=$(COQBIN)coqc
 
 
@@ -39,5 +40,17 @@ logs: $(OBJ)
 	$(COQC) $(COQDEBUG) $(COQFLAGS) $*
 
 
-clean:
-	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG) *.vo *.glob
+%.vio: %.v logs
+	$(COQC) $(VIOFLAG) $(COQDEBUG) $(COQFLAGS) $*
+
+
+parallel: Tests_zchaff_tactics.vio Tests_verit_tactics.vio Tests_lfsc_tactics.vio
+	coqtop -schedule-vio-checking 3 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics
+
+
+clean: cleanvo
+	rm -rf *~ $(ZCHAFFLOG) $(VERITLOG)
+
+
+cleanvo:
+	rm -rf *~ *.vo *.glob *.vio

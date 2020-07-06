@@ -46,7 +46,7 @@ type logic_item =
 
 module SL = Set.Make (struct
     type t = logic_item
-    let compare = Pervasives.compare
+    let compare = Stdlib.compare
   end)
 
 type logic = SL.t

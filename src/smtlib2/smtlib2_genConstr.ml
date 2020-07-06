@@ -111,7 +111,7 @@ let declare_sort rt sym = declare_sort_from_name rt (string_of_symbol sym)
 
 let declare_fun_from_name rt ro s tyl ty =
   let coqTy = List.fold_right (fun typ c ->
-      Term.mkArrow (interp_to_coq rt typ) c)
+      Structures.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
   let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
