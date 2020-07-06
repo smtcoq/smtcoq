@@ -11,7 +11,7 @@
 
 
 Require Import Bool OrderedType SMT_classes.
-Require Import ProofIrrelevance Classical_Pred_Type ClassicalEpsilon. (* TODO: REMOVE ALL THESE AXIOMS *)
+Require Import ProofIrrelevance.
 
 
 (** This file formalizes functional arrays with extensionality as specified in
@@ -86,7 +86,7 @@ Module Raw.
     destruct x, y. simpl in H.
     unfold not. intro. inversion H0.
     apply (lt_not_eq k k0); auto.
-  Qed.
+  Defined.
 
   (* ltk ignore the second components *)
 
@@ -1688,7 +1688,7 @@ Section FArray.
     exact H.
   Qed.
 
-  Lemma extensionnality_eqb : forall a b,
+  Lemma extensionality_eqb : forall a b,
       (forall i, select a i = select b i) -> equal a b = true.
   Proof.
     intros.
@@ -1745,9 +1745,9 @@ Section FArray.
     apply eq_equal. apply eqfarray_refl.
   Qed.
 
-  Lemma extensionnality : forall a b, (forall i, select a i = select b i) -> a = b.
+  Lemma extensionality : forall a b, (forall i, select a i = select b i) -> a = b.
   Proof.
-    intros; apply equal_eq; apply extensionnality_eqb; auto.
+    intros; apply equal_eq; apply extensionality_eqb; auto.
   Qed.
 
 
@@ -1776,18 +1776,122 @@ Section FArray.
     - intro; subst. apply equal_refl.
   Qed.
 
-  Section Classical_extensionnality.
+  Section Classical_extensionality.
 
-    Lemma extensionnality2 : forall a b, a <> b -> (exists i, select a i <> select b i).
+    Lemma lt_select_default i xs xsS xsD : (forall xe, HdRel lt (i, xe) xs) ->
+      select {| this := xs; sorted := xsS; nodefault := xsD |} i = default_value.
     Proof.
-      intros.
-      apply not_all_ex_not.
-      unfold not in *.
-      intros. apply H. apply extensionnality; auto.
+      intro H1. unfold select, find. simpl.
+      destruct xs as [ |[xk xe] xs]; auto.
+      simpl. assert (H2:=H1 xe). inversion H2 as [ |b l H0 H]; subst.
+      case_eq (compare i xk); auto.
+      - intros e He. subst i. now elim (lt_not_eq _ _ H0).
+      - intros l _. simpl in H0. unfold Raw.ltk in H0. simpl in H0.
+        now elim (lt_not_eq _ _ (lt_trans _ _ _ H0 l)).
     Qed.
 
-    Definition diff_index_p : forall a b, a <> b -> { i | select a i <> select b i } :=
-      (fun a b u => constructive_indefinite_description _ (@extensionnality2 _ _ u)).
+    Lemma HdRelElt (xk:key) (ye:elt) ys : HdRel lt (xk, ye) ys -> forall ye', HdRel lt (xk, ye') ys.
+    Proof.
+      induction ys as [ |[yk yee] ys IHys]; auto.
+      simpl. intros H ye'. inversion H as [ |b l H1 H0]; subst.
+      now constructor.
+    Qed.
+
+    Lemma diff_index_p : forall a b, a <> b -> {i | select a i <> select b i}.
+    Proof.
+      intros a b.
+      assert (Hcomp:forall (k:key), exists e, compare k k = EQ e).
+      {
+        intro k.
+        case_eq (compare k k); try (intro H; now elim (lt_not_eq _ _ H)).
+        intros e He. now exists e.
+      }
+      assert (HInd: forall x y (xS:Sorted _ x) (yS:Sorted _ y) (xD:NoDefault x) (yD:NoDefault y),
+                 let a := Build_farray xS xD in
+                 let b := Build_farray yS yD in
+                 a <> b -> {i : key | select a i <> select b i}).
+      {
+        clear a b. intros x y.
+        case_eq (list_eq_dec (@eq_dec _ (Raw.ke_dec key_dec elt_dec)) x y).
+        - intros e He. subst x. intros xS yS xD yD a b. subst a b.
+          rewrite (proof_irrelevance _ xS yS),  (proof_irrelevance _ xD yD).
+          intro H. elim H. reflexivity.
+        - intros n _ xS yS xD yD a b _. subst a b.
+          revert x y n xS yS xD yD.
+          {
+            induction x as [ |[xk xe] xs IHxs]; intros [ |[yk ye] ys].
+            - intro H; now elim H.
+            - intros _ xS yS xD yD. exists yk.
+              unfold select, find. simpl. destruct (Hcomp yk) as [e ->].
+              unfold NoDefault in yD. intro H. subst ye. elim (yD yk). unfold Raw.MapsTo.
+              constructor. apply Raw.eqke_refl.
+            - intros _ xS yS xD yD. exists xk.
+              unfold select, find. simpl. destruct (Hcomp xk) as [e ->].
+              unfold NoDefault in xD. intro H. subst xe. elim (xD xk). unfold Raw.MapsTo.
+              constructor. apply Raw.eqke_refl.
+            - intros H xS yS xD yD. case_eq (compare xk yk).
+              + intros l Hl. exists xk. unfold select, find. simpl.
+                destruct (Hcomp xk) as [e ->]. rewrite Hl.
+                unfold NoDefault in xD. intro H1; subst xe.
+                apply (xD xk). unfold Raw.MapsTo. constructor. apply Raw.eqke_refl.
+              + intros e _. subst xk. case_eq (eq_dec xe ye).
+                * intros e _. subst ye. assert (H1:xs <> ys)
+                    by (intro H1; rewrite H1 in H; now apply H).
+                  assert (xsS : Sorted (Raw.ltk key_ord) xs) by now inversion xS.
+                  assert (ysS : Sorted (Raw.ltk key_ord) ys) by now inversion yS.
+                  assert (xsD:NoDefault xs) by exact (nodefault_tail xD).
+                  assert (ysD:NoDefault ys) by exact (nodefault_tail yD).
+                  destruct (IHxs _ H1 xsS ysS xsD ysD) as [i Hi].
+                  {
+                    case_eq (compare i yk).
+                    - intros l Hl.
+                      rewrite (lt_select_default xsS xsD) in Hi.
+                      + rewrite (lt_select_default ysS ysD) in Hi.
+                        * now elim Hi.
+                        *
+                          {
+                            intro xe0.
+                            apply (InfA_ltA _ (y:=(yk, xe))).
+                            - simpl. unfold Raw.ltk. simpl. auto.
+                            - now inversion yS.
+                          }
+                      + intro xe0.
+                        apply (InfA_ltA _ (y:=(yk, xe))).
+                        * simpl. unfold Raw.ltk. simpl. auto.
+                        * now inversion xS.
+                    - intros l Hl.
+                      rewrite (lt_select_default xsS xsD) in Hi.
+                      + rewrite (lt_select_default ysS ysD) in Hi.
+                        * now elim Hi.
+                        * intro xe0.
+                          inversion yS as [ |a l0 H3 H4 H0]; subst.
+                          apply (HdRelElt H4).
+                      + intro xe0.
+                        inversion xS as [ |a l0 H3 H4 H0]; subst.
+                        apply (HdRelElt H4).
+                    - intros l Hl. exists i. unfold select, find. simpl. now rewrite Hl.
+                  }
+                * intros n Hn. exists yk. unfold select, find. simpl.
+                  now destruct (Hcomp yk) as [e ->].
+              + intros l Hl. exists yk. unfold select, find. simpl.
+                destruct (Hcomp yk) as [e ->].
+                case_eq (compare yk xk).
+                * intros m Hm. unfold NoDefault in yD. intro H1; subst ye.
+                  apply (yD yk). unfold Raw.MapsTo. constructor. apply Raw.eqke_refl.
+                * intros f _. subst yk. now elim (lt_not_eq _ _ l).
+                * intros f _. now elim (lt_not_eq _ _ (lt_trans _ _ _ l f)).
+          }
+      }
+      intro H.
+      apply (HInd (this a) (this b) (sorted a) (sorted b) (nodefault a) (nodefault b)).
+      destruct a as [aL aS aD]. simpl.
+      destruct b as [bL bS bD]. simpl. auto.
+    Qed.
+
+    Lemma extensionality2 : forall a b, a <> b -> exists i, select a i <> select b i.
+    Proof.
+      intros a b Hab. destruct (diff_index_p Hab) as [i Hi]. now exists i.
+    Qed.
 
     Definition diff_index : forall a b, a <> b -> key :=
       (fun a b u => proj1_sig (diff_index_p u)).
@@ -1820,7 +1924,7 @@ Section FArray.
      destruct (diff_index_p (n Logic.eq_refl)). simpl; auto.
    Qed.
 
-  End Classical_extensionnality.
+  End Classical_extensionality.
 
 End FArray.
 
@@ -1833,8 +1937,8 @@ Arguments equal_iff_eq {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments read_over_same_write {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.
 Arguments read_over_write {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 Arguments read_over_other_write {_} {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.
-Arguments extensionnality {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
-Arguments extensionnality2 {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments extensionality {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments extensionality2 {_} {_} {_} {_} {_} {_} {_} {_} {_} _.
 Arguments select_at_diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
 
 

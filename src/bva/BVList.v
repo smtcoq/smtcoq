@@ -12,6 +12,7 @@
 
 Require Import List Bool NArith Psatz Int63 Nnat ZArith.
 Require Import Misc.
+Require Import ProofIrrelevance.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -21,9 +22,6 @@ Local Open Scope bool_scope.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(* We temporarily assume proof irrelevance to handle dependently typed
-   bit vectors *)
-Axiom proof_irrelevance : forall (P : Prop) (p1 p2 : P), p1 = p2.
 
 Lemma inj a a' : N.to_nat a = N.to_nat a' -> a = a'.
 Proof. intros. lia. Qed.
@@ -303,7 +301,7 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Proof.
     unfold bv_eq. rewrite M.bv_eq_reflect. split.
     - revert a b. intros [a Ha] [b Hb]. simpl. intros ->.
-      rewrite (proof_irrelevance Ha Hb). reflexivity.
+      rewrite (proof_irrelevance _ Ha Hb). reflexivity.
     - intros. case a in *. case b in *. simpl in *.
       now inversion H. (* now intros ->. *)
   Qed.
