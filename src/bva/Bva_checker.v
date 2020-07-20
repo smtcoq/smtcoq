@@ -1186,7 +1186,7 @@ Proof.
         intros f Heq2.
       case_eq (t_atom .[ f]); try (intros; now apply C.interp_true).
 
-      intros [ | | | | | | |[ A B | A| | | |n]|N|N|N|N|N|N|N|N|N| | | | ];
+      intros [ | | | | | | |[ A B | A| | | |n]|N|N|N|N|N|N|N|N| | | | ];
          try (intros; now apply C.interp_true). intros a b Heq3.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
       intros c Heq4.
@@ -3215,7 +3215,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9;
+      intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9;
         try (intros; now apply C.interp_true).
       (* BVand *)
       - case_eq ((a1 == a1') && (a2 == a2') || (a1 == a2') && (a2 == a1'));
@@ -4513,7 +4513,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-       intros [ | | | | | | | [ A B | A | | | |n]|N|N|N|N|N|N|N|N|N| | | | ]; 
+       intros [ | | | | | | | [ A B | A | | | |n]|N|N|N|N|N|N|N|N| | | | ]; 
           try (intros; now apply C.interp_true).
 
        intros a1' a2' Heq9.
@@ -5168,7 +5168,7 @@ Proof.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-       intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N| | | | ]; 
+       intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N| | | | ]; 
          try (intros; now apply C.interp_true).
 
        intros a1' a2' Heq9.
@@ -5394,7 +5394,7 @@ Proof.
        case_eq (t_form .[ Lit.blit a]); try (intros; now apply C.interp_true). intros a3 Heq10.
        case_eq (t_atom .[ a3]); try (intros; now apply C.interp_true).
 
-       intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9; 
+       intros [ | | | | | | | [ A B | A | | | | ]|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9; 
           try (intros; now apply C.interp_true).
 
        case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq15; try (now apply C.interp_true).
@@ -5805,7 +5805,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9;
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9;
         try (intros; now apply C.interp_true).
 
       (* BVadd *)
@@ -6603,7 +6603,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9; try (intros; now apply C.interp_true).
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N| | | | ] a1' a2' Heq9; try (intros; now apply C.interp_true).
       (* BVmult *)
       - case_eq ((a1 == a1') && (a2 == a2') (* || (a1 == a2') && (a2 == a1')*) );
             simpl; intros Heq10; try (now apply C.interp_true).
@@ -6911,7 +6911,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ]  a1' a2' Heq9; try (intros; now apply C.interp_true).
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N| | | | ]  a1' a2' Heq9; try (intros; now apply C.interp_true).
       (* BVconcat *)
     - case_eq ((a1 == a1') && (a2 == a2')); simpl; intros Heq10; try (now apply C.interp_true).
         case_eq (
@@ -8055,7 +8055,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ]  a1' a2' Heq9; try (intros; now apply C.interp_true).
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N| | | | ]  a1' a2' Heq9; try (intros; now apply C.interp_true).
        case_eq (t_atom .[ a2]); try (intros; now apply C.interp_true). intros c Heqa2.
        case_eq c; try (intros; now apply C.interp_true). intros bv2 n0 Heqc.
       (* BVshl *)
@@ -8385,7 +8385,7 @@ Proof.
       case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
       intros a bsres Heq8.
       case_eq (t_atom .[ a]); try (intros; now apply C.interp_true).
-      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N|N| | | | ]  a1' a2' Heq9; try (intros; now apply C.interp_true).
+      intros [ | | | | | | |[ A B | A| | | | ]|N|N|N|N|N|N|N|N| | | | ]  a1' a2' Heq9; try (intros; now apply C.interp_true).
        case_eq (t_atom .[ a2]); try (intros; now apply C.interp_true). intros c Heqa2.
        case_eq c; try (intros; now apply C.interp_true). intros bv2 n0 Heqc.
       (* BVshr *)
