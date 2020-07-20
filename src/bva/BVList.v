@@ -53,27 +53,28 @@ Module Type BITVECTOR.
   (*equality*)
   Parameter bv_eq     : forall n, bitvector n -> bitvector n -> bool.
 
+  (*unary operations*)
+  Parameter bv_not    : forall n,     bitvector n -> bitvector n.
+  Parameter bv_neg    : forall n,     bitvector n -> bitvector n.
+  Parameter bv_extr   : forall (i n0 n1 : N), bitvector n1 -> bitvector n0.
+
   (*binary operations*)
   Parameter bv_concat : forall n m, bitvector n -> bitvector m -> bitvector (n + m).
   Parameter bv_and    : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_or     : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_xor    : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_add    : forall n, bitvector n -> bitvector n -> bitvector n.
-  Parameter bv_subt   : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_mult   : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_ult    : forall n, bitvector n -> bitvector n -> bool.
   Parameter bv_slt    : forall n, bitvector n -> bitvector n -> bool.
+
+  Notation bv_subt bv1 bv2 := (bv_add bv1 (bv_neg bv2)).
 
   Parameter bv_ultP   : forall n, bitvector n -> bitvector n -> Prop.
   Parameter bv_sltP   : forall n, bitvector n -> bitvector n -> Prop.
 
   Parameter bv_shl    : forall n, bitvector n -> bitvector n -> bitvector n.
   Parameter bv_shr    : forall n, bitvector n -> bitvector n -> bitvector n.
-
-    (*unary operations*)
-  Parameter bv_not    : forall n,     bitvector n -> bitvector n.
-  Parameter bv_neg    : forall n,     bitvector n -> bitvector n.
-  Parameter bv_extr   : forall (i n0 n1 : N), bitvector n1 -> bitvector n0.
 
  (* Parameter bv_extr   : forall (n i j : N) {H0: n >= j} {H1: j >= i}, bitvector n -> bitvector (j - i). *)
 
@@ -122,6 +123,11 @@ Parameter zeros      : N -> bitvector.
 (*equality*)
 Parameter bv_eq      : bitvector -> bitvector -> bool.
 
+(*unary operations*)
+Parameter bv_not     : bitvector -> bitvector.
+Parameter bv_neg     : bitvector -> bitvector.
+Parameter bv_extr    : forall (i n0 n1: N), bitvector -> bitvector.
+
 (*binary operations*)
 Parameter bv_concat  : bitvector -> bitvector -> bitvector.
 Parameter bv_and     : bitvector -> bitvector -> bitvector.
@@ -129,7 +135,6 @@ Parameter bv_or      : bitvector -> bitvector -> bitvector.
 Parameter bv_xor     : bitvector -> bitvector -> bitvector.
 Parameter bv_add     : bitvector -> bitvector -> bitvector.
 Parameter bv_mult    : bitvector -> bitvector -> bitvector.
-Parameter bv_subt    : bitvector -> bitvector -> bitvector.
 Parameter bv_ult     : bitvector -> bitvector -> bool.
 Parameter bv_slt     : bitvector -> bitvector -> bool.
 
@@ -138,11 +143,6 @@ Parameter bv_sltP    : bitvector -> bitvector -> Prop.
 
 Parameter bv_shl     : bitvector -> bitvector -> bitvector.
 Parameter bv_shr     : bitvector -> bitvector -> bitvector.
-
-(*unary operations*)
-Parameter bv_not     : bitvector -> bitvector.
-Parameter bv_neg     : bitvector -> bitvector.
-Parameter bv_extr    : forall (i n0 n1: N), bitvector -> bitvector.
 
 (*Parameter bv_extr    : forall (n i j: N) {H0: n >= j} {H1: j >= i}, bitvector -> bitvector.*)
 
@@ -160,7 +160,6 @@ Axiom bv_and_size    : forall n a b, size a = n -> size b = n -> size (bv_and a 
 Axiom bv_or_size     : forall n a b, size a = n -> size b = n -> size (bv_or a b) = n.
 Axiom bv_xor_size    : forall n a b, size a = n -> size b = n -> size (bv_xor a b) = n.
 Axiom bv_add_size    : forall n a b, size a = n -> size b = n -> size (bv_add a b) = n.
-Axiom bv_subt_size   : forall n a b, size a = n -> size b = n -> size (bv_subt a b) = n.
 Axiom bv_mult_size   : forall n a b, size a = n -> size b = n -> size (bv_mult a b) = n.
 Axiom bv_not_size    : forall n a, size a = n -> size (bv_not a) = n.
 Axiom bv_neg_size    : forall n a, size a = n -> size (bv_neg a) = n.
@@ -238,6 +237,12 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
 
   Definition bv_eq n (bv1 bv2:bitvector n) := M.bv_eq bv1 bv2.
 
+  Definition bv_not n (bv1: bitvector n) : bitvector n :=
+    @MkBitvector n (M.bv_not bv1) (M.bv_not_size (wf bv1)).
+
+  Definition bv_neg n (bv1: bitvector n) : bitvector n :=
+    @MkBitvector n (M.bv_neg bv1) (M.bv_neg_size (wf bv1)).
+
   Definition bv_ultP n (bv1 bv2:bitvector n) := M.bv_ultP bv1 bv2.
 
   Definition bv_sltP n (bv1 bv2:bitvector n) := M.bv_sltP bv1 bv2.
@@ -251,8 +256,7 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Definition bv_add n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_add bv1 bv2) (M.bv_add_size (wf bv1) (wf bv2)).
 
-  Definition bv_subt n (bv1 bv2:bitvector n) : bitvector n :=
-    @MkBitvector n (M.bv_subt bv1 bv2) (M.bv_subt_size (wf bv1) (wf bv2)).
+  Notation bv_subt bv1 bv2 := (bv_add bv1 (bv_neg bv2)).
 
   Definition bv_mult n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_mult bv1 bv2) (M.bv_mult_size (wf bv1) (wf bv2)).
@@ -263,12 +267,6 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Definition bv_ult n (bv1 bv2:bitvector n) : bool := M.bv_ult bv1 bv2.
 
   Definition bv_slt n (bv1 bv2:bitvector n) : bool := M.bv_slt bv1 bv2.
-
-  Definition bv_not n (bv1: bitvector n) : bitvector n :=
-    @MkBitvector n (M.bv_not bv1) (M.bv_not_size (wf bv1)).
-
-  Definition bv_neg n (bv1: bitvector n) : bitvector n :=
-    @MkBitvector n (M.bv_neg bv1) (M.bv_neg_size (wf bv1)).
 
   Definition bv_concat n m (bv1:bitvector n) (bv2: bitvector m) : bitvector (n + m) :=
     @MkBitvector (n + m) (M.bv_concat bv1 bv2) (M.bv_concat_size (wf bv1) (wf bv2)).
@@ -575,42 +573,6 @@ Definition twos_complement b :=
   
 Definition bv_neg (a: bitvector) : bitvector := (twos_complement a).
 
-Definition subst_list' a b := add_list a (twos_complement b).
-
-Definition bv_subt' (a b : bitvector) : bitvector :=
-   match (@size a) =? (@size b) with
-     | true => (subst_list' (@bits a) (@bits b))
-     | _    => nil
-   end.
-
-Definition subst_borrow b1 b2 b :=
-  match b1, b2, b with
-    | true,  true,  true  => (true, true)
-    | true,  true,  false => (false, false)
-    | true,  false, true  => (false, false)
-    | false, true,  true  => (false, true)
-    | false, false, true  => (true, true)
-    | false, true,  false => (true, true)
-    | true,  false, false => (true, false)
-    | false, false, false => (false, false)
-  end.
-
-Fixpoint subst_list_borrow bs1 bs2 b {struct bs1} :=
-  match bs1, bs2 with
-    | nil, _               => nil
-    | _ , nil              => nil
-    | b1 :: bs1, b2 :: bs2 =>
-      let (r, b) := subst_borrow b1 b2 b in r :: (subst_list_borrow bs1 bs2 b)
-  end.
-
-Definition subst_list (a b: list bool) := subst_list_borrow a b false.
-
-Definition bv_subt (a b : bitvector) : bitvector :=
-  match (@size a) =? (@size b) with 
-    | true => subst_list (@bits a) (@bits b)
-    | _    => nil 
-  end.
-  
 (*less than*)
 
 Fixpoint ult_list_big_endian (x y: list bool) :=
@@ -1735,33 +1697,6 @@ Qed.
 
 (* bitwise SUBST properties *)
 
-Lemma subst_list_empty_empty_l: forall a, (subst_list [] a) = [].
-Proof. intro a. unfold subst_list; auto. Qed.
-
-Lemma subst_list_empty_empty_r: forall a, (subst_list a []) = [].
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - auto.
-       - unfold subst_list; auto. 
-Qed.
-
-Lemma subst_list'_empty_empty_r: forall a, (subst_list' a []) = [].
-Proof. intro a.
-       induction a as [ | a xs IHxs].
-       - auto.
-       - unfold subst_list' in *. unfold twos_complement. simpl. reflexivity.
-Qed.
-
-Lemma subst_list_borrow_length: forall (a b: list bool) c, length a = length b -> length a = length (subst_list_borrow a b c). 
-Proof. induction a as [ | a' xs IHxs]. 
-       simpl. auto. 
-       intros [ | b ys].
-       - simpl. intros. exact H. 
-       - intros. simpl in *. 
-         case_eq (subst_borrow a' b c); intros r c0 Heq. simpl. apply f_equal. 
-         specialize (@IHxs ys). apply IHxs. inversion H; reflexivity. 
-Qed.
-
 Lemma length_twos_complement: forall (a: list bool), length a = length (twos_complement a).
 Proof. intro a.
       induction a as [ | a' xs IHxs].
@@ -1769,30 +1704,6 @@ Proof. intro a.
       - unfold twos_complement. specialize (@add_list_carry_length_eq (map negb (a' :: xs)) (mk_list_false (length (a' :: xs))) true).        
         intro H. rewrite <- H. simpl. apply f_equal. rewrite <- not_list_length. reflexivity.
         rewrite length_mk_list_false. rewrite <- not_list_length. reflexivity.
-Qed.
-
-Lemma subst_list_length: forall (a b: list bool), length a = length b -> length a = length (subst_list a b). 
-Proof. intros a b H. unfold subst_list. apply (@subst_list_borrow_length a b false). exact H. Qed.
-
-Lemma subst_list'_length: forall (a b: list bool), length a = length b -> length a = length (subst_list' a b).
-Proof. intros a b H. unfold subst_list'.
-       rewrite <- (@length_add_list_eq a (twos_complement b)).
-       - reflexivity.
-       - rewrite <- (@length_twos_complement b). exact H.
-Qed.
-
-Lemma subst_list_borrow_empty_neutral: forall (a: list bool), (subst_list_borrow a (mk_list_false (length a)) false) = a.
-Proof. intro a. induction a as [ | a' xs IHxs].
-       - simpl. reflexivity.
-       - simpl.
-         cut(subst_borrow a' false false = (a', false)).
-         + intro H. rewrite H. rewrite IHxs. reflexivity.
-         + unfold subst_borrow. case a'; auto.
-Qed.
-
-Lemma subst_list_empty_neutral: forall (a: list bool), (subst_list a (mk_list_false (length a))) = a.
-Proof. intros a. unfold subst_list.
-       apply (@subst_list_borrow_empty_neutral a).
 Qed.
 
 Lemma twos_complement_cons_false: forall a, false :: twos_complement a = twos_complement (false :: a).
@@ -1806,12 +1717,6 @@ Proof. intro n.
        - auto.
        - simpl. rewrite <- twos_complement_cons_false.
          apply f_equal. exact IHn.
-Qed.
-
-Lemma subst_list'_empty_neutral: forall (a: list bool), (subst_list' a (mk_list_false (length a))) = a.
-Proof. intros a. unfold subst_list'.
-       rewrite (@twos_complement_false_false (length a)).
-       rewrite add_list_empty_neutral_r. reflexivity.
 Qed.
 
 (* some list ult and slt properties *)
@@ -2117,36 +2022,6 @@ Proof. intros.
   now apply rev_neq in H1.
 Qed.
 
-(* bitvector SUBT properties *)
-
-Lemma bv_subt_size: forall n a b, size a = n -> size b = n -> size (bv_subt a b) = n.
-Proof. intros n a b H0 H1.
-       unfold bv_subt, size, bits in *. rewrite H0, H1. rewrite N.eqb_compare.
-       rewrite N.compare_refl. rewrite <- subst_list_length. exact H0.
-       now rewrite <- Nat2N.inj_iff, H0.
-Qed.
-
-Lemma bv_subt_empty_neutral_r: forall a, (bv_subt a (mk_list_false (length (bits a)))) = a.
-Proof. intro a. unfold bv_subt, size, bits.
-       rewrite N.eqb_compare. rewrite length_mk_list_false.
-       rewrite N.compare_refl.
-       rewrite subst_list_empty_neutral. reflexivity.
-Qed.
-
-Lemma bv_subt'_size: forall n a b, (size a) = n -> (size b) = n -> size (bv_subt' a b) = n.
-Proof. intros n a b H0 H1. unfold bv_subt', size, bits in *.
-       rewrite H0, H1. rewrite N.eqb_compare. rewrite N.compare_refl.
-       rewrite <- subst_list'_length. exact H0.
-       now rewrite <- Nat2N.inj_iff, H0.
-Qed.
-
-Lemma bv_subt'_empty_neutral_r: forall a, (bv_subt' a (mk_list_false (length (bits a)))) = a.
-Proof. intro a. unfold bv_subt', size, bits.
-       rewrite N.eqb_compare. rewrite length_mk_list_false.
-       rewrite N.compare_refl.
-       rewrite subst_list'_empty_neutral. reflexivity.
-Qed.
-
 (* bitwise ADD-NEG properties *)
 
 Lemma add_neg_list_carry_false: forall a b c, add_list_ingr a (add_list_ingr b c true) false = add_list_ingr a (add_list_ingr b c false) true.
@@ -2219,37 +2094,6 @@ Proof. intro a. unfold bv_add, bv_not, size, bits. rewrite not_list_length.
        unfold add_list. rewrite add_neg_list_carry_neg_f.
        rewrite Nat2N.id, not_list_length. reflexivity.
 Qed. 
-
-
-(* bitwise ADD-SUBST properties *)
-
-Lemma add_subst_list_carry_opp: forall n a b, (length a) = n -> (length b) = n -> (add_list_ingr (subst_list' a b) b false) = a.
-Proof. intros n a b H0 H1.
-       unfold subst_list', twos_complement, add_list.
-       rewrite add_neg_list_carry_false. rewrite not_list_length at 1.
-       rewrite add_list_carry_empty_neutral_r.
-       specialize (@add_list_carry_assoc a (map negb b) b true false false true).
-       intro H2. rewrite H2; try auto. rewrite add_neg_list_carry_neg_f_r.
-       rewrite H1. rewrite <- H0. rewrite add_list_carry_unit_t; reflexivity.
-Qed.
-
-Lemma add_subst_opp:  forall n a b, (length a) = n -> (length b) = n -> (add_list (subst_list' a b) b) = a.
-Proof. intros n a b H0 H1. unfold add_list, size, bits.
-       apply (@add_subst_list_carry_opp n a b); easy.
-Qed.
-
-(* bitvector ADD-SUBT properties *)
-
-Lemma bv_add_subst_opp:  forall n a b, (size a) = n -> (size b) = n -> (bv_add (bv_subt' a b) b) = a.
-Proof. intros n a b H0 H1. unfold bv_add, bv_subt', add_list, size, bits in *.
-       rewrite H0, H1.
-       rewrite N.eqb_compare. rewrite N.eqb_compare. rewrite N.compare_refl.
-       rewrite <- (@subst_list'_length a b). rewrite H0.
-       rewrite N.compare_refl. rewrite (@add_subst_list_carry_opp (nat_of_N n) a b); auto;
-       inversion H0; rewrite Nat2N.id; auto.
-       symmetry. now rewrite <- Nat2N.inj_iff, H0.
-        now rewrite <- Nat2N.inj_iff, H0.
-Qed.
 
  (* bitvector MULT properties *) 
 
