@@ -706,6 +706,22 @@ Section A_BV_EUF_LIA_PR.
     smt.
   Qed.
 
+
+  (* Testing bit-vectors substraction: this is a syntactic check that it
+     is correctly exported to SMT-LIB, CVC4-1.6 does not provide useful
+     proofs anyway. *)
+
+  Goal forall (x: bitvector 1), bv_subt x #b|0| = x.
+  Proof using.
+    smt.
+  Admitted.
+
+  (* The original issue (unvalid) *)
+  Goal forall (x: bitvector 1), bv_subt (bv_shl #b|0| x) #b|0| = #b|0|.
+  Proof using.
+    smt.
+  Admitted.
+
 End A_BV_EUF_LIA_PR.
 
 
