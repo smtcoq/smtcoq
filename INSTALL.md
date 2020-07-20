@@ -13,24 +13,12 @@ version, see below).
 You will also need to [install the provers](#installation-of-the-provers)
 you want to use.
 
-## Requirements
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.9.0.
-The easiest way to install these two pieces of software is through opam.
+## Installation via opam (recommended)
 
-> **Warning**: The version of Coq that you plan to use must have been compiled
-> with the same version of OCaml that you are going to use to compile
-> SMTCoq. In particular this means you want a version of Coq that was compiled
-> with OCaml version >= 4.09.0.
+### In an existing switch
 
-If you want to use SMTCoq with high performance to check large proof
-certificates, you need to use the [version of Coq with native
-data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.9 (warning: this allows one to use the vernacular commands but not
-the tactics).
-
-
-### Installation via opam (recommended)
+You need to have OCaml version >= 4.09.0 and Coq version 8.11.*.
 
 Simply add the coq-extra-dev repo to opam:
 ```bash
@@ -41,10 +29,24 @@ and install SMTCoq:
 opam install coq-smtcoq
 ```
 
+### In a new switch
 
-### Installation from the sources, using opam (not recommended)
+Create a switch with the last version of OCaml:
+```bash
+opam switch create ocaml-base-compiler.4.10.0
+eval $(opam env)
+```
+add the Coq repos to opam:
+```bash
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+```
+and install SMTCoq:
+```bash
+opam install coq-smtcoq
+```
 
-#### Install opam
+### If you are new to opam
 
 We recommended to install the required packages from
 [opam](https://opam.ocaml.org). Once you have installed opam on your system you
@@ -65,7 +67,48 @@ eval `opam config env`
 
 (this is not necessary if you start another session in your shell).
 
-#### Install OCaml
+Then follow the instructions of the previous section.
+
+
+## Installation from the sources, using opam (not recommended)
+
+### Requirements
+
+You need to have OCaml version >= 4.09.0 and Coq version 8.9.0.
+
+> **Warning**: The version of Coq that you plan to use must have been compiled
+> with the same version of OCaml that you are going to use to compile
+> SMTCoq. In particular this means you want a version of Coq that was compiled
+> with OCaml version >= 4.09.0.
+
+If you want to use SMTCoq with high performance to check large proof
+certificates, you need to use the [version of Coq with native
+data-structures](https://github.com/smtcoq/native-coq) instead of
+Coq-8.9 (warning: this allows one to use the vernacular commands but not
+the tactics).
+
+### Install opam
+
+We recommended to install the required packages from
+[opam](https://opam.ocaml.org). Once you have installed opam on your system you
+should issue the following command:
+
+```bash
+opam init
+```
+
+which will initialize the opam installation and prompt for modifying the shell
+init file.
+
+Once opam is installed you should still issue
+
+```bash
+eval `opam config env`
+```
+
+(this is not necessary if you start another session in your shell).
+
+### Install OCaml
 
 Now you can install an OCaml compiler (we recommend 4.09.0):
 
@@ -73,7 +116,7 @@ Now you can install an OCaml compiler (we recommend 4.09.0):
 opam switch create ocaml-base-compiler.4.09.0
 ```
 
-#### Install Coq
+### Install Coq
 
 After OCaml is installed, you can install Coq-8.9.0 through opam.
 
@@ -91,7 +134,7 @@ but you might need to install some extra packages and libraries for your system
 (such as GTK2, gtksourceview2, etc.).
 
 
-#### Install SMTCoq
+### Install SMTCoq
 
 Compile and install SMTCoq by using the following commands in the src directory.
 
@@ -101,37 +144,7 @@ make
 make install
 ```
 
-
-### Installation from the sources, with official Coq 8.9 release (not recommended)
-
-1. Download the last stable version of Coq 8.9:
-```bash
-wget https://github.com/coq/coq/archive/V8.9.0.tar.gz
-```
-   and compile it by following the instructions available in the
-   repository (make sure you use OCaml 4.09.0 for that). We recommand
-   that you do not install it, but only compile it in local:
-```bash
-./configure -local
-make
-```
-
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```bash
-export COQBIN=/home/jdoe/coq-8.9.0/bin/
-```
-   (the final slash is mandatory).
-
-3. Compile and install SMTCoq by using the following commands in the src directory.
-```
-./configure.sh
-make
-make install
-```
-
-
-### Installation with native-coq (not recommended except for high performances)
+## Installation with native-coq (not recommended except for high performances)
 
 > **Warning**: this installation procedure is recommended only to use
 > the vernacular commands efficiently (in particular, to check very
