@@ -74,7 +74,7 @@ Then follow the instructions of the previous section.
 
 ### Requirements
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.9.*.
+You need to have OCaml version >= 4.09.0 and Coq version 8.10.*.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
@@ -84,7 +84,7 @@ You need to have OCaml version >= 4.09.0 and Coq version 8.9.*.
 If you want to use SMTCoq with high performance to check large proof
 certificates, you need to use the [version of Coq with native
 data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.9 (warning: this allows one to use the vernacular commands but not
+Coq-8.10 (warning: this allows one to use the vernacular commands but not
 the tactics).
 
 ### Install opam
@@ -118,16 +118,16 @@ opam switch create ocaml-base-compiler.4.09.0
 
 ### Install Coq
 
-After OCaml is installed, you can install Coq-8.9.1 through opam.
+After OCaml is installed, you can install Coq-8.10.2 through opam.
 
 ```bash
-opam install coq.8.9.1
+opam install coq.8.10.2
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.9.1 coqide.8.9.1
+opam install coq.8.10.2 coqide.8.10.2
 ```
 
 but you might need to install some extra packages and libraries for your system
