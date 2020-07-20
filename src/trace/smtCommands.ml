@@ -740,15 +740,18 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
                flush oc; close_out oc; failwith "find_lemma" end
       | _ -> failwith "unexpected form of root" in
 
-  let (body_cast, body_nocast, cuts) =
+  let body_or_admit =
     if ((Structures.eq_constr b (Lazy.force ctrue)) ||
         (Structures.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let nl = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
       let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+      (match make_proof call_solver env rt ro ra' rf' nl lsmt with
+         | Some max_id_confl ->
+            Some (build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma))
+         | None -> None
+      )
     else
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
       let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra' solver_logic env sigma) rf' a in
@@ -757,20 +760,29 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
       let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
       let nl = Form.neg l in
       let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env rt ro ra' rf' nl lsmt in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-        (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) in
+      (match make_proof call_solver env rt ro ra' rf' nl lsmt with
+         | Some max_id_confl ->
+            Some (build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+                    (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma))
+         | None -> None
+      )
+  in
 
-      let cuts = (SmtBtype.get_cuts rt) @ cuts in
+  match body_or_admit with
+    | Some (body_cast, body_nocast, cuts) ->
+       (
+         let cuts = (SmtBtype.get_cuts rt) @ cuts in
 
-  List.fold_right (fun (eqn, eqt) tac ->
-      Structures.tclTHENLAST
-        (Structures.assert_before (Structures.name_of_id eqn) eqt)
-        tac
-    ) cuts
-    (Structures.tclTHEN
-       (Structures.set_evars_tac body_nocast)
-       (Structures.vm_cast_no_check body_cast))
+         List.fold_right (fun (eqn, eqt) tac ->
+             Structures.tclTHENLAST
+               (Structures.assert_before (Structures.name_of_id eqn) eqt)
+               tac
+           ) cuts
+           (Structures.tclTHEN
+              (Structures.set_evars_tac body_nocast)
+              (Structures.vm_cast_no_check body_cast))
+       )
+    | None -> failwith "under progress"
 
 
 let tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl =

@@ -116,4 +116,5 @@ END
 TACTIC EXTEND Tactic_cvc4
 | [ "cvc4_bool" ] -> [ Lfsc.tactic () ]
 | [ "cvc4_bool_no_check" ] -> [ Lfsc.tactic_no_check () ]
+| [ "cvc4_bool_admit" ] -> [ Lfsc.tactic_admit () ]
 END

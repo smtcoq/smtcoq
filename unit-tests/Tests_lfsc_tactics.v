@@ -755,6 +755,37 @@ Section group.
 End group.
 
 
+(* Testing the "admit" variant of the tactics *)
+
+Section Admit.
+  Import BVList.BITVECTOR_LIST FArray.
+
+  Local Open Scope farray_scope.
+  Local Open Scope bv_scope.
+
+  (* Valid *)
+  Goal forall (a b: farray Z Z) (v w x y: Z)
+              (r s: bitvector 4)
+              (f: Z -> Z)
+              (g: farray Z Z -> Z)
+              (h: bitvector 4 -> Z),
+      a[x <- v] = b /\ a[y <- w] = b ->
+      r = s /\ h r = v /\ h s = y ->
+      v < x + 1 /\ v > x - 1 ->
+      f (h r) = f (h s) \/ g a = g b.
+  Proof using.
+    cvc4_admit.
+  Admitted.
+
+  (* Not valid: prints a model *)
+  (* Goal forall (a b: bitvector 4), a = b. *)
+  (* Proof using. *)
+  (*   cvc4_admit. *)
+  (* Admitted. *)
+
+End Admit.
+
+
 (*
    Local Variables:
    coq-load-path: ((rec "../src" "SMTCoq"))
