@@ -206,6 +206,8 @@ let set_evars_tac noc =
       let sigma, _ = Typing.type_of env sigma (EConstr.of_constr noc) in
       Proofview.Unsafe.tclEVARS sigma)
 
+let give_up = Proofview.give_up
+
 
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr

@@ -34,6 +34,7 @@ Tactic Notation "verit_no_check" constr_list(h) := prop2bool; verit_bool_no_chec
 
 Ltac cvc4            := prop2bool; cvc4_bool; bool2prop.
 Ltac cvc4_no_check   := prop2bool; cvc4_bool_no_check; bool2prop.
+Ltac cvc4_admit      := prop2bool; cvc4_bool_admit; bool2prop.
 
 
 (* Ltac smt := prop2bool; *)

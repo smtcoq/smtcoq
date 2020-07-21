@@ -47,8 +47,9 @@ val tactic :
    SmtAtom.Op.reify_tbl ->
    SmtAtom.Atom.reify_tbl ->
    SmtAtom.Form.reify ->
-   (SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t) ->
-   SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause) ->
+   SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t ->
+   SmtAtom.Form.t list ->
+   (int * SmtAtom.Form.t SmtCertif.clause) option) ->
   SmtMisc.logic ->
   SmtBtype.reify_tbl ->
   SmtAtom.Op.reify_tbl ->
@@ -59,5 +60,6 @@ val tactic :
   (Environ.env -> Structures.constr -> Structures.constr) ->
   Structures.constr list ->
   Structures.constr_expr list -> Structures.tactic
+
 
 val model_string : Environ.env -> SmtBtype.reify_tbl -> 'a -> 'b -> 'c -> SExpr.t -> string

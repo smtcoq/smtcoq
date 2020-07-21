@@ -346,20 +346,27 @@ let string_logic ro f =
 
 
 
-let call_cvc4 env rt ro ra rf root _ =
+let call_cvc4 admit env rt ro ra rf root _ =
   let open Smtlib2_solver in
   let fl = snd root in
 
-  let cvc4 = create [|
-      "cvc4";
-      "--lang"; "smt2";
-      "--proof";
-      "--no-simplification"; "--fewer-preprocessing-holes";
-      "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic" |] in
+  let cvc4 = create (
+    if admit then
+      [|
+        "cvc4";
+        "--lang"; "smt2" |]
+    else
+      [|
+        "cvc4";
+        "--lang"; "smt2";
+        "--proof";
+        "--no-simplification"; "--fewer-preprocessing-holes";
+        "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic" |]
+  ) in
 
   set_option cvc4 "print-success" true;
   set_option cvc4 "produce-assignments" true;
-  set_option cvc4 "produce-proofs" true;
+  if not admit then set_option cvc4 "produce-proofs" true;
   set_logic cvc4 (string_logic ro fl);
 
   List.iter (fun (i,t) ->
@@ -383,13 +390,16 @@ let call_cvc4 env rt ro ra rf root _ =
   let proof =
     match check_sat cvc4 with
     | Unsat ->
-      begin
-        try get_proof cvc4 (import_trace (Some root) lfsc_parse_one)
-        with
-        | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
-        | No_proof -> Structures.error "CVC4 did not generate a proof"
-        | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
-      end
+       if admit then
+         None
+       else
+         begin
+           try Some (get_proof cvc4 (import_trace (Some root) lfsc_parse_one))
+           with
+             | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
+             | No_proof -> Structures.error "CVC4 did not generate a proof"
+             | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
+         end
     | Sat ->
       let smodel = get_model cvc4 in
       Structures.error
@@ -486,7 +496,7 @@ let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
-let tactic_gen vm_cast =
+let tactic_gen admit vm_cast =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
@@ -494,9 +504,10 @@ let tactic_gen vm_cast =
   let rf = Tosmtcoq.rf in
   let ra' = Tosmtcoq.ra in
   let rf' = Tosmtcoq.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+  SmtCommands.tactic (call_cvc4 admit) cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
   (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
    *    the same ra and rf twice to have everything reifed *\)
    * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
-let tactic () = tactic_gen vm_cast_true
-let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)
+let tactic () = tactic_gen false vm_cast_true
+let tactic_no_check () = tactic_gen false (fun _ -> vm_cast_true_no_check)
+let tactic_admit () = tactic_gen true vm_cast_true
