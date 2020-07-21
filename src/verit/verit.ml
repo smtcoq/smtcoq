@@ -207,7 +207,7 @@ let call_verit _ rt ro ra' rf' first lsmt =
     if exit_code <> 0 then Structures.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();
     let res = import_trace ra' rf' logfilename (Some first) lsmt in
-    close_in win; Sys.remove wname; res
+    close_in win; Sys.remove wname; Some res
   with x -> close_in win; Sys.remove wname;
             match x with
             | Unknown -> Structures.error "veriT returns 'unknown'"
