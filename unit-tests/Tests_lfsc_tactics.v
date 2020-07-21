@@ -777,11 +777,11 @@ Section Admit.
     cvc4_admit.
   Admitted.
 
-  (* Not valid: prints a model *)
-  (* Goal forall (a b: bitvector 4), a = b. *)
-  (* Proof using. *)
-  (*   cvc4_admit. *)
-  (* Admitted. *)
+  (* Not valid: fails and prints a model *)
+  Goal forall (a b: bitvector 4), a = b.
+  Proof using.
+    Fail cvc4_admit.
+  Abort.
 
 End Admit.
 

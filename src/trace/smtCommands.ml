@@ -782,7 +782,7 @@ let core_tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl 
               (Structures.set_evars_tac body_nocast)
               (Structures.vm_cast_no_check body_cast))
        )
-    | None -> failwith "under progress"
+    | None -> Structures.give_up
 
 
 let tactic call_solver solver_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl =
