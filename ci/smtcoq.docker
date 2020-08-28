@@ -3,6 +3,7 @@
 # Based on the debian image
 # Build with `docker build -t smtcoq -f smtcoq.docker .`
 # Run with `docker run -ti --rm -e DISPLAY=host.docker.internal:0 smtcoq bash`
+#   or `docker run --net=host --env="DISPLAY" --volume="$HOME/.Xauthority:/home/coq/.Xauthority:rw" smtcoq coqide`
 # Warning:
 #   To build the container, dockers needs more that 2GB of memory (8GB is enough).
 #   On Mac, see: https://docs.docker.com/docker-for-mac/#advanced.
@@ -22,6 +23,7 @@ WORKDIR /home/coq
 
 RUN opam repo add coq-released https://coq.inria.fr/opam/released && \
     opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev && \
+    opam depext -y coq-smtcoq coqide && \
     opam install -y coq-smtcoq coqide
 
 ###################### COMPILE ZChaff ######################
@@ -47,16 +49,27 @@ RUN wget https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.
 
 ###################### DOWNLOAD CVC4 #######################
 
-WORKDIR /home/coq/bin
+WORKDIR /home/coq
 
 RUN wget http://cvc4.cs.stanford.edu/downloads/builds/x86_64-linux-opt/cvc4-1.6-x86_64-linux-opt && \
     chmod ugo+x cvc4-1.6-x86_64-linux-opt
+
+##################### LFSC SIGNATURES ######################
+
+WORKDIR /home/coq
+
+RUN git clone https://github.com/smtcoq/smtcoq.git
+
+ENV LFSCSIGS="/home/coq/smtcoq/src/lfsc/tests/signatures/"
+
+ENV DONTSHOWVERIT="yes"
 
 ######################### BINARIES #########################
 
 WORKDIR /home/coq/bin
 
 RUN ln -s /home/coq/zchaff/zchaff && \
-    ln -s /home/coq/veriT9f48a98/veriT
+    ln -s /home/coq/veriT9f48a98/veriT && \
+    ln -s /home/coq/cvc4-1.6-x86_64-linux-opt cvc4
 
 ENV PATH="/home/coq/bin:${PATH}"
