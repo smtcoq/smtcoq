@@ -25,6 +25,7 @@ clean::
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
+CAMLPKGS = -package str -package fileutils
 
 %.ml :  %.mll
 	$(CAMLLEX) $<
