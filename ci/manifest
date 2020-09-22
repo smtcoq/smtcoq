@@ -3,7 +3,7 @@
 # Testing the opam package with the veriT and CVC4 provers
 
 
-image: debian/sid
+image: debian/stable
 packages:
 - screen
 - opam
@@ -16,11 +16,21 @@ sources:
 tasks:
 - opam: |
     opam init --no-setup
-    opam switch create ocaml-base-compiler.4.09.0
-- smtcoq: |
+    opam switch create ocaml-base-compiler.4.09.1
+- coq: |
     eval $(opam env)
     opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
-    opam install camlp5 conf-findutils conf-m4 ocamlfind num coq coq-smtcoq
+    opam update
+    opam install -y -j2 camlp5 conf-findutils conf-m4 ocamlfind num coq.8.11.2
+- smtcoq: |
+    eval $(opam env)
+    cd smtcoq
+    git checkout coq-8.11
+    cd src
+    ./configure.sh
+    make
+    make install
+    cd ../..
 - cvc4: |
     wget http://cvc4.cs.stanford.edu/downloads/builds/x86_64-linux-opt/cvc4-1.6-x86_64-linux-opt
     chmod ugo+x cvc4-1.6-x86_64-linux-opt
@@ -42,6 +52,6 @@ tasks:
     export LFSCSIGS="/home/build/smtcoq/src/lfsc/tests/signatures/"
     export DONTSHOWVERIT="yes"
     cd smtcoq/unit-tests
-    sed -i "s/..\/src/~\/.opam\/ocaml-base-compiler.4.09.0\/lib\/coq\/user-contrib\/SMTCoq/g" Makefile
+    sed -i "s/..\/src/~\/.opam\/ocaml-base-compiler.4.09.1\/lib\/coq\/user-contrib\/SMTCoq/g" Makefile
     make verit
     make lfsc
