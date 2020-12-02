@@ -672,8 +672,12 @@ let get_arguments concl =
   | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
 
 
-let make_proof call_solver env rt ro ra' rf' l ls_smtc =
+let make_proof call_solver env rt ro ra' rf' l ls_smtc elim_distinct =
   let root = SmtTrace.mkRootV [l] in
+  if elim_distinct then (
+    
+    let step = SplDistinctElim (root, ??(* liste des inégalités *)) in
+  )
   call_solver env rt ro ra' rf' (root,l) ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
