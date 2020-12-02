@@ -104,6 +104,8 @@ type 'hform rule =
 
   (* Elimination of operators *)
   | SplDistinctElim of 'hform clause * 'hform
+  (* distinct_elim : {distinct a_1 ... a_n} --> {and (not (a_1 = a_2)) ... (not (a_{n-1} = a_n))}
+   *)
 
   (* Bit-blasting *)
   | BBVar of 'hform
