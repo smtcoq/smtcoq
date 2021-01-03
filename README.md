@@ -16,7 +16,7 @@ SMTCoq is distributed under the CeCILL-C license.
 Here is a very small example of the possibilities of SMTCoq: automatic proofs in group theory.
 
 ```coq
-Require Import SMTCoq ZArith.
+Require Import SMTCoq.SMTCoq ZArith.
 
 Local Open Scope Z_scope.
 
