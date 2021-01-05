@@ -1004,3 +1004,14 @@ Section Polymorphism.
   Goal forall (f : option Z -> Z) (a b : Z), a = b -> f (Some a) = f (Some b).
   Proof. verit. auto with typeclass_instances. Qed.
 End Polymorphism.
+
+
+Section EqualityOnUninterpretedType.
+  Variable A : Type.
+  (* Hypothesis HA : CompDec A. *)
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof.
+    intros f a b. prop2bool.
+  Abort.
+End EqualityOnUninterpretedType.

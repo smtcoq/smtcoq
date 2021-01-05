@@ -36,22 +36,28 @@ Ltac prop2bool :=
     | [ |- context[ Z.ge _ _ ] ] => rewrite Z.ge_le_iff; rewrite <- Z.leb_le
     | [ |- context[ Z.eq _ _ ] ] => rewrite <- Z.eqb_eq
 
-    | [ p: (CompDec ?t) |- context[ @Logic.eq ?t _ _ ] ] =>
-      pose proof p as p0;
-      rewrite (@compdec_eq_eqb _ p0);
-      destruct p0;
-      try exact p
-
-    | [ Eqb : (EqbType ?ty)  |- _ ] => destruct Eqb; simpl
-
-    | [ |- context[ @Logic.eq (bitvector _) _ _ ] ] =>
-      rewrite <- bv_eq_reflect
-
-    | [ |- context[ @Logic.eq (farray _ _) _ _ ] ] =>
-      rewrite <- equal_iff_eq
-
-    | [ |- context[ @Logic.eq Z _ _ ] ] =>
-      rewrite <- Z.eqb_eq
+    | [ |- context[ @Logic.eq ?t _ _ ] ] =>
+      lazymatch t with
+      | bitvector _ => rewrite <- bv_eq_reflect
+      | farray _ _ => rewrite <- equal_iff_eq
+      | Z => rewrite <- Z.eqb_eq
+      | bool => fail
+      | _ =>
+        lazymatch goal with
+        | [ p: (CompDec ?t) |- _ ] =>
+          pose proof p as p0;
+          rewrite (@compdec_eq_eqb _ p0);
+          destruct p0;
+          try exact p
+        | _ => assert (p:CompDec t);
+               [ auto with typeclass_instances
+               | pose proof p as p0;
+                 rewrite (@compdec_eq_eqb _ p0);
+                 destruct p0;
+                 try exact p
+               ]
+        end
+      end
 
     | [ |- context[?G0 = true \/ ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
