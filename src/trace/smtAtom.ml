@@ -1262,6 +1262,21 @@ module Atom =
         | _ -> assert false
 
       and mk_unknown c args ty =
+        let rec collect_types = function
+          | [] -> ([],[])
+          | x::xs as l ->
+             if Constr.iskind (Structures.retyping_get_type_of env sigma x) then
+               let (l1, l2) = collect_types xs in
+               (x::l1, l2)
+             else
+               ([], l)
+        in
+        let (args1, args2) = collect_types args in
+        let c, args =
+          match args1 with
+            | [] -> c, args
+            | _ -> Constr.mkApp (c, Array.of_list args1), args2
+        in
         let hargs = Array.of_list (List.map mk_hatom args) in
         let op =
           try Op.of_coq ro c
