@@ -14,7 +14,7 @@ easily re-usable for your own usage.
 ## Overview
 
 After installation, the SMTCoq module can be used in Coq files via the
-`Require Import SMTCoq.` command. For each supported solver, it
+`Require Import SMTCoq.SMTCoq.` command. For each supported solver, it
 provides:
 
 - a vernacular command to check answers: `XXX_Checker "problem_file"
@@ -60,7 +60,7 @@ To check the result given by zChaff on an unsatisfiable dimacs file
 
 - In a Coq file `file.v`, put:
 ```coq
-Require Import SMTCoq.
+Require Import SMTCoq.SMTCoq.
 Zchaff_Checker "file.cnf" "resolve_trace".
 ```
 
@@ -70,7 +70,7 @@ Zchaff_Checker "file.cnf" "resolve_trace".
 - You can also produce Coq theorems from zChaff proof witnesses: the
   commands
 ```coq
-Require Import SMTCoq.
+Require Import SMTCoq.SMTCoq.
 Zchaff_Theorem theo "file.cnf" "resolve_trace".
 ```
 will produce a Coq term `theo` whose type is the theorem stated in
@@ -111,7 +111,7 @@ This command produces a proof witness file named `file.log`.
 
 - In a Coq file `file.v`, put:
 ```coq
-Require Import SMTCoq.
+Require Import SMTCoq.SMTCoq.
 Section File.
   Verit_Checker "file.smt2" "file.log".
 End File.
@@ -123,7 +123,7 @@ End File.
 - You can also produce Coq theorems from veriT proof witnesses: the
   commands
 ```coq
-Require Import SMTCoq.
+Require Import SMTCoq.SMTCoq.
 Section File.
   Verit_Theorem theo "file.smt2" "file.log".
 End File.
@@ -186,7 +186,7 @@ This set of commands produces a proof witness file named `name.lfsc`.
 
 - In a Coq file `name.v`, put:
 ```coq
-Require Import SMTCoq Bool List.
+Require Import SMTCoq.SMTCoq Bool List.
 Import ListNotations BVList.BITVECTOR_LIST FArray.
 Local Open Scope list_scope.
 Local Open Scope farray_scope.
