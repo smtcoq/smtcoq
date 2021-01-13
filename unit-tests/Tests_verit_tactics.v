@@ -994,3 +994,13 @@ Proof using.
   intros.
   verit.
 Qed.
+
+
+Section Polymorphism.
+  Goal forall (f : option Z -> Z) (a b : Z),
+      implb (Z.eqb a b) (Z.eqb (f (Some a)) (f (Some b))).
+  Proof. verit. auto with typeclass_instances. Qed.
+
+  Goal forall (f : option Z -> Z) (a b : Z), a = b -> f (Some a) = f (Some b).
+  Proof. verit. auto with typeclass_instances. Qed.
+End Polymorphism.
