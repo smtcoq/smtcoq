@@ -74,12 +74,12 @@ Then follow the instructions of the previous section.
 
 ### Requirements
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.10.*.
+You need to have OCaml version >= 4.08 and < 4.10 and Coq version 8.10.*.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
-> with OCaml version >= 4.09.0.
+> with OCaml version >= 4.08.
 
 If you want to use SMTCoq with high performance to check large proof
 certificates, you need to use the [version of Coq with native
