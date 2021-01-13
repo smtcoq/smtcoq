@@ -580,12 +580,95 @@ Section Int63.
 End Int63.
 
 
-Hint Resolve unit_ord bool_ord Z_ord Positive_ord BV_ord FArray_ord : typeclass_instances.
-Hint Resolve unit_eqbtype bool_eqbtype Z_eqbtype Positive_eqbtype BV_eqbtype FArray_eqbtype : typeclass_instances.
-Hint Resolve bool_dec Z_dec Positive_dec BV_dec FArray_dec : typeclass_instances.
-Hint Resolve unit_comp bool_comp Z_comp Positive_comp BV_comp FArray_comp : typeclass_instances.
-Hint Resolve unit_inh bool_inh Z_inh Positive_inh BV_inh FArray_inh : typeclass_instances.
-Hint Resolve unit_compdec bool_compdec Z_compdec Positive_compdec BV_compdec FArray_compdec : typeclass_instances.
+Section option.
 
-Hint Resolve int63_ord int63_inh int63_eqbtype int63_dec int63_comp int63_compdec
-  : typeclass_instances.
+  Generalizable Variable A.
+  Context `{HA : CompDec A}.
+
+
+  Definition option_eqb (x y : option A) : bool :=
+    match x, y with
+    | Some a, Some b => eqb a b
+    | None, None => true
+    | _, _ => false
+    end.
+
+
+  Lemma option_eqb_spec : forall (x y : option A), option_eqb x y = true <-> x = y.
+  Proof.
+    intros [a| ] [b| ]; simpl; split; try discriminate; auto.
+    - intro H. rewrite eqb_spec in H. now subst b.
+    - intros H. inversion H as [H1]. now rewrite eqb_spec.
+  Qed.
+
+
+  Instance option_eqbtype : EqbType (option A) := Build_EqbType _ _ option_eqb_spec.
+
+
+  Definition option_lt (x y : option A) : Prop :=
+    match x, y with
+    | Some a, Some b => lt a b
+    | Some _, None => True
+    | None, Some _ => False
+    | None, None => False
+    end.
+
+
+  Lemma option_lt_trans : forall (x y z : option A),
+      option_lt x y -> option_lt y z -> option_lt x z.
+  Proof.
+    intros [a| ] [b| ] [c| ]; simpl; auto.
+    - apply lt_trans.
+    - intros _ [].
+  Qed.
+
+
+  Lemma option_lt_not_eq : forall (x y : option A), option_lt x y -> x <> y.
+  Proof.
+    intros [a| ] [b| ]; simpl; auto.
+    - intros H1 H2. inversion H2 as [H3]. revert H3. now apply lt_not_eq.
+    - discriminate.
+  Qed.
+
+
+  Instance option_ord : OrdType (option A) :=
+    Build_OrdType _ _ option_lt_trans option_lt_not_eq.
+
+
+  Definition option_compare : forall (x y : option A), Compare option_lt Logic.eq x y.
+  Proof.
+    intros [a| ] [b| ]; simpl.
+    - case_eq (compare a b); intros l H.
+      + now apply LT.
+      + apply EQ. now subst b.
+      + now apply GT.
+    - now apply LT.
+    - now apply GT.
+    - now apply EQ.
+  Defined.
+
+
+  Instance option_comp : Comparable (option A) := Build_Comparable _ _ option_compare.
+
+
+  Instance option_inh : Inhabited (option A) := Build_Inhabited _ None.
+
+
+  Instance option_compdec : CompDec (option A) := {|
+    Eqb := option_eqbtype;
+    Ordered := option_ord;
+    Comp := option_comp;
+    Inh := option_inh
+  |}.
+
+End option.
+
+
+Hint Resolve unit_ord unit_eqbtype unit_comp unit_inh unit_compdec : typeclass_instances.
+Hint Resolve bool_ord bool_eqbtype bool_dec bool_comp bool_inh bool_compdec : typeclass_instances.
+Hint Resolve Z_ord Z_eqbtype Z_dec Z_comp Z_inh Z_compdec : typeclass_instances.
+Hint Resolve Positive_ord Positive_eqbtype Positive_dec Positive_comp Positive_inh Positive_compdec : typeclass_instances.
+Hint Resolve BV_ord BV_eqbtype BV_dec BV_comp BV_inh BV_compdec : typeclass_instances.
+Hint Resolve FArray_ord FArray_eqbtype FArray_dec FArray_comp FArray_inh FArray_compdec : typeclass_instances.
+Hint Resolve int63_ord int63_inh int63_eqbtype int63_dec int63_comp int63_compdec option_compdec : typeclass_instances.
+Hint Resolve option_ord option_eqbtype option_comp option_inh : typeclass_instances.
