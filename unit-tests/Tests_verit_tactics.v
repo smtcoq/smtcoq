@@ -1005,6 +1005,7 @@ Section Polymorphism.
   Proof. verit. auto with typeclass_instances. Qed.
 End Polymorphism.
 
+
 Section EqualityOnUninterpretedType1.
   Variable A : Type.
   Hypothesis HA : CompDec A.
@@ -1029,8 +1030,17 @@ Section EqualityOnUninterpretedType2.
 End EqualityOnUninterpretedType2.
 
 Section EqualityOnUninterpretedType3.
-  Variable A : Type.
+  Variable A B : Type.
 
   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. prop2bool. Abort. (* verit. Qed. *)
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. prop2bool. Abort. (* verit. Qed. *)
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. prop2bool. Abort. (* verit. Qed. *)
+
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
   Proof. prop2bool. Abort. (* verit. Qed. *)
 End EqualityOnUninterpretedType3.
