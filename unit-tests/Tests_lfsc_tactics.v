@@ -716,7 +716,7 @@ Section A_BV_EUF_LIA_PR.
     smt.
   Admitted.
 
-  (* The original issue (unvalid) *)
+  (* The original issue (invalid) *)
   Goal forall (x: bitvector 1), bv_subt (bv_shl #b|0| x) #b|0| = #b|0|.
   Proof using.
     smt.
