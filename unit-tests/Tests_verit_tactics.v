@@ -1033,14 +1033,14 @@ Section EqualityOnUninterpretedType3.
   Variable A B : Type.
 
   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
-  Proof. prop2bool. Abort. (* verit. Qed. *)
+  Proof. verit. Abort.
 
   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
-  Proof. prop2bool. Abort. (* verit. Qed. *)
+  Proof. verit. Abort.
 
   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
-  Proof. prop2bool. Abort. (* verit. Qed. *)
+  Proof. verit. Abort.
 
   Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
-  Proof. prop2bool. Abort. (* verit. Qed. *)
+  Proof. verit. Abort.
 End EqualityOnUninterpretedType3.
