@@ -44,7 +44,7 @@ Ltac prop2bool :=
       | bool => fail
       | _ =>
         lazymatch goal with
-        | [ p: (CompDec ?t) |- _ ] =>
+        | [ p: (CompDec t) |- _ ] =>
           pose proof p as p0;
           rewrite (@compdec_eq_eqb _ p0);
           destruct p0;
