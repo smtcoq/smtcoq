@@ -1057,7 +1057,7 @@ Section AppliedPolymorphicTypes2.
 
   Goal forall l1 l2 l3 l4 : list B,
       l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
-  Proof. intros l1 l2 l3 l4. pose proof HlB as p0. rewrite (@compdec_eq_eqb _ p0). destruct p0. verit. Qed.
+  Proof. verit. Qed.
 
   Hypothesis append_assoc_B :
     forall l1 l2 l3 : list B, eqb_of_compdec HlB (l1 +++ (l2 +++ l3)) ((l1 +++ l2) +++ l3) = true.
@@ -1071,7 +1071,9 @@ Section AppliedPolymorphicTypes2.
   Proof. verit append_assoc_B. Qed.
 
   (* The hypothesis is used *)
-  (* Goal forall l1 l2 l3 l4 : list B, *)
-  (*     l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4. *)
-  (* Proof. verit append_assoc_B. Qed. *)
+  (* TODO: applications of lemmas must be checked modulo two symmetries
+     of equality *)
+  Goal forall l1 l2 l3 l4 : list B,
+      l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4.
+  Proof. verit append_assoc_B. Abort.
 End AppliedPolymorphicTypes2.

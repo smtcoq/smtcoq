@@ -12,7 +12,6 @@
 
 open SmtMisc
 open CoqTerms
-open SmtBtype
 
 
 (** Operators *)
@@ -43,7 +42,7 @@ type bop =
    | BO_Zle
    | BO_Zge
    | BO_Zgt
-   | BO_eq of btype
+   | BO_eq of SmtBtype.btype
    | BO_BVand of int
    | BO_BVor of int
    | BO_BVxor of int
@@ -54,20 +53,20 @@ type bop =
    | BO_BVconcat of int * int
    | BO_BVshl of int
    | BO_BVshr of int
-   | BO_select of btype * btype
-   | BO_diffarray of btype * btype
+   | BO_select of SmtBtype.btype * SmtBtype.btype
+   | BO_diffarray of SmtBtype.btype * SmtBtype.btype
 
 
 type top =
-  | TO_store of btype * btype
+  | TO_store of SmtBtype.btype * SmtBtype.btype
 
 
 type nop =
-  | NO_distinct of btype
+  | NO_distinct of SmtBtype.btype
 
 type op_def = {
-    tparams : btype array;
-    tres : btype;
+    tparams : SmtBtype.btype array;
+    tres : SmtBtype.btype;
     op_val : Structures.constr }
 
 type index = Index of int
@@ -97,9 +96,9 @@ module Op =
       | CO_BV bv -> mklApp cCO_BV [|mk_bv_list bv; mkN (List.length bv)|]
 
     let c_type_of = function
-      | CO_xH -> Tpositive
-      | CO_Z0 -> TZ
-      | CO_BV bv -> TBV (List.length bv)
+      | CO_xH -> SmtBtype.Tpositive
+      | CO_Z0 -> SmtBtype.TZ
+      | CO_BV bv -> SmtBtype.TBV (List.length bv)
 
     let interp_cop = function
       | CO_xH -> Lazy.force cxH
@@ -120,20 +119,20 @@ module Op =
       | UO_BVsextn (s, n) -> mklApp cUO_BVsextn [|mkN s; mkN n|]
 
     let u_type_of = function
-      | UO_xO | UO_xI -> Tpositive
-      | UO_Zpos | UO_Zneg | UO_Zopp -> TZ
-      | UO_BVbitOf _ -> Tbool
-      | UO_BVnot s | UO_BVneg s -> TBV s
-      | UO_BVextr (_, n, _) -> TBV n
-      | UO_BVzextn (s, n) | UO_BVsextn (s, n) -> TBV (s + n)
+      | UO_xO | UO_xI -> SmtBtype.Tpositive
+      | UO_Zpos | UO_Zneg | UO_Zopp -> SmtBtype.TZ
+      | UO_BVbitOf _ -> SmtBtype.Tbool
+      | UO_BVnot s | UO_BVneg s -> SmtBtype.TBV s
+      | UO_BVextr (_, n, _) -> SmtBtype.TBV n
+      | UO_BVzextn (s, n) | UO_BVsextn (s, n) -> SmtBtype.TBV (s + n)
 
     let u_type_arg = function
-      | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> Tpositive
-      | UO_Zopp -> TZ
-      | UO_BVbitOf (s,_) -> TBV s
-      | UO_BVnot s | UO_BVneg s -> TBV s
-      | UO_BVextr (_, _, s) -> TBV s
-      | UO_BVzextn (s, _) | UO_BVsextn (s, _) -> TBV s
+      | UO_xO | UO_xI | UO_Zpos | UO_Zneg -> SmtBtype.Tpositive
+      | UO_Zopp -> SmtBtype.TZ
+      | UO_BVbitOf (s,_) -> SmtBtype.TBV s
+      | UO_BVnot s | UO_BVneg s -> SmtBtype.TBV s
+      | UO_BVextr (_, _, s) -> SmtBtype.TBV s
+      | UO_BVzextn (s, _) | UO_BVsextn (s, _) -> SmtBtype.TBV s
 
 
     let interp_uop = function
@@ -205,25 +204,25 @@ module Op =
       | BO_diffarray (ti, te) -> diffarray_to_coq ti te
 
     let b_type_of = function
-      | BO_Zplus | BO_Zminus | BO_Zmult -> TZ
+      | BO_Zplus | BO_Zminus | BO_Zmult -> SmtBtype.TZ
       | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt | BO_eq _
-      | BO_BVult _ | BO_BVslt _ -> Tbool
+      | BO_BVult _ | BO_BVslt _ -> SmtBtype.Tbool
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
-      | BO_BVshl s | BO_BVshr s -> TBV s
-      | BO_BVconcat (s1, s2) -> TBV (s1 + s2)
+      | BO_BVshl s | BO_BVshr s -> SmtBtype.TBV s
+      | BO_BVconcat (s1, s2) -> SmtBtype.TBV (s1 + s2)
       | BO_select (_, te) -> te
       | BO_diffarray (ti, _) -> ti
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult
-      | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (TZ,TZ)
+      | BO_Zlt | BO_Zle | BO_Zge | BO_Zgt -> (SmtBtype.TZ,SmtBtype.TZ)
       | BO_eq t -> (t,t)
       | BO_BVand s | BO_BVor s | BO_BVxor s | BO_BVadd s | BO_BVmult s
       | BO_BVult s | BO_BVslt s | BO_BVshl s | BO_BVshr s ->
-        (TBV s,TBV s)
-      | BO_BVconcat (s1, s2) -> (TBV s1, TBV s2)
-      | BO_select (ti, te) -> (TFArray (ti, te), ti)
-      | BO_diffarray (ti, te) -> (TFArray (ti, te), TFArray (ti, te))
+        (SmtBtype.TBV s,SmtBtype.TBV s)
+      | BO_BVconcat (s1, s2) -> (SmtBtype.TBV s1, SmtBtype.TBV s2)
+      | BO_select (ti, te) -> (SmtBtype.TFArray (ti, te), ti)
+      | BO_diffarray (ti, te) -> (SmtBtype.TFArray (ti, te), SmtBtype.TFArray (ti, te))
 
 
     (* let interp_ieq t_i t =
@@ -270,14 +269,15 @@ module Op =
 
 
     let interp_eq t_i = function
-      | TZ -> Lazy.force ceqbZ
-      | Tbool -> Lazy.force ceqb
-      | Tpositive -> Lazy.force ceqbP
-      | TBV s -> mklApp cbv_eq [|mkN s|]
-      | Tindex i ->
-        mklApp ceqb_of_compdec [|mklApp cte_carrier [|i.hval|];
-                                 mklApp cte_compdec [|i.hval|]|]
-      | TFArray (ti, te) -> interp_eqarray t_i ti te
+      | SmtBtype.TZ -> Lazy.force ceqbZ
+      | SmtBtype.Tbool -> Lazy.force ceqb
+      | SmtBtype.Tpositive -> Lazy.force ceqbP
+      | SmtBtype.TBV s -> mklApp cbv_eq [|mkN s|]
+      | SmtBtype.Tindex i ->
+         let compdec = SmtBtype.indexed_type_compdec i in
+         mklApp ceqb_of_compdec [|mklApp cte_carrier [|compdec|];
+                                  mklApp cte_compdec [|compdec|]|]
+      | SmtBtype.TFArray (ti, te) -> interp_eqarray t_i ti te
 
 
 
@@ -307,10 +307,10 @@ module Op =
       | TO_store (ti, te) -> store_to_coq ti te
 
     let t_type_of = function
-      | TO_store (ti, te) -> TFArray (ti, te)
+      | TO_store (ti, te) -> SmtBtype.TFArray (ti, te)
 
     let t_type_args = function
-      | TO_store (ti, te) -> TFArray (ti, te), ti, te
+      | TO_store (ti, te) -> SmtBtype.TFArray (ti, te), ti, te
 
     let interp_top t_i = function
       | TO_store (ti, te) -> interp_store t_i ti te
@@ -320,7 +320,7 @@ module Op =
       | NO_distinct t -> mklApp cNO_distinct [|SmtBtype.to_coq t|]
 
     let n_type_of = function
-      | NO_distinct _ -> Tbool
+      | NO_distinct _ -> SmtBtype.Tbool
 
     let n_type_args = function
       | NO_distinct ty -> ty
@@ -362,7 +362,7 @@ module Op =
 
     let interp_tbl tval mk_Tval reify =
       let t = Array.make (reify.count + 1)
-	        (mk_Tval [||] Tbool (Lazy.force ctrue)) in
+	        (mk_Tval [||] SmtBtype.Tbool (Lazy.force ctrue)) in
       let set _ op =
         let index, hval = destruct "destruct on a Rel: called by set in interp_tbl" op in
         t.(index) <- mk_Tval hval.tparams hval.tres hval.op_val in
@@ -607,8 +607,8 @@ module Atom =
       | Anop (op,_) -> Op.n_type_of op
       | Aapp (op,_) -> Op.i_type_of op
 
-    let is_bool_type h = SmtBtype.equal (type_of h) Tbool
-    let is_bv_type h = match type_of h with | TBV _ -> true | _ -> false
+    let is_bool_type h = SmtBtype.equal (type_of h) SmtBtype.Tbool
+    let is_bv_type h = match type_of h with | SmtBtype.TBV _ -> true | _ -> false
 
 
     let rec compute_int = function
@@ -784,7 +784,7 @@ module Atom =
         let th = type_of h in
         if SmtBtype.equal t th then
           h
-        else if t == TZ && th == Tpositive then
+        else if t == SmtBtype.TZ && th == SmtBtype.Tpositive then
           (* Special case: the SMT solver cannot distinguish Z from
              positive, we have to add the injection back *)
           get reify (Auop(UO_Zpos, h))
@@ -1074,9 +1074,9 @@ module Atom =
         | CCBVsextn -> mk_bvsextn args
         | CCBVshl -> mk_bop_bvshl args
         | CCBVshr -> mk_bop_bvshr args
-        | CCeqb -> mk_teq Tbool args
-        | CCeqbP -> mk_teq Tpositive args
-        | CCeqbZ -> mk_teq TZ args
+        | CCeqb -> mk_teq SmtBtype.Tbool args
+        | CCeqbP -> mk_teq SmtBtype.Tpositive args
+        | CCeqbZ -> mk_teq SmtBtype.TZ args
         | CCeqbA -> mk_bop_farray_equal args
         | CCeqbBV -> mk_bop_bveq args
         | CCeqbI -> mk_bop_ieq args
@@ -1228,7 +1228,7 @@ module Atom =
       and mk_bop_bveq = function
         | [s;a1;a2] when SL.mem LBitvectors known_logic ->
           let s' = mk_bvsize s in
-          mk_teq (TBV s') [a1;a2]
+          mk_teq (SmtBtype.TBV s') [a1;a2]
         (* We still want to interpret bv equality as uninterpreted
            smtlib2 equality if the solver doesn't support bitvectors *)
         | [s;a1;a2] ->
@@ -1261,7 +1261,7 @@ module Atom =
         | [ti;te;_;_;_;_;_;a;b] when SL.mem LArrays known_logic ->
           let ti' = SmtBtype.of_coq rt known_logic ti in
           let te' = SmtBtype.of_coq rt known_logic te in
-          mk_teq (TFArray (ti', te')) [a; b]
+          mk_teq (SmtBtype.TFArray (ti', te')) [a; b]
         (* We still want to interpret array equality as uninterpreted
            smtlib2 equality if the solver doesn't support arrays *)
         | [ti;te;ord_ti;_;_;_;inh_te;a;b] ->

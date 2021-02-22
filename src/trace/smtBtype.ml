@@ -15,11 +15,28 @@ open CoqTerms
 
 (** Syntaxified version of Coq type *)
 
-type indexed_type = Structures.constr gen_hashed
+type uninterpreted_type =
+  (* Uninterpreted type for which a CompDec is already known
+     The constr is of type typ_compdec
+   *)
+  | CompDec of Structures.constr
+  (* Uninterpreted type for which the knowledge of a CompDec is delayed
+     until either:
+     - one is used
+     - we have reached the end of the process and we generate a new one
+       via a cut
+     The constr is of type Type
+   *)
+  | Delayed of Structures.constr
 
-let dummy_indexed_type i = {index = i; hval = Structures.mkProp}
+type indexed_type = uninterpreted_type gen_hashed
+
+let dummy_indexed_type i = {index = i; hval = Delayed (Structures.mkProp)}
 let indexed_type_index i = i.index
-let indexed_type_hval i = i.hval
+let indexed_type_compdec i =
+  match i.hval with
+    | CompDec compdec -> compdec
+    | Delayed _ -> assert false
 
 type btype =
   | TZ
@@ -39,7 +56,7 @@ let index_to_coq i =
     interp
 
 let indexed_type_of_int i =
-  {index = i; hval = index_to_coq i }
+  {index = i; hval = Delayed (index_to_coq i) }
 
 let rec equal t1 t2 =
   match t1,t2 with
@@ -103,10 +120,24 @@ let get_coq_type_op = Hashtbl.find op_coq_types
 
 let interp_tbl reify =
   let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_compdec) in
-  let set _ = function
-    | Tindex it -> t.(it.index) <- it.hval
-    | _ -> () in
-  Hashtbl.iter set reify.tbl;
+  let set c bt =
+    match bt with
+      | Tindex it ->
+         (match it.hval with
+            | CompDec compdec -> t.(it.index) <- compdec; Some bt
+            | Delayed ty ->
+               let n = string_of_int (List.length reify.cuts) in
+               let compdec_name = Structures.mkId ("CompDec"^n) in
+               let compdec_var = Structures.mkVar compdec_name in
+               let compdec_type = mklApp cCompDec [| ty |] in
+               reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
+               let ce = mklApp cTyp_compdec [|ty; compdec_var|] in
+               t.(it.index) <- ce;
+               Some (Tindex {index = it.index; hval = CompDec ce})
+         )
+      | _ -> Some bt
+  in
+  Hashtbl.filter_map_inplace set reify.tbl;
   Structures.mkArray (Lazy.force ctyp_compdec, t)
 
 
@@ -139,7 +170,11 @@ let rec interp t_i = function
   | Tbool -> Lazy.force cbool
   | Tpositive -> Lazy.force cpositive
   | TBV n -> mklApp cbitvector [|mkN n|]
-  | Tindex c -> mklApp cte_carrier [|c.hval|]
+  | Tindex c ->
+     (match c.hval with
+        | CompDec t -> mklApp cte_carrier [|t|]
+        | Delayed _ -> assert false
+     )
   (* | TFArray _ as t -> interp_t t_i t *)
   | TFArray (ti,te) ->
      mklApp cfarray [| interp t_i ti; interp t_i te;
@@ -150,13 +185,24 @@ let interp_to_coq reify t = interp (make_t_i reify) t
 
 let get_cuts reify = reify.cuts
 
-let declare reify t typ_compdec =
-  (* TODO: allows to have only typ_compdec *)
+let declare reify t typ_uninterpreted_type =
   assert (not (Hashtbl.mem reify.tbl t));
-  let res = Tindex {index = reify.count; hval = typ_compdec} in
+  let res = Tindex {index = reify.count; hval = typ_uninterpreted_type} in
   Hashtbl.add reify.tbl t res;
   reify.count <- reify.count + 1;
   res
+
+let declare_compdec reify t compdec =
+  let ce = mklApp cTyp_compdec [|t; compdec|] in
+  let ty = declare reify t (CompDec ce) in
+  (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
+  ty
+
+let declare_delayed reify t delayed =
+  let ty = declare reify t (Delayed delayed) in
+  (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
+  ty
+
 
 exception Unknown_type of btype
 
@@ -175,22 +221,27 @@ let rec compdec_btype reify = function
        [|interp_to_coq reify ti; interp_to_coq reify te;
          compdec_btype reify ti; compdec_btype reify te|]
   | Tindex i ->
-     let c, args = Structures.decompose_app i.hval in
-     if Structures.eq_constr c (Lazy.force cTyp_compdec) then
-       match args with
-         | [_; tic] -> tic
-         | _ -> assert false
-     else assert false
+     (match i.hval with
+        | CompDec compdec ->
+           let c, args = Structures.decompose_app compdec in
+           if Structures.eq_constr c (Lazy.force cTyp_compdec) then
+             match args with
+               | [_; tic] -> tic
+               | _ -> assert false
+           else assert false
+        | _ -> assert false
+     )
 
 
 let declare_and_compdec reify t ty =
   try Hashtbl.find reify.unsup_tbl ty
   with Not_found ->
     let res =
-      declare reify t (mklApp cTyp_compdec [|t; compdec_btype reify ty|])
+      declare reify t (CompDec (mklApp cTyp_compdec [|t; compdec_btype reify ty|]))
     in
     Hashtbl.add reify.unsup_tbl ty res;
     res
+
 
 
 let rec of_coq reify known_logic t =
@@ -220,15 +271,7 @@ let rec of_coq reify known_logic t =
     else
       try Hashtbl.find reify.tbl t
       with Not_found ->
-        let n = string_of_int (List.length reify.cuts) in
-        let compdec_name = Structures.mkId ("CompDec"^n) in
-        let compdec_var = Structures.mkVar compdec_name in
-        let compdec_type = mklApp cCompDec [| t |]in
-        reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
-        let ce = mklApp cTyp_compdec [|t; compdec_var|] in
-        let ty = declare reify t ce in
-        (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
-        ty
+        declare_delayed reify t t
 
   with Unknown_type ty ->
     try Hashtbl.find reify.tbl t
@@ -236,9 +279,19 @@ let rec of_coq reify known_logic t =
 
 
 let of_coq_compdec reify t compdec =
-  try Hashtbl.find reify.tbl t
+  try
+    let ty = Hashtbl.find reify.tbl t in
+    match ty with
+      | Tindex i ->
+         (match i.hval with
+            | CompDec _ -> ty
+            | Delayed _ ->
+               Hashtbl.remove reify.tbl t;
+               let ce = mklApp cTyp_compdec [|t; compdec|] in
+               let res = Tindex {index = i.index; hval = CompDec ce} in
+               Hashtbl.add reify.tbl t res;
+               res
+         )
+      | _ -> assert false
   with Not_found ->
-    let ce = mklApp cTyp_compdec [|t; compdec|] in
-    let ty = declare reify t ce in
-    (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
-    ty
+    declare_compdec reify t compdec
