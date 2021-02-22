@@ -1008,10 +1008,8 @@ End Polymorphism.
 
 Section EqualityOnUninterpretedType.
   Variable A : Type.
-  (* Hypothesis HA : CompDec A. *)
+  Hypothesis HA : CompDec A.
 
   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
-  Proof.
-    intros f a b. prop2bool.
-  Abort.
+  Proof. verit. Qed.
 End EqualityOnUninterpretedType.

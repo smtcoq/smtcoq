@@ -233,3 +233,12 @@ let rec of_coq reify known_logic t =
   with Unknown_type ty ->
     try Hashtbl.find reify.tbl t
     with Not_found -> declare_and_compdec reify t ty
+
+
+let of_coq_compdec reify t compdec =
+  try Hashtbl.find reify.tbl t
+  with Not_found ->
+    let ce = mklApp cTyp_compdec [|t; compdec|] in
+    let ty = declare reify t ce in
+    (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
+    ty

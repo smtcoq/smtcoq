@@ -908,11 +908,12 @@ module Atom =
       | CCBVzextn
       | CCBVshl
       | CCBVshr
-      | CCeqb
-      | CCeqbP
-      | CCeqbZ
-      | CCeqbBV
-      | CCeqbA
+      | CCeqb                   (* Equality on bool *)
+      | CCeqbP                  (* Equality on positive *)
+      | CCeqbZ                  (* Equality on Z *)
+      | CCeqbBV                 (* Equality on bit vectors *)
+      | CCeqbA                  (* Equality on arrays *)
+      | CCeqbI                  (* Equality on uninterpreted types *)
       | CCselect
       | CCdiff
       | CCstore
@@ -962,7 +963,7 @@ module Atom =
       (* | CCeqbBV -> SL.singleton LBitvectors *)
       (* | CCeqbA -> SL.singleton LArrays *)
 
-      | CCeqbP | CCeqbZ | CCeqbBV | CCeqbA
+      | CCeqbP | CCeqbZ | CCeqbBV | CCeqbA | CCeqbI
       | CCunknown | CCunknown_deps _  -> SL.singleton LUF
 
 
@@ -994,7 +995,7 @@ module Atom =
 
 
     let op_tbl () =
-      let tbl = Hashtbl.create 29 in
+      let tbl = Hashtbl.create 40 in
       let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
@@ -1007,7 +1008,7 @@ module Atom =
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
           cbv_shl, CCBVshl; cbv_shr, CCBVshr;
-          ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV;
+          ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV; ceqb_of_compdec, CCeqbI;
           cselect, CCselect; cdiff, CCdiff;
           cstore, CCstore;
           cequalarray, CCeqbA;
@@ -1078,6 +1079,7 @@ module Atom =
         | CCeqbZ -> mk_teq TZ args
         | CCeqbA -> mk_bop_farray_equal args
         | CCeqbBV -> mk_bop_bveq args
+        | CCeqbI -> mk_bop_ieq args
         | CCselect -> mk_bop_select args
         | CCdiff -> mk_bop_diff args
         | CCstore -> mk_top_store args
@@ -1141,6 +1143,13 @@ module Atom =
                                 mk_eq reify ty h1 h2
                   | _ -> failwith "unexpected number of arguments for mk_teq"
         else mk_bop (BO_eq ty) args
+
+      and mk_bop_ieq args =
+        match args with
+          | t::compdec::args ->
+             let ty = SmtBtype.of_coq_compdec rt t compdec in
+             mk_teq ty args
+          | _ -> failwith "unexpected number of arguments for mk_bop_ieq"
 
       and mk_bop op = function
         | [a1;a2] ->
