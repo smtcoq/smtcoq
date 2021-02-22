@@ -1027,3 +1027,10 @@ Section EqualityOnUninterpretedType2.
   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
   Proof. verit. Qed.
 End EqualityOnUninterpretedType2.
+
+Section EqualityOnUninterpretedType3.
+  Variable A : Type.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. prop2bool. Abort. (* verit. Qed. *)
+End EqualityOnUninterpretedType3.
