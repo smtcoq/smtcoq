@@ -41,21 +41,13 @@ Ltac prop2bool :=
       | _ =>
         lazymatch goal with
         | [ p: (CompDec t) |- _ ] =>
-          let p0 := fresh "p0" in
-          pose proof p as p0;
-          rewrite (@compdec_eq_eqb _ p0);
-          destruct p0;
-          try exact p
+          rewrite (@compdec_eq_eqb _ p)
         | _ =>
           let p := fresh "p" in
-          let p0 := fresh "p0" in
           assert (p:CompDec t);
-               [ auto with typeclass_instances
-               | pose proof p as p0;
-                 rewrite (@compdec_eq_eqb _ p0);
-                 destruct p0;
-                 try exact p
-               ]
+          [ auto with typeclass_instances
+          | rewrite (@compdec_eq_eqb _ p)
+          ]
         end
       end
 

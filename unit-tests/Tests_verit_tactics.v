@@ -996,14 +996,14 @@ Proof using.
 Qed.
 
 
-Section Polymorphism.
+Section AppliedPolymorphicTypes1.
   Goal forall (f : option Z -> Z) (a b : Z),
       implb (Z.eqb a b) (Z.eqb (f (Some a)) (f (Some b))).
   Proof. verit. auto with typeclass_instances. Qed.
 
   Goal forall (f : option Z -> Z) (a b : Z), a = b -> f (Some a) = f (Some b).
   Proof. verit. auto with typeclass_instances. Qed.
-End Polymorphism.
+End AppliedPolymorphicTypes1.
 
 
 Section EqualityOnUninterpretedType1.
@@ -1044,3 +1044,34 @@ Section EqualityOnUninterpretedType3.
   Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
   Proof. verit. Abort.
 End EqualityOnUninterpretedType3.
+
+
+Section AppliedPolymorphicTypes2.
+  Variable list : Type -> Type.
+  Variable append : forall A : Type, list A -> list A -> list A.
+  Arguments append {A} _ _.
+  Local Notation "l1 +++ l2" := (append l1 l2) (at level 60).
+
+  Variable B : Type.
+  Variable HlB : CompDec (list B).
+
+  Goal forall l1 l2 l3 l4 : list B,
+      l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
+  Proof. intros l1 l2 l3 l4. pose proof HlB as p0. rewrite (@compdec_eq_eqb _ p0). destruct p0. verit. Qed.
+
+  Hypothesis append_assoc_B :
+    forall l1 l2 l3 : list B, eqb_of_compdec HlB (l1 +++ (l2 +++ l3)) ((l1 +++ l2) +++ l3) = true.
+  (* TODO: make it possible to apply prop2bool to hypotheses *)
+  (* Hypothesis append_assoc_B : *)
+  (*   forall l1 l2 l3 : list B, l1 +++ (l2 +++ l3) = (l1 +++ l2) +++ l3. *)
+
+  Goal forall l1 l2 l3 l4 : list B,
+      l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
+  (* The hypothesis is not used *)
+  Proof. verit append_assoc_B. Qed.
+
+  (* The hypothesis is used *)
+  (* Goal forall l1 l2 l3 l4 : list B, *)
+  (*     l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4. *)
+  (* Proof. verit append_assoc_B. Qed. *)
+End AppliedPolymorphicTypes2.
