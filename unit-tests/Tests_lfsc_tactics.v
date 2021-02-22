@@ -755,6 +755,70 @@ Section group.
 End group.
 
 
+Section EqualityOnUninterpretedType1.
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. smt. Qed.
+End EqualityOnUninterpretedType1.
+
+Section EqualityOnUninterpretedType2.
+  Variable A B : Type.
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. smt. Qed.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. smt. Qed.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. smt. Qed.
+End EqualityOnUninterpretedType2.
+
+Section EqualityOnUninterpretedType3.
+  Variable A B : Type.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. smt. Abort.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. smt. Abort.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. smt. Abort.
+
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
+  Proof. smt. Abort.
+End EqualityOnUninterpretedType3.
+
+
 (*
    Local Variables:
    coq-load-path: ((rec "../src" "SMTCoq"))
