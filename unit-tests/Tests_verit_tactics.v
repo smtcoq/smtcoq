@@ -707,27 +707,24 @@ End mult3.
 (* End mult. *)
 
 Section implicit_transform.
-  Variable f : Z -> bool.
-  Variable a1 a2 : Z.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable f : A -> bool.
+  Variable a1 a2 : A.
   Hypothesis f_const : forall b, implb (f b) (f a2).
   Hypothesis f_a1 : f a1.
   Add_lemmas f_const f_a1.
 
   Lemma implicit_transform :
     f a2.
-  Proof using f_const f_a1. verit. Qed.
+  Proof using HA f_const f_a1. verit. Qed.
 
   Clear_lemmas.
 End implicit_transform.
 
 Section list.
-  Variable Zlist : Type.
-  Hypothesis dec_Zlist : CompDec Zlist.
-  Variable nil : Zlist.
-  Variable cons : Z -> Zlist -> Zlist.
-  Variable inlist : Z -> Zlist -> bool.
-
-  Infix "::" := cons.
+  Hypothesis dec_Zlist : CompDec (list Z).
+  Variable inlist : Z -> (list Z) -> bool.
 
   Hypothesis in_eq : forall a l, inlist a (a :: l).
   Hypothesis in_cons : forall a b l, implb (inlist a l) (inlist a (b::l)).
@@ -764,9 +761,6 @@ Section list.
   (* Lemma in_cons_false3 : *)
   (*   inlist 12 (11::13::(-12)::1::nil). *)
   (*   verit. (*returns unknown*) *)
-
-  Variable append : Zlist -> Zlist -> Zlist.
-  Infix "++" := append.
 
   Hypothesis in_or_app : forall a l1 l2,
       implb (orb (inlist a l1) (inlist a l2))
@@ -846,6 +840,42 @@ Section group.
 
   Clear_lemmas.
 End group.
+
+
+(* TODO: applications of lemmas must be checked modulo two symmetries of
+   equality *)
+(* Section group. *)
+(*   Variable G : Type. *)
+(*   Variable HG : CompDec G. *)
+(*   Variable op : G -> G -> G. *)
+(*   Variable inv : G -> G. *)
+(*   Variable e : G. *)
+
+(*   Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60). *)
+
+(*   Hypothesis associative : *)
+(*     forall a b c : G, op a (op b c) ==? op (op a b) c. *)
+(*   Hypothesis identity : *)
+(*     forall a : G, (op e a ==? a) && (op a e ==? a). *)
+(*   Hypothesis inverse : *)
+(*     forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e). *)
+(*   Add_lemmas associative identity inverse. *)
+
+(*   Lemma unique_identity e': *)
+(*     (forall z, op e' z ==? z) -> e' ==? e. *)
+(*   Proof using associative identity inverse. intros pe'. verit pe'. Qed. *)
+
+(*   Lemma simplification_right x1 x2 y: *)
+(*       op x1 y ==? op x2 y -> x1 ==? x2. *)
+(*   Proof using associative identity inverse. intro H. verit H. Qed. *)
+
+(*   Lemma simplification_left x1 x2 y: *)
+(*       op y x1 ==? op y x2 -> x1 ==? x2. *)
+(*   Proof using associative identity inverse. intro H. verit H. Qed. *)
+
+(*   Clear_lemmas. *)
+(* End group. *)
+
 
 Section Linear1.
   Variable f : Z -> Z.
