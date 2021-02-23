@@ -813,7 +813,7 @@ Section list.
 End list.
 
 
-Section group.
+Section GroupZ.
   Variable op : Z -> Z -> Z.
   Variable inv : Z -> Z.
   Variable e : Z.
@@ -826,55 +826,53 @@ Section group.
     forall a : Z, (op a (inv a) =? e) && (op (inv a) a =? e).
   Add_lemmas associative identity inverse.
 
-  Lemma unique_identity e':
+  Lemma unique_identity_Z e':
     (forall z, op e' z =? z) -> e' =? e.
   Proof using associative identity inverse. intros pe'. verit pe'. Qed.
 
-  Lemma simplification_right x1 x2 y:
+  Lemma simplification_right_Z x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
 
-  Lemma simplification_left x1 x2 y:
+  Lemma simplification_left_Z x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
 
   Clear_lemmas.
-End group.
+End GroupZ.
 
 
-(* TODO: applications of lemmas must be checked modulo two symmetries of
-   equality *)
-(* Section group. *)
-(*   Variable G : Type. *)
-(*   Variable HG : CompDec G. *)
-(*   Variable op : G -> G -> G. *)
-(*   Variable inv : G -> G. *)
-(*   Variable e : G. *)
+Section Group.
+  Variable G : Type.
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
 
-(*   Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60). *)
+  Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60).
 
-(*   Hypothesis associative : *)
-(*     forall a b c : G, op a (op b c) ==? op (op a b) c. *)
-(*   Hypothesis identity : *)
-(*     forall a : G, (op e a ==? a) && (op a e ==? a). *)
-(*   Hypothesis inverse : *)
-(*     forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e). *)
-(*   Add_lemmas associative identity inverse. *)
+  Hypothesis associative :
+    forall a b c : G, op a (op b c) ==? op (op a b) c.
+  Hypothesis identity :
+    forall a : G, (op e a ==? a) && (op a e ==? a).
+  Hypothesis inverse :
+    forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e).
+  Add_lemmas associative identity inverse.
 
-(*   Lemma unique_identity e': *)
-(*     (forall z, op e' z ==? z) -> e' ==? e. *)
-(*   Proof using associative identity inverse. intros pe'. verit pe'. Qed. *)
+  Lemma unique_identity e':
+    (forall z, op e' z ==? z) -> e' ==? e.
+  Proof using associative identity inverse. intros pe'. verit pe'. Qed.
 
-(*   Lemma simplification_right x1 x2 y: *)
-(*       op x1 y ==? op x2 y -> x1 ==? x2. *)
-(*   Proof using associative identity inverse. intro H. verit H. Qed. *)
+  Lemma simplification_right x1 x2 y:
+      op x1 y ==? op x2 y -> x1 ==? x2.
+  Proof using associative identity inverse. intro H. verit H. Qed.
 
-(*   Lemma simplification_left x1 x2 y: *)
-(*       op y x1 ==? op y x2 -> x1 ==? x2. *)
-(*   Proof using associative identity inverse. intro H. verit H. Qed. *)
+  Lemma simplification_left x1 x2 y:
+      op y x1 ==? op y x2 -> x1 ==? x2.
+  Proof using associative identity inverse. intro H. verit H. Qed.
 
-(*   Clear_lemmas. *)
-(* End group. *)
+  Clear_lemmas.
+End Group.
 
 
 Section Linear1.
