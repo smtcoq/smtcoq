@@ -1095,15 +1095,13 @@ Section AppliedPolymorphicTypes2.
   (* Hypothesis append_assoc_B : *)
   (*   forall l1 l2 l3 : list B, l1 +++ (l2 +++ l3) = (l1 +++ l2) +++ l3. *)
 
+  (* The hypothesis is not used *)
   Goal forall l1 l2 l3 l4 : list B,
       l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
-  (* The hypothesis is not used *)
   Proof. verit append_assoc_B. Qed.
 
   (* The hypothesis is used *)
-  (* TODO: applications of lemmas must be checked modulo two symmetries
-     of equality *)
   Goal forall l1 l2 l3 l4 : list B,
       l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4.
-  Proof. verit append_assoc_B. Abort.
+  Proof. verit append_assoc_B. Qed.
 End AppliedPolymorphicTypes2.
