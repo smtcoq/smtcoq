@@ -55,7 +55,7 @@ open SmtCertif
  *   done;
  *   Format.fprintf fmt "@."; close_out out_channel *)
 
-let import_trace ra' rf' filename first lsmt =
+let import_trace ra_quant rf_quant filename first lsmt =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let confl_num = ref (-1) in
@@ -78,7 +78,7 @@ let import_trace ra' rf' filename first lsmt =
        close_in chan;
        let cfirst = ref (VeritSyntax.get_clause !first_num) in
        let confl = ref (VeritSyntax.get_clause !confl_num) in
-       let re_hash = Form.hash_hform (Atom.hash_hatom ra') rf' in
+       let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in
        begin match first with
        | None -> ()
        | Some _ ->
@@ -114,10 +114,10 @@ let import_all fsmt fproof =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  let ra' = VeritSyntax.ra' in
-  let rf' = VeritSyntax.rf' in
+  let ra_quant = VeritSyntax.ra_quant in
+  let rf_quant = VeritSyntax.rf_quant in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace ra' rf' fproof None [] in
+  let (max_id, confl) = import_trace ra_quant rf_quant fproof None [] in
   (rt, ro, ra, rf, roots, max_id, confl)
 
 
@@ -169,7 +169,7 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let call_verit _ rt ro ra' rf' first lsmt =
+let call_verit _ rt ro ra_quant rf_quant first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
   close_out outchan;
@@ -206,7 +206,7 @@ let call_verit _ rt ro ra' rf' first lsmt =
   try
     if exit_code <> 0 then Structures.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();
-    let res = import_trace ra' rf' logfilename (Some first) lsmt in
+    let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
             match x with
@@ -223,8 +223,8 @@ let tactic_gen vm_cast lcpl lcepl =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  let ra' = VeritSyntax.ra' in
-  let rf' = VeritSyntax.rf' in
-  SmtCommands.tactic call_verit verit_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl
+  let ra_quant = VeritSyntax.ra_quant in
+  let rf_quant = VeritSyntax.rf_quant in
+  SmtCommands.tactic call_verit verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)

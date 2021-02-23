@@ -716,7 +716,7 @@ Section A_BV_EUF_LIA_PR.
     smt.
   Admitted.
 
-  (* The original issue (unvalid) *)
+  (* The original issue (invalid) *)
   Goal forall (x: bitvector 1), bv_subt (bv_shl #b|0| x) #b|0| = #b|0|.
   Proof using.
     smt.
@@ -753,6 +753,94 @@ Section group.
 
   Clear_lemmas.
 End group.
+
+
+Section EqualityOnUninterpretedType1.
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. smt. Qed.
+End EqualityOnUninterpretedType1.
+
+Section EqualityOnUninterpretedType2.
+  Variable A B : Type.
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. smt. Qed.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. smt. Qed.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Qed.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. smt. Qed.
+End EqualityOnUninterpretedType2.
+
+Section EqualityOnUninterpretedType3.
+  Variable A B : Type.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. smt. Abort.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. smt. Abort.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. smt. Abort.
+
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
+  Proof. cvc4. Abort.
+
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
+  Proof. smt. Abort.
+End EqualityOnUninterpretedType3.
+
+
+Section Issue17.
+
+  Variable A : Type.
+  Variable cd : CompDec A.
+
+  Goal forall (a:A), a = a.
+  Proof. smt. Qed.
+
+End Issue17.
+
+
+(* TODO *)
+(* From cvc4_bool : Uncaught exception Not_found *)
+(* Goal forall (a b c d: farray Z Z), *)
+(*     b[0 <- 4] = c  -> *)
+(*     d = b[0 <- 4][1 <- 4]  -> *)
+(*     a = d[1 <- b[1]]  -> *)
+(*     a = c. *)
+(* Proof. *)
+(*   smt. *)
+(* Qed. *)
+
 
 
 (*

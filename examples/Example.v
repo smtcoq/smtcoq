@@ -111,8 +111,9 @@ Proof.
 Qed.
 
 
-(*Some examples of using verit with lemmas. Use <verit H1 .. Hn>
-  to temporarily add the lemmas H1 .. Hn to the verit environment. *)
+(* Some examples of using verit with lemmas. Use <verit H1 .. Hn> to
+   temporarily add the lemmas H1 .. Hn to the verit environment.
+ *)
 
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
@@ -134,6 +135,7 @@ Section With_lemmas.
 End With_lemmas.
 
 (* Instantiating a lemma with multiple quantifiers *)
+
 Section NonLinear.
   Lemma distr_right_inst a b (mult : Z -> Z -> Z) :
     (forall x y z, mult (x + y)  z =? mult x z + mult y z) ->
@@ -207,28 +209,6 @@ Proof.
   smt.
 Qed.
 
-(* All tactics have a "no_check" variant that is faster but, in case of
-  failure, it will only fail at Qed *)
-
-Goal forall (bv1 bv2 bv3: bitvector 4),
-    bv1 = #b|0|0|0|0|  /\
-    bv2 = #b|1|0|0|0|  /\
-    bv3 = #b|1|1|0|0|  ->
-    bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
-Proof.
-  smt_no_check.
-Qed.
-
-(* From cvc4_bool : Uncaught exception Not_found *)
-(* Goal forall (a b c d: farray Z Z), *)
-(*     b[0 <- 4] = c  -> *)
-(*     d = b[0 <- 4][1 <- 4]  -> *)
-(*     a = d[1 <- b[1]]  -> *)
-(*     a = c. *)
-(* Proof. *)
-(*   smt. *)
-(* Qed. *)
-
 Goal forall (a b: farray Z Z) (v w x y z t: Z)
             (r s: bitvector 4)
             (f: Z -> Z)
@@ -240,6 +220,32 @@ Goal forall (a b: farray Z Z) (v w x y z t: Z)
     ~ (g a = g b) \/ f (h r) = f (h s).
 Proof.
   smt.
+Qed.
+
+
+(* All tactics have a "no_check" variant that is faster but, in case of
+   failure, it will only fail at Qed *)
+
+Goal forall (bv1 bv2 bv3: bitvector 4),
+    bv1 = #b|0|0|0|0|  /\
+    bv2 = #b|1|0|0|0|  /\
+    bv3 = #b|1|1|0|0|  ->
+    bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
+Proof.
+  smt_no_check.
+Qed.
+
+Goal forall (a b: farray Z Z) (v w x y z t: Z)
+            (r s: bitvector 4)
+            (f: Z -> Z)
+            (g: farray Z Z -> Z)
+            (h: bitvector 4 -> Z),
+    a[x <- v] = b /\ a[y <- w] = b ->
+    a[z <- w] = b /\ a[t <- v] = b ->
+    r = s -> v < x + 10 /\ v > x - 5 ->
+    ~ (g a = g b) \/ f (h r) = f (h s).
+Proof.
+  smt_no_check.
 Qed.
 
 
@@ -332,46 +338,51 @@ Open Scope Z_scope.
 (** Now more insightful examples. The first one automatically proves
     properties in group theory. **)
 
-Section group.
-  Variable op : Z -> Z -> Z.
-  Variable inv : Z -> Z.
-  Variable e : Z.
+Section Group.
+  Variable G : Type.
+  (* We suppose that G has a decidable equality *)
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
+
+  Local Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60).
 
   (* We can prove automatically that we have a group if we only have the
      "left" versions of the axioms of a group *)
   Hypothesis associative :
-    forall a b c : Z, op a (op b c) =? op (op a b) c.
+    forall a b c : G, op a (op b c) ==? op (op a b) c.
   Hypothesis inverse :
-    forall a : Z, (op (inv a) a =? e).
+    forall a : G, op (inv a) a ==? e.
   Hypothesis identity :
-    forall a : Z, (op e a =? a).
-  Add_lemmas associative identity inverse.
+    forall a : G, op e a ==? a.
+  Add_lemmas associative inverse identity.
 
   (* The "right" version of inverse *)
   Lemma inverse' :
-    forall a : Z, (op a (inv a) =? e).
+    forall a : G, op a (inv a) ==? e.
   Proof. smt. Qed.
 
   (* The "right" version of identity *)
   Lemma identity' :
-    forall a : Z, (op a e =? a).
+    forall a : G, op a e ==? a.
   Proof. smt inverse'. Qed.
 
   (* Some other interesting facts about groups *)
   Lemma unique_identity e':
-    (forall z, op e' z =? z) -> e' =? e.
+    (forall z, op e' z ==? z) -> e' ==? e.
   Proof. intros pe'; smt pe'. Qed.
 
   Lemma simplification_right x1 x2 y:
-      op x1 y =? op x2 y -> x1 =? x2.
+      op x1 y ==? op x2 y -> x1 ==? x2.
   Proof. intro H. smt_no_check H inverse'. Qed.
 
   Lemma simplification_left x1 x2 y:
-      op y x1 =? op y x2 -> x1 =? x2.
+      op y x1 ==? op y x2 -> x1 ==? x2.
   Proof. intro H. smt_no_check H inverse'. Qed.
 
   Clear_lemmas.
-End group.
+End Group.
 
 
 (* A full example coming from CompCert, slightly revisited.
@@ -380,20 +391,23 @@ End group.
  *)
 Section CompCert.
 
-  Definition block := Z.
+  Variable block : Set.
+  Hypothesis eq_block : CompDec block.
+  Local Notation "a ==? b" := (@eqb_of_compdec block eq_block a b) (at level 60).
+
   Variable mem: Set.
-  Variable dec_mem : CompDec mem.
+  Hypothesis dec_mem : CompDec mem.
   Variable alloc_block: mem -> Z -> Z -> block.
   Variable alloc_mem: mem -> Z -> Z -> mem.
   Variable valid_block: mem -> block -> bool.
 
   Hypothesis alloc_valid_block_1:
     forall m lo hi b,
-      valid_block (alloc_mem m lo hi) b ---> ((b =? (alloc_block m lo hi)) || valid_block m b).
+      valid_block (alloc_mem m lo hi) b ---> ((b ==? (alloc_block m lo hi)) || valid_block m b).
 
   Hypothesis alloc_valid_block_2:
     forall m lo hi b,
-      ((b =? (alloc_block m lo hi)) || valid_block m b) ---> valid_block (alloc_mem m lo hi) b.
+      ((b ==? (alloc_block m lo hi)) || valid_block m b) ---> valid_block (alloc_mem m lo hi) b.
 
   Hypothesis alloc_not_valid_block:
     forall m lo hi,
@@ -402,13 +416,13 @@ Section CompCert.
   Lemma alloc_valid_block_inv m lo hi b :
     valid_block m b -> valid_block (alloc_mem m lo hi) b.
   Proof.
-    intro H. unfold block in *. verit alloc_valid_block_2 H.
+    intro H. verit alloc_valid_block_2 H.
   Qed.
 
   Lemma alloc_not_valid_block_2 m lo hi b' :
-    valid_block m b' -> b' =? (alloc_block m lo hi) = false.
+    valid_block m b' -> b' ==? (alloc_block m lo hi) = false.
   Proof.
-    intro H. unfold block in *. verit alloc_not_valid_block H.
+    intro H. verit alloc_not_valid_block H.
   Qed.
 
 End CompCert.

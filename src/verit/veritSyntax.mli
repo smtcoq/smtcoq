@@ -52,8 +52,8 @@ val qf_to_add : SmtAtom.Form.t SmtCertif.clause list -> (SmtAtom.Form.t SmtCerti
 
 val ra : SmtAtom.Atom.reify_tbl
 val rf : SmtAtom.Form.reify
-val ra' : SmtAtom.Atom.reify_tbl
-val rf' : SmtAtom.Form.reify
+val ra_quant : SmtAtom.Atom.reify_tbl
+val rf_quant : SmtAtom.Form.reify
 
 val hlets : (string, Form.atom_form_lit) Hashtbl.t
 

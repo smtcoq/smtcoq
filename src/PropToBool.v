@@ -18,16 +18,12 @@ Import BVList.BITVECTOR_LIST.
 Ltac prop2bool :=
   repeat
     match goal with
-    | [ |- forall _ : bitvector _, _] => intro
-    | [ |- forall _ : farray _ _, _] => intro
-    | [ |- forall _ : _ -> _, _] => intro
-    | [ |- forall _ : Z, _] => intro
-    | [ |- forall _ : bool, _] => intro
-    | [ |- forall _ : Type, _] => intro
-    | [ p: (CompDec ?t) |-  context[ forall _ : ?t, _ ] ] => intro
+    | [ |- forall _ : ?t, _ ] =>
+      lazymatch type of t with
+      | Prop => fail
+      | _ => intro
+      end
 
-    | [ |- forall t : Type, CompDec t -> _  ] => intro
-    | [ |- CompDec _ -> _  ] => intro
     | [ |- context[ bv_ultP _ _ ] ] => rewrite <- bv_ult_B2P
     | [ |- context[ bv_sltP _ _ ] ] => rewrite <- bv_slt_B2P
     | [ |- context[ Z.lt _ _ ] ] => rewrite <- Z.ltb_lt
@@ -36,22 +32,24 @@ Ltac prop2bool :=
     | [ |- context[ Z.ge _ _ ] ] => rewrite Z.ge_le_iff; rewrite <- Z.leb_le
     | [ |- context[ Z.eq _ _ ] ] => rewrite <- Z.eqb_eq
 
-    | [ p: (CompDec ?t) |- context[ @Logic.eq ?t _ _ ] ] =>
-      pose proof p as p0;
-      rewrite (@compdec_eq_eqb _ p0);
-      destruct p0;
-      try exact p
-
-    | [ Eqb : (EqbType ?ty)  |- _ ] => destruct Eqb; simpl
-
-    | [ |- context[ @Logic.eq (bitvector _) _ _ ] ] =>
-      rewrite <- bv_eq_reflect
-
-    | [ |- context[ @Logic.eq (farray _ _) _ _ ] ] =>
-      rewrite <- equal_iff_eq
-
-    | [ |- context[ @Logic.eq Z _ _ ] ] =>
-      rewrite <- Z.eqb_eq
+    | [ |- context[ @Logic.eq ?t _ _ ] ] =>
+      lazymatch t with
+      | bitvector _ => rewrite <- bv_eq_reflect
+      | farray _ _ => rewrite <- equal_iff_eq
+      | Z => rewrite <- Z.eqb_eq
+      | bool => fail
+      | _ =>
+        lazymatch goal with
+        | [ p: (CompDec t) |- _ ] =>
+          rewrite (@compdec_eq_eqb _ p)
+        | _ =>
+          let p := fresh "p" in
+          assert (p:CompDec t);
+          [ auto with typeclass_instances
+          | rewrite (@compdec_eq_eqb _ p)
+          ]
+        end
+      end
 
     | [ |- context[?G0 = true \/ ?G1 = true ] ] =>
       rewrite (@reflect_iff (G0 = true \/ G1 = true) (orb G0 G1));
