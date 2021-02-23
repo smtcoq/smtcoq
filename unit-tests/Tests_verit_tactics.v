@@ -499,20 +499,16 @@ Proof using.
   verit.
 Qed.
 
-(* TODO: fails with native-coq: "compilation error"
 Goal forall (i j:int),
     (i == j) && (negb (i == j)) = false.
 Proof using.
-  verit.
-  exact int63_compdec.
+  verit. auto with typeclass_instances.
 Qed.
 
 Goal forall i j, (i == j) || (negb (i == j)).
 Proof using.
-  verit.
-  exact int63_compdec.
+  verit. auto with typeclass_instances.
 Qed.
-*)
 
 
 (* Congruence in which some premises are REFL *)
