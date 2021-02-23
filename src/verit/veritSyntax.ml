@@ -555,7 +555,7 @@ let init_index lsmt re_hash =
               List.iter (fun h -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) (re_hash h)) lsmt;
               Format.fprintf fmt "\n%a\n@." (Form.to_smt ~debug:true) re_hf;
               flush oc; close_out oc;
-              failwith "not found: log available"
+              failwith "Input not found: log available in /tmp/input_not_found.log"
 
 let qf_to_add lr =
   let is_forall l = match Form.pform l with
@@ -570,8 +570,8 @@ let qf_to_add lr =
 
 let ra = Atom.create ()
 let rf = Form.create ()
-let ra' = Atom.create ()
-let rf' = Form.create ()
+let ra_quant = Atom.create ()
+let rf_quant = Form.create ()
 
 let hlets : (string, Form.atom_form_lit) Hashtbl.t = Hashtbl.create 17
 
@@ -586,6 +586,6 @@ let clear () =
   clear_solver ();
   Atom.clear ra;
   Form.clear rf;
-  Atom.clear ra';
-  Form.clear rf';
+  Atom.clear ra_quant;
+  Form.clear rf_quant;
   Hashtbl.clear hlets

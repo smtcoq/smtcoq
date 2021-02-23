@@ -11,7 +11,7 @@
 
 
 Require Import Bool ZArith.
-Require Import State.
+Require Import State SMT_classes.
 
 
 (** Handling quantifiers with veriT **)
@@ -47,28 +47,72 @@ Qed.
 
 (* verit considers equality modulo its symmetry, so we have to recover the
    right direction in the instances of the theorems *)
-Definition hidden_eq (a b : Z) := (a =? b)%Z.
-Ltac all_rew :=
+Lemma eqb_of_compdec_sym (A:Type) (HA:CompDec A) (a b:A) :
+  eqb_of_compdec HA b a = eqb_of_compdec HA a b.
+Proof.
+  destruct (@eq_dec _ (@Decidable _ HA) a b) as [H|H].
+  - now rewrite H.
+  - case_eq (eqb_of_compdec HA a b).
+    + now rewrite <- !(@compdec_eq_eqb _ HA).
+    + intros _. case_eq (eqb_of_compdec HA b a); auto.
+      intro H1. elim H. symmetry. now rewrite compdec_eq_eqb.
+Qed.
+
+Definition hidden_eq_Z (a b : Z) := (a =? b)%Z.
+Definition hidden_eq_U (A:Type) (HA:CompDec A) (a b : A) := eqb_of_compdec HA a b.
+Ltac apply_sym_hyp T :=
+  repeat match T with
+         | context [ (?A =? ?B)%Z] =>
+           change (A =? B)%Z with (hidden_eq_Z A B) in T
+         end;
+  repeat match T with
+         | context [ @eqb_of_compdec ?A ?HA ?a ?b ] =>
+           change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b) in T
+         end;
+  repeat match T with
+         | context [ hidden_eq_Z ?A ?B] =>
+           replace (hidden_eq_Z A B) with (B =? A)%Z in T;
+           [ | now rewrite Z.eqb_sym]
+         end;
+  repeat match T with
+         | context [ hidden_eq_U ?A ?HA ?a ?b] =>
+           replace (hidden_eq_U A HA a b) with (eqb_of_compdec HA b a) in T;
+           [ | now rewrite eqb_of_compdec_sym]
+         end.
+Ltac apply_sym_goal :=
   repeat match goal with
-         | [ |- context [ (?A =? ?B)%Z]] =>
-           change (A =? B)%Z with (hidden_eq A B)
+         | [ |- context [ (?A =? ?B)%Z] ] =>
+           change (A =? B)%Z with (hidden_eq_Z A B)
          end;
   repeat match goal with
-         | [ |- context [ hidden_eq ?A ?B] ] =>
-           replace (hidden_eq A B) with (B =? A)%Z;
+         | [ |- context [ @eqb_of_compdec ?A ?HA ?a ?b ] ] =>
+           change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b)
+         end;
+  repeat match goal with
+         | [ |- context [ hidden_eq_Z ?A ?B] ] =>
+           replace (hidden_eq_Z A B) with (B =? A)%Z;
            [ | now rewrite Z.eqb_sym]
+         end;
+  repeat match goal with
+         | [ |- context [ hidden_eq_U ?A ?HA ?a ?b] ] =>
+           replace (hidden_eq_U A HA a b) with (eqb_of_compdec HA b a);
+           [ | now rewrite eqb_of_compdec_sym]
          end.
 
 (* An automatic tactic that takes into account all those transformations *)
 Ltac vauto :=
   try (let H := fresh "H" in
-       intro H; try (all_rew; apply H);
+       intro H;
+       try apply H;
+       try (apply_sym_goal; apply H);
+       try (apply_sym_hyp H; apply H);
+       try (apply_sym_goal; apply_sym_hyp H; apply H);
        match goal with
        | [ |- is_true (negb ?A || ?B) ] =>
          try (eapply impl_or_split_right; apply H);
          eapply impl_or_split_left; apply H
-       end;
-       apply H);
+       end
+      );
   auto.
 
 

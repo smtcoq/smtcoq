@@ -244,7 +244,7 @@ let rec term_smtcoq_old t =
       | Some (n, args) when n == H.iff -> Form.Form (Fapp (Fiff, args_smtcoq args))
       | Some (n, [_; a; b]) when n == H.eq ->
         let h1, h2 = term_smtcoq_atom a, term_smtcoq_atom b in
-        Form.Atom (Atom.mk_eq ra (Atom.type_of h1) h1 h2)
+        Form.Atom (Atom.mk_eq_sym ra (Atom.type_of h1) h1 h2)
       | Some (n, _) when n == H.apply -> uncurry [] t
       | Some (n, [p]) when n == H.p_app -> term_smtcoq p
       | Some (n, [{value = Int bi}]) when n == H.a_int ->

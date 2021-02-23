@@ -101,8 +101,7 @@ let declare_sort_from_name rt s =
   let compdec_type = mklApp cCompDec [| cons_t |] in
   let compdec_var =
     Structures.declare_new_variable (Structures.mkId ("CompDec_"^s)) compdec_type in
-  let ce = mklApp cTyp_compdec [|cons_t; compdec_var|] in
-  let res = SmtBtype.declare rt cons_t ce in
+  let res = SmtBtype.of_coq_compdec rt cons_t compdec_var in
   SmtMaps.add_btype s res;
   res
 
@@ -190,7 +189,7 @@ let make_root ra rf t =
       | "=", [a;b] ->
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' when Atom.type_of a' <> Tbool ->
-           Atom (Atom.mk_eq ra (Atom.type_of a') a' b')
+           Atom (Atom.mk_eq_sym ra (Atom.type_of a') a' b')
          | _ -> Form (Form.get rf (Fapp (Fiff, [|make_root a; make_root b|])))
         )
       | "<", [a;b] ->

@@ -140,7 +140,7 @@ module Atom :
       val print_atoms : reify_tbl -> string -> unit
 
       (** Given a coq term, build the corresponding atom *)
-      val of_coq : ?hash:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
+      val of_coq : ?eqsym:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
         reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> Structures.constr -> t
 
       val get_coq_term_op : int -> Structures.constr
@@ -159,7 +159,7 @@ module Atom :
       (* Generation of atoms *)
       val hatom_Z_of_int : reify_tbl -> int -> t
       val hatom_Z_of_bigint : reify_tbl -> Big_int.big_int -> t
-      val mk_eq : reify_tbl -> ?declare:bool -> btype -> t -> t -> t
+      val mk_eq_sym : reify_tbl -> ?declare:bool -> btype -> t -> t -> t
       val mk_lt : reify_tbl -> ?declare:bool -> t -> t -> t
       val mk_le : reify_tbl -> ?declare:bool -> t -> t -> t
       val mk_gt : reify_tbl -> ?declare:bool -> t -> t -> t
