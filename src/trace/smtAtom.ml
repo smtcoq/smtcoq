@@ -913,7 +913,7 @@ module Atom =
       | CCeqbZ                  (* Equality on Z *)
       | CCeqbBV                 (* Equality on bit vectors *)
       | CCeqbA                  (* Equality on arrays *)
-      | CCeqbI                  (* Equality on uninterpreted types *)
+      | CCeqbU                  (* Equality on uninterpreted types *)
       | CCselect
       | CCdiff
       | CCstore
@@ -963,7 +963,7 @@ module Atom =
       (* | CCeqbBV -> SL.singleton LBitvectors *)
       (* | CCeqbA -> SL.singleton LArrays *)
 
-      | CCeqbP | CCeqbZ | CCeqbBV | CCeqbA | CCeqbI
+      | CCeqbP | CCeqbZ | CCeqbBV | CCeqbA | CCeqbU
       | CCunknown | CCunknown_deps _  -> SL.singleton LUF
 
 
@@ -1008,7 +1008,7 @@ module Atom =
           cbv_add, CCBVadd; cbv_mult, CCBVmult;
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
           cbv_shl, CCBVshl; cbv_shr, CCBVshr;
-          ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV; ceqb_of_compdec, CCeqbI;
+          ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV; ceqb_of_compdec, CCeqbU;
           cselect, CCselect; cdiff, CCdiff;
           cstore, CCstore;
           cequalarray, CCeqbA;
@@ -1079,7 +1079,7 @@ module Atom =
         | CCeqbZ -> mk_teq SmtBtype.TZ args
         | CCeqbA -> mk_bop_farray_equal args
         | CCeqbBV -> mk_bop_bveq args
-        | CCeqbI -> mk_bop_ieq args
+        | CCeqbU -> mk_bop_ueq args
         | CCselect -> mk_bop_select args
         | CCdiff -> mk_bop_diff args
         | CCstore -> mk_top_store args
@@ -1144,12 +1144,12 @@ module Atom =
                   | _ -> failwith "unexpected number of arguments for mk_teq"
         else mk_bop (BO_eq ty) args
 
-      and mk_bop_ieq args =
+      and mk_bop_ueq args =
         match args with
           | t::compdec::args ->
              let ty = SmtBtype.of_coq_compdec rt t compdec in
              mk_teq ty args
-          | _ -> failwith "unexpected number of arguments for mk_bop_ieq"
+          | _ -> failwith "unexpected number of arguments for mk_bop_ueq"
 
       and mk_bop op = function
         | [a1;a2] ->
