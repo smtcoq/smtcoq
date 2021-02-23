@@ -819,6 +819,17 @@ Section EqualityOnUninterpretedType3.
 End EqualityOnUninterpretedType3.
 
 
+Section Issue17.
+
+  Variable A : Type.
+  Variable cd : CompDec A.
+
+  Goal forall (a:A), a = a.
+  Proof. smt. Qed.
+
+End Issue17.
+
+
 (* TODO *)
 (* From cvc4_bool : Uncaught exception Not_found *)
 (* Goal forall (a b c d: farray Z Z), *)
