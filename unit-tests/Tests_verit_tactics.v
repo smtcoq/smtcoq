@@ -1099,3 +1099,11 @@ Section AppliedPolymorphicTypes2.
       l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4.
   Proof. verit append_assoc_B. Qed.
 End AppliedPolymorphicTypes2.
+
+
+Section Issue78.
+
+  Goal forall (f : option Z -> Z) (a  b : Z), Some a = Some b -> f (Some a) = f (Some b).
+  Proof. verit. Qed.
+
+End Issue78.
