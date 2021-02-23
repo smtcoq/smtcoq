@@ -886,10 +886,8 @@ module Atom =
       a
 
 
-    (* Identifies two equalities modulo symmetry
-       It is used to handle veriT lemmas, which can be applied modulo
-       symmetry *)
-    let mk_eq reify ?declare:(decl=true) ty h1 h2 =
+    (* Identifies two equalities modulo symmetry *)
+    let mk_eq_sym reify ?declare:(decl=true) ty h1 h2 =
       let op = BO_eq ty in
       try
         HashAtom.find reify.tbl (Abop (op, h1, h2))
@@ -916,7 +914,7 @@ module Atom =
          let new_ha1 = hash_hatom ra_quant ha1 in
          let new_ha2 = hash_hatom ra_quant ha2 in
          begin match bop with
-         | BO_eq ty -> mk_eq ra_quant ty new_ha1 new_ha2
+         | BO_eq ty -> mk_eq_sym ra_quant ty new_ha1 new_ha2
          | _ -> get ra_quant (Abop (bop, new_ha1, new_ha2)) end
       | Atop (top, ha1, ha2, ha3) ->
          let new_ha1 = hash_hatom ra_quant ha1 in
@@ -1098,7 +1096,7 @@ module Atom =
       Hashtbl.find op_coq_terms
 
 
-    let of_coq ?hash:(hash=false) rt ro reify known_logic env sigma c =
+    let of_coq ?eqsym:(eqsym=false) rt ro reify known_logic env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try
@@ -1204,10 +1202,10 @@ module Atom =
         | _ -> assert false
 
       and mk_teq ty args =
-        if hash then match args with
+        if eqsym then match args with
                   | [a1; a2] -> let h1 = mk_hatom a1 in
                                 let h2 = mk_hatom a2 in
-                                mk_eq reify ty h1 h2
+                                mk_eq_sym reify ty h1 h2
                   | _ -> failwith "unexpected number of arguments for mk_teq"
         else mk_bop (BO_eq ty) args
 

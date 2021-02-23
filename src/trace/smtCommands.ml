@@ -703,7 +703,7 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
          arg1
       | _ -> raise Axiom_form_unsupported
     else raise Axiom_form_unsupported in
-  let core_smt = Form.of_coq (Atom.of_coq ~hash:true rt ro ra_quant solver_logic env_lemma sigma)
+  let core_smt = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma)
                    rf_quant core_f in
   match forall_args with
     [] -> core_smt
@@ -744,16 +744,16 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
     if ((Structures.eq_constr b (Lazy.force ctrue)) ||
         (Structures.eq_constr b (Lazy.force cfalse))) then (
       let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
       let nl = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let lsmt = Form.flatten rf nl :: lsmt in
       let max_id_confl = make_proof call_solver env rt ro ra_quant rf_quant nl lsmt in
       build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
     ) else (
       let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
       let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
-      let _ = Form.of_coq (Atom.of_coq ~hash:true rt ro ra_quant solver_logic env sigma) rf_quant b in
+      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
       let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
       let nl = Form.neg l in
       let lsmt = Form.flatten rf nl :: lsmt in

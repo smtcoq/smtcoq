@@ -189,7 +189,7 @@ let make_root ra rf t =
       | "=", [a;b] ->
         (match make_root_term a, make_root_term b with
          | Atom a', Atom b' when Atom.type_of a' <> Tbool ->
-           Atom (Atom.mk_eq ra (Atom.type_of a') a' b')
+           Atom (Atom.mk_eq_sym ra (Atom.type_of a') a' b')
          | _ -> Form (Form.get rf (Fapp (Fiff, [|make_root a; make_root b|])))
         )
       | "<", [a;b] ->
