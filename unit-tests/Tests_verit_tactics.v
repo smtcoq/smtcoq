@@ -499,20 +499,16 @@ Proof using.
   verit.
 Qed.
 
-(* TODO: fails with native-coq: "compilation error"
 Goal forall (i j:int),
     (i == j) && (negb (i == j)) = false.
 Proof using.
-  verit.
-  exact int63_compdec.
+  verit. auto with typeclass_instances.
 Qed.
 
 Goal forall i j, (i == j) || (negb (i == j)).
 Proof using.
-  verit.
-  exact int63_compdec.
+  verit. auto with typeclass_instances.
 Qed.
-*)
 
 
 (* Congruence in which some premises are REFL *)
@@ -707,27 +703,24 @@ End mult3.
 (* End mult. *)
 
 Section implicit_transform.
-  Variable f : Z -> bool.
-  Variable a1 a2 : Z.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable f : A -> bool.
+  Variable a1 a2 : A.
   Hypothesis f_const : forall b, implb (f b) (f a2).
   Hypothesis f_a1 : f a1.
   Add_lemmas f_const f_a1.
 
   Lemma implicit_transform :
     f a2.
-  Proof using f_const f_a1. verit. Qed.
+  Proof using HA f_const f_a1. verit. Qed.
 
   Clear_lemmas.
 End implicit_transform.
 
 Section list.
-  Variable Zlist : Type.
-  Hypothesis dec_Zlist : CompDec Zlist.
-  Variable nil : Zlist.
-  Variable cons : Z -> Zlist -> Zlist.
-  Variable inlist : Z -> Zlist -> bool.
-
-  Infix "::" := cons.
+  Hypothesis dec_Zlist : CompDec (list Z).
+  Variable inlist : Z -> (list Z) -> bool.
 
   Hypothesis in_eq : forall a l, inlist a (a :: l).
   Hypothesis in_cons : forall a b l, implb (inlist a l) (inlist a (b::l)).
@@ -764,9 +757,6 @@ Section list.
   (* Lemma in_cons_false3 : *)
   (*   inlist 12 (11::13::(-12)::1::nil). *)
   (*   verit. (*returns unknown*) *)
-
-  Variable append : Zlist -> Zlist -> Zlist.
-  Infix "++" := append.
 
   Hypothesis in_or_app : forall a l1 l2,
       implb (orb (inlist a l1) (inlist a l2))
@@ -819,7 +809,7 @@ Section list.
 End list.
 
 
-Section group.
+Section GroupZ.
   Variable op : Z -> Z -> Z.
   Variable inv : Z -> Z.
   Variable e : Z.
@@ -832,20 +822,54 @@ Section group.
     forall a : Z, (op a (inv a) =? e) && (op (inv a) a =? e).
   Add_lemmas associative identity inverse.
 
-  Lemma unique_identity e':
+  Lemma unique_identity_Z e':
     (forall z, op e' z =? z) -> e' =? e.
   Proof using associative identity inverse. intros pe'. verit pe'. Qed.
 
-  Lemma simplification_right x1 x2 y:
+  Lemma simplification_right_Z x1 x2 y:
       op x1 y =? op x2 y -> x1 =? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
 
-  Lemma simplification_left x1 x2 y:
+  Lemma simplification_left_Z x1 x2 y:
       op y x1 =? op y x2 -> x1 =? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
 
   Clear_lemmas.
-End group.
+End GroupZ.
+
+
+Section Group.
+  Variable G : Type.
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
+
+  Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60).
+
+  Hypothesis associative :
+    forall a b c : G, op a (op b c) ==? op (op a b) c.
+  Hypothesis identity :
+    forall a : G, (op e a ==? a) && (op a e ==? a).
+  Hypothesis inverse :
+    forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e).
+  Add_lemmas associative identity inverse.
+
+  Lemma unique_identity e':
+    (forall z, op e' z ==? z) -> e' ==? e.
+  Proof using associative identity inverse. intros pe'. verit pe'. Qed.
+
+  Lemma simplification_right x1 x2 y:
+      op x1 y ==? op x2 y -> x1 ==? x2.
+  Proof using associative identity inverse. intro H. verit H. Qed.
+
+  Lemma simplification_left x1 x2 y:
+      op y x1 ==? op y x2 -> x1 ==? x2.
+  Proof using associative identity inverse. intro H. verit H. Qed.
+
+  Clear_lemmas.
+End Group.
+
 
 Section Linear1.
   Variable f : Z -> Z.
@@ -996,11 +1020,90 @@ Proof using.
 Qed.
 
 
-Section Polymorphism.
+Section AppliedPolymorphicTypes1.
   Goal forall (f : option Z -> Z) (a b : Z),
       implb (Z.eqb a b) (Z.eqb (f (Some a)) (f (Some b))).
   Proof. verit. auto with typeclass_instances. Qed.
 
   Goal forall (f : option Z -> Z) (a b : Z), a = b -> f (Some a) = f (Some b).
   Proof. verit. auto with typeclass_instances. Qed.
-End Polymorphism.
+End AppliedPolymorphicTypes1.
+
+
+Section EqualityOnUninterpretedType1.
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. verit. Qed.
+End EqualityOnUninterpretedType1.
+
+Section EqualityOnUninterpretedType2.
+  Variable A B : Type.
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. verit. Qed.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. verit. Qed.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. verit. Qed.
+End EqualityOnUninterpretedType2.
+
+Section EqualityOnUninterpretedType3.
+  Variable A B : Type.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof. verit. Abort.
+
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof. verit. Abort.
+
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof. verit. Abort.
+
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
+  Proof. verit. Abort.
+End EqualityOnUninterpretedType3.
+
+
+Section AppliedPolymorphicTypes2.
+  Variable list : Type -> Type.
+  Variable append : forall A : Type, list A -> list A -> list A.
+  Arguments append {A} _ _.
+  Local Notation "l1 +++ l2" := (append l1 l2) (at level 60).
+
+  Variable B : Type.
+  Variable HlB : CompDec (list B).
+
+  Goal forall l1 l2 l3 l4 : list B,
+      l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
+  Proof. verit. Qed.
+
+  Hypothesis append_assoc_B :
+    forall l1 l2 l3 : list B, eqb_of_compdec HlB (l1 +++ (l2 +++ l3)) ((l1 +++ l2) +++ l3) = true.
+  (* TODO: make it possible to apply prop2bool to hypotheses *)
+  (* Hypothesis append_assoc_B : *)
+  (*   forall l1 l2 l3 : list B, l1 +++ (l2 +++ l3) = (l1 +++ l2) +++ l3. *)
+
+  (* The hypothesis is not used *)
+  Goal forall l1 l2 l3 l4 : list B,
+      l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
+  Proof. verit append_assoc_B. Qed.
+
+  (* The hypothesis is used *)
+  Goal forall l1 l2 l3 l4 : list B,
+      l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4.
+  Proof. verit append_assoc_B. Qed.
+End AppliedPolymorphicTypes2.
+
+
+Section Issue78.
+
+  Goal forall (f : option Z -> Z) (a  b : Z), Some a = Some b -> f (Some a) = f (Some b).
+  Proof. verit. Qed.
+
+End Issue78.
