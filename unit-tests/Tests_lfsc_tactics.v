@@ -819,6 +819,19 @@ Section EqualityOnUninterpretedType3.
 End EqualityOnUninterpretedType3.
 
 
+(* TODO *)
+(* From cvc4_bool : Uncaught exception Not_found *)
+(* Goal forall (a b c d: farray Z Z), *)
+(*     b[0 <- 4] = c  -> *)
+(*     d = b[0 <- 4][1 <- 4]  -> *)
+(*     a = d[1 <- b[1]]  -> *)
+(*     a = c. *)
+(* Proof. *)
+(*   smt. *)
+(* Qed. *)
+
+
+
 (*
    Local Variables:
    coq-load-path: ((rec "../src" "SMTCoq"))
