@@ -58,12 +58,24 @@ let index_to_coq i =
 let indexed_type_of_int i =
   {index = i; hval = Delayed (index_to_coq i) }
 
-let rec equal t1 t2 =
-  match t1,t2 with
-    | Tindex i, Tindex j -> i.index == j.index
-    | TBV i, TBV j -> i == j
-    | TFArray (ti, te), TFArray (ti', te') -> equal ti ti' && equal te te'
-    | _ -> t1 == t2
+module HashedBtype : Hashtbl.HashedType with type t = btype = struct
+  type t = btype
+
+  let rec equal t1 t2 =
+    match t1,t2 with
+      | Tindex i, Tindex j -> i.index == j.index
+      | TBV i, TBV j -> i == j
+      | TFArray (ti, te), TFArray (ti', te') -> equal ti ti' && equal te te'
+      | _ -> t1 == t2
+
+  let rec hash = function
+    | TZ -> 1
+    | Tbool -> 2
+    | Tpositive -> 3
+    | TBV s -> s lxor 4
+    | TFArray (t1, t2) -> ((((hash t1) lsl 3) land (hash t2)) lsl 3) lxor 5
+    | Tindex i -> (i.index lsl 3) lxor 6
+end
 
 let rec to_coq = function
   | TZ -> Lazy.force cTZ

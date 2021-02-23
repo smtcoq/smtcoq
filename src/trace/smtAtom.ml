@@ -14,6 +14,24 @@ open SmtMisc
 open CoqTerms
 
 
+(** Hashing functions on Btypes *)
+
+module HashBtype = Hashtbl.Make(SmtBtype.HashedBtype)
+
+module HashedBtypePair : Hashtbl.HashedType
+       with type t = SmtBtype.btype * SmtBtype.btype = struct
+  type t = SmtBtype.btype * SmtBtype.btype
+
+  let equal (t1,s1) (t2,s2) =
+    SmtBtype.HashedBtype.equal t1 t2 && SmtBtype.HashedBtype.equal s1 s2
+
+  let hash (t,s) =
+    ((SmtBtype.HashedBtype.hash t) lsl 3) land (SmtBtype.HashedBtype.hash s)
+end
+
+module HashBtypePair = Hashtbl.Make(HashedBtypePair)
+
+
 (** Operators *)
 
 type cop =
@@ -148,37 +166,37 @@ module Op =
       | UO_BVzextn (s, n) -> mklApp cbv_zextn [|mkN s; mkN n|]
       | UO_BVsextn (s, n) -> mklApp cbv_sextn [|mkN s; mkN n|]
 
-    let eq_tbl = Hashtbl.create 17
-    let select_tbl = Hashtbl.create 17
-    let store_tbl = Hashtbl.create 17
-    let diffarray_tbl = Hashtbl.create 17
+    let eq_tbl = HashBtype.create 17
+    let select_tbl = HashBtypePair.create 17
+    let store_tbl = HashBtypePair.create 17
+    let diffarray_tbl = HashBtypePair.create 17
 
     let eq_to_coq t =
-      try Hashtbl.find eq_tbl t
+      try HashBtype.find eq_tbl t
       with Not_found ->
 	let op = mklApp cBO_eq [|SmtBtype.to_coq t|] in
-	Hashtbl.add eq_tbl t op;
+	HashBtype.add eq_tbl t op;
 	op
 
     let select_to_coq ti te =
-      try Hashtbl.find select_tbl (ti, te)
+      try HashBtypePair.find select_tbl (ti, te)
       with Not_found ->
         let op = mklApp cBO_select [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        Hashtbl.add select_tbl (ti, te) op;
+        HashBtypePair.add select_tbl (ti, te) op;
         op
 
     let store_to_coq ti te =
-      try Hashtbl.find store_tbl (ti, te)
+      try HashBtypePair.find store_tbl (ti, te)
       with Not_found ->
         let op = mklApp cTO_store [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        Hashtbl.add store_tbl (ti, te) op;
+        HashBtypePair.add store_tbl (ti, te) op;
         op
 
     let diffarray_to_coq ti te =
-      try Hashtbl.find diffarray_tbl (ti, te)
+      try HashBtypePair.find diffarray_tbl (ti, te)
       with Not_found ->
         let op = mklApp cBO_diffarray [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        Hashtbl.add diffarray_tbl (ti, te) op;
+        HashBtypePair.add diffarray_tbl (ti, te) op;
         op
 
     let b_to_coq = function
@@ -381,6 +399,11 @@ module Op =
          | Invalid_argument _ -> false)
       | _ -> op1 == op2
 
+    let c_hash = function
+      | CO_xH -> 1
+      | CO_Z0 -> 2
+      | CO_BV l -> 3 + (List.fold_left (fun acc b -> if b then 2*acc+1 else 2*acc) 0 l)
+
     let u_equal op1 op2 =
       match op1,op2 with
       | UO_xO, UO_xO
@@ -397,9 +420,22 @@ module Op =
       | UO_BVsextn (s1, n1), UO_BVsextn (s2, n2) -> s1 == s2 && n1 == n2
       | _ -> false
 
+    let u_hash = function
+      | UO_xO -> 0
+      | UO_xI -> 1
+      | UO_Zpos -> 2
+      | UO_Zneg -> 3
+      | UO_Zopp -> 4
+      | UO_BVbitOf (s,n) -> (n land s) lxor 5
+      | UO_BVnot s -> s lxor 6
+      | UO_BVneg s -> s lxor 7
+      | UO_BVextr (s, n0, n1) -> (s land n0 land n1) lxor 8
+      | UO_BVzextn (s, n) -> (s land n) lxor 9
+      | UO_BVsextn (s, n) -> (s land n) lxor 10
+
     let b_equal op1 op2 =
       match op1,op2 with
-        | BO_eq t1, BO_eq t2 -> SmtBtype.equal t1 t2
+        | BO_eq t1, BO_eq t2 -> SmtBtype.HashedBtype.equal t1 t2
         | BO_BVand n1, BO_BVand n2 -> n1 == n2
         | BO_BVor n1, BO_BVor n2 -> n1 == n2
         | BO_BVxor n1, BO_BVxor n2 -> n1 == n2
@@ -412,17 +448,45 @@ module Op =
         | BO_BVshr n1, BO_BVshr n2 -> n1 == n2
         | BO_select (ti1, te1), BO_select (ti2, te2)
         | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) ->
-          SmtBtype.equal ti1 ti2 && SmtBtype.equal te1 te2
+           HashedBtypePair.equal (ti1, te1) (ti2, te2)
         | _ -> op1 == op2
+
+    let b_hash = function
+      | BO_Zplus -> 1
+      | BO_Zminus -> 2
+      | BO_Zmult -> 3
+      | BO_Zlt -> 4
+      | BO_Zle -> 5
+      | BO_Zge -> 6
+      | BO_Zgt -> 7
+      | BO_eq ty -> ((SmtBtype.HashedBtype.hash ty) lsl 6) lxor 8
+      | BO_BVand s -> s lxor 9
+      | BO_BVor s -> s lxor 10
+      | BO_BVxor s -> s lxor 11
+      | BO_BVadd s -> s lxor 12
+      | BO_BVmult s -> s lxor 13
+      | BO_BVult s -> s lxor 14
+      | BO_BVslt s -> s lxor 15
+      | BO_BVconcat (s1,s2) -> (s1 land s2) lxor 16
+      | BO_BVshl s -> s lxor 17
+      | BO_BVshr s -> s lxor 18
+      | BO_select (ti, te) -> ((HashedBtypePair.hash (ti, te)) lsl 6) lxor 19
+      | BO_diffarray (ti, te) -> ((HashedBtypePair.hash (ti, te)) lsl 6) lxor 20
 
     let t_equal op1 op2 =
       match op1,op2 with
         | TO_store (ti1, te1), TO_store (ti2, te2) ->
-          SmtBtype.equal ti1 ti2 && SmtBtype.equal te1 te2
+          SmtBtype.HashedBtype.equal ti1 ti2 && SmtBtype.HashedBtype.equal te1 te2
+
+    let t_hash = function
+      | TO_store (ti, te) -> HashedBtypePair.hash (ti, te)
 
     let n_equal op1 op2 =
       match op1,op2 with
-      | NO_distinct t1, NO_distinct t2 -> SmtBtype.equal t1 t2
+      | NO_distinct t1, NO_distinct t2 -> SmtBtype.HashedBtype.equal t1 t2
+
+    let n_hash = function
+      | NO_distinct t -> SmtBtype.HashedBtype.hash t
 
     let i_equal (i1, _) (i2, _) = i1 = i2
 
@@ -554,14 +618,14 @@ module HashedAtom =
       | _, _ -> false
 
     let hash = function
-      |	Acop op -> ((Hashtbl.hash op) lsl 3) lxor 1
+      |	Acop op -> ((Op.c_hash op) lsl 3) lxor 1
       | Auop (op,h) ->
-         (( (h.index lsl 3) + (Hashtbl.hash op)) lsl 3) lxor 2
+         (( (h.index lsl 3) + (Op.u_hash op)) lsl 3) lxor 2
       | Abop (op,h1,h2) ->
-        (((( (h1.index lsl 2) + h2.index) lsl 3) + Hashtbl.hash op) lsl 3) lxor 3
+        (((( (h1.index lsl 2) + h2.index) lsl 3) + Op.b_hash op) lsl 3) lxor 3
       | Atop (op,h1,h2,h3) ->
         (((( ((h1.index lsl 2) + h2.index) lsl 3) + h3.index) lsl 4
-          + Hashtbl.hash op) lsl 4) lxor 4
+          + Op.t_hash op) lsl 4) lxor 4
       | Anop (op, args) ->
           let hash_args =
             match Array.length args with
@@ -570,7 +634,7 @@ module HashedAtom =
             | 2 -> args.(1).index lsl 2 + args.(0).index
             | _ -> args.(2).index lsl 4 + args.(1).index lsl 2 + args.(0).index
           in
-          (hash_args lsl 5 + (Hashtbl.hash op) lsl 3) lxor 4
+          (hash_args lsl 5 + (Op.n_hash op) lsl 3) lxor 4
       | Aapp (op, args) ->
          let op_index = try fst (destruct "destruct on a Rel: called by hash" op) with _ -> 0 in
           let hash_args =
@@ -607,7 +671,7 @@ module Atom =
       | Anop (op,_) -> Op.n_type_of op
       | Aapp (op,_) -> Op.i_type_of op
 
-    let is_bool_type h = SmtBtype.equal (type_of h) SmtBtype.Tbool
+    let is_bool_type h = SmtBtype.HashedBtype.equal (type_of h) SmtBtype.Tbool
     let is_bv_type h = match type_of h with | SmtBtype.TBV _ -> true | _ -> false
 
 
@@ -782,7 +846,7 @@ module Atom =
 
       let check_one t h =
         let th = type_of h in
-        if SmtBtype.equal t th then
+        if SmtBtype.HashedBtype.equal t th then
           h
         else if t == SmtBtype.TZ && th == SmtBtype.Tpositive then
           (* Special case: the SMT solver cannot distinguish Z from
@@ -822,6 +886,9 @@ module Atom =
       a
 
 
+    (* Identifies two equalities modulo symmetry
+       It is used to handle veriT lemmas, which can be applied modulo
+       symmetry *)
     let mk_eq reify ?declare:(decl=true) ty h1 h2 =
       let op = BO_eq ty in
       try
@@ -841,23 +908,23 @@ module Atom =
           | _ -> failwith "opp not on Z" in
         get reify na
 
-    let rec hash_hatom ra' {index = _; hval = a} =
+    let rec hash_hatom ra_quant {index = _; hval = a} =
       match a with
-      | Acop cop -> get ra' a
-      | Auop (uop, ha) -> get ra' (Auop (uop, hash_hatom ra' ha))
+      | Acop cop -> get ra_quant a
+      | Auop (uop, ha) -> get ra_quant (Auop (uop, hash_hatom ra_quant ha))
       | Abop (bop, ha1, ha2) ->
-         let new_ha1 = hash_hatom ra' ha1 in
-         let new_ha2 = hash_hatom ra' ha2 in
+         let new_ha1 = hash_hatom ra_quant ha1 in
+         let new_ha2 = hash_hatom ra_quant ha2 in
          begin match bop with
-         | BO_eq ty -> mk_eq ra' ty new_ha1 new_ha2
-         | _ -> get ra' (Abop (bop, new_ha1, new_ha2)) end
+         | BO_eq ty -> mk_eq ra_quant ty new_ha1 new_ha2
+         | _ -> get ra_quant (Abop (bop, new_ha1, new_ha2)) end
       | Atop (top, ha1, ha2, ha3) ->
-         let new_ha1 = hash_hatom ra' ha1 in
-         let new_ha2 = hash_hatom ra' ha2 in
-         let new_ha3 = hash_hatom ra' ha3 in
-         get ra' (Atop (top, new_ha1, new_ha2, new_ha3))
+         let new_ha1 = hash_hatom ra_quant ha1 in
+         let new_ha2 = hash_hatom ra_quant ha2 in
+         let new_ha3 = hash_hatom ra_quant ha3 in
+         get ra_quant (Atop (top, new_ha1, new_ha2, new_ha3))
       | Anop _ -> assert false
-      | Aapp (op, arr) -> get ra' (Aapp (op, Array.map (hash_hatom ra') arr))
+      | Aapp (op, arr) -> get ra_quant (Aapp (op, Array.map (hash_hatom ra_quant) arr))
 
     let copy {count=c; tbl=t} = {count = c; tbl = HashAtom.copy t}
 

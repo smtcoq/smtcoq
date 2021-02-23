@@ -29,7 +29,7 @@ type btype =
 
 val indexed_type_of_int : int -> indexed_type
 
-val equal : btype -> btype -> bool
+module HashedBtype : Hashtbl.HashedType with type t = btype
 
 val to_coq : btype -> Structures.constr
 

@@ -419,12 +419,10 @@ Section CompCert.
     intro H. verit alloc_valid_block_2 H.
   Qed.
 
-  (*
   Lemma alloc_not_valid_block_2 m lo hi b' :
     valid_block m b' -> b' ==? (alloc_block m lo hi) = false.
   Proof.
     intro H. verit alloc_not_valid_block H.
   Qed.
-  *)
 
 End CompCert.

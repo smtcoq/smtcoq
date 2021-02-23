@@ -472,7 +472,7 @@ module Make (Atom:ATOM) =
       mk_hform c
 
 
-    let hash_hform hash_hatom rf' hf =
+    let hash_hform hash_hatom rf_quant hf =
       let rec mk_hform = function
         | Pos hp -> Pos (mk_hpform hp)
         | Neg hp -> Neg (mk_hpform hp)
@@ -482,7 +482,7 @@ module Make (Atom:ATOM) =
             | Fapp (fop, arr) -> Fapp (fop, Array.map mk_hform arr)
             | FbbT (a, l) -> FbbT (hash_hatom a, List.map mk_hform l)
         in
-        match get rf' new_hv with Pos x | Neg x -> x in
+        match get rf_quant new_hv with Pos x | Neg x -> x in
       mk_hform hf
 
 
