@@ -1071,32 +1071,27 @@ End EqualityOnUninterpretedType3.
 
 
 Section AppliedPolymorphicTypes2.
-  Variable list : Type -> Type.
-  Variable append : forall A : Type, list A -> list A -> list A.
-  Arguments append {A} _ _.
-  Local Notation "l1 +++ l2" := (append l1 l2) (at level 60).
-
   Variable B : Type.
   Variable HlB : CompDec (list B).
 
   Goal forall l1 l2 l3 l4 : list B,
-      l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
+      l1 ++ (l2 ++ (l3 ++ l4)) = l1 ++ (l2 ++ (l3 ++ l4)).
   Proof. verit. Qed.
 
   Hypothesis append_assoc_B :
-    forall l1 l2 l3 : list B, eqb_of_compdec HlB (l1 +++ (l2 +++ l3)) ((l1 +++ l2) +++ l3) = true.
+    forall l1 l2 l3 : list B, eqb_of_compdec HlB (l1 ++ (l2 ++ l3)) ((l1 ++ l2) ++ l3) = true.
   (* TODO: make it possible to apply prop2bool to hypotheses *)
   (* Hypothesis append_assoc_B : *)
-  (*   forall l1 l2 l3 : list B, l1 +++ (l2 +++ l3) = (l1 +++ l2) +++ l3. *)
+  (*   forall l1 l2 l3 : list B, l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3. *)
 
   (* The hypothesis is not used *)
   Goal forall l1 l2 l3 l4 : list B,
-      l1 +++ (l2 +++ (l3 +++ l4)) = l1 +++ (l2 +++ (l3 +++ l4)).
+      l1 ++ (l2 ++ (l3 ++ l4)) = l1 ++ (l2 ++ (l3 ++ l4)).
   Proof. verit append_assoc_B. Qed.
 
   (* The hypothesis is used *)
   Goal forall l1 l2 l3 l4 : list B,
-      l1 +++ (l2 +++ (l3 +++ l4)) = ((l1 +++ l2) +++ l3) +++ l4.
+      l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
   Proof. verit append_assoc_B. Qed.
 End AppliedPolymorphicTypes2.
 

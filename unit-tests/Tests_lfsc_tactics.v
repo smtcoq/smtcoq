@@ -727,32 +727,51 @@ End A_BV_EUF_LIA_PR.
 
 (* Example of the webpage *)
 
-Section group.
-  Variable e : Z.
-  Variable inv : Z -> Z.
-  Variable op : Z -> Z -> Z.
+Section Group.
+  Variable G : Type.
+  (* We suppose that G has a decidable equality *)
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
 
+  Local Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60).
+
+  (* We can prove automatically that we have a group if we only have the
+     "left" versions of the axioms of a group *)
   Hypothesis associative :
-    forall a b c, op a (op b c) =? op (op a b) c.
-  Hypothesis identity : forall a, (op e a =? a).
-  Hypothesis inverse : forall a, (op (inv a) a =? e).
+    forall a b c : G, op a (op b c) ==? op (op a b) c.
+  Hypothesis inverse :
+    forall a : G, op (inv a) a ==? e.
+  Hypothesis identity :
+    forall a : G, op e a ==? a.
+  Add_lemmas associative inverse identity.
 
-  Add_lemmas associative identity inverse.
-
+  (* The "right" version of inverse *)
   Lemma inverse' :
-    forall a : Z, (op a (inv a) =? e).
-  Proof using associative identity inverse. smt. Qed.
+    forall a : G, op a (inv a) ==? e.
+  Proof. smt. Qed.
 
+  (* The "right" version of identity *)
   Lemma identity' :
-    forall a : Z, (op a e =? a).
-  Proof using associative identity inverse. smt inverse'. Qed.
+    forall a : G, op a e ==? a.
+  Proof. smt inverse'. Qed.
 
+  (* Some other interesting facts about groups *)
   Lemma unique_identity e':
-    (forall z, op e' z =? z) -> e' =? e.
-  Proof using associative identity inverse. intros pe'; smt pe'. Qed.
+    (forall z, op e' z ==? z) -> e' ==? e.
+  Proof. intros pe'; smt pe'. Qed.
+
+  Lemma simplification_right x1 x2 y:
+      op x1 y ==? op x2 y -> x1 ==? x2.
+  Proof. intro H. smt_no_check H inverse'. Qed.
+
+  Lemma simplification_left x1 x2 y:
+      op y x1 ==? op y x2 -> x1 ==? x2.
+  Proof. intro H. smt_no_check H inverse'. Qed.
 
   Clear_lemmas.
-End group.
+End Group.
 
 
 Section EqualityOnUninterpretedType1.
