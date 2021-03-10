@@ -17,7 +17,7 @@ Require Import List Bool Int63 PArray Omega.
 Local Open Scope int63_scope.
 Local Open Scope array_scope.
 
-Coercion is_true (x: bool) := x = true.
+Coercion is_true : bool >-> Sortclass.
 
 Set Vm Optimize.
 
