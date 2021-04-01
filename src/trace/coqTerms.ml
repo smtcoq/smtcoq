@@ -23,6 +23,9 @@ let ceq63 = gen_constant Structures.int63_modules "eqb"
 (* PArray *)
 let carray = gen_constant Structures.parray_modules "array"
 
+(* is_true *)
+let cis_true = gen_constant init_modules "is_true"
+
 (* nat *)
 let cnat = gen_constant Structures.init_modules "nat"
 let cO = gen_constant Structures.init_modules "O"
@@ -265,8 +268,6 @@ let cFimp = gen_constant smt_modules "Fimp"
 let cFiff = gen_constant smt_modules "Fiff"
 let cFite = gen_constant smt_modules "Fite"
 let cFbbT = gen_constant smt_modules "FbbT"
-
-let cis_true = gen_constant smt_modules "is_true"
 
 let cvalid_sat_checker = gen_constant [["SMTCoq";"Trace";"Sat_Checker"]] "valid"
 let cinterp_var_sat_checker = gen_constant [["SMTCoq";"Trace";"Sat_Checker"]] "interp_var"
