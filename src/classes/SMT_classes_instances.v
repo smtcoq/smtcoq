@@ -664,11 +664,109 @@ Section option.
 End option.
 
 
+Section list.
+
+  Generalizable Variable A.
+  Context `{HA : CompDec A}.
+
+
+  Fixpoint list_eqb (xs ys : list A) : bool :=
+    match xs, ys with
+    | nil, nil => true
+    | x::xs, y::ys => eqb x y && list_eqb xs ys
+    | _, _ => false
+    end.
+
+
+  Lemma list_eqb_spec : forall (x y : list A), list_eqb x y = true <-> x = y.
+  Proof.
+    induction x as [ |x xs IHxs]; intros [ |y ys]; simpl; split; try discriminate; auto.
+    - rewrite andb_true_iff. intros [H1 H2]. rewrite eqb_spec in H1. rewrite IHxs in H2. now subst.
+    - intros H. inversion H as [H1]. rewrite andb_true_iff; split.
+      + now rewrite eqb_spec.
+      + subst ys. now rewrite IHxs.
+  Qed.
+
+
+  Instance list_eqbtype : EqbType (list A) := Build_EqbType _ _ list_eqb_spec.
+
+
+  Fixpoint list_lt (xs ys : list A) : Prop :=
+    match xs, ys with
+    | nil, nil => False
+    | nil, _::_ => True
+    | _::_, nil => False
+    | x::xs, y::ys => (lt x y) \/ (eqb x y /\ list_lt xs ys)
+    end.
+
+
+  Lemma list_lt_trans : forall (x y z : list A),
+      list_lt x y -> list_lt y z -> list_lt x z.
+  Proof.
+    induction x as [ |x xs IHxs]; intros [ |y ys] [ |z zs]; simpl; auto.
+    - inversion 1.
+    - intros [H1|[H1a H1b]] [H2|[H2a H2b]].
+      + left; eapply lt_trans; eauto.
+      + left. unfold is_true in H2a. rewrite eqb_spec in H2a. now subst z.
+      + left. unfold is_true in H1a. rewrite eqb_spec in H1a. now subst y.
+      + right. split.
+        * unfold is_true in H1a. rewrite eqb_spec in H1a. now subst y.
+        * eapply IHxs; eauto.
+  Qed.
+
+
+  Lemma list_lt_not_eq : forall (x y : list A), list_lt x y -> x <> y.
+  Proof.
+    induction x as [ |x xs IHxs]; intros [ |y ys]; simpl; auto.
+    - discriminate.
+    - intros [H1|[H1 H2]]; intros H; inversion H; subst.
+      + eapply lt_not_eq; eauto.
+      + eapply IHxs; eauto.
+  Qed.
+
+
+  Instance list_ord : OrdType (list A) :=
+    Build_OrdType _ _ list_lt_trans list_lt_not_eq.
+
+
+  Definition list_compare : forall (x y : list A), Compare list_lt Logic.eq x y.
+  Proof.
+    induction x as [ |x xs IHxs]; intros [ |y ys]; simpl.
+    - now apply EQ.
+    - now apply LT.
+    - now apply GT.
+    - case_eq (compare x y); intros l H.
+      + apply LT. simpl. now left.
+      + case_eq (IHxs ys); intros l1 H1.
+        * apply LT. simpl. right. split; auto. now apply eqb_spec.
+        * apply EQ. now rewrite l, l1.
+        * apply GT. simpl. right. split; auto. now apply eqb_spec.
+      + apply GT. simpl. now left.
+  Defined.
+
+
+  Instance list_comp : Comparable (list A) := Build_Comparable _ _ list_compare.
+
+
+  Instance list_inh : Inhabited (list A) := Build_Inhabited _ nil.
+
+
+  Instance list_compdec : CompDec (list A) := {|
+    Eqb := list_eqbtype;
+    Ordered := list_ord;
+    Comp := list_comp;
+    Inh := list_inh
+  |}.
+
+End list.
+
+
 Hint Resolve unit_ord unit_eqbtype unit_comp unit_inh unit_compdec : typeclass_instances.
 Hint Resolve bool_ord bool_eqbtype bool_dec bool_comp bool_inh bool_compdec : typeclass_instances.
 Hint Resolve Z_ord Z_eqbtype Z_dec Z_comp Z_inh Z_compdec : typeclass_instances.
 Hint Resolve Positive_ord Positive_eqbtype Positive_dec Positive_comp Positive_inh Positive_compdec : typeclass_instances.
 Hint Resolve BV_ord BV_eqbtype BV_dec BV_comp BV_inh BV_compdec : typeclass_instances.
 Hint Resolve FArray_ord FArray_eqbtype FArray_dec FArray_comp FArray_inh FArray_compdec : typeclass_instances.
-Hint Resolve int63_ord int63_inh int63_eqbtype int63_dec int63_comp int63_compdec option_compdec : typeclass_instances.
+Hint Resolve int63_ord int63_inh int63_eqbtype int63_dec int63_comp int63_compdec option_compdec list_compdec : typeclass_instances.
 Hint Resolve option_ord option_eqbtype option_comp option_inh : typeclass_instances.
+Hint Resolve list_ord list_eqbtype list_comp list_inh : typeclass_instances.
