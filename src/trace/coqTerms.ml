@@ -25,7 +25,7 @@ let ceq63 = gen_constant Structures.int63_modules "eqb"
 let carray = gen_constant Structures.parray_modules "array"
 
 (* is_true *)
-let cis_true = gen_constant Structures.init_modules "is_true"
+let cis_true = gen_constant init_modules "is_true"
 
 (* nat *)
 let cnat = gen_constant init_modules "nat"
