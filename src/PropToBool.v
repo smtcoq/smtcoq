@@ -203,7 +203,7 @@ Infix "<--->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 
 
-(* See if it fails with 8.13 *)
+(* Does not fail since 8.10 *)
 
 Goal True.
   evar (t:Type).
