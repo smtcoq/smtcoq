@@ -204,7 +204,7 @@ Infix "<--->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 
 (* See if it fails with 8.13 *)
-(*
+
 Goal True.
   evar (t:Type).
   assert (H:True).
@@ -213,8 +213,15 @@ Goal True.
 Qed.
 
 Goal True.
-  evar (t:option Type).
+  evar (t:option Set).
   assert (H:True).
   - instantiate (t:=Some nat). exact I.
   - exact I.
-*)
+Qed.
+
+Goal True.
+  evar (t:option Type).
+  assert (H:True).
+  - Fail instantiate (t:=Some nat). exact I.
+  - exact I.
+Abort.
