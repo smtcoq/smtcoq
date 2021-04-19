@@ -139,7 +139,7 @@ Ltac prop2bool_hyp H :=
     repeat match goal with
            | [ |- forall _ : _, _ ] => intro
            | [ |- @eq ?A _ _ ] => instantiate (t := A); instantiate (comp := true)
-           | _ => instantiate (comp := false)
+           | _ => instantiate (t := nat); instantiate (comp := false)
            end;
     destruct HFalse
   | ];
@@ -190,8 +190,7 @@ Section Toto.
   Proof.
     prop2bool_hyp toto.
     prop2bool_hyp tutu.
-    Fail epose (t := ?[t] : Type).
-    Fail prop2bool_hyp tata.
+    prop2bool_hyp tata.
   Abort.
 End Toto.
 
