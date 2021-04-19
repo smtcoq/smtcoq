@@ -131,8 +131,8 @@ Ltac bool2prop := unfold is_true; bool2prop_true.
 
 Ltac prop2bool_hyp H :=
   let TH := type of H in
-  let t := fresh "t" in evar (t : Type);
-  let comp := fresh "comp" in evar (comp : bool);
+  let t := fresh "t" in epose (t := ?[t] : Type);
+  let comp := fresh "comp" in epose (comp := ?[comp] : bool);
   let H' := fresh in
   assert (H':False -> TH);
   [ let HFalse := fresh "HFalse" in intro HFalse;
@@ -153,7 +153,7 @@ Ltac prop2bool_hyp H :=
   end;
   clear comp;
   [ .. |
-    let Hbool := fresh "Hbool" in evar (Hbool : Prop);
+    let Hbool := fresh "Hbool" in epose (Hbool := ?[Hbool] : Prop);
     assert (H':False -> TH);
     [ let HFalse := fresh "HFalse" in intro HFalse;
       let rec tac_rec :=
@@ -190,6 +190,7 @@ Section Toto.
   Proof.
     prop2bool_hyp toto.
     prop2bool_hyp tutu.
+    Fail epose (t := ?[t] : Type).
     Fail prop2bool_hyp tata.
   Abort.
 End Toto.
@@ -203,7 +204,7 @@ Infix "<--->" := Bool.eqb (at level 60, right associativity) : bool_scope.
 
 
 
-(* Si if it fails with 8.13 *)
+(* See if it fails with 8.13 *)
 (*
 Goal True.
   evar (t:Type).
