@@ -539,11 +539,11 @@ Proof using. intros f p. verit p. Qed.
 
 Lemma taut3 :
   forall f, f 2 =? 0 -> f 3 =? 5 -> f 2 =? 0.
-Proof using. intros f p1 p2. verit p1 p2. Qed.
+Proof using. intros f p1 p2. verit (p1, p2). Qed.
 
 Lemma taut4 :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
-Proof using. intros f p1 p2. verit p1 p2. Qed.
+Proof using. intros f p1 p2. verit (p1, p2). Qed.
 
 Lemma test_eq_sym a b : implb (a =? b) (b =? a).
 Proof using. verit. Qed.
@@ -590,7 +590,7 @@ Proof using. intro p. verit p. Qed.
 
 Lemma lcongr1 (a b : Z) (P : Z -> bool) f:
   (f a =? b) -> (P (f a)) -> P b.
-Proof using. intros eqfab pfa. verit eqfab pfa. Qed.
+Proof using. intros eqfab pfa. verit (eqfab, pfa). Qed.
 
 Lemma lcongr2 (f:Z -> Z -> Z) x y z:
   x =? y -> f z x =? f z y.
@@ -598,7 +598,7 @@ Proof using. intro p. verit p. Qed.
 
 Lemma lcongr3 (P:Z -> Z -> bool) x y z:
   x =? y -> P z x -> P z y.
-Proof using. intros eqxy pzx. verit eqxy pzx. Qed.
+Proof using. intros eqxy pzx. verit (eqxy, pzx). Qed.
 
 Lemma test20 :  forall x, (forall a, a <? x) -> 0 <=? x = false.
 Proof using. intros x H. verit H. Qed.
@@ -613,7 +613,7 @@ Lemma un_menteur (a b c d : Z) dit:
   (a =? c) || (a =? d) ->
   (b =? c) || (b =? d) ->
   a =? d.
-Proof using. intros H1 H2 H3 H4 H5. verit H1 H2 H3 H4 H5. Qed.
+Proof using. intros H1 H2 H3 H4 H5. verit (H1, H2, H3, H4, H5). Qed.
 
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,

@@ -23,8 +23,8 @@ let mkInt i =
 (** Generic representation of shared object *)
 type 'a gen_hashed = { index : int; hval : 'a }
 
-(** Functions over constr *)
 
+(** Functions over constr *)
 let mklApp f args = Structures.mkApp (Lazy.force f, args)
 
 let string_of_name_def d n = try Structures.string_of_name n with | _ -> d
