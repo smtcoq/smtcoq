@@ -135,6 +135,8 @@ Ltac bool2prop := unfold is_true; bool2prop_true.
 
 Ltac prop2bool_hyp H :=
   let TH := type of H in
+
+  (* Add a CompDec hypothesis if needed *)
   let prop2bool_t := fresh "prop2bool_t" in epose (prop2bool_t := ?[prop2bool_t_evar] : Type);
   let prop2bool_comp := fresh "prop2bool_comp" in epose (prop2bool_comp := ?[prop2bool_comp_evar] : bool);
   let H' := fresh in
@@ -161,6 +163,8 @@ Ltac prop2bool_hyp H :=
   | false => idtac
   end;
   clear prop2bool_t; clear prop2bool_comp;
+
+  (* Compute the bool version of the lemma *)
   [ .. |
     let prop2bool_Hbool := fresh "prop2bool_Hbool" in epose (prop2bool_Hbool := ?[prop2bool_Hbool_evar] : Prop);
     assert (H':False -> TH);
@@ -183,8 +187,12 @@ Ltac prop2bool_hyp H :=
       destruct HFalse
     | ];
     clear H';
+
+    (* Assert and prove the bool version of the lemma *)
     assert (H':prop2bool_Hbool); subst prop2bool_Hbool;
     [ bool2prop; apply H | ];
+
+    (* Replace the Prop version with the bool version *)
     clear H; assert (H:=H'); clear H'
   ].
 
