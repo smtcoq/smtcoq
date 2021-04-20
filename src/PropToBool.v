@@ -175,7 +175,11 @@ Ltac prop2bool_hyp H :=
     clear H; assert (H:=H'); clear H'
   ].
 
-
+Ltac prop2bool_hyps Hs :=
+  match Hs with
+  | (?Hs, ?H) => prop2bool_hyp H; [ .. | prop2bool_hyps Hs]
+  | ?H => prop2bool_hyp H
+  end.
 
 
 
@@ -191,6 +195,11 @@ Section Toto.
     prop2bool_hyp toto.
     prop2bool_hyp tutu.
     prop2bool_hyp tata.
+  Abort.
+
+  Goal True.
+  Proof.
+    prop2bool_hyps (toto, tutu, tata).
   Abort.
 End Toto.
 
