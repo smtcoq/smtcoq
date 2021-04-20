@@ -143,8 +143,12 @@ Ltac prop2bool_hyp H :=
   assert (H':False -> TH);
   [ let HFalse := fresh "HFalse" in intro HFalse;
     repeat match goal with
-           | [ |- forall _ : _, _ ] => intro
-           | [ |- @eq ?A _ _ ] => instantiate (prop2bool_t_evar := A); instantiate (prop2bool_comp_evar := true)
+           | [ |- forall _ : ?t, _ ] =>
+             lazymatch type of t with
+             | Prop => fail
+             | _ => intro
+             end
+           | [ |- context[@eq ?A _ _] ] => instantiate (prop2bool_t_evar := A); instantiate (prop2bool_comp_evar := true)
            | _ => instantiate (prop2bool_t_evar := nat); instantiate (prop2bool_comp_evar := false)
            end;
     destruct HFalse
@@ -258,6 +262,35 @@ Section Group.
   Qed.
 
 End Group.
+
+
+Section MultipleCompDec.
+
+  Variables A B : Type.
+  Hypothesis multiple : forall (a1 a2:A) (b1 b2:B), a1 = a2 -> b1 = b2.
+
+  Goal True.
+  Proof.
+    Fail prop2bool_hyp multiple.
+  Abort.
+
+End MultipleCompDec.
+
+
+(* We can assume that we deal only with monomorphic hypotheses, since
+   polymorphism will be removed before *)
+Section Poly.
+  Hypothesis basic : forall (A:Type) (l1 l2:list A),
+    length (l1++l2) = length l1 + length l2.
+  Hypothesis uninterpreted_type : forall (A:Type) (a:A), a = a.
+
+  Goal True.
+  Proof.
+    prop2bool_hyp basic.
+    Fail prop2bool_hyp uninterpreted_type.
+  Abort.
+
+End Poly.
 
 
 
