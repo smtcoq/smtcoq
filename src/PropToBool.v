@@ -89,7 +89,11 @@ Ltac prop2bool :=
 Ltac bool2prop_true :=
   repeat
     match goal with
-    | [ |- forall _ : ?t, _ ] => intro
+    | [ |- forall _ : ?t, _ ] =>
+      lazymatch type of t with
+      | Prop => fail
+      | _ => intro
+      end
 
     | [ |- context[ bv_ult _ _ = true ] ] => rewrite bv_ult_B2P
     | [ |- context[ bv_slt _ _ = true ] ] => rewrite bv_slt_B2P
@@ -163,9 +167,13 @@ Ltac prop2bool_hyp H :=
     [ let HFalse := fresh "HFalse" in intro HFalse;
       let rec tac_rec :=
           match goal with
-          | [ |- forall _ : _, _ ] =>
-            let H := fresh in
-            intro H; tac_rec; revert H
+          | [ |- forall _ : ?t, _ ] =>
+            lazymatch type of t with
+            | Prop => fail
+            | _ =>
+              let H := fresh in
+              intro H; tac_rec; revert H
+            end
           | _ => prop2bool
           end in
       tac_rec;
