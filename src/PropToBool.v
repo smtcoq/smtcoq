@@ -131,29 +131,34 @@ Ltac bool2prop := unfold is_true; bool2prop_true.
 
 Ltac prop2bool_hyp H :=
   let TH := type of H in
-  let t := fresh "t" in epose (t := ?[t] : Type);
-  let comp := fresh "comp" in epose (comp := ?[comp] : bool);
+  let prop2bool_t := fresh "prop2bool_t" in epose (prop2bool_t := ?[prop2bool_t_evar] : Type);
+  let prop2bool_comp := fresh "prop2bool_comp" in epose (prop2bool_comp := ?[prop2bool_comp_evar] : bool);
   let H' := fresh in
   assert (H':False -> TH);
   [ let HFalse := fresh "HFalse" in intro HFalse;
     repeat match goal with
            | [ |- forall _ : _, _ ] => intro
-           | [ |- @eq ?A _ _ ] => instantiate (t := A); instantiate (comp := true)
-           | _ => instantiate (t := nat); instantiate (comp := false)
+           | [ |- @eq ?A _ _ ] => instantiate (prop2bool_t_evar := A); instantiate (prop2bool_comp_evar := true)
+           | _ => instantiate (prop2bool_t_evar := nat); instantiate (prop2bool_comp_evar := false)
            end;
     destruct HFalse
   | ];
   clear H';
-  match (eval compute in comp) with
+  match (eval compute in prop2bool_comp) with
   | true =>
-    let Hcompdec := fresh "Hcompdec" in
-    assert (Hcompdec: CompDec t); subst t;
-    [ auto with typeclass_instances | ]
-  | false => clear t
+    let A := eval cbv in prop2bool_t in
+    match goal with
+    | [ _ : CompDec A |- _ ] => idtac
+    | _ =>
+      let Hcompdec := fresh "Hcompdec" in
+      assert (Hcompdec: CompDec A);
+      [ auto with typeclass_instances | ]
+    end
+  | false => idtac
   end;
-  clear comp;
+  clear prop2bool_t; clear prop2bool_comp;
   [ .. |
-    let Hbool := fresh "Hbool" in epose (Hbool := ?[Hbool] : Prop);
+    let prop2bool_Hbool := fresh "prop2bool_Hbool" in epose (prop2bool_Hbool := ?[prop2bool_Hbool_evar] : Prop);
     assert (H':False -> TH);
     [ let HFalse := fresh "HFalse" in intro HFalse;
       let rec tac_rec :=
@@ -165,43 +170,78 @@ Ltac prop2bool_hyp H :=
           end in
       tac_rec;
       match goal with
-      | [ |- ?g ] => only [Hbool]: refine g
+      | [ |- ?g ] => only [prop2bool_Hbool_evar]: refine g
       end;
       destruct HFalse
     | ];
     clear H';
-    assert (H':Hbool); subst Hbool;
+    assert (H':prop2bool_Hbool); subst prop2bool_Hbool;
     [ bool2prop; apply H | ];
     clear H; assert (H:=H'); clear H'
   ].
 
 Ltac prop2bool_hyps Hs :=
   match Hs with
-  | (?Hs, ?H) => prop2bool_hyp H; [ .. | prop2bool_hyps Hs]
-  | ?H => prop2bool_hyp H
+  | (?Hs, ?H) => try prop2bool_hyp H; [ .. | prop2bool_hyps Hs]
+  | ?H => try prop2bool_hyp H
   end.
 
 
 
-Section Toto.
+Section Test.
   Variable A : Type.
 
-  Hypothesis toto : forall (l1 l2:list A), length (l1++l2) = length l1 + length l2.
-  Hypothesis tutu : forall (z1 z2:Z), (z1 < z2)%Z.
-  Hypothesis tata : forall (a:A), a = a.
+  Hypothesis basic : forall (l1 l2:list A), length (l1++l2) = length l1 + length l2.
+  Hypothesis no_eq : forall (z1 z2:Z), (z1 < z2)%Z.
+  Hypothesis uninterpreted_type : forall (a:A), a = a.
 
   Goal True.
   Proof.
-    prop2bool_hyp toto.
-    prop2bool_hyp tutu.
-    prop2bool_hyp tata.
+    prop2bool_hyp basic.
+    prop2bool_hyp no_eq.
+    prop2bool_hyp uninterpreted_type.
   Abort.
 
   Goal True.
   Proof.
-    prop2bool_hyps (toto, tutu, tata).
+    prop2bool_hyps (basic, no_eq, uninterpreted_type).
   Abort.
-End Toto.
+End Test.
+
+Section Group.
+
+  Variable G : Type.
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
+
+  Hypothesis associative :
+    forall a b c : G, op a (op b c) = op (op a b) c.
+  Hypothesis identity :
+    forall a : G, (op e a = a) /\ (op a e = a).
+  Hypothesis inverse :
+    forall a : G, (op a (inv a) = e) /\ (op (inv a) a = e).
+
+  Variable e' : G.
+  Hypothesis other_id : forall e' z, op e' z = z.
+
+  Goal True.
+  Proof.
+    prop2bool_hyp associative.
+    prop2bool_hyp identity.
+    prop2bool_hyp inverse.
+    prop2bool_hyp other_id.
+    exact I.
+  Qed.
+
+  Goal True.
+  Proof.
+    prop2bool_hyps (associative, identity, inverse, other_id).
+    exact I.
+  Qed.
+
+End Group.
 
 
 

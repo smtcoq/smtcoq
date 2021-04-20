@@ -838,7 +838,7 @@ Section GroupZ.
 End GroupZ.
 
 
-Section Group.
+Section GroupBool.
   Variable G : Type.
   Variable HG : CompDec G.
   Variable op : G -> G -> G.
@@ -855,17 +855,58 @@ Section Group.
     forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e).
   Add_lemmas associative identity inverse.
 
-  Lemma unique_identity e':
+  Lemma unique_identity_bool e':
     (forall z, op e' z ==? z) -> e' ==? e.
   Proof using associative identity inverse. intros pe'. verit pe'. Qed.
 
-  Lemma simplification_right x1 x2 y:
+  Lemma simplification_right_bool x1 x2 y:
       op x1 y ==? op x2 y -> x1 ==? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
 
-  Lemma simplification_left x1 x2 y:
+  Lemma simplification_left_bool x1 x2 y:
       op y x1 ==? op y x2 -> x1 ==? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
+
+  Clear_lemmas.
+End GroupBool.
+
+
+Section Group.
+  Variable G : Type.
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
+
+  Hypothesis associative :
+    forall a b c : G, op a (op b c) = op (op a b) c.
+  Hypothesis identity :
+    forall a : G, (op e a = a) /\ (op a e = a).
+  Hypothesis inverse :
+    forall a : G, (op a (inv a) = e) /\ (op (inv a) a = e).
+  (* TODO: apply [prop2bool_hyp] to lemmas added with [Add_lemmas] *)
+  (* Add_lemmas associative identity inverse. *)
+
+  Lemma unique_identity e':
+    (forall z, op e' z = z) -> e' = e.
+  Proof using associative identity inverse HG.
+    intros pe'.
+    verit (associative, identity, inverse, pe').
+  Qed.
+
+  Lemma simplification_right x1 x2 y:
+      op x1 y = op x2 y -> x1 = x2.
+  Proof using associative identity inverse HG.
+    intro H.
+    verit (associative, identity, inverse, H).
+  Qed.
+
+  Lemma simplification_left x1 x2 y:
+      op y x1 = op y x2 -> x1 = x2.
+  Proof using associative identity inverse HG.
+    intro H.
+    verit (associative, identity, inverse, H).
+  Qed.
 
   Clear_lemmas.
 End Group.
