@@ -764,11 +764,11 @@ Section Group.
 
   Lemma simplification_right x1 x2 y:
       op x1 y ==? op x2 y -> x1 ==? x2.
-  Proof. intro H. smt_no_check H inverse'. Qed.
+  Proof. intro H. smt_no_check (H, inverse'). Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 ==? op y x2 -> x1 ==? x2.
-  Proof. intro H. smt_no_check H inverse'. Qed.
+  Proof. intro H. smt_no_check (H, inverse'). Qed.
 
   Clear_lemmas.
 End Group.

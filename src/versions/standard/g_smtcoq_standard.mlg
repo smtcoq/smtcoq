@@ -113,8 +113,8 @@ END
 
 
 TACTIC EXTEND Tactic_verit
-| [ "verit_bool_base" constr_list(lpl) ] -> { Verit.tactic (List.map EConstr.Unsafe.to_constr lpl) (get_lemmas ()) }
-| [ "verit_bool_no_check_base" constr_list(lpl) ] -> { Verit.tactic_no_check (List.map EConstr.Unsafe.to_constr lpl) (get_lemmas ()) }
+| [ "verit_bool_base" constr(lpl) ] -> { Verit.tactic lpl (get_lemmas ()) }
+| [ "verit_bool_no_check_base" constr(lpl) ] -> { Verit.tactic_no_check lpl (get_lemmas ()) }
 END
 
 TACTIC EXTEND Tactic_cvc4

@@ -354,7 +354,6 @@ let rec mk_bv_list = function
 
 
 (* Reification *)
-
 let mk_bool b =
   let c, args = Structures.decompose_app b in
   if Structures.eq_constr c (Lazy.force ctrue) then true
@@ -434,3 +433,27 @@ let mk_bvsize n =
       else assert false
     | _ -> assert false
   else mk_N n
+
+(** Switches between constr and OCaml *)
+(* Transform a option constr into a constr option *)
+let option_of_constr_option co =
+  let c, args = Structures.decompose_app co in
+  if c = Lazy.force cSome then
+    match args with
+      | [_;c] -> Some c
+      | _ -> assert false
+  else
+    None
+
+(* Transform a tuple of constr into a (reversed) list of constr *)
+let list_of_constr_tuple =
+  let rec list_of_constr_tuple acc t =
+    let c, args = Structures.decompose_app t in
+    if c = Lazy.force cpair then
+      match args with
+        | [_;_;t;l] -> list_of_constr_tuple (l::acc) t
+        | _ -> assert false
+    else
+      t::acc
+  in
+  list_of_constr_tuple []
