@@ -681,43 +681,68 @@ let make_proof call_solver env rt ro ra_quant rf_quant l ls_smtc =
  .smt2 file. We need the reify tables to correctly recognize free variables
  of the lemma. We also need to make sure to leave unchanged the tables because
  the new objects may contain bound (by forall of the lemma) variables. *)
-exception Axiom_form_unsupported
-
 let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
+  (* TODO: remove side effects... *)
+  let rt_copy = SmtBtype.copy rt in
+
+  let warn () =
+    Structures.warning "Lemma" ("Discarding the following lemma (axiom form unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr Environ.empty_env Evd.empty (Structures.extern_constr clemma))));
+    None
+  in
+
   let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
   let env_lemma = List.fold_right Environ.push_rel rel_context env in
   let forall_args =
     let fmap r = let n, t = Structures.destruct_rel_decl r in
-                 Structures.string_of_name n, SmtBtype.of_coq rt solver_logic t in
-    List.map fmap rel_context in
+                 Structures.string_of_name n, SmtBtype.of_coq rt_copy solver_logic t in
+    List.map fmap rel_context
+  in
   let f, args = Structures.decompose_app qf_lemma in
   let core_f =
     if Structures.eq_constr f (Lazy.force cis_true) then
       match args with
-      | [a] -> a
-      | _ -> raise Axiom_form_unsupported
+      | [a] -> Some a
+      | _ -> warn ()
     else if Structures.eq_constr f (Lazy.force ceq) then
       match args with
       | [ty; arg1; arg2] when Structures.eq_constr ty (Lazy.force cbool) &&
                                 Structures.eq_constr arg2 (Lazy.force ctrue) ->
-         arg1
-      | _ -> raise Axiom_form_unsupported
-    else raise Axiom_form_unsupported in
-  let core_smt = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma)
-                   rf_quant core_f in
+         Some arg1
+      | _ -> warn ()
+    else warn () in
+  let core_smt =
+    match core_f with
+      | Some core_f ->
+         (* TODO: remove side effects... *)
+         let _ =
+           let fmap r = let n, t = Structures.destruct_rel_decl r in
+                        Structures.string_of_name n, SmtBtype.of_coq rt solver_logic t in
+           List.map fmap rel_context
+         in
+         Some (Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma) rf_quant core_f)
+      | None -> None
+  in
   match forall_args with
-    [] -> core_smt
-  | _ -> Form.get rf_quant (Fapp (Fforall forall_args, [|core_smt|]))
+    | [] -> core_smt
+    | _ ->
+       (match core_smt with
+          | Some core_smt -> Some (Form.get rf_quant (Fapp (Fforall forall_args, [|core_smt|])))
+          | None -> None)
 
 let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl env sigma concl =
   let a, b = get_arguments concl in
 
   let tlcepl = List.map (Structures.interp_constr env sigma) lcepl in
   let lcpl = lcpl @ tlcepl in
-  let lcl = List.map (Structures.retyping_get_type_of env sigma) lcpl in
 
-  let lsmt  = List.map (of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic) lcl in
-  let l_pl_ls = List.combine (List.combine lcl lcpl) lsmt in
+  let create_lemma l =
+    let cl = Structures.retyping_get_type_of env sigma l in
+    match of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic cl with
+      | Some smt -> Some ((cl, l), smt)
+      | None -> None
+  in
+  let l_pl_ls = SmtMisc.filter_map create_lemma lcpl in
+  let lsmt = List.map snd l_pl_ls in
 
   let lem_tbl : (int, Structures.constr * Structures.constr) Hashtbl.t =
     Hashtbl.create 100 in

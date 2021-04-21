@@ -38,6 +38,7 @@ val to_smt : Format.formatter -> btype -> unit
 type reify_tbl
 
 val create : unit -> reify_tbl
+val copy : reify_tbl -> reify_tbl
 
 val of_coq : reify_tbl -> logic -> Structures.constr -> btype
 val of_coq_compdec : reify_tbl -> Structures.constr -> Structures.constr -> btype
