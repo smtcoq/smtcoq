@@ -211,7 +211,7 @@ Ltac prop2bool_hyps Hs :=
 Section Test.
   Variable A : Type.
 
-  Hypothesis basic : forall (l1 l2:list A), length (l1++l2) = length l1 + length l2.
+  Hypothesis basic : forall (l1 l2:list A), length (l1++l2) = (length l1 + length l2)%nat.
   Hypothesis no_eq : forall (z1 z2:Z), (z1 < z2)%Z.
   Hypothesis uninterpreted_type : forall (a:A), a = a.
 
@@ -281,7 +281,7 @@ End MultipleCompDec.
    polymorphism will be removed before *)
 Section Poly.
   Hypothesis basic : forall (A:Type) (l1 l2:list A),
-    length (l1++l2) = length l1 + length l2.
+    length (l1++l2) = (length l1 + length l2)%nat.
   Hypothesis uninterpreted_type : forall (A:Type) (a:A), a = a.
 
   Goal True.
