@@ -19,5 +19,5 @@ val parse_certif :
 val checker : string -> string -> unit
 val checker_debug : string -> string -> unit
 val theorem : Structures.id -> string -> string -> unit
-val tactic : Structures.constr list -> Structures.constr_expr list -> Structures.tactic
-val tactic_no_check : Structures.constr list -> Structures.constr_expr list -> Structures.tactic
+val tactic : EConstr.t -> Structures.constr_expr list -> Structures.tactic
+val tactic_no_check : EConstr.t -> Structures.constr_expr list -> Structures.tactic

@@ -375,11 +375,11 @@ Section Group.
 
   Lemma simplification_right x1 x2 y:
       op x1 y ==? op x2 y -> x1 ==? x2.
-  Proof. intro H. smt_no_check H inverse'. Qed.
+  Proof. intro H. smt_no_check (H, inverse'). Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 ==? op y x2 -> x1 ==? x2.
-  Proof. intro H. smt_no_check H inverse'. Qed.
+  Proof. intro H. smt_no_check (H, inverse'). Qed.
 
   Clear_lemmas.
 End Group.
@@ -393,7 +393,6 @@ Section CompCert.
 
   Variable block : Set.
   Hypothesis eq_block : CompDec block.
-  Local Notation "a ==? b" := (@eqb_of_compdec block eq_block a b) (at level 60).
 
   Variable mem: Set.
   Hypothesis dec_mem : CompDec mem.
@@ -403,11 +402,11 @@ Section CompCert.
 
   Hypothesis alloc_valid_block_1:
     forall m lo hi b,
-      valid_block (alloc_mem m lo hi) b ---> ((b ==? (alloc_block m lo hi)) || valid_block m b).
+      valid_block (alloc_mem m lo hi) b -> ((b = (alloc_block m lo hi)) \/ valid_block m b).
 
   Hypothesis alloc_valid_block_2:
     forall m lo hi b,
-      ((b ==? (alloc_block m lo hi)) || valid_block m b) ---> valid_block (alloc_mem m lo hi) b.
+      ((b = (alloc_block m lo hi)) \/ valid_block m b) -> (valid_block (alloc_mem m lo hi) b).
 
   Hypothesis alloc_not_valid_block:
     forall m lo hi,
@@ -416,13 +415,13 @@ Section CompCert.
   Lemma alloc_valid_block_inv m lo hi b :
     valid_block m b -> valid_block (alloc_mem m lo hi) b.
   Proof.
-    intro H. verit alloc_valid_block_2 H.
+    intro H. verit (alloc_valid_block_2, H).
   Qed.
 
   Lemma alloc_not_valid_block_2 m lo hi b' :
-    valid_block m b' -> b' ==? (alloc_block m lo hi) = false.
+    valid_block m b' -> b' <> (alloc_block m lo hi).
   Proof.
-    intro H. verit alloc_not_valid_block H.
+    intro H. verit (alloc_not_valid_block, H).
   Qed.
 
 End CompCert.

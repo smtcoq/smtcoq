@@ -261,3 +261,7 @@ val mk_nat : Structures.constr -> int
 val mk_N : Structures.constr -> int
 val mk_Z : Structures.constr -> int
 val mk_bvsize : Structures.constr -> int
+
+(* Switches between constr and OCaml *)
+val option_of_constr_option : Structures.constr -> Structures.constr option
+val list_of_constr_tuple : Structures.constr -> Structures.constr list

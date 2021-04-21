@@ -529,32 +529,57 @@ Qed.
 (* Some examples of using verit with lemmas. Use <verit H1 .. Hn>
    to temporarily add the lemmas H1 .. Hn to the verit environment. *)
 
-Lemma taut1 :
+Lemma taut1_bool :
   forall f, f 2 =? 0 -> f 2 =? 0.
 Proof using. intros f p. verit p. Qed.
 
-Lemma taut2 :
-  forall f, 0 =? f 2 -> 0 =?f 2.
+Lemma taut1 :
+  forall f, f 2 = 0 -> f 2 = 0.
 Proof using. intros f p. verit p. Qed.
 
-Lemma taut3 :
+Lemma taut2_bool :
+  forall f, 0 =? f 2 -> 0 =? f 2.
+Proof using. intros f p. verit p. Qed.
+
+Lemma taut2 :
+  forall f, 0 = f 2 -> 0 = f 2.
+Proof using. intros f p. verit p. Qed.
+
+Lemma taut3_bool :
   forall f, f 2 =? 0 -> f 3 =? 5 -> f 2 =? 0.
-Proof using. intros f p1 p2. verit p1 p2. Qed.
+Proof using. intros f p1 p2. verit (p1, p2). Qed.
+
+Lemma taut3 :
+  forall f, f 2 = 0 -> f 3 = 5 -> f 2 = 0.
+Proof using. intros f p1 p2. verit (p1, p2). Qed.
+
+Lemma taut4_bool :
+  forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
+Proof using. intros f p1 p2. verit (p1, p2). Qed.
 
 Lemma taut4 :
-  forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
-Proof using. intros f p1 p2. verit p1 p2. Qed.
+  forall f, f 3 = 5 -> f 2 = 0 -> f 2 = 0.
+Proof using. intros f p1 p2. verit (p1, p2). Qed.
 
 Lemma test_eq_sym a b : implb (a =? b) (b =? a).
 Proof using. verit. Qed.
 
-Lemma taut5 :
+Lemma taut5_bool :
   forall f, 0 =? f 2 -> f 2 =? 0.
 Proof using. intros f p. verit p. Qed.
 
-Lemma fun_const_Z :
+Lemma taut5 :
+  forall f, 0 = f 2 -> f 2 = 0.
+Proof using. intros f p. verit p. Qed.
+
+Lemma fun_const_Z_bool :
   forall f , (forall x, f x =? 2) ->
              f 3 =? 2.
+Proof using. intros f Hf. verit Hf. Qed.
+
+Lemma fun_const_Z :
+  forall f , (forall x, f x = 2) ->
+             f 3 = 2.
 Proof using. intros f Hf. verit Hf. Qed.
 
 Lemma lid (A : bool) :  A -> A.
@@ -564,21 +589,38 @@ Lemma lpartial_id A :
   (xorb A A) -> (xorb A A).
 Proof using. intro xa. verit xa. Qed.
 
-Lemma llia1 X Y Z:
+Lemma llia1_bool X Y Z:
   (X <=? 3) && ((Y <=? 7) || (Z <=? 9)) ->
   (X + Y <=? 10) || (X + Z <=? 12).
 Proof using. intro p. verit p. Qed.
 
-Lemma llia2 X:
+Lemma llia1 X Y Z:
+  (X <= 3) /\ ((Y <= 7) \/ (Z <= 9)) ->
+  (X + Y <= 10) \/ (X + Z <= 12).
+Proof using. intro p. verit p. Qed.
+
+Lemma llia2_bool X:
   X - 3 =? 7 -> X >=? 10.
 Proof using. intro p. verit p. Qed.
 
-Lemma llia3 X Y:
+Lemma llia2 X:
+  X - 3 = 7 -> X >= 10.
+Proof using. intro p. verit p. Qed.
+
+Lemma llia3_bool X Y:
   X >? Y -> Y + 1 <=? X.
 Proof using. intro p. verit p. Qed.
 
-Lemma llia6 X:
+Lemma llia3 X Y:
+  X > Y -> Y + 1 <= X.
+Proof using. intro p. verit p. Qed.
+
+Lemma llia6_bool X:
   andb ((X - 3) <=? 7) (7 <=? (X - 3)) -> X >=? 10.
+Proof using. intro p. verit p. Qed.
+
+Lemma llia6 X:
+  ((X - 3) <= 7) /\ (7 <= (X - 3)) -> X >= 10.
 Proof using. intro p. verit p. Qed.
 
 Lemma even_odd b1 b2 x1 x2:
@@ -588,43 +630,76 @@ Lemma even_odd b1 b2 x1 x2:
   ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
 Proof using. intro p. verit p. Qed.
 
-Lemma lcongr1 (a b : Z) (P : Z -> bool) f:
+Lemma lcongr1_bool (a b : Z) (P : Z -> bool) f:
   (f a =? b) -> (P (f a)) -> P b.
-Proof using. intros eqfab pfa. verit eqfab pfa. Qed.
+Proof using. intros eqfab pfa. verit (eqfab, pfa). Qed.
 
-Lemma lcongr2 (f:Z -> Z -> Z) x y z:
+Lemma lcongr1 (a b : Z) (P : Z -> bool) f:
+  (f a = b) -> (P (f a)) -> P b.
+Proof using. intros eqfab pfa. verit (eqfab, pfa). Qed.
+
+Lemma lcongr2_bool (f:Z -> Z -> Z) x y z:
   x =? y -> f z x =? f z y.
 Proof using. intro p. verit p. Qed.
 
-Lemma lcongr3 (P:Z -> Z -> bool) x y z:
+Lemma lcongr2 (f:Z -> Z -> Z) x y z:
+  x = y -> f z x = f z y.
+Proof using. intro p. verit p. Qed.
+
+Lemma lcongr3_bool (P:Z -> Z -> bool) x y z:
   x =? y -> P z x -> P z y.
-Proof using. intros eqxy pzx. verit eqxy pzx. Qed.
+Proof using. intros eqxy pzx. verit (eqxy, pzx). Qed.
 
-Lemma test20 :  forall x, (forall a, a <? x) -> 0 <=? x = false.
+Lemma lcongr3 (P:Z -> Z -> bool) x y z:
+  x = y -> P z x -> P z y.
+Proof using. intros eqxy pzx. verit (eqxy, pzx). Qed.
+
+Lemma test20_bool :  forall x, (forall a, a <? x) -> 0 <=? x = false.
 Proof using. intros x H. verit H. Qed.
 
-Lemma test21 : forall x, (forall a, negb (x <=? a)) -> negb (0 <=? x).
+Lemma test20 :  forall x, (forall a, a < x) -> ~ (0 <= x).
 Proof using. intros x H. verit H. Qed.
 
-Lemma un_menteur (a b c d : Z) dit:
+Lemma test21_bool : forall x, (forall a, negb (x <=? a)) -> negb (0 <=? x).
+Proof using. intros x H. verit H. Qed.
+
+Lemma test21 : forall x, (forall a, ~ (x <= a)) -> ~ (0 <= x).
+Proof using. intros x H. verit H. Qed.
+
+Lemma un_menteur_bool (a b c d : Z) dit:
   dit a =? c ->
   dit b =? d ->
   (d =? a) || (b =? c) ->
   (a =? c) || (a =? d) ->
   (b =? c) || (b =? d) ->
   a =? d.
-Proof using. intros H1 H2 H3 H4 H5. verit H1 H2 H3 H4 H5. Qed.
+Proof using. intros H1 H2 H3 H4 H5. verit (H1, H2, H3, H4, H5). Qed.
 
-Lemma const_fun_is_eq_val_0 :
+Lemma un_menteur (a b c d : Z) dit:
+  dit a = c ->
+  dit b = d ->
+  (d = a) \/ (b = c) ->
+  (a = c) \/ (a = d) ->
+  (b = c) \/ (b = d) ->
+  a = d.
+Proof using. intros H1 H2 H3 H4 H5. verit (H1, H2, H3, H4, H5). Qed.
+
+Lemma const_fun_is_eq_val_0_bool :
   forall f : Z -> Z,
     (forall a b, f a =? f b) ->
     forall x, f x =? f 0.
 Proof using. intros f Hf. verit Hf. Qed.
 
-(* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 .. Hn to
-   the environment. If you did so in a section then, at the end of the section,
-   you should use <Clear_lemmas> to empty the globally added lemmas because
-   those lemmas won't be available outside of the section. *)
+Lemma const_fun_is_eq_val_0 :
+  forall f : Z -> Z,
+    (forall a b, f a = f b) ->
+    forall x, f x = f 0.
+Proof using. intros f Hf. verit Hf. Qed.
+
+(* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 ..
+   Hn to the environment. You should use <Clear_lemmas> when you do not
+   need them anymore (all the time, but especially for lemmas that were
+   section hypotheses before closing the section) *)
 
 Section S.
   Variable f : Z -> Z.
@@ -838,7 +913,7 @@ Section GroupZ.
 End GroupZ.
 
 
-Section Group.
+Section GroupBool.
   Variable G : Type.
   Variable HG : CompDec G.
   Variable op : G -> G -> G.
@@ -855,17 +930,58 @@ Section Group.
     forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e).
   Add_lemmas associative identity inverse.
 
-  Lemma unique_identity e':
+  Lemma unique_identity_bool e':
     (forall z, op e' z ==? z) -> e' ==? e.
   Proof using associative identity inverse. intros pe'. verit pe'. Qed.
 
-  Lemma simplification_right x1 x2 y:
+  Lemma simplification_right_bool x1 x2 y:
       op x1 y ==? op x2 y -> x1 ==? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
 
-  Lemma simplification_left x1 x2 y:
+  Lemma simplification_left_bool x1 x2 y:
       op y x1 ==? op y x2 -> x1 ==? x2.
   Proof using associative identity inverse. intro H. verit H. Qed.
+
+  Clear_lemmas.
+End GroupBool.
+
+
+Section Group.
+  Variable G : Type.
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
+
+  Hypothesis associative :
+    forall a b c : G, op a (op b c) = op (op a b) c.
+  Hypothesis identity :
+    forall a : G, (op e a = a) /\ (op a e = a).
+  Hypothesis inverse :
+    forall a : G, (op a (inv a) = e) /\ (op (inv a) a = e).
+  (* TODO: apply [prop2bool_hyp] to lemmas added with [Add_lemmas] *)
+  (* Add_lemmas associative identity inverse. *)
+
+  Lemma unique_identity e':
+    (forall z, op e' z = z) -> e' = e.
+  Proof using associative identity inverse HG.
+    intros pe'.
+    verit (associative, identity, inverse, pe').
+  Qed.
+
+  Lemma simplification_right x1 x2 y:
+      op x1 y = op x2 y -> x1 = x2.
+  Proof using associative identity inverse HG.
+    intro H.
+    verit (associative, identity, inverse, H).
+  Qed.
+
+  Lemma simplification_left x1 x2 y:
+      op y x1 = op y x2 -> x1 = x2.
+  Proof using associative identity inverse HG.
+    intro H.
+    verit (associative, identity, inverse, H).
+  Qed.
 
   Clear_lemmas.
 End Group.
@@ -893,23 +1009,43 @@ Section Linear2.
 (* Proof using. verit g_2_linear. *)
 End Linear2.
 
-Section Input_switched1.
+Section Input_switched1Bool.
   Variable m : Z -> Z.
 
   Hypothesis m_0 : m 0 =? 5.
 
   (* veriT switches the input lemma in this case *)
-  Lemma cinq_m_0 : m 0 =? 5.
+  Lemma five_m_0_bool : m 0 =? 5.
+  Proof using m_0. verit m_0. Qed.
+End Input_switched1Bool.
+
+Section Input_switched1.
+  Variable m : Z -> Z.
+
+  Hypothesis m_0 : m 0 = 5.
+
+  (* veriT switches the input lemma in this case *)
+  Lemma five_m_0 : m 0 = 5.
   Proof using m_0. verit m_0. Qed.
 End Input_switched1.
 
-Section Input_switched2.
+Section Input_switched2Bool.
   Variable h : Z -> Z -> Z.
 
   Hypothesis h_Sm_n : forall x y, h (x+1) y =? h x y.
 
   (* veriT switches the input lemma in this case *)
-  Lemma h_1_0 : h 1 0 =? h 0 0.
+  Lemma h_1_0_bool : h 1 0 =? h 0 0.
+  Proof using h_Sm_n. verit h_Sm_n. Qed.
+End Input_switched2Bool.
+
+Section Input_switched2.
+  Variable h : Z -> Z -> Z.
+
+  Hypothesis h_Sm_n : forall x y, h (x+1) y = h x y.
+
+  (* veriT switches the input lemma in this case *)
+  Lemma h_1_0 : h 1 0 = h 0 0.
   Proof using h_Sm_n. verit h_Sm_n. Qed.
 End Input_switched2.
 
@@ -1079,10 +1215,7 @@ Section AppliedPolymorphicTypes2.
   Proof. verit. Qed.
 
   Hypothesis append_assoc_B :
-    forall l1 l2 l3 : list B, eqb_of_compdec HlB (l1 ++ (l2 ++ l3)) ((l1 ++ l2) ++ l3) = true.
-  (* TODO: make it possible to apply prop2bool to hypotheses *)
-  (* Hypothesis append_assoc_B : *)
-  (*   forall l1 l2 l3 : list B, l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3. *)
+    forall l1 l2 l3 : list B, l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3.
 
   (* The hypothesis is not used *)
   Goal forall l1 l2 l3 l4 : list B,

@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Export PropToBool BoolToProp.  (* Before SMTCoq.State *)
+Require Export PropToBool.
 Require Export Int63 List PArray.
 Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
 Require Export Tactics.
