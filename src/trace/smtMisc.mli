@@ -19,3 +19,6 @@ val string_coq_constr : Structures.constr -> string
 type logic_item = LUF | LLia | LBitvectors | LArrays
 module SL : Set.S with type elt = logic_item
 type logic = SL.t
+
+(** Utils *)
+val filter_map : ('a -> 'b option) -> 'a list -> 'b list

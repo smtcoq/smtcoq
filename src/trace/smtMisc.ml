@@ -50,3 +50,9 @@ module SL = Set.Make (struct
   end)
 
 type logic = SL.t
+
+
+(** Utils *)
+let rec filter_map f = function
+  | [] -> []
+  | x::xs -> match f x with Some x -> x::(filter_map f xs) | None -> filter_map f xs
