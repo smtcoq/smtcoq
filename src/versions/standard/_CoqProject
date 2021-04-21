@@ -146,7 +146,6 @@ Misc.v
 SMTCoq.v
 ReflectFacts.v
 PropToBool.v
-BoolToProp.v
 QInst.v
 Tactics.v
 SMT_terms.v

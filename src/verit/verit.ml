@@ -218,6 +218,16 @@ let verit_logic =
   SL.of_list [LUF; LLia]
 
 let tactic_gen vm_cast lcpl lcepl =
+  (* Transform the tuple of lemmas given by the user into a list *)
+  let lcpl =
+    let lcpl = EConstr.Unsafe.to_constr lcpl in
+    let lcpl = CoqTerms.option_of_constr_option lcpl in
+    match lcpl with
+      | Some lcpl -> CoqTerms.list_of_constr_tuple lcpl
+      | None -> []
+  in
+
+  (* Core tactic *)
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
