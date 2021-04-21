@@ -686,7 +686,7 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let rt_copy = SmtBtype.copy rt in
 
   let warn () =
-    Structures.warning "Lemma" ("Discarding the following lemma (axiom form unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr (Structures.extern_constr clemma))));
+    Structures.warning "Lemma" ("Discarding the following lemma (axiom form unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr Environ.empty_env Evd.empty (Structures.extern_constr clemma))));
     None
   in
 
