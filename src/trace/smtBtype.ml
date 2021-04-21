@@ -121,6 +121,12 @@ let create () =
     unsup_tbl = Hashtbl.create 17;
   }
 
+let copy t =
+  { count = t.count;
+    tbl = Hashtbl.copy t.tbl;
+    cuts = t.cuts;
+    unsup_tbl = Hashtbl.copy t.unsup_tbl }
+
 
 (* Should we give a way to clear it? *)
 let op_coq_types = Hashtbl.create 17
