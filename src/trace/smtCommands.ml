@@ -681,22 +681,23 @@ let make_proof call_solver env rt ro ra_quant rf_quant l ls_smtc =
  .smt2 file. We need the reify tables to correctly recognize free variables
  of the lemma. We also need to make sure to leave unchanged the tables because
  the new objects may contain bound (by forall of the lemma) variables. *)
-let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
-  (* TODO: remove side effects... *)
-  let rt_copy = SmtBtype.copy rt in
 
+(* Bound variables are given fresh names to avoid variable capture *)
+let gen_rel_name =
+  let num = ref (-1) in
+  fun () -> incr num; "SMTCoqRelName"^(string_of_int !num)
+
+let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let warn () =
     Structures.warning "Lemma" ("Discarding the following lemma (axiom form unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr Environ.empty_env Evd.empty (Structures.extern_constr clemma))));
     None
   in
 
   let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
-  let env_lemma = List.fold_right Environ.push_rel rel_context env in
-  let forall_args =
-    let fmap r = let n, t = Structures.destruct_rel_decl r in
-                 Structures.string_of_name n, SmtBtype.of_coq rt_copy solver_logic t in
-    List.map fmap rel_context
-  in
+  (* Bound variables are given fresh names to avoid variable capture *)
+  let rel_context = List.map (fun rel -> Context.Rel.Declaration.set_name (Names.Name.mk_name (Names.Id.of_string (gen_rel_name ()))) rel) rel_context in
+
+  let env_lemma = Environ.push_rel_context rel_context env in
   let f, args = Structures.decompose_app qf_lemma in
   let core_f =
     if Structures.eq_constr f (Lazy.force cis_true) then
@@ -713,14 +714,13 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let core_smt =
     match core_f with
       | Some core_f ->
-         (* TODO: remove side effects... *)
-         let _ =
-           let fmap r = let n, t = Structures.destruct_rel_decl r in
-                        Structures.string_of_name n, SmtBtype.of_coq rt solver_logic t in
-           List.map fmap rel_context
-         in
          Some (Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma) rf_quant core_f)
       | None -> None
+  in
+  let forall_args =
+    let fmap r = let n, t = Structures.destruct_rel_decl r in
+                 Structures.string_of_name n, SmtBtype.of_coq rt solver_logic t in
+    List.map fmap rel_context
   in
   match forall_args with
     | [] -> core_smt
