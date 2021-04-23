@@ -197,7 +197,7 @@ Ltac prop2bool_hyp H :=
     [ bool2prop; apply H | ];
 
     (* Replace the Prop version with the bool version *)
-    clear H; assert (H:=H'); clear H'
+    try clear H; let H := fresh H in assert (H:=H'); clear H'
   ].
 
 Ltac prop2bool_hyps Hs :=
@@ -220,11 +220,14 @@ Section Test.
     prop2bool_hyp basic.
     prop2bool_hyp no_eq.
     prop2bool_hyp uninterpreted_type.
+    admit.
+    prop2bool_hyp plus_n_O.
   Abort.
 
   Goal True.
   Proof.
-    prop2bool_hyps (basic, no_eq, uninterpreted_type).
+    prop2bool_hyps (basic, plus_n_O, no_eq, uninterpreted_type, plus_O_n).
+    admit.
   Abort.
 End Test.
 
