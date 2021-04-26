@@ -500,12 +500,21 @@ Qed.
 Goal forall (i j:int),
     (i == j) && (negb (i == j)) = false.
 Proof using.
-  verit. auto with typeclass_instances.
+  verit.
 Qed.
+
+Goal forall (i j:int),
+    ~ ((i = j) /\ (~ (i = j))).
+Proof using. verit. Qed.
 
 Goal forall i j, (i == j) || (negb (i == j)).
 Proof using.
-  verit. auto with typeclass_instances.
+  verit.
+Qed.
+
+Goal forall (i j:int), (i = j) \/ (~ (i = j)).
+Proof using.
+  verit.
 Qed.
 
 
@@ -1153,10 +1162,10 @@ Qed.
 Section AppliedPolymorphicTypes1.
   Goal forall (f : option Z -> Z) (a b : Z),
       implb (Z.eqb a b) (Z.eqb (f (Some a)) (f (Some b))).
-  Proof. verit. auto with typeclass_instances. Qed.
+  Proof. verit. Qed.
 
   Goal forall (f : option Z -> Z) (a b : Z), a = b -> f (Some a) = f (Some b).
-  Proof. verit. auto with typeclass_instances. Qed.
+  Proof. verit. Qed.
 End AppliedPolymorphicTypes1.
 
 
