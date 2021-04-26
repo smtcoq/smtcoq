@@ -29,7 +29,7 @@ Qed.
 
 Hint Resolve impl_split : smtcoq_core.
 
-(* verit silently transforms an <implb (a || b) c> into a <or (not a) c>
+(** verit silently transforms an <implb (a || b) c> into a <or (not a) c>
    or into a <or (not b) c> when instantiating such a quantified theorem *)
 Lemma impl_or_split_right a b c:
   implb (a || b) c = true -> negb b || c = true.
@@ -40,6 +40,35 @@ Qed.
 
 Lemma impl_or_split_left a b c:
   implb (a || b) c = true -> negb a || c = true.
+Proof.
+  intro H.
+  destruct a; destruct c; intuition.
+Qed.
+
+(** same for Boolean equivalence, modulo symmetry *)
+Lemma eqb_sym_or_split_right a b c:
+  Bool.eqb c (a || b) = true -> negb b || c = true.
+Proof.
+  intro H.
+  destruct a; destruct c; intuition.
+Qed.
+
+Lemma eqb_sym_or_split_left a b c:
+  Bool.eqb c (a || b) = true -> negb a || c = true.
+Proof.
+  intro H.
+  destruct a; destruct c; intuition.
+Qed.
+
+Lemma eqb_or_split_right a b c:
+  Bool.eqb (a || b) c = true -> negb b || c = true.
+Proof.
+  intro H.
+  destruct a; destruct c; intuition.
+Qed.
+
+Lemma eqb_or_split_left a b c:
+  Bool.eqb (a || b) c = true -> negb a || c = true.
 Proof.
   intro H.
   destruct a; destruct c; intuition.
@@ -157,6 +186,18 @@ Ltac vauto :=
                          first [ strategy1 H
                                | strategy2 H ]
                        | eapply impl_or_split_left;
+                         first [ strategy1 H
+                               | strategy2 H ]
+                       | eapply eqb_sym_or_split_right;
+                         first [ strategy1 H
+                               | strategy2 H ]
+                       | eapply eqb_sym_or_split_left;
+                         first [ strategy1 H
+                               | strategy2 H ]
+                       | eapply eqb_or_split_right;
+                         first [ strategy1 H
+                               | strategy2 H ]
+                       | eapply eqb_or_split_left;
                          first [ strategy1 H
                                | strategy2 H ]
                        ]

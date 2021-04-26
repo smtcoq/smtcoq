@@ -1238,3 +1238,14 @@ Section Issue78.
   Proof. verit. Qed.
 
 End Issue78.
+
+
+Section SearchApp.
+  Variable search : Z -> list Z -> bool.
+  Hypothesis search_app : forall (x: Z) (l1 l2: list Z),
+    search x (l1 ++ l2) = orb (search x l1) (search x l2).
+
+  Lemma search_lemma : forall (x: Z) (l1 l2 l3: list Z),
+      search x (l1 ++ l2 ++ l3) = search x (l3 ++ l2 ++ l1).
+  Proof. verit. Qed.
+End SearchApp.
