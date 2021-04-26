@@ -69,7 +69,7 @@ End Test.
 Tactic Notation "verit_bool" constr(h) :=
   get_hyps ltac:(fun Hs =>
                    match Hs with
-                   | Some Hs => verit_bool_base (Some (h, Hs))
+                   | Some ?Hs => verit_bool_base (Some (h, Hs))
                    | None => verit_bool_base (Some h)
                    end;
                    vauto).
@@ -79,7 +79,7 @@ Tactic Notation "verit_bool"           :=
 Tactic Notation "verit_bool_no_check" constr(h) :=
   get_hyps ltac:(fun Hs =>
                    match Hs with
-                   | Some Hs => verit_bool_no_check_base (Some (h, Hs))
+                   | Some ?Hs => verit_bool_no_check_base (Some (h, Hs))
                    | None => verit_bool_no_check_base (Some h)
                    end;
                    vauto).
@@ -97,7 +97,7 @@ Tactic Notation "verit" constr(h) :=
   [ .. | prop2bool_hyps h;
          [ .. | get_hyps ltac:(fun Hs =>
                                  match Hs with
-                                   | Some Hs =>
+                                   | Some ?Hs =>
                                      prop2bool_hyps Hs;
                                      [ .. | verit_bool_base (Some (h, Hs)) ]
                                    | None => verit_bool_base (Some h)
@@ -108,7 +108,7 @@ Tactic Notation "verit"           :=
   prop2bool;
   [ .. | get_hyps ltac:(fun Hs =>
                           match Hs with
-                          | Some Hs =>
+                          | Some ?Hs =>
                             prop2bool_hyps Hs;
                             [ .. | verit_bool_base (Some Hs) ]
                           | None => verit_bool_base (@None nat)
@@ -119,7 +119,7 @@ Tactic Notation "verit_no_check" constr(h) :=
   [ .. | prop2bool_hyps h;
          [ .. | get_hyps ltac:(fun Hs =>
                                  match Hs with
-                                   | Some Hs =>
+                                   | Some ?Hs =>
                                      prop2bool_hyps Hs;
                                      [ .. | verit_bool_no_check_base (Some (h, Hs)) ]
                                    | None => verit_bool_no_check_base (Some h)
@@ -130,7 +130,7 @@ Tactic Notation "verit_no_check"           :=
   prop2bool;
   [ .. | get_hyps ltac:(fun Hs =>
                           match Hs with
-                          | Some Hs =>
+                          | Some ?Hs =>
                             prop2bool_hyps Hs;
                             [ .. | verit_bool_no_check_base (Some Hs) ]
                           | None => verit_bool_no_check_base (@None nat)
