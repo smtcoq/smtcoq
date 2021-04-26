@@ -714,13 +714,13 @@ Section A_BV_EUF_LIA_PR.
   Goal forall (x: bitvector 1), bv_subt x #b|0| = x.
   Proof using.
     smt.
-  Admitted.
+  Abort.
 
   (* The original issue (invalid) *)
   Goal forall (x: bitvector 1), bv_subt (bv_shl #b|0| x) #b|0| = #b|0|.
   Proof using.
     smt.
-  Admitted.
+  Abort.
 
 End A_BV_EUF_LIA_PR.
 
@@ -760,15 +760,15 @@ Section Group.
   (* Some other interesting facts about groups *)
   Lemma unique_identity e':
     (forall z, op e' z ==? z) -> e' ==? e.
-  Proof. intros pe'; smt pe'. Qed.
+  Proof. smt. Qed.
 
   Lemma simplification_right x1 x2 y:
       op x1 y ==? op x2 y -> x1 ==? x2.
-  Proof. intro H. smt_no_check (H, inverse'). Qed.
+  Proof. smt_no_check inverse'. Qed.
 
   Lemma simplification_left x1 x2 y:
       op y x1 ==? op y x2 -> x1 ==? x2.
-  Proof. intro H. smt_no_check (H, inverse'). Qed.
+  Proof. smt_no_check inverse'. Qed.
 
   Clear_lemmas.
 End Group.

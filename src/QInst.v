@@ -45,8 +45,11 @@ Proof.
   destruct a; destruct c; intuition.
 Qed.
 
-(* verit considers equality modulo its symmetry, so we have to recover the
-   right direction in the instances of the theorems *)
+(** verit considers equality modulo its symmetry, so we have to recover the
+    right direction in the instances of the theorems *)
+(* TODO: currently incomplete *)
+
+(* An auxiliary lemma to rewrite an eqb_of_compdec into its the symmetrical version *)
 Lemma eqb_of_compdec_sym (A:Type) (HA:CompDec A) (a b:A) :
   eqb_of_compdec HA b a = eqb_of_compdec HA a b.
 Proof.
@@ -58,6 +61,10 @@ Proof.
       intro H1. elim H. symmetry. now rewrite compdec_eq_eqb.
 Qed.
 
+(* First strategy: change the order of all equalities in the goal or the
+   hypotheses
+   Incomplete: all or none of the equalities are changed, whereas we may
+   need to change some of them but not all of them *)
 Definition hidden_eq_Z (a b : Z) := (a =? b)%Z.
 Definition hidden_eq_U (A:Type) (HA:CompDec A) (a b : A) := eqb_of_compdec HA a b.
 Ltac apply_sym_hyp T :=
@@ -98,20 +105,63 @@ Ltac apply_sym_goal :=
            replace (hidden_eq_U A HA a b) with (eqb_of_compdec HA b a);
            [ | now rewrite eqb_of_compdec_sym]
          end.
+Ltac strategy1 H :=
+  first [ apply H
+        | apply_sym_goal; apply H
+        | apply_sym_hyp H; apply H
+        | apply_sym_goal; apply_sym_hyp H; apply H
+        ].
+
+(* Second strategy: find the order of equalities
+   Incomplete: does not work if the lemma is quantified *)
+Ltac order_equalities g TH :=
+  match g with
+  | eqb_of_compdec ?HC ?a1 ?b1 =>
+    match TH with
+    | eqb_of_compdec _ ?a2 _ =>
+      first [ constr_eq a1 a2 | replace (eqb_of_compdec HC a1 b1) with (eqb_of_compdec HC b1 a1) by now rewrite eqb_of_compdec_sym ]
+    | _ => idtac
+    end
+  | Z.eqb ?a1 ?b1 =>
+    match TH with
+    | Z.eqb ?a2 _ =>
+      first [ constr_eq a1 a2 | replace (Z.eqb a1 b1) with (Z.eqb b1 a1) by now rewrite Z.eqb_sym ]
+    | _ => idtac
+    end
+  | ?f1 ?t1 =>
+    match TH with
+    | ?f2 ?t2 => order_equalities f1 f2; order_equalities t1 t2
+    | _ => idtac
+    end
+  | _ => idtac
+  end.
+Ltac strategy2 H :=
+  match goal with
+  | [ |- ?g ] =>
+    let TH := type of H in
+    order_equalities g TH;
+    apply H
+  end.
+
 
 (* An automatic tactic that takes into account all those transformations *)
 Ltac vauto :=
-  try (let H := fresh "H" in
+  try (unfold is_true;
+       let H := fresh "H" in
        intro H;
-       try apply H;
-       try (apply_sym_goal; apply H);
-       try (apply_sym_hyp H; apply H);
-       try (apply_sym_goal; apply_sym_hyp H; apply H);
-       match goal with
-       | [ |- is_true (negb ?A || ?B) ] =>
-         try (eapply impl_or_split_right; apply H);
-         eapply impl_or_split_left; apply H
-       end
+       first [ strategy1 H
+             | strategy2 H
+             | match goal with
+               | [ |- (negb ?A || ?B) = true ] =>
+                 first [ eapply impl_or_split_right;
+                         first [ strategy1 H
+                               | strategy2 H ]
+                       | eapply impl_or_split_left;
+                         first [ strategy1 H
+                               | strategy2 H ]
+                       ]
+               end
+             ]
       );
   auto with smtcoq_core.
 

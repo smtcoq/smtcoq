@@ -451,7 +451,9 @@ let list_of_constr_tuple =
     let c, args = Structures.decompose_app t in
     if c = Lazy.force cpair then
       match args with
-        | [_;_;t;l] -> list_of_constr_tuple (l::acc) t
+        | [_;_;t1;t2] ->
+           let acc' = list_of_constr_tuple acc t1 in
+           list_of_constr_tuple acc' t2
         | _ -> assert false
     else
       t::acc
