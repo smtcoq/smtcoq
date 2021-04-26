@@ -26,7 +26,11 @@ Ltac prop2bool :=
     match goal with
     | [ |- forall _ : ?t, _ ] =>
       lazymatch type of t with
-      | Prop => fail
+      | Prop =>
+        match t with
+        | forall _ : _, _ => intro
+        | _ => fail
+        end
       | _ => intro
       end
 
