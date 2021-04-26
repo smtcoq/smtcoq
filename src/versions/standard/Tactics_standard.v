@@ -66,25 +66,28 @@ End Test.
 
 (** Tactics in bool *)
 
+Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; auto with typeclass_instances.
+Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; auto with typeclass_instances.
+
 Tactic Notation "verit_bool" constr(h) :=
   get_hyps ltac:(fun Hs =>
                    match Hs with
-                   | Some ?Hs => verit_bool_base (Some (h, Hs))
-                   | None => verit_bool_base (Some h)
+                   | Some ?Hs => verit_bool_base_auto (Some (h, Hs))
+                   | None => verit_bool_base_auto (Some h)
                    end;
                    vauto).
 Tactic Notation "verit_bool"           :=
-  get_hyps ltac:(fun Hs => verit_bool_base Hs; vauto).
+  get_hyps ltac:(fun Hs => verit_bool_base_auto Hs; vauto).
 
 Tactic Notation "verit_bool_no_check" constr(h) :=
   get_hyps ltac:(fun Hs =>
                    match Hs with
-                   | Some ?Hs => verit_bool_no_check_base (Some (h, Hs))
-                   | None => verit_bool_no_check_base (Some h)
+                   | Some ?Hs => verit_bool_no_check_base_auto (Some (h, Hs))
+                   | None => verit_bool_no_check_base_auto (Some h)
                    end;
                    vauto).
 Tactic Notation "verit_bool_no_check"           :=
-  get_hyps ltac:(fun Hs => verit_bool_no_check_base Hs; vauto).
+  get_hyps ltac:(fun Hs => verit_bool_no_check_base_auto Hs; vauto).
 
 
 (** Tactics in Prop **)
@@ -99,8 +102,8 @@ Tactic Notation "verit" constr(h) :=
                                  match Hs with
                                    | Some ?Hs =>
                                      prop2bool_hyps Hs;
-                                     [ .. | verit_bool_base (Some (h, Hs)) ]
-                                   | None => verit_bool_base (Some h)
+                                     [ .. | verit_bool_base_auto (Some (h, Hs)) ]
+                                   | None => verit_bool_base_auto (Some h)
                                  end; vauto)
          ]
   ].
@@ -110,8 +113,8 @@ Tactic Notation "verit"           :=
                           match Hs with
                           | Some ?Hs =>
                             prop2bool_hyps Hs;
-                            [ .. | verit_bool_base (Some Hs) ]
-                          | None => verit_bool_base (@None nat)
+                            [ .. | verit_bool_base_auto (Some Hs) ]
+                          | None => verit_bool_base_auto (@None nat)
                           end; vauto)
   ].
 Tactic Notation "verit_no_check" constr(h) :=
@@ -121,8 +124,8 @@ Tactic Notation "verit_no_check" constr(h) :=
                                  match Hs with
                                    | Some ?Hs =>
                                      prop2bool_hyps Hs;
-                                     [ .. | verit_bool_no_check_base (Some (h, Hs)) ]
-                                   | None => verit_bool_no_check_base (Some h)
+                                     [ .. | verit_bool_no_check_base_auto (Some (h, Hs)) ]
+                                   | None => verit_bool_no_check_base_auto (Some h)
                                  end; vauto)
          ]
   ].
@@ -132,8 +135,8 @@ Tactic Notation "verit_no_check"           :=
                           match Hs with
                           | Some ?Hs =>
                             prop2bool_hyps Hs;
-                            [ .. | verit_bool_no_check_base (Some Hs) ]
-                          | None => verit_bool_no_check_base (@None nat)
+                            [ .. | verit_bool_no_check_base_auto (Some Hs) ]
+                          | None => verit_bool_no_check_base_auto (@None nat)
                           end; vauto)
   ].
 
