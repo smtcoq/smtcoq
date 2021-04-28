@@ -1096,6 +1096,8 @@ module Atom =
       Hashtbl.find op_coq_terms
 
 
+    exception UnknownUnderForall
+
     let of_coq ?eqsym:(eqsym=false) rt ro reify known_logic env sigma c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
@@ -1361,10 +1363,17 @@ module Atom =
                        let i = Structures.destRel c in
                        let n, _ = Structures.destruct_rel_decl (Environ.lookup_rel i env) in
                        Some (Structures.string_of_name n)
-                     else
+                     else if Vars.closed0 c then
                        None
+                     else
+                       (* Uninterpreted expression depending on a quantified variable.
+                          We do not handle it for the moment.
+                          We leave for future work to have "dependent" constants.
+                        *)
+                       raise UnknownUnderForall
             in
-            Op.declare ro c targs tres os in
+            Op.declare ro c targs tres os
+        in
         (try
            let (i, _) = destruct "" op in
            Hashtbl.add op_coq_terms i c (* Chantal: I think we should move it to "Not_found" (otherwise it is already in the table) *)

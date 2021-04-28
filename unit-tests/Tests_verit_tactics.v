@@ -1249,3 +1249,17 @@ Section SearchApp.
       search x (l1 ++ l2 ++ l3) = search x (l3 ++ l2 ++ l1).
   Proof. verit. Qed.
 End SearchApp.
+
+
+Section UnknowUnderForall.
+  Variable H5 : forall H : Z, Some H = None -> False.
+  Variable H10 : @hd_error Z nil = None.
+  Variable H6 : forall H : list (list Z),
+      hd_error H = match H with
+                   | nil => None
+                   | x :: _ => Some x
+                   end.
+
+  Goal forall (l : list Z) (x : Z), hd_error l = Some x -> l <> nil.
+  Proof. verit. Qed.
+End UnknowUnderForall.

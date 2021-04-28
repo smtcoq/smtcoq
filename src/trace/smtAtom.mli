@@ -140,6 +140,7 @@ module Atom :
       val print_atoms : reify_tbl -> string -> unit
 
       (** Given a coq term, build the corresponding atom *)
+      exception UnknownUnderForall
       val of_coq : ?eqsym:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
         reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> Structures.constr -> t
 

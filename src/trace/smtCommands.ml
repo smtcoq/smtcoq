@@ -689,7 +689,7 @@ let gen_rel_name =
 
 let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let warn () =
-    Structures.warning "Lemma" ("Discarding the following lemma (axiom form unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr Environ.empty_env Evd.empty (Structures.extern_constr clemma))));
+    Structures.warning "Lemma" ("Discarding the following lemma (unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr Environ.empty_env Evd.empty (Structures.extern_constr clemma))));
     None
   in
 
@@ -714,7 +714,11 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let core_smt =
     match core_f with
       | Some core_f ->
-         Some (Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma) rf_quant core_f)
+         (try
+            Some (Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma) rf_quant core_f)
+          with
+            | Atom.UnknownUnderForall -> warn ()
+         )
       | None -> None
   in
   let forall_args =
