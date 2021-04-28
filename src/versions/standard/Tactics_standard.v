@@ -23,7 +23,7 @@ Ltac get_hyps_acc acc k :=
   match goal with
   | [ H : ?P |- _ ] =>
     let T := type of P in
-    match T with
+    lazymatch T with
     | Prop =>
       lazymatch P with
       | id _ => fail
