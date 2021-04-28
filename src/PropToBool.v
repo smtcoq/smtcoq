@@ -211,8 +211,8 @@ Ltac prop2bool_hyp H :=
   ].
 
 Ltac prop2bool_hyps Hs :=
-  match Hs with
-  | (?Hs, ?H) => try prop2bool_hyp H; [ .. | prop2bool_hyps Hs]
+  lazymatch Hs with
+  | (?Hs1, ?Hs2) => prop2bool_hyps Hs1; [ .. | prop2bool_hyps Hs2]
   | ?H => try prop2bool_hyp H
   end.
 
