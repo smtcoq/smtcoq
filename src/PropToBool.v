@@ -210,10 +210,33 @@ Ltac prop2bool_hyp H :=
     try clear H; let H := fresh H in assert (H:=H'); clear H'
   ].
 
+
+Ltac remove_compdec_hyp H :=
+  let TH := type of H in
+  match TH with
+  | forall p : CompDec ?A, _ =>
+    match goal with
+    | [ p' : CompDec A |- _ ] =>
+      let H1 := fresh in
+      assert (H1 := H p'); clear H; assert (H := H1); clear H1;
+      remove_compdec_hyp H
+    | _ =>
+      idtac 1;
+      let c := fresh "c" in
+      assert (c : CompDec A);
+      [ auto with typeclass_instances
+      | let H1 := fresh in
+        assert (H1 := H c); clear H; assert (H := H1); clear H1;
+        remove_compdec_hyp H ]
+    end
+  | _ => idtac
+  end.
+
+
 Ltac prop2bool_hyps Hs :=
   lazymatch Hs with
   | (?Hs1, ?Hs2) => prop2bool_hyps Hs1; [ .. | prop2bool_hyps Hs2]
-  | ?H => try prop2bool_hyp H
+  | ?H => remove_compdec_hyp H; try prop2bool_hyp H
   end.
 
 

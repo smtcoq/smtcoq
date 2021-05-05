@@ -13,7 +13,7 @@
 open SmtMisc
 open CoqTerms
 
-(** Syntaxified version of Coq type *)
+(** Reified version of Coq type *)
 
 type uninterpreted_type =
   (* Uninterpreted type for which a CompDec is already known
