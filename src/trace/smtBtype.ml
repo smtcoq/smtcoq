@@ -310,6 +310,6 @@ let of_coq_compdec reify t compdec =
                Hashtbl.add reify.tbl t res;
                res
          )
-      | _ -> assert false
+      | _ -> ty
   with Not_found ->
     declare_compdec reify t compdec
