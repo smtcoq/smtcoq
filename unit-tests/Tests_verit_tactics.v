@@ -1263,3 +1263,34 @@ Section UnknowUnderForall.
   Goal forall (l : list Z) (x : Z), hd_error l = Some x -> l <> nil.
   Proof. verit. Qed.
 End UnknowUnderForall.
+
+
+Section CompDecHypotheses.
+  Variable A : Type.
+  Variable H : CompDec A.
+  Variable x : A.
+  Variable l2 : list A.
+  Hypothesis H1 : forall (x y : A) (x0 y0 : list A),
+      x :: x0 = y :: y0 -> y = x /\ y0 = x0.
+  Hypothesis H2 : forall (H : A) (H0 : list A), nil = H :: H0 -> False.
+  Hypothesis H7_bool : forall (H : bool) (H0 H1 : list bool),
+      ((H :: H0) ++ H1)%list = H :: H0 ++ H1.
+  Hypothesis H7_A : forall (H : A) (H0 H1 : list A),
+      ((H :: H0) ++ H1)%list = H :: H0 ++ H1.
+  Hypothesis H6_bool : forall H : list bool, (nil ++ H)%list = H.
+  Hypothesis H6_A : forall H : list A, (nil ++ H)%list = H.
+  Variable search : forall {A : Type} {H: CompDec A}, A -> list A -> bool.
+  Arguments search {_ _} _ _.
+  Hypothesis H5_bool : forall (H : CompDec bool) (H0 H1 : bool) (H2 : list bool),
+      search H0 (H1 :: H2) =
+      (if eqb_of_compdec H H0 H1 then true else search H0 H2).
+  Hypothesis H5_A : forall (H : CompDec A) (H0 H1 : A) (H2 : list A),
+      search H0 (H1 :: H2) =
+      (if eqb_of_compdec H H0 H1 then true else search H0 H2).
+  Hypothesis H4_bool : forall (H : CompDec bool) (H0 : bool), search H0 nil = false.
+  Hypothesis H4_A : forall (H : CompDec A) (H0 : A), search H0 nil = false.
+
+  Goal search x l2 = search x l2.
+  Proof. verit. Qed.
+
+End CompDecHypotheses.
