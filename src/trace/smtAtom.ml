@@ -1338,10 +1338,16 @@ module Atom =
         | _ -> assert false
 
       and mk_unknown c args ty =
+        (* Collecting types and CompDec allows to reify applied
+           polymorphic functions *)
         let rec collect_types = function
           | [] -> ([],[])
           | x::xs as l ->
-             if Constr.iskind (Structures.retyping_get_type_of env sigma x) then
+             let ty = Structures.retyping_get_type_of env sigma x in
+             if Constr.iskind ty ||
+                  let c, _ = Structures.decompose_app ty in
+                  Structures.eq_constr c (Lazy.force cCompDec)
+             then
                let (l1, l2) = collect_types xs in
                (x::l1, l2)
              else
