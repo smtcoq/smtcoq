@@ -221,7 +221,6 @@ Ltac remove_compdec_hyp H :=
       assert (H1 := H p'); clear H; assert (H := H1); clear H1;
       remove_compdec_hyp H
     | _ =>
-      idtac 1;
       let c := fresh "c" in
       assert (c : CompDec A);
       [ auto with typeclass_instances

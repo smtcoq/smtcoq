@@ -1294,3 +1294,38 @@ Section CompDecHypotheses.
   Proof. verit. Qed.
 
 End CompDecHypotheses.
+
+
+Section CompDecOnInterpretedType.
+  Variable A : Type.
+  Variable H : CompDec A.
+  Variable x : A.
+  Variable l2 : list A.
+  Variable Hcompdec : CompDec (list A).
+  Variable H1 : (forall (H3 H4 : A) (H5 H6 : list A),
+        eqb_of_compdec Hcompdec (H3 :: H5) (H4 :: H6) --->
+        eqb_of_compdec H H4 H3 && eqb_of_compdec Hcompdec H6 H5 = true).
+  Variable H2 : (forall (H3 : A) (H4 : list A),
+        eqb_of_compdec Hcompdec nil (H3 :: H4) ---> false = true).
+  Variable Hcompdec0 : CompDec (list bool).
+  Variable H7_bool : (forall (H3 : bool) (H4 H5 : list bool),
+             eqb_of_compdec Hcompdec0 ((H3 :: H4) ++ H5)%list (H3 :: H4 ++ H5) = true).
+  Variable H7_A : (forall (H3 : A) (H4 H5 : list A),
+          eqb_of_compdec Hcompdec ((H3 :: H4) ++ H5)%list (H3 :: H4 ++ H5) = true).
+  Variable H6_bool : (forall H3 : list bool,
+             eqb_of_compdec Hcompdec0 (nil ++ H3)%list H3 = true).
+  Variable H6_A : (forall H3 : list A, eqb_of_compdec Hcompdec (nil ++ H3)%list H3 = true).
+  Variable c : CompDec bool.
+  Variable search : forall {A : Type} {H: CompDec A}, A -> list A -> bool.
+  Arguments search {_ _} _ _.
+  Variable H5_bool : (forall (H3 H4 : bool) (H5 : list bool),
+             search H3 (H4 :: H5) <---> eqb_of_compdec c H3 H4 || search H3 H5 = true).
+  Variable H5_A : (forall (H3 H4 : A) (H5 : list A),
+          search H3 (H4 :: H5) <---> eqb_of_compdec H H3 H4 || search H3 H5 = true).
+  Variable H4_bool : (forall H3 : bool, search H3 nil <---> false = true).
+  Variable H4_A : (forall H3 : A, search H3 nil <---> false = true).
+
+  Goal search x l2 <---> search x l2 = true.
+  Proof. verit. Qed.
+
+End CompDecOnInterpretedType.
