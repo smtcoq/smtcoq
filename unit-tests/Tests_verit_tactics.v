@@ -1329,3 +1329,15 @@ Section CompDecOnInterpretedType.
   Proof. verit. Qed.
 
 End CompDecOnInterpretedType.
+
+
+
+Section Issue92.
+  Variable F : 0 = 1%Z.
+
+  Goal false = false.
+  Proof. verit_no_check. Qed.
+
+  Goal 0 = 2.
+  Proof. verit_no_check. Abort.
+End Issue92.
