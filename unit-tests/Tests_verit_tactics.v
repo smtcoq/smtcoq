@@ -1341,3 +1341,25 @@ Section Issue92.
   Goal 0 = 2.
   Proof. verit_no_check. Abort.
 End Issue92.
+
+
+Section Vauto.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable H0 : forall (x y : A) (x0 y0 : list A), x :: x0 = y :: y0 -> y = x /\ y0 = x0.
+  Variable H1 : forall (H : A) (H0 : list A), nil = H :: H0 -> False.
+  Variable search : forall {A : Type} {H: CompDec A}, A -> list A -> bool.
+  Arguments search {_ _} _ _.
+  Variable H4_A : forall (H : CompDec A) (H0 H1 : A) (H2 : list A),
+         search H0 (H1 :: H2) = eqb_of_compdec H H0 H1 || search H0 H2.
+  Variable H2 : forall (H : CompDec (list A)) (H0 H1 : list A) (H2 : list (list A)),
+       search H0 (H1 :: H2) = eqb_of_compdec H H0 H1 || search H0 H2.
+  Variable H3_A : forall (H : CompDec A) (H0 : A), search H0 nil = false.
+  Variable H4 : forall (H : CompDec (list A)) (H0 : list A), search H0 nil = false.
+  Variables a b : A.
+  Variable l : list A.
+  Variable H : search b (a :: l).
+
+  Goal eqb_of_compdec HA a b \/ search b l.
+  Proof. verit_no_check. Qed.
+End Vauto.
