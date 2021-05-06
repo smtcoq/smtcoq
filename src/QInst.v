@@ -74,6 +74,13 @@ Proof.
   destruct a; destruct c; intuition.
 Qed.
 
+Lemma eqb_or_split a b c:
+  Bool.eqb c (a || b) = true -> negb c || a || b = true.
+Proof.
+  intro H.
+  destruct a; destruct b; destruct c; intuition.
+Qed.
+
 (** verit considers equality modulo its symmetry, so we have to recover the
     right direction in the instances of the theorems *)
 (* TODO: currently incomplete *)
@@ -201,6 +208,10 @@ Ltac vauto :=
                          first [ strategy1 H
                                | strategy2 H ]
                        ]
+               | [ |- (negb ?A || ?B || ?C) = true ] =>
+                 eapply eqb_or_split;
+                 first [ strategy1 H
+                       | strategy2 H ]
                end
              ]
       );
