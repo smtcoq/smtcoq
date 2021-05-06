@@ -760,14 +760,4 @@ Section list.
 
 End list.
 
-
-Hint Resolve unit_ord unit_eqbtype unit_comp unit_inh unit_compdec : typeclass_instances.
-Hint Resolve bool_ord bool_eqbtype bool_dec bool_comp bool_inh bool_compdec : typeclass_instances.
-Hint Resolve Z_ord Z_eqbtype Z_dec Z_comp Z_inh Z_compdec : typeclass_instances.
-Hint Resolve Nat_ord Nat_eqbtype Nat_dec Nat_comp Nat_inh Nat_compdec : typeclass_instances.
-Hint Resolve Positive_ord Positive_eqbtype Positive_dec Positive_comp Positive_inh Positive_compdec : typeclass_instances.
-Hint Resolve BV_ord BV_eqbtype BV_dec BV_comp BV_inh BV_compdec : typeclass_instances.
-Hint Resolve FArray_ord FArray_eqbtype FArray_dec FArray_comp FArray_inh FArray_compdec : typeclass_instances.
-Hint Resolve int63_ord int63_inh int63_eqbtype int63_dec int63_comp int63_compdec option_compdec list_compdec : typeclass_instances.
-Hint Resolve option_ord option_eqbtype option_comp option_inh : typeclass_instances.
-Hint Resolve list_ord list_eqbtype list_comp list_inh : typeclass_instances.
+Hint Resolve unit_compdec bool_compdec Z_compdec Nat_compdec Positive_compdec BV_compdec FArray_compdec int63_compdec option_compdec list_compdec : typeclass_instances.
