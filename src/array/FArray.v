@@ -29,11 +29,12 @@ Module Raw.
 
   Variable key : Type.
   Variable elt : Type.
-  Variable key_dec : DecType key.
   Variable key_ord : OrdType key.
   Variable key_comp : Comparable key.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
+
+  Instance key_dec : DecType key := @EqbToDecType _ Comparable2EqbType.
 
   Definition eqb_key (x y : key) : bool := if eq_dec x y then true else false.
   Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
@@ -54,10 +55,7 @@ Module Raw.
 
   Definition ltk (a b : (key * elt)) := lt (fst a) (fst b).
 
-  (* Definition ltke (a b : (key * elt)) := *)
-  (*   lt (fst a) (fst b) \/ ( (fst a) = (fst b) /\ lt (snd a) (snd b)). *)
-
-  Hint Unfold ltk (* ltke *) eqk eqke.
+  Hint Unfold ltk eqk eqke.
   Hint Extern 2 (eqke ?a ?b) => split.
 
   Global Instance lt_key_strorder : StrictOrder (lt : key -> key -> Prop).
@@ -69,8 +67,6 @@ Module Raw.
   Global Instance ke_dec : DecType (key * elt).
   Proof.
     split; auto.
-    intros; destruct x, y, z.
-    inversion H. inversion H0. trivial.
     intros; destruct x, y.
     destruct (eq_dec k k0).
     destruct (eq_dec e e0).
@@ -107,45 +103,6 @@ Module Raw.
 
   Hint Unfold MapsTo In.
 
-  (* Instance ke_ord: OrdType (key * elt). *)
-  (* Proof. *)
-  (*   exists ltke. *)
-  (*   unfold ltke. intros. *)
-  (*   destruct H, H0. *)
-  (*   left; apply (lt_trans _ (fst y)); auto. *)
-  (*   destruct H0. left. rewrite <- H0. assumption. *)
-  (*   destruct H. left. rewrite H. assumption. *)
-  (*   destruct H, H0. *)
-  (*   right. split. *)
-  (*   apply (eq_trans _ (fst y)); trivial. *)
-  (*   apply (lt_trans _ (snd y)); trivial. *)
-  (*   unfold ltke. intros. *)
-  (*   destruct x, y. simpl in H. *)
-  (*   destruct H. *)
-  (*   apply lt_not_eq in H. *)
-  (*   unfold not in *. intro. inversion H0. apply H. trivial. *)
-  (*   destruct H. apply lt_not_eq in H0. unfold not in *. intro.  *)
-  (*   inversion H1. apply H0; trivial. *)
-  (*   intros. *)
-  (*   unfold ltke. *)
-  (*   destruct (compare (fst x) (fst y)). *)
-  (*   apply LT. left; assumption. *)
-  (*   destruct (compare (snd x) (snd y)). *)
-  (*   apply LT. right; split; assumption. *)
-  (*   apply EQ. destruct x, y. simpl in *. rewrite e, e0; trivial. *)
-  (*   apply GT. right; symmetry in e; split; assumption. *)
-  (*   apply GT. left; assumption. *)
-  (* Qed. *)
-
-  (* Hint Immediate ke_ord. *)
-  (* Let ke_ord := ke_ord. *)
-
-  (* Instance keyelt_ord: OrdType (key * elt). *)
-
-
-  (* Variable keyelt_ord : OrdType (key * elt). *)
-   (* eqke is stricter than eqk *)
-
    Lemma eqke_eqk : forall x x', eqke x x' -> eqk x x'.
    Proof.
      unfold eqk, eqke; intuition.
@@ -166,15 +123,15 @@ Module Raw.
   Proof. unfold eqke; intuition. Qed.
 
   Lemma eqk_trans : forall e e' e'', eqk e e' -> eqk e' e'' -> eqk e e''.
-  Proof. eauto. Qed.
+  Proof. unfold eqk; now intros e1 e2 e3 ->. Qed.
 
   Lemma eqke_trans : forall e e' e'', eqke e e' -> eqke e' e'' -> eqke e e''.
   Proof.
-    unfold eqke; intuition; [ eauto | congruence ].
+    unfold eqke; intros [k1 e1] [k2 e2] [k3 e3]; simpl; now intros [-> ->].
   Qed.
 
   Lemma ltk_trans : forall e e' e'', ltk e e' -> ltk e' e'' -> ltk e e''.
-  Proof. eauto. Qed.
+  Proof. unfold ltk; eauto. Qed.
 
   Lemma ltk_not_eqk : forall e e', ltk e e' -> ~ eqk e e'.
   Proof. unfold ltk, eqk. intros. apply lt_not_eq; auto. Qed.
@@ -203,24 +160,11 @@ Module Raw.
     unfold Transitive. intros x y z. apply lt_trans.
   Qed.
 
-  (* Instance ltke_strorder : StrictOrder ltke. *)
-  (* Proof. *)
-  (*   split. *)
-  (*   unfold Irreflexive, Reflexive, complement. *)
-  (*   intros. apply lt_not_eq in H; auto. *)
-  (*   unfold Transitive. apply lt_trans. *)
-  (* Qed. *)
-
   Global Instance eq_equiv : @Equivalence (key * elt) eq.
   Proof.
     split; auto.
     unfold Transitive. apply eq_trans.
   Qed.
-
-  (* Instance ltke_compat : Proper (eq ==> eq ==> iff) ltke. *)
-  (* Proof. *)
-  (*   split; rewrite H, H0; trivial. *)
-  (* Qed. *)
 
   Global Instance ltk_compat : Proper (eq ==> eq ==> iff) ltk.
   Proof.
@@ -275,27 +219,6 @@ Module Raw.
   Qed.
 
   Hint Resolve InA_eqke_eqk.
-
-  (* Lemma InA_eqk : forall p q m, eqk p q -> InA eqk p m -> InA eqk q m. *)
-  (* Proof. *)
-  (*  intros; apply InA_eqA with p; auto with *. *)
-  (* Qed. *)
-
-  (* Lemma In_eq : forall l x y, eq x y -> InA eqke x l -> InA eqke y l. *)
-  (* Proof. intros. rewrite <- H; auto. Qed. *)
-
-  (* Lemma ListIn_In : forall l x, List.In x l -> InA eqk x l. *)
-  (* Proof. apply In_InA. split; auto. unfold Transitive. *)
-  (*   unfold eqk; intros. rewrite H, <- H0. auto. *)
-  (* Qed. *)
-  
-  (* Lemma Inf_lt : forall l x y, ltk x y -> Inf y l -> Inf x l. *)
-  (* Proof. exact (InfA_ltA ltk_strorder). Qed. *)
-
-  (* Lemma Inf_eq : forall l x y, x = y -> Inf y l -> Inf x l. *)
-  (* Proof. exact (InfA_eqA eq_equiv ltk_compat). Qed. *)
-
-  (* An alternative formulation for [In k l] is [exists e, InA eqk (k,e) l] *)
 
   Lemma In_alt : forall k l, In k l <-> exists e, InA eqk (k,e) l.
   Proof.
@@ -666,10 +589,6 @@ Module Raw.
     clear e0. inversion Hm. subst.
     apply Sort_Inf_NotIn with x0; auto.
 
-    (* clear e0;inversion_clear Hm. *)
-    (* apply Sort_Inf_NotIn with x0; auto. *)
-    (* apply Inf_eq with (k',x0);auto; compute; apply eq_trans with x; auto. *)
-
     clear e0;inversion_clear Hm.
     assert (notin:~ In y (remove y l)) by auto.
     intros (x1,abs).
@@ -755,7 +674,6 @@ Module Raw.
       | _ => idtac
       end.
     intros.
-    (* rewrite In_alt in *. *)
     destruct H0 as (e, H0).
     exists e.
     apply InA_cons_tl. auto.
@@ -764,7 +682,6 @@ Module Raw.
     inversion_clear Hm.
     apply In_inv in H0.
     destruct H0.
-    (* destruct (eq_dec k' y). *)
     exists _x.
     apply InA_cons_hd. split; simpl; auto.
     specialize (IHb H1 H H0).
@@ -1004,14 +921,22 @@ Section FArray.
 
   Variable key : Type.
   Variable elt : Type.
-  Variable key_dec : DecType key.
   Variable key_ord : OrdType key.
   Variable key_comp : Comparable key.
-  Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
   Variable elt_comp : Comparable elt.
-  Variable key_inh :  Inhabited key.
+  (* Variable key_inh :  Inhabited key. *)
   Variable elt_inh :  Inhabited elt.
+
+  Instance key_dec : DecType key := @EqbToDecType _ Comparable2EqbType.
+  Instance elt_dec : DecType elt := @EqbToDecType _ Comparable2EqbType.
+
+  (* Variable key_dec : DecType key. *)
+  (* Variable key_ord : OrdType key. *)
+  (* Variable key_comp : Comparable key. *)
+  (* Variable elt_dec : DecType elt. *)
+  (* Variable elt_ord : OrdType elt. *)
+  (* Variable elt_comp : Comparable elt. *)
 
   Set Implicit Arguments.
 
@@ -1030,16 +955,11 @@ Section FArray.
   Qed.
 
   (** Boolean comparison over elements *)
-  Definition cmp (e e':elt) :=
-    match compare e e' with EQ _ => true | _ => false end.
-
+  Definition cmp := @compare2eqb _ _ elt_comp.
 
   Lemma cmp_refl : forall e, cmp e e = true.
-    unfold cmp.
-    intros.
-    destruct (compare e e); auto;
-      apply lt_not_eq in l; now contradict l.
-  Qed.
+  Proof. intro e. unfold cmp. now rewrite compare2eqb_spec. Qed.
+
 
   Lemma remove_nodefault : forall l (Hd:NoDefault l) (Hs:Sorted (Raw.ltk key_ord) l) x ,
       NoDefault (Raw.remove key_comp x l).
@@ -1072,29 +992,26 @@ Section FArray.
   Lemma add_nodefault : forall l (Hd:NoDefault l) (Hs:Sorted (Raw.ltk key_ord) l) x e,
       NoDefault (raw_add_nodefault x e l).
   Proof.
-    intros.
+    intros l Hd Hs x e.
     unfold raw_add_nodefault.
-    case_eq (cmp e default_value); intro; auto.
-    case_eq (Raw.mem key_comp x l); intro; auto.
-    apply remove_nodefault; auto.
-    unfold NoDefault; intros.
-    assert (e <> default_value).
-      unfold cmp in H.
-      case (compare e default_value) in H; try now contradict H.
-      apply lt_not_eq in l0; auto.
-      apply lt_not_eq in l0; now auto.
-    destruct (eq_dec k x).
-    - symmetry in e0.
-      apply (Raw.add_1 key_dec key_comp l e) in e0.
-      unfold not; intro.
-      specialize (Raw.add_sorted key_dec key_comp Hs x e).
-      intro Hsadd.
-      specialize (Raw.MapsTo_inj key_dec Hsadd e0 H1).
-      intro. contradiction.
-    - unfold not; intro.
-      assert (x <> k). unfold not in *. intro. apply n. symmetry; auto.
-      specialize (Raw.add_3 key_dec key_comp l e H2 H1).
-      intro. now apply Hd in H3.
+    case_eq (cmp e default_value); intro H; auto.
+    - case_eq (Raw.mem key_comp x l); intro H0; auto.
+      apply remove_nodefault; auto.
+    - unfold NoDefault; intros k.
+      assert (H0: e <> default_value).
+      { intro H1. subst e. rewrite cmp_refl in H. discriminate. }
+      destruct (eq_dec k x) as [e0|n].
+      + symmetry in e0.
+        apply (Raw.add_1 key_comp l e) in e0.
+        unfold not; intro.
+        specialize (Raw.add_sorted key_comp Hs x e).
+        intro Hsadd.
+        specialize (Raw.MapsTo_inj Hsadd e0 H1).
+        intro. contradiction.
+      + unfold not; intro.
+        assert (x <> k). unfold not in *. intro. apply n. symmetry; auto.
+        specialize (Raw.add_3 key_comp l e H2 H1).
+        intro. now apply Hd in H3.
   Qed.
 
   Definition empty : farray :=
@@ -1133,8 +1050,7 @@ Section FArray.
   Definition lt_key : (key*elt) -> (key*elt) -> Prop := @Raw.ltk key elt key_ord.
 
   Lemma MapsTo_1 : forall m x y e, eq x y -> MapsTo x e m -> MapsTo y e m.
-  Proof. intros m.
-    apply (Raw.MapsTo_eq key_dec elt_dec). Qed.
+  Proof. intros m. apply Raw.MapsTo_eq. Qed.
 
   Lemma mem_1 : forall m x, In x m -> mem x m = true.
   Proof. intros m; apply (Raw.mem_1); auto. apply m.(sorted). Qed.
@@ -1150,12 +1066,13 @@ Section FArray.
   Proof. intros m; apply Raw.is_empty_2. Qed.
 
   Lemma add_1 : forall m x y e, e <> default_value -> eq x y -> MapsTo y e (add x e m).
-  Proof. intros.
+  Proof.
+    intros m x y e H H0.
     unfold add, raw_add_nodefault.
     unfold MapsTo. simpl.
-    case_eq (cmp e default_value); intro; auto.
-    unfold cmp in H1. destruct (compare e default_value); try now contradict H1.
-    apply Raw.add_1; auto.
+    case_eq (cmp e default_value); intro H1; auto.
+    - elim H. unfold cmp in H1. now rewrite compare2eqb_spec in H1.
+    - apply Raw.add_1; auto.
   Qed.
 
   Lemma add_2 : forall m x y e e', ~ eq x y -> MapsTo y e m -> MapsTo y e (add x e' m).
@@ -1203,7 +1120,7 @@ Section FArray.
   Proof. intros m; apply Raw.elements_3; auto. apply m.(sorted). Qed.
 
   Lemma elements_3w : forall m, NoDupA eq_key (elements m).
-  Proof. intros m; apply (Raw.elements_3w key_dec m.(sorted)). Qed.
+  Proof. intros m; apply (Raw.elements_3w m.(sorted)). Qed.
 
   Lemma cardinal_1 : forall m, cardinal m = length (elements m).
   Proof. intros; reflexivity. Qed.
@@ -1907,7 +1824,6 @@ Section FArray.
       case_eq (equal a b); intro.
       - apply default_value.
       - apply (diff_index (notequal_neq H)).
-        (* destruct (diff_index_p H). apply x. *)
     Defined.
 
    Lemma select_at_diff: forall a b, a <> b ->
