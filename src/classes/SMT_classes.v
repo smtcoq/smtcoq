@@ -37,9 +37,6 @@ Class EqbType T := {
 
 (** Types with a decidable equality *)
 Class DecType T := {
- (* eq_refl : forall x : T, x = x; *)
- (* eq_sym : forall x y : T, x = y -> y = x; *)
- (* eq_trans : forall x y z : T, x = y -> y = z -> x = z; *)
  eq_dec : forall x y : T, { x = y } + { x <> y }
 }.
 
@@ -58,6 +55,33 @@ Section EqbToDecType.
     apply (eqb_to_eq_dec _ eqb0); auto.
   Defined.
 End EqbToDecType.
+
+
+(** Basic properties on types with Boolean equality *)
+Section EqbTypeProp.
+  Generalizable Variable T.
+  Context `{ET : EqbType T}.
+
+  Lemma eqb_refl x : eqb x x = true.
+  Proof. now rewrite eqb_spec. Qed.
+
+  Lemma eqb_trans x y z : eqb x y = true -> eqb y z = true -> eqb x z = true.
+  Proof. rewrite !eqb_spec. now intros ->. Qed.
+
+  Lemma eqb_spec_false x y : eqb x y = false <-> x <> y.
+  Proof.
+    split.
+    - intros H1 H2. subst y. rewrite eqb_refl in H1. inversion H1.
+    - intro H. case_eq (eqb x y); auto. intro H1. elim H. now rewrite <- eqb_spec.
+  Qed.
+
+  Lemma reflect_eqb x y : reflect (x = y) (eqb x y).
+  Proof.
+    case_eq (eqb x y); intro H; constructor.
+    - now rewrite eqb_spec in H.
+    - now rewrite eqb_spec_false in H.
+  Qed.
+End EqbTypeProp.
 
 
 (** Class of types with a partial order *)
@@ -117,9 +141,6 @@ Class Inhabited T := {
 (** * CompDec: Merging all previous classes *)
 
 Class CompDec T := {
-  (* ty := T; *)
-  (* Eqb :> EqbType T; *)
-  (* Decidable := EqbToDecType ty Eqb; *)
   Ordered :> OrdType T;
   Comp :> @Comparable T Ordered;
   Inh :> Inhabited T
@@ -128,7 +149,6 @@ Class CompDec T := {
 
 Instance ord_of_compdec t `{c: CompDec t} : (OrdType t) := 
   let (ord, _, _) := c in ord.
-  (* let (_, _, _, ord, _, _) := c in ord. *)
 
 Instance inh_of_compdec t `{c: CompDec t} : (Inhabited t) :=
   let (_, _, inh) := c in inh.
@@ -138,13 +158,7 @@ Instance comp_of_compdec t `{c: CompDec t} : @Comparable t (ord_of_compdec t).
 Defined.
 
 Instance eqbtype_of_compdec t `{c: CompDec t} : EqbType t := Comparable2EqbType.
-  (* let (_, eqbtype, _, _, _, inh) := c in eqbtype. *)
 
-(* Instance dec_of_compdec t `{c: CompDec t} : DecType t := *)
-(*   let (_, _, dec, _, _, inh) := c in dec. *)
-
-
-(* Definition type_compdec {ty:Type} (cd : CompDec ty) := ty. *)
 
 Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
   match eqbtype_of_compdec t with
@@ -163,8 +177,7 @@ Hint Resolve
      ord_of_compdec
      inh_of_compdec
      comp_of_compdec
-     eqbtype_of_compdec
-     (* dec_of_compdec *) : typeclass_instances.
+     eqbtype_of_compdec : typeclass_instances.
 
 
 Record typ_compdec : Type := Typ_compdec {
@@ -172,28 +185,26 @@ Record typ_compdec : Type := Typ_compdec {
   te_compdec : CompDec te_carrier
 }.
 
-(* Section CompDec_from. *)
 
-(*   Variable T : Type. *)
-(*   Variable eqb' : T -> T -> bool. *)
-(*   Variable lt' : T -> T -> Prop. *)
-(*   (* Variable d : T. *) *)
+Section CompDec_from.
 
-(*   Hypothesis eqb_spec' : forall x y : T, eqb' x y = true <-> x = y. *)
-(*   Hypothesis lt_trans': forall x y z : T, lt' x y -> lt' y z -> lt' x z. *)
-(*   Hypothesis lt_neq': forall x y : T, lt' x y -> x <> y. *)
-  
-(*   Variable compare': forall x y : T, Compare lt' eq x y. *)
-  
-(*   Program Instance CompDec_from : (CompDec T) := {| *)
-(*     Eqb := {| eqb := eqb' |}; *)
-(*     Ordered := {| lt := lt'; lt_trans := lt_trans' |}; *)
-(*     Comp := {| compare := compare' |} *)
-(*     (* Inh := {| default_value := d |} *) *)
-(*   |}. *)
+  Variable T : Type.
 
-  
-(*   Definition typ_compdec_from : typ_compdec := *)
-(*     Typ_compdec T CompDec_from. *)
-  
-(* End CompDec_from. *)
+  Variable lt' : T -> T -> Prop.
+  Hypothesis lt_trans': forall x y z : T, lt' x y -> lt' y z -> lt' x z.
+  Hypothesis lt_neq': forall x y : T, lt' x y -> x <> y.
+
+  Variable compare': forall x y : T, Compare lt' eq x y.
+
+  Variable d : T.
+
+  Program Instance CompDec_from : (CompDec T) := {|
+    Ordered := {| lt := lt'; lt_trans := lt_trans' |};
+    Comp := {| compare := compare' |};
+    Inh := {| default_value := d |}
+  |}.
+
+  Definition typ_compdec_from : typ_compdec :=
+    Typ_compdec T CompDec_from.
+
+End CompDec_from.

@@ -274,13 +274,13 @@ Module Typ.
       match t with
       | TFArray ti te =>
         existT (fun ty : Type => CompDec ty)
-               (@farray (type_compdec (projT2 (interp_compdec_aux ti)))
-                        (type_compdec (projT2 (interp_compdec_aux te)))
+               (@farray (projT1 (interp_compdec_aux ti))
+                        (projT1 (interp_compdec_aux te))
                         (@ord_of_compdec _ (projT2 (interp_compdec_aux ti)))
                         (@inh_of_compdec _ (projT2 (interp_compdec_aux te))))
                (FArray_compdec
-                  (type_compdec (projT2 (interp_compdec_aux ti)))
-                  (type_compdec (projT2 (interp_compdec_aux te))))
+                  (projT1 (interp_compdec_aux ti))
+                  (projT1 (interp_compdec_aux te)))
       | Tindex i =>
         existT (fun ty : Type => CompDec ty)
                (te_carrier (t_i .[ i])) (te_compdec (t_i .[ i]))
@@ -293,7 +293,7 @@ Module Typ.
     Definition interp_compdec (t:type) : CompDec (projT1 (interp_compdec_aux t)) :=
       projT2 (interp_compdec_aux t).
 
-    Definition interp (t:type) : Type := type_compdec (interp_compdec t).
+    Definition interp (t:type) : Type := projT1 (interp_compdec_aux t).
 
 
     Definition interp_ftype (t:ftype) :=
@@ -302,21 +302,24 @@ Module Typ.
 
 
     Definition dec_interp (t:type) : DecType (interp t).
-      destruct (interp_compdec t).
-      subst ty.
-      apply Decidable.
-    Defined.
-
-    Instance comp_interp (t:type) : Comparable (interp t).
-      destruct (interp_compdec t).
-      subst ty.
-      apply Comp.
+    Proof.
+      unfold interp.
+      destruct (interp_compdec_aux t) as [x c]. simpl.
+      apply (@EqbToDecType _ Comparable2EqbType).
     Defined.
 
     Instance ord_interp (t:type) : OrdType (interp t).
-      destruct (interp_compdec t).
-      subst ty.
+    Proof.
+      unfold interp.
+      destruct (interp_compdec_aux t) as [x c]. simpl.
       apply Ordered.
+    Defined.
+
+    Instance comp_interp (t:type) : Comparable (interp t).
+    Proof.
+      unfold interp, ord_interp. Set Printing All.
+      destruct (interp_compdec_aux t) as [x c]. simpl.
+      apply Comp.
     Defined.
 
 
@@ -326,7 +329,7 @@ Module Typ.
       apply Inh.
     Defined.
 
-    Definition inhabitant_interp (t:type) : interp t := default_value.
+    Definition inhabitant_interp (t:type) : interp t := @default_value _ (inh_interp _).
 
 
     Hint Resolve
@@ -344,28 +347,18 @@ Module Typ.
 
       Lemma eqb_compdec_spec {t} (c : CompDec t) : forall x y,
           eqb_of_compdec c x y = true <-> x = y.
-        intros.
-        destruct c.
-        destruct Eqb.
-        simpl.
-        auto.
+      Proof.
+        intros x y.
+        destruct c as [O C I].
+        unfold eqb_of_compdec.
+        simpl. apply compare2eqb_spec.
       Qed.
 
       Lemma eqb_compdec_spec_false {t} (c : CompDec t) : forall x y,
           eqb_of_compdec c x y = false <-> x <> y.
-        intros.
-        destruct c.
-        destruct Eqb.
-        simpl.
-        split. intros.
-        unfold not. intros.
-        apply eqb_spec in H0.
-        rewrite H in H0. now contradict H0.
-        intros. unfold not in H.
-        rewrite <- not_true_iff_false.
-        unfold not. intros.
-        apply eqb_spec in H0.
-        apply H in H0. now contradict H0.
+      Proof.
+        intros x y.
+        apply eqb_spec_false.
       Qed.
 
       Lemma i_eqb_spec : forall t x y, i_eqb t x y <-> x = y.
@@ -384,12 +377,9 @@ Module Typ.
 
       Lemma reflect_eqb_compdec {t} (c : CompDec t) : forall x y,
           reflect (x = y) (eqb_of_compdec c x y).
-        intros.
-        destruct c.
-        destruct Eqb.
-        simpl in *.
-        apply iff_reflect.
-        symmetry; auto.
+      Proof.
+        intros x y.
+        apply reflect_eqb.
       Qed.
 
 
@@ -424,11 +414,9 @@ Module Typ.
 
       Lemma eqb_compdec_refl {t} (c : CompDec t) : forall x,
           eqb_of_compdec c x x = true.
-        intros.
-        destruct c.
-        destruct Eqb.
-        simpl.
-        apply eqb_spec. auto.
+      Proof.
+        intro x.
+        apply eqb_refl.
       Qed.
 
       Lemma i_eqb_refl : forall t x, i_eqb t x x.
@@ -442,15 +430,10 @@ Module Typ.
       Lemma eqb_compdec_trans {t} (c : CompDec t) : forall x y z,
           eqb_of_compdec c x y = true ->
           eqb_of_compdec c y z = true ->
-          eqb_of_compdec c x z = true .
-        intros.
-        destruct c.
-        destruct Eqb.
-        simpl in *.
-        apply eqb_spec.
-        apply eqb_spec in H.
-        apply eqb_spec in H0.
-        subst; auto.
+          eqb_of_compdec c x z = true.
+      Proof.
+        intros x y z.
+        apply eqb_trans.
       Qed.
 
       Lemma i_eqb_trans : forall t x y z, i_eqb t x y -> i_eqb t y z -> i_eqb t x z.
@@ -461,12 +444,12 @@ Module Typ.
       Qed.
 
 
-      Lemma i_eqb_t : forall t x y, i_eqb t x y = i_eqb_eqb t x y.
-      Proof.
-        intros.
-        unfold i_eqb_eqb.
-        destruct t; simpl; auto; unfold i_eqb; simpl.
-      Qed.
+      (* Lemma i_eqb_t : forall t x y, i_eqb t x y = i_eqb_eqb t x y. *)
+      (* Proof. *)
+      (*   intros. *)
+      (*   unfold i_eqb_eqb. *)
+      (*   destruct t; simpl; auto; unfold i_eqb; simpl. *)
+      (* Qed. *)
 
     End Interp_Equality.
 
@@ -1514,6 +1497,8 @@ Qed.
           apply_unop (Typ.TBV s) (Typ.TBV (i + s)) (@BITVECTOR_LIST.bv_sextn s i)
         end.
 
+(* Goal forall ti te, interp_t (Typ.TFArray ti te) = @FArray.farray (interp_t ti) (interp_t te) (Typ.ord_interp t_i ti) (Typ.inh_interp t_i te). *)
+(* intros ti te. unfold interp_t. simpl. Set Printing All. *)
 
       Definition interp_bop o :=
          match o  with
@@ -1547,13 +1532,13 @@ Qed.
            apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_shr s)
          | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te FArray.select
          | BO_diffarray ti te =>
-           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti FArray.diff
+           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te) (ord_of_compdec _) _ (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te))
          end.
 
       Definition interp_top o :=
          match o with
          | TO_store ti te =>
-           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) FArray.store
+           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store (Typ.interp t_i ti) (Typ.interp t_i te) (ord_of_compdec _) _ (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i te))
          end.
 
       Fixpoint compute_interp ty acc l :=
@@ -1987,7 +1972,10 @@ Qed.
         rewrite H2, H3, H1.
         rewrite !Typ.cast_refl.
         intros.
-        exists (FArray.diff x1 x2); auto.
+        exists (@FArray.diff (Typ.interp t_i t') (Typ.interp t_i te)
+             (ord_of_compdec _)
+             (comp_of_compdec _) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te)
+             (Typ.inh_interp t_i t') (Typ.inh_interp t_i te) x1 x2); auto.
 
         (* Ternary operatores *)
         destruct op as [ti te]; intros [ ti' te' | | | | | ];
@@ -2008,7 +1996,10 @@ Qed.
         intros.
         rewrite !Typ.cast_refl.
         intros.
-        exists (FArray.store x1 x2 x3); auto.
+        exists (@FArray.store (Typ.interp t_i ti') (Typ.interp t_i te')
+             (ord_of_compdec _)
+             (comp_of_compdec _) (Typ.ord_interp t_i te') (Typ.comp_interp t_i te')
+             (Typ.inh_interp t_i te') x1 x2 x3); auto.
 
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
@@ -2483,7 +2474,11 @@ Qed.
           simpl; try (exists true; auto); intro k1;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TFArray ti te)) as [k2| ];
             simpl; try (exists true; reflexivity).
-        exists (FArray.diff (k1 interp_t x) (k2 interp_t y)); auto.
+        exists (@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te)
+             (ord_of_compdec _)
+             (comp_of_compdec _) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te)
+             (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x)
+             (k2 (Typ.interp t_i) y)); auto.
 
         (* Ternary operators *)
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
@@ -2496,7 +2491,11 @@ Qed.
           simpl; try (exists true; auto); intro k2;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
             simpl; try (exists true; reflexivity).
-         exists (FArray.store (k1 interp_t x) (k2 interp_t y) (k3 interp_t z)); auto.
+         exists (@FArray.store (Typ.interp t_i ti) (Typ.interp t_i te)
+             (ord_of_compdec _)
+             (comp_of_compdec _) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te)
+             (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y)
+             (k3 (Typ.interp t_i) z)); auto.
 
         (* N-ary operators *)
         intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
