@@ -81,6 +81,13 @@ Section EqbTypeProp.
     - now rewrite eqb_spec in H.
     - now rewrite eqb_spec_false in H.
   Qed.
+
+  Lemma eqb_sym2 x y : eqb x y = eqb y x.
+  Proof.
+    case_eq (eqb y x); intro H.
+    - now apply eqb_sym.
+    - rewrite eqb_spec_false in *. auto.
+  Qed.
 End EqbTypeProp.
 
 

@@ -1842,8 +1842,8 @@ End FArray.
 
 Arguments farray _ _ {_} {_}.
 Arguments select {_} {_} {_} {_} {_} _ _.
-Arguments store {_} {_} {_} {_} {_} {_} {_} _ _ _.
-Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} _ _.
+Arguments store {_} {_} {_} {_} {_} {_} {_} {_} _ _ _.
+Arguments diff {_} {_} {_} {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments equal {_} {_} {_} {_} {_} {_} {_}  _ _.
 Arguments equal_iff_eq {_} {_} {_} {_} {_} {_} {_} _ _.
 Arguments read_over_same_write {_} {_} {_} {_} {_} {_} {_} _ _ _ _ _.

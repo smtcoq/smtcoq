@@ -391,11 +391,7 @@ Module Typ.
       Qed.
 
      Lemma i_eqb_sym : forall t x y, i_eqb t x y = i_eqb t y x.
-     Proof.
-       intros t x y; case_eq (i_eqb t x y); intro H1; symmetry;
-          [ | rewrite neg_eq_true_eq_false in *; intro H2; apply H1];
-          rewrite is_true_iff in *; now rewrite i_eqb_spec in *.
-      Qed.
+     Proof. intros. apply eqb_sym2. Qed.
 
 
       Definition i_eqb_eqb (t:type) : interp t -> interp t -> bool :=
