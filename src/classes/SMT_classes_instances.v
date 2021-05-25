@@ -22,25 +22,25 @@ Section Unit.
 
   Let lt : unit -> unit -> Prop := fun _ _ => False.
 
-  Instance unit_ord : OrdType unit.
+  Global Instance unit_ord : OrdType unit.
   Proof. exists lt; unfold lt; trivial.
     intros; contradict H; trivial.
   Defined.
 
-  Instance unit_eqbtype : EqbType unit.
+  Global Instance unit_eqbtype : EqbType unit.
   Proof.
     exists eqb. intros. destruct x, y. unfold eqb. split; trivial.
   Defined.
 
-  Instance unit_comp : @Comparable unit unit_ord.
+  Global Instance unit_comp : @Comparable unit unit_ord.
   Proof.
     split. intros. destruct x, y.
     apply OrderedType.EQ; trivial.
   Defined.
 
-  Instance unit_inh : Inhabited unit := {| default_value := tt |}.
+  Global Instance unit_inh : Inhabited unit := {| default_value := tt |}.
 
-  Instance unit_compdec : CompDec unit := {|
+  Global Instance unit_compdec : CompDec unit := {|
     Eqb := unit_eqbtype;
     Ordered := unit_ord;
     Comp := unit_comp;
@@ -58,7 +58,7 @@ Section Bool.
 
   Definition lt_bool x y := ltb_bool x y = true.
 
-  Instance bool_ord : OrdType bool.
+  Global Instance bool_ord : OrdType bool.
   Proof.
     exists lt_bool.
     intros x y z.
@@ -67,7 +67,7 @@ Section Bool.
     case x; case y; intros; simpl in H; easy.
   Defined.
 
-  Instance bool_comp: Comparable bool.
+  Global Instance bool_comp: Comparable bool.
   Proof.
     constructor.
     intros x y.
@@ -85,14 +85,14 @@ Section Bool.
     case x in *; case y in *; auto.
   Defined.
 
-  Instance bool_eqbtype : EqbType bool :=
+  Global Instance bool_eqbtype : EqbType bool :=
     {| eqb := Bool.eqb; eqb_spec := eqb_true_iff |}.
 
-  Instance bool_dec : DecType bool := EqbToDecType.
+  Global Instance bool_dec : DecType bool := EqbToDecType.
 
-  Instance bool_inh : Inhabited bool := {| default_value := false|}.
+  Global Instance bool_inh : Inhabited bool := {| default_value := false|}.
 
-  Instance bool_compdec : CompDec bool := {|
+  Global Instance bool_compdec : CompDec bool := {|
     Eqb := bool_eqbtype;
     Ordered := bool_ord;
     Comp := bool_comp;
@@ -110,7 +110,7 @@ End Bool.
 
 Section Z.
 
-  Instance Z_ord : OrdType Z.
+  Global Instance Z_ord : OrdType Z.
   Proof.
     exists Z_as_OT.lt.
     exact Z_as_OT.lt_trans.
@@ -118,22 +118,22 @@ Section Z.
   Defined.
 
 
-  Instance Z_comp: Comparable Z.
+  Global Instance Z_comp: Comparable Z.
   Proof.
     constructor.
     apply Z_as_OT.compare.
   Defined.
 
-  Instance Z_eqbtype : EqbType Z :=
+  Global Instance Z_eqbtype : EqbType Z :=
     {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
 
-  Instance Z_dec : DecType Z := EqbToDecType.
+  Global Instance Z_dec : DecType Z := @EqbToDecType _ Z_eqbtype.
 
 
-  Instance Z_inh : Inhabited Z := {| default_value := 0%Z |}.
+  Global Instance Z_inh : Inhabited Z := {| default_value := 0%Z |}.
 
 
-  Instance Z_compdec : CompDec Z := {|
+  Global Instance Z_compdec : CompDec Z := {|
     Eqb := Z_eqbtype;
     Ordered := Z_ord;
     Comp := Z_comp;
@@ -237,7 +237,7 @@ End Z.
 
 Section Nat.
 
-  Instance Nat_ord : OrdType nat.
+  Global Instance Nat_ord : OrdType nat.
   Proof.
 
     exists Nat_as_OT.lt.
@@ -246,22 +246,22 @@ Section Nat.
   Defined.
 
 
-  Instance Nat_comp: Comparable nat.
+  Global Instance Nat_comp: Comparable nat.
   Proof.
     constructor.
     apply Nat_as_OT.compare.
   Defined.
 
-  Instance Nat_eqbtype : EqbType nat :=
+  Global Instance Nat_eqbtype : EqbType nat :=
     {| eqb := Structures.nat_eqb; eqb_spec := Structures.nat_eqb_eq |}.
 
-  Instance Nat_dec : DecType nat := EqbToDecType.
+  Global Instance Nat_dec : DecType nat := EqbToDecType.
 
 
-  Instance Nat_inh : Inhabited nat := {| default_value := O%nat |}.
+  Global Instance Nat_inh : Inhabited nat := {| default_value := O%nat |}.
 
 
-  Instance Nat_compdec : CompDec nat := {|
+  Global Instance Nat_compdec : CompDec nat := {|
     Eqb := Nat_eqbtype;
     Ordered := Nat_ord;
     Comp := Nat_comp;
@@ -273,27 +273,27 @@ End Nat.
 
 Section Positive.
 
-  Instance Positive_ord : OrdType positive.
+  Global Instance Positive_ord : OrdType positive.
   Proof.
     exists Positive_as_OT.lt.
     exact Positive_as_OT.lt_trans.
     exact Positive_as_OT.lt_not_eq.
   Defined.
 
-  Instance Positive_comp: Comparable positive.
+  Global Instance Positive_comp: Comparable positive.
   Proof.
     constructor.
     apply Positive_as_OT.compare.
   Defined.
 
-  Instance Positive_eqbtype : EqbType positive :=
+  Global Instance Positive_eqbtype : EqbType positive :=
     {| eqb := Pos.eqb; eqb_spec := Pos.eqb_eq |}.
 
-  Instance Positive_dec : DecType positive := EqbToDecType.
+  Global Instance Positive_dec : DecType positive := EqbToDecType.
 
-  Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
+  Global Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
 
-  Instance Positive_compdec : CompDec positive := {|
+  Global Instance Positive_compdec : CompDec positive := {|
     Eqb := Positive_eqbtype;
     Ordered := Positive_ord;
     Comp := Positive_comp;
@@ -309,7 +309,7 @@ Section BV.
   Import BITVECTOR_LIST.
 
 
-  Instance BV_ord n : OrdType (bitvector n).
+  Global Instance BV_ord n : OrdType (bitvector n).
   Proof.
     exists (fun a b => (bv_ult a b)).
     unfold bv_ult, RAWBITVECTOR_LIST.bv_ult.
@@ -328,7 +328,7 @@ Section BV.
   Defined.
 
 
-  Instance BV_comp n: Comparable (bitvector n).
+  Global Instance BV_comp n: Comparable (bitvector n).
   Proof.
     constructor.
     intros x y.
@@ -366,17 +366,17 @@ Section BV.
     now apply RAWBITVECTOR_LIST.rev_neq in H.
   Defined.
 
-  Instance BV_eqbtype n : EqbType (bitvector n) :=
+  Global Instance BV_eqbtype n : EqbType (bitvector n) :=
     {| eqb := @bv_eq n;
        eqb_spec := @bv_eq_reflect n |}.
 
-  Instance BV_dec n : DecType (bitvector n) := EqbToDecType.
+  Global Instance BV_dec n : DecType (bitvector n) := EqbToDecType.
 
-  Instance BV_inh n : Inhabited (bitvector n) :=
+  Global Instance BV_inh n : Inhabited (bitvector n) :=
     {| default_value := zeros n |}.
 
 
-  Instance BV_compdec n: CompDec (bitvector n) := {|
+  Global Instance BV_compdec n: CompDec (bitvector n) := {|
     Eqb := BV_eqbtype n;
     Ordered := BV_ord n;
     Comp := BV_comp n;
@@ -389,7 +389,7 @@ End BV.
 
 Section FArray.
 
-  Instance FArray_ord key elt
+  Global Instance FArray_ord key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}
            `{elt_inh: Inhabited elt}
@@ -406,7 +406,7 @@ Section FArray.
   Defined.
 
 
-  Instance FArray_comp key elt
+  Global Instance FArray_comp key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}
            `{key_comp: @Comparable key key_ord}
@@ -425,7 +425,7 @@ Section FArray.
     - apply OrderedType.GT. auto.
   Defined.
 
-  Instance FArray_eqbtype key elt
+  Global Instance FArray_eqbtype key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}
            `{elt_eqbtype: EqbType elt}
@@ -441,7 +441,7 @@ Section FArray.
     intros. subst. apply eq_equal. apply eqfarray_refl.
   Defined.
 
-  Instance FArray_dec key elt
+  Global Instance FArray_dec key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}
            `{elt_eqbtype: EqbType elt}
@@ -450,13 +450,13 @@ Section FArray.
            `{elt_inh: Inhabited elt}
     : DecType (farray key elt) := EqbToDecType.
 
-  Instance FArray_inh key elt
+  Global Instance FArray_inh key elt
            `{key_ord: OrdType key}
            `{elt_inh: Inhabited elt} : Inhabited (farray key elt) :=
     {| default_value := FArray.empty key_ord elt_inh |}.
 
 
-  Program Instance FArray_compdec key elt
+  Global Instance FArray_compdec key elt
           `{key_compdec: CompDec key}
           `{elt_compdec: CompDec elt} :
     CompDec (farray key elt) :=
@@ -477,7 +477,7 @@ Section Int63.
   Let int_lt x y :=
     if Int63Native.ltb x y then True else False.
 
-  Instance int63_ord : OrdType int.
+  Global Instance int63_ord : OrdType int.
   Proof.
     exists int_lt; unfold int_lt.
     - intros x y z.
@@ -498,7 +498,7 @@ Section Int63.
   Defined.
 
 
-  Instance int63_comp: Comparable int.
+  Global Instance int63_comp: Comparable int.
   Proof.
     constructor.
     intros x y.
@@ -523,15 +523,15 @@ Section Int63.
       rewrite H0. auto.
   Defined.
 
-  Instance int63_eqbtype : EqbType int :=
+  Global Instance int63_eqbtype : EqbType int :=
     {| eqb := Int63Native.eqb; eqb_spec := Int63Properties.eqb_spec |}.
 
-  Instance int63_dec : DecType int := EqbToDecType.
+  Global Instance int63_dec : DecType int := EqbToDecType.
 
 
-  Instance int63_inh : Inhabited int := {| default_value := 0 |}.
+  Global Instance int63_inh : Inhabited int := {| default_value := 0 |}.
 
-  Instance int63_compdec : CompDec int := {|
+  Global Instance int63_compdec : CompDec int := {|
     Eqb := int63_eqbtype;
     Ordered := int63_ord;
     Comp := int63_comp;
@@ -573,7 +573,7 @@ Section option.
   Qed.
 
 
-  Instance option_ord : OrdType (option A) :=
+  Global Instance option_ord : OrdType (option A) :=
     Build_OrdType _ _ option_lt_trans option_lt_not_eq.
 
 
@@ -589,15 +589,15 @@ Section option.
     - now apply EQ.
   Defined.
 
-  Instance option_comp : Comparable (option A) := Build_Comparable _ _ option_compare.
+  Global Instance option_comp : Comparable (option A) := Build_Comparable _ _ option_compare.
 
-  Instance option_eqbtype : EqbType (option A) := Comparable2EqbType.
-
-
-  Instance option_inh : Inhabited (option A) := Build_Inhabited _ None.
+  Global Instance option_eqbtype : EqbType (option A) := Comparable2EqbType.
 
 
-  Instance option_compdec : CompDec (option A) := {|
+  Global Instance option_inh : Inhabited (option A) := Build_Inhabited _ None.
+
+
+  Global Instance option_compdec : CompDec (option A) := {|
     Ordered := option_ord;
     Comp := option_comp;
     Inh := option_inh
@@ -662,19 +662,19 @@ Section list.
   Qed.
 
 
-  Instance list_ord : OrdType (list A) :=
+  Global Instance list_ord : OrdType (list A) :=
     Build_OrdType _ _ list_lt_trans list_lt_not_eq.
 
 
-  Instance list_comp : Comparable (list A) := Build_Comparable _ _ list_compare.
+  Global Instance list_comp : Comparable (list A) := Build_Comparable _ _ list_compare.
 
-  Instance list_eqbtype : EqbType (list A) := Comparable2EqbType.
-
-
-  Instance list_inh : Inhabited (list A) := Build_Inhabited _ nil.
+  Global Instance list_eqbtype : EqbType (list A) := Comparable2EqbType.
 
 
-  Instance list_compdec : CompDec (list A) := {|
+  Global Instance list_inh : Inhabited (list A) := Build_Inhabited _ nil.
+
+
+  Global Instance list_compdec : CompDec (list A) := {|
     Ordered := list_ord;
     Comp := list_comp;
     Inh := list_inh
