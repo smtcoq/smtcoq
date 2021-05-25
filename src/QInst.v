@@ -88,14 +88,7 @@ Qed.
 (* An auxiliary lemma to rewrite an eqb_of_compdec into its the symmetrical version *)
 Lemma eqb_of_compdec_sym (A:Type) (HA:CompDec A) (a b:A) :
   eqb_of_compdec HA b a = eqb_of_compdec HA a b.
-Proof.
-  destruct (@eq_dec _ (@Decidable _ HA) a b) as [H|H].
-  - now rewrite H.
-  - case_eq (eqb_of_compdec HA a b).
-    + now rewrite <- !(@compdec_eq_eqb _ HA).
-    + intros _. case_eq (eqb_of_compdec HA b a); auto.
-      intro H1. elim H. symmetry. now rewrite compdec_eq_eqb.
-Qed.
+Proof. apply eqb_sym2. Qed.
 
 (* First strategy: change the order of all equalities in the goal or the
    hypotheses
