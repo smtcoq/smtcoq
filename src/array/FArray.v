@@ -29,12 +29,11 @@ Module Raw.
 
   Variable key : Type.
   Variable elt : Type.
+  Variable key_dec : DecType key.
   Variable key_ord : OrdType key.
   Variable key_comp : Comparable key.
   Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
-
-  Instance key_dec : DecType key := @EqbToDecType _ Comparable2EqbType.
 
   Definition eqb_key (x y : key) : bool := if eq_dec x y then true else false.
   Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
@@ -921,22 +920,14 @@ Section FArray.
 
   Variable key : Type.
   Variable elt : Type.
+  Variable key_dec : DecType key.
   Variable key_ord : OrdType key.
   Variable key_comp : Comparable key.
+  Variable elt_dec : DecType elt.
   Variable elt_ord : OrdType elt.
   Variable elt_comp : Comparable elt.
   Variable key_inh :  Inhabited key.
   Variable elt_inh :  Inhabited elt.
-
-  Instance key_dec : DecType key := @EqbToDecType _ Comparable2EqbType.
-  Instance elt_dec : DecType elt := @EqbToDecType _ Comparable2EqbType.
-
-  (* Variable key_dec : DecType key. *)
-  (* Variable key_ord : OrdType key. *)
-  (* Variable key_comp : Comparable key. *)
-  (* Variable elt_dec : DecType elt. *)
-  (* Variable elt_ord : OrdType elt. *)
-  (* Variable elt_comp : Comparable elt. *)
 
   Set Implicit Arguments.
 
@@ -1447,7 +1438,7 @@ Section FArray.
               + intro. contradiction.
               + intro. contradict H0.
                 apply Raw.remove_1; auto.
-            - apply Raw.remove_4; auto. apply (@EqbToDecType _ Comparable2EqbType).
+            - apply Raw.remove_4; auto.
           }
         * { intros k e e' H0 H1.
             destruct (eq_dec x k) as [e0|n].
@@ -1457,7 +1448,6 @@ Section FArray.
               + contradict H2.
                 apply Raw.remove_1; auto.
               + apply key_comp.
-              + apply (@EqbToDecType _ Comparable2EqbType).
             - apply (Raw.remove_2 key_comp Hm n) in H0.
               specialize (Raw.remove_sorted key_comp Hm x). intros H2.
               specialize (Raw.MapsTo_inj H2 H0 H1).
@@ -1494,7 +1484,6 @@ Section FArray.
     - contradict H1.
       apply remove_1; auto.
     - apply key_comp.
-    - apply (@EqbToDecType _ Comparable2EqbType).
   Qed.
 
   Lemma add_neq_o : forall m x y e,
@@ -1735,7 +1724,7 @@ Section FArray.
                  a <> b -> {i : key | select a i <> select b i}).
       {
         clear a b. intros x y.
-        case_eq (list_eq_dec (@eq_dec _ (Raw.ke_dec key_comp (@EqbToDecType _ Comparable2EqbType))) x y).
+        case_eq (list_eq_dec (@eq_dec _ (Raw.ke_dec key_dec elt_dec)) x y).
         - intros e He. subst x. intros xS yS xD yD a b. subst a b.
           rewrite (proof_irrelevance _ xS yS),  (proof_irrelevance _ xD yD).
           intro H. elim H. reflexivity.

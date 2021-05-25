@@ -18,6 +18,7 @@ Require Export SMT_classes.
 
 
 Section Unit.
+  Let eqb : unit -> unit -> bool := fun _ _ => true.
 
   Let lt : unit -> unit -> Prop := fun _ _ => False.
 
@@ -26,17 +27,21 @@ Section Unit.
     intros; contradict H; trivial.
   Defined.
 
+  Instance unit_eqbtype : EqbType unit.
+  Proof.
+    exists eqb. intros. destruct x, y. unfold eqb. split; trivial.
+  Defined.
+
   Instance unit_comp : @Comparable unit unit_ord.
   Proof.
     split. intros. destruct x, y.
     apply OrderedType.EQ; trivial.
   Defined.
 
-  Instance unit_eqbtype : EqbType unit := Comparable2EqbType.
-
   Instance unit_inh : Inhabited unit := {| default_value := tt |}.
 
   Instance unit_compdec : CompDec unit := {|
+    Eqb := unit_eqbtype;
     Ordered := unit_ord;
     Comp := unit_comp;
     Inh := unit_inh
@@ -80,13 +85,15 @@ Section Bool.
     case x in *; case y in *; auto.
   Defined.
 
-  Instance bool_eqbtype : EqbType bool := Comparable2EqbType.
+  Instance bool_eqbtype : EqbType bool :=
+    {| eqb := Bool.eqb; eqb_spec := eqb_true_iff |}.
 
   Instance bool_dec : DecType bool := EqbToDecType.
 
   Instance bool_inh : Inhabited bool := {| default_value := false|}.
 
   Instance bool_compdec : CompDec bool := {|
+    Eqb := bool_eqbtype;
     Ordered := bool_ord;
     Comp := bool_comp;
     Inh := bool_inh
@@ -117,7 +124,8 @@ Section Z.
     apply Z_as_OT.compare.
   Defined.
 
-  Instance Z_eqbtype : EqbType Z := Comparable2EqbType.
+  Instance Z_eqbtype : EqbType Z :=
+    {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
 
   Instance Z_dec : DecType Z := EqbToDecType.
 
@@ -126,6 +134,7 @@ Section Z.
 
 
   Instance Z_compdec : CompDec Z := {|
+    Eqb := Z_eqbtype;
     Ordered := Z_ord;
     Comp := Z_comp;
     Inh := Z_inh
@@ -243,7 +252,8 @@ Section Nat.
     apply Nat_as_OT.compare.
   Defined.
 
-  Instance Nat_eqbtype : EqbType nat := Comparable2EqbType.
+  Instance Nat_eqbtype : EqbType nat :=
+    {| eqb := Structures.nat_eqb; eqb_spec := Structures.nat_eqb_eq |}.
 
   Instance Nat_dec : DecType nat := EqbToDecType.
 
@@ -252,6 +262,7 @@ Section Nat.
 
 
   Instance Nat_compdec : CompDec nat := {|
+    Eqb := Nat_eqbtype;
     Ordered := Nat_ord;
     Comp := Nat_comp;
     Inh := Nat_inh
@@ -275,13 +286,15 @@ Section Positive.
     apply Positive_as_OT.compare.
   Defined.
 
-  Instance Positive_eqbtype : EqbType positive := Comparable2EqbType.
+  Instance Positive_eqbtype : EqbType positive :=
+    {| eqb := Pos.eqb; eqb_spec := Pos.eqb_eq |}.
 
   Instance Positive_dec : DecType positive := EqbToDecType.
 
   Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
 
   Instance Positive_compdec : CompDec positive := {|
+    Eqb := Positive_eqbtype;
     Ordered := Positive_ord;
     Comp := Positive_comp;
     Inh := Positive_inh
@@ -353,7 +366,9 @@ Section BV.
     now apply RAWBITVECTOR_LIST.rev_neq in H.
   Defined.
 
-  Instance BV_eqbtype n : EqbType (bitvector n) := Comparable2EqbType.
+  Instance BV_eqbtype n : EqbType (bitvector n) :=
+    {| eqb := @bv_eq n;
+       eqb_spec := @bv_eq_reflect n |}.
 
   Instance BV_dec n : DecType (bitvector n) := EqbToDecType.
 
@@ -362,6 +377,7 @@ Section BV.
 
 
   Instance BV_compdec n: CompDec (bitvector n) := {|
+    Eqb := BV_eqbtype n;
     Ordered := BV_ord n;
     Comp := BV_comp n;
     Inh := BV_inh n
@@ -412,15 +428,23 @@ Section FArray.
   Instance FArray_eqbtype key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}
+           `{elt_eqbtype: EqbType elt}
            `{key_comp: @Comparable key key_ord}
            `{elt_comp: @Comparable elt elt_ord}
            `{elt_inh: Inhabited elt}
-    : EqbType (farray key elt) := Comparable2EqbType.
-
+    : EqbType (farray key elt).
+  Proof.
+    exists FArray.equal.
+    intros.
+    split.
+    apply FArray.equal_eq.
+    intros. subst. apply eq_equal. apply eqfarray_refl.
+  Defined.
 
   Instance FArray_dec key elt
            `{key_ord: OrdType key}
            `{elt_ord: OrdType elt}
+           `{elt_eqbtype: EqbType elt}
            `{key_comp: @Comparable key key_ord}
            `{elt_comp: @Comparable elt elt_ord}
            `{elt_inh: Inhabited elt}
@@ -437,6 +461,7 @@ Section FArray.
           `{elt_compdec: CompDec elt} :
     CompDec (farray key elt) :=
     {|
+      Eqb := FArray_eqbtype key elt;
       Ordered := FArray_ord key elt;
       Comp := FArray_comp key elt ;
       Inh := FArray_inh key elt
@@ -498,7 +523,8 @@ Section Int63.
       rewrite H0. auto.
   Defined.
 
-  Instance int63_eqbtype : EqbType int := Comparable2EqbType.
+  Instance int63_eqbtype : EqbType int :=
+    {| eqb := Int63Native.eqb; eqb_spec := Int63Properties.eqb_spec |}.
 
   Instance int63_dec : DecType int := EqbToDecType.
 
@@ -506,11 +532,11 @@ Section Int63.
   Instance int63_inh : Inhabited int := {| default_value := 0 |}.
 
   Instance int63_compdec : CompDec int := {|
+    Eqb := int63_eqbtype;
     Ordered := int63_ord;
     Comp := int63_comp;
     Inh := int63_inh
   |}.
-
 
 End Int63.
 
@@ -604,9 +630,9 @@ Section list.
     - case_eq (compare x y); intros l H.
       + apply LT. simpl. now left.
       + case_eq (IHxs ys); intros l1 H1.
-        * apply LT. simpl. right. split; auto. now apply compare2eqb_spec.
+        * apply LT. simpl. right. split; auto. now apply eqb_spec.
         * apply EQ. now rewrite l, l1.
-        * apply GT. simpl. right. split; auto. now apply compare2eqb_spec.
+        * apply GT. simpl. right. split; auto. now apply eqb_spec.
       + apply GT. simpl. now left.
   Defined.
 
@@ -618,10 +644,10 @@ Section list.
     - inversion 1.
     - intros [H1|[H1a H1b]] [H2|[H2a H2b]].
       + left; eapply lt_trans; eauto.
-      + left. unfold is_true in H2a. rewrite compare2eqb_spec in H2a. now subst z.
-      + left. unfold is_true in H1a. rewrite compare2eqb_spec in H1a. now subst y.
+      + left. unfold is_true in H2a. rewrite eqb_spec in H2a. now subst z.
+      + left. unfold is_true in H1a. rewrite eqb_spec in H1a. now subst y.
       + right. split.
-        * unfold is_true in H1a. rewrite compare2eqb_spec in H1a. now subst y.
+        * unfold is_true in H1a. rewrite eqb_spec in H1a. now subst y.
         * eapply IHxs; eauto.
   Qed.
 

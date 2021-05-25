@@ -41,9 +41,6 @@ Class DecType T := {
 }.
 
 
-(* Hint Immediate eq_sym. *)
-(* Hint Resolve eq_refl eq_trans. *)
-
 (** Types equipped with Boolean equality are decidable *)
 Section EqbToDecType.
   Generalizable Variable T.
@@ -64,6 +61,9 @@ Section EqbTypeProp.
 
   Lemma eqb_refl x : eqb x x = true.
   Proof. now rewrite eqb_spec. Qed.
+
+  Lemma eqb_sym x y : eqb x y = true -> eqb y x = true.
+  Proof. rewrite !eqb_spec. now intros ->. Qed.
 
   Lemma eqb_trans x y z : eqb x y = true -> eqb y z = true -> eqb x z = true.
   Proof. rewrite !eqb_spec. now intros ->. Qed.
@@ -141,23 +141,25 @@ Class Inhabited T := {
 (** * CompDec: Merging all previous classes *)
 
 Class CompDec T := {
+  Eqb :> EqbType T;             (* This is redundant since implied by Comp, but it actually allows us to choose a specific equality function *)
   Ordered :> OrdType T;
   Comp :> @Comparable T Ordered;
   Inh :> Inhabited T
 }.
 
 
-Instance ord_of_compdec t `{c: CompDec t} : (OrdType t) := 
-  let (ord, _, _) := c in ord.
+Instance eqbtype_of_compdec t `{c: CompDec t} : (EqbType t) :=
+  let (eqb, _, _, _) := c in eqb.
+
+Instance ord_of_compdec t `{c: CompDec t} : (OrdType t) :=
+  let (_, ord, _, _) := c in ord.
 
 Instance inh_of_compdec t `{c: CompDec t} : (Inhabited t) :=
-  let (_, _, inh) := c in inh.
+  let (_, _, _, inh) := c in inh.
 
 Instance comp_of_compdec t `{c: CompDec t} : @Comparable t (ord_of_compdec t).
   destruct c; trivial.
 Defined.
-
-Instance eqbtype_of_compdec t `{c: CompDec t} : EqbType t := Comparable2EqbType.
 
 
 Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
@@ -169,8 +171,7 @@ Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
 Lemma compdec_eq_eqb {T:Type} {c : CompDec T} : forall x y : T,
     x = y <-> eqb_of_compdec c x y = true.
 Proof.
-  intros x y. unfold eqb_of_compdec, eqbtype_of_compdec, Comparable2EqbType.
-  now rewrite compare2eqb_spec.
+  intros x y. destruct c as [[E HE] O C I]. unfold eqb_of_compdec. simpl. now rewrite HE.
 Qed.
 
 Hint Resolve
@@ -190,16 +191,20 @@ Section CompDec_from.
 
   Variable T : Type.
 
+  Variable eqb' : T -> T -> bool.
+  Variable eqb'_spec : forall x y, eqb' x y = true <-> x = y.
+
   Variable lt' : T -> T -> Prop.
-  Hypothesis lt_trans': forall x y z : T, lt' x y -> lt' y z -> lt' x z.
-  Hypothesis lt_neq': forall x y : T, lt' x y -> x <> y.
+  Hypothesis lt'_trans : forall x y z : T, lt' x y -> lt' y z -> lt' x z.
+  Hypothesis lt'_neq : forall x y : T, lt' x y -> x <> y.
 
   Variable compare': forall x y : T, Compare lt' eq x y.
 
   Variable d : T.
 
   Program Instance CompDec_from : (CompDec T) := {|
-    Ordered := {| lt := lt'; lt_trans := lt_trans' |};
+    Eqb := {| eqb := eqb'; eqb_spec := eqb'_spec |};
+    Ordered := {| lt := lt'; lt_trans := lt'_trans |};
     Comp := {| compare := compare' |};
     Inh := {| default_value := d |}
   |}.
