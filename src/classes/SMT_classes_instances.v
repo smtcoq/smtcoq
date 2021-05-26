@@ -682,4 +682,4 @@ Section list.
 
 End list.
 
-Hint Resolve unit_compdec bool_compdec Z_compdec Nat_compdec Positive_compdec BV_compdec FArray_compdec int63_compdec option_compdec list_compdec : typeclass_instances.
+#[export] Hint Resolve unit_compdec bool_compdec Z_compdec Nat_compdec Positive_compdec BV_compdec FArray_compdec int63_compdec option_compdec list_compdec : typeclass_instances.

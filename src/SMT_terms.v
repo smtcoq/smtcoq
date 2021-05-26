@@ -18,7 +18,7 @@ Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
 
-Hint Unfold is_true : smtcoq_core.
+#[export] Hint Unfold is_true : smtcoq_core.
 
 
 (* Remark: I use Notation instead of Definition du eliminate conversion check during the type checking *)
