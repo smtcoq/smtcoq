@@ -167,7 +167,7 @@ let lia_enum  = ref true
 let max_depth = max_int
 let lia_proof_depth = ref max_depth
 let get_lia_option () =
- (!Structures.Micromega_plugin_Certificate.use_simplex,!lia_enum,!lia_proof_depth)
+ (Structures.Micromega_plugin_Certificate.use_simplex (),!lia_enum,!lia_proof_depth)
 
 let lift_pexpr_prover p l =  p (List.map (fun (e,o) -> Structures.Micromega_plugin_Micromega.denorm e , o) l)
 
@@ -249,7 +249,7 @@ let pp_nat o n = Printf.fprintf o "%i" (Structures.Micromega_plugin_Mutils.CoqTo
 
 let pp_positive o x = Printf.fprintf o "%i" (Structures.Micromega_plugin_Mutils.CoqToCaml.positive x)
 
-let pp_z o x = Printf.fprintf o "%s" (Big_int.string_of_big_int (Structures.Micromega_plugin_Mutils.CoqToCaml.z_big_int x))
+let pp_z o x = Printf.fprintf o "%s" (Structures.Micromega_plugin_NumCompat.Z.to_string (Structures.Micromega_plugin_Mutils.CoqToCaml.z_big_int x))
 
 let pp_list op cl elt o l =
   let rec _pp  o l =

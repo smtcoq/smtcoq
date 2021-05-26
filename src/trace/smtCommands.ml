@@ -689,7 +689,7 @@ let gen_rel_name =
 
 let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let warn () =
-    Structures.warning "Lemma" ("Discarding the following lemma (unsupported): "^(Pp.string_of_ppcmds (Ppconstr.pr_constr_expr Environ.empty_env Evd.empty (Structures.extern_constr clemma))));
+    Structures.warning "Lemma" ("Discarding the following lemma (unsupported): "^(SmtMisc.string_coq_constr clemma));
     None
   in
 

@@ -94,6 +94,7 @@ module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
 module Micromega_plugin_Persistent_cache = Micromega_plugin.Persistent_cache
+module Micromega_plugin_NumCompat = Micromega_plugin.NumCompat
 
 val micromega_coq_proofTerm : constr lazy_t
 val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
@@ -113,10 +114,9 @@ val set_evars_tac : constr -> tactic
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
 val warning : string -> string -> unit
-val extern_constr : constr -> constr_expr
 val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
-val ppconstr_lsimpleconstr : Notation_gram.tolerability
+val ppconstr_lsimpleconstr : Constrexpr.entry_relative_level
 val constrextern_extern_constr : constr -> constr_expr
 val get_rel_dec_name : (constr, types) Context.Rel.Declaration.pt -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
