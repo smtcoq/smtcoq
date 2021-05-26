@@ -105,7 +105,7 @@ Module Form.
             t_b.[i <- interp_aux (PArray.get t_b) hf])
         (PArray.make (PArray.length t_form) true) t_form.
 
-      Fixpoint lt_form i h {struct h} :=
+      Definition lt_form i h :=
         match h with
         | Fatom _ | Ftrue | Ffalse => true
         | Fnot2 _ l => Lit.blit l < i

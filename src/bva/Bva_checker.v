@@ -1318,7 +1318,7 @@ Proof. intros a bs.
        induction bs as [ | b ys IHys].
        - intros. simpl in H. 
          cut (i = n). intro Hn. rewrite Hn in H1.
-         contradict H1. omega. omega.
+         contradict H1. lia. lia.
        - intros. simpl in H0.
          case_eq (Lit.is_pos b). intros Heq0. rewrite Heq0 in H0.
          case_eq (t_form .[ Lit.blit b] ). intros i1 Heq1. rewrite Heq1 in H0.
@@ -1349,7 +1349,7 @@ Proof. intros a bs.
          cut ((S k - S i)%nat = (k - i)%nat). intro ISki.
          specialize (@IHys Hd).
          now rewrite ISki in IHys.
-         now simpl. omega.
+         now simpl. lia.
          rewrite Hd.
          cut ((i0 - i0 = 0)%nat). intro Hi0. rewrite Hi0.
          simpl.
@@ -1417,13 +1417,13 @@ Proof. intros a bs.
          now apply Nat_eqb_eq in Hif2.
          now apply Nat_eqb_eq in Hif1.
 
-         omega.
+         lia.
          destruct H1.
          specialize (@le_le_S_eq i i0). intros H11.
          specialize (@H11 H1).
          destruct H11. left. split. exact H5. exact H3.
          right. exact H5.
-         omega.
+         lia.
          intro H3. rewrite H3 in H0. now contradict H0.
          intros n0 Hn. rewrite Hn in H0. now contradict H0.
          intros n0 Hn. rewrite Hn in H0. now contradict H0.
@@ -1464,7 +1464,7 @@ Proof. intros.
        cut ( (0 <= i0 < Datatypes.length bs)%nat). intro Hc3.
        specialize (@Hp Hc3).
        now rewrite Hc in Hp.
-       omega. omega. omega.
+       lia. lia. lia.
 Qed.
 
 
@@ -1501,7 +1501,7 @@ Proof. intros a.
            cut ((0 < S (Datatypes.length xs))%nat). intro HS.
            specialize (@H2 HS). rewrite H2; apply f_equal.
            apply IHxs. intros. apply (@nth_eq0 i a b xs ys).
-           apply H. simpl. omega. omega.
+           apply H. simpl. lia. lia.
 Qed.
 
 Lemma is_even_0: is_even 0 = true.
@@ -1645,7 +1645,7 @@ Proof.
   case (t_form .[ Lit.blit b]) in Hc; try now contradict Hc.
   case a in Hc; try now contradict Hc. exact Hc.
   case a in Hc; try now contradict Hc. exact Hc.
-  simpl in Hlen. omega.
+  simpl in Hlen. lia.
 Qed.
 
 Lemma prop_check_bbc2: forall l bs, check_bbc l bs = true ->
@@ -2890,7 +2890,7 @@ Proof. intros bs1 bs2 bsres.
              specialize (IHbsres bs1 bs2 (n-1)%nat).
              simpl in H0.
              assert (length bs1 = (n-1)%nat).
-             { omega. }
+             { lia. }
 
              cut ( (BO_BVand (N.of_nat n - 1)) = (BO_BVand (N.of_nat (n - 1)))).
 
@@ -2899,7 +2899,7 @@ Proof. intros bs1 bs2 bsres.
              rewrite H2.
              intros.
              specialize (IHbsres H H1).
-             simpl. rewrite IHbsres. omega.
+             simpl. rewrite IHbsres. lia.
 
              simpl.
              cut ((N.of_nat n - 1)%N = (N.of_nat (n - 1))).
@@ -3017,7 +3017,7 @@ Proof. intros bs1 bs2 bsres.
              specialize (IHbsres bs1 bs2 (n-1)%nat).
              simpl in H0.
              assert (length bs1 = (n-1)%nat).
-             { omega. }
+             { lia. }
 
              cut ( (BO_BVor (N.of_nat n - 1)) = (BO_BVor (N.of_nat (n - 1)))).
 
@@ -3026,7 +3026,7 @@ Proof. intros bs1 bs2 bsres.
              rewrite H2.
              intros.
              specialize (IHbsres H H1).
-             simpl. rewrite IHbsres. omega.
+             simpl. rewrite IHbsres. lia.
 
              simpl.
              cut ((N.of_nat n - 1)%N = (N.of_nat (n - 1))).
@@ -3142,7 +3142,7 @@ Proof. intros bs1 bs2 bsres.
              specialize (IHbsres bs1 bs2 (n-1)%nat).
              simpl in H0.
              assert (length bs1 = (n-1)%nat).
-             { omega. }
+             { lia. }
 
              cut ( (BO_BVxor (N.of_nat n - 1)) = (BO_BVxor (N.of_nat (n - 1)))).
 
@@ -3151,7 +3151,7 @@ Proof. intros bs1 bs2 bsres.
              rewrite H2.
              intros.
              specialize (IHbsres H H1).
-             simpl. rewrite IHbsres. omega.
+             simpl. rewrite IHbsres. lia.
 
              simpl.
              cut ((N.of_nat n - 1)%N = (N.of_nat (n - 1))).
@@ -6515,7 +6515,7 @@ Proof. intro a.
        induction a as [ | xa xsa IHa ].
        - intros. simpl. easy.
        - intros.
-         case b in *. simpl. rewrite IHa. simpl. omega.
+         case b in *. simpl. rewrite IHa. simpl. lia.
          simpl. case (k - 1 <? 0)%Z; simpl; now rewrite IHa.
 Qed.
 
@@ -6523,9 +6523,9 @@ Lemma prop_mult_step3: forall k' a b res k,
                          length (mult_step a b res k k') = (length res)%nat.
 Proof. intro k'.
        induction k'.
-       - intros. simpl. rewrite prop_mult_step_k_h_len. simpl. omega.
+       - intros. simpl. rewrite prop_mult_step_k_h_len. simpl. lia.
        - intros. simpl.
-         rewrite IHk'. rewrite prop_mult_step_k_h_len. simpl; omega.
+         rewrite IHk'. rewrite prop_mult_step_k_h_len. simpl; lia.
 Qed.
 
 Lemma prop_and_with_bit2: forall bs1 b, length (and_with_bit bs1 b) = length bs1.

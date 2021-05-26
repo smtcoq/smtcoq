@@ -35,10 +35,10 @@ Lemma get_or_of_imp : forall args i,
 Proof.
   unfold or_of_imp; intros args i H; case_eq (0 < PArray.length args).
   intro Heq; rewrite get_mapi.
-  replace (i == PArray.length args - 1) with false; auto; symmetry; rewrite eqb_false_spec; intro; subst i; unfold is_true in H; rewrite ltb_spec, (to_Z_sub_1 _ _ Heq) in H; omega.
-  rewrite ltb_spec; unfold is_true in H; rewrite ltb_spec, (to_Z_sub_1 _ _ Heq) in H; omega.
+  replace (i == PArray.length args - 1) with false; auto; symmetry; rewrite eqb_false_spec; intro; subst i; unfold is_true in H; rewrite ltb_spec, (to_Z_sub_1 _ _ Heq) in H; lia.
+  rewrite ltb_spec; unfold is_true in H; rewrite ltb_spec, (to_Z_sub_1 _ _ Heq) in H; lia.
   rewrite ltb_negb_geb; case_eq (PArray.length args <= 0); try discriminate; intros Heq _; assert (H1: PArray.length args = 0).
-  apply to_Z_inj; rewrite leb_spec in Heq; destruct (to_Z_bounded (PArray.length args)) as [H1 _]; change [|0|] with 0%Z in *; omega.
+  apply to_Z_inj; rewrite leb_spec in Heq; destruct (to_Z_bounded (PArray.length args)) as [H1 _]; change [|0|] with 0%Z in *; lia.
   rewrite !get_outofbound.
   rewrite default_mapi, H1; auto.
   rewrite H1; case_eq (i < 0); auto; intro H2; eelim ltb_0; eassumption.
@@ -50,7 +50,7 @@ Lemma get_or_of_imp2 : forall args i, 0 < PArray.length args ->
 Proof.
   unfold or_of_imp; intros args i Heq Hi; rewrite get_mapi; subst i.
   rewrite Int63Axioms.eqb_refl; auto.
-  rewrite ltb_spec, (to_Z_sub_1 _ _ Heq); omega.
+  rewrite ltb_spec, (to_Z_sub_1 _ _ Heq); lia.
 Qed.
 
 Lemma afold_right_impb p a :
@@ -489,7 +489,7 @@ Section CHECKER.
      exists (a.[i]);split;trivial.
      assert (H1: 0 < PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Int63Properties.eqb_spec in Heq'; rewrite <- (get_or_of_imp2 H1 Heq'); apply to_list_In; rewrite length_or_of_imp; auto.
      exists (Lit.neg (a.[i]));rewrite Lit.interp_neg, Heq2;split;trivial.
-     assert (H1: i < PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq'; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; omega); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
+     assert (H1: i < PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq'; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; lia); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
   Qed.
 
 End CHECKER.
