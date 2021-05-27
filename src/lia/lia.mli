@@ -12,4 +12,4 @@
 
 val build_lia_certif :
   SmtAtom.Form.t list ->
-  Structures.Micromega_plugin_Certificate.Mc.zArithProof list option
+  CoqInterface.Micromega_plugin_Certificate.Mc.zArithProof list option

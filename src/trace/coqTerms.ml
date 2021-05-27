@@ -13,23 +13,23 @@
 open SmtMisc
 
 
-let gen_constant = Structures.gen_constant
+let gen_constant = CoqInterface.gen_constant
 
 
 (* Int63 *)
-let cint = Structures.cint
-let ceq63 = gen_constant Structures.int63_modules "eqb"
+let cint = CoqInterface.cint
+let ceq63 = gen_constant CoqInterface.int63_modules "eqb"
 
 (* PArray *)
-let carray = gen_constant Structures.parray_modules "array"
+let carray = gen_constant CoqInterface.parray_modules "array"
 
 (* is_true *)
-let cis_true = gen_constant Structures.init_modules "is_true"
+let cis_true = gen_constant CoqInterface.init_modules "is_true"
 
 (* nat *)
-let cnat = gen_constant Structures.init_modules "nat"
-let cO = gen_constant Structures.init_modules "O"
-let cS = gen_constant Structures.init_modules "S"
+let cnat = gen_constant CoqInterface.init_modules "nat"
+let cO = gen_constant CoqInterface.init_modules "O"
+let cS = gen_constant CoqInterface.init_modules "S"
 
 (* Positive *)
 let positive_modules = [["Coq";"Numbers";"BinNums"];
@@ -74,49 +74,49 @@ let ceqbZ = gen_constant z_modules "eqb"
 (* Booleans *)
 let bool_modules = [["Coq";"Bool";"Bool"]]
 
-let cbool = gen_constant Structures.init_modules "bool"
-let ctrue = gen_constant Structures.init_modules "true"
-let cfalse = gen_constant Structures.init_modules "false"
-let candb = gen_constant Structures.init_modules "andb"
-let corb = gen_constant Structures.init_modules "orb"
-let cxorb = gen_constant Structures.init_modules "xorb"
-let cnegb = gen_constant Structures.init_modules "negb"
-let cimplb = gen_constant Structures.init_modules "implb"
+let cbool = gen_constant CoqInterface.init_modules "bool"
+let ctrue = gen_constant CoqInterface.init_modules "true"
+let cfalse = gen_constant CoqInterface.init_modules "false"
+let candb = gen_constant CoqInterface.init_modules "andb"
+let corb = gen_constant CoqInterface.init_modules "orb"
+let cxorb = gen_constant CoqInterface.init_modules "xorb"
+let cnegb = gen_constant CoqInterface.init_modules "negb"
+let cimplb = gen_constant CoqInterface.init_modules "implb"
 let ceqb = gen_constant  bool_modules "eqb"
 let cifb = gen_constant bool_modules "ifb"
-let ciff = gen_constant Structures.init_modules "iff"
+let ciff = gen_constant CoqInterface.init_modules "iff"
 let creflect = gen_constant bool_modules "reflect"
 
 (* Lists *)
-let clist = gen_constant Structures.init_modules "list"
-let cnil = gen_constant Structures.init_modules "nil"
-let ccons = gen_constant Structures.init_modules "cons"
-let clength = gen_constant Structures.init_modules "length"
+let clist = gen_constant CoqInterface.init_modules "list"
+let cnil = gen_constant CoqInterface.init_modules "nil"
+let ccons = gen_constant CoqInterface.init_modules "cons"
+let clength = gen_constant CoqInterface.init_modules "length"
 
 (* Option *)
-let coption = gen_constant Structures.init_modules "option"
-let cSome = gen_constant Structures.init_modules "Some"
-let cNone = gen_constant Structures.init_modules "None"
+let coption = gen_constant CoqInterface.init_modules "option"
+let cSome = gen_constant CoqInterface.init_modules "Some"
+let cNone = gen_constant CoqInterface.init_modules "None"
 
 (* Pairs *)
-let cpair = gen_constant Structures.init_modules "pair"
-let cprod = gen_constant Structures.init_modules "prod"
+let cpair = gen_constant CoqInterface.init_modules "pair"
+let cprod = gen_constant CoqInterface.init_modules "prod"
 
 (* Dependent pairs *)
-let csigT = gen_constant Structures.init_modules "sigT"
-(* let cprojT1 = gen_constant Structures.init_modules "projT1" *)
-(* let cprojT2 = gen_constant Structures.init_modules "projT2" *)
-(* let cprojT3 = gen_constant Structures.init_modules "projT3" *)
+let csigT = gen_constant CoqInterface.init_modules "sigT"
+(* let cprojT1 = gen_constant CoqInterface.init_modules "projT1" *)
+(* let cprojT2 = gen_constant CoqInterface.init_modules "projT2" *)
+(* let cprojT3 = gen_constant CoqInterface.init_modules "projT3" *)
 
-(* let csigT2 = gen_constant Structures.init_modules "sigT2" *)
-(* let csigT_of_sigT2 = gen_constant Structures.init_modules "sigT_of_sigT2" *)
+(* let csigT2 = gen_constant CoqInterface.init_modules "sigT2" *)
+(* let csigT_of_sigT2 = gen_constant CoqInterface.init_modules "sigT_of_sigT2" *)
 
 (* Logical Operators *)
-let cnot = gen_constant Structures.init_modules "not"
-let ceq = gen_constant Structures.init_modules "eq"
-let crefl_equal = gen_constant Structures.init_modules "eq_refl"
-let cconj = gen_constant Structures.init_modules "conj"
-let cand = gen_constant Structures.init_modules "and"
+let cnot = gen_constant CoqInterface.init_modules "not"
+let ceq = gen_constant CoqInterface.init_modules "eq"
+let crefl_equal = gen_constant CoqInterface.init_modules "eq_refl"
+let cconj = gen_constant CoqInterface.init_modules "conj"
+let cand = gen_constant CoqInterface.init_modules "and"
 
 (* Bit vectors *)
 let bv_modules = [["SMTCoq";"bva";"BVList";"BITVECTOR_LIST"]]
@@ -306,8 +306,8 @@ let ceq_refl_true =
 let eq_refl_true () = Lazy.force ceq_refl_true
 
 let vm_cast_true_no_check t =
-  Structures.mkCast(eq_refl_true (),
-              Structures.vmcast,
+  CoqInterface.mkCast(eq_refl_true (),
+              CoqInterface.vmcast,
               mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
 
 (* This version checks convertibility right away instead of delaying it at
@@ -315,13 +315,13 @@ let vm_cast_true_no_check t =
    SMTCoq's tactics. *)
 let vm_cast_true env t =
   try
-    Structures.vm_conv Reduction.CUMUL env
+    CoqInterface.vm_conv Reduction.CUMUL env
       (mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
       (mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
     vm_cast_true_no_check t
   with Reduction.NotConvertible ->
-    Structures.error ("SMTCoq was not able to check the proof certificate.")
+    CoqInterface.error ("SMTCoq was not able to check the proof certificate.")
 
 
 (* Compute a nat *)
@@ -355,39 +355,39 @@ let rec mk_bv_list = function
 
 (* Reification *)
 let mk_bool b =
-  let c, args = Structures.decompose_app b in
-  if Structures.eq_constr c (Lazy.force ctrue) then true
-  else if Structures.eq_constr c (Lazy.force cfalse) then false
+  let c, args = CoqInterface.decompose_app b in
+  if CoqInterface.eq_constr c (Lazy.force ctrue) then true
+  else if CoqInterface.eq_constr c (Lazy.force cfalse) then false
   else assert false
 
 let rec mk_bool_list bs =
-  let c, args = Structures.decompose_app bs in
-  if Structures.eq_constr c (Lazy.force cnil) then []
-  else if Structures.eq_constr c (Lazy.force ccons) then
+  let c, args = CoqInterface.decompose_app bs in
+  if CoqInterface.eq_constr c (Lazy.force cnil) then []
+  else if CoqInterface.eq_constr c (Lazy.force ccons) then
     match args with
     | [_; b; bs] -> mk_bool b :: mk_bool_list bs
     | _ -> assert false
   else assert false
 
 let rec mk_nat n =
-  let c, args = Structures.decompose_app n in
-  if Structures.eq_constr c (Lazy.force cO) then
+  let c, args = CoqInterface.decompose_app n in
+  if CoqInterface.eq_constr c (Lazy.force cO) then
     0
-  else if Structures.eq_constr c (Lazy.force cS) then
+  else if CoqInterface.eq_constr c (Lazy.force cS) then
     match args with
     | [n] -> (mk_nat n) + 1
     | _ -> assert false
   else assert false
 
 let rec mk_positive n =
-  let c, args = Structures.decompose_app n in
-  if Structures.eq_constr c (Lazy.force cxH) then
+  let c, args = CoqInterface.decompose_app n in
+  if CoqInterface.eq_constr c (Lazy.force cxH) then
     1
-  else if Structures.eq_constr c (Lazy.force cxO) then
+  else if CoqInterface.eq_constr c (Lazy.force cxO) then
     match args with
     | [n] -> 2 * (mk_positive n)
     | _ -> assert false
-  else if Structures.eq_constr c (Lazy.force cxI) then
+  else if CoqInterface.eq_constr c (Lazy.force cxI) then
     match args with
     | [n] -> 2 * (mk_positive n) + 1
     | _ -> assert false
@@ -395,10 +395,10 @@ let rec mk_positive n =
 
 
 let mk_N n =
-  let c, args = Structures.decompose_app n in
-  if Structures.eq_constr c (Lazy.force cN0) then
+  let c, args = CoqInterface.decompose_app n in
+  if CoqInterface.eq_constr c (Lazy.force cN0) then
     0
-  else if Structures.eq_constr c (Lazy.force cNpos) then
+  else if CoqInterface.eq_constr c (Lazy.force cNpos) then
     match args with
     | [n] -> mk_positive n
     | _ -> assert false
@@ -406,13 +406,13 @@ let mk_N n =
 
 
 let mk_Z n =
-  let c, args = Structures.decompose_app n in
-  if Structures.eq_constr c (Lazy.force cZ0) then 0
-  else if Structures.eq_constr c (Lazy.force cZpos) then
+  let c, args = CoqInterface.decompose_app n in
+  if CoqInterface.eq_constr c (Lazy.force cZ0) then 0
+  else if CoqInterface.eq_constr c (Lazy.force cZpos) then
     match args with
     | [n] -> mk_positive n
     | _ -> assert false
-  else if Structures.eq_constr c (Lazy.force cZneg) then
+  else if CoqInterface.eq_constr c (Lazy.force cZneg) then
     match args with
     | [n] -> - mk_positive n
     | _ -> assert false
@@ -421,12 +421,12 @@ let mk_Z n =
 
 (* size of bivectors are either N.of_nat (length l) or an N *)
 let mk_bvsize n =
-  let c, args = Structures.decompose_app n in
-  if Structures.eq_constr c (Lazy.force cof_nat) then
+  let c, args = CoqInterface.decompose_app n in
+  if CoqInterface.eq_constr c (Lazy.force cof_nat) then
     match args with
     | [nl] ->
-      let c, args = Structures.decompose_app nl in
-      if Structures.eq_constr c (Lazy.force clength) then
+      let c, args = CoqInterface.decompose_app nl in
+      if CoqInterface.eq_constr c (Lazy.force clength) then
         match args with
         | [_; l] -> List.length (mk_bool_list l)
         | _ -> assert false
@@ -437,7 +437,7 @@ let mk_bvsize n =
 (** Switches between constr and OCaml *)
 (* Transform a option constr into a constr option *)
 let option_of_constr_option co =
-  let c, args = Structures.decompose_app co in
+  let c, args = CoqInterface.decompose_app co in
   if c = Lazy.force cSome then
     match args with
       | [_;c] -> Some c
@@ -448,7 +448,7 @@ let option_of_constr_option co =
 (* Transform a tuple of constr into a (reversed) list of constr *)
 let list_of_constr_tuple =
   let rec list_of_constr_tuple acc t =
-    let c, args = Structures.decompose_app t in
+    let c, args = CoqInterface.decompose_app t in
     if c = Lazy.force cpair then
       match args with
         | [_;_;t1;t2] ->
