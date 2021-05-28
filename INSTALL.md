@@ -133,7 +133,6 @@ but you might need to install some extra packages and libraries for your system
 Compile and install SMTCoq by using the following commands in the src directory.
 
 ```bash
-coq_makefile -f _CoqProject -o Makefile
 make
 make install
 ```

@@ -1,5 +1,5 @@
 all:
-	cd src && coq_makefile -f _CoqProject -o Makefile && $(MAKE)
+	cd src && $(MAKE)
 
 install: all
 	cd src && $(MAKE) install
