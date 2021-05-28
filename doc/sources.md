@@ -17,14 +17,6 @@ The rest of the document describes the organization of `src`.
 SMTCoq sources are contained in this directory. A few Coq files can be found at
 top-level.
 
-### [configure.sh](../src/configure.sh)
-
-This script is meant to be run when compiling SMTCoq for the first time. It
-should also be run every time the Makefile is modified. It takes as argument an
-optional flag `-native` which, when present, will set up the sources to use the
-*native Coq* libraries. Otherwise the standard version 8.5 of Coq is used. See
-section [versions](#versions).
-
 ### [SMTCoq.v](../src/SMTCoq.v)
 
 This is the main SMTCoq entry point, it is meant to be imported by users that
@@ -141,30 +133,6 @@ Lemma t_interp_wf : forall i,
 This module contains miscellaneous general lemmas that are used in several
 places throughout the development of SMTCoq.
 
-
-### [versions](../src/versions)
-
-This directory contains everything that is dependent on the version of Coq that
-one wants to use. `standard` contains libraries for the standard version of Coq
-and `native` contains everything related to native Coq. Note that some
-libraries are already present in the default libraries of native Coq, in this
-case they have a counterpart in `standard` that replicates the functionality
-(without using native integers or native arrays).
-
-A particular point of interest is the files
-[smtcoq_plugin_standard.ml4](../src/versions/standard/smtcoq_plugin_standard.ml4)
-and
-[smtcoq_plugin_native.ml4](../src/versions/native/smtcoq_plugin_native.ml4). They
-provide extension points for Coq by defining new vernacular commands and new
-tactics. For instance the tactic `verit` tells Coq to call the OCaml function
-`verit.tactic` (which in turns uses the Coq API to manipulate the goals and
-call the certified checkers).
-
-```ocaml
-TACTIC EXTEND Tactic_verit
-| [ "verit" ] -> [ Verit.tactic () ]
-END
-```
 
 
 

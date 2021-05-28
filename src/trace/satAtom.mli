@@ -23,13 +23,13 @@ module Atom : sig
 
   type reify_tbl = {
       mutable count : int;
-      tbl : (Structures.constr, t) Hashtbl.t;
+      tbl : (CoqInterface.constr, t) Hashtbl.t;
     }
   val create : unit -> reify_tbl
-  val declare : reify_tbl -> Structures.constr -> t
-  val get : reify_tbl -> Structures.constr -> t
-  val atom_tbl : reify_tbl -> Structures.constr array
-  val interp_tbl : reify_tbl -> Structures.constr
+  val declare : reify_tbl -> CoqInterface.constr -> t
+  val get : reify_tbl -> CoqInterface.constr -> t
+  val atom_tbl : reify_tbl -> CoqInterface.constr array
+  val interp_tbl : reify_tbl -> CoqInterface.constr
 end
 
 

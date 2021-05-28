@@ -12,8 +12,6 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-Require Structures.
-
 Require Import Int63 Int63Properties PArray SMT_classes ZArith.
 
 Require Import Misc State SMT_terms BVList Psatz.
@@ -925,7 +923,7 @@ Definition shl_lit_be (a: list _lit) (b: list bool): list _lit :=
 
 
  Definition check_shl (bs1: list _lit) (bs2: list bool) (bsres: list _lit) : bool :=
-    if (Structures.nat_eqb (length bs1) (length bs2)) then
+    if (Nat.eqb (length bs1) (length bs2)) then
       if (forallb2 eq_carry_lit (lit_to_carry (shl_lit_be bs1 bs2)) bsres)
       then true else false
     else false.
@@ -976,7 +974,7 @@ Definition shr_lit_be (a: list _lit) (b: list bool): list _lit :=
 
 
  Definition check_shr (bs1: list _lit) (bs2: list bool) (bsres: list _lit) : bool :=
-    if (Structures.nat_eqb (length bs1) (length bs2)) then
+    if (Nat.eqb (length bs1) (length bs2)) then
       if (forallb2 eq_carry_lit (lit_to_carry (shr_lit_be bs1 bs2)) bsres)
       then true else false
     else false.
@@ -7946,7 +7944,7 @@ Proof. intro bs1.
        - simpl in *.
          unfold check_shl in H. simpl in H.
          case_eq bs2; simpl; intros; subst. simpl in H. now contradict H.
-         simpl in *. inversion H0. rewrite H2, Structures.nat_eqb_refl in H.
+         simpl in *. inversion H0. rewrite H2, Nat.eqb_refl in H.
          case_eq (forallb2 eq_carry_lit (lit_to_carry (shl_lit_be (a :: bs1) (b :: l))) bsres); intros.
          +  apply prop_eq_carry_lit2 in H1.
             rewrite prop_interp_carry3 in H1.
@@ -8016,8 +8014,8 @@ Proof. intro bs1.
        induction bs1 as [ | xbs1 xsbs1 IHbs1 ].
        - intros. simpl.
          unfold check_shl, shl_lit_be in H.
-         case_eq (Structures.nat_eqb (@length int []) (length bs2)); intros.
-         rewrite Structures.nat_eqb_eq in H0.
+         case_eq (Nat.eqb (@length int []) (length bs2)); intros.
+         rewrite Nat.eqb_eq in H0.
          rewrite <- H0 in H. simpl in H.
          rewrite nshl_lit_empty in H.
          case_eq bsres; intros. simpl.
@@ -8025,7 +8023,7 @@ Proof. intro bs1.
          subst; now contradict H.
          rewrite H0 in H; now contradict H.
        - intros. unfold check_shl in H.
-         case_eq (Structures.nat_eqb (Datatypes.length (xbs1 :: xsbs1)) (Datatypes.length bs2)); intros.
+         case_eq (Nat.eqb (Datatypes.length (xbs1 :: xsbs1)) (Datatypes.length bs2)); intros.
          rewrite H0 in H.
          case_eq (
           forallb2 eq_carry_lit (lit_to_carry (shl_lit_be (xbs1 :: xsbs1) bs2)) bsres); intros.
@@ -8033,7 +8031,7 @@ Proof. intro bs1.
          rewrite prop_interp_carry3 in H1.
          
          unfold RAWBITVECTOR_LIST.bv_shl.
-         rewrite Structures.nat_eqb_eq in H0.
+         rewrite Nat.eqb_eq in H0.
          unfold RAWBITVECTOR_LIST.size.
          rewrite !map_length. rewrite H0, N.eqb_refl.
          now rewrite <- H1, shl_interp.
@@ -8287,7 +8285,7 @@ Proof. intro bs1.
        - simpl in *.
          unfold check_shr in H. simpl in H.
          case_eq bs2; simpl; intros; subst. simpl in H. now contradict H.
-         simpl in *. inversion H0. rewrite H2, Structures.nat_eqb_refl in H.
+         simpl in *. inversion H0. rewrite H2, Nat.eqb_refl in H.
          case_eq (forallb2 eq_carry_lit (lit_to_carry (shr_lit_be (a :: bs1) (b :: l))) bsres); intros.
          +  apply prop_eq_carry_lit2 in H1.
             rewrite prop_interp_carry3 in H1.
@@ -8345,8 +8343,8 @@ Proof. intro bs1.
        induction bs1 as [ | xbs1 xsbs1 IHbs1 ].
        - intros. simpl.
          unfold check_shr, shr_lit_be in H.
-         case_eq (Structures.nat_eqb (@length int []) (length bs2)); intros.
-         rewrite Structures.nat_eqb_eq in H0.
+         case_eq (Nat.eqb (@length int []) (length bs2)); intros.
+         rewrite Nat.eqb_eq in H0.
          rewrite <- H0 in H. simpl in H.
          rewrite nshr_lit_empty in H.
          case_eq bsres; intros. simpl.
@@ -8354,7 +8352,7 @@ Proof. intro bs1.
          subst; now contradict H.
          rewrite H0 in H; now contradict H.
        - intros. unfold check_shr in H.
-         case_eq (Structures.nat_eqb (Datatypes.length (xbs1 :: xsbs1)) (Datatypes.length bs2)); intros.
+         case_eq (Nat.eqb (Datatypes.length (xbs1 :: xsbs1)) (Datatypes.length bs2)); intros.
          rewrite H0 in H.
          case_eq (
           forallb2 eq_carry_lit (lit_to_carry (shr_lit_be (xbs1 :: xsbs1) bs2)) bsres); intros.
@@ -8362,7 +8360,7 @@ Proof. intro bs1.
          rewrite prop_interp_carry3 in H1.
          
          unfold RAWBITVECTOR_LIST.bv_shr.
-         rewrite Structures.nat_eqb_eq in H0.
+         rewrite Nat.eqb_eq in H0.
          unfold RAWBITVECTOR_LIST.size.
          rewrite !map_length. rewrite H0, N.eqb_refl.
          now rewrite <- H1, shr_interp.

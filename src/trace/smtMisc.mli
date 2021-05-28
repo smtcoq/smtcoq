@@ -10,12 +10,12 @@
 (**************************************************************************)
 
 
-val cInt_tbl : (int, Structures.constr) Hashtbl.t
-val mkInt : int -> Structures.constr
+val cInt_tbl : (int, CoqInterface.constr) Hashtbl.t
+val mkInt : int -> CoqInterface.constr
 type 'a gen_hashed = { index : int; hval : 'a; }
-val mklApp : Structures.constr Lazy.t -> Structures.constr array -> Structures.constr
-val string_of_name_def : string -> Structures.name -> string
-val string_coq_constr : Structures.constr -> string
+val mklApp : CoqInterface.constr Lazy.t -> CoqInterface.constr array -> CoqInterface.constr
+val string_of_name_def : string -> CoqInterface.name -> string
+val string_coq_constr : CoqInterface.constr -> string
 type logic_item = LUF | LLia | LBitvectors | LArrays
 module SL : Set.S with type elt = logic_item
 type logic = SL.t
