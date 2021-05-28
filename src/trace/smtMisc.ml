@@ -16,7 +16,7 @@ let cInt_tbl = Hashtbl.create 17
 let mkInt i = 
   try Hashtbl.find cInt_tbl i 
   with Not_found ->
-    let ci = Structures.mkInt i in
+    let ci = CoqInterface.mkInt i in
     Hashtbl.add cInt_tbl i ci;
     ci
 
@@ -25,15 +25,15 @@ type 'a gen_hashed = { index : int; hval : 'a }
 
 
 (** Functions over constr *)
-let mklApp f args = Structures.mkApp (Lazy.force f, args)
+let mklApp f args = CoqInterface.mkApp (Lazy.force f, args)
 
-let string_of_name_def d n = try Structures.string_of_name n with | _ -> d
+let string_of_name_def d n = try CoqInterface.string_of_name n with | _ -> d
 
 let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in
   let pr = fix
-      Ppconstr.modular_constr_pr Pp.mt Structures.ppconstr_lsimpleconstr in
-  Pp.string_of_ppcmds (pr (Structures.constrextern_extern_constr t))
+      Ppconstr.modular_constr_pr Pp.mt CoqInterface.ppconstr_lsimpleconstr in
+  Pp.string_of_ppcmds (pr (CoqInterface.constrextern_extern_constr t))
 
 
 (** Logics *)

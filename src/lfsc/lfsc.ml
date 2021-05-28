@@ -57,7 +57,7 @@ let process_signatures_once =
           ) signatures
       with
       | Ast.TypingError (t1, t2) ->
-        Structures.error
+        CoqInterface.error
           (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
              Ast.print_term t1
              Ast.print_term t2)
@@ -116,7 +116,7 @@ let import_trace first parse lexbuf =
 
   with
   | Ast.TypingError (t1, t2) ->
-    Structures.error
+    CoqInterface.error
       (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
          Ast.print_term t1
          Ast.print_term t2)
@@ -386,13 +386,13 @@ let call_cvc4 env rt ro ra rf root _ =
       begin
         try get_proof cvc4 (import_trace (Some root) lfsc_parse_one)
         with
-        | Ast.CVC4Sat -> Structures.error "CVC4 returned SAT"
-        | No_proof -> Structures.error "CVC4 did not generate a proof"
-        | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
+        | Ast.CVC4Sat -> CoqInterface.error "CVC4 returned SAT"
+        | No_proof -> CoqInterface.error "CVC4 did not generate a proof"
+        | Failure s -> CoqInterface.error ("Importing of proof failed: " ^ s)
       end
     | Sat ->
       let smodel = get_model cvc4 in
-      Structures.error
+      CoqInterface.error
         ("CVC4 returned sat. Here is the model:\n\n" ^
          SmtCommands.model_string env rt ro ra rf smodel)
         (* (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel) *)
@@ -435,7 +435,7 @@ let get_model_from_file filename =
   let lexbuf = Lexing.from_channel chan in
   match SExprParser.sexps SExprLexer.main lexbuf with
   | [SExpr.Atom "sat"; m] -> m
-  | _ -> Structures.error "CVC4 returned SAT but no model"
+  | _ -> CoqInterface.error "CVC4 returned SAT but no model"
 
 
 let call_cvc4_file env rt ro ra rf root =
@@ -467,17 +467,17 @@ let call_cvc4_file env rt ro ra rf root =
   eprintf "CVC4 = %.5f@." (t1-.t0);
 
   if exit_code <> 0 then
-    Structures.error ("CVC4 crashed: return code "^string_of_int exit_code);
+    CoqInterface.error ("CVC4 crashed: return code "^string_of_int exit_code);
 
   (* ignore (Sys.command clean_cmd); *)
 
   try import_trace_from_file (Some root) prooffilename
   with
-  | No_proof -> Structures.error "CVC4 did not generate a proof"
-  | Failure s -> Structures.error ("Importing of proof failed: " ^ s)
+  | No_proof -> CoqInterface.error "CVC4 did not generate a proof"
+  | Failure s -> CoqInterface.error ("Importing of proof failed: " ^ s)
   | Ast.CVC4Sat ->
     let smodel = get_model_from_file prooffilename in
-    Structures.error
+    CoqInterface.error
       ("CVC4 returned sat. Here is the model:\n\n" ^
        SmtCommands.model_string env rt ro ra rf smodel)
 

@@ -26,21 +26,16 @@
 -I trace
 -I verit
 -I zchaff
--I versions/standard
--I versions/standard/Int63
--I versions/standard/Array
+-I Int63
+-I Array
 -I ../3rdparty/alt-ergo
 
-versions/standard/Int63/Int63.v
-versions/standard/Int63/Int63Native.v
-versions/standard/Int63/Int63Op.v
-versions/standard/Int63/Int63Axioms.v
-versions/standard/Int63/Int63Properties.v
-versions/standard/Array/PArray.v
-
-versions/standard/Structures.v
-versions/standard/structures.ml
-versions/standard/structures.mli
+Int63/Int63.v
+Int63/Int63Native.v
+Int63/Int63Op.v
+Int63/Int63Axioms.v
+Int63/Int63Properties.v
+Array/PArray.v
 
 bva/BVList.v
 bva/Bva_checker.v
@@ -73,6 +68,8 @@ trace/smtMisc.ml
 trace/smtMisc.mli
 trace/smtTrace.ml
 trace/smtTrace.mli
+trace/coqInterface.ml
+trace/coqInterface.mli
 
 ../3rdparty/alt-ergo/smtlib2_parse.ml
 ../3rdparty/alt-ergo/smtlib2_parse.mli

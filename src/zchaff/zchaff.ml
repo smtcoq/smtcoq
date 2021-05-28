@@ -133,7 +133,7 @@ let import_cnf_trace reloc filename first last =
 
 let make_roots first last =
   let cint = Lazy.force cint in
-  let roots = Array.make (last.id + 2) (Structures.mkArray (cint, Array.make 1 (mkInt 0))) in
+  let roots = Array.make (last.id + 2) (CoqInterface.mkArray (cint, Array.make 1 (mkInt 0))) in
   let mk_elem l =
     let x = match Form.pform l with
     | Fatom x -> x + 2
@@ -144,15 +144,15 @@ let make_roots first last =
     let root = Array.of_list (get_val !r) in
     let croot = Array.make (Array.length root + 1) (mkInt 0) in
     Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
-    roots.(!r.id) <- Structures.mkArray (cint, croot);
+    roots.(!r.id) <- CoqInterface.mkArray (cint, croot);
     r := next !r
   done;
   let root = Array.of_list (get_val !r) in
   let croot = Array.make (Array.length root + 1) (mkInt 0) in
   Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
-  roots.(!r.id) <- Structures.mkArray (cint, croot);
+  roots.(!r.id) <- CoqInterface.mkArray (cint, croot);
 
-  Structures.mkArray (mklApp carray [|cint|], roots)
+  CoqInterface.mkArray (mklApp carray [|cint|], roots)
 
 let interp_roots first last =
   let tbl = Hashtbl.create 17 in
@@ -164,7 +164,7 @@ let interp_roots first last =
     let h = if Form.is_pos l then ph else ph lxor 1 in
     try Hashtbl.find tbl h
     with Not_found ->
-      let p = Structures.mkApp (Structures.mkRel 1, [|mkInt (x+1)|]) in
+      let p = CoqInterface.mkApp (CoqInterface.mkRel 1, [|mkInt (x+1)|]) in
       let np = mklApp cnegb [|p|] in
       Hashtbl.add tbl ph p;
       Hashtbl.add tbl (ph lxor 1) np;
@@ -194,15 +194,15 @@ let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
-  let ce1 = Structures.mkUConst d in
-  let _ = Structures.declare_constant dimacs ce1 in
+  let ce1 = CoqInterface.mkUConst d in
+  let _ = CoqInterface.declare_constant dimacs ce1 in
 
   let max_id, confl = import_cnf_trace reloc ftrace first last in
   let (tres,_,_) = SmtTrace.to_coq (fun _ -> assert false) (fun _ -> assert false) certif_ops confl None in
   let certif =
    mklApp cCertif [|mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
-  let ce2 = Structures.mkUConst certif in
-  let _ = Structures.declare_constant trace ce2 in
+  let ce2 = CoqInterface.mkUConst certif in
+  let _ = CoqInterface.declare_constant trace ce2 in
   ()
 
 let cdimacs = gen_constant sat_checker_modules "dimacs"
@@ -222,36 +222,36 @@ let theorems interp name fdimacs ftrace =
    mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp d first last|] |] in
-  let vtype = Structures.mkArrow (Lazy.force cint) (Lazy.force cbool) in
+  let vtype = CoqInterface.mkArrow (Lazy.force cint) (Lazy.force cbool) in
   let theorem_type =
-    Structures.mkProd (Structures.mkName "v", vtype, theorem_concl) in
+    CoqInterface.mkProd (CoqInterface.mkName "v", vtype, theorem_concl) in
   let theorem_proof_cast =
-    Structures.mkCast (
-        Structures.mkLetIn (Structures.mkName "d", d, Lazy.force cdimacs,
-        Structures.mkLetIn (Structures.mkName "c", certif, Lazy.force ccertif,
-        Structures.mkLambda (Structures.mkName "v", vtype,
+    CoqInterface.mkCast (
+        CoqInterface.mkLetIn (CoqInterface.mkName "d", d, Lazy.force cdimacs,
+        CoqInterface.mkLetIn (CoqInterface.mkName "c", certif, Lazy.force ccertif,
+        CoqInterface.mkLambda (CoqInterface.mkName "v", vtype,
         mklApp ctheorem_checker
-               [| Structures.mkRel 3(*d*); Structures.mkRel 2(*c*);
+               [| CoqInterface.mkRel 3(*d*); CoqInterface.mkRel 2(*c*);
 		  vm_cast_true_no_check
-		    (mklApp cchecker [|Structures.mkRel 3(*d*); Structures.mkRel 2(*c*)|]);
-                  Structures.mkRel 1(*v*)|]))),
-      Structures.vmcast,
+		    (mklApp cchecker [|CoqInterface.mkRel 3(*d*); CoqInterface.mkRel 2(*c*)|]);
+                  CoqInterface.mkRel 1(*v*)|]))),
+      CoqInterface.vmcast,
       theorem_type)
   in
   let theorem_proof_nocast =
-    Structures.mkLetIn (Structures.mkName "d", d, Lazy.force cdimacs,
-    Structures.mkLetIn (Structures.mkName "c", certif, Lazy.force ccertif,
-    Structures.mkLambda (Structures.mkName "v", vtype,
+    CoqInterface.mkLetIn (CoqInterface.mkName "d", d, Lazy.force cdimacs,
+    CoqInterface.mkLetIn (CoqInterface.mkName "c", certif, Lazy.force ccertif,
+    CoqInterface.mkLambda (CoqInterface.mkName "v", vtype,
     mklApp ctheorem_checker
-           [| Structures.mkRel 3(*d*); Structures.mkRel 2(*c*)|])))
+           [| CoqInterface.mkRel 3(*d*); CoqInterface.mkRel 2(*c*)|])))
   in
-  let ce = Structures.mkTConst theorem_proof_cast theorem_proof_nocast theorem_type in
-  let _ = Structures.declare_constant name ce in
+  let ce = CoqInterface.mkTConst theorem_proof_cast theorem_proof_nocast theorem_type in
+  let _ = CoqInterface.declare_constant name ce in
   ()
 
 let theorem = theorems (fun _ -> interp_roots)
 let theorem_abs =
-  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|Structures.mkRel 1(*v*)|]; d|])
+  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|CoqInterface.mkRel 1(*v*)|]; d|])
 
 
 let checker fdimacs ftrace =
@@ -267,9 +267,9 @@ let checker fdimacs ftrace =
 
   let tm = mklApp cchecker [|d; certif|] in
 
-  let res = Structures.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
+  let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   Format.eprintf "     = %s\n     : bool@."
-    (if Structures.eq_constr res (Lazy.force CoqTerms.ctrue) then
+    (if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then
         "true" else "false")
 
 
@@ -358,22 +358,22 @@ let cchecker_eq_correct =
 let cchecker_eq = gen_constant cnf_checker_modules "checker_eq"
 
 let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
-  let ntvar = Structures.mkName "t_var" in
-  let ntform = Structures.mkName "t_form" in
-  let nc = Structures.mkName "c" in
+  let ntvar = CoqInterface.mkName "t_var" in
+  let ntform = CoqInterface.mkName "t_form" in
+  let nc = CoqInterface.mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
     SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
-  let vtvar = Structures.mkRel 3 in
-  let vtform = Structures.mkRel 2 in
-  let vc = Structures.mkRel 1 in
+  let vtvar = CoqInterface.mkRel 3 in
+  let vtform = CoqInterface.mkRel 2 in
+  let vc = CoqInterface.mkRel 1 in
   let add_lets t =
-    Structures.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Structures.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Structures.mkLetIn (nc, certif, Lazy.force ccertif,
+    CoqInterface.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    CoqInterface.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    CoqInterface.mkLetIn (nc, certif, Lazy.force ccertif,
     t)))
   in
   let cbc =
@@ -391,22 +391,22 @@ let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
 
 
 let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) vm_cast =
-  let ntvar = Structures.mkName "t_var" in
-  let ntform = Structures.mkName "t_form" in
-  let nc = Structures.mkName "c" in
+  let ntvar = CoqInterface.mkName "t_var" in
+  let ntform = CoqInterface.mkName "t_form" in
+  let nc = CoqInterface.mkName "c" in
   let tvar = Atom.interp_tbl reify_atom in
   let _, tform = Form.interp_tbl reify_form in
   let (tres,_,_) =
     SmtTrace.to_coq Form.to_coq (fun _ -> assert false) certif_ops confl None in
   let certif =
     mklApp cCertif [|mkInt (max_id + 1);tres;mkInt (get_pos confl)|] in
-  let vtvar = Structures.mkRel 3 in
-  let vtform = Structures.mkRel 2 in
-  let vc = Structures.mkRel 1 in
+  let vtvar = CoqInterface.mkRel 3 in
+  let vtform = CoqInterface.mkRel 2 in
+  let vc = CoqInterface.mkRel 1 in
   let add_lets t =
-    Structures.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
-    Structures.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
-    Structures.mkLetIn (nc, certif, Lazy.force ccertif,
+    CoqInterface.mkLetIn (ntvar, tvar, mklApp carray [|Lazy.force cbool|],
+    CoqInterface.mkLetIn (ntform, tform, mklApp carray [|Lazy.force cform|],
+    CoqInterface.mkLetIn (nc, certif, Lazy.force ccertif,
     t)))
   in
   let ceqc = add_lets (mklApp cchecker_eq [|vtform;l1;l2;l;vc|])
@@ -421,10 +421,10 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) vm_cast =
   (proof_cast, proof_nocast)
 
 let get_arguments concl =
-  let f, args = Structures.decompose_app concl in
+  let f, args = CoqInterface.decompose_app concl in
   match args with
-  | [ty;a;b] when (Structures.eq_constr f (Lazy.force ceq)) && (Structures.eq_constr ty (Lazy.force cbool)) -> a, b
-  | [a] when (Structures.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
+  | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
+  | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
   | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
 
 
@@ -499,7 +499,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
   let (reloc, resfilename, logfilename, last) =
     call_zchaff (Form.nvars reify_form) root in
   (try check_unsat resfilename with
-    | Sat model -> Structures.error (List.fold_left (fun acc i ->
+    | Sat model -> CoqInterface.error (List.fold_left (fun acc i ->
       let index = if i > 0 then i-1 else -i-1 in
       let ispos = i > 0 in
       try (
@@ -508,7 +508,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
           | Fatom a ->
             let t = atom_tbl.(a) in
             let value = if ispos then " = true" else " = false" in
-            acc^"  "^(Pp.string_of_ppcmds (Structures.pr_constr_env env t))^value
+            acc^"  "^(Pp.string_of_ppcmds (CoqInterface.pr_constr_env env t))^value
           | Fapp _ -> acc
           (* Nothing to do with ZChaff *)
           | FbbT _ -> assert false
@@ -528,9 +528,9 @@ let core_tactic vm_cast env sigma concl =
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
   let (body_cast, body_nocast) =
-    if ((Structures.eq_constr b (Lazy.force ctrue)) || (Structures.eq_constr b (Lazy.force cfalse))) then
+    if ((CoqInterface.eq_constr b (Lazy.force ctrue)) || (CoqInterface.eq_constr b (Lazy.force cfalse))) then
       let l = Form.of_coq (Atom.get reify_atom) reify_form a in
-      let l' = if (Structures.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+      let l' = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
       let atom_tbl = Atom.atom_tbl reify_atom in
       let pform_tbl = Form.pform_tbl reify_form in
       let max_id_confl = make_proof pform_tbl atom_tbl (Environ.push_rel_context forall_let env) reify_form l' in
@@ -551,10 +551,10 @@ let core_tactic vm_cast env sigma concl =
   let res_cast = compose_lam_assum forall_let body_cast in
   let res_nocast = compose_lam_assum forall_let body_nocast in
 
-  (Structures.tclTHEN
-     (Structures.set_evars_tac res_nocast)
-     (Structures.vm_cast_no_check res_cast))
+  (CoqInterface.tclTHEN
+     (CoqInterface.set_evars_tac res_nocast)
+     (CoqInterface.vm_cast_no_check res_cast))
 
 
-let tactic () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic (core_tactic vm_cast_true))
-let tactic_no_check () = Structures.tclTHEN Tactics.intros (Structures.mk_tactic (core_tactic (fun _ -> vm_cast_true_no_check)))
+let tactic () = CoqInterface.tclTHEN Tactics.intros (CoqInterface.mk_tactic (core_tactic vm_cast_true))
+let tactic_no_check () = CoqInterface.tclTHEN Tactics.intros (CoqInterface.mk_tactic (core_tactic (fun _ -> vm_cast_true_no_check)))

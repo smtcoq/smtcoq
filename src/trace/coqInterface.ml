@@ -112,7 +112,7 @@ let init_modules = Coqlib.init_modules
 
 
 (* Int63 *)
-let int63_modules = [["SMTCoq";"versions";"standard";"Int63";"Int63Native"]]
+let int63_modules = [["SMTCoq";"Int63";"Int63Native"]]
 
 (* 31-bits integers are "called" 63 bits (this is sound) *)
 let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
@@ -135,7 +135,7 @@ let cint = gen_constant int31_module "int31"
 
 
 (* PArray *)
-let parray_modules = [["SMTCoq";"versions";"standard";"Array";"PArray"]]
+let parray_modules = [["SMTCoq";"Array";"PArray"]]
 
 let cmake = gen_constant parray_modules "make"
 let cset = gen_constant parray_modules "set"
