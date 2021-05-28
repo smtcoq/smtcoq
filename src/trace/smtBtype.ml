@@ -19,7 +19,7 @@ type uninterpreted_type =
   (* Uninterpreted type for which a CompDec is already known
      The constr is of type typ_compdec
    *)
-  | CompDec of Structures.constr
+  | CompDec of CoqInterface.constr
   (* Uninterpreted type for which the knowledge of a CompDec is delayed
      until either:
      - one is used
@@ -27,11 +27,11 @@ type uninterpreted_type =
        via a cut
      The constr is of type Type
    *)
-  | Delayed of Structures.constr
+  | Delayed of CoqInterface.constr
 
 type indexed_type = uninterpreted_type gen_hashed
 
-let dummy_indexed_type i = {index = i; hval = Delayed (Structures.mkProp)}
+let dummy_indexed_type i = {index = i; hval = Delayed (CoqInterface.mkProp)}
 let indexed_type_index i = i.index
 let indexed_type_compdec i =
   match i.hval with
@@ -105,8 +105,8 @@ let rec logic = function
 (* reify table *)
 type reify_tbl =
   { mutable count : int;
-    tbl : (Structures.constr, btype) Hashtbl.t;
-    mutable cuts : (Structures.id * Structures.types) list;
+    tbl : (CoqInterface.constr, btype) Hashtbl.t;
+    mutable cuts : (CoqInterface.id * CoqInterface.types) list;
     unsup_tbl : (btype, btype) Hashtbl.t;
   }
 
@@ -145,8 +145,8 @@ let interp_tbl reify =
             | CompDec compdec -> t.(it.index) <- compdec; Some bt
             | Delayed ty ->
                let n = string_of_int (List.length reify.cuts) in
-               let compdec_name = Structures.mkId ("CompDec"^n) in
-               let compdec_var = Structures.mkVar compdec_name in
+               let compdec_name = CoqInterface.mkId ("CompDec"^n) in
+               let compdec_var = CoqInterface.mkVar compdec_name in
                let compdec_type = mklApp cCompDec [| ty |] in
                reify.cuts <- (compdec_name, compdec_type) :: reify.cuts;
                let ce = mklApp cTyp_compdec [|ty; compdec_var|] in
@@ -156,7 +156,7 @@ let interp_tbl reify =
       | _ -> Some bt
   in
   Hashtbl.filter_map_inplace set reify.tbl;
-  Structures.mkArray (Lazy.force ctyp_compdec, t)
+  CoqInterface.mkArray (Lazy.force ctyp_compdec, t)
 
 
 let to_list reify =
@@ -241,8 +241,8 @@ let rec compdec_btype reify = function
   | Tindex i ->
      (match i.hval with
         | CompDec compdec ->
-           let c, args = Structures.decompose_app compdec in
-           if Structures.eq_constr c (Lazy.force cTyp_compdec) then
+           let c, args = CoqInterface.decompose_app compdec in
+           if CoqInterface.eq_constr c (Lazy.force cTyp_compdec) then
              match args with
                | [_; tic] -> tic
                | _ -> assert false
@@ -264,22 +264,22 @@ let declare_and_compdec reify t ty =
 
 let rec of_coq reify known_logic t =
   try
-    let c, args = Structures.decompose_app t in
-    if Structures.eq_constr c (Lazy.force cbool) ||
-         Structures.eq_constr c (Lazy.force cTbool) then Tbool
-    else if Structures.eq_constr c (Lazy.force cZ) ||
-              Structures.eq_constr c (Lazy.force cTZ) then
+    let c, args = CoqInterface.decompose_app t in
+    if CoqInterface.eq_constr c (Lazy.force cbool) ||
+         CoqInterface.eq_constr c (Lazy.force cTbool) then Tbool
+    else if CoqInterface.eq_constr c (Lazy.force cZ) ||
+              CoqInterface.eq_constr c (Lazy.force cTZ) then
       check_known TZ known_logic
-    else if Structures.eq_constr c (Lazy.force cpositive) ||
-              Structures.eq_constr c (Lazy.force cTpositive) then
+    else if CoqInterface.eq_constr c (Lazy.force cpositive) ||
+              CoqInterface.eq_constr c (Lazy.force cTpositive) then
       check_known Tpositive known_logic
-    else if Structures.eq_constr c (Lazy.force cbitvector) ||
-              Structures.eq_constr c (Lazy.force cTBV) then
+    else if CoqInterface.eq_constr c (Lazy.force cbitvector) ||
+              CoqInterface.eq_constr c (Lazy.force cTBV) then
       match args with
         | [s] -> check_known (TBV (mk_bvsize s)) known_logic
         | _ -> assert false
-    else if Structures.eq_constr c (Lazy.force cfarray) ||
-              Structures.eq_constr c (Lazy.force cTFArray) then
+    else if CoqInterface.eq_constr c (Lazy.force cfarray) ||
+              CoqInterface.eq_constr c (Lazy.force cTFArray) then
       match args with
         | ti :: te :: _ ->
            let ty = TFArray (of_coq reify known_logic ti,

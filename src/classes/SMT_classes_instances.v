@@ -13,7 +13,6 @@
 Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
 Require Import Int63.
 Require Import State BVList FArray.
-Require Structures.
 Require Export SMT_classes.
 
 
@@ -253,7 +252,7 @@ Section Nat.
   Defined.
 
   Global Instance Nat_eqbtype : EqbType nat :=
-    {| eqb := Structures.nat_eqb; eqb_spec := Structures.nat_eqb_eq |}.
+    {| eqb := Nat.eqb; eqb_spec := Nat.eqb_eq |}.
 
   Global Instance Nat_dec : DecType nat := EqbToDecType.
 
