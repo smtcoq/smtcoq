@@ -74,18 +74,12 @@ Then follow the instructions of the previous section.
 
 ### Requirements
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.11.*.
+You need to have OCaml version >= 4.11.1 and Coq version 8.12.*.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
-> with OCaml version >= 4.08.
-
-If you want to use SMTCoq with high performance to check large proof
-certificates, you need to use the [version of Coq with native
-data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.11 (warning: this allows one to use the vernacular commands but not
-the tactics).
+> with OCaml version >= 4.11.1.
 
 ### Install opam
 
@@ -110,24 +104,24 @@ eval `opam config env`
 
 ### Install OCaml
 
-Now you can install an OCaml compiler (we recommend 4.10.0):
+Now you can install an OCaml compiler (we recommend 4.11.1):
 
 ```bash
-opam switch create ocaml-base-compiler.4.10.0
+opam switch create ocaml-base-compiler.4.11.1
 ```
 
 ### Install Coq
 
-After OCaml is installed, you can install Coq-8.11.2 through opam.
+After OCaml is installed, you can install Coq-8.12.1 through opam.
 
 ```bash
-opam install coq.8.11.2
+opam install coq.8.12.1
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.11.2 coqide.8.11.2
+opam install coq.8.12.1 coqide.8.12.1
 ```
 
 but you might need to install some extra packages and libraries for your system
@@ -139,43 +133,9 @@ but you might need to install some extra packages and libraries for your system
 Compile and install SMTCoq by using the following commands in the src directory.
 
 ```bash
-./configure.sh
 make
 make install
 ```
-
-## Installation with native-coq (not recommended except for high performances)
-
-> **Warning**: this installation procedure is recommended only to use
-> the vernacular commands efficiently (in particular, to check very
-> large proof certificates). It does not allow one to use the tactics.
-
-1. Download the git version of Coq with native compilation:
-```bash
-git clone https://github.com/smtcoq/native-coq.git
-```
-   and compile it by following the instructions available in the
-   repository. We recommand that you do not install it, but only compile
-   it in local:
-```bash
-./configure -local
-make
-```
-
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```bash
-export COQBIN=/home/jdoe/native-coq/bin/
-```
-   (the final slash is mandatory).
-
-3. Compile and install SMTCoq by using the following commands in the src directory.
-```
-./configure.sh -native
-make
-make install
-```
-
 
 ## Installation of the provers
 

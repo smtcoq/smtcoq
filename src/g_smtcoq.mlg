@@ -87,7 +87,7 @@ let lemmas_list = Summary.ref ~name:"Selected lemmas" []
 let cache_lemmas (_, lems) =
   lemmas_list := lems
 
-let declare_lemmas : Structures.constr_expr list -> Libobject.obj =
+let declare_lemmas : CoqInterface.constr_expr list -> Libobject.obj =
   let open Libobject in
   declare_object
     {

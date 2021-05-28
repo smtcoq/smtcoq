@@ -27,7 +27,6 @@ tasks:
     cd smtcoq
     git checkout coq-8.11
     cd src
-    ./configure.sh
     make
     make install
     cd ../..

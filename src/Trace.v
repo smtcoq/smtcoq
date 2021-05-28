@@ -11,7 +11,6 @@
 
 
 Require Import Bool Int63 PArray.
-Require Structures.
 Require Import Misc State SMT_terms.
 Require Import Syntactic Arithmetic Operators Assumptions.
 Require Import Cnf Euf Lia BVList Bva_checker Array_checker.
@@ -34,7 +33,7 @@ Section trace.
 
   Variable rho : Valuation.t.
 
-  Definition _trace_ := Structures.trace step.
+  Definition _trace_ := ((list step) * step)%type.
 
   (* A checker for such a trace *)
 
@@ -42,7 +41,7 @@ Section trace.
   Hypothesis is_false_correct : forall c, is_false c -> ~ C.interp rho c.
 
   Definition _checker_ (s: S.t) (t: _trace_) (confl:clause_id) : bool :=
-    let s' := Structures.trace_fold check_step s t in
+    let s' := List.fold_left check_step (fst t) s in
     (* let s' := PArray.fold_left (fun s a => PArray.fold_left check_step s a) s t in *)
     is_false (S.get s' confl).
   (* Register _checker_ as PrimInline. *)
@@ -78,7 +77,11 @@ Section trace.
     intros s t' cid Hf Hv.
     apply (is_false_correct Hf).
     apply S.valid_get.
-    apply Structures.trace_fold_ind; auto.
+    clear Hf.
+    rewrite <- List.fold_left_rev_right in *.
+    induction (List.rev (fst t')); [ apply Hv | ].
+    apply valid_check_step.
+    apply IHl.
     (* apply PArray.fold_left_ind; auto. *)
     (* intros a i _ Ha;apply PArray.fold_left_ind;trivial. *)
     (* intros a0 i0 _ H1;auto. *)
@@ -534,7 +537,7 @@ Inductive step :=
   Definition setup_checker_step_debug d used_roots (c:certif) :=
     let (nclauses, t, confl) := c in
     let s := add_roots (S.make nclauses) d used_roots in
-    (s, Structures.trace_to_list t).
+    (s, fst t).
 
 
   Definition position_of_step (st:step) :=
@@ -686,7 +689,7 @@ Inductive step :=
     let (nclauses, t, confl) := c in
     let s := add_roots (S.make nclauses) d used_roots in
     let '(_, nb, failure) :=
-        Structures.trace_fold
+        List.fold_left
           (fun acc step =>
              match acc with
              | (s, nb, None) =>
@@ -698,7 +701,7 @@ Inductive step :=
                else (s, nb, None)
              | _ => acc
              end
-          ) (s, O, None) t
+          ) (fst t) (s, O, None)
     in
     match failure with
     | Some st => Some (nb, name_of_step st)
