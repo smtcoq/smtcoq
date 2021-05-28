@@ -159,10 +159,7 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
-module Micromega_plugin_Mutils = Micromega_plugin.Mutils
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-module Micromega_plugin_Coq_micromega = Micromega_plugin.Coq_micromega
-module Micromega_plugin_Persistent_cache = Micromega_plugin.Persistent_cache
 
 let micromega_coq_proofTerm =
   (* Cannot contain evars *)
@@ -170,7 +167,7 @@ let micromega_coq_proofTerm =
 
 let micromega_dump_proof_term p =
   (* Cannot contain evars *)
-  EConstr.Unsafe.to_constr (Micromega_plugin_Coq_micromega.dump_proof_term p)
+  EConstr.Unsafe.to_constr (Micromega_plugin.Coq_micromega.dump_proof_term p)
 
 
 (* Tactics *)
