@@ -74,12 +74,12 @@ Then follow the instructions of the previous section.
 
 ### Requirements
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.11.*.
+You need to have OCaml version >= 4.11.1 and Coq version 8.12.*.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
-> with OCaml version >= 4.08.
+> with OCaml version >= 4.11.1.
 
 ### Install opam
 
@@ -104,24 +104,24 @@ eval `opam config env`
 
 ### Install OCaml
 
-Now you can install an OCaml compiler (we recommend 4.10.0):
+Now you can install an OCaml compiler (we recommend 4.11.1):
 
 ```bash
-opam switch create ocaml-base-compiler.4.10.0
+opam switch create ocaml-base-compiler.4.11.1
 ```
 
 ### Install Coq
 
-After OCaml is installed, you can install Coq-8.11.2 through opam.
+After OCaml is installed, you can install Coq-8.12.1 through opam.
 
 ```bash
-opam install coq.8.11.2
+opam install coq.8.12.1
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.11.2 coqide.8.11.2
+opam install coq.8.12.1 coqide.8.12.1
 ```
 
 but you might need to install some extra packages and libraries for your system
