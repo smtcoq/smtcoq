@@ -151,200 +151,20 @@ let binop_list tbl op def l =
 let smt_clause_to_coq_micromega_formula tbl cl =
   binop_list tbl (fun x y -> Cj (x,y)) TT (List.map Form.neg cl)
 
+let tauto_lia ff =
+  let cnf_ff,_ = Structures.Micromega_plugin_Micromega.cnfZ ff in
 
-(* backported from Coq *)
-type ('option,'a,'prf,'model) prover = {
-  name : string ; (* name of the prover *)
-  get_option : unit ->'option ; (* find the options of the prover *)
-  prover : ('option *  'a list) -> ('prf, 'model) Structures.Micromega_plugin_Certificate.res ; (* the prover itself *)
-  hyps : 'prf -> Structures.Micromega_plugin_Mutils.ISet.t ; (* extract the indexes of the hypotheses really used in the proof *)
-  compact : 'prf -> (int -> int) -> 'prf ; (* remap the hyp indexes according to function *)
-  pp_prf : out_channel -> 'prf -> unit ;(* pretting printing of proof *)
-  pp_f   : out_channel -> 'a   -> unit (* pretty printing of the formulas (polynomials)*)
-}
-
-let lia_enum  = ref true
-let max_depth = max_int
-let lia_proof_depth = ref max_depth
-let get_lia_option () =
- (Structures.Micromega_plugin_Certificate.use_simplex (),!lia_enum,!lia_proof_depth)
-
-let lift_pexpr_prover p l =  p (List.map (fun (e,o) -> Structures.Micromega_plugin_Micromega.denorm e , o) l)
-
-module CacheZ = Structures.Micromega_plugin_Persistent_cache.PHashtable(struct
- type prover_option = bool * bool* int
- type t = prover_option * ((Structures.Micromega_plugin_Micromega.z Structures.Micromega_plugin_Micromega.pol * Structures.Micromega_plugin_Micromega.op1) list)
-  let equal = (=)
-  let hash  = Hashtbl.hash
-end)
-
-let memo_zlinear_prover = CacheZ.memo ".lia.cache" (fun ((_,ce,b),s) -> lift_pexpr_prover (Structures.Micromega_plugin_Certificate.lia ce b) s)
-
-let xhyps_of_cone base acc prf =
-  let open Structures.Micromega_plugin_Micromega in
-
-  let rec xtract e acc =
-    match e with
-    | PsatzC _ | PsatzZ | PsatzSquare _ -> acc
-    | PsatzIn n -> let n = (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n) in
-                        if n >= base
-                        then  Structures.Micromega_plugin_Mutils.ISet.add (n-base) acc
-                        else acc
-    | PsatzMulC(_,c) -> xtract  c acc
-    | PsatzAdd(e1,e2) |  PsatzMulE(e1,e2) -> xtract e1 (xtract e2 acc) in
-
-    xtract prf acc
-
-let hyps_of_pt pt =
-  let open Structures.Micromega_plugin_Micromega in
-
-  let rec xhyps base pt acc =
-    match pt with
-      | DoneProof -> acc
-      | RatProof (c, pt) -> xhyps (base + 1) pt (xhyps_of_cone base acc c)
-      | CutProof (c, pt) -> xhyps (base + 1) pt (xhyps_of_cone base acc c)
-      | EnumProof (c1, c2, l) ->
-         let s = xhyps_of_cone base (xhyps_of_cone base acc c2) c1 in
-         List.fold_left (fun s x -> xhyps (base + 1) x s) s l
-      | ExProof (_, pt) -> xhyps (base + 3) pt acc
-  in
-
-  xhyps 0 pt Structures.Micromega_plugin_Mutils.ISet.empty
-
-let compact_cone prf f  =
-  let open Structures.Micromega_plugin_Micromega in
-
-  let np n = Structures.Micromega_plugin_Mutils.CamlToCoq.nat (f (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n)) in
-
-  let rec xinterp prf =
-    match prf with
-    | PsatzC _ | PsatzZ | PsatzSquare _ -> prf
-    | PsatzIn n -> PsatzIn (np n)
-    | PsatzMulC(e,c) -> PsatzMulC(e,xinterp c)
-    | PsatzAdd(e1,e2) -> PsatzAdd(xinterp e1,xinterp e2)
-    | PsatzMulE(e1,e2) -> PsatzMulE(xinterp e1,xinterp e2) in
-
-    xinterp prf
-
-let compact_pt pt f =
-  let open Structures.Micromega_plugin_Micromega in
-  let translate ofset x = if x < ofset then x else f (x - ofset) + ofset in
-  let rec compact_pt ofset pt =
-    match pt with
-    | DoneProof -> DoneProof
-    | RatProof (c, pt) ->
-      RatProof (compact_cone c (translate ofset), compact_pt (ofset + 1) pt)
-    | CutProof (c, pt) ->
-      CutProof (compact_cone c (translate ofset), compact_pt (ofset + 1) pt)
-    | EnumProof (c1, c2, l) ->
-      EnumProof
-        ( compact_cone c1 (translate ofset)
-        , compact_cone c2 (translate ofset)
-        , map (fun x -> compact_pt (ofset + 1) x) l )
-    | ExProof (x, pt) -> ExProof (x, compact_pt (ofset + 3) pt)
-  in
-  compact_pt 0 pt
-
-let pp_nat o n = Printf.fprintf o "%i" (Structures.Micromega_plugin_Mutils.CoqToCaml.nat n)
-
-let pp_positive o x = Printf.fprintf o "%i" (Structures.Micromega_plugin_Mutils.CoqToCaml.positive x)
-
-let pp_z o x = Printf.fprintf o "%s" (Structures.Micromega_plugin_NumCompat.Z.to_string (Structures.Micromega_plugin_Mutils.CoqToCaml.z_big_int x))
-
-let pp_list op cl elt o l =
-  let rec _pp  o l =
-    match l with
-      | [] -> ()
-      | [e] -> Printf.fprintf o "%a" elt e
-      | e::l -> Printf.fprintf o "%a ,%a" elt e  _pp l in
-  Printf.fprintf o "%s%a%s" op _pp l cl
-
-let pp_pol pp_c o e =
-  let open Structures.Micromega_plugin_Micromega in
-  let rec pp_pol o e =
-    match e with
-      | Pc n -> Printf.fprintf o "Pc %a" pp_c n
-      | Pinj(p,pol) -> Printf.fprintf o "Pinj(%a,%a)" pp_positive p pp_pol pol
-      | PX(pol1,p,pol2) -> Printf.fprintf o "PX(%a,%a,%a)" pp_pol pol1 pp_positive p pp_pol pol2 in
-  pp_pol o e
-
-let pp_psatz pp_z o e =
-  let open Structures.Micromega_plugin_Micromega in
-  let rec pp_cone o e =
-    match e with
-      | PsatzIn n ->
-         Printf.fprintf o "(In %a)%%nat" pp_nat n
-      | PsatzMulC(e,c) ->
-         Printf.fprintf o "( %a [*] %a)" (pp_pol pp_z) e pp_cone c
-      | PsatzSquare e ->
-         Printf.fprintf o "(%a^2)" (pp_pol pp_z) e
-      | PsatzAdd(e1,e2) ->
-         Printf.fprintf o "(%a [+] %a)" pp_cone e1 pp_cone e2
-      | PsatzMulE(e1,e2) ->
-         Printf.fprintf o "(%a [*] %a)" pp_cone e1 pp_cone e2
-      | PsatzC p ->
-         Printf.fprintf o "(%a)%%positive" pp_z p
-      | PsatzZ    ->
-         Printf.fprintf o "0" in
-  pp_cone o e
-
-let rec pp_proof_term o p =
-  let open Structures.Micromega_plugin_Micromega in
-  match p with
-    | DoneProof -> Printf.fprintf o "D"
-    | RatProof (cone, rst) ->
-       Printf.fprintf o "R[%a,%a]" (pp_psatz pp_z) cone pp_proof_term rst
-    | CutProof (cone, rst) ->
-       Printf.fprintf o "C[%a,%a]" (pp_psatz pp_z) cone pp_proof_term rst
-    | EnumProof (c1, c2, rst) ->
-       Printf.fprintf o "EP[%a,%a,%a]" (pp_psatz pp_z) c1 (pp_psatz pp_z) c2
-         (pp_list "[" "]" pp_proof_term)
-         rst
-    | ExProof (p, prf) ->
-       Printf.fprintf o "Ex[%a,%a]" pp_positive p pp_proof_term prf
-
-let linear_Z =   {
-  name    = "lia";
- get_option = get_lia_option;
- prover  = memo_zlinear_prover ;
-  hyps    = hyps_of_pt;
-  compact = compact_pt;
-  pp_prf  = pp_proof_term;
-  pp_f    = fun o x -> pp_pol pp_z o (fst x)
-}
-
-let find_witness  p polys1 =
-  let open Structures.Micromega_plugin_Certificate in
-  let polys1 = List.map fst polys1 in
-  match p.prover (p.get_option (), polys1) with
-  | Model m -> Model m
-  | Unknown -> Unknown
-  | Prf prf -> Prf(prf,p)
-
-let witness_list prover l =
-  let open Structures.Micromega_plugin_Certificate in
  let rec xwitness_list l =
   match l with
-   | [] -> Prf []
+   | [] -> Some []
    | e :: l ->
       match xwitness_list l with
-      | Model (m,e) -> Model (m,e)
-      | Unknown     -> Unknown
-      | Prf l ->
-         match find_witness  prover e  with
-         | Model m -> Model (m,e)
-         | Unknown -> Unknown
-         | Prf w ->  Prf (w::l) in
- xwitness_list l
-
-let witness_list_tags = witness_list
-
-let tauto_lia ff =
-  let prover = linear_Z in
-  let cnf_ff,_ = Structures.Micromega_plugin_Micromega.cnfZ ff in
-  match witness_list_tags prover cnf_ff with
-    | Structures.Micromega_plugin_Certificate.Prf l -> Some (List.map fst l)
-    | _ -> None
+      | None -> None
+      | Some l ->
+         match Structures.Micromega_plugin_Certificate.lia true max_int (List.map (fun ((e, o), _) -> Structures.Micromega_plugin_Micromega.denorm e, o) e) with
+         | Structures.Micromega_plugin_Certificate.Prf w -> Some (w::l)
+         | _ -> None in
+ xwitness_list cnf_ff
 
 (* call to micromega solver *)
 let build_lia_certif cl =
