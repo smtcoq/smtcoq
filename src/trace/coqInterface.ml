@@ -112,26 +112,12 @@ let init_modules = Coqlib.init_modules
 
 
 (* Int63 *)
-let int63_modules = [["SMTCoq";"Int63";"Int63Native"]]
+let int63_module = [["Coq";"Numbers";"Cyclic";"Int63";"Int63"]]
 
-(* 31-bits integers are "called" 63 bits (this is sound) *)
-let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
-let cD0 = gen_constant int31_module "D0"
-let cD1 = gen_constant int31_module "D1"
-let cI31 = gen_constant int31_module "I31"
+let mkInt : int -> Constr.constr =
+  fun i -> Constr.mkInt (Uint63.of_int i)
 
-let mkInt : int -> constr = fun i ->
-  let a = Array.make 31 (Lazy.force cD0) in
-  let j = ref i in
-  let k = ref 30 in
-  while !j <> 0 do
-    if !j land 1 = 1 then a.(!k) <- Lazy.force cD1;
-    j := !j lsr 1;
-    decr k
-  done;
-  mkApp (Lazy.force cI31, a)
-
-let cint = gen_constant int31_module "int31"
+let cint = gen_constant int63_module "int"
 
 
 (* PArray *)
