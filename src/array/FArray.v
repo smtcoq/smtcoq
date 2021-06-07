@@ -130,7 +130,7 @@ Module Raw.
   Qed.
 
   Lemma ltk_trans : forall e e' e'', ltk e e' -> ltk e' e'' -> ltk e e''.
-  Proof. unfold ltk; eauto. Qed.
+  Proof. unfold ltk; eauto with typeclass_ordtype. Qed.
 
   Lemma ltk_not_eqk : forall e e', ltk e e' -> ~ eqk e e'.
   Proof. unfold ltk, eqk. intros. apply lt_not_eq; auto with smtcoq_array. Qed.

@@ -98,6 +98,8 @@ Class OrdType T := {
   lt_not_eq : forall x y : T, lt x y -> x <> y
 }.
 
+#[export] Hint Resolve lt_not_eq lt_trans : typeclass_ordtype.
+
 
 Global Instance StrictOrder_OrdType T `(OrdType T) :
   StrictOrder (lt : T -> T -> Prop).
@@ -182,7 +184,7 @@ Proof.
   intros x y. destruct c as [TY [E HE] O C I]. unfold eqb_of_compdec. simpl. now rewrite HE.
 Qed.
 
-Hint Resolve
+#[export] Hint Resolve
      ord_of_compdec
      inh_of_compdec
      comp_of_compdec

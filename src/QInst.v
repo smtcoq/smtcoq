@@ -27,7 +27,7 @@ Proof.
    installed when we compile SMTCoq. *)
 Qed.
 
-Hint Resolve impl_split : smtcoq_core.
+#[export] Hint Resolve impl_split : smtcoq_core.
 
 (** verit silently transforms an <implb (a || b) c> into a <or (not a) c>
    or into a <or (not b) c> when instantiating such a quantified theorem *)
