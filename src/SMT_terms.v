@@ -274,13 +274,13 @@ Module Typ.
       match t with
       | TFArray ti te =>
         existT (fun ty : Type => CompDec ty)
-               (@farray (projT1 (interp_compdec_aux ti))
-                        (projT1 (interp_compdec_aux te))
+               (@farray (type_compdec (projT2 (interp_compdec_aux ti)))
+                        (type_compdec (projT2 (interp_compdec_aux te)))
                         (@ord_of_compdec _ (projT2 (interp_compdec_aux ti)))
                         (@inh_of_compdec _ (projT2 (interp_compdec_aux te))))
                (FArray_compdec
-                  (projT1 (interp_compdec_aux ti))
-                  (projT1 (interp_compdec_aux te)))
+                  (type_compdec (projT2 (interp_compdec_aux ti)))
+                  (type_compdec (projT2 (interp_compdec_aux te))))
       | Tindex i =>
         existT (fun ty : Type => CompDec ty)
                (te_carrier (t_i .[ i])) (te_compdec (t_i .[ i]))
@@ -293,7 +293,7 @@ Module Typ.
     Definition interp_compdec (t:type) : CompDec (projT1 (interp_compdec_aux t)) :=
       projT2 (interp_compdec_aux t).
 
-    Definition interp (t:type) : Type := projT1 (interp_compdec_aux t).
+    Definition interp (t:type) : Type := type_compdec (interp_compdec t).
 
 
     Definition interp_ftype (t:ftype) :=
@@ -304,21 +304,21 @@ Module Typ.
     Definition dec_interp (t:type) : DecType (interp t).
     Proof.
       unfold interp.
-      destruct (interp_compdec_aux t) as [x c]. simpl.
+      destruct (interp_compdec t) as [x c]. simpl.
       apply EqbToDecType.
     Defined.
 
     Instance ord_interp (t:type) : OrdType (interp t).
     Proof.
       unfold interp.
-      destruct (interp_compdec_aux t) as [x c]. simpl.
+      destruct (interp_compdec t) as [x c]. simpl.
       apply Ordered.
     Defined.
 
     Instance comp_interp (t:type) : Comparable (interp t).
     Proof.
       unfold interp, ord_interp.
-      destruct (interp_compdec_aux t) as [x c]. simpl.
+      destruct (interp_compdec t) as [x c]. simpl.
       apply Comp.
     Defined.
 
@@ -349,7 +349,7 @@ Module Typ.
           eqb_of_compdec c x y = true <-> x = y.
       Proof.
         intros x y.
-        destruct c as [[E HE] O C I].
+        destruct c as [TY [E HE] O C I].
         unfold eqb_of_compdec.
         simpl. now rewrite HE.
       Qed.
