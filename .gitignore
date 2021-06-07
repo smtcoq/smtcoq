@@ -24,7 +24,6 @@ setup.log
 .nia.cache
 
 # targets of coq_makefile:
-src/Makefile
 src/Makefile.conf
 src/g_smtcoq.ml
 
