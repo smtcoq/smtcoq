@@ -123,13 +123,13 @@ let binop_array g tbl op def t =
 let rec smt_Form_to_coq_micromega_formula tbl l =
   let v =
     match Form.pform l with
-      | Fatom ha -> A (smt_Atom_to_micromega_formula tbl ha, Tt)
-      | Fapp (Ftrue, _) -> TT
-      | Fapp (Ffalse, _) -> FF
-      | Fapp (Fand, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> Cj (x,y)) TT l
-      | Fapp (For, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> D (x,y)) FF l
+      | Fatom ha -> A (IsProp, smt_Atom_to_micromega_formula tbl ha, Tt)
+      | Fapp (Ftrue, _) -> TT IsProp
+      | Fapp (Ffalse, _) -> FF IsProp
+      | Fapp (Fand, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> AND (IsProp, x,y)) (TT IsProp) l
+      | Fapp (For, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> OR (IsProp, x,y)) (FF IsProp) l
       | Fapp (Fxor, l) -> failwith "todo:Fxor"
-      | Fapp (Fimp, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> I (x,None,y)) TT l
+      | Fapp (Fimp, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> IMPL (IsProp, x,None,y)) (TT IsProp) l
       | Fapp (Fiff, l) -> failwith "todo:Fiff"
       | Fapp (Fite, l) -> failwith "todo:Fite"
       | Fapp (Fnot2 _, l) ->
@@ -141,7 +141,7 @@ let rec smt_Form_to_coq_micromega_formula tbl l =
       | Fapp (Fforall _, _) -> assert false
   in
   if Form.is_pos l then v
-  else N(v)
+  else NOT(IsProp, v)
 
 let binop_list tbl op def l =
   match l with
@@ -149,10 +149,10 @@ let binop_list tbl op def l =
   | f::l -> List.fold_left (fun x y -> op x (smt_Form_to_coq_micromega_formula tbl y)) (smt_Form_to_coq_micromega_formula tbl f) l
 
 let smt_clause_to_coq_micromega_formula tbl cl =
-  binop_list tbl (fun x y -> Cj (x,y)) TT (List.map Form.neg cl)
+  binop_list tbl (fun x y -> AND (IsProp, x,y)) (TT IsProp) (List.map Form.neg cl)
 
 let tauto_lia ff =
-  let cnf_ff,_ = CoqInterface.Micromega_plugin_Micromega.cnfZ ff in
+  let cnf_ff,_ = CoqInterface.Micromega_plugin_Micromega.cnfZ IsProp ff in
  let rec xwitness_list l =
   match l with
    | [] -> Some []
@@ -168,5 +168,5 @@ let tauto_lia ff =
 (* call to micromega solver *)
 let build_lia_certif cl =
   let tbl = create_tbl 13 in
-  let f = I(smt_clause_to_coq_micromega_formula tbl cl, None, FF) in
+  let f = IMPL(IsProp, smt_clause_to_coq_micromega_formula tbl cl, None, (FF IsProp)) in
   tauto_lia f

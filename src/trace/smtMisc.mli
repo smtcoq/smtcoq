@@ -22,3 +22,12 @@ type logic = SL.t
 
 (** Utils *)
 val filter_map : ('a -> 'b option) -> 'a list -> 'b list
+
+(** Lexing *)
+val char_for_backslash : char -> char
+val lf : char
+val dec_code : char -> char -> char -> int
+val hex_code : char -> char -> int
+val found_newline : Lexing.lexbuf -> int -> unit
+val lexeme_len : Lexing.lexbuf -> int
+val main_failure : Lexing.lexbuf -> string -> 'a
