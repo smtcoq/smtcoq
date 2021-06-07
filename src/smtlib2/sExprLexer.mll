@@ -49,12 +49,12 @@
       else d2 - 48 in
     val1 * 16 + val2
 
-  let found_newline ({ lex_curr_p; _ } as lexbuf) diff =
+  let found_newline (lexbuf:Lexing.lexbuf) diff =
     lexbuf.lex_curr_p <-
       {
-        lex_curr_p with
-        pos_lnum = lex_curr_p.pos_lnum + 1;
-        pos_bol = lex_curr_p.pos_cnum - diff;
+        lexbuf.lex_curr_p with
+        pos_lnum = lexbuf.lex_curr_p.pos_lnum + 1;
+        pos_bol = lexbuf.lex_curr_p.pos_cnum - diff;
       }
 
   (* same length computation as in [Lexing.lexeme] *)
