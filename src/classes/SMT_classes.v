@@ -146,26 +146,29 @@ Class Inhabited T := {
 (** * CompDec: Merging all previous classes *)
 
 Class CompDec T := {
-  Eqb :> EqbType T;             (* This is redundant since implied by Comp, but it actually allows us to choose a specific equality function *)
-  Ordered :> OrdType T;
-  Comp :> @Comparable T Ordered;
-  Inh :> Inhabited T
+  ty := T;                      (* This is redundant for performance reasons *)
+  Eqb :> EqbType ty;             (* This is redundant since implied by Comp, but it actually allows us to choose a specific equality function *)
+  Ordered :> OrdType ty;
+  Comp :> @Comparable ty Ordered;
+  Inh :> Inhabited ty
 }.
 
 
 Instance eqbtype_of_compdec t `{c: CompDec t} : (EqbType t) :=
-  let (eqb, _, _, _) := c in eqb.
+  let (_, eqb, _, _, _) := c in eqb.
 
 Instance ord_of_compdec t `{c: CompDec t} : (OrdType t) :=
-  let (_, ord, _, _) := c in ord.
+  let (_, _, ord, _, _) := c in ord.
 
 Instance inh_of_compdec t `{c: CompDec t} : (Inhabited t) :=
-  let (_, _, _, inh) := c in inh.
+  let (_, _, _, _, inh) := c in inh.
 
 Instance comp_of_compdec t `{c: CompDec t} : @Comparable t (ord_of_compdec t).
   destruct c; trivial.
 Defined.
 
+
+Definition type_compdec {ty:Type} (cd : CompDec ty) := ty.
 
 Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
   match eqbtype_of_compdec t with
@@ -176,7 +179,7 @@ Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
 Lemma compdec_eq_eqb {T:Type} {c : CompDec T} : forall x y : T,
     x = y <-> eqb_of_compdec c x y = true.
 Proof.
-  intros x y. destruct c as [[E HE] O C I]. unfold eqb_of_compdec. simpl. now rewrite HE.
+  intros x y. destruct c as [TY [E HE] O C I]. unfold eqb_of_compdec. simpl. now rewrite HE.
 Qed.
 
 Hint Resolve
