@@ -351,27 +351,53 @@ Proof.
  rewrite leb_spec, sub_spec, Z.mod_small; lia.
 Qed.
 
-Definition foldi {A : Type} (f : int -> A -> A) (from to : int) (a : A) : A :=
-  let fix foldi_rec (n : nat) (a : A) : A :=
-    match n with
-      | O => a
-      | S m => foldi_rec m (f (to - of_Z (Z.of_nat n)) a)
-    end in
-  foldi_rec (Z.to_nat (to_Z to) - Z.to_nat (to_Z from))%nat a.
+Definition firstr i := negb((i land 1) == 0).
+Fixpoint recr_aux (n:nat)(A:Type)(case0:A)(caserec:bool->int->A->A)
+ (i:int) : A :=
+  match n with
+  | O => case0
+  | S next =>
+          if i == 0 then
+             case0
+          else
+             let si := i >> 1 in
+             caserec (firstr i) si (recr_aux next A case0 caserec si)
+  end.
+Definition recr := recr_aux size.
+Definition iter_int63 i A f :=
+  recr (A->A) (fun x => x)
+   (fun b si rec => if b
+      then fun x => f (rec (rec x))
+      else fun x => rec (rec x))
+    i.
+
+Definition foldi_cont
+     {A B     : Type}
+     (f       : int -> (A -> B) -> A -> B)
+     (from to : int)
+     (cont    : A -> B)                      : A -> B :=
+  if to <= from then
+    cont
+  else
+    let (_,r) := iter_int63 (to - from) _ (fun (jy: (int * (A -> B))%type) =>
+                     let (j,y) := jy in (j - 1, f (j - 1) y)
+                                      ) (to, cont) in r.
+
+Definition foldi {A} (f:int -> A -> A) from to :=
+  foldi_cont (fun i cont a => cont (f i a)) from to (fun a => a).
 
 Lemma foldi_ge : forall A f from to (a:A),
   to <= from = true -> foldi f from to a = a.
 Proof.
- intros A f from to a; unfold foldi.
- assert (Bfrom := to_Z_bounded from); assert (Bto := to_Z_bounded to).
- rewrite leb_spec, Z2Nat.inj_le by lia; intro Hle.
- replace (_ - _)%nat with O by lia; tauto.
+ intros A f from to a; unfold foldi, foldi_cont.
+ intro H; rewrite H; reflexivity.
 Qed.
 
 Lemma foldi_lt_l : forall A f from to (a:A),
   from < to = true -> foldi f from to a = foldi f (from + 1) to (f from a).
 Proof.
- intros A f from to a; rewrite ltb_spec; intro Hlt; unfold foldi.
+Admitted.
+(*  intros A f from to a; rewrite ltb_spec; intro Hlt; unfold foldi, foldi_cont.
  assert (Bfrom := to_Z_bounded from); assert (Bto := to_Z_bounded to).
  rewrite <- Nat.sub_succ.
  rewrite Nat.sub_succ_l by (rewrite Nat.le_succ_l, <- Z2Nat.inj_lt; lia); f_equal.
@@ -381,7 +407,7 @@ Proof.
  rewrite Nat.sub_succ, <- Z2Nat.inj_sub, Z2Nat.id by lia.
  apply to_Z_inj; rewrite sub_spec, of_Z_spec, <- 2!sub_spec; f_equal; ring.
 Qed.
-
+ *)
 Lemma foldi_lt_r : forall A f from to (a:A),
   from < to = true -> foldi f from to a = f (to - 1) (foldi f from (to - 1) a).
 Proof.
