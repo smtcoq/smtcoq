@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray Psatz.
+Require Import Bool List Int63 PArray Psatz ZArith.
 Require Import Misc State SMT_terms FArray SMT_classes.
 
 Import Form.
@@ -193,7 +193,7 @@ Section certif.
         rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[ x]).
     Proof. intros x;apply wf_interp_form;trivial. Qed.
 
-    Definition wf := PArray.forallbi lt_form t_form.
+    Definition wf := aforallbi lt_form t_form.
 
     Hypothesis wf_t_i : wf.
     Notation atom := int (only parsing).
@@ -226,14 +226,14 @@ Section certif.
         apply Typ.eqb_spec in Heq6a.
         apply Typ.eqb_spec in Heq6b.
         apply Typ.eqb_spec in Heq6c.
-        apply Int63Properties.eqb_spec in Heq6d.
-        apply Int63Properties.eqb_spec in Heq6e.
+        apply Int63.eqb_spec in Heq6d.
+        apply Int63.eqb_spec in Heq6e.
 
         pose proof (rho_interp (Lit.blit lres)) as Hrho.
         rewrite Heq2 in Hrho. simpl in Hrho.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite PArray.forallbi_spec;intros.
+        rewrite aforallbi_spec;intros.
 
         pose proof (H a). assert (a < PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq3. easy.
@@ -440,7 +440,7 @@ Section certif.
         subst t1 t2 t3 t4.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite PArray.forallbi_spec;intros.
+        rewrite aforallbi_spec;intros.
 
         assert (H15: b1 < PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq7. discriminate.
@@ -629,9 +629,9 @@ Section certif.
 
           apply Typ.eqb_spec in Heq11a.
           apply Typ.eqb_spec in Heq11b.
-          apply Int63Properties.eqb_spec in Heq11c.
+          apply Int63.eqb_spec in Heq11c.
           rewrite !andb_true_iff in Heq11d.
-          rewrite !Int63Properties.eqb_spec in Heq11d.
+          rewrite !Int63.eqb_spec in Heq11d.
 
 
           rewrite !Atom.t_interp_wf in isif; trivial.
@@ -785,9 +785,9 @@ Section certif.
 
           apply Typ.eqb_spec in Heq11a.
           apply Typ.eqb_spec in Heq11b.
-          apply Int63Properties.eqb_spec in Heq11d.
+          apply Int63.eqb_spec in Heq11d.
           rewrite !andb_true_iff in Heq11c.
-          rewrite !Int63Properties.eqb_spec in Heq11c.
+          rewrite !Int63.eqb_spec in Heq11c.
 
 
           rewrite !Atom.t_interp_wf in isif; trivial.
@@ -955,26 +955,22 @@ Section certif.
     apply Typ.eqb_spec in Heq15.
     apply Typ.eqb_spec in Heq15a.
     subst t3 t5 t4 t6 t7 t8.
-    rewrite !Int63Properties.eqb_spec in Heq1314.
+    rewrite !Int63.eqb_spec in Heq1314.
 
     unfold Lit.interp. rewrite Heq.
     unfold Var.interp.
     rewrite !wf_interp_form; trivial. rewrite Heq2. simpl.
     rewrite afold_left_or.
     unfold to_list.
-    rewrite Int63Properties.eqb_spec in Heq3.
+    rewrite Int63.eqb_spec in Heq3.
     rewrite Heq3.
 
-    (* for native-coq compatibility *)
-    assert (0 == 2 = false) as NCC.
-    { auto. } rewrite NCC.
     (* simpl. *)
-    rewrite foldi_down_gt; auto.
+    rewrite foldi_lt_r by reflexivity.
+    rewrite foldi_lt_r by reflexivity.
+    rewrite foldi_ge by reflexivity.
+    change (2 - 1) with 1; change (2 - 1 - 1) with 0.
 
-    (* simpl. *)
-    assert (2 - 1 = 1). { auto. }
-                        rewrite H.
-    rewrite foldi_down_eq; auto. 
     simpl. rewrite orb_false_r.
     assert (1 - 1 = 0) as Has2. { auto. }
                                 rewrite Has2.
@@ -985,8 +981,8 @@ Section certif.
     pose proof (rho_interp (Lit.blit (a .[ 0]))).
     pose proof (rho_interp (Lit.blit (a .[ 1]))).
 
-    rewrite Heq5 in H0. rewrite Heq6 in H1.
-    simpl in H0, H1.
+    rewrite Heq5 in H. rewrite Heq6 in H0.
+    simpl in H, H0.
     unfold Lit.interp.
     rewrite andb_true_iff in Heq4.
     destruct Heq4 as (Heq4, Heq4a).
@@ -994,32 +990,32 @@ Section certif.
 
     unfold Lit.interp in Hisa.
     rewrite Heq4 in Hisa. unfold Var.interp in Hisa.
-    rewrite Hisa in H0. symmetry in H0.
+    rewrite Hisa in H. symmetry in H.
     rewrite Heq4a.
     unfold Var.interp.
-    rewrite H1.
+    rewrite H0.
 
     generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-    rewrite PArray.forallbi_spec;intros.
+    rewrite aforallbi_spec;intros.
 
     (* b *)
-    pose proof (H2 b). assert (b < PArray.length t_atom).
+    pose proof (H1 b). assert (b < PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq7. easy.
-    specialize (H3 H4). simpl in H3.
-    rewrite Heq7 in H3. simpl in H3.
-    rewrite !andb_true_iff in H3. destruct H3. destruct H3.
-    unfold get_type' in H3, H5, H6. unfold v_type in H3, H5, H6.
+    specialize (H2 H3). simpl in H2.
+    rewrite Heq7 in H2. simpl in H2.
+    rewrite !andb_true_iff in H2. destruct H2. destruct H2.
+    unfold get_type' in H2, H4, H5. unfold v_type in H2, H4, H5.
 
     case_eq (t_interp .[ b]).
-    intros v_typeb v_valb Htib. rewrite Htib in H3.
+    intros v_typeb v_valb Htib. rewrite Htib in H2.
     pose proof Htib as Htib''.
-    case_eq v_typeb; intros; rewrite H7 in H3; try now contradict H3.
+    case_eq v_typeb; intros; rewrite H6 in H2; try now contradict H2.
 
     case_eq (t_interp .[ b1]).
-    intros v_typeb1 v_valb1 Htib1. rewrite Htib1 in H6.
+    intros v_typeb1 v_valb1 Htib1. rewrite Htib1 in H5.
     pose proof Htib1 as Htib1''.
     case_eq (t_interp .[ b2]).
-    intros v_typeb2 v_valb2 Htib2. rewrite Htib2 in H5.
+    intros v_typeb2 v_valb2 Htib2. rewrite Htib2 in H4.
     pose proof Htib2 as Htib2''.
     rewrite Atom.t_interp_wf in Htib; trivial.
     rewrite Atom.t_interp_wf in Htib1; trivial.
@@ -1028,33 +1024,33 @@ Section certif.
     rewrite !Atom.t_interp_wf in Htib; trivial.
     rewrite Htib1, Htib2 in Htib.
     unfold apply_binop in Htib.
+    apply Typ.eqb_spec in H4.
     apply Typ.eqb_spec in H5.
-    apply Typ.eqb_spec in H6.
 
     generalize dependent v_valb1. generalize dependent v_valb2.
     generalize dependent v_valb.
-    rewrite H5, H6, H7. rewrite !Typ.cast_refl. intros.
+    rewrite H4, H5, H6. rewrite !Typ.cast_refl. intros.
 
     specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t v_valb1 v_valb2) (v_valb)).
-    intros. specialize (H8 Htib).
+    intros. specialize (H7 Htib).
 
     (* c *)
-    pose proof (H2 c). assert (c < PArray.length t_atom).
+    pose proof (H1 c). assert (c < PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
-    specialize (H9 H10). simpl in H9.
-    rewrite Heq9 in H9. simpl in H9.
-    rewrite !andb_true_iff in H9. destruct H9. destruct H9.
-    unfold get_type' in H9, H11, H12. unfold v_type in H9, H11, H12.
+    specialize (H8 H9). simpl in H8.
+    rewrite Heq9 in H8. simpl in H8.
+    rewrite !andb_true_iff in H8. destruct H8. destruct H8.
+    unfold get_type' in H8, H10, H11. unfold v_type in H8, H10, H11.
 
     case_eq (t_interp .[ c]).
-    intros v_typec v_valc Htic. rewrite Htic in H9.
+    intros v_typec v_valc Htic. rewrite Htic in H8.
     pose proof Htic as Htic''.
-    case_eq v_typec; intros; rewrite H13 in H9; try now contradict H9.
+    case_eq v_typec; intros; rewrite H12 in H8; try now contradict H8.
 
     case_eq (t_interp .[ c1]).
-    intros v_typec1 v_valc1 Htic1. rewrite Htic1 in H12.
+    intros v_typec1 v_valc1 Htic1. rewrite Htic1 in H11.
     case_eq (t_interp .[ c2]).
-    intros v_typec2 v_valc2 Htic2. rewrite Htic2 in H11.
+    intros v_typec2 v_valc2 Htic2. rewrite Htic2 in H10.
     rewrite Atom.t_interp_wf in Htic; trivial.
     rewrite Atom.t_interp_wf in Htic1; trivial.
     rewrite Atom.t_interp_wf in Htic2; trivial.
@@ -1062,33 +1058,33 @@ Section certif.
     rewrite !Atom.t_interp_wf in Htic; trivial.
     rewrite Htic1, Htic2 in Htic. simpl in Htic.
 
-    apply Typ.eqb_spec in H11. apply Typ.eqb_spec in H12.
+    apply Typ.eqb_spec in H10. apply Typ.eqb_spec in H11.
 
     generalize dependent v_valc1. generalize dependent v_valc2.
     generalize dependent v_valc.
-    rewrite H11, H12, H13.
+    rewrite H10, H11, H12.
     rewrite !Typ.cast_refl. intros. simpl in Htic.
     unfold Bval in Htic.
 
     specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t2 v_valc1 v_valc2) (v_valc)).
-    intros. specialize (H14 Htic).
+    intros. specialize (H13 Htic).
 
     (* c1 *)
-    pose proof (H2 c1). assert (c1 < PArray.length t_atom).
+    pose proof (H1 c1). assert (c1 < PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq11. easy.
-    specialize (H15 H16). simpl in H15.
-    rewrite Heq11 in H15. simpl in H15.
-    rewrite !andb_true_iff in H15. destruct H15. destruct H15.
-    unfold get_type' in H15, H17, H18. unfold v_type in H15, H17, H18.
+    specialize (H14 H15). simpl in H14.
+    rewrite Heq11 in H14. simpl in H14.
+    rewrite !andb_true_iff in H14. destruct H14. destruct H14.
+    unfold get_type' in H14, H16, H17. unfold v_type in H14, H16, H17.
 
     case_eq (t_interp .[ c1]).
-    intros v_typec1' v_valc1' Htic1'. rewrite Htic1' in H15.
+    intros v_typec1' v_valc1' Htic1'. rewrite Htic1' in H14.
     pose proof Htic1' as Htic1'''.
 
     case_eq (t_interp .[ d1]).
-    intros v_typed1 v_vald1 Htid1. rewrite Htid1 in H18.
+    intros v_typed1 v_vald1 Htid1. rewrite Htid1 in H17.
     case_eq (t_interp .[ d2]).
-    intros v_typed2 v_vald2 Htid2. rewrite Htid2 in H17.
+    intros v_typed2 v_vald2 Htid2. rewrite Htid2 in H16.
     rewrite Atom.t_interp_wf in Htic1'; trivial.
     rewrite Atom.t_interp_wf in Htid1; trivial.
     rewrite Atom.t_interp_wf in Htid2; trivial.
@@ -1096,35 +1092,35 @@ Section certif.
     rewrite !Atom.t_interp_wf in Htic1'; trivial.
     rewrite Htid1, Htid2 in Htic1'. simpl in Htic1'.
 
-    apply Typ.eqb_spec in H15. apply Typ.eqb_spec in H17.
-    apply Typ.eqb_spec in H18.
+    apply Typ.eqb_spec in H14. apply Typ.eqb_spec in H16.
+    apply Typ.eqb_spec in H17.
 
     generalize dependent v_vald1. generalize dependent v_vald2.
     generalize dependent v_valc1'.
 
-    rewrite H15, H17, H18.
-    unfold Bval. rewrite <- H15.
+    rewrite H14, H16, H17.
+    unfold Bval. rewrite <- H14.
     rewrite !Typ.cast_refl. intros.
 
     specialize (Atom.Bval_inj2 t_i t1 (select v_vald1 v_vald2) (v_valc1')).
-    intros. specialize (H19 Htic1').
+    intros. specialize (H18 Htic1').
 
     (* c2 *)
-    pose proof (H2 c2). assert (c2 < PArray.length t_atom).
+    pose proof (H1 c2). assert (c2 < PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq12. easy.
-    specialize (H20 H21). simpl in H20.
-    rewrite Heq12 in H20. simpl in H20.
-    rewrite !andb_true_iff in H20. destruct H20. destruct H20.
-    unfold get_type' in H20, H22, H23. unfold v_type in H20, H22, H23.
+    specialize (H19 H20). simpl in H19.
+    rewrite Heq12 in H19. simpl in H19.
+    rewrite !andb_true_iff in H19. destruct H19. destruct H19.
+    unfold get_type' in H19, H21, H22. unfold v_type in H19, H21, H22.
 
     case_eq (t_interp .[ c2]).
-    intros v_typec2' v_valc2' Htic2'. rewrite Htic2' in H20.
+    intros v_typec2' v_valc2' Htic2'. rewrite Htic2' in H19.
     pose proof Htic2' as Htic2'''.
 
     case_eq (t_interp .[ e1]).
-    intros v_typee1 v_vale1 Htie1. rewrite Htie1 in H23.
+    intros v_typee1 v_vale1 Htie1. rewrite Htie1 in H22.
     case_eq (t_interp .[ e2]).
-    intros v_typee2 v_vale2 Htie2. rewrite Htie2 in H22.
+    intros v_typee2 v_vale2 Htie2. rewrite Htie2 in H21.
     pose proof Htie2 as Htie2''.
     rewrite Atom.t_interp_wf in Htic2'; trivial.
     rewrite Atom.t_interp_wf in Htie1; trivial.
@@ -1133,35 +1129,35 @@ Section certif.
     rewrite !Atom.t_interp_wf in Htic2'; trivial.
     rewrite Htie1, Htie2 in Htic2'. simpl in Htic2'.
 
-    apply Typ.eqb_spec in H20. apply Typ.eqb_spec in H22.
-    apply Typ.eqb_spec in H23.
+    apply Typ.eqb_spec in H19. apply Typ.eqb_spec in H21.
+    apply Typ.eqb_spec in H22.
 
     generalize dependent v_valc1'. generalize dependent v_valc2'.
     generalize dependent v_vale1. generalize dependent v_vale2.
 
-    rewrite H22. rewrite H20 in *. rewrite H23.
-    unfold Bval. rewrite <- H20.
+    rewrite H21. rewrite H19 in *. rewrite H22.
+    unfold Bval. rewrite <- H19.
     rewrite !Typ.cast_refl. intros.
 
     specialize (Atom.Bval_inj2 t_i t1 (select v_vale1 v_vale2) (v_valc2')).
-    intros. specialize (H24 Htic2').
+    intros. specialize (H23 Htic2').
 
     (* d2 *)
-    pose proof (H2 d2). assert (d2 < PArray.length t_atom).
+    pose proof (H1 d2). assert (d2 < PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq14. easy.
-    specialize (H25 H26). simpl in H25.
-    rewrite Heq14 in H25. simpl in H25.
-    rewrite !andb_true_iff in H25. destruct H25. destruct H25.
-    unfold get_type' in H25, H27, H28. unfold v_type in H25, H27, H28.
+    specialize (H24 H25). simpl in H24.
+    rewrite Heq14 in H24. simpl in H24.
+    rewrite !andb_true_iff in H24. destruct H24. destruct H24.
+    unfold get_type' in H24, H26, H27. unfold v_type in H24, H26, H27.
 
     case_eq (t_interp .[ d2]).
-    intros v_typed2' v_vald2' Htid2'. rewrite Htid2' in H25.
+    intros v_typed2' v_vald2' Htid2'. rewrite Htid2' in H24.
     pose proof Htid2' as Htid2'''.
 
     case_eq (t_interp .[ f1]).
-    intros v_typef1 v_valf1 Htif1. rewrite Htif1 in H28.
+    intros v_typef1 v_valf1 Htif1. rewrite Htif1 in H27.
     case_eq (t_interp .[ f2]).
-    intros v_typef2 v_valf2 Htif2. rewrite Htif2 in H27.
+    intros v_typef2 v_valf2 Htif2. rewrite Htif2 in H26.
     rewrite Atom.t_interp_wf in Htid2'; trivial.
     rewrite Atom.t_interp_wf in Htif1; trivial.
     rewrite Atom.t_interp_wf in Htif2; trivial.
@@ -1169,21 +1165,21 @@ Section certif.
     rewrite !Atom.t_interp_wf in Htid2'; trivial.
     rewrite Htif1, Htif2 in Htid2'. simpl in Htid2'.
 
-    apply Typ.eqb_spec in H25. apply Typ.eqb_spec in H27.
-    apply Typ.eqb_spec in H28.
+    apply Typ.eqb_spec in H24. apply Typ.eqb_spec in H26.
+    apply Typ.eqb_spec in H27.
 
     generalize dependent v_valf1. generalize dependent v_valf2.
     generalize dependent v_vald2'.
 
-    rewrite H25, H27, H28.
-    unfold Bval. rewrite <- H25.
+    rewrite H24, H26, H27.
+    unfold Bval. rewrite <- H24.
     rewrite !Typ.cast_refl. intros.
 
     specialize (Atom.Bval_inj2 t_i t0 (@diff _ _
        (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i t0)))
        _ _ (Typ.dec_interp t_i v_typec2') _ (Typ.comp_interp t_i v_typec2') (Typ.inh_interp t_i t0) _
        v_valf1 v_valf2) (v_vald2')).
-    intros. specialize (H29 Htid2').
+    intros. specialize (H28 Htid2').
 
     (* semantics *)
 
@@ -1278,8 +1274,8 @@ Section certif.
                                    (interp_compdec_aux te)))
                        | Typ.Tindex i =>
                            @existT Type (fun ty : Type => CompDec ty)
-                             (te_carrier (@get typ_compdec t_i i))
-                             (te_compdec (@get typ_compdec t_i i))
+                             (te_carrier (@get typ_compdec t_i (of_Z (Z.of_N i))))
+                             (te_compdec (@get typ_compdec t_i (of_Z (Z.of_N i))))
                        | Typ.TZ =>
                            @existT Type (fun ty : Type => CompDec ty) BinNums.Z
                              SMT_classes_instances.Z_compdec
@@ -1339,8 +1335,8 @@ Section certif.
                                    (interp_compdec_aux te)))
                        | Typ.Tindex i =>
                            @existT Type (fun ty : Type => CompDec ty)
-                             (te_carrier (@get typ_compdec t_i i))
-                             (te_compdec (@get typ_compdec t_i i))
+                             (te_carrier (@get typ_compdec t_i (of_Z (Z.of_N i))))
+                             (te_compdec (@get typ_compdec t_i (of_Z (Z.of_N i))))
                        | Typ.TZ =>
                            @existT Type (fun ty : Type => CompDec ty) BinNums.Z
                              SMT_classes_instances.Z_compdec
@@ -1358,18 +1354,18 @@ Section certif.
              (Typ.ord_interp t_i v_typec1') (Typ.comp_interp t_i v_typec1')
              (Typ.inh_interp t_i v_typed2') (Typ.inh_interp t_i v_typec1') v_valf1
              v_valf2)).
-    intros. specialize (H5 Htid2''').
-    rewrite <- H5.
+    intros. specialize (H4 Htid2''').
+    rewrite <- H4.
     specialize (Atom.Bval_inj2 t_i v_typed2' (v_vale2) (v_vald2)).
     intros.
 
-    unfold Atom.interp_form_hatom, interp_hatom in H0.
-    rewrite !Atom.t_interp_wf in H0; trivial.
-    rewrite Heq7 in H0. simpl in H0.
-    rewrite !Atom.t_interp_wf in H0; trivial.
-    rewrite Htib1, Htib2 in H0. simpl in H0.
-    rewrite !Typ.cast_refl in H0. simpl in H0.
-    apply Typ.i_eqb_spec_false in H0.
+    unfold Atom.interp_form_hatom, interp_hatom in H.
+    rewrite !Atom.t_interp_wf in H; trivial.
+    rewrite Heq7 in H. simpl in H.
+    rewrite !Atom.t_interp_wf in H; trivial.
+    rewrite Htib1, Htib2 in H. simpl in H.
+    rewrite !Typ.cast_refl in H. simpl in H.
+    apply Typ.i_eqb_spec_false in H.
 
 
     destruct Heq1314 as [Heq1314 | Heq1314];
@@ -1403,7 +1399,7 @@ Section certif.
       rewrite (Atom.Bval_inj2 t_i _ _ _ Htid2) in *.
 
       apply select_at_diff.
-      red in H0. red. intro. apply H0. auto.
+      red in H. red. intro. apply H. auto.
   Qed.
   
   End Correct.
