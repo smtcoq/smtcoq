@@ -18,7 +18,7 @@ let gen_constant = CoqInterface.gen_constant
 
 (* Int63 *)
 let cint = CoqInterface.cint
-let ceq63 = gen_constant CoqInterface.int63_modules "eqb"
+let ceq63 = gen_constant CoqInterface.int63_module "eqb"
 
 (* PArray *)
 let carray = gen_constant CoqInterface.parray_modules "array"

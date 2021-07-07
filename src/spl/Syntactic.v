@@ -184,15 +184,15 @@ Section CheckAtom.
       (* N-ary operators *)
       - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; destruct op1 as [t1]; destruct op2 as [t2]; unfold is_true; rewrite andb_true_iff; change (Typ.eqb t1 t2 = true) with (is_true (Typ.eqb t1 t2)); rewrite Typ.eqb_spec; intros [H1 H2]; subst t2; rewrite (list_beq_compute_interp _ _ _ H2); auto.
       (* Application *)
-      - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff, Int63Properties.eqb_spec; intros [H2 H1]; subst f2; rewrite (list_beq_correct _ _ H1); auto.
+      - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff, Int63.eqb_spec; intros [H2 H1]; subst f2; rewrite (list_beq_correct _ _ H1); auto.
     Qed.
 
   End AUX.
 
   Definition check_hatom h1 h2 :=
-    foldi_down_cont
+    foldi
     (fun _ cont h1 h2 => (h1 == h2) || check_atom_aux cont (t_atom.[h1]) (t_atom.[h2]))
-    (PArray.length t_atom) 0 (fun h1 h2 => false) h1 h2.
+    0 (PArray.length t_atom) (fun h1 h2 => false) h1 h2.
 
   Definition check_atom := check_atom_aux check_hatom.
 
@@ -230,10 +230,11 @@ Section CheckAtom.
       interp_hatom t_i t_func t_atom h1 = interp_hatom t_i t_func t_atom h2.
   Proof.
    unfold check_hatom;intros Hwf Hdef.
-   apply foldi_down_cont_ind;try discriminate.
+   apply foldi_ind;try discriminate.
+  apply leb_0.
    intros i cont _ _ Hrec h1 h2.
    unfold is_true; rewrite orb_true_iff; intros [H|H].
-   rewrite Int63Properties.eqb_spec in H; rewrite H; reflexivity.
+   rewrite Int63.eqb_spec in H; rewrite H; reflexivity.
    unfold interp_hatom;rewrite !t_interp_wf;trivial.
    apply check_atom_aux_correct with cont;trivial.
   Qed.
@@ -268,7 +269,7 @@ Section CheckAtom.
         | Val _ _, Val _ _ => False
       end.
   Proof.
-    unfold wt; unfold is_true at 1; rewrite forallbi_spec; intros Hwt Hwf Hdef h1 h2; unfold check_neg_hatom; case_eq (get_atom h1); try discriminate; intros b1 t11 t12 H1; case_eq (get_atom h2); try discriminate; intros b2 t21 t22 H2; assert (H7: h1 < length t_atom) by (apply PArray.get_not_default_lt; rewrite H1, Hdef; discriminate); generalize (Hwt _ H7); rewrite H1; simpl; generalize H1; case b1; try discriminate; clear H1 b1; simpl; intro H1; case (get_type' t_i (t_interp t_i t_func t_atom) h1); try discriminate; simpl; rewrite andb_true_iff; intros [H30 H31]; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t11) Typ.TZ)) in H30; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t12) Typ.TZ)) in H31; rewrite Typ.eqb_spec in H30, H31; generalize (check_aux_interp_hatom _ t_func _ Hwf t11), (check_aux_interp_hatom _ t_func _ Hwf t12); rewrite H30, H31; intros [v1 Hv1] [v2 Hv2]; generalize H2; case b2; try discriminate; clear H2 b2; intro H2; unfold is_true; rewrite andb_true_iff; intros [H3 H4]; generalize (check_hatom_correct Hwf Hdef _ _ H3), (check_hatom_correct Hwf Hdef _ _ H4); unfold interp_hatom; intros H5 H6; rewrite t_interp_wf; auto; rewrite H1; simpl; rewrite Hv1, Hv2; simpl; rewrite t_interp_wf; auto; rewrite H2; simpl; rewrite <- H5; rewrite <- H6, Hv1, Hv2; simpl.
+    unfold wt; unfold is_true at 1; rewrite aforallbi_spec; intros Hwt Hwf Hdef h1 h2; unfold check_neg_hatom; case_eq (get_atom h1); try discriminate; intros b1 t11 t12 H1; case_eq (get_atom h2); try discriminate; intros b2 t21 t22 H2; assert (H7: h1 < length t_atom) by (apply PArray.get_not_default_lt; rewrite H1, Hdef; discriminate); generalize (Hwt _ H7); rewrite H1; simpl; generalize H1; case b1; try discriminate; clear H1 b1; simpl; intro H1; case (get_type' t_i (t_interp t_i t_func t_atom) h1); try discriminate; simpl; rewrite andb_true_iff; intros [H30 H31]; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t11) Typ.TZ)) in H30; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t12) Typ.TZ)) in H31; rewrite Typ.eqb_spec in H30, H31; generalize (check_aux_interp_hatom _ t_func _ Hwf t11), (check_aux_interp_hatom _ t_func _ Hwf t12); rewrite H30, H31; intros [v1 Hv1] [v2 Hv2]; generalize H2; case b2; try discriminate; clear H2 b2; intro H2; unfold is_true; rewrite andb_true_iff; intros [H3 H4]; generalize (check_hatom_correct Hwf Hdef _ _ H3), (check_hatom_correct Hwf Hdef _ _ H4); unfold interp_hatom; intros H5 H6; rewrite t_interp_wf; auto; rewrite H1; simpl; rewrite Hv1, Hv2; simpl; rewrite t_interp_wf; auto; rewrite H2; simpl; rewrite <- H5; rewrite <- H6, Hv1, Hv2; simpl.
     rewrite Z.ltb_antisym; auto.
     rewrite Z.geb_leb, Z.ltb_antisym; auto.
     rewrite Z.leb_antisym; auto.
@@ -332,20 +333,20 @@ Section FLATTEN.
     (frec : list _lit -> _lit -> list _lit)
     (largs:list _lit) (l:_lit) : list _lit :=
     match get_op l with
-      | Some a => PArray.fold_left frec largs a
+      | Some a => foldi (fun i x => frec x (a.[i])) 0 (length a) largs
       | None => l::largs
     end.
   (* Register flatten_op_body as PrimInline. *)
 
 
   Definition flatten_op_lit (get_op:_lit -> option (array _lit)) max :=
-    foldi_cont (fun _ => flatten_op_body get_op) 0 max (fun largs l => l::largs).
+    foldi (fun _ => flatten_op_body get_op) 0 max (fun largs l => l::largs).
 
   Definition flatten_and t :=
-    PArray.fold_left (flatten_op_lit get_and (PArray.length t_form)) nil t.
+    foldi (fun i x => flatten_op_lit get_and (PArray.length t_form) x (t.[i])) 0 (length t) nil.
 
   Definition flatten_or t :=
-    PArray.fold_left (flatten_op_lit get_or (PArray.length t_form)) nil t.
+    foldi (fun i x => flatten_op_lit get_or (PArray.length t_form) x (t.[i])) 0 (length t) nil.
 
 
   Variable check_atom check_neg_atom : atom -> atom -> bool.
@@ -371,7 +372,7 @@ Section FLATTEN.
                 frec l1 lf1 && frec l2 lf2
               | Fimp args1, Fimp args2 =>
                 if PArray.length args1 == PArray.length args2 then
-                  PArray.forallbi (fun i l => frec l (args2.[i])) args1
+                  aforallbi (fun i l => frec l (args2.[i])) args1
                   else false
               | Fiff l1 l2, Fiff lf1 lf2 =>
                 frec l1 lf1 && frec l2 lf2
@@ -387,7 +388,7 @@ Section FLATTEN.
   (* Register check_flatten_body as PrimInline. *)
 
   Definition check_flatten_aux l lf :=
-    foldi_cont (fun _ => check_flatten_body) 0 (PArray.length t_form) (fun _ _ => false) l lf.
+    foldi (fun _ => check_flatten_body) 0 (PArray.length t_form) (fun _ _ => false) l lf.
 
   Definition check_flatten s cid lf :=
     match S.get s cid with
@@ -412,8 +413,11 @@ Section FLATTEN.
 
   Lemma interp_Fnot2 : forall i l, interp interp_atom interp_bvatom t_form (Fnot2 i l) = interp_lit l.
   Proof.
-    intros i l;simpl;apply fold_ind;trivial.
-    intros a;rewrite negb_involutive;trivial.
+    intros i l;simpl.
+    apply foldi_ind.
+    apply leb_0.
+    reflexivity.
+    intros; rewrite negb_involutive; assumption.
   Qed.
 
   Lemma remove_not_correct :
@@ -452,23 +456,21 @@ Section FLATTEN.
 
   Lemma flatten_and_correct : forall args,
     List.fold_right (fun l res => andb res (interp_lit l)) true (flatten_and args) =
-    afold_left _ _ true andb interp_lit args.
+    afold_left _ true andb (amap interp_lit args).
   Proof.
     intros;rewrite afold_left_spec;auto;unfold flatten_and.
-    set (t:= true);unfold t at 2;
-      change true with
-        (List.fold_right (fun (l : int) (res : bool) => res && interp_lit l) true nil).
-    unfold t;clear t.
-    rewrite !fold_left_to_list.
+    change true with (List.fold_right (fun (l : int) (res : bool) => res && interp_lit l) true nil) at 2.
+    rewrite !foldi_to_list, to_list_amap.
     generalize (@nil int);induction (to_list args);simpl;trivial.
     intros l0;rewrite IHl.
     clear IHl;f_equal; unfold flatten_op_lit.
-    clear l;revert a l0;apply foldi_cont_ind;simpl;trivial.
-    intros i cont _ Hle Hrec a l;unfold flatten_op_body.
+    clear l;revert a l0;apply foldi_ind;simpl;trivial.
+    apply leb_0.
+    intros i cont _ Hlt Hrec a l;unfold flatten_op_body.
     case_eq (get_and a);intros;trivial.
     rewrite get_and_correct with (1:= H);simpl.
-    rewrite afold_left_spec; auto; rewrite !fold_left_to_list.
-    rewrite <- !fold_left_rev_right.
+    rewrite afold_left_spec; auto; rewrite !foldi_to_list.
+    rewrite <- !fold_left_rev_right, to_list_amap, <- map_rev.
     clear H a;revert l;induction (List.rev (to_list a0));simpl.
     intros l;rewrite andb_true_r;trivial.
     intros;rewrite Hrec, IHl, andb_assoc;trivial.
@@ -476,23 +478,21 @@ Section FLATTEN.
 
   Lemma flatten_or_correct : forall args,
     List.fold_right (fun l res => orb res (interp_lit l)) false (flatten_or args) =
-    afold_left _ _ false orb interp_lit args.
+    afold_left _ false orb (amap interp_lit args).
   Proof.
     intros;rewrite afold_left_spec;auto;unfold flatten_or.
-    set (t:= false);unfold t at 2;
-      change false with
-        (List.fold_right (fun (l : int) (res : bool) => res || interp_lit l) false nil).
-    unfold t;clear t.
-    rewrite !fold_left_to_list.
+    change false with (List.fold_right (fun (l : int) (res : bool) => res || interp_lit l) false nil) at 2.
+    rewrite !foldi_to_list, to_list_amap.
     generalize (@nil int);induction (to_list args);simpl;trivial.
     intros l0;rewrite IHl.
     clear IHl;f_equal; unfold flatten_op_lit.
-    clear l;revert a l0;apply foldi_cont_ind;simpl;trivial.
-    intros i cont _ Hle Hrec a l;unfold flatten_op_body.
+    clear l;revert a l0;apply foldi_ind;simpl;trivial.
+    apply leb_0.
+    intros i cont _ Hlt Hrec a l;unfold flatten_op_body.
     case_eq (get_or a);intros;trivial.
     rewrite get_or_correct with (1:= H);simpl.
-    rewrite afold_left_spec; auto; rewrite !fold_left_to_list.
-    rewrite <- !fold_left_rev_right.
+    rewrite afold_left_spec; auto; rewrite !foldi_to_list.
+    rewrite <- !fold_left_rev_right, to_list_amap, <- map_rev.
     clear H a;revert l;induction (List.rev (to_list a0));simpl.
     intros l;rewrite orb_false_r;trivial.
     intros;rewrite Hrec, IHl, orb_assoc;trivial.
@@ -503,7 +503,8 @@ Section FLATTEN.
     interp_lit l = interp_lit lf.
   Proof.
     unfold check_flatten_aux.
-    apply foldi_cont_ind.
+    apply foldi_ind.
+    apply leb_0.
     discriminate.
     intros i cont _ Hle Hrec l lf;unfold check_flatten_body.
     rewrite <- (remove_not_correct l), <- (remove_not_correct lf).
@@ -513,7 +514,7 @@ Section FLATTEN.
     unfold Lit.interp.
     assert (Lit.is_pos l = Lit.is_pos lf).
     unfold Lit.is_pos.
-    rewrite <- eqb_spec, land_comm in e.
+    rewrite <- eqb_spec, landC in e.
     change (is_true (is_even (l lxor lf))) in e.
     rewrite is_even_xor in e.
     destruct (is_even l);destruct (is_even lf);trivial;discriminate.
@@ -542,8 +543,8 @@ Section FLATTEN.
     rewrite (Hrec _ _ H1), (IHl0 _ H2);trivial.
      (* implb *)
     revert H;destruct (reflect_eqb (length a) (length a0));[intros|discriminate].
-    apply afold_right_eq;trivial.
-    rewrite forallbi_spec in H;auto.
+    apply afold_right_eq;rewrite !length_amap;trivial.
+    intros;rewrite !get_amap by congruence;rewrite aforallbi_spec in H;auto.
      (* xorb *)
     unfold is_true in H;rewrite andb_true_iff in H;destruct H as [H H0].
     rewrite (Hrec _ _ H), (Hrec _ _ H0);trivial.
@@ -556,7 +557,7 @@ Section FLATTEN.
      (** opposite sign *)
     assert (Lit.is_pos l = negb (Lit.is_pos lf)).
     unfold Lit.is_pos.
-    rewrite <- eqb_spec, land_comm in n0.
+    rewrite <- eqb_spec, landC in n0.
     change (~is_true (is_even (l lxor lf))) in n0.
     rewrite is_even_xor in n0.
     destruct (is_even l);destruct (is_even lf);trivial;elim n0;reflexivity.
