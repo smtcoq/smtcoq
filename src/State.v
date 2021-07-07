@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool Int63 PArray Psatz.
+Require Import List Bool Int63 Psatz Ring63 PArray Omega Misc Ring.
 
 (* Require Import AxiomesInt. *)
 
@@ -88,13 +88,13 @@ Module Lit.
 
   Lemma neg_involutive : forall l,  neg (neg l) = l.
   Proof.
-    unfold neg;intros; rewrite <- lxor_assoc;change (1 lxor 1) with 0;rewrite lxor_0_r;trivial.
+    unfold neg;intros; rewrite <- lxorA;change (1 lxor 1) with 0;rewrite lxor0_r;trivial.
   Qed.
 
   Lemma blit_neg : forall l, blit (neg l) = blit l.
   Proof.
     unfold blit, neg;intros l.
-    rewrite lxor_lsr, lxor_0_r;trivial.
+    rewrite lxor_lsr, lxor0_r;trivial.
   Qed.
 
   Lemma lit_blit: forall l,
@@ -103,7 +103,7 @@ Module Lit.
     unfold is_pos, lit, blit;intros.
     rewrite (bit_xor_split l) at 2.
     rewrite is_even_bit, negb_true_iff in H;rewrite H.
-    symmetry;apply lxor_0_r.
+    symmetry;apply lxor0_r.
   Qed.
 
   Lemma lit_blit_neg: forall l,
@@ -220,7 +220,7 @@ Module Lit.
   Lemma lxor_neg : forall l1 l2, (l1 lxor l2 == 1) = true -> l1 = Lit.neg l2.
   Proof.
     unfold Lit.neg; intros l1 l2;rewrite eqb_spec;intros Heq;rewrite <- Heq.
-    rewrite lxor_comm, <- lxor_assoc, lxor_nilpotent, lxor_0_r;trivial.
+    rewrite lxorC, <- lxorA, lxor_nilpotent, lxor0_r;trivial.
   Qed.
 
 End Lit.
@@ -484,7 +484,7 @@ Module S.
         forall id, valid rho (set s id c).
   Proof.
     unfold valid, get;simpl;intros.
-    destruct (Int63Properties.reflect_eqb id id0);subst.
+    destruct (reflect_eqb id id0);subst.
     case_eq (id0 < length s);intros.
     rewrite PArray.get_set_same;trivial.
     rewrite PArray.get_outofbound.
@@ -622,7 +622,7 @@ Module S.
                  C.valid rho c -> valid rho (set_clause s pos c).
   Proof.
     unfold valid, get, set_clause. intros rho s Hrho Hs pos c Hc id.
-    destruct (Int63Properties.reflect_eqb pos id);subst.
+    destruct (reflect_eqb pos id);subst.
     case_eq (id < length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
     unfold C.valid;rewrite sort_correct;trivial.
@@ -640,7 +640,7 @@ Module S.
                  C.valid rho c -> valid rho (set_clause_keep s pos c).
   Proof.
     unfold valid, get, set_clause_keep. intros rho s Hrho Hs pos c Hc id.
-    destruct (Int63Properties.reflect_eqb pos id);subst.
+    destruct (reflect_eqb pos id);subst.
     case_eq (id < length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
     unfold C.valid;rewrite sort_keep_correct;trivial.
@@ -657,7 +657,7 @@ Module S.
     let len := PArray.length r in
     if len == 0 then s
     else
-      let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 (len - 1) (get s (r.[0])) in
+      let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 len (get s (r.[0])) in
       (* S.set_clause *) internal_set s pos c.
 
   Lemma valid_set_resolve :
@@ -665,13 +665,18 @@ Module S.
       forall pos r, valid rho (set_resolve s pos r).
   Proof.
     unfold set_resolve; intros rho s Hrho Hv pos r.
-    destruct (Int63Properties.reflect_eqb (length r) 0);[trivial | ].
+    destruct (reflect_eqb (length r) 0);[trivial | ].
     apply valid_internal_set;trivial.
-    (* apply S.valid_set_clause; auto. *)
-    apply foldi_ind;auto.
-    intros i c _ _ Hc. apply C.resolve_correct;auto;apply Hv.
-  Qed.
-
+    pattern (length r); apply (int_ind_bounded _ 1).
+    generalize (to_Z_bounded (length r)); rewrite <- to_Z_eq, to_Z_0 in n; rewrite leb_spec, to_Z_1; lia.
+    rewrite foldi_ge; [ apply Hv | reflexivity ].
+    intros i Hi1 Hi2 Hc.
+    rewrite foldi_lt_r.
+    apply C.resolve_correct; [ apply Hv | ring_simplify (i + 1 - 1); exact Hc ].
+    rewrite ltb_spec, to_Z_add_1_wB, to_Z_1.
+    rewrite leb_spec, to_Z_1 in Hi1; generalize (to_Z_bounded i); omega.
+    rewrite ltb_spec in Hi2; generalize (to_Z_bounded (length r)); omega.
+ Qed.
 
   (* Weakening *)
 

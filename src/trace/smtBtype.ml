@@ -51,7 +51,7 @@ let index_tbl = Hashtbl.create 17
 let index_to_coq i =
   try Hashtbl.find index_tbl i
   with Not_found ->
-    let interp = mklApp cTindex [|mkInt i|] in
+    let interp = mklApp cTindex [|mkN i|] in
     Hashtbl.add index_tbl i interp;
     interp
 

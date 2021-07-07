@@ -435,7 +435,7 @@ Fixpoint beq_listP (l m : list bool) {struct l} :=
 Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
 Proof.
   unfold bv_eq, size, bits.
-  case_eq (Nat_eqb (length l1) (length l2)); intro Heq.
+  case_eq (Nat.eqb (length l1) (length l2)); intro Heq.
   - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl.
   - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false.
     * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto.
