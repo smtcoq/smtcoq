@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool Int63 Psatz Ring63 PArray Omega Misc.
+Require Import List Bool Int63 Psatz Ring63 PArray Omega Misc Ring.
 
 (* Require Import AxiomesInt. *)
 
