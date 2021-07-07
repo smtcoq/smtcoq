@@ -435,7 +435,7 @@ Fixpoint beq_listP (l m : list bool) {struct l} :=
 Lemma bv_mk_eq l1 l2 : bv_eq l1 l2 = beq_list l1 l2.
 Proof.
   unfold bv_eq, size, bits.
-  case_eq (Nat_eqb (length l1) (length l2)); intro Heq.
+  case_eq (Nat.eqb (length l1) (length l2)); intro Heq.
   - now rewrite (EqNat.beq_nat_true _ _ Heq), N.eqb_refl.
   - replace (N.of_nat (length l1) =? N.of_nat (length l2)) with false.
     * revert l2 Heq. induction l1 as [ |b1 l1 IHl1]; intros [ |b2 l2]; simpl in *; auto.
@@ -696,7 +696,7 @@ Definition bvmult_bool (a b: list bool) (n: nat) : list bool :=
 Definition mult_list a b := bvmult_bool a b (length a).
 
 Definition bv_mult (a b : bitvector) : bitvector :=
-  if ((@size a) =? (@size b))
+  if ((@size a) =? (@size b))%N
   then mult_list a b
   else zeros (@size a).
 
@@ -710,11 +710,11 @@ Proof. intro n.
 Qed.
 
 Definition _of_bits (a:list bool) (s: N) := 
-if (N.of_nat (length a) =? s) then a else zeros s.
+if (N.of_nat (length a) =? s)%N then a else zeros s.
 
 Lemma _of_bits_size l s: (size (_of_bits l s)) = s.
 Proof. unfold of_bits, size. unfold _of_bits.
-       case_eq ( N.of_nat (length l) =? s).
+       case_eq ( N.of_nat (length l) =? s)%N.
        intros. now rewrite N.eqb_eq in H.
        intros. unfold zeros. rewrite length_mk_list_false.
        now rewrite N2Nat.id.
@@ -800,7 +800,7 @@ Qed.
 
 Lemma bv_eq_reflect a b : bv_eq a b = true <-> a = b.
 Proof.
-  unfold bv_eq. case_eq (size a =? size b); intro Heq; simpl.
+  unfold bv_eq. case_eq (size a =? size b)%N; intro Heq; simpl.
   - apply List_eq.
   - split; try discriminate.
     intro H. rewrite H, N.eqb_refl in Heq. discriminate.
@@ -1880,11 +1880,11 @@ Qed.
 
 Lemma bv_ult_B2P: forall x y, bv_ult x y = true <-> bv_ultP x y.
 Proof. intros. split; intros; unfold bv_ult, bv_ultP in *.
-       case_eq (size x =? size y); intros;
+       case_eq (size x =? size y)%N; intros;
        rewrite H0 in H; unfold ult_listP. now rewrite H.
        now contradict H.
        unfold ult_listP in *.
-       case_eq (size x =? size y); intros.
+       case_eq (size x =? size y)%N; intros.
        rewrite H0 in H.
        case_eq (ult_list x y); intros. easy.
        rewrite H1 in H. now contradict H.
@@ -1893,11 +1893,11 @@ Qed.
 
 Lemma bv_slt_B2P: forall x y, bv_slt x y = true <-> bv_sltP x y.
 Proof. intros. split; intros; unfold bv_slt, bv_sltP in *.
-       case_eq (size x =? size y); intros;
+       case_eq (size x =? size y)%N; intros;
        rewrite H0 in H; unfold slt_listP. now rewrite H.
        now contradict H.
        unfold slt_listP in *.
-       case_eq (size x =? size y); intros.
+       case_eq (size x =? size y)%N; intros.
        rewrite H0 in H.
        case_eq (slt_list x y); intros. easy.
        rewrite H1 in H. now contradict H.
@@ -1962,28 +1962,28 @@ Qed.
 
 Lemma bv_ult_not_eqP : forall x y, bv_ultP x y -> x <> y.
 Proof. intros x y. unfold bv_ultP.
-       case_eq (size x =? size y); intros.
+       case_eq (size x =? size y)%N; intros.
        - now apply ult_list_not_eqP in H0.
        - now contradict H0.
 Qed.
 
 Lemma bv_slt_not_eqP : forall x y, bv_sltP x y -> x <> y.
 Proof. intros x y. unfold bv_sltP.
-       case_eq (size x =? size y); intros.
+       case_eq (size x =? size y)%N; intros.
        - now apply slt_list_not_eqP in H0.
        - now contradict H0.
 Qed.
 
 Lemma bv_ult_not_eq : forall x y, bv_ult x y = true -> x <> y.
 Proof. intros x y. unfold bv_ult.
-       case_eq (size x =? size y); intros.
+       case_eq (size x =? size y)%N; intros.
        - now apply ult_list_not_eq in H0.
        - now contradict H0.
 Qed.
 
 Lemma bv_slt_not_eq : forall x y, bv_slt x y = true -> x <> y.
 Proof. intros x y. unfold bv_slt.
-       case_eq (size x =? size y); intros.
+       case_eq (size x =? size y)%N; intros.
        - now apply slt_list_not_eq in H0.
        - now contradict H0.
 Qed.
@@ -2258,7 +2258,7 @@ Qed.
                       size a = n1 -> size (@bv_extr i n0 n1 a) = n0%N.
   Proof. 
     intros. unfold bv_extr, size in *.
-    case_eq (n1 <? n0 + i).
+    case_eq (n1 <? n0 + i)%N.
     intros. now rewrite length_mk_list_false, N2Nat.id.
     intros.
     specialize (@length_extract a i (n0 + i)). intros.
@@ -2455,7 +2455,7 @@ Qed.
 
   (** bit-vector extension *)
 Definition bv_shl (a b : bitvector) : bitvector :=
-  if ((@size a) =? (@size b))
+  if ((@size a) =? (@size b))%N
   then shl_be a b
   else zeros (@size a).
 
@@ -2510,7 +2510,7 @@ Qed.
 
   (** bit-vector extension *)
 Definition bv_shr (a b : bitvector) : bitvector :=
-  if ((@size a) =? (@size b))
+  if ((@size a) =? (@size b))%N
   then shr_be a b
   else zeros (@size a).
 

@@ -65,7 +65,7 @@ val init_modules : string list list
 
 
 (* Int63 *)
-val int63_modules : string list list
+val int63_module : string list list
 val mkInt : int -> constr
 val cint : constr lazy_t
 

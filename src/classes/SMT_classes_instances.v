@@ -474,7 +474,7 @@ Section Int63.
   Local Open Scope int63_scope.
 
   Let int_lt x y :=
-    if Int63Native.ltb x y then True else False.
+    if x < y then True else False.
 
   Global Instance int63_ord : OrdType int.
   Proof.
@@ -486,13 +486,13 @@ Section Int63.
             simpl; try easy.
       contradict H1.
       rewrite not_false_iff_true.
-      rewrite Int63Axioms.ltb_spec in *.
+      rewrite ltb_spec in *.
       exact (Z.lt_trans _ _ _ H H0).
     - intros x y.
       case_eq (x < y); intro; simpl; try easy.
       intros.
-      rewrite Int63Axioms.ltb_spec in *.
-      rewrite <- Int63Properties.to_Z_eq.
+      rewrite ltb_spec in *.
+      rewrite <- Misc.to_Z_eq.
       exact (Z.lt_neq _ _ H).
   Defined.
 
@@ -503,19 +503,19 @@ Section Int63.
     intros x y.
     case_eq (x < y); intro;
       case_eq (x == y); intro; unfold lt in *; simpl.
-    - rewrite Int63Properties.eqb_spec in H0.
+    - rewrite Int63.eqb_spec in H0.
       contradict H0.
       assert (int_lt x y). unfold int_lt.
       rewrite H; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
     - apply LT. unfold int_lt. rewrite H; trivial.
-    - apply EQ. rewrite Int63Properties.eqb_spec in H0; trivial.
+    - apply EQ. rewrite Int63.eqb_spec in H0; trivial.
     - apply GT. unfold int_lt.
       case_eq (y < x); intro; simpl; try easy.
-      specialize (leb_ltb_eqb x y); intro.
+      specialize (Misc.leb_ltb_eqb x y); intro.
       contradict H2.
-      rewrite leb_negb_gtb. rewrite H1. simpl.
+      rewrite Misc.leb_negb_gtb. rewrite H1. simpl.
       red. intro. symmetry in H2.
       rewrite orb_true_iff in H2. destruct H2; contradict H2.
       rewrite H. auto.
@@ -523,7 +523,7 @@ Section Int63.
   Defined.
 
   Global Instance int63_eqbtype : EqbType int :=
-    {| eqb := Int63Native.eqb; eqb_spec := Int63Properties.eqb_spec |}.
+    {| eqb := Int63.eqb; eqb_spec := Int63.eqb_spec |}.
 
   Global Instance int63_dec : DecType int := EqbToDecType.
 
