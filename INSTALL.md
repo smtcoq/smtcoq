@@ -177,6 +177,14 @@ your shell), export the following environment variable to make it point at the
 export LFSCSIGS="$HOME/path/to/smtcoq/src/lfsc/tests/signatures/"
 ```
 
+If you installed SMTCoq via opam (recommended), the path for to SMTCoq
+(to replace `path/to/smtcoq`) is
+`.opam/NAMEOFTHESWITCH/.opam-switch/sources/coq-smtcoq.dev+COQVERSION`
+where `NAMEOFTHESWITCH` must be replaced by the name of the opam switch
+(`ocaml-base-compiler.4.09.0` if you created a new switch following the
+instructions above) and `COQVERSION` must be replaced by the first two
+parts of the version of Coq (`8.11`, `8.12` or `8.13`).
+
 If you don't want SMTCoq to spit the translated proof in your proof environment
 window, add the following optional definition (in the same file).
 
