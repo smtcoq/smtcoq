@@ -73,7 +73,7 @@ Then follow the instructions of the previous section.
 
 ### Requirements
 
-You need to have OCaml version >= 4.11.1 and Coq version 8.12.*.
+You need to have OCaml version >= 4.11.1 and Coq version 8.13.*.
 
 > **Warning**: The version of Coq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
@@ -111,16 +111,16 @@ opam switch create ocaml-base-compiler.4.11.1
 
 ### Install Coq
 
-After OCaml is installed, you can install Coq-8.12.1 through opam.
+After OCaml is installed, you can install Coq-8.13.2 through opam.
 
 ```bash
-opam install coq.8.12.1
+opam install coq.8.13.2
 ```
 
 If you also want to install CoqIDE at the same time you can do
 
 ```bash
-opam install coq.8.12.1 coqide.8.12.1
+opam install coq.8.13.2 coqide.8.13.2
 ```
 
 but you might need to install some extra packages and libraries for your system
