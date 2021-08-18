@@ -17,7 +17,7 @@ you want to use.
 
 ### In an existing switch
 
-You need to have OCaml version between 4.07 and 4.10 and Coq >= 8.11.
+You need to have OCaml version >= 4.09 and Coq >= 8.11.
 
 Simply add the coq-extra-dev repo to opam:
 ```bash
@@ -32,7 +32,7 @@ opam install coq-smtcoq
 
 Create a switch:
 ```bash
-opam switch create ocaml-base-compiler.4.07.1
+opam switch create ocaml-base-compiler.4.09.0
 eval $(opam env)
 ```
 add the Coq repos to opam:
