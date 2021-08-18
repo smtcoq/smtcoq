@@ -7,8 +7,7 @@ clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64) and Mac OS X.
 
 The simplest way is to install it using opam. You can also install it
-from the sources (this is mandatory if you want to use the native
-version, see below).
+from the sources.
 
 You will also need to [install the provers](#installation-of-the-provers)
 you want to use.
@@ -18,7 +17,7 @@ you want to use.
 
 ### In an existing switch
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.11.*.
+You need to have OCaml version between 4.07 and 4.10 and Coq >= 8.11.
 
 Simply add the coq-extra-dev repo to opam:
 ```bash
@@ -31,9 +30,9 @@ opam install coq-smtcoq
 
 ### In a new switch
 
-Create a switch with the last version of OCaml:
+Create a switch:
 ```bash
-opam switch create ocaml-base-compiler.4.10.0
+opam switch create ocaml-base-compiler.4.07.1
 eval $(opam env)
 ```
 add the Coq repos to opam:
@@ -195,7 +194,6 @@ which is known compatible with SMTCoq, and is already in proof
 production mode. To compile it, unpack the archive and use the following
 commands:
 ```
-autoconf
 ./configure
 make
 ```
