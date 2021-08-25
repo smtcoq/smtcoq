@@ -69,9 +69,11 @@ Definition map {A B:Type} (f:A -> B) (t:array A) : array B :=
   let (t,d) := td in
   (Map.map f t, f d, l).
 
+Module Export PArrayNotations.
 Delimit Scope array_scope with array.
 Notation "t '.[' i ']'" := (get t i) (at level 50) : array_scope.
 Notation "t '.[' i '<-' a ']'" := (set t i a) (at level 50) : array_scope.
+End PArrayNotations.
 
 Local Open Scope array_scope.
 
