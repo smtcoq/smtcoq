@@ -101,9 +101,11 @@ Definition length {A:Type} (t:array A) : int :=
 
 Definition copy {A:Type} (t:array A) : array A := t.
 
+Module Export PArrayNotations.
 Delimit Scope array_scope with array.
 Notation "t '.[' i ']'" := (get t i) (at level 50) : array_scope.
 Notation "t '.[' i '<-' a ']'" := (set t i a) (at level 50) : array_scope.
+End PArrayNotations.
 
 Local Open Scope array_scope.
 
