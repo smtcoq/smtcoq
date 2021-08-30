@@ -121,7 +121,7 @@ let cint = gen_constant int63_module "int"
 
 
 (* PArray *)
-let parray_modules = [["SMTCoq";"Array";"PArray"]]
+let parray_modules = [["SMTCoq";"PArray";"PArray"]]
 
 let cmake = gen_constant parray_modules "make"
 let cset = gen_constant parray_modules "set"
