@@ -163,6 +163,7 @@ Use the stable version 1.6 of CVC4 that is available either:
 - as a [MacOs binary](https://github.com/cvc5/cvc5/releases/download/1.6/cvc4-1.6-macos-opt)
 - from [the sources](https://github.com/cvc5/cvc5/releases/tag/1.6), using the following commands:
 ```
+./autogen.sh
 ./configure
 make
 ```
