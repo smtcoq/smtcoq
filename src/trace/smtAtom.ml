@@ -1343,15 +1343,18 @@ module Atom =
         let rec collect_types = function
           | [] -> ([],[])
           | x::xs as l ->
-             let ty = Structures.retyping_get_type_of env sigma x in
-             if Constr.iskind ty ||
-                  let c, _ = Structures.decompose_app ty in
-                  Structures.eq_constr c (Lazy.force cCompDec)
-             then
-               let (l1, l2) = collect_types xs in
-               (x::l1, l2)
-             else
-               ([], l)
+             let (l1, l2) = collect_types xs in
+             match l1 with
+               | [] -> 
+                 let ty = Structures.retyping_get_type_of env sigma x in
+                 if Constr.iskind ty ||
+                      let c, _ = Structures.decompose_app ty in
+                      Structures.eq_constr c (Lazy.force cCompDec)
+                 then
+                   (x::[], xs)
+                 else
+                   ([], l)
+               | _ -> (x::l1, l2)
         in
         let (args1, args2) = collect_types args in
         let c, args =
