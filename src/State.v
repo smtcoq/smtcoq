@@ -487,9 +487,9 @@ Module S.
     destruct (reflect_eqb id id0);subst.
     case_eq (id0 < length s);intros.
     rewrite PArray.get_set_same;trivial.
-    rewrite PArray.get_outofbound.
+    rewrite PArray.get_out_of_bounds.
     rewrite PArray.default_set.
-    rewrite <- (PArray.get_outofbound _ _ (length s)); trivial.
+    rewrite <- (PArray.get_out_of_bounds _ _ (length s)); trivial.
     rewrite <- not_true_iff_false, ltb_spec;auto with zarith.
     rewrite PArray.length_set;trivial.
     rewrite get_set_other;trivial.
@@ -626,7 +626,7 @@ Module S.
     case_eq (id < length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
     unfold C.valid;rewrite sort_correct;trivial.
-    generalize (Hs id);rewrite !PArray.get_outofbound, PArray.default_set;trivial.
+    generalize (Hs id);rewrite !PArray.get_out_of_bounds, PArray.default_set;trivial.
     rewrite length_set;trivial.
     rewrite get_set_other;trivial.
   Qed.
@@ -644,7 +644,7 @@ Module S.
     case_eq (id < length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
     unfold C.valid;rewrite sort_keep_correct;trivial.
-    generalize (Hs id);rewrite !PArray.get_outofbound, PArray.default_set;trivial.
+    generalize (Hs id);rewrite !PArray.get_out_of_bounds, PArray.default_set;trivial.
     rewrite length_set;trivial.
     rewrite get_set_other;trivial.
   Qed.

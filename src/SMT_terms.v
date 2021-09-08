@@ -216,7 +216,7 @@ Module Form.
     Proof.
       intros t Hd Hwf x;case_eq (x < PArray.length t);intros.
       apply wf_interp_form_lt;trivial.
-      unfold interp_state_var;rewrite !PArray.get_outofbound;trivial.
+      unfold interp_state_var;rewrite !PArray.get_out_of_bounds;trivial.
       rewrite default_t_interp, Hd;trivial.
       rewrite length_t_interp;trivial.
     Qed.
@@ -2315,7 +2315,7 @@ Qed.
       Proof.
         intros i;case_eq (i< PArray.length t_atom);intros.
         apply t_interp_wf_lt;trivial.
-        rewrite !PArray.get_outofbound;trivial.
+        rewrite !PArray.get_out_of_bounds;trivial.
         rewrite default_t_atom, default_t_interp;trivial.
         rewrite length_t_interp;trivial.
       Qed.
@@ -2521,7 +2521,7 @@ Qed.
       Proof.
         intros i;case_eq (i< PArray.length t_atom);intros.
         apply check_aux_interp_hatom_lt;trivial.
-        unfold get_type'; rewrite !PArray.get_outofbound;trivial.
+        unfold get_type'; rewrite !PArray.get_out_of_bounds;trivial.
         rewrite default_t_interp; simpl; exists (1%positive); auto.
         rewrite length_t_interp;trivial.
       Qed.

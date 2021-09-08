@@ -28,10 +28,8 @@
 -I trace
 -I verit
 -I zchaff
--I PArray
 -I ../3rdparty/alt-ergo
 
-PArray/PArray.v
 
 bva/BVList.v
 bva/Bva_checker.v

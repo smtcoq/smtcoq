@@ -466,7 +466,7 @@ Proof.
   simpl; f_equal; exact IH.
 Qed.
 
-Lemma to_list_In : forall {A} (t: array A) i,
+Lemma to_list_In : forall {A : Type} (t: array A) i,
   i < length t = true -> In (t.[i]) (to_list t).
   intros A t i; assert (Bt := to_Z_bounded (length t)); assert (Bi := to_Z_bounded i); rewrite ltb_spec; unfold to_list.
   rewrite <- in_rev.
@@ -579,7 +579,7 @@ Qed.
 Lemma get_amapi_outofbound : forall {A B} (f:int -> A -> B) t i,
   i < length t = false -> (amapi f t).[i] = f (length t) (default t).
 Proof.
-  intros A B f t i H1; rewrite get_outofbound.
+  intros A B f t i H1; rewrite get_out_of_bounds.
   apply default_amapi.
   rewrite length_amapi; auto.
 Qed.
