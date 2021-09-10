@@ -140,13 +140,13 @@ Tactic Notation "verit_no_check"           :=
                           end; vauto)
   ].
 
-Ltac cvc4            := prop2bool; [ .. | cvc4_bool; bool2prop ].
-Ltac cvc4_no_check   := prop2bool; [ .. | cvc4_bool_no_check; bool2prop ].
+(*Ltac cvc4            := prop2bool; [ .. | cvc4_bool; bool2prop ].
+Ltac cvc4_no_check   := prop2bool; [ .. | cvc4_bool_no_check; bool2prop ].*)
 
-Tactic Notation "smt" constr(h) := (prop2bool; [ .. | try verit h; cvc4_bool; try verit h; bool2prop ]).
-Tactic Notation "smt"           := (prop2bool; [ .. | try verit  ; cvc4_bool; try verit  ; bool2prop ]).
-Tactic Notation "smt_no_check" constr(h) := (prop2bool; [ .. | try verit_no_check h; cvc4_bool_no_check; try verit_no_check h; bool2prop]).
-Tactic Notation "smt_no_check"           := (prop2bool; [ .. | try verit_no_check  ; cvc4_bool_no_check; try verit_no_check  ; bool2prop]).
+Tactic Notation "smt" constr(h) := (prop2bool; [ .. | try verit h; (*cvc4_bool; try verit h;*) bool2prop ]).
+Tactic Notation "smt"           := (prop2bool; [ .. | try verit  ; (*cvc4_bool; try verit  ;*) bool2prop ]).
+Tactic Notation "smt_no_check" constr(h) := (prop2bool; [ .. | try verit_no_check h; (*cvc4_bool_no_check; try verit_no_check h;*) bool2prop]).
+Tactic Notation "smt_no_check"           := (prop2bool; [ .. | try verit_no_check  ; (*cvc4_bool_no_check; try verit_no_check  ;*) bool2prop]).
 
 
 

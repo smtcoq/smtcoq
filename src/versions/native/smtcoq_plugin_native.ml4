@@ -53,7 +53,7 @@ VERNAC COMMAND EXTEND Vernac_verit
   ]
 END
 
-VERNAC COMMAND EXTEND Vernac_lfsc
+(*VERNAC COMMAND EXTEND Vernac_lfsc
 | [ "Parse_certif_lfsc"
     ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
   [
@@ -71,7 +71,7 @@ VERNAC COMMAND EXTEND Vernac_lfsc
   [
     Lfsc.theorem name fsmt fproof
   ]
-END
+END*)
 
 TACTIC EXTEND Tactic_zchaff
 | [ "zchaff_bool" ] -> [ Zchaff.tactic () ]
@@ -93,7 +93,7 @@ TACTIC EXTEND Tactic_verit
 | [ "verit_bool_no_check_base" constr_list(lpl) ] -> [ error () ]
 END
 
-TACTIC EXTEND Tactic_cvc4
+(*TACTIC EXTEND Tactic_cvc4
 | [ "cvc4_bool" ] -> [ error () ]
 | [ "cvc4_bool_no_check" ] -> [ error () ]
-END
+END*)

@@ -33,22 +33,10 @@ VeritSyntax
 VeritParser
 VeritLexer
 
-Shashcons
-Hstring
-Type
-Ast
-Builtin
-Tosmtcoq
-Converter
-LfscParser
-LfscLexer
-
 Smtlib2_genConstr
 
 SmtCommands
 
 Verit
-
-Lfsc
 
 G_smtcoq

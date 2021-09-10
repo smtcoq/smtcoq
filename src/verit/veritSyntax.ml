@@ -20,8 +20,70 @@ open SmtTrace
 
 exception Sat
 
-type typ = | Inpu | Deep | True | Fals | Andp | Andn | Orp | Orn | Xorp1 | Xorp2 | Xorn1 | Xorn2 | Impp | Impn1 | Impn2 | Equp1 | Equp2 | Equn1 | Equn2 | Itep1 | Itep2 | Iten1 | Iten2 | Eqre | Eqtr | Eqco | Eqcp | Dlge | Lage | Lata | Dlde | Lade | Fins | Eins | Skea | Skaa | Qnts | Qntm | Reso | Weak | And | Nor | Or | Nand | Xor1 | Xor2 | Nxor1 | Nxor2 | Imp | Nimp1 | Nimp2 | Equ1 | Equ2 | Nequ1 | Nequ2 | Ite1 | Ite2 | Nite1 | Nite2 | Tpal | Tlap | Tple | Tpne | Tpde | Tpsa | Tpie | Tpma | Tpbr | Tpbe | Tpsc | Tppp | Tpqt | Tpqs | Tpsk | Subp | Flat | Hole | Bbva | Bbconst | Bbeq | Bbdis | Bbop | Bbadd | Bbmul | Bbult | Bbslt | Bbnot | Bbneg | Bbconc | Bbextr | Bbzext | Bbsext | Bbshl | Bbshr | Row1 | Row2 | Exte
-
+type typ = 
+  | Assume (* Inpu *)
+  | True
+  | Fals
+  | Notnot (* New *)
+  | Threso (* New *)
+  | Reso
+  | Taut (* New *)
+  | Cont (* New *)
+  | Refl (* New *)
+  | Trans (* New *)
+  | Cong (* New *)
+  | Eqre
+  | Eqtr
+  | Eqco
+  | Eqcp
+  | And
+  | Nor
+  | Or
+  | Nand
+  | Xor1 
+  | Xor2
+  | Nxor1 
+  | Nxor2
+  | Imp
+  | Nimp1
+  | Nimp2
+  | Equ1
+  | Equ2
+  | Nequ1
+  | Nequ2
+  | Andp
+  | Andn
+  | Orp
+  | Orn
+  | Xorp1
+  | Xorp2
+  | Xorn1
+  | Xorn2
+  | Impp
+  | Impn1
+  | Impn2
+  | Equp1
+  | Equp2
+  | Equn1
+  | Equn2
+  | Ite1
+  | Ite2
+  | Itep1
+  | Itep2
+  | Iten1
+  | Iten2
+  | Nite1
+  | Nite2
+  | Conndef (* New *)
+  | Andsimp (* New *)
+  | Orsimp (* New *)
+  | Notsimp (* New *)
+  | Impsimp (* New *)
+  | Eqsimp (* New *)
+  | Boolsimp (* New *)
+  | Acsimp (* New *)
+  | Itesimp (* New *)
+  | Equalsimp (* New *)
 
 
 (* About equality *)
@@ -254,7 +316,7 @@ let mk_clause (id,typ,value,ids_params) =
   let kind =
     match typ with
       (* Roots *)
-      | Inpu -> Root
+      | Assume -> Root
       (* Cnf conversion *)
       | True -> Other SmtCertif.True
       | Fals -> Other False
@@ -312,12 +374,6 @@ let mk_clause (id,typ,value,ids_params) =
       | Eqco -> mkCongr value
       | Eqcp -> mkCongrPred value
       (* Linear integer arithmetic *)
-      | Dlge | Lage | Lata -> mkMicromega value
-      | Lade               -> mkMicromega value (* TODO: utiliser un solveur plus simple *)
-      | Dlde ->
-        (match value with
-          | l::_ -> Other (LiaDiseq l)
-          | _ -> assert false)
       (* Resolution *)
       | Reso ->
          let ids_params = merge ids_params in
@@ -327,159 +383,25 @@ let mk_clause (id,typ,value,ids_params) =
                Res res
             | [fins_id] -> Same (get_clause fins_id)
             | [] -> assert false)
-      (* Clause weakening *)
-      | Weak ->
-        (match ids_params with
-         | [id] -> (* Other (Weaken (get_clause id, value)) *)
-           let cid = get_clause id in
-           (match cid.value with
-           | None -> Other (Weaken (cid, value))
-           | Some c -> Other (Weaken (cid, value))
-            (* need to add c, otherwise dosen't terminate or returns false,
-               we would like instead: clause_diff value c *)
-           )
-          | _ -> assert false)
-      (* Simplifications *)
-      | Tpal ->
-        (match ids_params with
-          | id::_ -> Same (get_clause id)
-          | _ -> assert false)
-      | Tple ->
-        (match ids_params with
-          | id::_ -> Same (get_clause id)
-          | _ -> assert false)
-      | Tpde ->
-        (match ids_params with
-          | id::_ -> mkDistinctElim (get_clause id) value
-          | _ -> assert false)
-      | Tpsa | Tlap ->
-        (match ids_params with
-          | id::_ -> mkSplArith (get_clause id) value
-          | _ -> assert false)
-      | Flat ->
-        (match ids_params, value with
-         | id::_, f :: _ -> Other (ImmFlatten(get_clause id, f))
-         | _ -> assert false)
-      (* Bit blasting *)
-      | Bbva ->
-         (match value with
-           | [f] -> Other (BBVar f)
-           | _ -> assert false)
-      | Bbconst ->
-         (match value with
-           | [f] -> Other (BBConst f)
-           | _ -> assert false)
-      | Bbeq ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBEq (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbdis ->
-         (match value with
-           | [f] -> Other (BBDiseq f)
-           | __ -> assert false)
-      | Bbop ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBOp (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbadd ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBAdd (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbmul ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBMul (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbult ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBUlt (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbslt ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBSlt (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbconc ->
-         (match ids_params, value with
-           | [id1;id2], [f] ->
-             Other (BBConc (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbextr ->
-         (match ids_params, value with
-           | [id], [f] -> Other (BBExtr (get_clause id, f))
-           | _, _ -> assert false)
-      | Bbzext ->
-         (match ids_params, value with
-           | [id], [f] -> Other (BBZextn (get_clause id, f))
-           | _, _ -> assert false)
-      | Bbsext ->
-         (match ids_params, value with
-           | [id], [f] -> Other (BBSextn (get_clause id, f))
-           | _, _ -> assert false)
-      | Bbshl ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBShl (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbshr ->
-         (match ids_params, value with
-           | [id1;id2], [f] -> Other (BBShr (get_clause id1, get_clause id2, f))
-           | _, _ -> assert false)
-      | Bbnot ->
-         (match ids_params, value with
-           | [id], [f] -> Other (BBNot (get_clause id, f))
-           | _, _ -> assert false)
-      | Bbneg ->
-         (match ids_params, value with
-           | [id], [f] -> Other (BBNeg (get_clause id, f))
-           | _, _ -> assert false)
-
-      | Row1 ->
-         (match value with
-           | [f] -> Other (RowEq f)
-           | _ -> assert false)
-
-      | Exte ->
-         (match value with
-           | [f] -> Other (Ext f)
-           | _ -> assert false)
-
-      | Row2 -> Other (RowNeq value)
-
-      (* Holes in proofs *)
-      | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
-
-      (* Quantifier instanciation *)
-      | Fins ->
-         begin match value, ids_params with
-           | [inst], [ref_th] ->
-              let cl_th = get_clause ref_th in
-              Other (Forall_inst (repr cl_th, inst))
-           | _ -> failwith "unexpected form of forall_inst" end
-      | Tpbr ->
-         begin match ids_params with
-           | [id] ->
-              Same (get_clause id)
-           | _ -> failwith "unexpected form of tmp_betared" end
-      | Tpqt ->
-         begin match ids_params with
-           | [id] ->
-              Same (get_clause id)
-           | _ -> failwith "unexpected form of tmp_qnt_tidy" end
 
       (* Not implemented *)
-      | Deep -> failwith "VeritSyntax.ml: rule deep_res not implemented yet"
-      | Eins -> failwith "VeritSyntax.ml: rule exists_inst not implemented yet"
-      | Skea -> failwith "VeritSyntax.ml: rule skolem_ex_ax not implemented yet"
-      | Skaa -> failwith "VeritSyntax.ml: rule skolem_all_ax not implemented yet"
-      | Qnts -> failwith "VeritSyntax.ml: rule qnt_simplify_ax not implemented yet"
-      | Qntm -> failwith "VeritSyntax.ml: rule qnt_merge_ax not implemented yet"
-      | Tpne -> failwith "VeritSyntax.ml: rule tmp_nary_elim not implemented yet"
-      | Tpie -> failwith "VeritSyntax.ml: rule tmp_ite_elim not implemented yet"
-      | Tpma -> failwith "VeritSyntax.ml: rule tmp_macrosubst not implemented yet"
-      | Tpbe -> failwith "VeritSyntax.ml: rule tmp_bfun_elim not implemented yet"
-      | Tpsc -> failwith "VeritSyntax.ml: rule tmp_sk_connector not implemented yet"
-      | Tppp -> failwith "VeritSyntax.ml: rule tmp_pm_process not implemented yet"
-      | Tpqs -> failwith "VeritSyntax.ml: rule tmp_qnt_simplify not implemented yet"
-      | Tpsk -> failwith "VeritSyntax.ml: rule tmp_skolemize not implemented yet"
-      | Subp -> failwith "VeritSyntax.ml: rule subproof not implemented yet"
+      | Notnot -> failwith "VeritSyntax.ml: rule notnot not implemented yet"
+      | Threso -> failwith "VeritSyntax.ml: rule threso not implemented yet"
+      | Taut -> failwith "VeritSyntax.ml: rule taut not implemented yet"
+      | Cont -> failwith "VeritSyntax.ml: rule cont not implemented yet"
+      | Refl -> failwith "VeritSyntax.ml: rule refl not implemented yet"
+      | Trans -> failwith "VeritSyntax.ml: rule trans not implemented yet"
+      | Cong -> failwith "VeritSyntax.ml: rule cong not implemented yet"
+      | Conndef -> failwith "VeritSyntax.ml: rule conndef not implemented yet"
+      | Andsimp -> failwith "VeritSyntax.ml: rule andsimp not implemented yet"
+      | Orsimp -> failwith "VeritSyntax.ml: rule orsimp not implemented yet"
+      | Notsimp -> failwith "VeritSyntax.ml: rule notsimp not implemented yet"
+      | Impsimp -> failwith "VeritSyntax.ml: rule impsimp not implemented yet"
+      | Eqsimp -> failwith "VeritSyntax.ml: rule eqsimp not implemented yet"
+      | Boolsimp -> failwith "VeritSyntax.ml: rule boolsimp not implemented yet"
+      | Acsimp -> failwith "VeritSyntax.ml: rule acsimp not implemented yet"
+      | Itesimp -> failwith "VeritSyntax.ml: rule itesimp not implemented yet"
+      | Equalsimp -> failwith "VeritSyntax.ml: rule equalsimp not implemented yet"
   in
   let cl =
     (* TODO: change this into flatten when necessary *)

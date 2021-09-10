@@ -20,7 +20,6 @@
 -I array
 -I cnf
 -I euf
--I lfsc
 -I lia
 -I smtlib2
 -I trace
@@ -104,23 +103,6 @@ verit/verit.ml
 verit/verit.mli
 verit/veritSyntax.ml
 verit/veritSyntax.mli
-
-lfsc/shashcons.mli
-lfsc/shashcons.ml
-lfsc/hstring.mli
-lfsc/hstring.ml
-lfsc/lfscParser.ml
-lfsc/lfscParser.mli
-lfsc/type.ml
-lfsc/ast.ml
-lfsc/ast.mli
-lfsc/translator_sig.mli
-lfsc/builtin.ml
-lfsc/tosmtcoq.ml
-lfsc/tosmtcoq.mli
-lfsc/converter.ml
-lfsc/lfsc.ml
-lfsc/lfscLexer.ml
 
 zchaff/cnfParser.ml
 zchaff/cnfParser.mli

@@ -55,26 +55,6 @@ VERNAC COMMAND EXTEND Vernac_verit CLASSIFIED AS QUERY
   ]
 END
 
-VERNAC COMMAND EXTEND Vernac_lfsc CLASSIFIED AS QUERY
-| [ "Parse_certif_lfsc"
-    ident(t_i) ident(t_func) ident(t_atom) ident(t_form) ident(root) ident(used_roots) ident(trace) string(fsmt) string(fproof) ] ->
-  [
-    Lfsc.parse_certif t_i t_func t_atom t_form root used_roots trace fsmt fproof
-  ]
-| [ "Lfsc_Checker" string(fsmt) string(fproof) ] ->
-  [
-    Lfsc.checker fsmt fproof
-  ]
-| [ "Lfsc_Checker_Debug" string(fsmt) string(fproof) ] ->
-  [
-    Lfsc.checker_debug fsmt fproof
-  ]
-| [ "Lfsc_Theorem" ident(name) string(fsmt) string(fproof) ] ->
-  [
-    Lfsc.theorem name fsmt fproof
-  ]
-END
-
 TACTIC EXTEND Tactic_zchaff
 | [ "zchaff_bool" ] -> [ Zchaff.tactic () ]
 | [ "zchaff_bool_no_check" ] -> [ Zchaff.tactic_no_check () ]
@@ -111,9 +91,4 @@ END
 TACTIC EXTEND Tactic_verit
 | [ "verit_bool_base" constr(lpl) ] -> [ Verit.tactic lpl (get_lemmas ()) ]
 | [ "verit_bool_no_check_base" constr(lpl) ] -> [ Verit.tactic_no_check lpl (get_lemmas ()) ]
-END
-
-TACTIC EXTEND Tactic_cvc4
-| [ "cvc4_bool" ] -> [ Lfsc.tactic () ]
-| [ "cvc4_bool_no_check" ] -> [ Lfsc.tactic_no_check () ]
 END
