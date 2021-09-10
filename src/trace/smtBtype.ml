@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2019                                          *)
+(*     Copyright (C) 2011 - 2021                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -13,7 +13,7 @@
 open SmtMisc
 open CoqTerms
 
-(** Syntaxified version of Coq type *)
+(** Reified version of Coq type *)
 
 type uninterpreted_type =
   (* Uninterpreted type for which a CompDec is already known
@@ -310,6 +310,6 @@ let of_coq_compdec reify t compdec =
                Hashtbl.add reify.tbl t res;
                res
          )
-      | _ -> assert false
+      | _ -> ty
   with Not_found ->
     declare_compdec reify t compdec

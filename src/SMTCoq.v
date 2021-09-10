@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2019                                          *)
+(*     Copyright (C) 2011 - 2021                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -11,7 +11,7 @@
 
 
 Require Export PropToBool.
-Require Export Int63 List PArray.
+Require Export Int63 List.
 Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
 Require Export Tactics.
 Require Export Conversion_tactics.

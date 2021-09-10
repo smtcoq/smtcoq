@@ -7,8 +7,7 @@ clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64) and Mac OS X.
 
 The simplest way is to install it using opam. You can also install it
-from the sources (this is mandatory if you want to use the native
-version, see below).
+from the sources.
 
 You will also need to [install the provers](#installation-of-the-provers)
 you want to use.
@@ -18,7 +17,7 @@ you want to use.
 
 ### In an existing switch
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.11.*.
+You need to have OCaml version >= 4.09 and Coq >= 8.11.
 
 Simply add the coq-extra-dev repo to opam:
 ```bash
@@ -31,9 +30,9 @@ opam install coq-smtcoq
 
 ### In a new switch
 
-Create a switch with the last version of OCaml:
+Create a switch:
 ```bash
-opam switch create ocaml-base-compiler.4.10.0
+opam switch create ocaml-base-compiler.4.09.0
 eval $(opam env)
 ```
 add the Coq repos to opam:
@@ -80,12 +79,6 @@ You need to have OCaml version >= 4.09.0 and Coq version 8.9.*.
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
 > with OCaml version >= 4.09.0.
-
-If you want to use SMTCoq with high performance to check large proof
-certificates, you need to use the [version of Coq with native
-data-structures](https://github.com/smtcoq/native-coq) instead of
-Coq-8.9 (warning: this allows one to use the vernacular commands but not
-the tactics).
 
 ### Install opam
 
@@ -144,39 +137,6 @@ make
 make install
 ```
 
-## Installation with native-coq (not recommended except for high performances)
-
-> **Warning**: this installation procedure is recommended only to use
-> the vernacular commands efficiently (in particular, to check very
-> large proof certificates). It does not allow one to use the tactics.
-
-1. Download the git version of Coq with native compilation:
-```bash
-git clone https://github.com/smtcoq/native-coq.git
-```
-   and compile it by following the instructions available in the
-   repository. We recommand that you do not install it, but only compile
-   it in local:
-```bash
-./configure -local
-make
-```
-
-2. Set an environment variable COQBIN to the directory where Coq's
-   binaries are; for instance:
-```bash
-export COQBIN=/home/jdoe/native-coq/bin/
-```
-   (the final slash is mandatory).
-
-3. Compile and install SMTCoq by using the following commands in the src directory.
-```
-./configure.sh -native
-make
-make install
-```
-
-
 ## Installation of the provers
 
 To use SMTCoq, we recommend installing the following two SMT solvers:
@@ -218,6 +178,14 @@ your shell), export the following environment variable to make it point at the
 export LFSCSIGS="$HOME/path/to/smtcoq/src/lfsc/tests/signatures/"
 ```
 
+If you installed SMTCoq via opam (recommended), the path for to SMTCoq
+(to replace `path/to/smtcoq`) is
+`.opam/NAMEOFTHESWITCH/.opam-switch/sources/coq-smtcoq.dev+COQVERSION`
+where `NAMEOFTHESWITCH` must be replaced by the name of the opam switch
+(`ocaml-base-compiler.4.09.0` if you created a new switch following the
+instructions above) and `COQVERSION` must be replaced by the first two
+parts of the version of Coq (`8.11`, `8.12` or `8.13`).
+
 If you don't want SMTCoq to spit the translated proof in your proof environment
 window, add the following optional definition (in the same file).
 
@@ -234,7 +202,6 @@ which is known compatible with SMTCoq, and is already in proof
 production mode. To compile it, unpack the archive and use the following
 commands:
 ```
-autoconf
 ./configure
 make
 ```

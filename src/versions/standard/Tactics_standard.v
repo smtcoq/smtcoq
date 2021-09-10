@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2019                                          *)
+(*     Copyright (C) 2011 - 2021                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -19,7 +19,7 @@ Declare ML Module "smtcoq_plugin".
 
 (** Collect all the hypotheses from the context *)
 
-Ltac get_hyps_acc acc k :=
+Ltac get_hyps_acc acc :=
   match goal with
   | [ H : ?P |- _ ] =>
     let T := type of P in
@@ -28,15 +28,15 @@ Ltac get_hyps_acc acc k :=
       lazymatch P with
       | id _ => fail
       | _ =>
-        change P with (id P) in H;
+        let _ := match goal with _ => change P with (id P) in H end in
         match acc with
-        | Some ?t => get_hyps_acc (Some (H, t)) k
-        | None => get_hyps_acc (Some H) k
+        | Some ?t => get_hyps_acc (Some (H, t))
+        | None => get_hyps_acc (Some H)
         end
       end
     | _ => fail
     end
-  | _ => k acc
+  | _ => acc
   end.
 
 Ltac eliminate_id :=
@@ -48,20 +48,23 @@ Ltac eliminate_id :=
     end
   end.
 
-Ltac get_hyps k := get_hyps_acc (@None nat) ltac:(fun Hs => eliminate_id; k Hs).
+Ltac get_hyps :=
+  let Hs := get_hyps_acc (@None nat) in
+  let _ := match goal with _ => eliminate_id end in
+  Hs.
 
 
-Section Test.
-  Variable A : Type.
-  Hypothesis H1 : forall a:A, a = a.
-  Variable n : Z.
-  Hypothesis H2 : n = 17%Z.
+(* Section Test. *)
+(*   Variable A : Type. *)
+(*   Hypothesis H1 : forall a:A, a = a. *)
+(*   Variable n : Z. *)
+(*   Hypothesis H2 : n = 17%Z. *)
 
-  Goal True.
-  Proof.
-    (* get_hyps ltac:(fun acc => idtac acc). *)
-  Abort.
-End Test.
+(*   Goal True. *)
+(*   Proof. *)
+(*     let Hs := get_hyps in idtac Hs. *)
+(*   Abort. *)
+(* End Test. *)
 
 
 (** Tactics in bool *)
@@ -70,24 +73,26 @@ Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; auto with
 Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; auto with typeclass_instances.
 
 Tactic Notation "verit_bool" constr(h) :=
-  get_hyps ltac:(fun Hs =>
-                   match Hs with
-                   | Some ?Hs => verit_bool_base_auto (Some (h, Hs))
-                   | None => verit_bool_base_auto (Some h)
-                   end;
-                   vauto).
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_base_auto (Some (h, Hs))
+  | None => verit_bool_base_auto (Some h)
+  end;
+  vauto.
 Tactic Notation "verit_bool"           :=
-  get_hyps ltac:(fun Hs => verit_bool_base_auto Hs; vauto).
+  let Hs := get_hyps in
+  verit_bool_base_auto Hs; vauto.
 
 Tactic Notation "verit_bool_no_check" constr(h) :=
-  get_hyps ltac:(fun Hs =>
-                   match Hs with
-                   | Some ?Hs => verit_bool_no_check_base_auto (Some (h, Hs))
-                   | None => verit_bool_no_check_base_auto (Some h)
-                   end;
-                   vauto).
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_no_check_base_auto (Some (h, Hs))
+  | None => verit_bool_no_check_base_auto (Some h)
+  end;
+  vauto.
 Tactic Notation "verit_bool_no_check"           :=
-  get_hyps ltac:(fun Hs => verit_bool_no_check_base_auto Hs; vauto).
+  let Hs := get_hyps in
+  fun Hs => verit_bool_no_check_base_auto Hs; vauto.
 
 
 (** Tactics in Prop **)
@@ -98,46 +103,46 @@ Ltac zchaff_no_check := prop2bool; zchaff_bool_no_check; bool2prop.
 Tactic Notation "verit" constr(h) :=
   prop2bool;
   [ .. | prop2bool_hyps h;
-         [ .. | get_hyps ltac:(fun Hs =>
-                                 match Hs with
-                                   | Some ?Hs =>
-                                     prop2bool_hyps Hs;
-                                     [ .. | verit_bool_base_auto (Some (h, Hs)) ]
-                                   | None => verit_bool_base_auto (Some h)
-                                 end; vauto)
+         [ .. | let Hs := get_hyps in
+                match Hs with
+                | Some ?Hs =>
+                  prop2bool_hyps Hs;
+                  [ .. | verit_bool_base_auto (Some (h, Hs)) ]
+                | None => verit_bool_base_auto (Some h)
+                end; vauto
          ]
   ].
 Tactic Notation "verit"           :=
   prop2bool;
-  [ .. | get_hyps ltac:(fun Hs =>
-                          match Hs with
-                          | Some ?Hs =>
-                            prop2bool_hyps Hs;
-                            [ .. | verit_bool_base_auto (Some Hs) ]
-                          | None => verit_bool_base_auto (@None nat)
-                          end; vauto)
+  [ .. | let Hs := get_hyps in
+         match Hs with
+         | Some ?Hs =>
+           prop2bool_hyps Hs;
+           [ .. | verit_bool_base_auto (Some Hs) ]
+         | None => verit_bool_base_auto (@None nat)
+         end; vauto
   ].
 Tactic Notation "verit_no_check" constr(h) :=
   prop2bool;
   [ .. | prop2bool_hyps h;
-         [ .. | get_hyps ltac:(fun Hs =>
-                                 match Hs with
-                                   | Some ?Hs =>
-                                     prop2bool_hyps Hs;
-                                     [ .. | verit_bool_no_check_base_auto (Some (h, Hs)) ]
-                                   | None => verit_bool_no_check_base_auto (Some h)
-                                 end; vauto)
+         [ .. | let Hs := get_hyps in
+                match Hs with
+                | Some ?Hs =>
+                  prop2bool_hyps Hs;
+                  [ .. | verit_bool_no_check_base_auto (Some (h, Hs)) ]
+                | None => verit_bool_no_check_base_auto (Some h)
+                end; vauto
          ]
   ].
 Tactic Notation "verit_no_check"           :=
   prop2bool;
-  [ .. | get_hyps ltac:(fun Hs =>
-                          match Hs with
-                          | Some ?Hs =>
-                            prop2bool_hyps Hs;
-                            [ .. | verit_bool_no_check_base_auto (Some Hs) ]
-                          | None => verit_bool_no_check_base_auto (@None nat)
-                          end; vauto)
+  [ .. | let Hs := get_hyps in
+         match Hs with
+         | Some ?Hs =>
+           prop2bool_hyps Hs;
+           [ .. | verit_bool_no_check_base_auto (Some Hs) ]
+         | None => verit_bool_no_check_base_auto (@None nat)
+         end; vauto
   ].
 
 (*Ltac cvc4            := prop2bool; [ .. | cvc4_bool; bool2prop ].

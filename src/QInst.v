@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2019                                          *)
+(*     Copyright (C) 2011 - 2021                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -74,6 +74,13 @@ Proof.
   destruct a; destruct c; intuition.
 Qed.
 
+Lemma eqb_or_split a b c:
+  Bool.eqb c (a || b) = true -> negb c || a || b = true.
+Proof.
+  intro H.
+  destruct a; destruct b; destruct c; intuition.
+Qed.
+
 (** verit considers equality modulo its symmetry, so we have to recover the
     right direction in the instances of the theorems *)
 (* TODO: currently incomplete *)
@@ -81,14 +88,7 @@ Qed.
 (* An auxiliary lemma to rewrite an eqb_of_compdec into its the symmetrical version *)
 Lemma eqb_of_compdec_sym (A:Type) (HA:CompDec A) (a b:A) :
   eqb_of_compdec HA b a = eqb_of_compdec HA a b.
-Proof.
-  destruct (@eq_dec _ (@Decidable _ HA) a b) as [H|H].
-  - now rewrite H.
-  - case_eq (eqb_of_compdec HA a b).
-    + now rewrite <- !(@compdec_eq_eqb _ HA).
-    + intros _. case_eq (eqb_of_compdec HA b a); auto.
-      intro H1. elim H. symmetry. now rewrite compdec_eq_eqb.
-Qed.
+Proof. apply eqb_sym2. Qed.
 
 (* First strategy: change the order of all equalities in the goal or the
    hypotheses
@@ -201,6 +201,10 @@ Ltac vauto :=
                          first [ strategy1 H
                                | strategy2 H ]
                        ]
+               | [ |- (negb ?A || ?B || ?C) = true ] =>
+                 eapply eqb_or_split;
+                 first [ strategy1 H
+                       | strategy2 H ]
                end
              ]
       );

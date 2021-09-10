@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2019                                          *)
+(*     Copyright (C) 2011 - 2021                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -1263,3 +1263,103 @@ Section UnknowUnderForall.
   Goal forall (l : list Z) (x : Z), hd_error l = Some x -> l <> nil.
   Proof. verit. Qed.
 End UnknowUnderForall.
+
+
+Section CompDecHypotheses.
+  Variable A : Type.
+  Variable H : CompDec A.
+  Variable x : A.
+  Variable l2 : list A.
+  Hypothesis H1 : forall (x y : A) (x0 y0 : list A),
+      x :: x0 = y :: y0 -> y = x /\ y0 = x0.
+  Hypothesis H2 : forall (H : A) (H0 : list A), nil = H :: H0 -> False.
+  Hypothesis H7_bool : forall (H : bool) (H0 H1 : list bool),
+      ((H :: H0) ++ H1)%list = H :: H0 ++ H1.
+  Hypothesis H7_A : forall (H : A) (H0 H1 : list A),
+      ((H :: H0) ++ H1)%list = H :: H0 ++ H1.
+  Hypothesis H6_bool : forall H : list bool, (nil ++ H)%list = H.
+  Hypothesis H6_A : forall H : list A, (nil ++ H)%list = H.
+  Variable search : forall {A : Type} {H: CompDec A}, A -> list A -> bool.
+  Arguments search {_ _} _ _.
+  Hypothesis H5_bool : forall (H : CompDec bool) (H0 H1 : bool) (H2 : list bool),
+      search H0 (H1 :: H2) =
+      (if eqb_of_compdec H H0 H1 then true else search H0 H2).
+  Hypothesis H5_A : forall (H : CompDec A) (H0 H1 : A) (H2 : list A),
+      search H0 (H1 :: H2) =
+      (if eqb_of_compdec H H0 H1 then true else search H0 H2).
+  Hypothesis H4_bool : forall (H : CompDec bool) (H0 : bool), search H0 nil = false.
+  Hypothesis H4_A : forall (H : CompDec A) (H0 : A), search H0 nil = false.
+
+  Goal search x l2 = search x l2.
+  Proof. verit. Qed.
+
+End CompDecHypotheses.
+
+
+Section CompDecOnInterpretedType.
+  Variable A : Type.
+  Variable H : CompDec A.
+  Variable x : A.
+  Variable l2 : list A.
+  Variable Hcompdec : CompDec (list A).
+  Variable H1 : (forall (H3 H4 : A) (H5 H6 : list A),
+        eqb_of_compdec Hcompdec (H3 :: H5) (H4 :: H6) --->
+        eqb_of_compdec H H4 H3 && eqb_of_compdec Hcompdec H6 H5 = true).
+  Variable H2 : (forall (H3 : A) (H4 : list A),
+        eqb_of_compdec Hcompdec nil (H3 :: H4) ---> false = true).
+  Variable Hcompdec0 : CompDec (list bool).
+  Variable H7_bool : (forall (H3 : bool) (H4 H5 : list bool),
+             eqb_of_compdec Hcompdec0 ((H3 :: H4) ++ H5)%list (H3 :: H4 ++ H5) = true).
+  Variable H7_A : (forall (H3 : A) (H4 H5 : list A),
+          eqb_of_compdec Hcompdec ((H3 :: H4) ++ H5)%list (H3 :: H4 ++ H5) = true).
+  Variable H6_bool : (forall H3 : list bool,
+             eqb_of_compdec Hcompdec0 (nil ++ H3)%list H3 = true).
+  Variable H6_A : (forall H3 : list A, eqb_of_compdec Hcompdec (nil ++ H3)%list H3 = true).
+  Variable c : CompDec bool.
+  Variable search : forall {A : Type} {H: CompDec A}, A -> list A -> bool.
+  Arguments search {_ _} _ _.
+  Variable H5_bool : (forall (H3 H4 : bool) (H5 : list bool),
+             search H3 (H4 :: H5) <---> eqb_of_compdec c H3 H4 || search H3 H5 = true).
+  Variable H5_A : (forall (H3 H4 : A) (H5 : list A),
+          search H3 (H4 :: H5) <---> eqb_of_compdec H H3 H4 || search H3 H5 = true).
+  Variable H4_bool : (forall H3 : bool, search H3 nil <---> false = true).
+  Variable H4_A : (forall H3 : A, search H3 nil <---> false = true).
+
+  Goal search x l2 <---> search x l2 = true.
+  Proof. verit. Qed.
+
+End CompDecOnInterpretedType.
+
+
+
+Section Issue92.
+  Variable F : 0 = 1%Z.
+
+  Goal false = false.
+  Proof. verit_no_check. Qed.
+
+  Goal 0 = 2.
+  Proof. verit_no_check. Abort.
+End Issue92.
+
+
+Section Vauto.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable H0 : forall (x y : A) (x0 y0 : list A), x :: x0 = y :: y0 -> y = x /\ y0 = x0.
+  Variable H1 : forall (H : A) (H0 : list A), nil = H :: H0 -> False.
+  Variable search : forall {A : Type} {H: CompDec A}, A -> list A -> bool.
+  Arguments search {_ _} _ _.
+  Variable H4_A : forall (H : CompDec A) (H0 H1 : A) (H2 : list A),
+         search H0 (H1 :: H2) = eqb_of_compdec H H0 H1 || search H0 H2.
+  Variable H2 : forall (H : CompDec (list A)) (H0 H1 : list A) (H2 : list (list A)),
+       search H0 (H1 :: H2) = eqb_of_compdec H H0 H1 || search H0 H2.
+  Variable H3_A : forall (H : CompDec A) (H0 : A), search H0 nil = false.
+  Variable H4 : forall (H : CompDec (list A)) (H0 : list A), search H0 nil = false.
+  Variables a b : A.
+  Variable l : list A.
+  Variable H : search b (a :: l).
+
+  Goal eqb_of_compdec HA a b \/ search b l.
+  Proof. verit_no_check. Qed.
+End Vauto.
