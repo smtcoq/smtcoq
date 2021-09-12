@@ -176,7 +176,8 @@ let call_verit _ rt ro ra_quant rf_quant first lsmt =
   let logfilename = Filename.chop_extension filename ^ ".vtlog" in
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
   close_out woc;
-  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " 2> " ^ wname in
+  let command = "veriT --proof-prune --proof-merge --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " 2> " ^ wname in
+  (*--proof-merge --proof-with-sharing --cnf-definitional*)
   Format.eprintf "%s@." command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
