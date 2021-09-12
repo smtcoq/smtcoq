@@ -71,37 +71,30 @@
 
 line:
   | SAT EOL { raise Sat }
-  | LPAREN ASSUME SYMBOL lit_list RPAREN EOL
-    { let id = symbol_to_id $3 in
-      let _, l = list_dec $4 in
-      mk_clause (id, Assume, l, []) }
-  | LPAREN STEP SYMBOL clause COLRULE rulename RPAREN EOL
-    { let id = symbol_to_id $3 in
-      mk_clause (id, $6, $4, []) }
-  | LPAREN STEP SYMBOL clause COLRULE rulename COLPREMISES LPAREN symbol_list RPAREN RPAREN EOL
-    { let id = symbol_to_id $3 in
-      mk_clause (id, $6, $4, $9) }
-  | LPAREN STEP SYMBOL clause COLRULE rulename COLPREMISES LPAREN symbol_list RPAREN
-      COLARGS LPAREN int_list RPAREN RPAREN EOL
-    { let id = symbol_to_id $3 in
-      mk_clause (id, $6, $4, ($9 @ $13)) }
-  | LPAREN STEP SYMBOL clause COLRULE rulename COLARGS LPAREN int_list RPAREN RPAREN EOL
-    { let id = symbol_to_id $3 in
-      mk_clause (id, $6, $4, $9) }
+  | LPAREN ASSUME s=SYMBOL l=lit RPAREN EOL
+    { let id = symbol_to_id s in
+      let _, l' = l in
+      mk_clause (id, Assume, [l'], []) }
+  | LPAREN STEP s=SYMBOL c=clause COLRULE r=rulename RPAREN EOL
+    { let id = symbol_to_id s in
+      mk_clause (id, r, c, []) }
+  | LPAREN STEP s=SYMBOL c=clause COLRULE r=rulename COLPREMISES LPAREN prems=SYMBOL+ RPAREN RPAREN EOL
+    { let id = symbol_to_id s in
+      let prems' = List.map symbol_to_id prems in
+      mk_clause (id, r, c, prems') }
+  | LPAREN STEP s=SYMBOL c=clause COLRULE r=rulename COLPREMISES LPAREN prems=SYMBOL+ RPAREN
+      COLARGS LPAREN args=INT+ RPAREN RPAREN EOL
+    { let id = symbol_to_id s in
+      let prems' = List.map symbol_to_id prems in
+      mk_clause (id, r, c, (prems' @ args)) }
+  | LPAREN STEP s=SYMBOL c=clause COLRULE r=rulename COLARGS LPAREN args=INT+ RPAREN RPAREN EOL
+    { let id = symbol_to_id s in
+      mk_clause (id, r, c, args) }
   /*| LPAREN ANCHOR COLSTEP SYMBOL RPAREN { "" }
   | LPAREN ANCHOR COLSTEP SYMBOL COLARGS proof_args RPAREN { "" }
   | LPAREN DEFINEFUN function_def RPAREN { "" }*/
 ;
 
-symbol_list:
-  | SYMBOL { [symbol_to_id $1] }
-  | SYMBOL symbol_list { (symbol_to_id $1)::$2 }
-;
-
-int_list:
-  | INT { [$1] }
-  | INT int_list { $1::$2 }
-;
 /*
   | SAT                                                    { raise Sat }
   | INT COLON LPAR typ clause                   RPAR EOL   { mk_clause ($1,$4,$5,[]) }
@@ -161,37 +154,33 @@ sorted_var:
 ;*/
 
 clause:
-  | LPAREN CL RPAREN { [] }
-  | LPAREN CL lit_list RPAREN  { let _, l = list_dec $3 in l }
-;
-
-lit_list:
-  | lit                                                    { [$1] }
-  | lit lit_list                                           { $1::$2 }
+  | LPAREN CL lits=lit* RPAREN 
+    { let _, l = list_dec lits in l }
 ;
 
 lit:   /* returns a SmtAtom.Form.t option */
-  | term                                              
-  { let decl, t = $1 in decl, Form.lit_of_atom_form_lit rf (decl, t) }
-  | LPAREN NOT lit RPAREN                                      { apply_dec Form.neg $3 }
+  | t=term                                              
+  { let decl, t' = t in decl, Form.lit_of_atom_form_lit rf (decl, t') }
+  | LPAREN NOT l=lit RPAREN 
+  { apply_dec Form.neg l }
 ;
 
 term: /* term will produce many shift/reduce conflicts */
   | TRUE                        { true, Form.Form Form.pform_true }
   | FALSE                       { true, Form.Form Form.pform_false }
   /*| LPAREN NOT term RPAREN      { apply_dec Form.neg $3 }*/
-  | LPAREN IMPLIES lit_list RPAREN 
+  | LPAREN IMPLIES lits=lit* RPAREN 
     { apply_dec (fun x -> Form.Form (Fapp (Fimp, Array.of_list x))) 
-                (list_dec $3) }
-  | LPAREN AND lit_list RPAREN 
+                (list_dec lits) }
+  | LPAREN AND lits=lit* RPAREN 
     { apply_dec (fun x -> Form.Form (Fapp (Fand, Array.of_list x))) 
-                (list_dec $3) }
-  | LPAREN OR lit_list RPAREN
+                (list_dec lits) }
+  | LPAREN OR lits=lit* RPAREN
     { apply_dec (fun x -> Form.Form (Fapp (For, Array.of_list x))) 
-                (list_dec $3) }
-  | LPAREN XOR lit_list RPAREN
+                (list_dec lits) }
+  | LPAREN XOR lits=lit* RPAREN
     { apply_dec (fun x -> Form.Form (Fapp (Fxor, Array.of_list x))) 
-                (list_dec $3) }
+                (list_dec lits) }
   /*| SPECCONST { "" }
   | qual_id { "" }
   | LPAREN qual_id term+ RPAREN { "" }
