@@ -121,22 +121,28 @@ attr:
   | KEYWORD attr_val { "" }
 ;*/
 
-/*ident:
-  | SYMBOL { "" }
-  | ISYMBOL { "" }
+ident:
+  | s=SYMBOL 
+  { match find_opt_qvar s with
+    | Some bt   -> false, Form.Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name s) [||] bt, [||])))
+    | None      -> true, Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun s, [||]))) }
+  | i=ISYMBOL
+  { match find_opt_qvar i with
+    | Some bt   -> false, Form.Atom (Atom.get ~declare:false ra (Aapp (dummy_indexed_op (Rel_name i) [||] bt, [||])))
+    | None      -> true, Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun i, [||]))) }
 ;
 
-sort:
+/*sort:
   | ident { "" }
   | ident sort+ { "" }
 ;*/
 
-/*qual_id:
-  | ident { "" }
-  | LPAREN AS ident sort RPAREN { "" }
+qual_id:
+  | i=ident { i }
+  /*| LPAREN AS ident sort RPAREN { "" }*/
 ;
 
-var_binding:
+/*var_binding:
   | LPAREN SYMBOL term RPAREN { "" }
 ;
 
@@ -181,9 +187,20 @@ term: /* term will produce many shift/reduce conflicts */
   | LPAREN XOR lits=lit* RPAREN
     { apply_dec (fun x -> Form.Form (Fapp (Fxor, Array.of_list x))) 
                 (list_dec lits) }
-  /*| SPECCONST { "" }
-  | qual_id { "" }
-  | LPAREN qual_id term+ RPAREN { "" }
+  | q=qual_id                   { q }
+  | i=INT                       { true, Form.Atom (Atom.hatom_Z_of_int ra i) }
+  | b=BIGINT                    { true, Form.Atom (Atom.hatom_Z_of_bigint ra b) }
+  | LPAREN f=SYMBOL l=term+ RPAREN
+    { let args = List.map (fun x -> match x with 
+                                    | decl, Form.Atom h -> (decl, h)
+                                    | _ -> assert false)
+                          l in
+      match find_opt_qvar f with 
+      | Some bt -> let op = dummy_indexed_op (Rel_name f) [||] bt in 
+                   false, Form.Atom (Atom.get ~declare:false ra (Aapp (op, Array.of_list (snd (list_dec args))))) 
+      | None ->    let dl, l = list_dec args in 
+                   dl, Form.Atom (Atom.get ra ~declare:dl (Aapp (SmtMaps.get_fun f, Array.of_list l))) }
+  /*
   | LPAREN LET LPAREN var_binding+ RPAREN term RPAREN { "" }
   | LPAREN FORALL LPAREN sorted_var+ RPAREN term RPAREN { "" }
   | LPAREN EXISTS LPAREN sorted_var+ RPAREN term RPAREN { "" }
