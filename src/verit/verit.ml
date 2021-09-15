@@ -99,7 +99,9 @@ let import_trace ra_quant rf_quant filename first lsmt =
        select !confl;
        occur !confl;
        (alloc !cfirst, !confl)
-    | Parsing.Parse_error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
+    (*| Parsing.Parse_error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))*)
+    | VeritParser.Error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
+    | _ -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
 
 
 let clear_all () =

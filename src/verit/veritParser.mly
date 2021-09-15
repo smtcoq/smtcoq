@@ -266,6 +266,10 @@ rulename:
   | ITEN2 { Iten2 }
   | NITE1 { Nite1 }
   | NITE2 { Nite2 }
+  | ANDSIMP { Hole }
+  | ORSIMP { Hole }
+  | NOTSIMP { Hole }
+  | NOTNOT { Hole }
 /*  | CONNDEF { Conndef }
   | ANDSIMP { Andsimp }
   | ORSIMP { Orsimp }

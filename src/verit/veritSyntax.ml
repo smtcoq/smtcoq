@@ -84,6 +84,7 @@ type typ =
   | Acsimp (* New *)
   | Itesimp (* New *)
   | Equalsimp (* New *)
+  | Hole
 
 
 (* About equality *)
@@ -383,6 +384,9 @@ let mk_clause (id,typ,value,ids_params) =
                Res res
             | [fins_id] -> Same (get_clause fins_id)
             | [] -> assert false)
+
+      (* Holes in proofs *)
+      | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
 
       (* Not implemented *)
       | Notnot -> failwith "VeritSyntax.ml: rule notnot not implemented yet"

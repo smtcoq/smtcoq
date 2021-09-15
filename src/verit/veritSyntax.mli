@@ -78,6 +78,7 @@ type typ =
   | Acsimp (* New *)
   | Itesimp (* New *)
   | Equalsimp (* New *)
+  | Hole
 
 val get_clause : int -> SmtAtom.Form.t SmtCertif.clause
 val add_clause : int -> SmtAtom.Form.t SmtCertif.clause -> unit
