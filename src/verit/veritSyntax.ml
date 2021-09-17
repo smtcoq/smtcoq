@@ -376,7 +376,7 @@ let mk_clause (id,typ,value,ids_params) =
       | Eqcp -> mkCongrPred value
       (* Linear integer arithmetic *)
       (* Resolution *)
-      | Reso ->
+      | Reso | Threso ->
          let ids_params = merge ids_params in
          (match ids_params with
             | cl1::cl2::q ->
@@ -390,7 +390,6 @@ let mk_clause (id,typ,value,ids_params) =
 
       (* Not implemented *)
       | Notnot -> failwith "VeritSyntax.ml: rule notnot not implemented yet"
-      | Threso -> failwith "VeritSyntax.ml: rule threso not implemented yet"
       | Taut -> failwith "VeritSyntax.ml: rule taut not implemented yet"
       | Cont -> failwith "VeritSyntax.ml: rule cont not implemented yet"
       | Refl -> failwith "VeritSyntax.ml: rule refl not implemented yet"

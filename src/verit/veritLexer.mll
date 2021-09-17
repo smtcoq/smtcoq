@@ -169,6 +169,7 @@ rule token = parse
   | "exists" { EXISTS }
   | "match" { MATCH }
   | "Formula is Satisfiable" { SAT }
+  | "=" { EQ }
   | spec_constant   { let s = Lexing.lexeme lexbuf in 
                       SPECCONST s }
   | keyword         { let k = Lexing.lexeme lexbuf in 

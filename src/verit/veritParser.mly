@@ -63,6 +63,7 @@
 %token EQSIMP BOOLSIMP ACSIMP
 %token ITESIMP
 %token EQUALSIMP
+%token EQ
 
 %type <int> line
 %start line
@@ -97,10 +98,10 @@ line:
 
 /*
   | SAT                                                    { raise Sat }
-  | INT COLON LPAR typ clause                   RPAR EOL   { mk_clause ($1,$4,$5,[]) }
-  | INT COLON LPAR typ clause clause_ids_params RPAR EOL   { mk_clause ($1,$4,$5,$6) }
-  | INT COLON LPAR TPQT LPAR SHARPINT COLON LPAR forall_decl RPAR RPAR INT RPAR EOL { add_solver $6 $9; add_ref $6 $1; mk_clause ($1, Tpqt, [], [$12]) }
-  | INT COLON LPAR FINS LPAR SHARPINT COLON LPAR OR LPAR NOT SHARPINT RPAR lit RPAR RPAR RPAR EOL
+  | INT COLON LPAREN typ clause                   RPAREN EOL   { mk_clause ($1,$4,$5,[]) }
+  | INT COLON LPAREN typ clause clause_ids_params RPAREN EOL   { mk_clause ($1,$4,$5,$6) }
+  | INT COLON LPAREN TPQT LPAREN SHARPINT COLON LPAREN forall_decl RPAREN RPAREN INT RPAREN EOL { add_solver $6 $9; add_ref $6 $1; mk_clause ($1, Tpqt, [], [$12]) }
+  | INT COLON LPAREN FINS LPAREN SHARPINT COLON LPAREN OR LPAREN NOT SHARPINT RPAREN lit RPAREN RPAREN RPAREN EOL
   { mk_clause ($1, Fins, [snd $14], [get_ref $12]) }
 ;*/
 
@@ -171,7 +172,12 @@ lit:   /* returns a SmtAtom.Form.t option */
   { apply_dec Form.neg l }
 ;
 
+nlit:
+  | LPAREN NOT lit RPAREN                                      { apply_dec Form.neg $3 }
+;
+
 term: /* term will produce many shift/reduce conflicts */
+  | LPAREN t=term RPAREN        { t }
   | TRUE                        { true, Form.Form Form.pform_true }
   | FALSE                       { true, Form.Form Form.pform_false }
   /*| LPAREN NOT term RPAREN      { apply_dec Form.neg $3 }*/
@@ -200,6 +206,24 @@ term: /* term will produce many shift/reduce conflicts */
                    false, Form.Atom (Atom.get ~declare:false ra (Aapp (op, Array.of_list (snd (list_dec args))))) 
       | None ->    let dl, l = list_dec args in 
                    dl, Form.Atom (Atom.get ra ~declare:dl (Aapp (SmtMaps.get_fun f, Array.of_list l))) }
+  | EQ t1=term t2=term                                 
+  { match t1,t2 with 
+    | (decl1, Form.Atom h1), (decl2, Form.Atom h2) when 
+          (match Atom.type_of h1 with 
+          | SmtBtype.Tbool -> false 
+          | _ -> true) -> let decl = decl1 && decl2 in 
+      decl, Form.Atom (Atom.mk_eq_sym ra ~declare:decl (Atom.type_of h1) h1 h2) 
+    | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|Form.lit_of_atom_form_lit rf (decl1, t1); 
+                                                                   Form.lit_of_atom_form_lit rf (decl2, t2)|])) 
+  }
+  | EQ n=nlit l=lit                                            
+  { match n,l with 
+    (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|t1; t2|])) 
+  }
+  | EQ t=term n=nlit                                      
+  { match t, n with 
+    | (decl1, t1), (decl2, t2) -> decl1 && decl2, Form.Form (Fapp (Fiff, [|Form.lit_of_atom_form_lit rf (decl1, t1); t2|])) 
+  }
   /*
   | LPAREN LET LPAREN var_binding+ RPAREN term RPAREN { "" }
   | LPAREN FORALL LPAREN sorted_var+ RPAREN term RPAREN { "" }
@@ -216,14 +240,14 @@ rulename:
   | ASSUME { Assume } /* Inpu */
   | TRUE { True }
   | FALSE { Fals }
-/*  | NOTNOT { Notnot }
-  | THRESO { Threso } */ 
+  | NOTNOT { Hole } /* Needs to be updated */
+  | THRESO { Hole }
   | RESO { Reso }
-/*  | TAUT { Taut }
-  | CONT { Cont }
-  | REFL { Refl }
-  | TRANS { Trans }
-  | CONG { Cong } */
+  | TAUT { Hole } /* Needs to be updated */
+  | CONT { Hole } /* Needs to be updated */
+  | REFL { Hole } /* Needs to be updated */
+  | TRANS { Hole } /* Needs to be updated */
+  | CONG { Hole } /* Needs to be updated */
   | EQRE { Eqre }
   | EQTR { Eqtr }
   | EQCO { Eqco }
@@ -266,17 +290,13 @@ rulename:
   | ITEN2 { Iten2 }
   | NITE1 { Nite1 }
   | NITE2 { Nite2 }
-  | ANDSIMP { Hole }
-  | ORSIMP { Hole }
-  | NOTSIMP { Hole }
-  | NOTNOT { Hole }
-/*  | CONNDEF { Conndef }
-  | ANDSIMP { Andsimp }
-  | ORSIMP { Orsimp }
-  | NOTSIMP { Notsimp }
-  | IMPSIMP { Impsimp }
-  | EQSIMP { Eqsimp }
-  | BOOLSIMP { Boolsimp }
-  | ACSIMP { Acsimp }
-  | ITESIMP { Itesimp }
-  | EQUALSIMP { Equalsimp } */
+  | CONNDEF { Hole } /* Needs to be updated */
+  | ANDSIMP { Hole } /* Needs to be updated */
+  | ORSIMP { Hole } /* Needs to be updated */
+  | NOTSIMP { Hole } /* Needs to be updated */
+  | IMPSIMP { Hole } /* Needs to be updated */
+  | EQSIMP { Hole } /* Needs to be updated */
+  | BOOLSIMP { Hole } /* Needs to be updated */
+  | ACSIMP { Hole } /* Needs to be updated */
+  | ITESIMP { Hole } /* Needs to be updated */
+  | EQUALSIMP { Hole } /* Needs to be updated */
