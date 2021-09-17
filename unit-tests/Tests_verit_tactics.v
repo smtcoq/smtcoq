@@ -1363,3 +1363,9 @@ Section Vauto.
   Goal eqb_of_compdec HA a b \/ search b l.
   Proof. verit_no_check. Qed.
 End Vauto.
+
+
+Section PropToBool.
+  Goal (forall (x x0 : bool) (x1 x2 : list bool), x :: x1 = x0 :: x2 -> x = x0) -> true.
+  Proof. verit. Qed.
+End PropToBool.
