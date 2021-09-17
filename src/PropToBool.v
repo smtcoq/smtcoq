@@ -50,7 +50,7 @@ Ltac prop2bool :=
       | bool =>
         lazymatch y with
         | true => fail
-        | _ => rewrite <- eqb_true_iff
+        | _ => rewrite <- (eqb_true_iff x y)
         end
       | _ =>
         lazymatch goal with
