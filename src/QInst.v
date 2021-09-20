@@ -89,21 +89,10 @@ Lemma eqb_of_compdec_sym (A:Type) (HA:CompDec A) (a b:A) :
   eqb_of_compdec HA b a = eqb_of_compdec HA a b.
 Proof. apply eqb_sym2. Qed.
 
-(* Strategy: change or not the order of each equality
+(* Strategy: change or not the order of each equality in the goal
    Complete but exponential in some cases *)
 Definition hidden_eq_Z (a b : Z) := (a =? b)%Z.
 Definition hidden_eq_U (A:Type) (HA:CompDec A) (a b : A) := eqb_of_compdec HA a b.
-Ltac apply_sym_hyp H :=
-  let TH := type of H in
-  lazymatch TH with
-  | context [ (?A =? ?B)%Z ] =>
-    first [ change (A =? B)%Z with (hidden_eq_Z A B) in H; apply_sym_hyp H
-          | replace (A =? B)%Z with (hidden_eq_Z B A) in H; [apply_sym_hyp H | now rewrite Z.eqb_sym] ]
-  | context [ @eqb_of_compdec ?A ?HA ?a ?b ] =>
-    first [ change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b) in H; apply_sym_hyp H
-          | replace (eqb_of_compdec HA a b) with (hidden_eq_U A HA b a) in H; [apply_sym_hyp H | now rewrite eqb_of_compdec_sym] ]
-  | _ => apply H
-  end.
 Ltac apply_sym H :=
   lazymatch goal with
   | [ |- context [ (?A =? ?B)%Z ] ] =>
@@ -112,7 +101,7 @@ Ltac apply_sym H :=
   | [ |- context [ @eqb_of_compdec ?A ?HA ?a ?b ] ] =>
     first [ change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b); apply_sym H
           | replace (eqb_of_compdec HA a b) with (hidden_eq_U A HA b a); [apply_sym H | now rewrite eqb_of_compdec_sym] ]
-  | _ => apply_sym_hyp H
+  | _ => apply H
   end.
 
 
