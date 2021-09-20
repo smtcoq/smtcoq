@@ -1369,3 +1369,40 @@ Section PropToBool.
   Goal (forall (x x0 : bool) (x1 x2 : list bool), x :: x1 = x0 :: x2 -> x = x0) -> true.
   Proof. verit. Qed.
 End PropToBool.
+
+
+Section EqSym.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable H8 : forall (h : list A) (l : list (list A)), tl (h :: l) = l.
+  Variable H12_A : forall (h : A) (l : list A), tl (h :: l) = l.
+  Variable H9 : forall (h : option A) (l : list (option A)), tl (h :: l) = l.
+  Variable H12 : @tl (list A) nil = nil.
+  Variable H13_A : @tl A nil = nil.
+  Variable H14 : @tl (option A) nil = nil.
+  Variable H13 : forall (h : list A) (l : list (list A)), hd_error (h :: l) = Some h.
+  Variable H10_A : forall (h : A) (l : list A), hd_error (h :: l) = Some h.
+  Variable H15 : forall (h : option A) (l : list (option A)), hd_error (h :: l) = Some h.
+  Variable H10 : @hd_error (list A) nil = None.
+  Variable H11_A : @hd_error A nil = None.
+  Variable H16 : @hd_error (option A) nil = None.
+  Variable H11 : forall x : list A, Some x = None -> False.
+  Variable H7_A : forall x : A, Some x = None -> False.
+  Variable H17 : forall x : option A, Some x = None -> False.
+  Variable H7 : forall x x0 : list A, Some x = Some x0 -> x = x0.
+  Variable H6_A : forall x x0 : A, Some x = Some x0 -> x = x0.
+  Variable H18 : forall x x0 : option A, Some x = Some x0 -> x = x0.
+  Variable H4 : forall (x : list A) (x0 : list (list A)), nil = x :: x0 -> False.
+  Variable H3_A : forall (x : A) (x0 : list A), nil = x :: x0 -> False.
+  Variable H5 : forall (x : option A) (x0 : list (option A)), nil = x :: x0 -> False.
+  Variable H3 : forall (x x0 : list A) (x1 x2 : list (list A)), x :: x1 = x0 :: x2 -> x = x0.
+  Variable H2_A : forall (x x0 : A) (x1 x2 : list A), x :: x1 = x0 :: x2 -> x = x0.
+  Variable H6 : forall (x x0 : option A) (x1 x2 : list (option A)), x :: x1 = x0 :: x2 -> x = x0.
+  Variable x : A.
+  Variable xs : list A.
+  Variable a : A.
+  Variable r : list A.
+
+  Goal hd_error (x :: xs) = Some a /\ tl (x :: xs) = r <-> x :: xs = a :: r.
+  Proof. verit. Qed.
+End EqSym.
