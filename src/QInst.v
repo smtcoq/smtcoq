@@ -27,7 +27,6 @@ Proof.
    installed when we compile SMTCoq. *)
 Qed.
 
-Hint Resolve impl_split : smtcoq_core.
 
 (** verit silently transforms an <implb (a || b) c> into a <or (not a) c>
    or into a <or (not b) c> when instantiating such a quantified theorem *)
@@ -90,86 +89,30 @@ Lemma eqb_of_compdec_sym (A:Type) (HA:CompDec A) (a b:A) :
   eqb_of_compdec HA b a = eqb_of_compdec HA a b.
 Proof. apply eqb_sym2. Qed.
 
-(* First strategy: change the order of all equalities in the goal or the
-   hypotheses
-   Incomplete: all or none of the equalities are changed, whereas we may
-   need to change some of them but not all of them *)
+(* Strategy: change or not the order of each equality
+   Complete but exponential in some cases *)
 Definition hidden_eq_Z (a b : Z) := (a =? b)%Z.
 Definition hidden_eq_U (A:Type) (HA:CompDec A) (a b : A) := eqb_of_compdec HA a b.
-Ltac apply_sym_hyp T :=
-  repeat match T with
-         | context [ (?A =? ?B)%Z] =>
-           change (A =? B)%Z with (hidden_eq_Z A B) in T
-         end;
-  repeat match T with
-         | context [ @eqb_of_compdec ?A ?HA ?a ?b ] =>
-           change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b) in T
-         end;
-  repeat match T with
-         | context [ hidden_eq_Z ?A ?B] =>
-           replace (hidden_eq_Z A B) with (B =? A)%Z in T;
-           [ | now rewrite Z.eqb_sym]
-         end;
-  repeat match T with
-         | context [ hidden_eq_U ?A ?HA ?a ?b] =>
-           replace (hidden_eq_U A HA a b) with (eqb_of_compdec HA b a) in T;
-           [ | now rewrite eqb_of_compdec_sym]
-         end.
-Ltac apply_sym_goal :=
-  repeat match goal with
-         | [ |- context [ (?A =? ?B)%Z] ] =>
-           change (A =? B)%Z with (hidden_eq_Z A B)
-         end;
-  repeat match goal with
-         | [ |- context [ @eqb_of_compdec ?A ?HA ?a ?b ] ] =>
-           change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b)
-         end;
-  repeat match goal with
-         | [ |- context [ hidden_eq_Z ?A ?B] ] =>
-           replace (hidden_eq_Z A B) with (B =? A)%Z;
-           [ | now rewrite Z.eqb_sym]
-         end;
-  repeat match goal with
-         | [ |- context [ hidden_eq_U ?A ?HA ?a ?b] ] =>
-           replace (hidden_eq_U A HA a b) with (eqb_of_compdec HA b a);
-           [ | now rewrite eqb_of_compdec_sym]
-         end.
-Ltac strategy1 H :=
-  first [ apply H
-        | apply_sym_goal; apply H
-        | apply_sym_hyp H; apply H
-        | apply_sym_goal; apply_sym_hyp H; apply H
-        ].
-
-(* Second strategy: find the order of equalities
-   Incomplete: does not work if the lemma is quantified *)
-Ltac order_equalities g TH :=
-  match g with
-  | eqb_of_compdec ?HC ?a1 ?b1 =>
-    match TH with
-    | eqb_of_compdec _ ?a2 _ =>
-      first [ constr_eq a1 a2 | replace (eqb_of_compdec HC a1 b1) with (eqb_of_compdec HC b1 a1) by now rewrite eqb_of_compdec_sym ]
-    | _ => idtac
-    end
-  | Z.eqb ?a1 ?b1 =>
-    match TH with
-    | Z.eqb ?a2 _ =>
-      first [ constr_eq a1 a2 | replace (Z.eqb a1 b1) with (Z.eqb b1 a1) by now rewrite Z.eqb_sym ]
-    | _ => idtac
-    end
-  | ?f1 ?t1 =>
-    match TH with
-    | ?f2 ?t2 => order_equalities f1 f2; order_equalities t1 t2
-    | _ => idtac
-    end
-  | _ => idtac
+Ltac apply_sym_hyp H :=
+  let TH := type of H in
+  lazymatch TH with
+  | context [ (?A =? ?B)%Z ] =>
+    first [ change (A =? B)%Z with (hidden_eq_Z A B) in H; apply_sym_hyp H
+          | replace (A =? B)%Z with (hidden_eq_Z B A) in H; [apply_sym_hyp H | now rewrite Z.eqb_sym] ]
+  | context [ @eqb_of_compdec ?A ?HA ?a ?b ] =>
+    first [ change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b) in H; apply_sym_hyp H
+          | replace (eqb_of_compdec HA a b) with (hidden_eq_U A HA b a) in H; [apply_sym_hyp H | now rewrite eqb_of_compdec_sym] ]
+  | _ => apply H
   end.
-Ltac strategy2 H :=
-  match goal with
-  | [ |- ?g ] =>
-    let TH := type of H in
-    order_equalities g TH;
-    apply H
+Ltac apply_sym H :=
+  lazymatch goal with
+  | [ |- context [ (?A =? ?B)%Z ] ] =>
+    first [ change (A =? B)%Z with (hidden_eq_Z A B); apply_sym H
+          | replace (A =? B)%Z with (hidden_eq_Z B A); [apply_sym H | now rewrite Z.eqb_sym] ]
+  | [ |- context [ @eqb_of_compdec ?A ?HA ?a ?b ] ] =>
+    first [ change (eqb_of_compdec HA a b) with (hidden_eq_U A HA a b); apply_sym H
+          | replace (eqb_of_compdec HA a b) with (hidden_eq_U A HA b a); [apply_sym H | now rewrite eqb_of_compdec_sym] ]
+  | _ => apply_sym_hyp H
   end.
 
 
@@ -178,33 +121,19 @@ Ltac vauto :=
   try (unfold is_true;
        let H := fresh "H" in
        intro H;
-       first [ strategy1 H
-             | strategy2 H
+       first [ apply_sym H
              | match goal with
                | [ |- (negb ?A || ?B) = true ] =>
-                 first [ eapply impl_or_split_right;
-                         first [ strategy1 H
-                               | strategy2 H ]
-                       | eapply impl_or_split_left;
-                         first [ strategy1 H
-                               | strategy2 H ]
-                       | eapply eqb_sym_or_split_right;
-                         first [ strategy1 H
-                               | strategy2 H ]
-                       | eapply eqb_sym_or_split_left;
-                         first [ strategy1 H
-                               | strategy2 H ]
-                       | eapply eqb_or_split_right;
-                         first [ strategy1 H
-                               | strategy2 H ]
-                       | eapply eqb_or_split_left;
-                         first [ strategy1 H
-                               | strategy2 H ]
+                 first [ eapply impl_split; apply_sym H
+                       | eapply impl_or_split_right; apply_sym H
+                       | eapply impl_or_split_left; apply_sym H
+                       | eapply eqb_sym_or_split_right; apply_sym H
+                       | eapply eqb_sym_or_split_left; apply_sym H
+                       | eapply eqb_or_split_right; apply_sym H
+                       | eapply eqb_or_split_left; apply_sym H
                        ]
                | [ |- (negb ?A || ?B || ?C) = true ] =>
-                 eapply eqb_or_split;
-                 first [ strategy1 H
-                       | strategy2 H ]
+                 eapply eqb_or_split; apply_sym H
                end
              ]
       );
