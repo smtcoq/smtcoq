@@ -807,6 +807,7 @@ module Atom =
 
     let to_smt (fmt:Format.formatter) h = to_smt_named fmt h
 
+    let to_string t = ""
 
     type reify_tbl =
       { mutable count : int;

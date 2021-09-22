@@ -121,6 +121,8 @@ module Atom :
 
       val to_smt : Format.formatter -> t -> unit
 
+      val to_string : t -> string 
+      
       type reify_tbl
 
       val create : unit -> reify_tbl

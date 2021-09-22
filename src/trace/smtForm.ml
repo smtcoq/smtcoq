@@ -26,6 +26,7 @@ module type ATOM =
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
     val to_smt : Format.formatter -> t -> unit
+    val to_string : t -> string
     val logic : t -> logic
 
   end
@@ -48,6 +49,17 @@ type ('a,'f) gen_pform =
   | Fapp of fop * 'f array
   | FbbT of 'a * 'f list
 
+let fop_to_string = function
+  | Ftrue -> "Ftrue"
+  | Ffalse  -> "Ffalse "
+  | Fand -> "Fand"
+  | For -> "For"
+  | Fxor -> "Fxor"
+  | Fimp -> "Fimp"
+  | Fiff -> "Fiff"
+  | Fite -> "Fite"
+  | Fnot2 _ -> "Fnot2"
+  | Fforall _ -> "Fforall"
 
 module type FORM =
   sig
@@ -72,6 +84,8 @@ module type FORM =
                  Format.formatter -> t -> unit
 
     val logic : t -> logic
+    val to_string : t -> string
+    val pform_to_string : pform -> string
 
     (* Building formula from positive formula *)
     exception NotWellTyped of pform
@@ -186,7 +200,9 @@ module Make (Atom:ATOM) =
         Format.fprintf fmt "])"
 
     and to_smt_op fmt op args =
-      let (s1,s2) = if ((Array.length args = 0) || (match op with Fnot2 _ -> true | _ -> false)) then ("","") else ("(",")") in
+      let (s1,s2) = if ((Array.length args = 0) || 
+        (match op with Fnot2 _ -> true | _ -> false)) then 
+          ("","") else ("(",")") in
       Format.fprintf fmt "%s" s1;
       (match op with
          | Ftrue -> Format.fprintf fmt "true"
@@ -225,6 +241,40 @@ module Make (Atom:ATOM) =
 
     and logic = function
       | Pos hp | Neg hp -> logic_pform hp.hval
+
+    let rec to_string = function
+      | Pos hp -> "Atom.Pos ("^(to_string_pform hp.hval)^")"
+      | Neg hp -> "Atom.Neg ("^(to_string_pform hp.hval)^")"
+
+    and to_string_pform = function
+      | Fatom a -> "Fatom ("^(Atom.to_string a)^")"
+      | Fapp (op, args) -> "Fapp ("^(to_string_op op args)^")"
+      | FbbT (a, l) -> "Fbbt _" (* Fix this - look at to_smt_op *)
+
+    and to_string_op op args = 
+      let (s1,s2) = if ((Array.length args = 0) || 
+        (match op with Fnot2 _ -> true | _ -> false)) then 
+          ("","") else ("(",")") in
+        s1 ^
+      (match op with
+         | Ftrue -> "Ftrue"
+         | Ffalse -> "Ffalse"
+         | Fand -> "Fand"
+         | For -> "For"
+         | Fxor -> "Fxor"
+         | Fimp -> "Fimp"
+         | Fiff -> "Fiff"
+         | Fite -> "Fite"
+         | Fnot2 _ -> ""
+         | Fforall l -> "Fforall _" (* Fix this - look at to_smt_op *)
+      )^" "^
+      (Array.fold_left (^) "" 
+        (Array.map (fun h -> to_string h) args)^s2)
+
+    let pform_to_string = function
+    | Fatom a -> "Fatom "^(Atom.to_string a)
+    | Fapp (f,l) -> "Fapp "^(fop_to_string f)^" "^(Array.fold_left (fun x y -> x^" "^y) "" (Array.map (to_string) l))
+    | FbbT _ -> "FbbT"
 
     let dumbed_down op =
       let dumbed_down_bt = function

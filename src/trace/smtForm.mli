@@ -23,6 +23,7 @@ module type ATOM =
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
     val to_smt : Format.formatter -> t -> unit
+    val to_string : t -> string
     val logic : t -> logic
 
   end
@@ -68,6 +69,10 @@ module type FORM =
                    Format.formatter -> t -> unit
 
       val logic : t -> logic
+
+      val to_string : t -> string
+
+      val pform_to_string : pform -> string
 
       (* Building formula from positive formula *)
       exception NotWellTyped of pform

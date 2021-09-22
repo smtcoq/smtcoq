@@ -101,7 +101,10 @@ let import_trace ra_quant rf_quant filename first lsmt =
        (alloc !cfirst, !confl)
     (*| Parsing.Parse_error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))*)
     | VeritParser.Error -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
-    | _ -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line))
+    | Failure f -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line)^" because of failure: "^f)
+    | VeritSyntax.Debug s -> failwith ("Verit.import_trace: parsing error line "^(string_of_int !line)^
+                            " Verit.import_trace: "^s)
+    | _ -> failwith ("Verit.import_trace: parsing uncaught error line "^(string_of_int !line))
 
 
 let clear_all () =

@@ -17,7 +17,7 @@ open SmtTrace
 
 
 (*** Syntax of veriT proof traces ***)
-
+exception Debug of string
 exception Sat
 
 type typ = 
@@ -86,6 +86,10 @@ type typ =
   | Equalsimp (* New *)
   | Hole
 
+(*let get_type x = 
+  match Form.pform l with
+  | Fatom ha -> 
+  | Fapp (_, _) -> raise (Debug "This is ")*)
 
 (* About equality *)
 
@@ -94,13 +98,20 @@ let get_eq l =
   | Fatom ha ->
      (match Atom.atom ha with
       | Abop (BO_eq _,a,b) -> (a,b)
-      | _ -> failwith "VeritSyntax.get_eq: equality was expected")
-  | _ -> failwith "VeritSyntax.get_eq: equality was expected"
+      | _ -> raise (Debug ("VeritSyntax.get_eq: equality was expected but we have (Fatom case) "^ 
+                    (Form.pform_to_string (Form.pform l)))))
+  | Fapp (Fiff, [|a; b|]) -> raise(Debug ("VeritSyntax.get_eq: equality was expected but we have (Fapp (Fiff _ _ ) case) "^
+                    (Form.pform_to_string (Form.pform l))))
+  | Fapp _ -> raise(Debug ("VeritSyntax.get_eq: equality was expected but we have (Fapp case) "^
+                    (Form.pform_to_string (Form.pform l))))
+  | FbbT _ -> raise (Debug ("VeritSyntax.get_eq: equality was expected but we have (FbbT case) "^ 
+                    (Form.pform_to_string (Form.pform l))))
+  | _ -> raise (Debug ("VeritSyntax.get_eq: equality was expected but we have " ^ (Form.to_string l)))
 
 let get_at l =
   match Form.pform l with
   | Fatom ha -> ha
-  | _ -> failwith "VeritSyntax.get_eq: equality was expected"
+  | _ -> raise (Debug "VeritSyntax.get_eq: equality was expected")
 
 let is_eq l =
   match Form.pform l with
@@ -108,11 +119,11 @@ let is_eq l =
      (match Atom.atom ha with
       | Abop (BO_eq _,_,_) -> true
       | _ -> false)
-  | _ -> failwith "VeritSyntax.get_eq: atom was expected"
+  | _ -> raise (Debug "VeritSyntax.get_eq: atom was expected")
 
 
 (* Transitivity *)
-
+(* list_find_remove p l finds the first element x in l, such that p(x) holds and returns (x, l') where l' is l without x *)
 let rec list_find_remove p = function
     [] -> raise Not_found
   | h::t -> if p h
@@ -126,7 +137,7 @@ let rec process_trans a b prem res =
     List.rev res
   ) else
     let ((l,(c,c')),prem) =
-      (* Search if there is a trivial reflexivity premice *)
+      (* Search if there is a trivial reflexivity premise *)
       try list_find_remove (fun (l,(a',b')) -> ((Atom.equal a' b) && (Atom.equal b' b))) prem
       (* If not, search for the equality [l:c = c'] s.t. [c = b] or [c' = b] *)
       with | Not_found -> list_find_remove (fun (l,(a',b')) -> ((Atom.equal a' b) || (Atom.equal b' b))) prem in
@@ -142,8 +153,13 @@ let mkTrans p =
     let prem_val = List.map (fun l -> (l,get_eq l)) prem in
     let cert = (process_trans a b prem_val []) in
     Other (EqTr (c,cert))
-  |_ -> failwith "VeritSyntax.mkTrans: no conclusion or more than one conclusion in transitivity"
+  |_ -> raise (Debug "VeritSyntax.mkTrans: no conclusion or more than one conclusion in transitivity")
 
+let mkTrans' prem concl =
+  let a,b = get_eq concl in
+  let prem_val = List.map (fun l -> (l,get_eq l)) prem in
+  let cert = (process_trans a b prem_val []) in
+    Other (EqTr (concl,cert))
 
 (* Congruence *)
 
@@ -156,7 +172,7 @@ let rec process_congr a_args b_args prem res =
      let (l,(a',b')) = List.find (fun (l,(a',b')) -> ((Atom.equal a a') && (Atom.equal b b'))||((Atom.equal a b') && (Atom.equal b a'))) prem in
      process_congr a_args b_args prem ((Some l)::res)
   | [],[] -> List.rev res
-  | _ -> failwith "VeritSyntax.process_congr: incorrect number of arguments in function application"
+  | _ -> raise (Debug "VeritSyntax.process_congr: incorrect number of arguments in function application")
 
 
 let mkCongr p =
@@ -180,9 +196,9 @@ let mkCongr p =
         if indexed_op_index a_f = indexed_op_index b_f then
           let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
           Other (EqCgr (c,cert))
-        else failwith "VeritSyntax.mkCongr: left function is different from right fucntion"
-     | _, _ -> failwith "VeritSyntax.mkCongr: atoms are not applications")
-  |_ -> failwith "VeritSyntax.mkCongr: no conclusion or more than one conclusion in congruence"
+        else raise (Debug "VeritSyntax.mkCongr: left function is different from right function")
+     | _, _ -> raise (Debug "VeritSyntax.mkCongr: atoms are not applications"))
+  |_ -> raise (Debug "VeritSyntax.mkCongr: no conclusion or more than one conclusion in congruence")
 
 
 let mkCongrPred p =
@@ -203,11 +219,11 @@ let mkCongrPred p =
            if indexed_op_index a_f = indexed_op_index b_f then
              let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
              Other (EqCgrP (p_p,c,cert))
-           else failwith "VeritSyntax.mkCongrPred: unmatching predicates"
-        | _ -> failwith "VeritSyntax.mkCongrPred : not pred app")
-     |_ ->  failwith "VeritSyntax.mkCongr: no or more than one predicate app premise in congruence")
-  |[] ->  failwith "VeritSyntax.mkCongrPred: no conclusion in congruence"
-  |_ -> failwith "VeritSyntax.mkCongrPred: more than one conclusion in congruence"
+           else raise (Debug "VeritSyntax.mkCongrPred: unmatching predicates")
+        | _ -> raise (Debug "VeritSyntax.mkCongrPred : not pred app"))
+     |_ ->  raise (Debug "VeritSyntax.mkCongr: no or more than one predicate app premise in congruence"))
+  |[] ->  raise (Debug "VeritSyntax.mkCongrPred: no conclusion in congruence")
+  |_ -> raise (Debug "VeritSyntax.mkCongrPred: more than one conclusion in congruence")
 
 
 (* Linear arithmetic *)
@@ -216,7 +232,7 @@ let mkMicromega cl =
   let _tbl, _f, cert = Lia.build_lia_certif cl in
   let c =
     match cert with
-    | None -> failwith "VeritSyntax.mkMicromega: micromega can't solve this"
+    | None -> raise (Debug "VeritSyntax.mkMicromega: micromega can't solve this")
     | Some c -> c in
   Other (LiaMicromega (cl,c))
 
@@ -225,16 +241,16 @@ let mkSplArith orig cl =
   let res =
     match cl with
     | res::nil -> res
-    | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the resulting clause" in
+    | _ -> raise (Debug "VeritSyntax.mkSplArith: wrong number of literals in the resulting clause") in
   try
     let orig' =
       match orig.value with
       | Some [orig'] -> orig'
-      | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the premise clause" in
+      | _ -> raise (Debug "VeritSyntax.mkSplArith: wrong number of literals in the premise clause") in
     let _tbl, _f, cert = Lia.build_lia_certif [Form.neg orig';res] in
     let c =
       match cert with
-      | None -> failwith "VeritSyntax.mkSplArith: micromega can't solve this"
+      | None -> raise (Debug "VeritSyntax.mkSplArith: micromega can't solve this")
       | Some c -> c in
     Other (SplArith (orig,res,c))
   with
@@ -276,7 +292,7 @@ let mkDistinctElim old value =
 let clauses : (int,Form.t clause) Hashtbl.t = Hashtbl.create 17
 let get_clause id =
   try Hashtbl.find clauses id
-  with | Not_found -> failwith ("VeritSyntax.get_clause : clause number "^(string_of_int id)^" not found\n")
+  with | Not_found -> raise (Debug ("VeritSyntax.get_clause : clause number "^(string_of_int id)^" not found\n"))
 let add_clause id cl = Hashtbl.add clauses id cl
 let clear_clauses () = Hashtbl.clear clauses
 
@@ -372,6 +388,15 @@ let mk_clause (id,typ,value,ids_params) =
       (* Equality *)
       | Eqre -> mkTrans value
       | Eqtr -> mkTrans value
+      | Trans -> let prems = List.map (fun id -> (match (get_clause id).value with
+                                                    | Some [f] -> f
+                                                    | Some _ -> raise (Debug "VeritSyntax.mkClause.Trans: We expected (get_clause x.value) to return Some [cl] where cl is an SmtAtom.Form.t representing the clause, but cl is larger than a singleton list!")
+                                                    | _ -> raise (Debug "VeritSyntax.mkClause.Trans: No premises"))) 
+                                        ids_params in
+                 let concl = (match value with
+                              | [f] -> f
+                              | _ -> raise (Debug "VeritSyntax.mkClause.Trans: no conclusion or more than one conclusion in transitivity")) in
+                 mkTrans' prems concl
       | Eqco -> mkCongr value
       | Eqcp -> mkCongrPred value
       (* Linear integer arithmetic *)
@@ -389,22 +414,22 @@ let mk_clause (id,typ,value,ids_params) =
       | Hole -> Other (SmtCertif.Hole (List.map get_clause ids_params, value))
 
       (* Not implemented *)
-      | Notnot -> failwith "VeritSyntax.ml: rule notnot not implemented yet"
-      | Taut -> failwith "VeritSyntax.ml: rule taut not implemented yet"
-      | Cont -> failwith "VeritSyntax.ml: rule cont not implemented yet"
-      | Refl -> failwith "VeritSyntax.ml: rule refl not implemented yet"
-      | Trans -> failwith "VeritSyntax.ml: rule trans not implemented yet"
-      | Cong -> failwith "VeritSyntax.ml: rule cong not implemented yet"
-      | Conndef -> failwith "VeritSyntax.ml: rule conndef not implemented yet"
-      | Andsimp -> failwith "VeritSyntax.ml: rule andsimp not implemented yet"
-      | Orsimp -> failwith "VeritSyntax.ml: rule orsimp not implemented yet"
-      | Notsimp -> failwith "VeritSyntax.ml: rule notsimp not implemented yet"
-      | Impsimp -> failwith "VeritSyntax.ml: rule impsimp not implemented yet"
-      | Eqsimp -> failwith "VeritSyntax.ml: rule eqsimp not implemented yet"
-      | Boolsimp -> failwith "VeritSyntax.ml: rule boolsimp not implemented yet"
-      | Acsimp -> failwith "VeritSyntax.ml: rule acsimp not implemented yet"
-      | Itesimp -> failwith "VeritSyntax.ml: rule itesimp not implemented yet"
-      | Equalsimp -> failwith "VeritSyntax.ml: rule equalsimp not implemented yet"
+      | Notnot -> raise (Debug "VeritSyntax.ml: rule notnot not implemented yet")
+      | Taut -> raise (Debug "VeritSyntax.ml: rule taut not implemented yet")
+      | Cont -> raise (Debug "VeritSyntax.ml: rule cont not implemented yet")
+      | Refl -> raise (Debug "VeritSyntax.ml: rule refl not implemented yet")
+      (*| Trans -> raise (Debug "VeritSyntax.ml: rule trans not implemented yet")*)
+      | Cong -> raise (Debug "VeritSyntax.ml: rule cong not implemented yet")
+      | Conndef -> raise (Debug "VeritSyntax.ml: rule conndef not implemented yet")
+      | Andsimp -> raise (Debug "VeritSyntax.ml: rule andsimp not implemented yet")
+      | Orsimp -> raise (Debug "VeritSyntax.ml: rule orsimp not implemented yet")
+      | Notsimp -> raise (Debug "VeritSyntax.ml: rule notsimp not implemented yet")
+      | Impsimp -> raise (Debug "VeritSyntax.ml: rule impsimp not implemented yet")
+      | Eqsimp -> raise (Debug "VeritSyntax.ml: rule eqsimp not implemented yet")
+      | Boolsimp -> raise (Debug "VeritSyntax.ml: rule boolsimp not implemented yet")
+      | Acsimp -> raise (Debug "VeritSyntax.ml: rule acsimp not implemented yet")
+      | Itesimp -> raise (Debug "VeritSyntax.ml: rule itesimp not implemented yet")
+      | Equalsimp -> raise (Debug "VeritSyntax.ml: rule equalsimp not implemented yet")
   in
   let cl =
     (* TODO: change this into flatten when necessary *)
@@ -451,7 +476,7 @@ let apply_tdec_atom (f:?declare:bool -> SmtAtom.Atom.t -> SmtAtom.Atom.t -> SmtA
 let solver : (int, (bool * Form.atom_form_lit)) Hashtbl.t = Hashtbl.create 17
 let get_solver id =
   try Hashtbl.find solver id
-  with | Not_found -> failwith ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n")
+  with | Not_found -> raise (Debug ("VeritSyntax.get_solver : solver variable number "^(string_of_int id)^" not found\n"))
 let add_solver id cl = Hashtbl.add solver id cl
 let clear_solver () = Hashtbl.clear solver
 
@@ -480,7 +505,7 @@ let init_index lsmt re_hash =
               List.iter (fun h -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) (re_hash h)) lsmt;
               Format.fprintf fmt "\n%a\n@." (Form.to_smt ~debug:true) re_hf;
               flush oc; close_out oc;
-              failwith "Input not found: log available in /tmp/input_not_found.log"
+              raise (Debug "Input not found: log available in /tmp/input_not_found.log")
 
 let qf_to_add lr =
   let is_forall l = match Form.pform l with

@@ -57,6 +57,7 @@ module Atom =
 
     let to_smt = Format.pp_print_int
     
+    let to_string = string_of_int
   end
 
 module Form = SmtForm.Make(Atom)

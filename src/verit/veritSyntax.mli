@@ -13,7 +13,7 @@
 open SmtAtom
 
 exception Sat
-
+exception Debug of string
 type typ = 
   | Assume (* Inpu *)
   | True
