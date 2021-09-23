@@ -417,7 +417,6 @@ let mk_clause (id,typ,value,ids_params) =
   if id > 1 then SmtTrace.link (get_clause (id-1)) cl;
   id
 
-
 let mk_clause cl =
   try mk_clause cl
   with Failure f ->
