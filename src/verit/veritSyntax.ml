@@ -98,15 +98,8 @@ let get_eq l =
   | Fatom ha ->
      (match Atom.atom ha with
       | Abop (BO_eq _,a,b) -> (a,b)
-      | _ -> raise (Debug ("VeritSyntax.get_eq: equality was expected but we have (Fatom case) "^ 
-                    (Form.pform_to_string (Form.pform l)))))
-  | Fapp (Fiff, [|a; b|]) -> raise(Debug ("VeritSyntax.get_eq: equality was expected but we have (Fapp (Fiff _ _ ) case) "^
-                    (Form.pform_to_string (Form.pform l))))
-  | Fapp _ -> raise(Debug ("VeritSyntax.get_eq: equality was expected but we have (Fapp case) "^
-                    (Form.pform_to_string (Form.pform l))))
-  | FbbT _ -> raise (Debug ("VeritSyntax.get_eq: equality was expected but we have (FbbT case) "^ 
-                    (Form.pform_to_string (Form.pform l))))
-  | _ -> raise (Debug ("VeritSyntax.get_eq: equality was expected but we have " ^ (Form.to_string l)))
+      | _ -> raise (Debug "VeritSyntax.get_eq: equality was expected"))
+  | _ -> raise (Debug "VeritSyntax.get_eq: equality was expected")
 
 let get_at l =
   match Form.pform l with
@@ -144,7 +137,6 @@ let rec process_trans a b prem res =
     let c = if Atom.equal c b then c' else c in
     process_trans a c prem (l::res)
 
-
 let mkTrans p =
   let (concl,prem) = List.partition Form.is_pos p in
   match concl with
@@ -155,11 +147,6 @@ let mkTrans p =
     Other (EqTr (c,cert))
   |_ -> raise (Debug "VeritSyntax.mkTrans: no conclusion or more than one conclusion in transitivity")
 
-let mkTrans' prem concl =
-  let a,b = get_eq concl in
-  let prem_val = List.map (fun l -> (l,get_eq l)) prem in
-  let cert = (process_trans a b prem_val []) in
-    Other (EqTr (concl,cert))
 
 (* Congruence *)
 
@@ -388,15 +375,6 @@ let mk_clause (id,typ,value,ids_params) =
       (* Equality *)
       | Eqre -> mkTrans value
       | Eqtr -> mkTrans value
-      | Trans -> let prems = List.map (fun id -> (match (get_clause id).value with
-                                                    | Some [f] -> f
-                                                    | Some _ -> raise (Debug "VeritSyntax.mkClause.Trans: We expected (get_clause x.value) to return Some [cl] where cl is an SmtAtom.Form.t representing the clause, but cl is larger than a singleton list!")
-                                                    | _ -> raise (Debug "VeritSyntax.mkClause.Trans: No premises"))) 
-                                        ids_params in
-                 let concl = (match value with
-                              | [f] -> f
-                              | _ -> raise (Debug "VeritSyntax.mkClause.Trans: no conclusion or more than one conclusion in transitivity")) in
-                 mkTrans' prems concl
       | Eqco -> mkCongr value
       | Eqcp -> mkCongrPred value
       (* Linear integer arithmetic *)
@@ -418,7 +396,7 @@ let mk_clause (id,typ,value,ids_params) =
       | Taut -> raise (Debug "VeritSyntax.ml: rule taut not implemented yet")
       | Cont -> raise (Debug "VeritSyntax.ml: rule cont not implemented yet")
       | Refl -> raise (Debug "VeritSyntax.ml: rule refl not implemented yet")
-      (*| Trans -> raise (Debug "VeritSyntax.ml: rule trans not implemented yet")*)
+      | Trans -> raise (Debug "VeritSyntax.ml: rule trans not implemented yet")
       | Cong -> raise (Debug "VeritSyntax.ml: rule cong not implemented yet")
       | Conndef -> raise (Debug "VeritSyntax.ml: rule conndef not implemented yet")
       | Andsimp -> raise (Debug "VeritSyntax.ml: rule andsimp not implemented yet")
