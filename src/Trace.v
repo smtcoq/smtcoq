@@ -388,13 +388,7 @@ Inductive step :=
       | EqTr pos l fl => S.set_clause s pos (check_trans t_form t_atom l fl)
       | EqCgr pos l fl => S.set_clause s pos (check_congr t_form t_atom l fl)
       | EqCgrP pos l1 l2 fl => S.set_clause s pos (check_congr_pred t_form t_atom l1 l2 fl)
-      | IffTrans pos ls l => S.set_clause s pos (check_ifftrans t_form 
-                                                                (List.map (fun id => match S.get s id with
-                                                                                      | l::nil => l
-                                                                                      | _ => Lit._true
-                                                                                      end)
-                                                                           ls)
-                                                                l)
+      | IffTrans pos ls l => S.set_clause s pos (check_ifftrans t_form (List.map (S.get s) ls) l)
       | LiaMicromega pos cl c => S.set_clause s pos (check_micromega t_form t_atom cl c)
       | LiaDiseq pos l => S.set_clause s pos (check_diseq t_form t_atom l)
       | SplArith pos orig res l => S.set_clause s pos (check_spl_arith t_form t_atom (S.get s orig) res l)

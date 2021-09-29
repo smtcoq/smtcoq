@@ -308,20 +308,24 @@ Section CHECKER.
 
   (* * ifftrans         : {(= x_1 x_2) --> (= x_2 x_1) --> ... --> (= x_{n-1} x_n) 
                            -->(= x_1 x_n)} *)
-    Definition check_ifftrans_aux (l1:option (int * int)) (l2:_lit) :=
-      if Lit.is_pos l2 then 
-        match get_hash (Lit.blit l2), l1 with
-        | Fiff a b, Some (c1, c2) => if a == c1 then Some (b, c2) else
-                        if a == c2 then Some (b, c1) else
-                          if b == c1 then Some (a, c2) else
-                            if b == c2 then Some (a, c1) else
-                              None
-        | _, _ => None
-        end
-      else
-        None.
+    Definition check_ifftrans_aux (l1:option (int * int)) (l2:list _lit) :=
+      match l2 with
+      | l2::nil =>
+        if Lit.is_pos l2 then 
+          match get_hash (Lit.blit l2), l1 with
+          | Fiff a b, Some (c1, c2) => if a == c1 then Some (b, c2) else
+                          if a == c2 then Some (b, c1) else
+                            if b == c1 then Some (a, c2) else
+                              if b == c2 then Some (a, c1) else
+                                None
+          | _, _ => None
+          end
+        else
+          None
+      | _ => None
+      end.
 
-    Definition check_ifftrans (ls:list _lit) (l:_lit) :=
+    Definition check_ifftrans (ls:list (list _lit)) (l:_lit) :=
       if Lit.is_pos l then
         match get_hash (Lit.blit l) with
         | Fiff l1 l2 => match List.fold_left check_ifftrans_aux ls (Some (l1,l2)) with
