@@ -96,6 +96,10 @@ type 'hform rule =
     (*  * eq_congruent_pred : {(not (= x_1 y_1)) ... (not (= x_n y_n))
                                    (not (p x_1 ... x_n)) (p y_1 ... y_n)}
     *)
+  | IffTrans of 'hform list * 'hform
+    (* * trans              : {(= x_1 x_2) --> (= x_2 x_1) --> ... --> (= x_{n-1} x_n) 
+                                -->(= x_1 x_n)}
+    *)
 
   (* Linear arithmetic *)
   | LiaMicromega of 'hform list * Structures.Micromega_plugin_Certificate.Mc.zArithProof list
@@ -262,7 +266,7 @@ let used_clauses r =
   | Forall_inst (c, _) | Qf_lemma (c, _) -> [c]
 
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
-  | EqTr _ | EqCgr _ | EqCgrP _
+  | EqTr _ | EqCgr _ | EqCgrP _ | IffTrans _ 
   | LiaMicromega _ | LiaDiseq _
   | BBVar _ | BBConst _ | BBDiseq _
   | RowEq _ | RowNeq _ | Ext _ -> []
@@ -292,6 +296,7 @@ let to_string r =
                            | EqTr _ -> "EqTr"
                            | EqCgr _ -> "EqCgr"
                            | EqCgrP _ -> "EqCgrP"
+                           | IffTrans _ -> "IffTrans"
                            | LiaMicromega _ -> "LiaMicromega"
                            | LiaDiseq _ -> "LiaDiseq"
                            | SplArith _ -> "SplArith"

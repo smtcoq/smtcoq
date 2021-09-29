@@ -243,7 +243,7 @@ val make_certif_ops :
            Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
            Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
            Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t
+           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t
 
 (* Some constructions *)
 val ceq_refl_true : Structures.constr lazy_t

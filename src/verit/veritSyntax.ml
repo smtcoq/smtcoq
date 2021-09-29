@@ -377,6 +377,16 @@ let mk_clause (id,typ,value,ids_params) =
       | Eqtr -> mkTrans value
       | Eqco -> mkCongr value
       | Eqcp -> mkCongrPred value
+      | Trans -> 
+        let prems = List.map (fun x -> match (get_clause x).value with
+                                 | Some [l] -> l
+                                 | _ -> raise (Debug "VeritSyntax.mkIffTrans: premise contains zero or more than one formulas, a single equality formula is expected"))
+                        ids_params in
+        (match value with
+          | c::_ -> Other (IffTrans (prems, c))
+          | _ -> raise (Debug "VeritSyntax.mkIffTrans: conclusion contains zero or more than one formulas, a single equality formula is expected"))
+        (*let prems = List.map get_clause ids_params in
+            Other (IffTrans (prems, value))*)
       (* Linear integer arithmetic *)
       (* Resolution *)
       | Reso | Threso ->
@@ -396,7 +406,6 @@ let mk_clause (id,typ,value,ids_params) =
       | Taut -> raise (Debug "VeritSyntax.ml: rule taut not implemented yet")
       | Cont -> raise (Debug "VeritSyntax.ml: rule cont not implemented yet")
       | Refl -> raise (Debug "VeritSyntax.ml: rule refl not implemented yet")
-      | Trans -> raise (Debug "VeritSyntax.ml: rule trans not implemented yet")
       | Cong -> raise (Debug "VeritSyntax.ml: rule cong not implemented yet")
       | Conndef -> raise (Debug "VeritSyntax.ml: rule conndef not implemented yet")
       | Andsimp -> raise (Debug "VeritSyntax.ml: rule andsimp not implemented yet")

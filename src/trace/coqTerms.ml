@@ -285,7 +285,7 @@ let make_certif_ops modules args =
   gen_constant "BuildProj",
   gen_constant "ImmBuildProj", gen_constant"ImmBuildDef",
   gen_constant"ImmBuildDef2",
-  gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP",
+  gen_constant "EqTr", gen_constant "EqCgr", gen_constant "EqCgrP", gen_constant "IffTrans",
   gen_constant "LiaMicromega", gen_constant "LiaDiseq",
   gen_constant "SplArith", gen_constant "SplDistinctElim",
   gen_constant "BBVar", gen_constant "BBConst",

@@ -354,7 +354,7 @@ let to_coq to_lit interp (cstep,
     cRes, cWeaken, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
     cImmBuildProj,cImmBuildDef,cImmBuildDef2,
-    cEqTr, cEqCgr, cEqCgrP,
+    cEqTr, cEqCgr, cEqCgrP, cIffTrans,
     cLiaMicromega, cLiaDiseq, cSplArith, cSplDistinctElim,
     cBBVar, cBBConst, cBBOp, cBBNot, cBBEq, cBBDiseq,
     cBBNeg, cBBAdd, cBBMul, cBBUlt, cBBSlt, cBBConc,
@@ -410,6 +410,9 @@ let to_coq to_lit interp (cstep,
         | EqCgrP (f1, f2, fl) ->
           let res = List.fold_right (fun f l -> mklApp ccons [|mklApp coption [|Lazy.force cint|]; (match f with | Some f -> mklApp cSome [|Lazy.force cint; out_f f|] | None -> mklApp cNone [|Lazy.force cint|]); l|]) fl (mklApp cnil [|mklApp coption [|Lazy.force cint|]|]) in
           mklApp cEqCgrP [|out_c c; out_f f1; out_f f2; res|]
+        | IffTrans (l, c) -> 
+          let res = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) l (mklApp cnil [|Lazy.force cint|]) in
+          mklApp cIffTrans [|res; out_f c|]
 	| LiaMicromega (cl,d) ->
           let cl' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
           let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force Structures.micromega_coq_proofTerm; Structures.micromega_dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force Structures.micromega_coq_proofTerm|]) in

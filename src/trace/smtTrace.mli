@@ -63,7 +63,7 @@ val to_coq :
   Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
   Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
   Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t *
-  Structures.constr Lazy.t * Structures.constr Lazy.t ->
+  Structures.constr Lazy.t * Structures.constr Lazy.t * Structures.constr Lazy.t ->
   'a SmtCertif.clause ->
   ('a SmtCertif.clause -> Structures.types * Structures.constr) option ->
   Structures.constr * 'a SmtCertif.clause *
