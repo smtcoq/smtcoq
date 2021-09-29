@@ -19,7 +19,7 @@
 %{
    open Smtlib2_ast
 
-   let loc () = symbol_start_pos (), symbol_end_pos ()
+   let loc () = Parsing.symbol_start_pos (), Parsing.symbol_end_pos ()
 
 %}
 
