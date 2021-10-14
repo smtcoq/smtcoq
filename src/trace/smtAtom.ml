@@ -1351,7 +1351,7 @@ module Atom =
                       let c, _ = Structures.decompose_app ty in
                       Structures.eq_constr c (Lazy.force cCompDec)
                  then
-                   (x::[], xs)
+                   ([x], xs)
                  else
                    ([], l)
                | _ -> (x::l1, l2)
