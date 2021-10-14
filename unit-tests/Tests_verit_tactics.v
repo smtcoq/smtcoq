@@ -1406,3 +1406,46 @@ Section EqSym.
   Goal hd_error (x :: xs) = Some a /\ tl (x :: xs) = r <-> x :: xs = a :: r.
   Proof. verit. Qed.
 End EqSym.
+
+
+
+Section PrenexDependentTypes.
+  Variables A B : Type.
+  Variable F : Type -> Type.
+  Variable p : B -> F bool.
+  Variable dep : forall (X:Type), A -> F X -> bool.
+  Hypothesis H : forall (x : A) (y : B), dep bool x (p y) = true.
+
+  Hypothesis HF : CompDec (F bool).
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Variable a : A.
+  Variable b : B.
+
+  Goal dep bool a (p b).
+  Proof. verit. Qed.
+
+End PrenexDependentTypes.
+
+
+(*
+Section NonPrenexDependentTypes.
+  Variables A B : Type.
+  Variable F : Type -> Type.
+  Variable p : B -> F bool.
+  Variable dep : A -> forall (X:Type), F X -> bool.
+  Hypothesis H : forall (x : A) (y : B), dep x bool (p y) = true.
+
+  Hypothesis HF : CompDec (F bool).
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Variable a : A.
+  Variable b : B.
+
+  Goal dep a bool (p b).
+  Proof. Fail verit. Qed.
+
+End NonPrenexDependentTypes.
+*)

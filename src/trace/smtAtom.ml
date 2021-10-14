@@ -1351,7 +1351,7 @@ module Atom =
                       let c, _ = CoqInterface.decompose_app ty in
                       CoqInterface.eq_constr c (Lazy.force cCompDec)
                  then
-                   (x::[], xs)
+                   ([x], xs)
                  else
                    ([], l)
                | _ -> (x::l1, l2)
