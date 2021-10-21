@@ -69,8 +69,8 @@ Ltac get_hyps :=
 
 (** Tactics in bool *)
 
-Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; auto with typeclass_instances.
-Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; auto with typeclass_instances.
+Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exact _).
+Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
 
 Tactic Notation "verit_bool" constr(h) :=
   let Hs := get_hyps in
