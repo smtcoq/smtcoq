@@ -382,7 +382,7 @@ Section certif.
         intros.
         specialize (Atom.Bval_inj2 t_i (Typ.TFArray t0 t)
           (@store _ _
-                  (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i t0)))
+                  (Typ.dec_interp t_i t0)
                _ _ _ (Typ.comp_interp t_i t) _
                v_val2 v_val3 v_val4) v_val0).
         intros. specialize (H18 H6).
@@ -682,7 +682,7 @@ Section certif.
           rewrite H25a, H25b, H10. intros.
           specialize (Atom.Bval_inj2 t_i (Typ.TFArray t1 t2)
             (@store _ _
-                    (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i t1)))
+                    (Typ.dec_interp t_i t1)
                    _ _ _ (Typ.comp_interp t_i t2) _
                    v_vale1 v_vale2 v_vale3) (v_vald1')).
           intro H25. specialize (H25 Htid1').
@@ -839,7 +839,7 @@ Section certif.
           rewrite H25a, H25b, H10. intros.
           specialize (Atom.Bval_inj2 t_i (Typ.TFArray t1 t2)
             (@store _ _
-                   (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i t1)))
+                   (Typ.dec_interp t_i t1)
                    _ _ _ (Typ.comp_interp t_i t2) _
                    v_vale1 v_vale2 v_vale3) (v_valc1')).
           intro H25. specialize (H25 Htic1').
@@ -1176,7 +1176,7 @@ Section certif.
     rewrite !Typ.cast_refl. intros.
 
     specialize (Atom.Bval_inj2 t_i t0 (@diff _ _
-       (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i t0)))
+       (Typ.dec_interp t_i t0)
        _ _ (Typ.dec_interp t_i v_typec2') _ (Typ.comp_interp t_i v_typec2') (Typ.inh_interp t_i t0) _
        v_valf1 v_valf2) (v_vald2')).
     intros. specialize (H28 Htid2').
@@ -1221,141 +1221,88 @@ Section certif.
     apply negb_true_iff.
     apply Typ.i_eqb_spec_false.
     subst.
-    specialize (Atom.Bval_inj2 t_i v_typed2' (v_vald2) (@diff (Typ.interp t_i v_typed2') (Typ.interp t_i v_typec1')
+
+    specialize (Atom.Bval_inj2 t_i v_typed2' v_vald2 (@diff
+             _
+             _
              (@EqbToDecType
-                (@projT1 Type (fun ty : Type => CompDec ty)
-                   (Typ.interp_compdec_aux t_i v_typed2'))
-                (@eqbtype_of_compdec
+                (@type_compdec
                    (@projT1 Type (fun ty : Type => CompDec ty)
                       (Typ.interp_compdec_aux t_i v_typed2'))
-                   (Typ.interp_compdec t_i v_typed2')))
-             (@ord_of_compdec (Typ.interp t_i v_typed2')
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2')))
+                (@eqbtype_of_compdec
+                   (@type_compdec
+                      (@projT1 Type (fun ty : Type => CompDec ty)
+                         (Typ.interp_compdec_aux t_i v_typed2'))
+                      (@projT2 Type (fun ty : Type => CompDec ty)
+                         (Typ.interp_compdec_aux t_i v_typed2')))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2'))))
+             (@ord_of_compdec
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2')))
                 (@projT2 Type (fun ty : Type => CompDec ty)
-                   ((fix interp_compdec_aux (t : Typ.type) :
-                       @sigT Type (fun ty : Type => CompDec ty) :=
-                       match t return (@sigT Type (fun ty : Type => CompDec ty)) with
-                       | Typ.TFArray ti te =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             (@farray
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti)))
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te)))
-                                (@ord_of_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti)))
-                                (@inh_of_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))))
-                             (@SMT_classes_instances.FArray_compdec
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti)))
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te)))
-                                (@projT2 Type (fun ty : Type => CompDec ty)
-                                   (interp_compdec_aux ti))
-                                (@projT2 Type (fun ty : Type => CompDec ty)
-                                   (interp_compdec_aux te)))
-                       | Typ.Tindex i =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             (te_carrier (@get typ_compdec t_i (of_Z (Z.of_N i))))
-                             (te_compdec (@get typ_compdec t_i (of_Z (Z.of_N i))))
-                       | Typ.TZ =>
-                           @existT Type (fun ty : Type => CompDec ty) BinNums.Z
-                             SMT_classes_instances.Z_compdec
-                       | Typ.Tbool =>
-                           @existT Type (fun ty : Type => CompDec ty) bool
-                             SMT_classes_instances.bool_compdec
-                       | Typ.Tpositive =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             BinNums.positive SMT_classes_instances.Positive_compdec
-                       | Typ.TBV n =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             (BVList.BITVECTOR_LIST.bitvector n)
-                             (SMT_classes_instances.BV_compdec n)
-                       end) v_typed2')))
-             (@comp_of_compdec (Typ.interp t_i v_typed2')
+                   (Typ.interp_compdec_aux t_i v_typed2')))
+             (@comp_of_compdec
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2')))
                 (@projT2 Type (fun ty : Type => CompDec ty)
-                   ((fix interp_compdec_aux (t : Typ.type) :
-                       @sigT Type (fun ty : Type => CompDec ty) :=
-                       match t return (@sigT Type (fun ty : Type => CompDec ty)) with
-                       | Typ.TFArray ti te =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             (@farray
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti)))
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te)))
-                                (@ord_of_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti)))
-                                (@inh_of_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))))
-                             (@SMT_classes_instances.FArray_compdec
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux ti)))
-                                (@type_compdec
-                                   (@projT1 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te))
-                                   (@projT2 Type (fun ty : Type => CompDec ty)
-                                      (interp_compdec_aux te)))
-                                (@projT2 Type (fun ty : Type => CompDec ty)
-                                   (interp_compdec_aux ti))
-                                (@projT2 Type (fun ty : Type => CompDec ty)
-                                   (interp_compdec_aux te)))
-                       | Typ.Tindex i =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             (te_carrier (@get typ_compdec t_i (of_Z (Z.of_N i))))
-                             (te_compdec (@get typ_compdec t_i (of_Z (Z.of_N i))))
-                       | Typ.TZ =>
-                           @existT Type (fun ty : Type => CompDec ty) BinNums.Z
-                             SMT_classes_instances.Z_compdec
-                       | Typ.Tbool =>
-                           @existT Type (fun ty : Type => CompDec ty) bool
-                             SMT_classes_instances.bool_compdec
-                       | Typ.Tpositive =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             BinNums.positive SMT_classes_instances.Positive_compdec
-                       | Typ.TBV n =>
-                           @existT Type (fun ty : Type => CompDec ty)
-                             (BVList.BITVECTOR_LIST.bitvector n)
-                             (SMT_classes_instances.BV_compdec n)
-                       end) v_typed2'))) (Typ.dec_interp t_i v_typec1')
-             (Typ.ord_interp t_i v_typec1') (Typ.comp_interp t_i v_typec1')
-             (Typ.inh_interp t_i v_typed2') (Typ.inh_interp t_i v_typec1') v_valf1
-             v_valf2)).
-    intros. specialize (H4 Htid2''').
-    rewrite <- H4.
+                   (Typ.interp_compdec_aux t_i v_typed2')))
+             (@EqbToDecType
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1')))
+                (@eqbtype_of_compdec
+                   (@type_compdec
+                      (@projT1 Type (fun ty : Type => CompDec ty)
+                         (Typ.interp_compdec_aux t_i v_typec1'))
+                      (@projT2 Type (fun ty : Type => CompDec ty)
+                         (Typ.interp_compdec_aux t_i v_typec1')))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1'))))
+             (@ord_of_compdec
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1')))
+                (@projT2 Type (fun ty : Type => CompDec ty)
+                   (Typ.interp_compdec_aux t_i v_typec1')))
+             (@comp_of_compdec
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1')))
+                (@projT2 Type (fun ty : Type => CompDec ty)
+                   (Typ.interp_compdec_aux t_i v_typec1')))
+             (@inh_of_compdec
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typed2')))
+                (@projT2 Type (fun ty : Type => CompDec ty)
+                   (Typ.interp_compdec_aux t_i v_typed2')))
+             (@inh_of_compdec
+                (@type_compdec
+                   (@projT1 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1'))
+                   (@projT2 Type (fun ty : Type => CompDec ty)
+                      (Typ.interp_compdec_aux t_i v_typec1')))
+                (@projT2 Type (fun ty : Type => CompDec ty)
+                   (Typ.interp_compdec_aux t_i v_typec1'))) v_valf1 v_valf2)).
+    intros H5. specialize (H5 Htid2''').
+    rewrite <- H5.
     specialize (Atom.Bval_inj2 t_i v_typed2' (v_vale2) (v_vald2)).
     intros.
 
