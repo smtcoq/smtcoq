@@ -156,16 +156,16 @@ Class CompDec T := {
 }.
 
 
-Instance eqbtype_of_compdec t `{c: CompDec t} : (EqbType t) :=
+Global Instance eqbtype_of_compdec {t} `{c: CompDec t} : (EqbType t) :=
   let (_, eqb, _, _, _) := c in eqb.
 
-Instance ord_of_compdec t `{c: CompDec t} : (OrdType t) :=
+Global Instance ord_of_compdec {t} `{c: CompDec t} : (OrdType t) :=
   let (_, _, ord, _, _) := c in ord.
 
-Instance inh_of_compdec t `{c: CompDec t} : (Inhabited t) :=
+Global Instance inh_of_compdec {t} `{c: CompDec t} : (Inhabited t) :=
   let (_, _, _, _, inh) := c in inh.
 
-Instance comp_of_compdec t `{c: CompDec t} : @Comparable t (ord_of_compdec t).
+Global Instance comp_of_compdec {t} `{c: CompDec t} : @Comparable t (ord_of_compdec (t:=t)).
   destruct c; trivial.
 Defined.
 
@@ -173,7 +173,7 @@ Defined.
 Definition type_compdec {ty:Type} (cd : CompDec ty) := ty.
 
 Definition eqb_of_compdec {t} (c : CompDec t) : t -> t -> bool :=
-  match eqbtype_of_compdec t with
+  match eqbtype_of_compdec (t:=t) with
   | {| eqb := eqb |} => eqb
   end.
 
@@ -183,12 +183,6 @@ Lemma compdec_eq_eqb {T:Type} {c : CompDec T} : forall x y : T,
 Proof.
   intros x y. destruct c as [TY [E HE] O C I]. unfold eqb_of_compdec. simpl. now rewrite HE.
 Qed.
-
-Hint Resolve
-     ord_of_compdec
-     inh_of_compdec
-     comp_of_compdec
-     eqbtype_of_compdec : typeclass_instances.
 
 
 Record typ_compdec : Type := Typ_compdec {

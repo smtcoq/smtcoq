@@ -59,7 +59,7 @@ Ltac prop2bool :=
         | _ =>
           let p := fresh "p" in
           assert (p:CompDec t);
-          [ auto with typeclass_instances
+          [ try (exact _)       (* Use the typeclass machinery *)
           | rewrite (@compdec_eq_eqb _ p)
           ]
         end
@@ -172,7 +172,7 @@ Ltac prop2bool_hyp H :=
     | _ =>
       let Hcompdec := fresh "Hcompdec" in
       assert (Hcompdec: CompDec A);
-      [ auto with typeclass_instances | ]
+      [ try (exact _) | ]
     end
   | false => idtac
   end;
@@ -223,7 +223,7 @@ Ltac remove_compdec_hyp H :=
     | _ =>
       let c := fresh "c" in
       assert (c : CompDec A);
-      [ auto with typeclass_instances
+      [ try (exact _)
       | let H1 := fresh in
         assert (H1 := H c); clear H; assert (H := H1); clear H1;
         remove_compdec_hyp H ]

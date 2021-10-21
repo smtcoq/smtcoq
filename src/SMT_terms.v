@@ -273,14 +273,18 @@ Module Typ.
     Fixpoint interp_compdec_aux (t:type) : {ty: Type & CompDec ty} :=
       match t with
       | TFArray ti te =>
+        let iti := interp_compdec_aux ti in
+        let ite := interp_compdec_aux te in
+        let cti := projT2 iti in
+        let cte := projT2 ite in
+        let tti := type_compdec cti in
+        let tte := type_compdec cte in
         existT (fun ty : Type => CompDec ty)
-               (@farray (type_compdec (projT2 (interp_compdec_aux ti)))
-                        (type_compdec (projT2 (interp_compdec_aux te)))
-                        (@ord_of_compdec _ (projT2 (interp_compdec_aux ti)))
-                        (@inh_of_compdec _ (projT2 (interp_compdec_aux te))))
-               (FArray_compdec
-                  (type_compdec (projT2 (interp_compdec_aux ti)))
-                  (type_compdec (projT2 (interp_compdec_aux te))))
+               (@farray tti
+                        tte
+                        (@ord_of_compdec tti cti)
+                        (@inh_of_compdec tte cte))
+               (FArray_compdec tti tte)
       | Tindex i =>
         existT (fun ty : Type => CompDec ty)
                (te_carrier (t_i .[ i])) (te_compdec (t_i .[ i]))
@@ -290,10 +294,10 @@ Module Typ.
       | TBV n => existT (fun ty : Type => CompDec ty) (BITVECTOR_LIST.bitvector n) (BV_compdec n)
       end.
 
-    Definition interp_compdec (t:type) : CompDec (projT1 (interp_compdec_aux t)) :=
-      projT2 (interp_compdec_aux t).
+    Definition interp (t:type) : Type := type_compdec (projT2 (interp_compdec_aux t)).
 
-    Definition interp (t:type) : Type := type_compdec (interp_compdec t).
+    Definition interp_compdec (t:type) : CompDec (interp t) :=
+      projT2 (interp_compdec_aux t).
 
 
     Definition interp_ftype (t:ftype) :=
@@ -301,40 +305,17 @@ Module Typ.
       (interp (snd t)) (fst t).
 
 
-    Definition dec_interp (t:type) : DecType (interp t).
-    Proof.
-      unfold interp.
-      destruct (interp_compdec t) as [x c]. simpl.
-      apply EqbToDecType.
-    Defined.
+    Global Instance dec_interp (t:type) : DecType (interp t) :=
+      (@EqbToDecType _ (@eqbtype_of_compdec (interp t) (interp_compdec t))).
 
-    Instance ord_interp (t:type) : OrdType (interp t).
-    Proof.
-      unfold interp.
-      destruct (interp_compdec t) as [x c]. simpl.
-      apply Ordered.
-    Defined.
+    Global Instance ord_interp (t:type) : OrdType (interp t) :=
+      @ord_of_compdec (interp t) (interp_compdec t).
 
-    Instance comp_interp (t:type) : Comparable (interp t).
-    Proof.
-      unfold interp, ord_interp.
-      destruct (interp_compdec t) as [x c]. simpl.
-      apply Comp.
-    Defined.
+    Global Instance comp_interp (t:type) : Comparable (interp t) :=
+      @comp_of_compdec (interp t) (interp_compdec t).
 
-
-    Definition inh_interp (t:type) : Inhabited (interp t).
-      unfold interp.
-      destruct (interp_compdec t).
-      apply Inh.
-    Defined.
-
-    Definition inhabitant_interp (t:type) : interp t := @default_value _ (inh_interp _).
-
-
-    Hint Resolve
-         dec_interp comp_interp ord_interp
-         inh_interp interp_compdec : typeclass_instances.
+    Global Instance inh_interp (t:type) : Inhabited (interp t) :=
+      @inh_of_compdec (interp t) (interp_compdec t).
 
 
     (* Boolean equality over interpretation of a btype *)
@@ -1523,13 +1504,25 @@ Qed.
            apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_shr s)
          | BO_select ti te => apply_binop (Typ.TFArray ti te) ti te FArray.select
          | BO_diffarray ti te =>
-           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te) (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i ti))) (ord_of_compdec _) _ (Typ.dec_interp t_i te) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te))
+           let iti := Typ.interp_compdec_aux t_i ti in
+           let ite := Typ.interp_compdec_aux t_i te in
+           let cti := projT2 iti in
+           let cte := projT2 ite in
+           let tti := type_compdec cti in
+           let tte := type_compdec cte in
+           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (@FArray.diff tti tte (@EqbToDecType _ (@eqbtype_of_compdec tti cti)) (@ord_of_compdec tti cti) (@comp_of_compdec tti cti) (@EqbToDecType _ (@eqbtype_of_compdec tte cte)) (@ord_of_compdec tte cte) (@comp_of_compdec tte cte) (@inh_of_compdec tti cti) (@inh_of_compdec tte cte))
          end.
 
       Definition interp_top o :=
          match o with
          | TO_store ti te =>
-           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store (Typ.interp t_i ti) (Typ.interp t_i te) (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i ti))) (ord_of_compdec _) _ (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i te))
+           let iti := Typ.interp_compdec_aux t_i ti in
+           let ite := Typ.interp_compdec_aux t_i te in
+           let cti := projT2 iti in
+           let cte := projT2 ite in
+           let tti := type_compdec cti in
+           let tte := type_compdec cte in
+           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store tti tte (@EqbToDecType _ (@eqbtype_of_compdec tti cti)) (@ord_of_compdec tti cti) (@comp_of_compdec tti cti) (@ord_of_compdec tte cte) (@comp_of_compdec tte cte) (@inh_of_compdec tte cte))
          end.
 
       Fixpoint compute_interp ty acc l :=
@@ -1964,9 +1957,9 @@ Qed.
         rewrite !Typ.cast_refl.
         intros.
         exists ((@FArray.diff (Typ.interp t_i t') (Typ.interp t_i te)
-             (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i t')))
-             (ord_of_compdec _)
-             (comp_of_compdec _) (Typ.dec_interp t_i te) (Typ.ord_interp t_i te)
+             (Typ.dec_interp t_i t')
+             (Typ.ord_interp t_i t')
+             (Typ.comp_interp t_i t') (Typ.dec_interp t_i te) (Typ.ord_interp t_i te)
              (Typ.comp_interp t_i te) (Typ.inh_interp t_i t') (Typ.inh_interp t_i te) x1 x2)); auto.
 
         (* Ternary operatores *)
@@ -1988,11 +1981,7 @@ Qed.
         intros.
         rewrite !Typ.cast_refl.
         intros.
-        exists ((@FArray.store (Typ.interp t_i ti') (Typ.interp t_i te')
-             (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i ti')))
-             (ord_of_compdec _)
-             (comp_of_compdec _) (Typ.ord_interp t_i te') (Typ.comp_interp t_i te')
-             (Typ.inh_interp t_i te') x1 x2 x3)); auto.
+        exists (@FArray.store (Typ.interp t_i ti') (Typ.interp t_i te') (Typ.dec_interp t_i ti') (Typ.ord_interp t_i ti') (Typ.comp_interp t_i ti') (Typ.ord_interp t_i te') (Typ.comp_interp t_i te') (Typ.inh_interp t_i te') x1 x2 x3); auto.
 
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
@@ -2467,12 +2456,7 @@ Qed.
           simpl; try (exists true; auto); intro k1;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TFArray ti te)) as [k2| ];
             simpl; try (exists true; reflexivity).
-        exists ((@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te)
-             (@EqbToDecType _ (@eqbtype_of_compdec _(Typ.interp_compdec t_i ti)))
-             (ord_of_compdec _)
-             (comp_of_compdec _) (Typ.dec_interp t_i te) (Typ.ord_interp t_i te)
-             (Typ.comp_interp t_i te) (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te)
-             (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y))); auto.
+        exists ((@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te) (Typ.dec_interp t_i ti) (Typ.ord_interp t_i ti) (Typ.comp_interp t_i ti) (Typ.dec_interp t_i te) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y))); auto.
 
         (* Ternary operators *)
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
@@ -2486,9 +2470,9 @@ Qed.
             case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
             simpl; try (exists true; reflexivity).
          exists (@FArray.store (Typ.interp t_i ti) (Typ.interp t_i te)
-             (@EqbToDecType _ (@eqbtype_of_compdec _ (Typ.interp_compdec t_i ti)))
-             (ord_of_compdec _)
-             (comp_of_compdec _) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te)
+             (Typ.dec_interp t_i ti)
+             (Typ.ord_interp t_i ti)
+             (Typ.comp_interp t_i ti) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te)
              (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y)
              (k3 (Typ.interp t_i) z)); auto.
 
