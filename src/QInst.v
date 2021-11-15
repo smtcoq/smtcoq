@@ -27,6 +27,15 @@ Proof.
    installed when we compile SMTCoq. *)
 Qed.
 
+Lemma impl_split2 a b c:
+  implb a (b || c) = true -> (negb a) || b || c = true.
+Proof.
+  intro H.
+  destruct a; destruct b; trivial.
+(* alternatively we could do <now verit_base H.> but it forces us to have veriT
+   installed when we compile SMTCoq. *)
+Qed.
+
 
 (** verit silently transforms an <implb (a || b) c> into a <or (not a) c>
    or into a <or (not b) c> when instantiating such a quantified theorem *)
@@ -80,6 +89,25 @@ Proof.
   destruct a; destruct b; destruct c; intuition.
 Qed.
 
+(** verit silently transforms an <implb a (b && c)> into a <or (not a)
+    b> or into a <or (not a) c> when instantiating such a quantified
+    theorem. *)
+Lemma impl_and_split_right a b c:
+  implb a (b && c) = true -> negb a || c = true.
+Proof.
+  intro H.
+  destruct a; destruct c; intuition.
+  now rewrite andb_false_r in H.
+Qed.
+
+Lemma impl_and_split_left a b c:
+  implb a (b && c) = true -> negb a || b = true.
+Proof.
+  intro H.
+  destruct a; destruct b; intuition.
+Qed.
+
+
 (** verit considers equality modulo its symmetry, so we have to recover the
     right direction in the instances of the theorems *)
 (* TODO: currently incomplete *)
@@ -120,9 +148,13 @@ Ltac vauto :=
                        | eapply eqb_sym_or_split_left; apply_sym H
                        | eapply eqb_or_split_right; apply_sym H
                        | eapply eqb_or_split_left; apply_sym H
+                       | eapply impl_and_split_right; apply_sym H
+                       | eapply impl_and_split_left; apply_sym H
                        ]
                | [ |- (negb ?A || ?B || ?C) = true ] =>
-                 eapply eqb_or_split; apply_sym H
+                 first [ eapply eqb_or_split; apply_sym H
+                       | eapply impl_split2; apply_sym H
+                       ]
                end
              ]
       );
