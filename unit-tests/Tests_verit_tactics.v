@@ -1449,3 +1449,29 @@ Section NonPrenexDependentTypes.
 
 End NonPrenexDependentTypes.
 *)
+
+
+Section QInstAnd.
+
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
+
+  Hypothesis H : forall (a1 a2:A) l1 l2,
+      eqb_of_compdec _ (a1::l1) (a2::l2) --->
+        (eqb_of_compdec HA a1 a2) && (eqb_of_compdec _ l1 l2).
+
+  Variables a1 a2 : A.
+  Variables l1 l2 : list A.
+  Hypothesis H1 : eqb_of_compdec _ (a1::l1) (a2::l2).
+
+  Goal eqb_of_compdec _ a1 a2.
+  Proof. verit. Qed.
+
+  Variable inb : A -> list A -> bool.
+
+  Hypothesis H2 : forall (a:A) l1 l2, inb a (l1++l2) ---> (inb a l1 || inb a l2).
+
+  Goal negb (inb a1 (l1++l2)) || inb a1 l1 || inb a1 l2.
+  Proof. verit. Qed.
+
+End QInstAnd.
