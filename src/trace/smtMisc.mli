@@ -12,7 +12,7 @@
 
 val cInt_tbl : (int, Structures.constr) Hashtbl.t
 val mkInt : int -> Structures.constr
-type 'a gen_hashed = { index : int; hval : 'a; }
+type 'a gen_hashed = { index : int; mutable hval : 'a; }
 val mklApp : Structures.constr Lazy.t -> Structures.constr array -> Structures.constr
 val string_of_name_def : string -> Structures.name -> string
 val string_coq_constr : Structures.constr -> string
