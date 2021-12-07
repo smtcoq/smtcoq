@@ -304,10 +304,9 @@ let of_coq_compdec reify t compdec =
          (match i.hval with
             | CompDec _ -> ty
             | Delayed _ ->
-               Hashtbl.remove reify.tbl t;
                let ce = mklApp cTyp_compdec [|t; compdec|] in
-               let res = Tindex {index = i.index; hval = CompDec ce} in
-               Hashtbl.add reify.tbl t res;
+               i.hval <- CompDec ce;
+               let res = Tindex i in
                res
          )
       | _ -> ty

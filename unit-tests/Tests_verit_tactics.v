@@ -1475,3 +1475,26 @@ Section QInstAnd.
   Proof. verit. Qed.
 
 End QInstAnd.
+
+
+Section OCamlCompDec.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable H2 : forall (h : A) (l x : list A), (h :: l) ++ x = h :: l ++ x.
+  Variable H4 : forall x : list A, nil ++ x = x.
+  Variable H5 : forall (x : A) (x0 : list A), nil = x :: x0 -> False.
+  Variable H6 : forall (x : list A) (x0 : list (list A)), nil = x :: x0 -> False.
+  Variable H8 : forall (x x0 : list A) (x1 x2 : list (list A)), x :: x1 = x0 :: x2 -> x = x0 /\ x1 = x2.
+  Variable proj_list : forall A : Type, list A -> list A -> list A.
+  Variable H0 : forall (H : list A) (H0 : A) (H1 : list A), proj_list A H (H0 :: H1) = H1.
+  Variable H10 : forall (H : list (list A)) (H0 : list A) (H1 : list (list A)),
+        proj_list (list A) H (H0 :: H1) = H1.
+  Variable proj_list0 : forall A : Type, A -> list A -> A.
+  Variable H9 : forall (H H0 : A) (H1 : list A), proj_list0 A H (H0 :: H1) = H0.
+  Variable H12 : forall (H H0 : list A) (H1 : list (list A)), proj_list0 (list A) H (H0 :: H1) = H0.
+  Variable H11 : forall (x : A) (x0 x1 : list A), x1 = nil \/ x1 = proj_list0 A x x1 :: proj_list A x0 x1.
+
+  Goal forall (x y : list A) (a0 : A),
+      x ++ y = a0::nil -> x = nil /\ y = a0::nil \/ x = a0::nil /\ y = nil.
+  Proof. verit_no_check. Qed.
+End OCamlCompDec.
