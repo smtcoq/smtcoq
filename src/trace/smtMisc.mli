@@ -12,7 +12,7 @@
 
 val cInt_tbl : (int, CoqInterface.constr) Hashtbl.t
 val mkInt : int -> CoqInterface.constr
-type 'a gen_hashed = { index : int; hval : 'a; }
+type 'a gen_hashed = { index : int; mutable hval : 'a; }
 val mklApp : CoqInterface.constr Lazy.t -> CoqInterface.constr array -> CoqInterface.constr
 val string_of_name_def : string -> CoqInterface.name -> string
 val string_coq_constr : CoqInterface.constr -> string
