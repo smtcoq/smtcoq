@@ -19,5 +19,5 @@ val parse_certif :
 val checker : string -> string -> unit
 val checker_debug : string -> string -> unit
 val theorem : CoqInterface.id -> string -> string -> unit
-val tactic : EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
-val tactic_no_check : EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val tactic : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val tactic_no_check : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
