@@ -18,11 +18,78 @@ Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances 
 Declare ML Module "smtcoq_plugin".
 
 
-Ltac zchaff          := trakt Z bool; Tactics.zchaff_bool.
-Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
+(** Tactics in bool *)
+
+(* Collect all the hypotheses from the context *)
+
+Ltac get_hyps_acc acc :=
+  match goal with
+  | [ H : ?P |- _ ] =>
+    let T := type of P in
+    lazymatch T with
+    | Prop =>
+      lazymatch P with
+      | id _ => fail
+      | _ =>
+        let _ := match goal with _ => change P with (id P) in H end in
+        match acc with
+        | Some ?t => get_hyps_acc (Some (H, t))
+        | None => get_hyps_acc (Some H)
+        end
+      end
+    | _ => fail
+    end
+  | _ => acc
+  end.
+
+Ltac eliminate_id :=
+  repeat match goal with
+  | [ H : ?P |- _ ] =>
+    lazymatch P with
+    | id ?Q => change P with Q in H
+    | _ => fail
+    end
+  end.
+
+Ltac get_hyps :=
+  let Hs := get_hyps_acc (@None nat) in
+  let _ := match goal with _ => eliminate_id end in
+  Hs.
+
+
+(* Tactics *)
 
 Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exact _).
 Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
+
+Tactic Notation "verit_bool" constr(h) :=
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_base_auto (Some (h, Hs))
+  | None => verit_bool_base_auto (Some h)
+  end;
+  vauto.
+Tactic Notation "verit_bool"           :=
+  let Hs := get_hyps in
+  verit_bool_base_auto Hs; vauto.
+
+Tactic Notation "verit_bool_no_check" constr(h) :=
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_no_check_base_auto (Some (h, Hs))
+  | None => verit_bool_no_check_base_auto (Some h)
+  end;
+  vauto.
+Tactic Notation "verit_bool_no_check"           :=
+  let Hs := get_hyps in
+  fun Hs => verit_bool_no_check_base_auto Hs; vauto.
+
+
+(** Tactics in Prop **)
+
+
+Ltac zchaff          := trakt Z bool; Tactics.zchaff_bool.
+Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
 
 Tactic Notation "verit" constr(global) :=
   intros;
