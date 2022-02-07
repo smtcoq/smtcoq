@@ -36,6 +36,34 @@ Proof.
    installed when we compile SMTCoq. *)
 Qed.
 
+Lemma impl_split211 a b1 b2 c1 c2 :
+  implb a ((b1 && b2) || (c1 && c2)) = true -> (negb a) || b1 || c1 = true.
+Proof.
+  intro H.
+  destruct a; destruct b1; destruct b2; destruct c1; destruct c2; trivial.
+Qed.
+
+Lemma impl_split212 a b1 b2 c1 c2 :
+  implb a ((b1 && b2) || (c1 && c2)) = true -> (negb a) || b1 || c2 = true.
+Proof.
+  intro H.
+  destruct a; destruct b1; destruct b2; destruct c1; destruct c2; trivial.
+Qed.
+
+Lemma impl_split221 a b1 b2 c1 c2 :
+  implb a ((b1 && b2) || (c1 && c2)) = true -> (negb a) || b2 || c1 = true.
+Proof.
+  intro H.
+  destruct a; destruct b1; destruct b2; destruct c1; destruct c2; trivial.
+Qed.
+
+Lemma impl_split222 a b1 b2 c1 c2 :
+  implb a ((b1 && b2) || (c1 && c2)) = true -> (negb a) || b2 || c2 = true.
+Proof.
+  intro H.
+  destruct a; destruct b1; destruct b2; destruct c1; destruct c2; trivial.
+Qed.
+
 
 (** verit silently transforms an <implb (a || b) c> into a <or (not a) c>
    or into a <or (not b) c> when instantiating such a quantified theorem *)
@@ -154,6 +182,10 @@ Ltac vauto :=
                | [ |- (negb ?A || ?B || ?C) = true ] =>
                  first [ eapply eqb_or_split; apply_sym H
                        | eapply impl_split2; apply_sym H
+                       | eapply impl_split211; apply_sym H
+                       | eapply impl_split212; apply_sym H
+                       | eapply impl_split221; apply_sym H
+                       | eapply impl_split222; apply_sym H
                        ]
                end
              ]
