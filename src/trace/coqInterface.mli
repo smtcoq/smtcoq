@@ -59,21 +59,12 @@ type econstr = EConstr.t
 val econstr_of_constr : constr -> econstr
 
 
-(* Modules *)
-val gen_constant : string list list -> string -> constr lazy_t
-val init_modules : string list list
-
-
 (* Int63 *)
-val int63_module : string list list
 val mkInt : int -> constr
-val cint : constr lazy_t
 
 
 (* PArray *)
-val parray_modules : string list list
 val max_array_size : int
-val mkArray : types * constr array -> constr
 
 
 (* Traces *)
@@ -91,8 +82,6 @@ val mkTrace :
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-
-val micromega_coq_proofTerm : constr lazy_t
 val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
 
 

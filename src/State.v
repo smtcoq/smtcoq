@@ -737,3 +737,8 @@ Module S.
 
   
 End S.
+
+
+(* Register constants for OCaml access *)
+Register C.t as SMTCoq.State.C.t.
+Register S.t as SMTCoq.State.S.t.

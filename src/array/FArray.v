@@ -1861,6 +1861,14 @@ Notation "a '[' i '<-' v ']'" := (store a i v)
    (at level 1, format "a [ i  <-  v ]") : farray_scope.
 
 
+(* Register constants for OCaml access *)
+Register FArray.farray as SMTCoq.array.FArray.farray.
+Register select as SMTCoq.array.FArray.select.
+Register store as SMTCoq.array.FArray.store.
+Register diff as SMTCoq.array.FArray.diff.
+Register FArray.equal as SMTCoq.array.FArray.equal.
+
+
 
 (* 
    Local Variables:
