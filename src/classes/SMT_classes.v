@@ -217,3 +217,12 @@ Section CompDec_from.
     Typ_compdec T CompDec_from.
 
 End CompDec_from.
+
+
+(* Register constants for OCaml access *)
+Register typ_compdec as SMTCoq.classes.SMT_classes.typ_compdec.
+Register Typ_compdec as SMTCoq.classes.SMT_classes.Typ_compdec.
+Register te_carrier as SMTCoq.classes.SMT_classes.te_carrier.
+Register te_compdec as SMTCoq.classes.SMT_classes.te_compdec.
+Register eqb_of_compdec as SMTCoq.classes.SMT_classes.eqb_of_compdec.
+Register CompDec as SMTCoq.classes.SMT_classes.CompDec.

@@ -385,7 +385,7 @@ module Op =
         let index, hval = destruct "destruct on a Rel: called by set in interp_tbl" op in
         t.(index) <- mk_Tval hval.tparams hval.tres hval.op_val in
       Hashtbl.iter set reify.tbl;
-      CoqInterface.mkArray (tval, t)
+      CoqTerms.mkArray (tval, t)
 
     let to_list reify =
       let set _ op acc =
@@ -1435,7 +1435,7 @@ module Atom =
 
     let interp_tbl reify =
       let t = to_array reify (Lazy.force dft_atom) a_to_coq in
-      CoqInterface.mkArray (Lazy.force catom, t)
+      CoqTerms.mkArray (Lazy.force catom, t)
 
 
     (** Producing a Coq term corresponding to the interpretation of an atom *)
