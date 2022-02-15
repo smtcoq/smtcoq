@@ -18,6 +18,11 @@ val ceq63 : coqTerm
 
 (* PArray *)
 val carray : coqTerm
+val cmake : coqTerm
+val cset : coqTerm
+
+(* is_true *)
+val cis_true : coqTerm
 
 (* nat *)
 val cnat : coqTerm
@@ -63,7 +68,6 @@ val cnegb : coqTerm
 val cimplb : coqTerm
 val ceqb : coqTerm
 val cifb : coqTerm
-val ciff : coqTerm
 val creflect : coqTerm
 
 (* Lists *)
@@ -86,10 +90,16 @@ val csigT : coqTerm
 
 (* Logical Operators *)
 val cnot : coqTerm
-val ceq : coqTerm
-val crefl_equal : coqTerm
 val cconj : coqTerm
 val cand : coqTerm
+val ciff : coqTerm
+
+(* Equality *)
+val ceq : coqTerm
+val crefl_equal : coqTerm
+
+(* Micromega *)
+val micromega_coq_proofTerm : coqTerm
 
 (* Bit vectors *)
 val cbitvector : coqTerm
@@ -119,9 +129,7 @@ val cstore : coqTerm
 val cdiff : coqTerm
 val cequalarray : coqTerm
 
-(* OrderedType *)
-
-(* SMT_terms *)
+(* SMTCoq terms *)
 val cState_C_t : coqTerm
 val cState_S_t : coqTerm
 
@@ -142,20 +150,6 @@ val ccomp_interp : coqTerm
 val cinh_interp : coqTerm
 
 val cinterp_eqb : coqTerm
-
-val ctyp_compdec : coqTerm
-val cTyp_compdec : coqTerm
-val cunit_typ_compdec : coqTerm
-val cte_carrier : coqTerm
-val cte_compdec : coqTerm
-val ceqb_of_compdec : coqTerm
-val cCompDec : coqTerm
-
-val cbool_compdec : coqTerm
-val cZ_compdec : coqTerm
-val cPositive_compdec : coqTerm
-val cBV_compdec : coqTerm
-val cFArray_compdec : coqTerm
 
 val ctval : coqTerm
 val cTval : coqTerm
@@ -222,8 +216,22 @@ val cFiff : coqTerm
 val cFite : coqTerm
 val cFbbT : coqTerm
 
-val cis_true : coqTerm
+(* SMTCoq Classes *)
+val ctyp_compdec : coqTerm
+val cTyp_compdec : coqTerm
+val cte_carrier : coqTerm
+val cte_compdec : coqTerm
+val ceqb_of_compdec : coqTerm
+val cCompDec : coqTerm
 
+val cunit_typ_compdec : coqTerm
+val cbool_compdec : coqTerm
+val cZ_compdec : coqTerm
+val cPositive_compdec : coqTerm
+val cBV_compdec : coqTerm
+val cFArray_compdec : coqTerm
+
+(* SMTCoq Trace *)
 type certif_ops =
   coqTerm * coqTerm * coqTerm *
   coqTerm * coqTerm * coqTerm *
@@ -317,6 +325,7 @@ val vm_cast_true : Environ.env -> CoqInterface.constr -> CoqInterface.constr
 val mkNat : int -> CoqInterface.constr
 val mkN : int -> CoqInterface.constr
 val mk_bv_list : bool list -> CoqInterface.constr
+val mkArray : Constr.types * Constr.t array -> Constr.t
 
 (* Reification *)
 val mk_bool : CoqInterface.constr -> bool

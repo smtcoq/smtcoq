@@ -69,6 +69,7 @@ let cName_RowNeq = CoqTerms.ceuf_checker_Name_RowNeq
 let cName_Ext = CoqTerms.ceuf_checker_Name_Ext
 let cName_Hole = CoqTerms.ceuf_checker_Name_Hole
 
+
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
 
 let compute_roots roots last_root =
@@ -146,13 +147,13 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    CoqInterface.mkArray (Lazy.force cint, res) in
+    CoqTerms.mkArray (Lazy.force cint, res) in
   let used_roots =
     let l = List.length used_roots in
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqInterface.mkArray (Lazy.force cint, res)|] in
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqTerms.mkArray (Lazy.force cint, res)|] in
   let ce3 = CoqInterface.mkUConst roots in
   let _ = CoqInterface.declare_constant root ce3 in
   let ce3' = CoqInterface.mkUConst used_roots in
@@ -208,12 +209,12 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqInterface.mkArray (Lazy.force cint, res)|] in
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqTerms.mkArray (Lazy.force cint, res)|] in
   let rootsCstr =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    CoqInterface.mkArray (Lazy.force cint, res) in
+    CoqTerms.mkArray (Lazy.force cint, res) in
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
   let theorem_proof_cast =
@@ -285,12 +286,12 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqInterface.mkArray (Lazy.force cint, res)|] in
+    mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqTerms.mkArray (Lazy.force cint, res)|] in
   let rootsCstr =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    CoqInterface.mkArray (Lazy.force cint, res) in
+    CoqTerms.mkArray (Lazy.force cint, res) in
 
   let tm =
    CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
@@ -355,12 +356,12 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
     mklApp cSome [|mklApp carray [|Lazy.force cint|];
-                   CoqInterface.mkArray (Lazy.force cint, res)|] in
+                   CoqTerms.mkArray (Lazy.force cint, res)|] in
   let rootsCstr =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
-    CoqInterface.mkArray (Lazy.force cint, res) in
+    CoqTerms.mkArray (Lazy.force cint, res) in
 
   let tm =
    CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
@@ -483,14 +484,14 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *     let res = Array.make (List.length roots + 1) (mkInt 0) in
  *     let i = ref 0 in
  *     List.iter (fun j -> res.(!i) <- mkInt (Form.to_lit j); incr i) roots;
- *     CoqInterface.mkArray (Lazy.force cint, res) in
+ *     CoqTerms.mkArray (Lazy.force cint, res) in
  *   let cused_roots =
  *     let l = List.length used_roots in
  *     let res = Array.make (l + 1) (mkInt 0) in
  *     let i = ref (l-1) in
  *     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
  *     mklApp cSome [|mklApp carray [|Lazy.force cint|];
- *                    CoqInterface.mkArray (Lazy.force cint, res)|] in
+ *                    CoqTerms.mkArray (Lazy.force cint, res)|] in
  *   let ce3 = CoqInterface.mkUConst croots in
  *   let _ = CoqInterface.declare_constant root ce3 in
  *   let ce3' = CoqInterface.mkUConst cused_roots in

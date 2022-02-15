@@ -133,7 +133,7 @@ let import_cnf_trace reloc filename first last =
 
 let make_roots first last =
   let cint = Lazy.force cint in
-  let roots = Array.make (last.id + 2) (CoqInterface.mkArray (cint, Array.make 1 (mkInt 0))) in
+  let roots = Array.make (last.id + 2) (CoqTerms.mkArray (cint, Array.make 1 (mkInt 0))) in
   let mk_elem l =
     let x = match Form.pform l with
     | Fatom x -> x + 2
@@ -144,15 +144,15 @@ let make_roots first last =
     let root = Array.of_list (get_val !r) in
     let croot = Array.make (Array.length root + 1) (mkInt 0) in
     Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
-    roots.(!r.id) <- CoqInterface.mkArray (cint, croot);
+    roots.(!r.id) <- CoqTerms.mkArray (cint, croot);
     r := next !r
   done;
   let root = Array.of_list (get_val !r) in
   let croot = Array.make (Array.length root + 1) (mkInt 0) in
   Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
-  roots.(!r.id) <- CoqInterface.mkArray (cint, croot);
+  roots.(!r.id) <- CoqTerms.mkArray (cint, croot);
 
-  CoqInterface.mkArray (mklApp carray [|cint|], roots)
+  CoqTerms.mkArray (mklApp carray [|cint|], roots)
 
 let interp_roots first last =
   let tbl = Hashtbl.create 17 in

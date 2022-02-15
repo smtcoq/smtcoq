@@ -899,7 +899,6 @@ Register Euf_Checker.Hole as SMTCoq.Trace.Euf_Checker.Hole.
 Register Euf_Checker.ForallInst as SMTCoq.Trace.Euf_Checker.ForallInst.
 
 
-
 (*
    Local Variables:
    coq-load-path: ((rec "." "SMTCoq"))

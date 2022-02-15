@@ -14,114 +14,129 @@ open SmtMisc
 
 
 type coqTerm = CoqInterface.constr lazy_t
-let gen_constant = CoqInterface.gen_constant
+
+let gc prefix constant =
+  lazy (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref (prefix ^ "." ^ constant)))
 
 
 (* Int63 *)
-let cint = CoqInterface.cint
-let ceq63 = gen_constant CoqInterface.int63_module "eqb"
+let int63_prefix = "num.int63"
+let int63_gc = gc int63_prefix
+let cint = int63_gc "type"
+let ceq63 = int63_gc "eqb"
 
 (* PArray *)
-let carray = gen_constant CoqInterface.parray_modules "array"
+let array_prefix = "array.array"
+let array_gc = gc array_prefix
+let carray = array_gc "type"
+let cmake = array_gc "make"
+let cset = array_gc "set"
 
 (* is_true *)
-let cis_true = gen_constant CoqInterface.init_modules "is_true"
+let cis_true = gc "core.is_true" "is_true"
 
 (* nat *)
-let cnat = gen_constant CoqInterface.init_modules "nat"
-let cO = gen_constant CoqInterface.init_modules "O"
-let cS = gen_constant CoqInterface.init_modules "S"
+let nat_prefix = "num.nat"
+let nat_gc = gc nat_prefix
+let cnat = nat_gc "type"
+let cO = nat_gc "O"
+let cS = nat_gc "S"
 
 (* Positive *)
-let positive_modules = [["Coq";"Numbers";"BinNums"];
-                        ["Coq";"PArith";"BinPosDef";"Pos"]]
-
-let cpositive = gen_constant positive_modules "positive"
-let cxI = gen_constant positive_modules "xI"
-let cxO = gen_constant positive_modules "xO"
-let cxH = gen_constant positive_modules "xH"
-let ceqbP = gen_constant positive_modules "eqb"
+let positive_prefix = "num.pos"
+let positive_gc = gc positive_prefix
+let cpositive = positive_gc "type"
+let cxI = positive_gc "xI"
+let cxO = positive_gc "xO"
+let cxH = positive_gc "xH"
+let ceqbP = positive_gc "eqb"
 
 (* N *)
-let n_modules = [["Coq";"NArith";"BinNat";"N"]]
-
-let cN = gen_constant positive_modules "N"
-let cN0 = gen_constant positive_modules "N0"
-let cNpos = gen_constant positive_modules "Npos"
-
-let cof_nat = gen_constant n_modules "of_nat"
-
+let n_prefix = "num.N"
+let n_gc = gc n_prefix
+let cN = n_gc "type"
+let cN0 = n_gc "N0"
+let cNpos = n_gc "Npos"
+let cof_nat = n_gc "of_nat"
 
 (* Z *)
-let z_modules = [["Coq";"Numbers";"BinNums"];
-                 ["Coq";"ZArith";"BinInt"];
-                 ["Coq";"ZArith";"BinInt";"Z"]]
-
-let cZ = gen_constant z_modules "Z"
-let cZ0 = gen_constant z_modules "Z0"
-let cZpos = gen_constant z_modules "Zpos"
-let cZneg = gen_constant z_modules "Zneg"
-let copp = gen_constant z_modules "opp"
-let cadd = gen_constant z_modules "add"
-let csub = gen_constant z_modules "sub"
-let cmul = gen_constant z_modules "mul"
-let cltb = gen_constant z_modules "ltb"
-let cleb = gen_constant z_modules "leb"
-let cgeb = gen_constant z_modules "geb"
-let cgtb = gen_constant z_modules "gtb"
-let ceqbZ = gen_constant z_modules "eqb"
-(* let cZeqbsym = gen_constant z_modules "eqb_sym" *)
+let z_prefix = "num.Z"
+let z_gc = gc z_prefix
+let cZ = z_gc "type"
+let cZ0 = z_gc "Z0"
+let cZpos = z_gc "Zpos"
+let cZneg = z_gc "Zneg"
+let copp = z_gc "opp"
+let cadd = z_gc "add"
+let csub = z_gc "sub"
+let cmul = z_gc "mul"
+let cltb = z_gc "ltb"
+let cleb = z_gc "leb"
+let cgeb = z_gc "geb"
+let cgtb = z_gc "gtb"
+let ceqbZ = z_gc "eqb"
 
 (* Booleans *)
-let bool_modules = [["Coq";"Bool";"Bool"]]
-
-let cbool = gen_constant CoqInterface.init_modules "bool"
-let ctrue = gen_constant CoqInterface.init_modules "true"
-let cfalse = gen_constant CoqInterface.init_modules "false"
-let candb = gen_constant CoqInterface.init_modules "andb"
-let corb = gen_constant CoqInterface.init_modules "orb"
-let cxorb = gen_constant CoqInterface.init_modules "xorb"
-let cnegb = gen_constant CoqInterface.init_modules "negb"
-let cimplb = gen_constant CoqInterface.init_modules "implb"
-let ceqb = gen_constant  bool_modules "eqb"
-let cifb = gen_constant bool_modules "ifb"
-let ciff = gen_constant CoqInterface.init_modules "iff"
-let creflect = gen_constant bool_modules "reflect"
+let bool_prefix = "core.bool"
+let bool_gc = gc bool_prefix
+let cbool = bool_gc "type"
+let ctrue = bool_gc "true"
+let cfalse = bool_gc "false"
+let candb = bool_gc "andb"
+let corb = bool_gc "orb"
+let cxorb = bool_gc "xorb"
+let cnegb = bool_gc "negb"
+let cimplb = bool_gc "implb"
+let ceqb = bool_gc "eqb"
+let cifb = bool_gc "ifb"
+let creflect = bool_gc "reflect"
 
 (* Lists *)
-let clist = gen_constant CoqInterface.init_modules "list"
-let cnil = gen_constant CoqInterface.init_modules "nil"
-let ccons = gen_constant CoqInterface.init_modules "cons"
-let clength = gen_constant CoqInterface.init_modules "length"
+let list_prefix = "core.list"
+let list_gc = gc list_prefix
+let clist = list_gc "type"
+let cnil = list_gc "nil"
+let ccons = list_gc "cons"
+let clength = list_gc "length"
 
 (* Option *)
-let coption = gen_constant CoqInterface.init_modules "option"
-let cSome = gen_constant CoqInterface.init_modules "Some"
-let cNone = gen_constant CoqInterface.init_modules "None"
+let option_prefix = "core.option"
+let option_gc = gc option_prefix
+let coption = option_gc "type"
+let cSome = option_gc "Some"
+let cNone = option_gc "None"
 
 (* Pairs *)
-let cpair = gen_constant CoqInterface.init_modules "pair"
-let cprod = gen_constant CoqInterface.init_modules "prod"
+let pair_prefix = "core.prod"
+let pair_gc = gc pair_prefix
+let cpair = pair_gc "intro"
+let cprod = pair_gc "type"
 
 (* Dependent pairs *)
-let csigT = gen_constant CoqInterface.init_modules "sigT"
-(* let cprojT1 = gen_constant CoqInterface.init_modules "projT1" *)
-(* let cprojT2 = gen_constant CoqInterface.init_modules "projT2" *)
-(* let cprojT3 = gen_constant CoqInterface.init_modules "projT3" *)
-
-(* let csigT2 = gen_constant CoqInterface.init_modules "sigT2" *)
-(* let csigT_of_sigT2 = gen_constant CoqInterface.init_modules "sigT_of_sigT2" *)
+let sigT_prefix = "core.sigT"
+let sigT_gc = gc sigT_prefix
+let csigT = sigT_gc "type"
 
 (* Logical Operators *)
-let cnot = gen_constant CoqInterface.init_modules "not"
-let ceq = gen_constant CoqInterface.init_modules "eq"
-let crefl_equal = gen_constant CoqInterface.init_modules "eq_refl"
-let cconj = gen_constant CoqInterface.init_modules "conj"
-let cand = gen_constant CoqInterface.init_modules "and"
+let cnot = gc "core.not" "type"
+let cconj = gc "core.and" "conj"
+let cand = gc "core.and" "type"
+let ciff = gc "core.iff" "type"
+
+(* Equality *)
+let eq_prefix = "core.eq"
+let eq_gc = gc eq_prefix
+let ceq = eq_gc "type"
+let crefl_equal = eq_gc "refl"
+
+(* Micromega *)
+let micromega_prefix = "micromega.ZMicromega"
+let micromega_gc = gc micromega_prefix
+let micromega_coq_proofTerm = micromega_gc "ZArithProof"
 
 (* Bit vectors *)
 let bv_prefix = "SMTCoq.bva.BVList.BITVECTOR_LIST"
-let bv_gc = CoqInterface.gen_constant2 bv_prefix
+let bv_gc = gc bv_prefix
 let cbitvector = bv_gc "bitvector"
 let cof_bits = bv_gc "of_bits"
 let cbitOf = bv_gc "bitOf"
@@ -142,29 +157,27 @@ let cbv_sextn = bv_gc "bv_sextn"
 let cbv_shl = bv_gc "bv_shl"
 let cbv_shr = bv_gc "bv_shr"
 
-
 (* Arrays *)
 let array_prefix = "SMTCoq.array.FArray"
-let array_gc = CoqInterface.gen_constant2 array_prefix
+let array_gc = gc array_prefix
 let cfarray = array_gc "farray"
 let cselect = array_gc "select"
 let cstore = array_gc "store"
 let cdiff = array_gc "diff"
 let cequalarray = array_gc "equal"
 
-
-(* SMT_terms *)
+(* SMTCoq terms *)
 let state_prefix = "SMTCoq.State"
-let state_gc = CoqInterface.gen_constant2 state_prefix
+let state_gc = gc state_prefix
 let cState_C_t = state_gc "C.t"
 let cState_S_t = state_gc "S.t"
 
 let misc_prefix = "SMTCoq.Misc"
-let misc_gc = CoqInterface.gen_constant2 misc_prefix
+let misc_gc = gc misc_prefix
 let cdistinct = misc_gc "distinct"
 
 let terms_prefix = "SMTCoq.SMT_terms"
-let terms_gc = CoqInterface.gen_constant2 terms_prefix
+let terms_gc = gc terms_prefix
 
 let ctype = terms_gc "Typ.type"
 let cTZ = terms_gc "Typ.TZ"
@@ -247,8 +260,9 @@ let cFiff = terms_gc "Form.Fiff"
 let cFite = terms_gc "Form.Fite"
 let cFbbT = terms_gc "Form.FbbT"
 
+(* SMTCoq Classes *)
 let classes_prefix = "SMTCoq.classes.SMT_classes"
-let classes_gc = CoqInterface.gen_constant2 classes_prefix
+let classes_gc = gc classes_prefix
 let ctyp_compdec = classes_gc "typ_compdec"
 let cTyp_compdec = classes_gc "Typ_compdec"
 let cte_carrier = classes_gc "te_carrier"
@@ -257,7 +271,7 @@ let ceqb_of_compdec = classes_gc "eqb_of_compdec"
 let cCompDec = classes_gc "CompDec"
 
 let classesi_prefix = "SMTCoq.classes.SMT_classes_instances"
-let classesi_gc = CoqInterface.gen_constant2 classesi_prefix
+let classesi_gc = gc classesi_prefix
 let cunit_typ_compdec = classesi_gc "unit_typ_compdec"
 let cbool_compdec = classesi_gc "bool_compdec"
 let cZ_compdec = classesi_gc "Z_compdec"
@@ -265,8 +279,9 @@ let cPositive_compdec = classesi_gc "Positive_compdec"
 let cBV_compdec = classesi_gc "BV_compdec"
 let cFArray_compdec = classesi_gc "FArray_compdec"
 
+(* SMTCoq Trace *)
 let sat_checker_prefix = "SMTCoq.Trace.Sat_Checker"
-let sat_checker_gc = CoqInterface.gen_constant2 sat_checker_prefix
+let sat_checker_gc = gc sat_checker_prefix
 let csat_checker_valid = sat_checker_gc "valid"
 let csat_checker_interp_var = sat_checker_gc "interp_var"
 let csat_checker_Certif = sat_checker_gc "Certif"
@@ -276,7 +291,7 @@ let csat_checker_theorem_checker = sat_checker_gc "theorem_checker"
 let csat_checker_checker = sat_checker_gc "checker"
 
 let cnf_checker_prefix = "SMTCoq.Trace.Cnf_Checker"
-let cnf_checker_gc = CoqInterface.gen_constant2 cnf_checker_prefix
+let cnf_checker_gc = gc cnf_checker_prefix
 let ccnf_checker_certif = cnf_checker_gc "certif"
 let ccnf_checker_Certif = cnf_checker_gc "Certif"
 let ccnf_checker_checker_b_correct = cnf_checker_gc "checker_b_correct"
@@ -285,7 +300,7 @@ let ccnf_checker_checker_eq_correct = cnf_checker_gc "checker_eq_correct"
 let ccnf_checker_checker_eq = cnf_checker_gc "checker_eq"
 
 let euf_checker_prefix = "SMTCoq.Trace.Euf_Checker"
-let euf_checker_gc = CoqInterface.gen_constant2 euf_checker_prefix
+let euf_checker_gc = gc euf_checker_prefix
 let ceuf_checker_Certif = euf_checker_gc "Certif"
 let ceuf_checker_certif = euf_checker_gc "certif"
 let ceuf_checker_checker = euf_checker_gc "checker"
@@ -352,7 +367,7 @@ type certif_ops =
   coqTerm * coqTerm * coqTerm *
   coqTerm * coqTerm
 let make_certif_ops prefix args =
-  let gc = CoqInterface.gen_constant2 prefix in
+  let gc = gc prefix in
   let gen_constant c =
     match args with
       | Some args -> lazy (mklApp (gc c) args)
@@ -434,6 +449,19 @@ let rec mk_bv_list = function
   | [] -> mklApp cnil [|Lazy.force cbool|]
   | b :: bv ->
     mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
+
+(* Compute an array *)
+let mkArray : Constr.types * Constr.t array -> Constr.t =
+  fun (ty, a) ->
+  let l = (Array.length a) - 1 in
+  snd (Array.fold_left (fun (i,acc) c ->
+                        let acc' =
+                          if i = l then
+                            acc
+                          else
+                            mklApp cset [|ty; acc; mkInt i; c|] in
+                        (i+1,acc')
+                       ) (0, mklApp cmake [|ty; mkInt l; a.(l)|]) a)
 
 
 (* Reification *)
