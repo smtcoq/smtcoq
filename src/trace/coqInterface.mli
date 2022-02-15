@@ -61,6 +61,7 @@ val econstr_of_constr : constr -> econstr
 
 (* Modules *)
 val gen_constant : string list list -> string -> constr lazy_t
+val gen_constant2 : string -> string -> constr lazy_t
 val init_modules : string list list
 
 

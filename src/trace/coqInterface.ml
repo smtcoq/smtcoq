@@ -109,6 +109,8 @@ let gen_constant_in_modules s m n =
   UnivGen.constr_of_monomorphic_global @@ Coqlib.gen_reference_in_modules s m n
 let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
 let init_modules = Coqlib.init_modules
+let gen_constant2 prefix constant =
+  lazy (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref (prefix ^ constant)))
 
 
 (* Int63 *)
