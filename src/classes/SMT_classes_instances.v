@@ -747,3 +747,12 @@ Section prod.
   |}.
 
 End prod.
+
+
+(* Register constants for OCaml access *)
+Register unit_typ_compdec as SMTCoq.classes.SMT_classes_instances.unit_typ_compdec.
+Register bool_compdec as SMTCoq.classes.SMT_classes_instances.bool_compdec.
+Register Z_compdec as SMTCoq.classes.SMT_classes_instances.Z_compdec.
+Register Positive_compdec as SMTCoq.classes.SMT_classes_instances.Positive_compdec.
+Register BV_compdec as SMTCoq.classes.SMT_classes_instances.BV_compdec.
+Register FArray_compdec as SMTCoq.classes.SMT_classes_instances.FArray_compdec.

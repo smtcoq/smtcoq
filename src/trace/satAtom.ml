@@ -51,7 +51,7 @@ module Atom =
       t
 
     let interp_tbl reify =
-      CoqInterface.mkArray (Lazy.force cbool, atom_tbl reify)
+      CoqTerms.mkArray (Lazy.force cbool, atom_tbl reify)
 
     let logic _ = SL.empty
 

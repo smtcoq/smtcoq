@@ -546,7 +546,7 @@ module Make (Atom:ATOM) =
     let args_to_coq args =
       let cargs = Array.make (Array.length args + 1) (mkInt 0) in
       Array.iteri (fun i hf -> cargs.(i) <- to_coq hf) args;
-      CoqInterface.mkArray (Lazy.force cint, cargs)
+      CoqTerms.mkArray (Lazy.force cint, cargs)
 
     let pf_to_coq = function
       | Fatom a -> mklApp cFatom [|mkInt (Atom.index a)|]
@@ -586,7 +586,7 @@ module Make (Atom:ATOM) =
 
     let interp_tbl reify =
       let (i,t) = to_array reify (Lazy.force cFtrue) pf_to_coq in
-      (mkInt i, CoqInterface.mkArray (Lazy.force cform, t))
+      (mkInt i, CoqTerms.mkArray (Lazy.force cform, t))
 
     let nvars reify = reify.count
     (* Producing a Coq term corresponding to the interpretation of a formula *)
