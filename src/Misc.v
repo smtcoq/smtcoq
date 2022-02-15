@@ -1418,6 +1418,29 @@ Lemma is_true_iff e :  e = true <-> is_true e.
 Proof. now unfold is_true. Qed.
 
 
+(* Register constants for OCaml access *)
+Register distinct as SMTCoq.Misc.distinct.
+
+Register Int63.eqb as num.int63.eqb.
+Register PArray.array as array.array.type.
+Register PArray.make as array.array.make.
+Register PArray.set as array.array.set.
+Register Coq.Init.Datatypes.is_true as core.is_true.is_true.
+Register Coq.PArith.BinPosDef.Pos.eqb as num.pos.eqb.
+Register Coq.NArith.BinNat.N.of_nat as num.N.of_nat.
+Register Coq.ZArith.BinInt.Z.ltb as num.Z.ltb.
+Register Coq.ZArith.BinInt.Z.leb as num.Z.leb.
+Register Coq.ZArith.BinInt.Z.gtb as num.Z.gtb.
+Register Coq.ZArith.BinInt.Z.geb as num.Z.geb.
+Register Coq.ZArith.BinInt.Z.eqb as num.Z.eqb.
+Register Coq.Init.Datatypes.implb as core.bool.implb.
+Register Coq.Bool.Bool.eqb as core.bool.eqb.
+Register Coq.Bool.Bool.ifb as core.bool.ifb.
+Register Coq.Bool.Bool.reflect as core.bool.reflect.
+Register Coq.Init.Datatypes.length as core.list.length.
+Register Coq.micromega.ZMicromega.ZArithProof as micromega.ZMicromega.ZArithProof.
+
+
 (* 
    Local Variables:
    coq-load-path: ((rec "." "SMTCoq"))
