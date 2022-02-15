@@ -778,6 +778,18 @@ End Euf_Checker.
 Unset Implicit Arguments.
 
 
+(* Register constants for OCaml access *)
+Register Sat_Checker.valid as SMTCoq.Trace.Sat_Checker.valid.
+Register Sat_Checker.interp_var as SMTCoq.Trace.Sat_Checker.interp_var.
+Register Sat_Checker.Certif as SMTCoq.Trace.Sat_Checker.Certif.
+Register Sat_Checker.step as SMTCoq.Trace.Sat_Checker.step.
+Register Sat_Checker.Res as SMTCoq.Trace.Sat_Checker.Res.
+Register Sat_Checker.dimacs as SMTCoq.Trace.Sat_Checker.dimacs.
+Register Sat_Checker.certif as SMTCoq.Trace.Sat_Checker.certif.
+Register Sat_Checker.theorem_checker as SMTCoq.Trace.Sat_Checker.theorem_checker.
+Register Sat_Checker.checker as SMTCoq.Trace.Sat_Checker.checker.
+
+
 (*
    Local Variables:
    coq-load-path: ((rec "." "SMTCoq"))

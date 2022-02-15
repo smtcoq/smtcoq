@@ -2608,6 +2608,79 @@ End PredefinedArrays.
 *)
 
 
+(* Register constants for OCaml access *)
+Register Typ.type as SMTCoq.SMT_terms.Typ.type.
+Register Typ.TFArray as SMTCoq.SMT_terms.Typ.TFArray.
+Register Typ.Tindex as SMTCoq.SMT_terms.Typ.Tindex.
+Register Typ.TZ as SMTCoq.SMT_terms.Typ.TZ.
+Register Typ.Tbool as SMTCoq.SMT_terms.Typ.Tbool.
+Register Typ.Tpositive as SMTCoq.SMT_terms.Typ.Tpositive.
+Register Typ.TBV as SMTCoq.SMT_terms.Typ.TBV.
+Register Typ.interp as SMTCoq.SMT_terms.Typ.interp.
+Register Typ.dec_interp as SMTCoq.SMT_terms.Typ.dec_interp.
+Register Typ.ord_interp as SMTCoq.SMT_terms.Typ.ord_interp.
+Register Typ.comp_interp as SMTCoq.SMT_terms.Typ.comp_interp.
+Register Typ.inh_interp as SMTCoq.SMT_terms.Typ.inh_interp.
+Register Typ.i_eqb as SMTCoq.SMT_terms.Typ.i_eqb.
+Register Atom.tval as SMTCoq.SMT_terms.Atom.tval.
+Register Atom.Tval as SMTCoq.SMT_terms.Atom.Tval.
+Register Atom.CO_xH as SMTCoq.SMT_terms.Atom.CO_xH.
+Register Atom.CO_Z0 as SMTCoq.SMT_terms.Atom.CO_Z0.
+Register Atom.CO_BV as SMTCoq.SMT_terms.Atom.CO_BV.
+Register Atom.UO_xO as SMTCoq.SMT_terms.Atom.UO_xO.
+Register Atom.UO_xI as SMTCoq.SMT_terms.Atom.UO_xI.
+Register Atom.UO_Zpos as SMTCoq.SMT_terms.Atom.UO_Zpos.
+Register Atom.UO_Zneg as SMTCoq.SMT_terms.Atom.UO_Zneg.
+Register Atom.UO_Zopp as SMTCoq.SMT_terms.Atom.UO_Zopp.
+Register Atom.UO_BVbitOf as SMTCoq.SMT_terms.Atom.UO_BVbitOf.
+Register Atom.UO_BVnot as SMTCoq.SMT_terms.Atom.UO_BVnot.
+Register Atom.UO_BVneg as SMTCoq.SMT_terms.Atom.UO_BVneg.
+Register Atom.UO_BVextr as SMTCoq.SMT_terms.Atom.UO_BVextr.
+Register Atom.UO_BVzextn as SMTCoq.SMT_terms.Atom.UO_BVzextn.
+Register Atom.UO_BVsextn as SMTCoq.SMT_terms.Atom.UO_BVsextn.
+Register Atom.BO_Zplus as SMTCoq.SMT_terms.Atom.BO_Zplus.
+Register Atom.BO_Zminus as SMTCoq.SMT_terms.Atom.BO_Zminus.
+Register Atom.BO_Zmult as SMTCoq.SMT_terms.Atom.BO_Zmult.
+Register Atom.BO_Zlt as SMTCoq.SMT_terms.Atom.BO_Zlt.
+Register Atom.BO_Zle as SMTCoq.SMT_terms.Atom.BO_Zle.
+Register Atom.BO_Zge as SMTCoq.SMT_terms.Atom.BO_Zge.
+Register Atom.BO_Zgt as SMTCoq.SMT_terms.Atom.BO_Zgt.
+Register Atom.BO_eq as SMTCoq.SMT_terms.Atom.BO_eq.
+Register Atom.BO_BVand as SMTCoq.SMT_terms.Atom.BO_BVand.
+Register Atom.BO_BVor as SMTCoq.SMT_terms.Atom.BO_BVor.
+Register Atom.BO_BVxor as SMTCoq.SMT_terms.Atom.BO_BVxor.
+Register Atom.BO_BVadd as SMTCoq.SMT_terms.Atom.BO_BVadd.
+Register Atom.BO_BVmult as SMTCoq.SMT_terms.Atom.BO_BVmult.
+Register Atom.BO_BVult as SMTCoq.SMT_terms.Atom.BO_BVult.
+Register Atom.BO_BVslt as SMTCoq.SMT_terms.Atom.BO_BVslt.
+Register Atom.BO_BVconcat as SMTCoq.SMT_terms.Atom.BO_BVconcat.
+Register Atom.BO_BVshl as SMTCoq.SMT_terms.Atom.BO_BVshl.
+Register Atom.BO_BVshr as SMTCoq.SMT_terms.Atom.BO_BVshr.
+Register Atom.BO_select as SMTCoq.SMT_terms.Atom.BO_select.
+Register Atom.BO_diffarray as SMTCoq.SMT_terms.Atom.BO_diffarray.
+Register Atom.TO_store as SMTCoq.SMT_terms.Atom.TO_store.
+Register Atom.NO_distinct as SMTCoq.SMT_terms.Atom.NO_distinct.
+Register Atom.atom as SMTCoq.SMT_terms.Atom.atom.
+Register Atom.Acop as SMTCoq.SMT_terms.Atom.Acop.
+Register Atom.Auop as SMTCoq.SMT_terms.Atom.Auop.
+Register Atom.Abop as SMTCoq.SMT_terms.Atom.Abop.
+Register Atom.Atop as SMTCoq.SMT_terms.Atom.Atop.
+Register Atom.Anop as SMTCoq.SMT_terms.Atom.Anop.
+Register Atom.Aapp as SMTCoq.SMT_terms.Atom.Aapp.
+Register Form.form as SMTCoq.SMT_terms.Form.form.
+Register Form.Fatom as SMTCoq.SMT_terms.Form.Fatom.
+Register Form.Ftrue as SMTCoq.SMT_terms.Form.Ftrue.
+Register Form.Ffalse as SMTCoq.SMT_terms.Form.Ffalse.
+Register Form.Fnot2 as SMTCoq.SMT_terms.Form.Fnot2.
+Register Form.Fand as SMTCoq.SMT_terms.Form.Fand.
+Register Form.For as SMTCoq.SMT_terms.Form.For.
+Register Form.Fxor as SMTCoq.SMT_terms.Form.Fxor.
+Register Form.Fimp as SMTCoq.SMT_terms.Form.Fimp.
+Register Form.Fiff as SMTCoq.SMT_terms.Form.Fiff.
+Register Form.Fite as SMTCoq.SMT_terms.Form.Fite.
+Register Form.FbbT as SMTCoq.SMT_terms.Form.FbbT.
+
+
 (* 
    Local Variables:
    coq-load-path: ((rec "." "SMTCoq"))

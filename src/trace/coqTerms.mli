@@ -10,8 +10,6 @@
 (**************************************************************************)
 
 
-val gen_constant : string list list -> string -> CoqInterface.constr lazy_t
-
 (* Int63 *)
 val cint : CoqInterface.constr lazy_t
 val ceq63 : CoqInterface.constr lazy_t
@@ -224,12 +222,15 @@ val cFbbT : CoqInterface.constr lazy_t
 
 val cis_true : CoqInterface.constr lazy_t
 
-val cvalid_sat_checker : CoqInterface.constr lazy_t
-val cinterp_var_sat_checker : CoqInterface.constr lazy_t
+val csat_checker_valid : CoqInterface.constr lazy_t
+val csat_checker_interp_var : CoqInterface.constr lazy_t
+val csat_checker_Certif : CoqInterface.constr lazy_t
+val csat_checker_dimacs : CoqInterface.constr lazy_t
+val csat_checker_certif : CoqInterface.constr lazy_t
+val csat_checker_theorem_checker : CoqInterface.constr lazy_t
+val csat_checker_checker : CoqInterface.constr lazy_t
 
-val make_certif_ops :
-           string list list ->
-           CoqInterface.constr array option ->
+val csat_checker_certif_ops :
            CoqInterface.constr lazy_t * CoqInterface.constr lazy_t * CoqInterface.constr lazy_t *
            CoqInterface.constr lazy_t * CoqInterface.constr lazy_t * CoqInterface.constr lazy_t *
            CoqInterface.constr lazy_t * CoqInterface.constr lazy_t * CoqInterface.constr lazy_t *

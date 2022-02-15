@@ -185,10 +185,8 @@ let interp_roots first last =
   end;
   !res
 
-let sat_checker_modules = [ ["SMTCoq";"Trace";"Sat_Checker"] ]
-
-let certif_ops = CoqTerms.make_certif_ops sat_checker_modules None
-let cCertif = gen_constant sat_checker_modules "Certif"
+let certif_ops = CoqTerms.csat_checker_certif_ops
+let cCertif = CoqTerms.csat_checker_Certif
 
 let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
@@ -205,10 +203,10 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _ = CoqInterface.declare_constant trace ce2 in
   ()
 
-let cdimacs = gen_constant sat_checker_modules "dimacs"
-let ccertif = gen_constant sat_checker_modules "certif"
-let ctheorem_checker = gen_constant sat_checker_modules "theorem_checker"
-let cchecker = gen_constant sat_checker_modules "checker"
+let cdimacs = CoqTerms.csat_checker_dimacs
+let ccertif = CoqTerms.csat_checker_certif
+let ctheorem_checker = CoqTerms.csat_checker_theorem_checker
+let cchecker = CoqTerms.csat_checker_checker
 
 let theorems interp name fdimacs ftrace =
   SmtTrace.clear ();
@@ -251,7 +249,7 @@ let theorems interp name fdimacs ftrace =
 
 let theorem = theorems (fun _ -> interp_roots)
 let theorem_abs =
-  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|CoqInterface.mkRel 1(*v*)|]; d|])
+  theorems (fun d _ _ -> mklApp csat_checker_valid [|mklApp csat_checker_interp_var [|CoqInterface.mkRel 1(*v*)|]; d|])
 
 
 let checker fdimacs ftrace =

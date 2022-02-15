@@ -1418,6 +1418,10 @@ Lemma is_true_iff e :  e = true <-> is_true e.
 Proof. now unfold is_true. Qed.
 
 
+(* Register constants for OCaml access *)
+Register distinct as SMTCoq.Misc.distinct.
+
+
 (* 
    Local Variables:
    coq-load-path: ((rec "." "SMTCoq"))
