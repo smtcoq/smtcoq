@@ -13,6 +13,7 @@
 open SmtMisc
 
 
+type coqTerm = CoqInterface.constr lazy_t
 let gen_constant = CoqInterface.gen_constant
 
 
@@ -274,6 +275,82 @@ let csat_checker_certif = sat_checker_gc "certif"
 let csat_checker_theorem_checker = sat_checker_gc "theorem_checker"
 let csat_checker_checker = sat_checker_gc "checker"
 
+let cnf_checker_prefix = "SMTCoq.Trace.Cnf_Checker"
+let cnf_checker_gc = CoqInterface.gen_constant2 cnf_checker_prefix
+let ccnf_checker_certif = cnf_checker_gc "certif"
+let ccnf_checker_Certif = cnf_checker_gc "Certif"
+let ccnf_checker_checker_b_correct = cnf_checker_gc "checker_b_correct"
+let ccnf_checker_checker_b = cnf_checker_gc "checker_b"
+let ccnf_checker_checker_eq_correct = cnf_checker_gc "checker_eq_correct"
+let ccnf_checker_checker_eq = cnf_checker_gc "checker_eq"
+
+let euf_checker_prefix = "SMTCoq.Trace.Euf_Checker"
+let euf_checker_gc = CoqInterface.gen_constant2 euf_checker_prefix
+let ceuf_checker_Certif = euf_checker_gc "Certif"
+let ceuf_checker_certif = euf_checker_gc "certif"
+let ceuf_checker_checker = euf_checker_gc "checker"
+let ceuf_checker_checker_correct = euf_checker_gc "checker_correct"
+let ceuf_checker_checker_b_correct = euf_checker_gc "checker_b_correct"
+let ceuf_checker_checker_b = euf_checker_gc "checker_b"
+let ceuf_checker_checker_eq_correct = euf_checker_gc "checker_eq_correct"
+let ceuf_checker_checker_eq = euf_checker_gc "checker_eq"
+let ceuf_checker_checker_debug = euf_checker_gc "checker_debug"
+let ceuf_checker_name_step = euf_checker_gc "name_step"
+let ceuf_checker_Name_Res = euf_checker_gc "Name_Res"
+let ceuf_checker_Name_Weaken = euf_checker_gc "Name_Weaken"
+let ceuf_checker_Name_ImmFlatten = euf_checker_gc "Name_ImmFlatten"
+let ceuf_checker_Name_CTrue = euf_checker_gc "Name_CTrue"
+let ceuf_checker_Name_CFalse = euf_checker_gc "Name_CFalse"
+let ceuf_checker_Name_BuildDef = euf_checker_gc "Name_BuildDef"
+let ceuf_checker_Name_BuildDef2 = euf_checker_gc "Name_BuildDef2"
+let ceuf_checker_Name_BuildProj = euf_checker_gc "Name_BuildProj"
+let ceuf_checker_Name_ImmBuildDef = euf_checker_gc "Name_ImmBuildDef"
+let ceuf_checker_Name_ImmBuildDef2 = euf_checker_gc "Name_ImmBuildDef2"
+let ceuf_checker_Name_ImmBuildProj = euf_checker_gc "Name_ImmBuildProj"
+let ceuf_checker_Name_EqTr = euf_checker_gc "Name_EqTr"
+let ceuf_checker_Name_EqCgr = euf_checker_gc "Name_EqCgr"
+let ceuf_checker_Name_EqCgrP = euf_checker_gc "Name_EqCgrP"
+let ceuf_checker_Name_LiaMicromega = euf_checker_gc "Name_LiaMicromega"
+let ceuf_checker_Name_LiaDiseq = euf_checker_gc "Name_LiaDiseq"
+let ceuf_checker_Name_SplArith = euf_checker_gc "Name_SplArith"
+let ceuf_checker_Name_SplDistinctElim = euf_checker_gc "Name_SplDistinctElim"
+let ceuf_checker_Name_BBVar = euf_checker_gc "Name_BBVar"
+let ceuf_checker_Name_BBConst = euf_checker_gc "Name_BBConst"
+let ceuf_checker_Name_BBOp = euf_checker_gc "Name_BBOp"
+let ceuf_checker_Name_BBNot = euf_checker_gc "Name_BBNot"
+let ceuf_checker_Name_BBNeg = euf_checker_gc "Name_BBNeg"
+let ceuf_checker_Name_BBAdd = euf_checker_gc "Name_BBAdd"
+let ceuf_checker_Name_BBConcat = euf_checker_gc "Name_BBConcat"
+let ceuf_checker_Name_BBMul = euf_checker_gc "Name_BBMul"
+let ceuf_checker_Name_BBUlt = euf_checker_gc "Name_BBUlt"
+let ceuf_checker_Name_BBSlt = euf_checker_gc "Name_BBSlt"
+let ceuf_checker_Name_BBEq = euf_checker_gc "Name_BBEq"
+let ceuf_checker_Name_BBDiseq = euf_checker_gc "Name_BBDiseq"
+let ceuf_checker_Name_BBExtract = euf_checker_gc "Name_BBExtract"
+let ceuf_checker_Name_BBZextend = euf_checker_gc "Name_BBZextend"
+let ceuf_checker_Name_BBSextend = euf_checker_gc "Name_BBSextend"
+let ceuf_checker_Name_BBShl = euf_checker_gc "Name_BBShl"
+let ceuf_checker_Name_BBShr = euf_checker_gc "Name_BBShr"
+let ceuf_checker_Name_RowEq = euf_checker_gc "Name_RowEq"
+let ceuf_checker_Name_RowNeq = euf_checker_gc "Name_RowNeq"
+let ceuf_checker_Name_Ext = euf_checker_gc "Name_Ext"
+let ceuf_checker_Name_Hole = euf_checker_gc "Name_Hole"
+
+type certif_ops =
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm
 let make_certif_ops prefix args =
   let gc = CoqInterface.gen_constant2 prefix in
   let gen_constant c =
@@ -300,6 +377,8 @@ let make_certif_ops prefix args =
   gen_constant "RowEq", gen_constant "RowNeq", gen_constant "Ext",
   gen_constant "Hole", gen_constant "ForallInst")
 let csat_checker_certif_ops = make_certif_ops sat_checker_prefix None
+let ccnf_checker_certif_ops = make_certif_ops cnf_checker_prefix None
+let ceuf_checker_certif_ops = make_certif_ops euf_checker_prefix
 
 
 (** Useful constructions *)

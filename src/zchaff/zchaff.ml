@@ -343,17 +343,13 @@ let call_zchaff nvars root =
 
 (* Build the problem that it may be understoof by zchaff *)
 
-let cnf_checker_modules = [ ["SMTCoq";"Trace";"Cnf_Checker"] ]
-
-let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules None
-let ccertif = gen_constant cnf_checker_modules "certif"
-let cCertif = gen_constant cnf_checker_modules "Certif"
-let cchecker_b_correct =
-  gen_constant cnf_checker_modules "checker_b_correct"
-let cchecker_b = gen_constant cnf_checker_modules "checker_b"
-let cchecker_eq_correct =
-  gen_constant cnf_checker_modules "checker_eq_correct"
-let cchecker_eq = gen_constant cnf_checker_modules "checker_eq"
+let certif_ops = CoqTerms.ccnf_checker_certif_ops
+let ccertif = CoqTerms.ccnf_checker_certif
+let cCertif = CoqTerms.ccnf_checker_Certif
+let cchecker_b_correct = CoqTerms.ccnf_checker_checker_b_correct
+let cchecker_b = CoqTerms.ccnf_checker_checker_b
+let cchecker_eq_correct = CoqTerms.ccnf_checker_checker_eq_correct
+let cchecker_eq = CoqTerms.ccnf_checker_checker_eq
 
 let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
   let ntvar = CoqInterface.mkName "t_var" in

@@ -18,65 +18,56 @@ open SmtTrace
 open SmtCertif
 
 
-let euf_checker_modules = [ ["SMTCoq";"Trace";"Euf_Checker"] ]
-let certif_ops args = CoqTerms.make_certif_ops euf_checker_modules args
-let cCertif = gen_constant euf_checker_modules "Certif"
-let ccertif = gen_constant euf_checker_modules "certif"
-let cchecker = gen_constant euf_checker_modules "checker"
-let cchecker_correct = gen_constant euf_checker_modules "checker_correct"
-let cchecker_b_correct =
-  gen_constant euf_checker_modules "checker_b_correct"
-let cchecker_b = gen_constant euf_checker_modules "checker_b"
-let cchecker_eq_correct =
-  gen_constant euf_checker_modules "checker_eq_correct"
-let cchecker_eq = gen_constant euf_checker_modules "checker_eq"
-(* let csetup_checker_step_debug =
- *   gen_constant euf_checker_modules "setup_checker_step_debug" *)
-(* let cchecker_step_debug = gen_constant euf_checker_modules "checker_step_debug" *)
-(* let cstep = gen_constant euf_checker_modules "step" *)
-let cchecker_debug = gen_constant euf_checker_modules "checker_debug"
-
-let cname_step = gen_constant euf_checker_modules "name_step"
-
-let cName_Res = gen_constant euf_checker_modules "Name_Res"
-let cName_Weaken= gen_constant euf_checker_modules "Name_Weaken"
-let cName_ImmFlatten= gen_constant euf_checker_modules "Name_ImmFlatten"
-let cName_CTrue= gen_constant euf_checker_modules "Name_CTrue"
-let cName_CFalse = gen_constant euf_checker_modules "Name_CFalse"
-let cName_BuildDef= gen_constant euf_checker_modules "Name_BuildDef"
-let cName_BuildDef2= gen_constant euf_checker_modules "Name_BuildDef2"
-let cName_BuildProj = gen_constant euf_checker_modules "Name_BuildProj"
-let cName_ImmBuildDef= gen_constant euf_checker_modules "Name_ImmBuildDef"
-let cName_ImmBuildDef2= gen_constant euf_checker_modules "Name_ImmBuildDef2"
-let cName_ImmBuildProj = gen_constant euf_checker_modules "Name_ImmBuildProj"
-let cName_EqTr = gen_constant euf_checker_modules "Name_EqTr"
-let cName_EqCgr = gen_constant euf_checker_modules "Name_EqCgr"
-let cName_EqCgrP= gen_constant euf_checker_modules "Name_EqCgrP"
-let cName_LiaMicromega = gen_constant euf_checker_modules "Name_LiaMicromega"
-let cName_LiaDiseq= gen_constant euf_checker_modules "Name_LiaDiseq"
-let cName_SplArith= gen_constant euf_checker_modules "Name_SplArith"
-let cName_SplDistinctElim = gen_constant euf_checker_modules "Name_SplDistinctElim"
-let cName_BBVar= gen_constant euf_checker_modules "Name_BBVar"
-let cName_BBConst= gen_constant euf_checker_modules "Name_BBConst"
-let cName_BBOp= gen_constant euf_checker_modules "Name_BBOp"
-let cName_BBNot= gen_constant euf_checker_modules "Name_BBNot"
-let cName_BBNeg= gen_constant euf_checker_modules "Name_BBNeg"
-let cName_BBAdd= gen_constant euf_checker_modules "Name_BBAdd"
-let cName_BBConcat= gen_constant euf_checker_modules "Name_BBConcat"
-let cName_BBMul= gen_constant euf_checker_modules "Name_BBMul"
-let cName_BBUlt= gen_constant euf_checker_modules "Name_BBUlt"
-let cName_BBSlt= gen_constant euf_checker_modules "Name_BBSlt"
-let cName_BBEq= gen_constant euf_checker_modules "Name_BBEq"
-let cName_BBDiseq= gen_constant euf_checker_modules "Name_BBDiseq"
-let cName_BBExtract= gen_constant euf_checker_modules "Name_BBExtract"
-let cName_BBZextend= gen_constant euf_checker_modules "Name_BBZextend"
-let cName_BBSextend= gen_constant euf_checker_modules "Name_BBSextend"
-let cName_BBShl= gen_constant euf_checker_modules "Name_BBShl"
-let cName_BBShr= gen_constant euf_checker_modules "Name_BBShr"
-let cName_RowEq= gen_constant euf_checker_modules "Name_RowEq"
-let cName_RowNeq= gen_constant euf_checker_modules "Name_RowNeq"
-let cName_Ext= gen_constant euf_checker_modules "Name_Ext"
-let cName_Hole= gen_constant euf_checker_modules "Name_Hole"
+let certif_ops = CoqTerms.ceuf_checker_certif_ops
+let cCertif = CoqTerms.ceuf_checker_Certif
+let ccertif = CoqTerms.ceuf_checker_certif
+let cchecker = CoqTerms.ceuf_checker_checker
+let cchecker_correct = CoqTerms.ceuf_checker_checker_correct
+let cchecker_b_correct = CoqTerms.ceuf_checker_checker_b_correct
+let cchecker_b = CoqTerms.ceuf_checker_checker_b
+let cchecker_eq_correct = CoqTerms.ceuf_checker_checker_eq_correct
+let cchecker_eq = CoqTerms.ceuf_checker_checker_eq
+let cchecker_debug = CoqTerms.ceuf_checker_checker_debug
+let cname_step = CoqTerms.ceuf_checker_name_step
+let cName_Res = CoqTerms.ceuf_checker_Name_Res
+let cName_Weaken = CoqTerms.ceuf_checker_Name_Weaken
+let cName_ImmFlatten = CoqTerms.ceuf_checker_Name_ImmFlatten
+let cName_CTrue = CoqTerms.ceuf_checker_Name_CTrue
+let cName_CFalse = CoqTerms.ceuf_checker_Name_CFalse
+let cName_BuildDef = CoqTerms.ceuf_checker_Name_BuildDef
+let cName_BuildDef2 = CoqTerms.ceuf_checker_Name_BuildDef2
+let cName_BuildProj = CoqTerms.ceuf_checker_Name_BuildProj
+let cName_ImmBuildDef = CoqTerms.ceuf_checker_Name_ImmBuildDef
+let cName_ImmBuildDef2 = CoqTerms.ceuf_checker_Name_ImmBuildDef2
+let cName_ImmBuildProj = CoqTerms.ceuf_checker_Name_ImmBuildProj
+let cName_EqTr = CoqTerms.ceuf_checker_Name_EqTr
+let cName_EqCgr = CoqTerms.ceuf_checker_Name_EqCgr
+let cName_EqCgrP = CoqTerms.ceuf_checker_Name_EqCgrP
+let cName_LiaMicromega = CoqTerms.ceuf_checker_Name_LiaMicromega
+let cName_LiaDiseq = CoqTerms.ceuf_checker_Name_LiaDiseq
+let cName_SplArith = CoqTerms.ceuf_checker_Name_SplArith
+let cName_SplDistinctElim = CoqTerms.ceuf_checker_Name_SplDistinctElim
+let cName_BBVar = CoqTerms.ceuf_checker_Name_BBVar
+let cName_BBConst = CoqTerms.ceuf_checker_Name_BBConst
+let cName_BBOp = CoqTerms.ceuf_checker_Name_BBOp
+let cName_BBNot = CoqTerms.ceuf_checker_Name_BBNot
+let cName_BBNeg = CoqTerms.ceuf_checker_Name_BBNeg
+let cName_BBAdd = CoqTerms.ceuf_checker_Name_BBAdd
+let cName_BBConcat = CoqTerms.ceuf_checker_Name_BBConcat
+let cName_BBMul = CoqTerms.ceuf_checker_Name_BBMul
+let cName_BBUlt = CoqTerms.ceuf_checker_Name_BBUlt
+let cName_BBSlt = CoqTerms.ceuf_checker_Name_BBSlt
+let cName_BBEq = CoqTerms.ceuf_checker_Name_BBEq
+let cName_BBDiseq = CoqTerms.ceuf_checker_Name_BBDiseq
+let cName_BBExtract = CoqTerms.ceuf_checker_Name_BBExtract
+let cName_BBZextend = CoqTerms.ceuf_checker_Name_BBZextend
+let cName_BBSextend = CoqTerms.ceuf_checker_Name_BBSextend
+let cName_BBShl = CoqTerms.ceuf_checker_Name_BBShl
+let cName_BBShr = CoqTerms.ceuf_checker_Name_BBShr
+let cName_RowEq = CoqTerms.ceuf_checker_Name_RowEq
+let cName_RowNeq = CoqTerms.ceuf_checker_Name_RowNeq
+let cName_Ext = CoqTerms.ceuf_checker_Name_Ext
+let cName_Hole = CoqTerms.ceuf_checker_Name_Hole
 
 (* Given an SMT-LIB2 file and a certif, build the corresponding objects *)
 
