@@ -351,63 +351,272 @@ Proof.
  rewrite leb_spec, sub_spec, Z.mod_small; lia.
 Qed.
 
-Definition firstr i := negb((i land 1) == 0).
-Fixpoint recr_aux (n:nat)(A:Type)(case0:A)(caserec:bool->int->A->A)
- (i:int) : A :=
+Lemma bit_sub1_0 : forall i, bit (i - 1) 0 = negb (bit i 0).
+Proof.
+intro i.
+cut (b2i (bit (i - 1) 0) = b2i (negb (bit i 0))).
+generalize (bit (i - 1) 0) (negb (bit i 0)); intros b1 b2.
+destruct b1; destruct b2; simpl; rewrite <- eqb_spec; trivial; discriminate.
+replace (b2i (negb (bit i 0))) with (1 - bit i 0); [ | destruct (bit i 0); reflexivity ].
+rewrite <- to_Z_eq.
+rewrite sub_spec, to_Z_1.
+rewrite 2!bit_0_spec.
+rewrite sub_spec, to_Z_1.
+case_eq (i == 0).
+rewrite eqb_spec; intro Hi; rewrite Hi; reflexivity.
+rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_0.
+generalize (to_Z_bounded i).
+intros Hi1 Hi2.
+rewrite (Zmod_small _ wB); [ | lia ].
+assert (0 <= to_Z i mod 2 < 2)%Z.
+apply Z_mod_lt; lia.
+rewrite (Zmod_small _ wB); [ | lia ].
+rewrite 2!Zmod_even.
+rewrite Z.even_sub.
+case (Z.even (to_Z i)).
+reflexivity.
+reflexivity.
+Qed.
+
+Lemma sub1_lsr : forall i, i <> 0 -> (i - 1) >> 1 = if bit i 0 then i >> 1 else i >> 1 - 1.
+intro i.
+rewrite <- to_Z_eq, to_Z_0; intro Hi0.
+assert (Hi : (0 < to_Z i < wB)%Z).
+generalize (to_Z_bounded i); lia.
+clear Hi0.
+rewrite <- to_Z_eq.
+rewrite lsr_spec, to_Z_sub_1_0, to_Z_1; [ | lia ].
+case_eq (bit i 0); intro Hibit.
+rewrite lsr_spec, to_Z_1.
+change (2 ^ 1)%Z with 2%Z.
+rewrite to_Z_split.
+rewrite Hibit.
+rewrite <- Z.add_sub_assoc.
+change (to_Z true) with 1%Z.
+replace (1 - 1)%Z with 0%Z by ring.
+rewrite 2!Z.div_add_l; [ reflexivity | lia | lia ].
+rewrite to_Z_sub_1_0.
+rewrite lsr_spec, to_Z_1.
+change (2 ^ 1)%Z with 2%Z.
+rewrite to_Z_split.
+rewrite Hibit.
+rewrite <- Z.add_sub_assoc.
+change (to_Z false) with 0%Z.
+rewrite 2!Z.div_add_l; [ | lia | lia ].
+rewrite <- Z.add_sub_assoc; reflexivity.
+rewrite lsr_spec.
+change (2 ^ to_Z 1)%Z with 2%Z.
+apply Z.div_str_pos.
+split; [ lia | ].
+cut (to_Z i <> 1)%Z; [ lia | ].
+change 1%Z with (to_Z 1).
+rewrite to_Z_eq.
+intro H; rewrite H in Hibit; discriminate.
+Qed.
+
+Lemma pow2_lsr : forall i n,
+  (to_Z i < 2 ^ Z.of_nat (S n))%Z -> (to_Z (i >> 1) < 2 ^ Z.of_nat n)%Z.
+Proof.
+intros i n Hi.
+rewrite lsr_spec.
+change (2 ^ to_Z 1)%Z with 2%Z.
+apply (Zmult_lt_reg_r _ _ 2); [ lia | ].
+rewrite Zmult_comm.
+apply (Z.le_lt_trans _ (to_Z i)).
+apply Z.mul_div_le; lia.
+rewrite <- two_power_nat_equiv in *.
+rewrite two_power_nat_S in Hi.
+rewrite Zmult_comm; assumption.
+Qed.
+
+Lemma pow2_size : forall i, (to_Z i < 2 ^ Z.of_nat size)%Z.
+Proof.
+intro i.
+change (2 ^ Z.of_nat size)%Z with wB.
+generalize (to_Z_bounded i); lia.
+Qed.
+
+Fixpoint iter_int63_aux (n : nat) (i : int) (A : Type) (f : A -> A) : A -> A :=
   match n with
-  | O => case0
-  | S next =>
-          if i == 0 then
-             case0
-          else
-             let si := i >> 1 in
-             caserec (firstr i) si (recr_aux next A case0 caserec si)
+  | O => fun x => x
+  | S n =>
+    if i == 0 then fun x => x
+    else let g := iter_int63_aux n (i >> 1) A f in
+      fun x => if bit i 0 then f (g (g x)) else g (g x)
   end.
-Definition recr := recr_aux size.
-Definition iter_int63 i A f :=
-  recr (A->A) (fun x => x)
-   (fun b si rec => if b
-      then fun x => f (rec (rec x))
-      else fun x => rec (rec x))
-    i.
 
-Definition foldi_cont
-     {A B     : Type}
-     (f       : int -> (A -> B) -> A -> B)
+Definition iter_int63 := iter_int63_aux size.
+
+Lemma iter_int63_aux_comm : forall n i A f a,
+  (to_Z i < 2 ^ Z.of_nat n)%Z ->
+    iter_int63_aux n i A f (f a) = f (iter_int63_aux n i A f a).
+Proof.
+intros n i A f; revert i; induction n.
+intros i a Hi.
+assert (i = 0).
+rewrite <- to_Z_eq, to_Z_0.
+generalize (to_Z_bounded i); lia.
+reflexivity.
+intros i a Hi; simpl.
+case (i == 0); [ reflexivity | ].
+rewrite IHn; [ | apply pow2_lsr; assumption].
+rewrite IHn; [ | apply pow2_lsr; assumption].
+case (bit i 0); reflexivity.
+Qed.
+
+Lemma iter_int63_comm : forall i A f a,
+  iter_int63 i A f (f a) = f (iter_int63 i A f a).
+Proof.
+intros i A f a.
+unfold iter_int63.
+apply iter_int63_aux_comm.
+apply pow2_size.
+Qed.
+
+Lemma iter_int63_aux_S : forall n i A f a,
+  (0 < to_Z i < 2 ^ Z.of_nat n)%Z ->
+    iter_int63_aux n i A f a = f (iter_int63_aux n (i - 1) A f a).
+Proof.
+intros n i A f; revert i; induction n; intros i a Hi.
+{
+  lia.
+}
+simpl.
+replace (i == 0) with false.
+{
+  rewrite bit_sub1_0, sub1_lsr.
+  {
+    case_eq (bit i 0); simpl.
+    {
+      intros _.
+      case_eq (i == 1).
+      {
+        rewrite eqb_spec; intro H; rewrite H in *; clear i H.
+        case n; reflexivity.
+      }
+      rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_1; intro Hi1.
+      replace (i - 1 == 0) with false.
+      {
+        reflexivity.
+      }
+      symmetry.
+      rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_sub_1_0, to_Z_0; lia.
+    }
+    intro Hibit.
+    case_eq (i == 1).
+    {
+      rewrite eqb_spec; intro H; rewrite H in *; clear i H; discriminate.
+    }
+    rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_1; intro Hi1.
+    replace (i - 1 == 0) with false.
+    {
+      case_eq (i == 2).
+      {
+        rewrite eqb_spec; intro H; rewrite H in *; clear i H.
+        destruct n; [ lia | ].
+        case n; reflexivity.
+      }
+      rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq.
+      change (to_Z 2) with 2%Z; intro Hi2.
+      rewrite (IHn (i >> 1)).
+      {
+        rewrite (IHn (i >> 1)).
+        {
+          f_equal.
+          apply iter_int63_aux_comm.
+          replace (i >> 1 - 1) with ((i - 1) >> 1).
+          {
+            apply pow2_lsr.
+            rewrite to_Z_sub_1_0; lia.
+          }
+          rewrite sub1_lsr, Hibit; [ reflexivity | ].
+          rewrite <- to_Z_eq, to_Z_0; lia.
+        }
+        split.
+        {
+          rewrite lsr_spec, to_Z_1.
+          change (2 ^ 1)%Z with 2%Z.
+          apply Z.div_str_pos; lia.
+        }
+        apply pow2_lsr; lia.
+      }
+      split.
+      {
+        rewrite lsr_spec, to_Z_1.
+        change (2 ^ 1)%Z with 2%Z.
+        apply Z.div_str_pos; lia.
+      }
+      apply pow2_lsr; lia.
+    }
+    symmetry.
+    rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_sub_1_0, to_Z_0; lia.
+  }
+  rewrite <- to_Z_eq, to_Z_0; lia.
+}
+symmetry.
+rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_0; lia.
+Qed.
+
+Lemma iter_int63_S : forall i A f a, 0 < i = true -> iter_int63 i A f a = f (iter_int63 (i - 1) A f a).
+Proof.
+intros i A f a.
+rewrite ltb_spec, to_Z_0; intro Hi.
+unfold iter_int63.
+apply iter_int63_aux_S.
+split; [ lia | ].
+apply pow2_size.
+Qed.
+
+Definition foldi
+     {A       : Type}
+     (f       : int -> A -> A)
      (from to : int)
-     (cont    : A -> B)                      : A -> B :=
+     (a       : A)
+       : A :=
   if to <= from then
-    cont
+    a
   else
-    let (_,r) := iter_int63 (to - from) _ (fun (jy: (int * (A -> B))%type) =>
-                     let (j,y) := jy in (j - 1, f (j - 1) y)
-                                      ) (to, cont) in r.
-
-Definition foldi {A} (f:int -> A -> A) from to :=
-  foldi_cont (fun i cont a => cont (f i a)) from to (fun a => a).
+    let (_,r) := iter_int63 (to - from) _ (fun (jy: (int * A)%type) =>
+                     let (j,y) := jy in (j + 1, f j y)
+                                      ) (from, a) in r.
 
 Lemma foldi_ge : forall A f from to (a:A),
   to <= from = true -> foldi f from to a = a.
 Proof.
- intros A f from to a; unfold foldi, foldi_cont.
+ intros A f from to a; unfold foldi.
  intro H; rewrite H; reflexivity.
 Qed.
 
 Lemma foldi_lt_l : forall A f from to (a:A),
   from < to = true -> foldi f from to a = foldi f (from + 1) to (f from a).
 Proof.
-Admitted.
-(*  intros A f from to a; rewrite ltb_spec; intro Hlt; unfold foldi, foldi_cont.
- assert (Bfrom := to_Z_bounded from); assert (Bto := to_Z_bounded to).
- rewrite <- Nat.sub_succ.
- rewrite Nat.sub_succ_l by (rewrite Nat.le_succ_l, <- Z2Nat.inj_lt; lia); f_equal.
- rewrite to_Z_add_1_wB, Z.add_1_r, Z2Nat.inj_succ by lia; reflexivity.
- f_equal.
- rewrite <- Nat.sub_succ_l by (rewrite Nat.le_succ_l, <- Z2Nat.inj_lt; lia).
- rewrite Nat.sub_succ, <- Z2Nat.inj_sub, Z2Nat.id by lia.
- apply to_Z_inj; rewrite sub_spec, of_Z_spec, <- 2!sub_spec; f_equal; ring.
+intros A f from to a Hfromto.
+pose proof (to_Z_bounded from) as Hfrom.
+pose proof (to_Z_bounded to) as Hto.
+unfold foldi.
+rewrite leb_negb_gtb.
+rewrite Hfromto; simpl.
+rewrite ltb_spec in Hfromto.
+case_eq (to <= from + 1).
+rewrite leb_spec, to_Z_add_1_wB; [ | lia ].
+intro Htofrom.
+assert (H : to = from + 1).
+rewrite <- to_Z_eq.
+rewrite to_Z_add_1_wB; lia.
+rewrite H; clear H.
+replace (from + 1 - from) with 1 by ring.
+rewrite iter_int63_S; [ | reflexivity ].
+change (1 - 1) with 0.
+reflexivity.
+replace (to - (from + 1)) with (to - from - 1) by ring.
+rewrite iter_int63_S.
+rewrite (iter_int63_comm _ _
+  (fun jy : int * A => let (j, y) := jy in (j + 1, f j y))
+  (from, a)).
+reflexivity.
+rewrite ltb_spec, to_Z_0, sub_spec, Zmod_small; lia.
 Qed.
- *)
+
 Lemma foldi_lt_r : forall A f from to (a:A),
   from < to = true -> foldi f from to a = f (to - 1) (foldi f from (to - 1) a).
 Proof.
