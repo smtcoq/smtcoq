@@ -55,7 +55,7 @@ module Atom =
 
     let logic _ = SL.empty
 
-    let to_smt = Format.pp_print_int
+    let to_smt ?(debug=false) = Format.pp_print_int
     
   end
 

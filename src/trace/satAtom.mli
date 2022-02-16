@@ -18,7 +18,7 @@ module Atom : sig
 
   val is_bool_type : t -> bool
   val is_bv_type : t -> bool
-  val to_smt : Format.formatter -> t -> unit
+  val to_smt : ?debug:bool -> Format.formatter -> t -> unit
   val logic : t -> SmtMisc.logic
 
   type reify_tbl = {
