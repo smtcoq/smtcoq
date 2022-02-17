@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -119,7 +119,7 @@ module Atom :
 
       val type_of : t -> btype
 
-      val to_smt : Format.formatter -> t -> unit
+      val to_smt : ?debug:bool -> Format.formatter -> t -> unit
 
       type reify_tbl
 
