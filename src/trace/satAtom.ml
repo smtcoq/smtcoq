@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -55,7 +55,7 @@ module Atom =
 
     let logic _ = SL.empty
 
-    let to_smt = Format.pp_print_int
+    let to_smt ?(debug=false) = Format.pp_print_int
     
   end
 
