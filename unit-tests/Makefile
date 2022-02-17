@@ -53,4 +53,4 @@ clean: cleanvo
 
 
 cleanvo:
-	rm -rf *~ *.vo *.glob *.vio
+	rm -rf *~ *.vo *.glob *.vio .*.aux .lia.cache
