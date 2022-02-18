@@ -40,23 +40,23 @@ Section certif.
     | nil =>
       let xres := Lit.blit res in
       get_eq xres (fun t1' t2' =>
-         if ((t1 == t1') && (t2 == t2')) ||
-            ((t1 == t2') && (t2 == t1')) then
+         if ((t1 =? t1') && (t2 =? t2')) ||
+            ((t1 =? t2') && (t2 =? t1')) then
             Lit.lit xres :: clause
          else C._true)
     | leq::eqs =>
       let xeq := Lit.blit leq in
       get_eq xeq (fun t t' =>
-          if t2 == t' then
+          if t2 =? t' then
             check_trans_aux t1 t eqs res (Lit.nlit xeq :: clause)
           else
-            if t2 == t then
+            if t2 =? t then
               check_trans_aux t1 t' eqs res (Lit.nlit xeq :: clause)
             else
-              if t1 == t' then
+              if t1 =? t' then
                 check_trans_aux t t2 eqs res (Lit.nlit xeq :: clause)
               else
-                if t1 == t then
+                if t1 =? t then
                   check_trans_aux t' t2 eqs res (Lit.nlit xeq :: clause)
                 else C._true)
     end.
@@ -66,7 +66,7 @@ Section certif.
     | nil =>
       let xres := Lit.blit res in
         get_eq xres (fun t1 t2 =>
-         if t1 == t2 then Lit.lit xres :: nil else C._true)
+         if t1 =? t2 then Lit.lit xres :: nil else C._true)
     | leq :: eqs =>
       let xeq := Lit.blit leq in
       get_eq xeq
@@ -79,12 +79,12 @@ Section certif.
     | nil, nil, nil => c
     | eq::eqs, t1::l, t2::r =>
       match eq with
-      | None => if t1 == t2 then build_congr eqs l r c else C._true
+      | None => if t1 =? t2 then build_congr eqs l r c else C._true
       | Some leq =>
         let xeq := Lit.blit leq in
         get_eq xeq (fun t1' t2' =>
-          if ((t1 == t1') && (t2 == t2')) ||
-             ((t1 == t2') && (t2 == t1')) then
+          if ((t1 =? t1') && (t2 =? t2')) ||
+             ((t1 =? t2') && (t2 =? t1')) then
             build_congr eqs l r (Lit.nlit xeq :: c)
           else C._true)
       end
@@ -104,7 +104,7 @@ Section certif.
            build_congr eqs (a::nil) (b::nil) (Lit.lit xeq :: nil)
         else C._true
       | Atom.Aapp f1 args1, Atom.Aapp f2 args2 =>
-        if f1 == f2 then build_congr eqs args1 args2 (Lit.lit xeq :: nil)
+        if f1 =? f2 then build_congr eqs args1 args2 (Lit.lit xeq :: nil)
         else C._true
       | _, _ => C._true
       end).
@@ -126,7 +126,7 @@ Section certif.
           (a::nil) (b::nil) (Lit.nlit xPA :: Lit.lit xPB :: nil)
         else C._true
       | Atom.Aapp p a, Atom.Aapp p' b =>
-        if p == p' then
+        if p =? p' then
           build_congr eqs a b (Lit.nlit xPA :: Lit.lit xPB :: nil)
         else C._true
       | _, _ => C._true
@@ -215,7 +215,7 @@ Section certif.
       destruct b;trivial with smtcoq_euf.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
        rewrite Misc.aforallbi_spec;intros.
-      assert (i < length t_atom).
+      assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H0, def_t_atom;discriminate.
       apply H1 in H2;clear H1;rewrite H0 in H2;simpl in H2.
@@ -477,10 +477,10 @@ Section certif.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
        rewrite Misc.aforallbi_spec;intros.
-      assert (i < length t_atom).
+      assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom;discriminate.
-      assert (i0 < length t_atom).
+      assert (i0 <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H2, def_t_atom;discriminate.
       apply H4 in H5;apply H4 in H6;clear H4.
@@ -498,10 +498,10 @@ Section certif.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
        rewrite Misc.aforallbi_spec;intros.
-      assert (i < length t_atom).
+      assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom. discriminate.
-      assert (i0 < length t_atom).
+      assert (i0 <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H2, def_t_atom;discriminate.
       apply H4 in H5;apply H4 in H6;clear H4.
@@ -520,10 +520,10 @@ Section certif.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
        rewrite Misc.aforallbi_spec;intros.
-      assert (i < length t_atom).
+      assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom;discriminate.
-      assert (i0 < length t_atom).
+      assert (i0 <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H2, def_t_atom;discriminate.
       apply H4 in H5;apply H4 in H6;clear H4.

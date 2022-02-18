@@ -61,7 +61,7 @@ Section trace.
       end) s a) (inl s) t in
     s'.
   Definition _checker_partial_ (s: S.t) (t: _trace_) (max:int) : S.t :=
-    PArray.fold_left (fun s a => PArray.foldi_left (fun i s' a' => if i < max then check_step s' a' else s') s a) s t.
+    PArray.fold_left (fun s a => PArray.foldi_left (fun i s' a' => if i <? max then check_step s' a' else s') s a) s t.
   *)
 
   (* Proof of its partial correction: if it returns true, then the
@@ -137,7 +137,7 @@ Qed.
 
  Lemma valid_spec : forall rho d,
    valid rho d <->
-   (forall i : int, i < length d -> C.interp rho (to_list (d.[i]))).
+   (forall i : int, i <? length d -> C.interp rho (to_list (d.[i]))).
  Proof.
    unfold valid; intros rho d; split; intro H.
    intros i Hi; case_eq (C.interp rho (to_list (d .[ i]))); try reflexivity.
@@ -210,7 +210,7 @@ Module Cnf_Checker.
 
   Local Open Scope list_scope.
 
-  Local Notation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 == i2) (fun _ _ => false)) (only parsing).
+  Local Notation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 =? i2) (fun _ _ => false)) (only parsing).
 
   Definition step_checker t_form s (st:step) :=
     match st with
@@ -290,7 +290,7 @@ Module Cnf_Checker.
  Definition checker_eq t_form l1 l2 l (c:certif) :=
    negb (Lit.is_pos l) &&
    match t_form.[Lit.blit l] with
-   | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
+   | Form.Fiff l1' l2' => (l1 =? l1') && (l2 =? l2')
    | _ => false
    end &&
    checker t_form l c.
@@ -504,7 +504,7 @@ Inductive step :=
   Definition add_roots s d used_roots :=
     match used_roots with
       | Some ur => foldi (fun i s =>
-        let c := if (ur.[i]) < length d then (d.[ur.[i]])::nil else C._true in
+        let c := if (ur.[i]) <? length d then (d.[ur.[i]])::nil else C._true in
           S.set_clause s i c) 0 (length ur) s
       | None => foldi (fun i s => S.set_clause s i (d.[i]::nil)) 0 (length d) s
     end.
@@ -521,7 +521,7 @@ Inductive step :=
         S.valid rho (add_roots s d used_roots).
   Proof.
     intros (* t_i t_func t_atom t_form *) rho H1 H2 H10 s d used_roots H3; unfold valid; intro H4; pose (H5 := (afold_left_andb_true_inv _ H4)); unfold add_roots; assert (Valuation.wf rho) by (destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [_ H]; auto with smtcoq_core); case used_roots.
-    intro ur; apply (foldi_ind _ (fun _ a => S.valid rho a)); [ apply leb_0 | | ]; auto with smtcoq_core; intros i a _ H6 Ha; apply S.valid_set_clause; auto with smtcoq_core; case_eq (ur .[ i] < length d).
+    intro ur; apply (foldi_ind _ (fun _ a => S.valid rho a)); [ apply leb_0 | | ]; auto with smtcoq_core; intros i a _ H6 Ha; apply S.valid_set_clause; auto with smtcoq_core; case_eq (ur .[ i] <? length d).
     intro; unfold C.valid; simpl; specialize (H5 (ur.[i])); rewrite length_amap, get_amap in H5 by assumption; unfold rho; rewrite H5; auto with smtcoq_core.
     intros; apply C.interp_true; auto with smtcoq_core.
     apply (foldi_ind _ (fun _ a => S.valid rho a)); [ apply leb_0 | | ]; auto with smtcoq_core; intros i a _ H6 Ha; apply S.valid_set_clause; auto with smtcoq_core; unfold C.valid; simpl; specialize (H5 i); rewrite length_amap, get_amap in H5 by assumption; unfold rho; rewrite H5; auto with smtcoq_core.
@@ -733,7 +733,7 @@ Inductive step :=
   Definition checker_eq (* t_i t_func t_atom t_form *) l1 l2 l (c:certif) :=
     negb (Lit.is_pos l) &&
     match t_form.[Lit.blit l] with
-      | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
+      | Form.Fiff l1' l2' => (l1 =? l1') && (l2 =? l2')
       | _ => false
     end &&
     let (nclauses,_,_) := c in

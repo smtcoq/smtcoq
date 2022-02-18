@@ -40,7 +40,7 @@ Section certif.
             | Atop (TO_store ti2 te2) fa j v2 =>
               if Typ.eqb ti1 ti2 &&
                  Typ.eqb te te1 && Typ.eqb te te2 &&
-                 (i == j) && (v == v2)
+                 (i =? j) && (v =? v2)
               then lres::nil
               else C._true
             | _ => C._true
@@ -57,7 +57,7 @@ Section certif.
   Definition store_of_me a b :=
     match get_atom b with
     | Atop (TO_store ti te) a' i _ =>
-      if (a' == a) then Some (ti, te, i) else None
+      if (a' =? a) then Some (ti, te, i) else None
     | _ => None
     end.
  
@@ -77,8 +77,8 @@ Section certif.
                 match store_of_me sa sa2, store_of_me sa2 sa with
                 | Some (ti3, te3, i1), None | None, Some (ti3, te3, i1) => 
                   if Typ.eqb ti ti3 && Typ.eqb te te3 &&
-                     (((i1 == i) && (j1 == j) && (j2 == j)) ||
-                      ((i1 == j) && (j1 == i) && (j2 == i))) then
+                     (((i1 =? i) && (j1 =? j) && (j2 =? j)) ||
+                      ((i1 =? j) && (j1 =? i) && (j2 =? i))) then
                     cl
                   else C._true
                 | _, _ => C._true
@@ -101,11 +101,11 @@ Section certif.
     | Abop (BO_select ti1 te1) a' d1, Abop (BO_select ti2 te2) b' d2 =>
       Typ.eqb ti ti1 && Typ.eqb ti ti2 &&
       Typ.eqb te te1 && Typ.eqb te te2 &&
-      (a == a') && (b == b') && (d1 == d2) &&
+      (a =? a') && (b =? b') && (d1 =? d2) &&
       match get_atom d1 with
       | Abop (BO_diffarray ti3 te3) a3 b3 =>
         Typ.eqb ti ti3 && Typ.eqb te te3 &&
-        (a3 == a) && (b3 == b)
+        (a3 =? a) && (b3 =? b)
       | _ => false
       end
     | _, _ => false
@@ -116,7 +116,7 @@ Section certif.
     if Lit.is_pos lres then
       match get_form (Lit.blit lres) with
       | For args =>
-        if PArray.length args == 2 then
+        if PArray.length args =? 2 then
           let l1 := args.[0] in
           let l2 := args.[1] in
           if Lit.is_pos l1 && negb (Lit.is_pos l2) then
@@ -213,7 +213,7 @@ Section certif.
       intros [ ] c1 c2 c3 Heq5.
       (* roweq *)
       - case_eq (Typ.eqb t0 t2 && Typ.eqb t t1 && 
-             Typ.eqb t t3 && (b2 == c2) && (a2 == c3)); simpl; intros Heq6; try (now apply C.interp_true).
+             Typ.eqb t t3 && (b2 =? c2) && (a2 =? c3)); simpl; intros Heq6; try (now apply C.interp_true).
 
         unfold C.valid. simpl. rewrite orb_false_r.
         unfold Lit.interp. rewrite Heq.
@@ -235,7 +235,7 @@ Section certif.
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
         rewrite aforallbi_spec;intros.
 
-        pose proof (H a). assert (a < PArray.length t_atom).
+        pose proof (H a). assert (a <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq3. easy.
         specialize (H0 H1). simpl in H0.
         rewrite Heq3 in H0. simpl in H0.
@@ -269,7 +269,7 @@ Section certif.
         specialize (Atom.Bval_inj2 t_i (Typ.Tbool) (Typ.i_eqb t_i t v_vala1 v_vala2) (v_vala)).
         intros. specialize (H5 Htia).
 
-        pose proof (H a1). assert (a1 < PArray.length t_atom).
+        pose proof (H a1). assert (a1 <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq4. easy.
         specialize (H6 H7). simpl in H6.
         rewrite Heq4 in H6. simpl in H6.
@@ -279,7 +279,7 @@ Section certif.
         apply Typ.eqb_spec in H6b.
         apply Typ.eqb_spec in H6c.
 
-        pose proof (H b1). assert (b1 < PArray.length t_atom).
+        pose proof (H b1). assert (b1 <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq5. easy.
         specialize (H6 H8). simpl in H6.
         rewrite Heq5 in H6. simpl in H6.
@@ -442,13 +442,13 @@ Section certif.
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
         rewrite aforallbi_spec;intros.
 
-        assert (H15: b1 < PArray.length t_atom).
+        assert (H15: b1 <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq7. discriminate.
-        assert (H20: b2 < PArray.length t_atom).
+        assert (H20: b2 <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq8. discriminate.
-        assert (H9: b < PArray.length t_atom).
+        assert (H9: b <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq6. discriminate.
-        assert (H3: a < PArray.length t_atom).
+        assert (H3: a <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq5. discriminate.
 
 
@@ -594,13 +594,13 @@ Section certif.
           intro HT1. clear HT1.
           case_eq (t_atom .[ d1]); try discriminate.
           intros [ t5 t6 ] e1 e2 e3 Heq10 [[ti3 te3] i1].
-          case_eq (e1 == c1); try discriminate. intros Heq11c.
+          case_eq (e1 =? c1); try discriminate. intros Heq11c.
           intro HT.
           injection HT. intros. subst i1 te3 ti3. clear HT.
 
           case_eq (
               Typ.eqb t t5 && Typ.eqb v_typeb1' t6 &&
-                      ((e2 == a1) && (c2 == a2) && (d2 == a2) || (e2 == a2) && (c2 == a1) && (d2 == a1)));
+                      ((e2 =? a1) && (c2 =? a2) && (d2 =? a2) || (e2 =? a2) && (c2 =? a1) && (d2 =? a1)));
             simpl; intros Heq11; try (now apply C.interp_true).
 
           unfold C.valid. simpl. rewrite orb_false_r.
@@ -639,7 +639,7 @@ Section certif.
           unfold Bval in isif.
 
 
-          assert (H25: d1 < PArray.length t_atom).
+          assert (H25: d1 <? PArray.length t_atom).
           apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq10. discriminate.
           apply H2 in H25.
           rewrite Heq10 in H25.
@@ -750,13 +750,13 @@ Section certif.
         - unfold store_of_me.
           case_eq (t_atom .[ c1]); try discriminate.
           intros [ t5 t6 ] e1 e2 e3 Heq10 [[ti3 te3] i1].
-          case_eq (e1 == d1); try discriminate. intros Heq11d.
+          case_eq (e1 =? d1); try discriminate. intros Heq11d.
           intro HT.
           injection HT. intros E2 T6 T5 [ ]. subst i1 te3 ti3. clear HT.
 
           case_eq (
               Typ.eqb t t5 && Typ.eqb v_typeb1' t6 &&
-                      ((e2 == a1) && (c2 == a2) && (d2 == a2) || (e2 == a2) && (c2 == a1) && (d2 == a1)));
+                      ((e2 =? a1) && (c2 =? a2) && (d2 =? a2) || (e2 =? a2) && (c2 =? a1) && (d2 =? a1)));
             simpl; intros Heq11; try (now apply C.interp_true).
 
           unfold C.valid. simpl. rewrite orb_false_r.
@@ -796,7 +796,7 @@ Section certif.
           rewrite !Typ.cast_refl in isif.
           
 
-          assert (H25: c1 < PArray.length t_atom).
+          assert (H25: c1 <? PArray.length t_atom).
           apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq10. discriminate.
           apply H2 in H25.
           rewrite Heq10 in H25.
@@ -908,7 +908,7 @@ Section certif.
     case_eq (Lit.is_pos lres); intro Heq; simpl; try now apply C.interp_true.
     case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).
     intros a Heq2.
-    case_eq (length a == 2); [ intros Heq3 | intros Heq3; now apply C.interp_true].
+    case_eq (length a =? 2); [ intros Heq3 | intros Heq3; now apply C.interp_true].
     case_eq (Lit.is_pos (a .[ 0]) && negb (Lit.is_pos (a .[ 1])));
       [ intros Heq4 | intros Heq4; now apply C.interp_true].
     case_eq (t_form .[ Lit.blit (a .[0])]); try (intros; now apply C.interp_true).
@@ -935,8 +935,8 @@ Section certif.
     case_eq (Typ.eqb t0 t7 && Typ.eqb t1 t8);
       [ intros Heq14'| intro; rewrite !andb_false_r; simpl; now apply C.interp_true].
     simpl.
-    case_eq ((b1 == d1) && (b2 == e1) && (d2 == e2) && ((f1 == b1) && (f2 == b2))
-             || (b2 == d1) && (b1 == e1) && (d2 == e2) && ((f1 == b2) && (f2 == b1)));
+    case_eq ((b1 =? d1) && (b2 =? e1) && (d2 =? e2) && ((f1 =? b1) && (f2 =? b2))
+             || (b2 =? d1) && (b1 =? e1) && (d2 =? e2) && ((f1 =? b2) && (f2 =? b1)));
         [ intros Heq1314 | intro; now apply C.interp_true].
 
     unfold C.valid. simpl. rewrite orb_false_r.
@@ -999,7 +999,7 @@ Section certif.
     rewrite aforallbi_spec;intros.
 
     (* b *)
-    pose proof (H1 b). assert (b < PArray.length t_atom).
+    pose proof (H1 b). assert (b <? PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq7. easy.
     specialize (H2 H3). simpl in H2.
     rewrite Heq7 in H2. simpl in H2.
@@ -1035,7 +1035,7 @@ Section certif.
     intros. specialize (H7 Htib).
 
     (* c *)
-    pose proof (H1 c). assert (c < PArray.length t_atom).
+    pose proof (H1 c). assert (c <? PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq9. easy.
     specialize (H8 H9). simpl in H8.
     rewrite Heq9 in H8. simpl in H8.
@@ -1070,7 +1070,7 @@ Section certif.
     intros. specialize (H13 Htic).
 
     (* c1 *)
-    pose proof (H1 c1). assert (c1 < PArray.length t_atom).
+    pose proof (H1 c1). assert (c1 <? PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq11. easy.
     specialize (H14 H15). simpl in H14.
     rewrite Heq11 in H14. simpl in H14.
@@ -1106,7 +1106,7 @@ Section certif.
     intros. specialize (H18 Htic1').
 
     (* c2 *)
-    pose proof (H1 c2). assert (c2 < PArray.length t_atom).
+    pose proof (H1 c2). assert (c2 <? PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq12. easy.
     specialize (H19 H20). simpl in H19.
     rewrite Heq12 in H19. simpl in H19.
@@ -1143,7 +1143,7 @@ Section certif.
     intros. specialize (H23 Htic2').
 
     (* d2 *)
-    pose proof (H1 d2). assert (d2 < PArray.length t_atom).
+    pose proof (H1 d2). assert (d2 <? PArray.length t_atom).
     apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq14. easy.
     specialize (H24 H25). simpl in H24.
     rewrite Heq14 in H24. simpl in H24.

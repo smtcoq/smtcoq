@@ -668,7 +668,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
 Local Open Scope int63_scope.
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
-  if (k == 0) then nil
+  if (k =? 0) then nil
   else match a with
          | nil => nil
          | ai :: a' => ai :: top_k_bools a' (k - 1)
