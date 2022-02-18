@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool Int63 Psatz Ring63 PArray Omega Misc Ring.
+Require Import List Bool Int63 Psatz Ring63 PArray Misc Ring.
 
 (* Require Import AxiomesInt. *)
 
@@ -674,8 +674,8 @@ Module S.
     rewrite foldi_lt_r.
     apply C.resolve_correct; [ apply Hv | ring_simplify (i + 1 - 1); exact Hc ].
     rewrite ltb_spec, to_Z_add_1_wB, to_Z_1.
-    rewrite leb_spec, to_Z_1 in Hi1; generalize (to_Z_bounded i); omega.
-    rewrite ltb_spec in Hi2; generalize (to_Z_bounded (length r)); omega.
+    rewrite leb_spec, to_Z_1 in Hi1; generalize (to_Z_bounded i); lia.
+    rewrite ltb_spec in Hi2; generalize (to_Z_bounded (length r)); lia.
  Qed.
 
   (* Weakening *)

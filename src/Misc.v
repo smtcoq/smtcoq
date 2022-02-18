@@ -89,20 +89,20 @@ Qed.
 Lemma not_0_ltb : forall x, x <> 0 <-> 0 < x = true.
 Proof.
  intros x;rewrite ltb_spec, to_Z_0;assert (W:=to_Z_bounded x);split.
- intros Hd;assert ([|x|] <> 0)%Z;[ | omega].
+ intros Hd;assert ([|x|] <> 0)%Z;[ | lia].
    intros Heq;elim Hd;apply to_Z_inj;trivial.
  intros Hlt Heq;elimtype False.
- assert ([|x|] = 0)%Z;[ rewrite Heq, to_Z_0;trivial | omega].
+ assert ([|x|] = 0)%Z;[ rewrite Heq, to_Z_0;trivial | lia].
 Qed.
 
 Lemma ltb_0 : forall x, ~ (x < 0 = true).
 Proof.
- intros x;rewrite ltb_spec, to_Z_0;destruct (to_Z_bounded x);omega.
+ intros x;rewrite ltb_spec, to_Z_0;destruct (to_Z_bounded x);lia.
 Qed.
 
 Lemma not_ltb_refl : forall i, ~(i < i = true).
 Proof.
- intros;rewrite ltb_spec;omega.
+ intros;rewrite ltb_spec;lia.
 Qed.
 
 Lemma ltb_trans : forall x y z, x < y = true ->  y < z = true -> x < z = true.
@@ -114,7 +114,7 @@ Lemma leb_ltb_eqb : forall x y, ((x <= y) = (x < y) || (x == y)).
 Proof.
  intros.
  apply eq_true_iff_eq.
- rewrite leb_spec, orb_true_iff, ltb_spec, eqb_spec, <- to_Z_eq;omega.
+ rewrite leb_spec, orb_true_iff, ltb_spec, eqb_spec, <- to_Z_eq;lia.
 Qed.
 
 Lemma leb_ltb_trans : forall x y z, x <= y = true ->  y < z = true -> x < z = true.
@@ -125,7 +125,7 @@ Qed.
 Lemma to_Z_add_1 : forall x y, x < y = true -> [|x+1|] = ([|x|] + 1)%Z.
 Proof.
   intros x y;assert (W:= to_Z_bounded x);assert (W0:= to_Z_bounded y);
-   rewrite ltb_spec;intros;rewrite add_spec, to_Z_1, Z.mod_small;omega.
+   rewrite ltb_spec;intros;rewrite add_spec, to_Z_1, Z.mod_small;lia.
 Qed.
 
 Lemma to_Z_add_1_wB : forall x, ([|x|] < wB - 1)%Z -> [|x + 1|] = ([|x|] + 1)%Z.
@@ -135,7 +135,7 @@ Qed.
 
 Lemma leb_not_gtb : forall n m, m <= n = true -> ~(n < m = true).
 Proof.
- intros n m; rewrite ltb_spec, leb_spec;omega.
+ intros n m; rewrite ltb_spec, leb_spec;lia.
 Qed.
 
 Lemma leb_negb_gtb : forall x y, x <= y = negb (y < x).
@@ -143,7 +143,7 @@ Proof.
  intros x y;apply Bool.eq_true_iff_eq;split;intros.
  apply Bool.eq_true_not_negb;apply leb_not_gtb;trivial.
  rewrite Bool.negb_true_iff, <- Bool.not_true_iff_false in H.
- rewrite leb_spec; rewrite ltb_spec in H;omega.
+ rewrite leb_spec; rewrite ltb_spec in H;lia.
 Qed.
 
 Lemma ltb_negb_geb : forall x y, x < y = negb (y <= x).
@@ -154,7 +154,7 @@ Qed.
 Lemma to_Z_sub_gt : forall x y, y <= x = true -> [|x - y|] = ([|x|] - [|y|])%Z.
 Proof.
  intros x y;assert (W:= to_Z_bounded x);assert (W0:= to_Z_bounded y);
-   rewrite leb_spec;intros;rewrite sub_spec, Zmod_small;omega.
+   rewrite leb_spec;intros;rewrite sub_spec, Zmod_small;lia.
 Qed.
 
 Lemma to_Z_sub_1 : forall x y, y < x = true -> ([| x - 1|] = [|x|] - 1)%Z.
@@ -249,15 +249,15 @@ Proof.
  assert (W1 : [|n|] <> 0%Z) by (intros Heq;apply n0;apply to_Z_inj;trivial).
  assert (W2 := to_Z_bounded n);clear n0.
  assert (W3 : [|n-1|] = ([|n|] - 1)%Z).
-   rewrite sub_spec, to_Z_1, Zmod_small;trivial;omega.
+   rewrite sub_spec, to_Z_1, Zmod_small;trivial;lia.
  assert (H1 : n = (n-1)+1).
    apply to_Z_inj;rewrite add_spec, W3.
-   rewrite Zmod_small;rewrite to_Z_1; omega.
+   rewrite Zmod_small;rewrite to_Z_1; lia.
  case_eq ((n-1) < digits); intro l.
   rewrite ltb_spec in l.
   rewrite H1, <- !bit_half, H; trivial; rewrite ltb_spec; trivial.
  assert ((digits <= n) = true).
-  rewrite <- Bool.not_true_iff_false, ltb_spec in l; rewrite leb_spec;omega.
+  rewrite <- Bool.not_true_iff_false, ltb_spec in l; rewrite leb_spec;lia.
  rewrite !bit_M;trivial.
 Qed.
 
