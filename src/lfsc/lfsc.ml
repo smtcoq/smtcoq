@@ -354,7 +354,7 @@ let call_cvc4 env rt ro ra rf root _ =
       "cvc4";
       "--lang"; "smt2";
       "--proof";
-      "--no-simplification"; "--fewer-preprocessing-holes";
+      "--simplification=none"; "--fewer-preprocessing-holes";
       "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic" |] in
 
   set_option cvc4 "print-success" true;
@@ -455,7 +455,7 @@ let call_cvc4_file env rt ro ra rf root =
   
   let cvc4_cmd =
     "cvc4 --proof --dump-proof \
-     --no-simplification --fewer-preprocessing-holes \
+     --simplification=none --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " > " ^ prooffilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)

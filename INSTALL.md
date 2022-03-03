@@ -157,16 +157,8 @@ proof production mode**, as detailed below.
 
 ### CVC4
 
-Use the stable version 1.6 of CVC4 that is available either:
-- as a [Linux binary](http://cvc4.cs.stanford.edu/downloads/builds/x86_64-linux-opt/cvc4-1.6-x86_64-linux-opt)
-- as a [Windows binary](http://cvc4.cs.stanford.edu/downloads/builds/win64-opt/cvc4-1.6-win64-opt.exe)
-- as a [MacOs binary](https://github.com/cvc5/cvc5/releases/download/1.6/cvc4-1.6-macos-opt)
-- from [the sources](https://github.com/cvc5/cvc5/releases/tag/1.6), using the following commands:
-```
-./autogen.sh
-./configure
-make
-```
+Use the stable version 1.8 of CVC4 that is available [here](https://github.com/cvc5/cvc5/releases/tag/1.8) either as a Linux, Windows, or MacOS binary, or from the sources.
+
 Whatever solution you choose, a binary called `cvc4` must be present in
 your PATH to use it through SMTCoq.
 
