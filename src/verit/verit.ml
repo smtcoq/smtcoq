@@ -207,7 +207,7 @@ let call_verit timeout _ rt ro ra_quant rf_quant first lsmt =
           CoqInterface.error ("veriT failed with the error: " ^ l)
       done
     with End_of_file -> () in
-  if exit_code = 124 (*code for timeout*) then (Printf.printf "bar" ; flush stdout ; close_in win; Sys.remove wname; let _ = failwith "veriT timed out" in ());
+  if exit_code = 124 (*code for timeout*) then (Printf.printf "bar" ; flush stdout ; close_in win; Sys.remove wname; let _ = CErrors.anomaly (Pp.str "veriT timed out") in ()) ;
   try
     if exit_code <> 0 then CoqInterface.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();

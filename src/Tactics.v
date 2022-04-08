@@ -29,7 +29,7 @@ Ltac get_hyps_acc acc k :=
       | id _ => fail
       | _ =>
         change P with (id P) in H;
-        match acc with
+        lazymatch acc with
         | Some ?t => get_hyps_acc (Some (H, t)) k
         | None => get_hyps_acc (Some H) k
         end
