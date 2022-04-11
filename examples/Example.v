@@ -14,7 +14,6 @@
    If you are using native-coq instead of Coq 8.11, replace it with:
      Require Import SMTCoq.
    *)
-
 Require Import SMTCoq.SMTCoq.
 Require Import Bool.
 
@@ -425,3 +424,25 @@ Section CompCert.
   Qed.
 
 End CompCert.
+
+
+(** The verit solver can be called with an integer (the timeout in seconds).
+If the goal cannot be solved within timeout seconds, then an anomaly is raised **)
+
+Section test_timeout.
+
+Variable P : Z -> bool.
+Variable H0 : P 0.
+Variable HInd : forall n, implb (P n) (P (n + 1)).
+
+Goal P 3.
+(* verit_timeout 3. *) verit.
+Qed.
+
+Goal true -> P 1000000000.
+intro H.
+(* Fail verit_timeout 1. 
+Fail verit_timeout 5. *)
+Abort.
+
+End test_timeout.

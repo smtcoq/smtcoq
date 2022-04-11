@@ -115,8 +115,8 @@ END
 TACTIC EXTEND Tactic_verit
 | [ "verit_bool_base" constr(lpl) ] -> { Verit.tactic None lpl (get_lemmas ()) }
 | [ "verit_bool_no_check_base" constr(lpl) ] -> { Verit.tactic_no_check None lpl (get_lemmas ()) }
-| [ "verit_bool_base_timeout" constr(lpl) ] -> { Verit.tactic (Some 5) lpl (get_lemmas ()) }
-| [ "verit_bool_no_check_base_timeout" constr(lpl) ] -> { Verit.tactic_no_check (Some 5) lpl (get_lemmas ()) }
+| [ "verit_bool_base_timeout" constr(lpl) int_or_var(timeout) ] -> { Verit.tactic (Some timeout) lpl (get_lemmas ()) }
+| [ "verit_bool_no_check_base_timeout" constr(lpl) int_or_var(timeout) ] -> { Verit.tactic_no_check (Some timeout) lpl (get_lemmas ()) }
 END
 
 TACTIC EXTEND Tactic_cvc4
