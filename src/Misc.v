@@ -457,7 +457,7 @@ intros n i A f; revert i; induction n.
 intros i a Hi.
 assert (i = 0).
 rewrite <- to_Z_eq, to_Z_0.
-generalize (to_Z_bounded i); lia.
+generalize (to_Z_bounded i). change (φ (i) < 1)%Z in Hi. lia.
 reflexivity.
 intros i a Hi; simpl.
 case (i =? 0); [ reflexivity | ].
@@ -481,7 +481,7 @@ Lemma iter_int63_aux_S : forall n i A f a,
 Proof.
 intros n i A f; revert i; induction n; intros i a Hi.
 {
-  lia.
+  change (0 < φ (i) < 1)%Z in Hi. lia.
 }
 simpl.
 replace (i =? 0) with false.
@@ -515,8 +515,9 @@ replace (i =? 0) with false.
       case_eq (i =? 2).
       {
         rewrite eqb_spec; intro H; rewrite H in *; clear i H.
-        destruct n; [ lia | ].
-        case n; reflexivity.
+        destruct n.
+        - change (0 < φ (2) < 2 ^ Z.of_nat 1)%Z with (0 < φ (2) < 2)%Z in Hi. lia.
+        - case n; reflexivity.
       }
       rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq.
       change (to_Z 2) with 2%Z; intro Hi2.

@@ -98,6 +98,7 @@ val set_evars_tac : constr -> tactic
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
+val anomaly : string -> 'a
 val warning : string -> string -> unit
 val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
