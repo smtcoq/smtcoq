@@ -22,6 +22,10 @@ paralleltest :
 clean::
 	cd ../unit-tests; make clean
 
+cleanall::
+	rm -f ../3rdparty/alt-ergo/smtlib2_lex.ml ../3rdparty/alt-ergo/smtlib2_parse.ml ../3rdparty/alt-ergo/smtlib2_parse.mli .lia.cache Makefile.conf lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtlib2/sExprLexer.ml smtlib2/sExprParser.ml smtlib2/sExprParser.mli verit/veritLexer.ml verit/veritParser.ml verit/veritParser.mli Makefile
+
+
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc

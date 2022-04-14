@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -214,7 +214,7 @@ Section certif.
       case_eq (t_atom.[i]);trivial with smtcoq_euf;intros.
       destruct b;trivial with smtcoq_euf.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite PArray.forallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intros.
       assert (i < length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H0, def_t_atom;discriminate.
@@ -291,7 +291,7 @@ Section certif.
       rewrite eqb_spec in H7. rewrite eqb_spec in H8. subst.
       tunicity. subst t;rewrite interp_binop_eqb_sym in H1;rewrite H4, H1;auto with smtcoq_euf smtcoq_core.
       - apply get_eq_interp;intros.
-      destruct (Int63Properties.reflect_eqb t2 b);subst;tunicity; try subst t.
+      destruct (Misc.reflect_eqb t2 b);subst;tunicity; try subst t.
       + apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -300,7 +300,7 @@ Section certif.
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (4:= H1);trivial.
       rewrite interp_binop_eqb_sym;trivial.
-      + destruct (Int63Properties.reflect_eqb t2 a0); subst;tunicity; try subst t.
+      + destruct (Misc.reflect_eqb t2 a0); subst;tunicity; try subst t.
       * apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -308,7 +308,7 @@ Section certif.
       case_eq (rho (Lit.blit a));[rewrite H4; intros | simpl;auto].
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (4:= H1);trivial.
-      * destruct (Int63Properties.reflect_eqb t1 b);subst;tunicity; try subst t.
+      * destruct (Misc.reflect_eqb t1 b);subst;tunicity; try subst t.
       -- apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -316,7 +316,7 @@ Section certif.
       case_eq (rho (Lit.blit a));[rewrite H4; intros | simpl;auto].
       destruct H1;[left | auto].
       apply interp_binop_eqb_trans with (5:= H1);trivial.
-      -- destruct (Int63Properties.reflect_eqb t1 a0);[subst;tunicity;try subst t|auto with smtcoq_euf smtcoq_core].
+      -- destruct (Misc.reflect_eqb t1 a0);[subst;tunicity;try subst t|auto with smtcoq_euf smtcoq_core].
       apply (IHeqs u);trivial.
       simpl;unfold is_true;rewrite orb_true_iff.
       rewrite Lit.interp_nlit;unfold Var.interp.
@@ -333,7 +333,7 @@ Section certif.
     Proof.
       unfold check_trans;intros res [ | leq eqs].
       - apply get_eq_interp;intros.
-      destruct (Int63Properties.reflect_eqb a b).
+      destruct (Misc.reflect_eqb a b).
       + unfold C.interp; simpl; rewrite orb_false_r.
       unfold Lit.interp; simpl; rewrite Lit.is_pos_lit.
       unfold Var.interp; simpl; rewrite Lit.blit_lit.
@@ -384,7 +384,7 @@ Section certif.
       rewrite HHa, HHb;trivial with smtcoq_euf smtcoq_core.
       rewrite eqb_spec in H5. rewrite eqb_spec in H7. subst.
       rewrite HHa, HHb;trivial with smtcoq_euf smtcoq_core.
-      destruct (Int63Properties.reflect_eqb i i0);[subst | auto with smtcoq_euf smtcoq_core].
+      destruct (Misc.reflect_eqb i i0);[subst | auto with smtcoq_euf smtcoq_core].
       apply IHlp;intros;apply H;constructor;auto with smtcoq_euf smtcoq_core.
     Qed.
 
@@ -437,7 +437,7 @@ Section certif.
       apply Typ.i_eqb_refl.
       intros x y;destruct (Typ.reflect_eqb x y);auto with smtcoq_euf smtcoq_core.
       (* op *)
-      destruct (Int63Properties.reflect_eqb i i0);[subst | auto with smtcoq_euf smtcoq_core].
+      destruct (Misc.reflect_eqb i i0);[subst | auto with smtcoq_euf smtcoq_core].
       apply build_congr_correct;intros.
       simpl;rewrite Lit.interp_lit, orb_false_r;unfold Var.interp.
       rewrite H1.
@@ -476,7 +476,7 @@ Section certif.
        destruct (rho (Lit.blit lpa));reflexivity.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite PArray.forallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intros.
       assert (i < length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom;discriminate.
@@ -497,7 +497,7 @@ Section certif.
        destruct (rho (Lit.blit lpa));reflexivity.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite PArray.forallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intros.
       assert (i < length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom. discriminate.
@@ -512,14 +512,14 @@ Section certif.
       apply f_equal; apply f_equal2;trivial with smtcoq_euf smtcoq_core.
 
       (* op *)
-      destruct (Int63Properties.reflect_eqb i2 i1);[subst | auto with smtcoq_euf smtcoq_core].
+      destruct (Misc.reflect_eqb i2 i1);[subst | auto with smtcoq_euf smtcoq_core].
       apply build_congr_correct;simpl;intros.
       rewrite orb_false_r, Lit.interp_lit, Lit.interp_nlit;unfold Var.interp.
       replace (rho (Lit.blit lpb)) with (rho (Lit.blit lpa)).
        destruct (rho (Lit.blit lpa));reflexivity.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite PArray.forallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intros.
       assert (i < length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom;discriminate.

@@ -28,16 +28,10 @@
 -I trace
 -I verit
 -I zchaff
--I Int63
--I Array
+-I PArray
 -I ../3rdparty/alt-ergo
 
-Int63/Int63.v
-Int63/Int63Native.v
-Int63/Int63Op.v
-Int63/Int63Axioms.v
-Int63/Int63Properties.v
-Array/PArray.v
+PArray/PArray.v
 
 bva/BVList.v
 bva/Bva_checker.v

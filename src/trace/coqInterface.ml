@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -92,55 +92,13 @@ type econstr = EConstr.t
 let econstr_of_constr = EConstr.of_constr
 
 
-(* Modules *)
-let gen_constant_in_modules s m n =
-  (* UnivGen.constr_of_monomorphic_global will crash on universe polymorphic constants *)
-  UnivGen.constr_of_monomorphic_global @@ Coqlib.gen_reference_in_modules s m n
-let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
-let init_modules = Coqlib.init_modules
-
-
 (* Int63 *)
-let int63_modules = [["SMTCoq";"Int63";"Int63Native"]]
-
-(* 31-bits integers are "called" 63 bits (this is sound) *)
-let int31_module = [["Coq";"Numbers";"Cyclic";"Int31";"Int31"]]
-let cD0 = gen_constant int31_module "D0"
-let cD1 = gen_constant int31_module "D1"
-let cI31 = gen_constant int31_module "I31"
-
-let mkInt : int -> constr = fun i ->
-  let a = Array.make 31 (Lazy.force cD0) in
-  let j = ref i in
-  let k = ref 30 in
-  while !j <> 0 do
-    if !j land 1 = 1 then a.(!k) <- Lazy.force cD1;
-    j := !j lsr 1;
-    decr k
-  done;
-  mkApp (Lazy.force cI31, a)
-
-let cint = gen_constant int31_module "int31"
+let mkInt : int -> Constr.constr =
+  fun i -> Constr.mkInt (Uint63.of_int i)
 
 
 (* PArray *)
-let parray_modules = [["SMTCoq";"Array";"PArray"]]
-
-let cmake = gen_constant parray_modules "make"
-let cset = gen_constant parray_modules "set"
-
 let max_array_size : int = 4194302
-let mkArray : Constr.types * Constr.t array -> Constr.t =
-  fun (ty, a) ->
-  let l = (Array.length a) - 1 in
-  snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' =
-                          if i = l then
-                            acc
-                          else
-                            mkApp (Lazy.force cset, [|ty; acc; mkInt i; c|]) in
-                        (i+1,acc')
-                       ) (0, mkApp (Lazy.force cmake, [|ty; mkInt l; a.(l)|])) a)
 
 
 (* Traces *)
@@ -160,10 +118,6 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-
-let micromega_coq_proofTerm =
-  (* Cannot contain evars *)
-  lazy (gen_constant_in_modules "ZMicromega" [["Coq"; "micromega";"ZMicromega"]] "ZArithProof")
 
 let micromega_dump_proof_term p =
   (* Cannot contain evars *)

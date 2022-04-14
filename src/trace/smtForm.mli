@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -22,7 +22,7 @@ module type ATOM =
 
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
-    val to_smt : Format.formatter -> t -> unit
+    val to_smt : ?debug:bool -> Format.formatter -> t -> unit
     val logic : t -> logic
 
   end

@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -51,11 +51,11 @@ module Atom =
       t
 
     let interp_tbl reify =
-      CoqInterface.mkArray (Lazy.force cbool, atom_tbl reify)
+      CoqTerms.mkArray (Lazy.force cbool, atom_tbl reify)
 
     let logic _ = SL.empty
 
-    let to_smt = Format.pp_print_int
+    let to_smt ?(debug=false) = Format.pp_print_int
     
   end
 

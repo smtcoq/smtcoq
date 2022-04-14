@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -51,7 +51,7 @@ let index_tbl = Hashtbl.create 17
 let index_to_coq i =
   try Hashtbl.find index_tbl i
   with Not_found ->
-    let interp = mklApp cTindex [|mkInt i|] in
+    let interp = mklApp cTindex [|mkN i|] in
     Hashtbl.add index_tbl i interp;
     interp
 
@@ -156,7 +156,7 @@ let interp_tbl reify =
       | _ -> Some bt
   in
   Hashtbl.filter_map_inplace set reify.tbl;
-  CoqInterface.mkArray (Lazy.force ctyp_compdec, t)
+  CoqTerms.mkArray (Lazy.force ctyp_compdec, t)
 
 
 let to_list reify =
@@ -304,10 +304,9 @@ let of_coq_compdec reify t compdec =
          (match i.hval with
             | CompDec _ -> ty
             | Delayed _ ->
-               Hashtbl.remove reify.tbl t;
                let ce = mklApp cTyp_compdec [|t; compdec|] in
-               let res = Tindex {index = i.index; hval = CompDec ce} in
-               Hashtbl.add reify.tbl t res;
+               i.hval <- CompDec ce;
+               let res = Tindex i in
                res
          )
       | _ -> ty

@@ -7,8 +7,7 @@ clone) operating system. It is known to work under GNU/Linux (i386 and
 amd64) and Mac OS X.
 
 The simplest way is to install it using opam. You can also install it
-from the sources (this is mandatory if you want to use the native
-version, see below).
+from the sources.
 
 You will also need to [install the provers](#installation-of-the-provers)
 you want to use.
@@ -18,7 +17,7 @@ you want to use.
 
 ### In an existing switch
 
-You need to have OCaml version >= 4.09.0 and Coq version 8.11.*.
+You need to have OCaml version >= 4.09 and Coq >= 8.11.
 
 Simply add the coq-extra-dev repo to opam:
 ```bash
@@ -31,9 +30,9 @@ opam install coq-smtcoq
 
 ### In a new switch
 
-Create a switch with the last version of OCaml:
+Create a switch:
 ```bash
-opam switch create ocaml-base-compiler.4.10.0
+opam switch create ocaml-base-compiler.4.09.0
 eval $(opam env)
 ```
 add the Coq repos to opam:
@@ -142,13 +141,13 @@ make install
 
 To use SMTCoq, we recommend installing the following two SMT solvers:
 
-- [CVC4](http://cvc4.cs.nyu.edu)
+- CVC4
 
 - [veriT](https://verit.loria.fr)
 
 SMTCoq also supports the following SAT solver for propositional reasoning:
 
-- [zChaff](http://www.princeton.edu/~chaff/zchaff.html)
+- [ZChaff](http://www.princeton.edu/~chaff/zchaff.html)
 
 Please download the solvers you would like to use via the links below
 (since SMTCoq might not support other versions), and follow the
@@ -158,11 +157,13 @@ proof production mode**, as detailed below.
 
 ### CVC4
 
-Use the stable version 1.6 of CVC4 that is available in the **stable
-versions** column at [http://cvc4.cs.stanford.edu/downloads]. You can
-either get a binary (recommended) or compile it from the sources using
-the following commands:
+Use the stable version 1.6 of CVC4 that is available either:
+- as a [Linux binary](http://cvc4.cs.stanford.edu/downloads/builds/x86_64-linux-opt/cvc4-1.6-x86_64-linux-opt)
+- as a [Windows binary](http://cvc4.cs.stanford.edu/downloads/builds/win64-opt/cvc4-1.6-win64-opt.exe)
+- as a [MacOs binary](https://github.com/cvc5/cvc5/releases/download/1.6/cvc4-1.6-macos-opt)
+- from [the sources](https://github.com/cvc5/cvc5/releases/tag/1.6), using the following commands:
 ```
+./autogen.sh
 ./configure
 make
 ```
@@ -178,6 +179,14 @@ your shell), export the following environment variable to make it point at the
 ```bash
 export LFSCSIGS="$HOME/path/to/smtcoq/src/lfsc/tests/signatures/"
 ```
+
+If you installed SMTCoq via opam (recommended), the path to SMTCoq
+(to replace `path/to/smtcoq`) is
+`.opam/NAMEOFTHESWITCH/.opam-switch/sources/coq-smtcoq.dev+COQVERSION`
+where `NAMEOFTHESWITCH` must be replaced by the name of the opam switch
+(`ocaml-base-compiler.4.09.0` if you created a new switch following the
+instructions above) and `COQVERSION` must be replaced by the first two
+parts of the version of Coq (`8.11`, `8.12` or `8.13`).
 
 If you don't want SMTCoq to spit the translated proof in your proof environment
 window, add the following optional definition (in the same file).
@@ -195,7 +204,6 @@ which is known compatible with SMTCoq, and is already in proof
 production mode. To compile it, unpack the archive and use the following
 commands:
 ```
-autoconf
 ./configure
 make
 ```
@@ -204,9 +212,9 @@ your path. If you encounter problems to compile it, please report an
 issue.
 
 
-### zChaff
+### ZChaff
 
-zChaff can be downloaded
+ZChaff can be downloaded
 [here](http://www.princeton.edu/~chaff/zchaff.html). It is not actively
 maintained, so you might encounter problems to compile it on modern
 platforms. [This

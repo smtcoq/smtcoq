@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -21,7 +21,7 @@ let mkInt i =
     ci
 
 (** Generic representation of shared object *)
-type 'a gen_hashed = { index : int; hval : 'a }
+type 'a gen_hashed = { index : int; mutable hval : 'a }
 
 
 (** Functions over constr *)

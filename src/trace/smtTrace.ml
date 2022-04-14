@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -383,7 +383,7 @@ let to_coq to_lit interp (cstep,
 	      l := tl
 	  | _ -> assert false
 	done;
-	mklApp cRes [|mkInt (get_pos c); CoqInterface.mkArray (Lazy.force cint, args)|]
+	mklApp cRes [|mkInt (get_pos c); CoqTerms.mkArray (Lazy.force cint, args)|]
     | Other other ->
 	begin match other with
         | Weaken (c',l') ->
@@ -412,12 +412,12 @@ let to_coq to_lit interp (cstep,
           mklApp cEqCgrP [|out_c c; out_f f1; out_f f2; res|]
 	| LiaMicromega (cl,d) ->
           let cl' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
-          let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqInterface.micromega_coq_proofTerm; CoqInterface.micromega_dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force CoqInterface.micromega_coq_proofTerm|]) in
+          let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqTerms.micromega_coq_proofTerm; CoqInterface.micromega_dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force CoqTerms.micromega_coq_proofTerm|]) in
           mklApp cLiaMicromega [|out_c c; cl'; c'|]
         | LiaDiseq l -> mklApp cLiaDiseq [|out_c c; out_f l|]
         | SplArith (orig,res,l) ->
           let res' = out_f res in
-          let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqInterface.micromega_coq_proofTerm; CoqInterface.micromega_dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force CoqInterface.micromega_coq_proofTerm|]) in
+          let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqTerms.micromega_coq_proofTerm; CoqInterface.micromega_dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force CoqTerms.micromega_coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
         | BBVar res -> mklApp cBBVar [|out_c c; out_f res|]
@@ -483,7 +483,7 @@ let to_coq to_lit interp (cstep,
     | _ -> assert false in
   let step = Lazy.force cstep in
   let def_step =
-    mklApp cRes [|mkInt 0; CoqInterface.mkArray (Lazy.force cint, [|mkInt 0|]) |] in
+    mklApp cRes [|mkInt 0; CoqTerms.mkArray (Lazy.force cint, [|mkInt 0|]) |] in
   let r = ref confl in
   let nc = ref 0 in
   while not (isRoot !r.kind) do r := prev !r; incr nc done;

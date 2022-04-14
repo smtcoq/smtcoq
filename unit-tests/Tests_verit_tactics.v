@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -1363,3 +1363,138 @@ Section Vauto.
   Goal eqb_of_compdec HA a b \/ search b l.
   Proof. verit_no_check. Qed.
 End Vauto.
+
+
+Section PropToBool.
+  Goal (forall (x x0 : bool) (x1 x2 : list bool), x :: x1 = x0 :: x2 -> x = x0) -> true.
+  Proof. verit. Qed.
+End PropToBool.
+
+
+Section EqSym.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable H8 : forall (h : list A) (l : list (list A)), tl (h :: l) = l.
+  Variable H12_A : forall (h : A) (l : list A), tl (h :: l) = l.
+  Variable H9 : forall (h : option A) (l : list (option A)), tl (h :: l) = l.
+  Variable H12 : @tl (list A) nil = nil.
+  Variable H13_A : @tl A nil = nil.
+  Variable H14 : @tl (option A) nil = nil.
+  Variable H13 : forall (h : list A) (l : list (list A)), hd_error (h :: l) = Some h.
+  Variable H10_A : forall (h : A) (l : list A), hd_error (h :: l) = Some h.
+  Variable H15 : forall (h : option A) (l : list (option A)), hd_error (h :: l) = Some h.
+  Variable H10 : @hd_error (list A) nil = None.
+  Variable H11_A : @hd_error A nil = None.
+  Variable H16 : @hd_error (option A) nil = None.
+  Variable H11 : forall x : list A, Some x = None -> False.
+  Variable H7_A : forall x : A, Some x = None -> False.
+  Variable H17 : forall x : option A, Some x = None -> False.
+  Variable H7 : forall x x0 : list A, Some x = Some x0 -> x = x0.
+  Variable H6_A : forall x x0 : A, Some x = Some x0 -> x = x0.
+  Variable H18 : forall x x0 : option A, Some x = Some x0 -> x = x0.
+  Variable H4 : forall (x : list A) (x0 : list (list A)), nil = x :: x0 -> False.
+  Variable H3_A : forall (x : A) (x0 : list A), nil = x :: x0 -> False.
+  Variable H5 : forall (x : option A) (x0 : list (option A)), nil = x :: x0 -> False.
+  Variable H3 : forall (x x0 : list A) (x1 x2 : list (list A)), x :: x1 = x0 :: x2 -> x = x0.
+  Variable H2_A : forall (x x0 : A) (x1 x2 : list A), x :: x1 = x0 :: x2 -> x = x0.
+  Variable H6 : forall (x x0 : option A) (x1 x2 : list (option A)), x :: x1 = x0 :: x2 -> x = x0.
+  Variable x : A.
+  Variable xs : list A.
+  Variable a : A.
+  Variable r : list A.
+
+  Goal hd_error (x :: xs) = Some a /\ tl (x :: xs) = r <-> x :: xs = a :: r.
+  Proof. verit. Qed.
+End EqSym.
+
+
+
+Section PrenexDependentTypes.
+  Variables A B : Type.
+  Variable F : Type -> Type.
+  Variable p : B -> F bool.
+  Variable dep : forall (X:Type), A -> F X -> bool.
+  Hypothesis H : forall (x : A) (y : B), dep bool x (p y) = true.
+
+  Hypothesis HF : CompDec (F bool).
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Variable a : A.
+  Variable b : B.
+
+  Goal dep bool a (p b).
+  Proof. verit. Qed.
+
+End PrenexDependentTypes.
+
+
+(*
+Section NonPrenexDependentTypes.
+  Variables A B : Type.
+  Variable F : Type -> Type.
+  Variable p : B -> F bool.
+  Variable dep : A -> forall (X:Type), F X -> bool.
+  Hypothesis H : forall (x : A) (y : B), dep x bool (p y) = true.
+
+  Hypothesis HF : CompDec (F bool).
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
+
+  Variable a : A.
+  Variable b : B.
+
+  Goal dep a bool (p b).
+  Proof. Fail verit. Qed.
+
+End NonPrenexDependentTypes.
+*)
+
+
+Section QInstAnd.
+
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
+
+  Hypothesis H : forall (a1 a2:A) l1 l2,
+      eqb_of_compdec _ (a1::l1) (a2::l2) --->
+        (eqb_of_compdec HA a1 a2) && (eqb_of_compdec _ l1 l2).
+
+  Variables a1 a2 : A.
+  Variables l1 l2 : list A.
+  Hypothesis H1 : eqb_of_compdec _ (a1::l1) (a2::l2).
+
+  Goal eqb_of_compdec _ a1 a2.
+  Proof. verit. Qed.
+
+  Variable inb : A -> list A -> bool.
+
+  Hypothesis H2 : forall (a:A) l1 l2, inb a (l1++l2) ---> (inb a l1 || inb a l2).
+
+  Goal negb (inb a1 (l1++l2)) || inb a1 l1 || inb a1 l2.
+  Proof. verit. Qed.
+
+End QInstAnd.
+
+
+Section OCamlCompDec.
+  Variable A : Type.
+  Variable HA : CompDec A.
+  Variable H2 : forall (h : A) (l x : list A), (h :: l) ++ x = h :: l ++ x.
+  Variable H4 : forall x : list A, nil ++ x = x.
+  Variable H5 : forall (x : A) (x0 : list A), nil = x :: x0 -> False.
+  Variable H6 : forall (x : list A) (x0 : list (list A)), nil = x :: x0 -> False.
+  Variable H8 : forall (x x0 : list A) (x1 x2 : list (list A)), x :: x1 = x0 :: x2 -> x = x0 /\ x1 = x2.
+  Variable proj_list : forall A : Type, list A -> list A -> list A.
+  Variable H0 : forall (H : list A) (H0 : A) (H1 : list A), proj_list A H (H0 :: H1) = H1.
+  Variable H10 : forall (H : list (list A)) (H0 : list A) (H1 : list (list A)),
+        proj_list (list A) H (H0 :: H1) = H1.
+  Variable proj_list0 : forall A : Type, A -> list A -> A.
+  Variable H9 : forall (H H0 : A) (H1 : list A), proj_list0 A H (H0 :: H1) = H0.
+  Variable H12 : forall (H H0 : list A) (H1 : list (list A)), proj_list0 (list A) H (H0 :: H1) = H0.
+  Variable H11 : forall (x : A) (x0 x1 : list A), x1 = nil \/ x1 = proj_list0 A x x1 :: proj_list A x0 x1.
+
+  Goal forall (x y : list A) (a0 : A),
+      x ++ y = a0::nil -> x = nil /\ y = a0::nil \/ x = a0::nil /\ y = nil.
+  Proof. verit_no_check. Qed.
+End OCamlCompDec.

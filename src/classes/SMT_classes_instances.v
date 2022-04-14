@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -474,7 +474,7 @@ Section Int63.
   Local Open Scope int63_scope.
 
   Let int_lt x y :=
-    if Int63Native.ltb x y then True else False.
+    if x < y then True else False.
 
   Global Instance int63_ord : OrdType int.
   Proof.
@@ -486,13 +486,13 @@ Section Int63.
             simpl; try easy.
       contradict H1.
       rewrite not_false_iff_true.
-      rewrite Int63Axioms.ltb_spec in *.
+      rewrite ltb_spec in *.
       exact (Z.lt_trans _ _ _ H H0).
     - intros x y.
       case_eq (x < y); intro; simpl; try easy.
       intros.
-      rewrite Int63Axioms.ltb_spec in *.
-      rewrite <- Int63Properties.to_Z_eq.
+      rewrite ltb_spec in *.
+      rewrite <- Misc.to_Z_eq.
       exact (Z.lt_neq _ _ H).
   Defined.
 
@@ -503,19 +503,19 @@ Section Int63.
     intros x y.
     case_eq (x < y); intro;
       case_eq (x == y); intro; unfold lt in *; simpl.
-    - rewrite Int63Properties.eqb_spec in H0.
+    - rewrite Int63.eqb_spec in H0.
       contradict H0.
       assert (int_lt x y). unfold int_lt.
       rewrite H; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
     - apply LT. unfold int_lt. rewrite H; trivial.
-    - apply EQ. rewrite Int63Properties.eqb_spec in H0; trivial.
+    - apply EQ. rewrite Int63.eqb_spec in H0; trivial.
     - apply GT. unfold int_lt.
       case_eq (y < x); intro; simpl; try easy.
-      specialize (leb_ltb_eqb x y); intro.
+      specialize (Misc.leb_ltb_eqb x y); intro.
       contradict H2.
-      rewrite leb_negb_gtb. rewrite H1. simpl.
+      rewrite Misc.leb_negb_gtb. rewrite H1. simpl.
       red. intro. symmetry in H2.
       rewrite orb_true_iff in H2. destruct H2; contradict H2.
       rewrite H. auto.
@@ -523,7 +523,7 @@ Section Int63.
   Defined.
 
   Global Instance int63_eqbtype : EqbType int :=
-    {| eqb := Int63Native.eqb; eqb_spec := Int63Properties.eqb_spec |}.
+    {| eqb := Int63.eqb; eqb_spec := Int63.eqb_spec |}.
 
   Global Instance int63_dec : DecType int := EqbToDecType.
 
@@ -681,4 +681,78 @@ Section list.
 
 End list.
 
-Hint Resolve unit_compdec bool_compdec Z_compdec Nat_compdec Positive_compdec BV_compdec FArray_compdec int63_compdec option_compdec list_compdec : typeclass_instances.
+
+Section prod.
+
+  Generalizable Variables A B.
+  Context `{HA : CompDec A} `{HB : CompDec B}.
+
+
+  Definition prod_lt (x y:A*B) : Prop :=
+    let (a1, b1) := x in
+    let (a2, b2) := y in
+    (lt a1 a2) \/ ((a1 = a2) /\ (lt b1 b2)).
+
+
+  Definition prod_compare : forall (x y:A*B), Compare prod_lt Logic.eq x y.
+  Proof.
+    intros [a1 b1] [a2 b2].
+    case_eq (compare a1 a2); intros l H.
+    - apply LT. simpl. now left.
+    - case_eq (compare b1 b2); intros l1 H1.
+      + apply LT. simpl. now right.
+      + apply EQ. now subst.
+      + apply GT. simpl. now right.
+    - apply GT. simpl. now left.
+  Defined.
+
+
+  Lemma prod_lt_trans : forall (x y z:A*B),
+      prod_lt x y -> prod_lt y z -> prod_lt x z.
+  Proof.
+    intros [a1 b1] [a2 b2] [a3 b3]; simpl.
+    intros [H1|[H1 H4]] [H2|[H2 H3]].
+    - left. eapply lt_trans; eauto.
+    - subst a3. now left.
+    - subst a2. now left.
+    - subst a2 a3. right. split; auto. eapply lt_trans; eauto.
+  Qed.
+
+
+  Lemma prod_lt_not_eq : forall (x y:A*B), prod_lt x y -> x <> y.
+  Proof.
+    intros [a1 b1] [a2 b2]; simpl.
+    intros [H1|[_ H1]] H3; inversion H3 as [[H4 H5]]; clear H3; subst a2 b2;
+      now apply (lt_not_eq _ _ H1).
+  Qed.
+
+
+  Global Instance prod_ord : OrdType (prod A B) :=
+    Build_OrdType _ _ prod_lt_trans prod_lt_not_eq.
+
+
+  Global Instance prod_comp : Comparable (prod A B) := Build_Comparable _ _ prod_compare.
+
+  Global Instance prod_eqbtype : EqbType (prod A B) := Comparable2EqbType.
+
+
+  Global Instance prod_inh : Inhabited (prod A B) :=
+    Build_Inhabited _ (default_value, default_value).
+
+
+  Global Instance prod_compdec : CompDec (prod A B) := {|
+    Ordered := prod_ord;
+    Comp := prod_comp;
+    Inh := prod_inh
+  |}.
+
+End prod.
+
+
+(* Register constants for OCaml access *)
+Register unit_typ_compdec as SMTCoq.classes.SMT_classes_instances.unit_typ_compdec.
+Register bool_compdec as SMTCoq.classes.SMT_classes_instances.bool_compdec.
+Register Z_compdec as SMTCoq.classes.SMT_classes_instances.Z_compdec.
+Register Positive_compdec as SMTCoq.classes.SMT_classes_instances.Positive_compdec.
+Register BV_compdec as SMTCoq.classes.SMT_classes_instances.BV_compdec.
+Register FArray_compdec as SMTCoq.classes.SMT_classes_instances.FArray_compdec.

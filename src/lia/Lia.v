@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray ZArith.
+Require Import Bool List Int63 Ring63 PArray ZArith.
 Require Import Misc State SMT_terms Euf.
 
 Require Import RingMicromega ZMicromega Tauto Psatz.
@@ -44,10 +44,10 @@ Section certif.
   End BuildPositive.
 
   Definition build_positive :=
-    foldi_down_cont
+    foldi
       (fun i cont h =>
           build_positive_atom_aux cont (get_atom h))
-      (PArray.length t_atom) 0 (fun _ => None).
+      0 (PArray.length t_atom) (fun _ => None).
 
   Definition build_positive_atom := build_positive_atom_aux build_positive.
   (* Register build_positive_atom as PrimInline. *)
@@ -120,9 +120,9 @@ Section certif.
   End BuildPExpr.
 
   Definition build_pexpr :=
-     foldi_down_cont
+     foldi
        (fun i cont vm h => build_pexpr_atom_aux cont vm (get_atom h))
-       (PArray.length t_atom) 0 (fun vm _ => (vm,PEc 0%Z)).
+       0 (PArray.length t_atom) (fun vm _ => (vm,PEc 0%Z)).
 
   Definition build_pexpr_atom := build_pexpr_atom_aux build_pexpr.
 
@@ -157,7 +157,7 @@ Section certif.
   Section Build_form.
 
     Definition build_not2 i f :=
-      fold (fun f' : BFormula (Formula Z) => N (N f')) 1 i f.
+      foldi (fun _ (f' : BFormula (Formula Z)) => N (N f')) 0 i f.
 
     Variable build_var : vmap -> var -> option (vmap*BFormula (Formula Z)).
 
@@ -180,23 +180,43 @@ Section certif.
             | None => None
           end
         | Form.Fand args =>
-          let n := length args in
-          if n == 0 then Some (vm,TT)
-          else
-            foldi (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,Cj f1' f2') | None => None end | None => None end) 1 (n-1) (let l := args.[0] in
-              match build_var vm (Lit.blit l) with
-                | Some (vm',f) => if Lit.is_pos l then Some (vm',f) else Some (vm',N f)
+          afold_left _
+            (fun vm => Some (vm, TT))
+            (fun a b vm =>
+              match a vm with
+                | Some (vm1, f1) =>
+                  match b vm1 with
+                    | Some (vm2, f2) => Some (vm2, Cj f1 f2)
+                    | None => None
+                  end
                 | None => None
               end)
+            (amap
+              (fun l vm => match build_var vm (Lit.blit l) with
+                  | Some (vm', f) => Some (vm', if Lit.is_pos l then f else N f)
+                  | None => None
+                end)
+              args)
+            vm
         | Form.For args =>
-          let n := length args in
-          if n == 0 then Some (vm,FF)
-          else
-            foldi (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,D f1' f2') | None => None end | None => None end) 1 (n-1) (let l := args.[0] in
-              match build_var vm (Lit.blit l) with
-                | Some (vm',f) => if Lit.is_pos l then Some (vm',f) else Some (vm',N f)
+          afold_left _
+            (fun vm => Some (vm, FF))
+            (fun a b vm =>
+              match a vm with
+                | Some (vm1, f1) =>
+                  match b vm1 with
+                    | Some (vm2, f2) => Some (vm2, D f1 f2)
+                    | None => None
+                  end
                 | None => None
               end)
+            (amap
+              (fun l vm => match build_var vm (Lit.blit l) with
+                  | Some (vm', f) => Some (vm', if Lit.is_pos l then f else N f)
+                  | None => None
+                end)
+              args)
+            vm
         | Form.Fxor a b =>
           match build_var vm (Lit.blit a) with
             | Some (vm1, f1) =>
@@ -210,20 +230,24 @@ Section certif.
             | None => None
           end
         | Form.Fimp args =>
-          let n := length args in
-          if n == 0 then Some (vm,TT)
-          else if n <= 1 then
-            let l := args.[0] in
-            match build_var vm (Lit.blit l) with
-              | Some (vm',f) => if Lit.is_pos l then Some (vm',f) else Some (vm',N f)
-              | None => None
-            end
-          else
-            foldi_down (fun i f1 => match f1 with | Some(vm',f1') => let l := (args.[i]) in match build_var vm' (Lit.blit l) with | Some(vm2,f2) => let f2' := if Lit.is_pos l then f2 else N f2 in Some(vm2,I f2' None f1') | None => None end | None => None end) (n-2) 0 (let l := args.[n-1] in
-              match build_var vm (Lit.blit l) with
-                | Some (vm',f) => if Lit.is_pos l then Some (vm',f) else Some (vm',N f)
+          afold_right _
+            (fun vm => Some (vm, TT))
+            (fun a b vm =>
+              match b vm with
+                | Some (vm2, f2) =>
+                  match a vm2 with
+                    | Some (vm1, f1) => Some (vm1, I f1 None f2)
+                    | None => None
+                  end
                 | None => None
               end)
+            (amap
+              (fun l vm => match build_var vm (Lit.blit l) with
+                  | Some (vm', f) => Some (vm', if Lit.is_pos l then f else N f)
+                  | None => None
+                end)
+              args)
+            vm
         | Form.Fiff a b =>
           match build_var vm (Lit.blit a) with
             | Some (vm1, f1) =>
@@ -260,9 +284,9 @@ Section certif.
 
 
   Definition build_var :=
-    foldi_down_cont
+    foldi
     (fun i cont vm h => build_hform cont vm (get_form h))
-    (PArray.length t_form) 0 (fun _ _ => None).
+    0 (PArray.length t_form) (fun _ _ => None).
 
   Definition build_form := build_hform build_var.
 
@@ -418,9 +442,10 @@ Section certif.
       t_interp.[h] = Bval t_i Typ.Tpositive p.
     Proof.
       unfold build_positive.
-      apply foldi_down_cont_ind;intros;try discriminate.
+      apply foldi_ind;intros;try discriminate.
+      apply leb_0.
       rewrite t_interp_wf;trivial.
-      apply build_positive_atom_aux_correct with cont;trivial.
+      apply (build_positive_atom_aux_correct a); trivial.
     Qed.
 
     Lemma build_positive_atom_correct :
@@ -869,26 +894,27 @@ Transparent build_z_atom.
           t_interp.[h] = Bval t_i Typ.TZ (Zeval_expr (interp_vmap vm') pe).
    Proof.
      unfold build_pexpr.
-     apply foldi_down_cont_ZInd.
-     intros z Hz h vm vm' pe Hh.
-     assert (W:=to_Z_bounded h);rewrite to_Z_0 in Hz.
+     apply foldi_ind.
+     apply leb_0.
+     intros h vm vm' pe Hh.
+     assert (W:=to_Z_bounded h);rewrite to_Z_0 in Hh.
      elimtype False;omega.
      intros i cont Hpos Hlen Hrec.
      intros h vm vm' pe;unfold is_true;rewrite <-ltb_spec;intros.
      rewrite t_interp_wf;trivial.
-     apply build_pexpr_atom_aux_correct with cont h i;trivial.
+     apply build_pexpr_atom_aux_correct with cont h (i + 1);trivial.
      intros;apply Hrec;auto.
-     unfold is_true in H3;rewrite ltb_spec in H, H3;omega.
+     unfold is_true in H3;rewrite ltb_spec in H, H3, Hlen; rewrite to_Z_add_1_wB in H; generalize (to_Z_bounded (length t_atom)); lia.
      unfold wf, is_true in wf_t_atom.
-     rewrite forallbi_spec in wf_t_atom.
+     rewrite aforallbi_spec in wf_t_atom.
      apply wf_t_atom.
-     rewrite ltb_spec in H;rewrite leb_spec in Hlen;rewrite ltb_spec;omega.
+     rewrite ltb_spec in H, Hlen;rewrite ltb_spec; rewrite to_Z_add_1_wB in H; generalize (to_Z_bounded (length t_atom)); lia.
      unfold wt, is_true in wt_t_atom.
-     rewrite forallbi_spec in wt_t_atom.
+     rewrite aforallbi_spec in wt_t_atom.
      change (is_true(Typ.eqb (get_type t_i t_func t_atom h) Typ.TZ)) in H0.
      rewrite Typ.eqb_spec in H0;rewrite <- H0.
      apply wt_t_atom.
-     rewrite ltb_spec in H;rewrite leb_spec in Hlen;rewrite ltb_spec;omega.
+     rewrite ltb_spec in H, Hlen; rewrite ltb_spec; rewrite to_Z_add_1_wB in H; generalize (to_Z_bounded (length t_atom)); lia.
    Qed.
 
    Lemma build_pexpr_correct :
@@ -913,19 +939,16 @@ Transparent build_z_atom.
      rewrite PArray.get_outofbound, default_t_interp.
      revert H0.
      unfold build_pexpr.
-     case_eq (0 < length t_atom);intros Heq.
-     rewrite foldi_down_cont_gt;trivial.
-     rewrite PArray.get_outofbound;trivial.
+     apply foldi_ind.
+     apply leb_0.
+     discriminate.
+     intros i a _ Hi IH.
+     rewrite PArray.get_outofbound by exact H2.
      Opaque build_z_atom.
-     rewrite def_t_atom;simpl.
-     intros HH H;revert HH H1;apply build_pexpr_atom_aux_correct_z;trivial.
-     rewrite foldi_down_cont_eq;trivial.
-     rewrite PArray.get_outofbound;trivial.
-     rewrite def_t_atom;simpl.
-     intros HH H;revert HH H1;apply build_pexpr_atom_aux_correct_z;trivial.
-     rewrite <- not_true_iff_false, ltb_spec, to_Z_0 in Heq.
-     assert (W:= to_Z_bounded (length t_atom)).
-     apply to_Z_inj;rewrite to_Z_0;omega.
+     rewrite def_t_atom; simpl.
+     intros HH H.
+     revert HH H1.
+     apply build_pexpr_atom_aux_correct_z; trivial.
      rewrite length_t_interp;trivial.
    Qed.
 Transparent build_z_atom.
@@ -1019,7 +1042,7 @@ Transparent build_z_atom.
       rewrite t_interp_wf;trivial.
       intros;apply build_formula_atom_correct with
         (get_type t_i t_func t_atom h);trivial.
-      unfold wt, is_true in wt_t_atom;rewrite forallbi_spec in wt_t_atom.
+      unfold wt, is_true in wt_t_atom;rewrite aforallbi_spec in wt_t_atom.
       case_eq (h < length t_atom);intros Heq;unfold get_type;auto with smtcoq_core.
       unfold get_type'.
       rewrite !PArray.get_outofbound, default_t_interp, def_t_atom;trivial; try reflexivity.
@@ -1032,29 +1055,33 @@ Transparent build_z_atom.
     Lemma build_not2_pos_correct : forall vm f l i,
       bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l -> bounded_bformula (fst vm) (build_not2 i f) /\ (Form.interp interp_form_hatom interp_form_hatom_bv t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (build_not2 i f)).
     Proof.
-      simpl; intros vm f l i H1 H2 H3; split; unfold build_not2.
-      apply fold_ind; auto.
-      apply (fold_ind2 _ _ (fun b f' => b = true <-> eval_f (Zeval_formula (interp_vmap vm)) f')).
+      simpl; intros vm f l i H1 H2 H3; unfold build_not2.
+      case (Z.le_gt_cases 1 [|i|]); [ intro Hle | intro Hlt ].
+      set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern i, a, b; subst a b; apply foldi_ind2.
+      apply leb_0.
       unfold Lit.interp; rewrite H3; auto.
-      intros b f' H4; rewrite negb_involutive; simpl; split.
-      intros Hb H5; apply H5; rewrite <- H4; auto.
-      intro H5; case_eq b; auto; intro H6; elim H5; intro H7; rewrite <- H4 in H7; rewrite H7 in H6; discriminate.
+      intros j f' b _ _; rewrite negb_involutive; simpl.
+      intros [ H H' ]; rewrite <- H'.
+      unfold is_true; rewrite not_true_iff_false, not_false_iff_true; tauto.
+      rewrite 2!foldi_ge by (rewrite leb_spec, to_Z_0; lia).
+      unfold Lit.interp; rewrite H3; auto.
     Qed.
 
 
     Lemma build_not2_neg_correct : forall vm f l i,
       bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l = false -> bounded_bformula (fst vm) (N (build_not2 i f)) /\ (Form.interp interp_form_hatom interp_form_hatom_bv t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (N (build_not2 i f))).
     Proof.
-      simpl; intros vm f l i H1 H2 H3; split; unfold build_not2.
-      apply fold_ind; auto.
-      apply (fold_ind2 _ _ (fun b f' => b = true <-> ~ eval_f (Zeval_formula (interp_vmap vm)) f')).
-      unfold Lit.interp; rewrite H3; unfold Var.interp; split.
-      intros H4 H5; rewrite <- H2 in H5; rewrite H5 in H4; discriminate.
-      intro H4; case_eq (rho (Lit.blit l)); auto; intro H5; elim H4; rewrite <- H2; auto.
-      intros b f' H4; rewrite negb_involutive; simpl; split.
-      intros Hb H5; apply H5; rewrite <- H4; auto.
-      intro H5; case_eq b; auto; intro H6; elim H5; intro H7; rewrite <- H4 in H7; rewrite H7 in H6; discriminate.
-    Qed.
+      simpl; intros vm f l i H1 H2 H3; unfold build_not2.
+      case (Z.le_gt_cases 1 [|i|]); [ intro Hle | intro Hlt ].
+      set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern i, a, b; subst a b; apply foldi_ind2.
+      apply leb_0.
+      unfold Lit.interp; rewrite H3, <- H2; unfold is_true; rewrite negb_true_iff, not_true_iff_false; tauto.
+      intros j f' b _ _; rewrite negb_involutive; simpl.
+      intros [ H H' ]; rewrite <- H'.
+      unfold is_true; rewrite not_true_iff_false, not_false_iff_true; tauto.
+      rewrite 2!foldi_ge by (rewrite leb_spec, to_Z_0; lia).
+      unfold Lit.interp; rewrite H3, <- H2; unfold is_true; rewrite negb_true_iff, not_true_iff_false; tauto.
+Qed.
 
 
     Lemma bounded_bformula_le :
@@ -1129,45 +1156,47 @@ Transparent build_z_atom.
       (* Fnot2 *)
       case_eq (build_var vm (Lit.blit l)); try discriminate; intros [vm0 f] Heq H H1; inversion H; subst vm0; subst bf; destruct (Hbv _ _ _ _ Heq H1) as [H2 [H3 [H4 [H5 H6]]]]; do 3 (split; auto); case_eq (Lit.is_pos l); [apply build_not2_pos_correct|apply build_not2_neg_correct]; auto.
       (* Fand *)
-      simpl; unfold afold_left; case (length l == 0).
+      simpl; unfold afold_left; rewrite !length_amap; case_eq (length l == 0); [ rewrite Int63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
       intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [omega| ]; do 3 (split; auto with smtcoq_core).
-      revert vm' bf; apply (foldi_ind2 _ _ (fun f1 b => forall vm' bf, f1 = Some (vm', bf) -> wf_vmap vm -> wf_vmap vm' /\ (Pos.to_nat (fst vm) <= Pos.to_nat (fst vm'))%nat /\ (forall p : positive, (Pos.to_nat p < Pos.to_nat (fst vm))%nat -> nth_error (snd vm) (Pos.to_nat (fst vm - p) - 1) = nth_error (snd vm') (Pos.to_nat (fst vm' - p) - 1)) /\ bounded_bformula (fst vm') bf /\ (b = true <-> eval_f (Zeval_formula (interp_vmap vm')) bf))).
+      revert vm' bf; rewrite !get_amap by exact Hl; set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern (length l), a, b; subst a b; apply foldi_ind2.
+      rewrite ltb_spec, to_Z_0 in Hl; rewrite leb_spec, to_Z_1; lia.
       intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto); unfold Lit.interp; rewrite Heq2; auto; simpl; split.
       intros H3 H4; rewrite <- H14 in H4; rewrite H4 in H3; discriminate.
       intro H3; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto; intro H4; elim H3; rewrite <- H14; auto.
-      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto; split; [eauto with arith| ]; split.
+      intros i a b _ H1; case (a vm); try discriminate; intros [vm0 f0] IH vm' bf; rewrite get_amap by exact H1; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto; split; [eauto with arith| ]; split.
       intros p H15; rewrite H7; auto; apply H12; eauto with arith.
       split.
       simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
-      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite andb_true_r; try rewrite andb_false_r; try (intros; split; auto with smtcoq_core); try discriminate; intros [H20 H21]; auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; rewrite get_amap by exact H1; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite andb_true_r; try rewrite andb_false_r; try (intros; split; auto with smtcoq_core); try discriminate; intros [H20 H21]; auto with smtcoq_core.
       (* For *)
-      simpl; unfold afold_left; case (length l == 0).
+      simpl; unfold afold_left; rewrite !length_amap; case_eq (length l == 0); [ rewrite Int63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
       intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [omega| ]; do 3 (split; auto with smtcoq_core); discriminate.
-      revert vm' bf; apply (foldi_ind2 _ _ (fun f1 b => forall vm' bf, f1 = Some (vm', bf) -> wf_vmap vm -> wf_vmap vm' /\ (Pos.to_nat (fst vm) <= Pos.to_nat (fst vm'))%nat /\ (forall p : positive, (Pos.to_nat p < Pos.to_nat (fst vm))%nat -> nth_error (snd vm) (Pos.to_nat (fst vm - p) - 1) = nth_error (snd vm') (Pos.to_nat (fst vm' - p) - 1)) /\ bounded_bformula (fst vm') bf /\ (b = true <-> eval_f (Zeval_formula (interp_vmap vm')) bf))).
+      revert vm' bf; rewrite !get_amap by exact Hl; set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern (length l), a, b; subst a b; apply foldi_ind2.
+      rewrite ltb_spec, to_Z_0 in Hl; rewrite leb_spec, to_Z_1; lia.
       intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto with smtcoq_core); unfold Lit.interp; rewrite Heq2; auto with smtcoq_core; simpl; split.
       intros H3 H4; rewrite <- H14 in H4; rewrite H4 in H3; discriminate.
       intro H3; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto with smtcoq_core; intro H4; elim H3; rewrite <- H14; auto with smtcoq_core.
-      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros i a b _ H1; case (a vm); try discriminate; intros [vm0 f0] IH vm' bf; rewrite get_amap by exact H1; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
       intros p H15; rewrite H7; auto with smtcoq_core; apply H12; eauto with smtcoq_core arith.
       split.
       simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
-      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite orb_false_r; try rewrite orb_true_r; auto with smtcoq_core; try (intros [H20|H20]; auto with smtcoq_core; discriminate); right; intro H20; discriminate.
+      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; rewrite get_amap by exact H1; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite orb_false_r; try rewrite orb_true_r; auto with smtcoq_core; try (intros [H20|H20]; auto with smtcoq_core; discriminate); right; intro H20; discriminate.
       (* Fimp *)
-      simpl; unfold afold_right; case (length l == 0).
+      simpl; unfold afold_right; rewrite !length_amap; case_eq (length l == 0); [ rewrite Int63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
       intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [omega| ]; do 3 (split; auto with smtcoq_core).
-      case (length l <= 1).
-      case_eq (build_var vm (Lit.blit (l .[ 0]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ 0])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H3 [H4 [H5 [H6 H7]]]]; do 4 (split; auto with smtcoq_core); unfold Lit.interp; rewrite Heq2; auto with smtcoq_core; simpl; split.
-      intros H8 H9; rewrite <- H7 in H9; rewrite H9 in H8; discriminate.
-      intro H8; case_eq (Var.interp rho (Lit.blit (l .[ 0]))); auto with smtcoq_core; intro H9; rewrite H7 in H9; elim H8; auto with smtcoq_core.
-      revert vm' bf; apply (foldi_down_ind2 _ _ (fun f1 b => forall vm' bf, f1 = Some (vm', bf) -> wf_vmap vm -> wf_vmap vm' /\ (Pos.to_nat (fst vm) <= Pos.to_nat (fst vm'))%nat /\ (forall p : positive, (Pos.to_nat p < Pos.to_nat (fst vm))%nat -> nth_error (snd vm) (Pos.to_nat (fst vm - p) - 1) = nth_error (snd vm') (Pos.to_nat (fst vm' - p) - 1)) /\ bounded_bformula (fst vm') bf /\ (b = true <-> eval_f (Zeval_formula (interp_vmap vm')) bf))).
+      revert vm' bf; rewrite !get_amap by (apply minus_1_lt; rewrite eqb_false_spec, not_0_ltb; exact Hl); set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern (length l), a, b; subst a b; apply foldi_ind2.
+      rewrite ltb_spec, to_Z_0 in Hl; rewrite leb_spec, to_Z_1; lia.
       intros vm' bf; case_eq (build_var vm (Lit.blit (l .[ length l - 1]))); try discriminate; intros [vm0 f] Heq; case_eq (Lit.is_pos (l .[ length l - 1])); intros Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq H2) as [H10 [H11 [H12 [H13 H14]]]]; do 4 (split; auto with smtcoq_core); unfold Lit.interp; rewrite Heq2; auto with smtcoq_core; simpl; split.
       intros H3 H4; rewrite <- H14 in H4; rewrite H4 in H3; discriminate.
       intro H3; case_eq (Var.interp rho (Lit.blit (l .[ length l - 1]))); auto with smtcoq_core; intro H4; elim H3; rewrite <- H14; auto with smtcoq_core.
-      intros i a b _ H1; case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[ i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
+      intros i a b _ H1.
+      rewrite get_amap by (pose proof (to_Z_bounded i); pose proof (to_Z_bounded (length l)); revert H1 Hl; rewrite !ltb_spec, to_Z_0; intros; rewrite sub_spec, to_Z_sub_1_0, Z.mod_small; lia).
+      rewrite get_amap by (pose proof (to_Z_bounded i); pose proof (to_Z_bounded (length l)); revert H1 Hl; rewrite !ltb_spec, to_Z_0; intros; rewrite sub_spec, to_Z_sub_1_0, Z.mod_small; lia).
+      case a; try discriminate; intros [vm0 f0] IH vm' bf; case_eq (build_var vm0 (Lit.blit (l .[length l - 1 - i]))); try discriminate; intros [vm1 f1] Heq H2 H3; inversion H2; subst vm'; subst bf; destruct (IH _ _ (refl_equal (Some (vm0, f0))) H3) as [H5 [H6 [H7 [H8 H9]]]]; destruct (Hbv _ _ _ _ Heq H5) as [H10 [H11 [H12 [H13 H14]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
       intros p H15; rewrite H7; auto with smtcoq_core; apply H12; eauto with smtcoq_core arith.
       split.
-      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
-      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); auto with smtcoq_core; try discriminate; simpl; intro H; apply H; discriminate.
+      simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[length l - 1 - i])); rewrite H13; auto with smtcoq_core.
+      simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; case_eq (Lit.is_pos (l .[length l - 1 - i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[length l - 1 - i]))); auto with smtcoq_core; try discriminate; simpl; intro H; apply H; discriminate.
       (* Fxor *)
       simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
       intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
@@ -1223,7 +1252,8 @@ Transparent build_z_atom.
       bounded_bformula (fst vm') bf /\
       (Var.interp rho v <-> eval_f (Zeval_formula (interp_vmap vm')) bf).
     Proof.
-      unfold build_var; apply foldi_down_cont_ind; try discriminate.
+      unfold build_var; apply foldi_ind; try discriminate.
+      apply leb_0.
       intros i cont _ Hlen Hrec v vm vm' bf; unfold is_true; intros H1 H2; replace (Var.interp rho v) with (Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[v])).
       apply (build_hform_correct cont); auto with smtcoq_core.
       unfold Var.interp; rewrite <- wf_interp_form; auto with smtcoq_core.
@@ -1371,7 +1401,7 @@ Transparent build_z_atom.
      try(case_eq (t_atom.[i]);trivial;intros); try (apply valid_C_true; trivial).
      destruct b; try (apply valid_C_true; trivial).
      generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite PArray.forallbi_spec;intros.
+       rewrite aforallbi_spec;intros.
      assert (i < length t_atom).
      apply PArray.get_not_default_lt.
      rewrite H0, def_t_atom;discriminate.
@@ -1402,7 +1432,7 @@ Transparent build_z_atom.
      try(case_eq (t_atom.[i]);trivial;intros); try (apply valid_C_true; trivial).
      destruct b; try (apply valid_C_true; trivial).
      generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite PArray.forallbi_spec;intros.
+       rewrite aforallbi_spec;intros.
      assert (i < length t_atom).
      apply PArray.get_not_default_lt.
      rewrite H0, def_t_atom;discriminate.
@@ -1479,19 +1509,16 @@ Transparent build_z_atom.
      case_eq ((a0 == a1) && (a0 == b1) && (b == b0) && (b == a2)); intros; subst;
        try (unfold C.valid; apply valid_C_true; trivial).
      repeat(apply andb_prop in H19; destruct H19).
-     apply Int63Properties.eqb_spec in H19;apply Int63Properties.eqb_spec in H20;apply Int63Properties.eqb_spec in H21;apply Int63Properties.eqb_spec in H22; subst a0 b.
+     apply Int63.eqb_spec in H19;apply Int63.eqb_spec in H20;apply Int63.eqb_spec in H21;apply Int63.eqb_spec in H22; subst a0 b.
      unfold C.interp; simpl; rewrite orb_false_r.
      unfold Lit.interp; rewrite Lit.is_pos_lit.
      unfold Var.interp; rewrite Lit.blit_lit.
      rewrite wf_interp_form, H;simpl.
      case_eq (Lit.interp rho (a.[0]) || Lit.interp rho (a.[1]) || Lit.interp rho (a.[2])).
      intros;repeat (rewrite orb_true_iff in H19);destruct H19. destruct H19.
-     apply (afold_left_orb_true int 0); subst; auto with smtcoq_core.
-     apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 1); auto with smtcoq_core.
-     apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 2); auto with smtcoq_core.
-     apply ltb_spec;rewrite H0;compute;trivial.
+     apply (afold_left_orb_true 0); rewrite ?length_amap, ?get_amap; [ rewrite H0; reflexivity | assumption | rewrite H0; reflexivity ].
+     apply (afold_left_orb_true 1); rewrite ?length_amap, ?get_amap; [ rewrite H0; reflexivity | assumption | rewrite H0; reflexivity ].
+     apply (afold_left_orb_true 2); rewrite ?length_amap, ?get_amap; [ rewrite H0; reflexivity | assumption | rewrite H0; reflexivity ].
      intros; repeat (rewrite orb_false_iff in H19);destruct H19. destruct H19.
      unfold Lit.interp in H19.
      rewrite H3 in H19; unfold Var.interp in H19; rewrite H4 in H19.
@@ -1527,19 +1554,16 @@ Transparent build_z_atom.
      case_eq ((a0 == b0) && (a0 == a2) && (b == a1) && (b == b1)); intros; subst;
        try (unfold C.valid; apply valid_C_true; trivial).
      repeat(apply andb_prop in H19; destruct H19).
-     apply Int63Properties.eqb_spec in H19;apply Int63Properties.eqb_spec in H20;apply Int63Properties.eqb_spec in H21;apply Int63Properties.eqb_spec in H22;subst a0 b.
+     apply Int63.eqb_spec in H19;apply Int63.eqb_spec in H20;apply Int63.eqb_spec in H21;apply Int63.eqb_spec in H22;subst a0 b.
      unfold C.interp; simpl; rewrite orb_false_r.
      unfold Lit.interp; rewrite Lit.is_pos_lit.
      unfold Var.interp; rewrite Lit.blit_lit.
      rewrite wf_interp_form, H;simpl.
      case_eq (Lit.interp rho (a.[0]) || Lit.interp rho (a.[1]) || Lit.interp rho (a.[2])).
      intros;repeat (rewrite orb_true_iff in H19);destruct H19. destruct H19.
-     apply (afold_left_orb_true int 0); auto with smtcoq_core.
-     apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 1); auto with smtcoq_core.
-     apply ltb_spec;rewrite H0;compute;trivial.
-     apply (afold_left_orb_true int 2); auto with smtcoq_core.
-     apply ltb_spec;rewrite H0;compute;trivial.
+     apply (afold_left_orb_true 0); rewrite ?length_amap, ?get_amap; [ rewrite H0; reflexivity | assumption | rewrite H0; reflexivity ].
+     apply (afold_left_orb_true 1); rewrite ?length_amap, ?get_amap; [ rewrite H0; reflexivity | assumption | rewrite H0; reflexivity ].
+     apply (afold_left_orb_true 2); rewrite ?length_amap, ?get_amap; [ rewrite H0; reflexivity | assumption | rewrite H0; reflexivity ].
      intros; repeat (rewrite orb_false_iff in H19);destruct H19. destruct H19.
      unfold Lit.interp in H19.
      rewrite H3 in H19; unfold Var.interp in H19; rewrite H4 in H19.

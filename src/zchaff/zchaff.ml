@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -133,7 +133,7 @@ let import_cnf_trace reloc filename first last =
 
 let make_roots first last =
   let cint = Lazy.force cint in
-  let roots = Array.make (last.id + 2) (CoqInterface.mkArray (cint, Array.make 1 (mkInt 0))) in
+  let roots = Array.make (last.id + 2) (CoqTerms.mkArray (cint, Array.make 1 (mkInt 0))) in
   let mk_elem l =
     let x = match Form.pform l with
     | Fatom x -> x + 2
@@ -144,15 +144,15 @@ let make_roots first last =
     let root = Array.of_list (get_val !r) in
     let croot = Array.make (Array.length root + 1) (mkInt 0) in
     Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
-    roots.(!r.id) <- CoqInterface.mkArray (cint, croot);
+    roots.(!r.id) <- CoqTerms.mkArray (cint, croot);
     r := next !r
   done;
   let root = Array.of_list (get_val !r) in
   let croot = Array.make (Array.length root + 1) (mkInt 0) in
   Array.iteri (fun i l -> croot.(i) <- mk_elem l) root;
-  roots.(!r.id) <- CoqInterface.mkArray (cint, croot);
+  roots.(!r.id) <- CoqTerms.mkArray (cint, croot);
 
-  CoqInterface.mkArray (mklApp carray [|cint|], roots)
+  CoqTerms.mkArray (mklApp carray [|cint|], roots)
 
 let interp_roots first last =
   let tbl = Hashtbl.create 17 in
@@ -185,10 +185,8 @@ let interp_roots first last =
   end;
   !res
 
-let sat_checker_modules = [ ["SMTCoq";"Trace";"Sat_Checker"] ]
-
-let certif_ops = CoqTerms.make_certif_ops sat_checker_modules None
-let cCertif = gen_constant sat_checker_modules "Certif"
+let certif_ops = CoqTerms.csat_checker_certif_ops
+let cCertif = CoqTerms.csat_checker_Certif
 
 let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
@@ -205,10 +203,10 @@ let parse_certif dimacs trace fdimacs ftrace =
   let _ = CoqInterface.declare_constant trace ce2 in
   ()
 
-let cdimacs = gen_constant sat_checker_modules "dimacs"
-let ccertif = gen_constant sat_checker_modules "certif"
-let ctheorem_checker = gen_constant sat_checker_modules "theorem_checker"
-let cchecker = gen_constant sat_checker_modules "checker"
+let cdimacs = CoqTerms.csat_checker_dimacs
+let ccertif = CoqTerms.csat_checker_certif
+let ctheorem_checker = CoqTerms.csat_checker_theorem_checker
+let cchecker = CoqTerms.csat_checker_checker
 
 let theorems interp name fdimacs ftrace =
   SmtTrace.clear ();
@@ -251,7 +249,7 @@ let theorems interp name fdimacs ftrace =
 
 let theorem = theorems (fun _ -> interp_roots)
 let theorem_abs =
-  theorems (fun d _ _ -> mklApp cvalid_sat_checker [|mklApp cinterp_var_sat_checker [|CoqInterface.mkRel 1(*v*)|]; d|])
+  theorems (fun d _ _ -> mklApp csat_checker_valid [|mklApp csat_checker_interp_var [|CoqInterface.mkRel 1(*v*)|]; d|])
 
 
 let checker fdimacs ftrace =
@@ -345,17 +343,13 @@ let call_zchaff nvars root =
 
 (* Build the problem that it may be understoof by zchaff *)
 
-let cnf_checker_modules = [ ["SMTCoq";"Trace";"Cnf_Checker"] ]
-
-let certif_ops = CoqTerms.make_certif_ops cnf_checker_modules None
-let ccertif = gen_constant cnf_checker_modules "certif"
-let cCertif = gen_constant cnf_checker_modules "Certif"
-let cchecker_b_correct =
-  gen_constant cnf_checker_modules "checker_b_correct"
-let cchecker_b = gen_constant cnf_checker_modules "checker_b"
-let cchecker_eq_correct =
-  gen_constant cnf_checker_modules "checker_eq_correct"
-let cchecker_eq = gen_constant cnf_checker_modules "checker_eq"
+let certif_ops = CoqTerms.ccnf_checker_certif_ops
+let ccertif = CoqTerms.ccnf_checker_certif
+let cCertif = CoqTerms.ccnf_checker_Certif
+let cchecker_b_correct = CoqTerms.ccnf_checker_checker_b_correct
+let cchecker_b = CoqTerms.ccnf_checker_checker_b
+let cchecker_eq_correct = CoqTerms.ccnf_checker_checker_eq_correct
+let cchecker_eq = CoqTerms.ccnf_checker_checker_eq
 
 let build_body reify_atom reify_form l b (max_id, confl) vm_cast =
   let ntvar = CoqInterface.mkName "t_var" in
