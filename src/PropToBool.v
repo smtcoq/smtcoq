@@ -164,10 +164,10 @@ Ltac prop2bool_hyp H :=
     destruct HFalse
   | ];
   clear H';
-  match (eval compute in prop2bool_comp) with
+  lazymatch (eval compute in prop2bool_comp) with
   | true =>
     let A := eval cbv in prop2bool_t in
-    match goal with
+    lazymatch goal with
     | [ _ : CompDec A |- _ ] => idtac
     | _ =>
       let Hcompdec := fresh "Hcompdec" in
@@ -195,7 +195,7 @@ Ltac prop2bool_hyp H :=
           | _ => prop2bool
           end in
       tac_rec;
-      match goal with
+      lazymatch goal with
       | [ |- ?g ] => only [prop2bool_Hbool_evar]: refine g
       end;
       destruct HFalse
@@ -213,9 +213,9 @@ Ltac prop2bool_hyp H :=
 
 Ltac remove_compdec_hyp H :=
   let TH := type of H in
-  match TH with
+  lazymatch TH with
   | forall p : CompDec ?A, _ =>
-    match goal with
+    lazymatch goal with
     | [ p' : CompDec A |- _ ] =>
       let H1 := fresh in
       assert (H1 := H p'); clear H; assert (H := H1); clear H1;

@@ -169,7 +169,7 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let call_verit _ rt ro ra_quant rf_quant first lsmt =
+let call_verit timeout _ rt ro ra_quant rf_quant first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
   close_out outchan;
@@ -177,6 +177,11 @@ let call_verit _ rt ro ra_quant rf_quant first lsmt =
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
   close_out woc;
   let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " 2> " ^ wname in
+  let command = 
+    match timeout with
+      | Some i -> "timeout "^(string_of_int i)^" "^command
+      | None -> command
+  in
   Format.eprintf "%s@." command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
@@ -202,7 +207,7 @@ let call_verit _ rt ro ra_quant rf_quant first lsmt =
           CoqInterface.error ("veriT failed with the error: " ^ l)
       done
     with End_of_file -> () in
-
+  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; let _ = CoqInterface.anomaly "veriT timed out" in ());
   try
     if exit_code <> 0 then CoqInterface.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();
@@ -217,7 +222,7 @@ let call_verit _ rt ro ra_quant rf_quant first lsmt =
 let verit_logic =
   SL.of_list [LUF; LLia]
 
-let tactic_gen vm_cast lcpl lcepl =
+let tactic_gen vm_cast timeout lcpl lcepl =
   (* Transform the tuple of lemmas given by the user into a list *)
   let lcpl =
     let lcpl = EConstr.Unsafe.to_constr lcpl in
@@ -235,6 +240,7 @@ let tactic_gen vm_cast lcpl lcepl =
   let rf = VeritSyntax.rf in
   let ra_quant = VeritSyntax.ra_quant in
   let rf_quant = VeritSyntax.rf_quant in
-  SmtCommands.tactic call_verit verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl
+  SmtCommands.tactic (call_verit timeout) verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)
+
