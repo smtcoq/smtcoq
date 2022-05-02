@@ -25,12 +25,12 @@ let int63_gc = gc int63_prefix
 let cint = int63_gc "type"
 let ceq63 = int63_gc "eqb"
 
-(* PArray *)
-let array_prefix = "array.array"
-let array_gc = gc array_prefix
-let carray = array_gc "type"
-let cmake = array_gc "make"
-let cset = array_gc "set"
+(* (\* PArray *\)
+ * let array_prefix = "array.array"
+ * let array_gc = gc array_prefix
+ * let carray = array_gc "type"
+ * let cmake = array_gc "make"
+ * let cset = array_gc "set" *)
 
 (* is_true *)
 let cis_true = gc "core.is_true" "is_true"
@@ -451,17 +451,44 @@ let rec mk_bv_list = function
     mklApp ccons [|Lazy.force cbool; mkBool b; mk_bv_list bv|]
 
 (* Compute an array *)
+(* TODO: fresh_array_instance has been added in a later version of Coq, in evd.mli *)
+let univGen_fresh_array_instance env =
+  let auctx = CPrimitives.typ_univs CPrimitives.PT_array in
+  let u, ctx = UnivGen.fresh_instance_from auctx None in
+  u, ctx
+
+let evd_fresh_array_instance env evd =
+  Evd.with_context_set Evd.univ_flexible evd (univGen_fresh_array_instance env)
+
 let mkArray : Constr.types * Constr.t array -> Constr.t =
   fun (ty, a) ->
+  (* - ty is the type of the elements
+     - a is the array, plus an extra cell in the end with the default element *)
   let l = (Array.length a) - 1 in
-  snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' =
-                          if i = l then
-                            acc
-                          else
-                            mklApp cset [|ty; acc; mkInt i; c|] in
-                        (i+1,acc')
-                       ) (0, mklApp cmake [|ty; mkInt l; a.(l)|]) a)
+  let t = Array.make l a.(l) in
+  for i = 0 to l-1 do
+    t.(i) <- a.(i)
+  done;
+
+  let env = Global.env () in
+  let debug sigma = Termops.pr_evar_map ~with_univs:true None env sigma in
+  let sigma = Evd.from_env env in
+  let _ = debug sigma in
+  let sigma, u = evd_fresh_array_instance env sigma in
+  let _ = debug sigma in
+  let res = Constr.mkArray (u, t, a.(l), ty) in
+  (* let (sigma, _) = Typing.type_of env sigma res in
+   * let _ = debug sigma in *)
+  res
+
+  (* snd (Array.fold_left (fun (i,acc) c ->
+   *                       let acc' =
+   *                         if i = l then
+   *                           acc
+   *                         else
+   *                           mklApp cset [|ty; acc; mkInt i; c|] in
+   *                       (i+1,acc')
+   *                      ) (0, mklApp cmake [|ty; mkInt l; a.(l)|]) a) *)
 
 
 (* Reification *)

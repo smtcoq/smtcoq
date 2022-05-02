@@ -16,10 +16,10 @@ type coqTerm = CoqInterface.constr lazy_t
 val cint : coqTerm
 val ceq63 : coqTerm
 
-(* PArray *)
-val carray : coqTerm
-val cmake : coqTerm
-val cset : coqTerm
+(* (\* PArray *\)
+ * val carray : coqTerm
+ * val cmake : coqTerm
+ * val cset : coqTerm *)
 
 (* is_true *)
 val cis_true : coqTerm
