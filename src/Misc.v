@@ -451,10 +451,10 @@ Qed.
 
 (** Lemmas about to_list *)
 
-Definition to_list {A : Type} (t : array A) :=
+Polymorphic Definition to_list {A : Type} (t : array A) :=
   List.rev (foldi (fun i l => t.[i] :: l)%list 0 (length t) nil).
 
-Lemma foldi_to_list : forall A B (f : A -> B -> A) a e,
+Polymorphic Lemma foldi_to_list : forall A B (f : A -> B -> A) a e,
  foldi (fun i x => f x (a.[i])) 0 (length a) e = fold_left f (to_list a) e.
 Proof.
   intros A B f a e; unfold to_list.
@@ -466,7 +466,7 @@ Proof.
   simpl; f_equal; exact IH.
 Qed.
 
-Lemma to_list_In : forall {A : Type} (t: array A) i,
+Polymorphic Lemma to_list_In : forall {A : Type} (t: array A) i,
   i < length t = true -> In (t.[i]) (to_list t).
   intros A t i; assert (Bt := to_Z_bounded (length t)); assert (Bi := to_Z_bounded i); rewrite ltb_spec; unfold to_list.
   rewrite <- in_rev.
@@ -483,13 +483,13 @@ Lemma to_list_In : forall {A : Type} (t: array A) i,
   lia.
 Qed.
 
-Lemma to_list_In_eq : forall {A} (t: array A) i x,
+Polymorphic Lemma to_list_In_eq : forall {A} (t: array A) i x,
   i < length t = true -> x = t.[i] -> In x (to_list t).
 Proof.
   intros A t i x Hi ->. now apply to_list_In.
 Qed.
 
-Lemma In_to_list : forall {A} (t: array A) x,
+Polymorphic Lemma In_to_list : forall {A} (t: array A) x,
   In x (to_list t) -> exists i, i < length t = true /\ x = t.[i].
 Proof.
   intros A t x; assert (Bt := to_Z_bounded (length t)); unfold to_list.
@@ -504,15 +504,26 @@ Proof.
   split; [ rewrite ltb_spec; lia | reflexivity ].
 Qed.
 
+Polymorphic Lemma to_list_two: forall {A:Type} (a: PArray.array A),
+    PArray.length a = 2 -> (to_list a) = a .[0] :: a .[1] :: nil.
+Proof.
+  intros A a H.
+  unfold to_list.
+  rewrite H.
+  rewrite 2!foldi_lt_r by reflexivity.
+  rewrite foldi_ge by reflexivity.
+  reflexivity.
+Qed.
+
 (** Lemmas about amapi/amap *)
 
-Definition amapi {A B:Type} (f:int->A->B) (t:array A) :=
+Polymorphic Definition amapi {A B:Type} (f:int->A->B) (t:array A) :=
   let l := length t in
   foldi (fun i tb => tb.[i <- f i (t.[i])]) 0 l (make l (f l (default t))).
 
-Definition amap {A B:Type} (f:A->B) := amapi (fun _ => f).
+Polymorphic Definition amap {A B:Type} (f:A->B) := amapi (fun _ => f).
 
-Lemma length_amapi : forall {A B} (f:int -> A -> B) t,
+Polymorphic Lemma length_amapi : forall {A B} (f:int -> A -> B) t,
   length (amapi f t) = length t.
 Proof.
   unfold amapi; intros A B f t.
@@ -525,13 +536,13 @@ Proof.
   rewrite length_set; exact IH.
 Qed.
 
-Lemma length_amap : forall {A B} (f:A -> B) t,
+Polymorphic Lemma length_amap : forall {A B} (f:A -> B) t,
   length (amap f t) = length t.
 Proof.
   intros; unfold amap; apply length_amapi.
 Qed.
 
-Lemma default_amapi : forall {A B} (f:int -> A -> B) t,
+Polymorphic Lemma default_amapi : forall {A B} (f:int -> A -> B) t,
   default (amapi f t) = f (length t) (default t).
 Proof.
   unfold amapi; intros A B f t.
@@ -544,13 +555,13 @@ Proof.
   rewrite default_set; exact IH.
 Qed.
 
-Lemma default_amap : forall {A B} (f:A -> B) t,
+Polymorphic Lemma default_amap : forall {A B} (f:A -> B) t,
   default (amap f t) = f (default t).
 Proof.
   intros; unfold amap; apply default_amapi.
 Qed.
 
-Lemma get_amapi : forall {A B} (f:int -> A -> B) t i,
+Polymorphic Lemma get_amapi : forall {A B} (f:int -> A -> B) t i,
   i < length t = true -> (amapi f t).[i] = f i (t.[i]).
 Proof.
   intros A B f t.
@@ -570,13 +581,13 @@ Proof.
   apply IH; [ rewrite <- to_Z_eq in Hneq; lia | exact Hlength ].
 Qed.
 
-Lemma get_amap : forall {A B} (f:A -> B) t i,
+Polymorphic Lemma get_amap : forall {A B} (f:A -> B) t i,
   i < length t = true -> (amap f t).[i] = f (t.[i]).
 Proof.
   intros; unfold amap; apply get_amapi; assumption.
 Qed.
 
-Lemma get_amapi_outofbound : forall {A B} (f:int -> A -> B) t i,
+Polymorphic Lemma get_amapi_outofbound : forall {A B} (f:int -> A -> B) t i,
   i < length t = false -> (amapi f t).[i] = f (length t) (default t).
 Proof.
   intros A B f t i H1; rewrite get_out_of_bounds.
@@ -584,13 +595,13 @@ Proof.
   rewrite length_amapi; auto.
 Qed.
 
-Lemma get_amap_outofbound : forall {A B} (f:A -> B) t i,
+Polymorphic Lemma get_amap_outofbound : forall {A B} (f:A -> B) t i,
   i < length t = false -> (amap f t).[i] = f (default t).
 Proof.
   intros; unfold amap; apply get_amapi_outofbound; assumption.
 Qed.
 
-Lemma to_list_amap : forall A B (f : A -> B) t, to_list (amap f t) = List.map f (to_list t).
+Polymorphic Lemma to_list_amap : forall A B (f : A -> B) t, to_list (amap f t) = List.map f (to_list t).
 Proof.
   intros A B f t.
   assert (Bt := to_Z_bounded (length t)).
@@ -609,11 +620,11 @@ Qed.
 
 (** Some properties about afold_left *)
 
-Definition afold_left A default (OP : A -> A -> A) (V : array A) :=
+Polymorphic Definition afold_left A default (OP : A -> A -> A) (V : array A) :=
   if length V == 0 then default
   else foldi (fun i a => OP a (V.[i])) 1 (length V) (V.[0]).
 
-Lemma afold_left_spec : forall A args op (e : A),
+Polymorphic Lemma afold_left_spec : forall A args op (e : A),
   (forall a, op e a = a) ->
   afold_left _ e op args =
   foldi (fun i a => op a (args.[i])) 0 (length args) e.
@@ -625,7 +636,7 @@ Lemma afold_left_spec : forall A args op (e : A),
     f_equal; rewrite H10; reflexivity.
   Qed.
 
-Lemma afold_left_eq :
+Polymorphic Lemma afold_left_eq :
   forall A OP (def : A) V1 V2,
     length V1 = length V2 ->
     (forall i, i < length V1 = true -> V1.[i] = V2.[i]) ->
@@ -648,7 +659,7 @@ Proof.
   f_equal;[ exact IH | apply HeqV; rewrite ltb_spec; lia ].
 Qed.
 
-Lemma afold_left_ind : forall A OP def V (P : int -> A -> Prop),
+Polymorphic Lemma afold_left_ind : forall A OP def V (P : int -> A -> Prop),
   (length V = 0 -> P 0 def) ->
   (0 < length V = true -> P 1 (V.[0])) ->
   (forall a i, 0 < i = true -> i < length V = true -> P i a -> P (i + 1) (OP a (V.[i]))) ->
@@ -669,11 +680,11 @@ Qed.
 
 (** Some properties about afold_right *)
 
-Definition afold_right A default (OP : A -> A -> A) (V : array A) :=
+Polymorphic Definition afold_right A default (OP : A -> A -> A) (V : array A) :=
   if length V == 0 then default
   else foldi (fun i => OP (V.[length V - 1 - i])) 1 (length V) (V.[length V - 1]).
 
-Lemma afold_right_spec : forall A args op (e : A),
+Polymorphic Lemma afold_right_spec : forall A args op (e : A),
   (forall a, op a e = a) ->
   afold_right _ e op args =
   foldi (fun i a => op (args.[length args - 1 - i]) a) 0 (length args) e.
@@ -689,7 +700,7 @@ Lemma afold_right_spec : forall A args op (e : A),
     apply foldi_eq_compat; intros; reflexivity.
   Qed.
 
-Lemma afold_right_eq :
+Polymorphic Lemma afold_right_eq :
   forall A OP (def : A) V1 V2,
     length V1 = length V2 ->
     (forall i, i < length V1 = true -> V1.[i] = V2.[i]) ->
@@ -711,7 +722,7 @@ Proof.
   f_equal;[ apply HeqV; rewrite ltb_spec, sub_spec, to_Z_sub_1_0, Z.mod_small; lia | exact IH ].
 Qed.
 
-Lemma afold_right_ind : forall A OP def V (P : int -> A -> Prop),
+Polymorphic Lemma afold_right_ind : forall A OP def V (P : int -> A -> Prop),
   (length V = 0 -> P 0 def) ->
   (0 < length V = true -> P (length V - 1) (V.[length V - 1])) ->
   (forall a i, 0 < i = true -> i < length V = true -> P i a -> P (i - 1) (OP (V.[i - 1]) a)) ->
@@ -736,7 +747,7 @@ Qed.
 (** Application to our uses of afold_left and afold_right *)
 (* Case andb *)
 
-Lemma afold_left_andb_false : forall i a,
+Polymorphic Lemma afold_left_andb_false : forall i a,
   i < length a = true ->
   a .[ i] = false ->
   afold_left bool true andb a = false.
@@ -754,7 +765,7 @@ Proof.
   rewrite IH; [ apply andb_false_l | lia | exact Hai ].
 Qed.
 
-Lemma afold_left_andb_false_inv : forall a,
+Polymorphic Lemma afold_left_andb_false_inv : forall a,
   afold_left bool true andb a = false ->
   exists i, (i < length a = true) /\ (a .[ i] = false).
 Proof.
@@ -772,7 +783,7 @@ Proof.
   split; [ rewrite ltb_spec, to_Z_add_1_wB; lia | exact Haj ].
 Qed.
 
-Lemma afold_left_andb_true : forall a,
+Polymorphic Lemma afold_left_andb_true : forall a,
   (forall i, i < length a = true -> a.[i] = true) ->
   afold_left bool true andb a = true.
 Proof.
@@ -783,7 +794,7 @@ Proof.
   intros b j _ H1 H2; rewrite H2; simpl; rewrite H; trivial.
 Qed.
 
-Lemma afold_left_andb_true_inv : forall a,
+Polymorphic Lemma afold_left_andb_true_inv : forall a,
   afold_left bool true andb a = true ->
   forall i, i < length a = true -> a.[i] = true.
 Proof.
@@ -801,7 +812,7 @@ Proof.
   apply IH; [ exact Hb | lia ].
 Qed.
 
-Lemma afold_left_and A (p : A -> bool) a :
+Polymorphic Lemma afold_left_and A (p : A -> bool) a :
   afold_left bool true andb (amap p a) =
   List.forallb p (to_list a).
 Proof.
@@ -816,7 +827,7 @@ Qed.
 
 (* Case orb *)
 
-Lemma afold_left_orb_true : forall i a,
+Polymorphic Lemma afold_left_orb_true : forall i a,
   i < length a = true ->
   a .[ i] = true ->
   afold_left bool false orb a = true.
@@ -834,7 +845,7 @@ Proof.
   rewrite IH; [ apply orb_true_l | lia | exact Hai ].
 Qed.
 
-Lemma afold_left_orb_true_inv : forall a,
+Polymorphic Lemma afold_left_orb_true_inv : forall a,
   afold_left bool false orb a = true ->
   exists i, i < length a = true /\ a .[ i] = true.
 Proof.
@@ -852,7 +863,7 @@ Proof.
   split; [ rewrite ltb_spec, to_Z_add_1_wB; lia | reflexivity ].
 Qed.
 
-Lemma afold_left_orb_false : forall a,
+Polymorphic Lemma afold_left_orb_false : forall a,
   (forall i, i < length a = true -> a.[i] = false) ->
   afold_left bool false orb a = false.
 Proof.
@@ -863,7 +874,7 @@ Proof.
   intros b j _ H1 H2; rewrite H2; simpl; rewrite H; trivial.
 Qed.
 
-Lemma afold_left_orb_false_inv : forall a,
+Polymorphic Lemma afold_left_orb_false_inv : forall a,
   afold_left bool false orb a = false ->
   forall i, i < length a = true -> a.[i] = false.
 Proof.
@@ -881,7 +892,7 @@ Proof.
   apply IH; [ exact Hb | lia ].
 Qed.
 
-Lemma afold_left_or A (p : A -> bool) a :
+Polymorphic Lemma afold_left_or A (p : A -> bool) a :
   afold_left bool false orb (amap p a) =
   List.existsb p (to_list a).
 Proof.
@@ -896,7 +907,7 @@ Qed.
 
 (* Case implb *)
 
-Lemma afold_right_implb_false : forall a,
+Polymorphic Lemma afold_right_implb_false : forall a,
   0 < length a = true /\
   (forall i, i < length a - 1 = true -> a .[ i] = true) /\
   a.[length a - 1] = false ->
@@ -913,7 +924,7 @@ Proof.
   rewrite 2!to_Z_sub_1_0; lia.
 Qed.
 
-Lemma afold_right_implb_false_inv : forall a,
+Polymorphic Lemma afold_right_implb_false_inv : forall a,
   afold_right bool true implb a = false ->
   0 < length a = true /\
   (forall i, i < length a - 1 = true -> a .[ i] = true) /\
@@ -949,7 +960,7 @@ Proof.
   unfold implb at 1; case (a.[length a - 1 - i]); [ exact IH | discriminate ].
 Qed.
 
-Lemma afold_right_implb_true_aux : forall a,
+Polymorphic Lemma afold_right_implb_true_aux : forall a,
   (exists i, i < length a - 1 = true /\ a.[i] = false) ->
   afold_right bool true implb a = true.
 Proof.
@@ -970,7 +981,7 @@ Proof.
   rewrite IH by lia; case (a.[j - 1]); reflexivity.
 Qed.
 
-Lemma afold_right_implb_true : forall a,
+Polymorphic Lemma afold_right_implb_true : forall a,
   length a = 0 \/ (exists i, i < length a - 1 = true /\ a.[i] = false) \/
   (forall i, i < length a = true -> a.[i] = true) ->
   afold_right bool true implb a = true.
@@ -993,7 +1004,7 @@ Proof.
   rewrite IH; case (a.[length a - 1 - i]); reflexivity.
 Qed.
 
-Lemma afold_right_implb_true_inv : forall a,
+Polymorphic Lemma afold_right_implb_true_inv : forall a,
   afold_right bool true implb a = true ->
   length a = 0 \/ (exists i, i < length a - 1 = true /\ a.[i] = false) \/
   (forall i, i < length a = true -> a.[i] = true).
@@ -1040,7 +1051,7 @@ Qed.
 
 (* Other cases *)
 
-Lemma afold_left_length_2 : forall A default OP t,
+Polymorphic Lemma afold_left_length_2 : forall A default OP t,
   (length t == 2) = true ->
   afold_left A default OP t = OP (t.[0]) (t.[1]).
 Proof.
@@ -1048,7 +1059,7 @@ Proof.
 Qed.
 
 
-Lemma afold_right_length_2 : forall A default OP t,
+Polymorphic Lemma afold_right_length_2 : forall A default OP t,
   (length t == 2) = true ->
   afold_right A default OP t = OP (t.[0]) (t.[1]).
 Proof.
@@ -1069,77 +1080,56 @@ Ltac tac_right :=
   try (rewrite implb_true_r; trivial).
 
 
-Lemma afold_left_xorb_false1 : forall t,
+Polymorphic Lemma afold_left_xorb_false1 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = false -> t .[ 1] = false ->
   afold_left bool false xorb t = false.
 Proof. tac_left. Qed.
 
 
-Lemma afold_left_xorb_false2 : forall t,
+Polymorphic Lemma afold_left_xorb_false2 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = true -> t .[ 1] = true ->
   afold_left bool false xorb t = false.
 Proof. tac_left. Qed.
 
 
-Lemma afold_left_xorb_true1 : forall t,
+Polymorphic Lemma afold_left_xorb_true1 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = false -> t .[ 1] = true ->
   afold_left bool false xorb t = true.
 Proof. tac_left. Qed.
 
 
-Lemma afold_left_xorb_true2 : forall t,
+Polymorphic Lemma afold_left_xorb_true2 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = true -> t .[ 1] = false ->
   afold_left bool false xorb t = true.
 Proof. tac_left. Qed.
 
 
-(* Lemma afold_right_implb_false : forall t f, *)
-(*   (PArray.length t == 2) = true -> *)
-(*   f (t .[ 0]) = true -> f (t .[ 1]) = false -> *)
-(*   afold_right bool int true implb f t = false. *)
-(* Proof. tac_right. Qed. *)
-
-
-(* Lemma afold_right_implb_true1 : forall t f, *)
-(*   (PArray.length t == 2) = true -> *)
-(*   f (t .[ 0]) = false -> *)
-(*   afold_right bool int true implb f t = true. *)
-(* Proof. tac_right. Qed. *)
-
-
-(* Lemma afold_right_implb_true2 : forall t f, *)
-(*   (PArray.length t == 2) = true -> *)
-(*   f (t.[1]) = true -> *)
-(*   afold_right bool int true implb f t = true. *)
-(* Proof. tac_right. Qed. *)
-
-
-Lemma afold_left_eqb_false1 : forall t,
+Polymorphic Lemma afold_left_eqb_false1 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = false -> t .[ 1] = true ->
   afold_left bool true eqb t = false.
 Proof. tac_left. Qed.
 
 
-Lemma afold_left_eqb_false2 : forall t,
+Polymorphic Lemma afold_left_eqb_false2 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = true -> t .[ 1] = false ->
   afold_left bool true eqb t = false.
 Proof. tac_left. Qed.
 
 
-Lemma afold_left_eqb_true1 : forall t,
+Polymorphic Lemma afold_left_eqb_true1 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = true -> t .[ 1] = true ->
   afold_left bool true eqb t = true.
 Proof. tac_left. Qed.
 
 
-Lemma afold_left_eqb_true2 : forall t,
+Polymorphic Lemma afold_left_eqb_true2 : forall t,
   (PArray.length t == 2) = true ->
   t .[ 0] = false -> t .[ 1] = false ->
   afold_left bool true eqb t = true.
@@ -1333,10 +1323,10 @@ Arguments distinct [A] eq l.
 
 (** Specification of aexistsbi and aforallbi *)
 
-Definition aexistsbi {A:Type} (f:int->A->bool) (t:array A) :=
+Polymorphic Definition aexistsbi {A:Type} (f:int->A->bool) (t:array A) :=
   afold_left _ false orb (amapi f t).
 
-Lemma aexistsbi_false_spec : forall A (f : int -> A -> bool) t,
+Polymorphic Lemma aexistsbi_false_spec : forall A (f : int -> A -> bool) t,
   aexistsbi f t = false <->
   forall i, i < length t = true -> f i (t.[i]) = false.
 Proof.
@@ -1350,7 +1340,7 @@ Proof.
   intro i; rewrite length_amapi; intro Hi; rewrite get_amapi by exact Hi; apply H; exact Hi.
 Qed.
 
-Lemma aexistsbi_spec : forall A (f : int -> A -> bool) t,
+Polymorphic Lemma aexistsbi_spec : forall A (f : int -> A -> bool) t,
   aexistsbi f t = true <-> exists i, i < length t = true /\ f i (t.[i]) = true.
 Proof.
   intros A f t; unfold aexistsbi.
@@ -1363,10 +1353,10 @@ Proof.
   apply (afold_left_orb_true i); [ rewrite length_amapi; exact Hi | rewrite get_amapi by exact Hi; exact Hf ].
 Qed.
 
-Definition aforallbi {A:Type} (f:int->A->bool) (t:array A) :=
+Polymorphic Definition aforallbi {A:Type} (f:int->A->bool) (t:array A) :=
   afold_left _ true andb (amapi f t).
 
-Lemma aforallbi_false_spec : forall A (f : int -> A -> bool) t,
+Polymorphic Lemma aforallbi_false_spec : forall A (f : int -> A -> bool) t,
   aforallbi f t = false <-> exists i, i < length t = true /\ f i (t.[i]) = false.
 Proof.
   intros A f t; unfold aforallbi.
@@ -1379,7 +1369,7 @@ Proof.
   apply (afold_left_andb_false i); [ rewrite length_amapi; exact Hi | rewrite get_amapi by exact Hi; exact Hf ].
 Qed.
 
-Lemma aforallbi_spec : forall A (f : int -> A -> bool) t,
+Polymorphic Lemma aforallbi_spec : forall A (f : int -> A -> bool) t,
   aforallbi f t = true <->
   forall i, i < length t = true -> f i (t.[i]) = true.
 Proof.

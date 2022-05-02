@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import PArray List Bool ZArith Psatz.
+Require Import Int63 PArray List Bool ZArith Psatz.
 Require Import Misc State SMT_terms BVList.
 
 Import Form.
@@ -39,7 +39,7 @@ Proof.
   rewrite ltb_spec; unfold is_true in H; rewrite ltb_spec, (to_Z_sub_1 _ _ Heq) in H; lia.
   rewrite ltb_negb_geb; case_eq (PArray.length args <= 0); try discriminate; intros Heq _; assert (H1: PArray.length args = 0).
   apply to_Z_inj; rewrite leb_spec in Heq; destruct (to_Z_bounded (PArray.length args)) as [H1 _]; change [|0|] with 0%Z in *; lia.
-  rewrite !get_outofbound.
+  rewrite !get_out_of_bounds.
   rewrite default_amapi, H1; auto.
   rewrite H1; case_eq (i < 0); auto; intro H2; eelim ltb_0; eassumption.
   rewrite length_amapi, H1; case_eq (i < 0); auto; intro H2; eelim ltb_0; eassumption.

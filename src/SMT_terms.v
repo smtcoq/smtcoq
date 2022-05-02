@@ -2490,7 +2490,34 @@ Qed.
         intro acc; rewrite andb_true_iff; intros [H1 H2]; destruct (IH _ H1) as [va Hva]; rewrite Hva; simpl; case (Typ.cast (v_type Typ.type interp_t (a .[ i])) A); simpl; try (exists true; auto); intro k; destruct (IHl (k interp_t va :: acc) H2) as [vb Hvb]; exists vb; auto.
         (* Application *)
         intros i l H; apply (check_aux_interp_aux_lt_aux a h IH l H (t_func.[i])).
-Qed.
+      Qed.
+
+
+      (* This is an auxiliary lemma to get around a bug in the universe checker *)
+      Lemma check_aux_interp_hatom_lt_avoid_bug
+            (i : int)
+            (a : array@{t_interp.u0} bval)
+            (H1 : length@{t_interp.u0} a = length@{Set} t_atom ->
+                  forall j : int,
+                    j <? i ->
+                    exists v : interp_t (v_type Typ.type interp_t a.[j]),
+                      a.[j] = Bval (v_type Typ.type interp_t a.[j]) v)
+            (H2 : length@{t_interp.u0} a = length@{Set} t_atom)
+            (j : int)
+            (n : j <> i)
+            (H4 : j <? i)
+        :
+        exists
+          v : interp_t
+                (v_type Typ.type interp_t
+                        a.[i<-interp_aux (get@{t_interp.u0} a) t_atom.[i]].[j]),
+          a.[i<-interp_aux (get@{t_interp.u0} a) t_atom.[i]].[j] =
+            Bval
+              (v_type Typ.type interp_t a.[i<-interp_aux (get@{t_interp.u0} a) t_atom.[i]].[j]) v.
+      Proof.
+        rewrite get_set_other; auto.
+      Qed.
+
 
       Lemma check_aux_interp_hatom_lt : forall h, h < length t_atom ->
         exists v, t_interp.[h] = Bval (get_type h) v.
@@ -2512,7 +2539,7 @@ Qed.
         assert ([|j|] <> [|i|]) by(intros Heq1;elim n;apply to_Z_inj;trivial).
         generalize H3;unfold is_true;rewrite !ltb_spec,
           (to_Z_add_1 _ _ H0);auto with zarith.
-        rewrite get_set_other;auto.
+        now apply check_aux_interp_hatom_lt_avoid_bug.
         apply H;apply length_t_interp.
       Qed.
 

@@ -1919,16 +1919,6 @@ Proof.
  split;auto using eqb_correct, eqb_complete.
 Qed.
 
-Lemma to_list_two: forall {A:Type} (a: PArray.array A), 
-       PArray.length a = 2 -> (to_list a) = a .[0] :: a .[1] :: nil.
-Proof. intros A a H.
-       unfold to_list.
-       rewrite H.
-       rewrite 2!foldi_lt_r by reflexivity.
-       rewrite foldi_ge by reflexivity.
-       reflexivity.
-Qed.
-
 Lemma check_symopp_and: forall ibs1 ibs2 xbs1 ybs2 ibsres zbsres N,
       check_symopp (ibs1 :: xbs1) (ibs2 :: ybs2) (ibsres :: zbsres) (BO_BVand N) = true ->
       check_symopp xbs1 ybs2 zbsres (BO_BVand (N-1)) = true.

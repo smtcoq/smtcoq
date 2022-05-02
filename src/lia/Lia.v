@@ -937,14 +937,14 @@ Transparent build_z_atom.
      apply build_pexpr_correct_aux;trivial.
      rewrite <- ltb_spec;trivial.
      revert H;unfold get_type,get_type'.
-     rewrite PArray.get_outofbound, default_t_interp.
+     rewrite PArray.get_out_of_bounds, default_t_interp.
      revert H0.
      unfold build_pexpr.
      apply foldi_ind.
      apply leb_0.
      discriminate.
      intros i a _ Hi IH.
-     rewrite PArray.get_outofbound by exact H2.
+     rewrite PArray.get_out_of_bounds by exact H2.
      Opaque build_z_atom.
      rewrite def_t_atom; simpl.
      intros HH H.
@@ -1046,7 +1046,7 @@ Transparent build_z_atom.
       unfold wt, is_true in wt_t_atom;rewrite aforallbi_spec in wt_t_atom.
       case_eq (h < length t_atom);intros Heq;unfold get_type;auto with smtcoq_core.
       unfold get_type'.
-      rewrite !PArray.get_outofbound, default_t_interp, def_t_atom;trivial; try reflexivity.
+      rewrite !PArray.get_out_of_bounds, default_t_interp, def_t_atom;trivial; try reflexivity.
       rewrite length_t_interp;trivial.
     Qed.
 
