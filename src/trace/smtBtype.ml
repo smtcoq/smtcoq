@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -156,7 +156,7 @@ let interp_tbl reify =
       | _ -> Some bt
   in
   Hashtbl.filter_map_inplace set reify.tbl;
-  CoqInterface.mkArray (Lazy.force ctyp_compdec, t)
+  CoqTerms.mkArray (Lazy.force ctyp_compdec, t)
 
 
 let to_list reify =

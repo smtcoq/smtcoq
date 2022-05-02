@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -61,7 +61,7 @@ Section trace.
       end) s a) (inl s) t in
     s'.
   Definition _checker_partial_ (s: S.t) (t: _trace_) (max:int) : S.t :=
-    PArray.fold_left (fun s a => PArray.foldi_left (fun i s' a' => if i < max then check_step s' a' else s') s a) s t.
+    PArray.fold_left (fun s a => PArray.foldi_left (fun i s' a' => if i <? max then check_step s' a' else s') s a) s t.
   *)
 
   (* Proof of its partial correction: if it returns true, then the
@@ -137,7 +137,7 @@ Qed.
 
  Lemma valid_spec : forall rho d,
    valid rho d <->
-   (forall i : int, i < length d -> C.interp rho (to_list (d.[i]))).
+   (forall i : int, i <? length d -> C.interp rho (to_list (d.[i]))).
  Proof.
    unfold valid; intros rho d; split; intro H.
    intros i Hi; case_eq (C.interp rho (to_list (d .[ i]))); try reflexivity.
@@ -210,7 +210,7 @@ Module Cnf_Checker.
 
   Local Open Scope list_scope.
 
-  Local Notation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 == i2) (fun _ _ => false)) (only parsing).
+  Local Notation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 =? i2) (fun _ _ => false)) (only parsing).
 
   Definition step_checker t_form s (st:step) :=
     match st with
@@ -290,7 +290,7 @@ Module Cnf_Checker.
  Definition checker_eq t_form l1 l2 l (c:certif) :=
    negb (Lit.is_pos l) &&
    match t_form.[Lit.blit l] with
-   | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
+   | Form.Fiff l1' l2' => (l1 =? l1') && (l2 =? l2')
    | _ => false
    end &&
    checker t_form l c.
@@ -504,7 +504,7 @@ Inductive step :=
   Definition add_roots s d used_roots :=
     match used_roots with
       | Some ur => foldi (fun i s =>
-        let c := if (ur.[i]) < length d then (d.[ur.[i]])::nil else C._true in
+        let c := if (ur.[i]) <? length d then (d.[ur.[i]])::nil else C._true in
           S.set_clause s i c) 0 (length ur) s
       | None => foldi (fun i s => S.set_clause s i (d.[i]::nil)) 0 (length d) s
     end.
@@ -521,7 +521,7 @@ Inductive step :=
         S.valid rho (add_roots s d used_roots).
   Proof.
     intros (* t_i t_func t_atom t_form *) rho H1 H2 H10 s d used_roots H3; unfold valid; intro H4; pose (H5 := (afold_left_andb_true_inv _ H4)); unfold add_roots; assert (Valuation.wf rho) by (destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [_ H]; auto with smtcoq_core); case used_roots.
-    intro ur; apply (foldi_ind _ (fun _ a => S.valid rho a)); [ apply leb_0 | | ]; auto with smtcoq_core; intros i a _ H6 Ha; apply S.valid_set_clause; auto with smtcoq_core; case_eq (ur .[ i] < length d).
+    intro ur; apply (foldi_ind _ (fun _ a => S.valid rho a)); [ apply leb_0 | | ]; auto with smtcoq_core; intros i a _ H6 Ha; apply S.valid_set_clause; auto with smtcoq_core; case_eq (ur .[ i] <? length d).
     intro; unfold C.valid; simpl; specialize (H5 (ur.[i])); rewrite length_amap, get_amap in H5 by assumption; unfold rho; rewrite H5; auto with smtcoq_core.
     intros; apply C.interp_true; auto with smtcoq_core.
     apply (foldi_ind _ (fun _ a => S.valid rho a)); [ apply leb_0 | | ]; auto with smtcoq_core; intros i a _ H6 Ha; apply S.valid_set_clause; auto with smtcoq_core; unfold C.valid; simpl; specialize (H5 i); rewrite length_amap, get_amap in H5 by assumption; unfold rho; rewrite H5; auto with smtcoq_core.
@@ -733,7 +733,7 @@ Inductive step :=
   Definition checker_eq (* t_i t_func t_atom t_form *) l1 l2 l (c:certif) :=
     negb (Lit.is_pos l) &&
     match t_form.[Lit.blit l] with
-      | Form.Fiff l1' l2' => (l1 == l1') && (l2 == l2')
+      | Form.Fiff l1' l2' => (l1 =? l1') && (l2 =? l2')
       | _ => false
     end &&
     let (nclauses,_,_) := c in
@@ -776,6 +776,127 @@ End Euf_Checker.
 
 
 Unset Implicit Arguments.
+
+
+(* Register constants for OCaml access *)
+Register Sat_Checker.valid as SMTCoq.Trace.Sat_Checker.valid.
+Register Sat_Checker.interp_var as SMTCoq.Trace.Sat_Checker.interp_var.
+Register Sat_Checker.Certif as SMTCoq.Trace.Sat_Checker.Certif.
+Register Sat_Checker.step as SMTCoq.Trace.Sat_Checker.step.
+Register Sat_Checker.Res as SMTCoq.Trace.Sat_Checker.Res.
+Register Sat_Checker.dimacs as SMTCoq.Trace.Sat_Checker.dimacs.
+Register Sat_Checker.certif as SMTCoq.Trace.Sat_Checker.certif.
+Register Sat_Checker.theorem_checker as SMTCoq.Trace.Sat_Checker.theorem_checker.
+Register Sat_Checker.checker as SMTCoq.Trace.Sat_Checker.checker.
+
+Register Cnf_Checker.certif as SMTCoq.Trace.Cnf_Checker.certif.
+Register Cnf_Checker.Certif as SMTCoq.Trace.Cnf_Checker.Certif.
+Register Cnf_Checker.checker_b_correct as SMTCoq.Trace.Cnf_Checker.checker_b_correct.
+Register Cnf_Checker.checker_b as SMTCoq.Trace.Cnf_Checker.checker_b.
+Register Cnf_Checker.checker_eq_correct as SMTCoq.Trace.Cnf_Checker.checker_eq_correct.
+Register Cnf_Checker.checker_eq as SMTCoq.Trace.Cnf_Checker.checker_eq.
+Register Cnf_Checker.step as SMTCoq.Trace.Cnf_Checker.step.
+Register Cnf_Checker.Res as SMTCoq.Trace.Cnf_Checker.Res.
+Register Cnf_Checker.ImmFlatten as SMTCoq.Trace.Cnf_Checker.ImmFlatten.
+Register Cnf_Checker.CTrue as SMTCoq.Trace.Cnf_Checker.CTrue.
+Register Cnf_Checker.CFalse as SMTCoq.Trace.Cnf_Checker.CFalse.
+Register Cnf_Checker.BuildDef as SMTCoq.Trace.Cnf_Checker.BuildDef.
+Register Cnf_Checker.BuildDef2 as SMTCoq.Trace.Cnf_Checker.BuildDef2.
+Register Cnf_Checker.BuildProj as SMTCoq.Trace.Cnf_Checker.BuildProj.
+Register Cnf_Checker.ImmBuildDef as SMTCoq.Trace.Cnf_Checker.ImmBuildDef.
+Register Cnf_Checker.ImmBuildDef2 as SMTCoq.Trace.Cnf_Checker.ImmBuildDef2.
+Register Cnf_Checker.ImmBuildProj as SMTCoq.Trace.Cnf_Checker.ImmBuildProj.
+
+Register Euf_Checker.Certif as SMTCoq.Trace.Euf_Checker.Certif.
+Register Euf_Checker.certif as SMTCoq.Trace.Euf_Checker.certif.
+Register Euf_Checker.checker as SMTCoq.Trace.Euf_Checker.checker.
+Register Euf_Checker.checker_correct as SMTCoq.Trace.Euf_Checker.checker_correct.
+Register Euf_Checker.checker_b_correct as SMTCoq.Trace.Euf_Checker.checker_b_correct.
+Register Euf_Checker.checker_b as SMTCoq.Trace.Euf_Checker.checker_b.
+Register Euf_Checker.checker_eq_correct as SMTCoq.Trace.Euf_Checker.checker_eq_correct.
+Register Euf_Checker.checker_eq as SMTCoq.Trace.Euf_Checker.checker_eq.
+Register Euf_Checker.checker_debug as SMTCoq.Trace.Euf_Checker.checker_debug.
+Register Euf_Checker.name_step as SMTCoq.Trace.Euf_Checker.name_step.
+Register Euf_Checker.Name_Res as SMTCoq.Trace.Euf_Checker.Name_Res.
+Register Euf_Checker.Name_Weaken as SMTCoq.Trace.Euf_Checker.Name_Weaken.
+Register Euf_Checker.Name_ImmFlatten as SMTCoq.Trace.Euf_Checker.Name_ImmFlatten.
+Register Euf_Checker.Name_CTrue as SMTCoq.Trace.Euf_Checker.Name_CTrue.
+Register Euf_Checker.Name_CFalse as SMTCoq.Trace.Euf_Checker.Name_CFalse.
+Register Euf_Checker.Name_BuildDef as SMTCoq.Trace.Euf_Checker.Name_BuildDef.
+Register Euf_Checker.Name_BuildDef2 as SMTCoq.Trace.Euf_Checker.Name_BuildDef2.
+Register Euf_Checker.Name_BuildProj as SMTCoq.Trace.Euf_Checker.Name_BuildProj.
+Register Euf_Checker.Name_ImmBuildDef as SMTCoq.Trace.Euf_Checker.Name_ImmBuildDef.
+Register Euf_Checker.Name_ImmBuildDef2 as SMTCoq.Trace.Euf_Checker.Name_ImmBuildDef2.
+Register Euf_Checker.Name_ImmBuildProj as SMTCoq.Trace.Euf_Checker.Name_ImmBuildProj.
+Register Euf_Checker.Name_EqTr as SMTCoq.Trace.Euf_Checker.Name_EqTr.
+Register Euf_Checker.Name_EqCgr as SMTCoq.Trace.Euf_Checker.Name_EqCgr.
+Register Euf_Checker.Name_EqCgrP as SMTCoq.Trace.Euf_Checker.Name_EqCgrP.
+Register Euf_Checker.Name_LiaMicromega as SMTCoq.Trace.Euf_Checker.Name_LiaMicromega.
+Register Euf_Checker.Name_LiaDiseq as SMTCoq.Trace.Euf_Checker.Name_LiaDiseq.
+Register Euf_Checker.Name_SplArith as SMTCoq.Trace.Euf_Checker.Name_SplArith.
+Register Euf_Checker.Name_SplDistinctElim as SMTCoq.Trace.Euf_Checker.Name_SplDistinctElim.
+Register Euf_Checker.Name_BBVar as SMTCoq.Trace.Euf_Checker.Name_BBVar.
+Register Euf_Checker.Name_BBConst as SMTCoq.Trace.Euf_Checker.Name_BBConst.
+Register Euf_Checker.Name_BBOp as SMTCoq.Trace.Euf_Checker.Name_BBOp.
+Register Euf_Checker.Name_BBNot as SMTCoq.Trace.Euf_Checker.Name_BBNot.
+Register Euf_Checker.Name_BBNeg as SMTCoq.Trace.Euf_Checker.Name_BBNeg.
+Register Euf_Checker.Name_BBAdd as SMTCoq.Trace.Euf_Checker.Name_BBAdd.
+Register Euf_Checker.Name_BBConcat as SMTCoq.Trace.Euf_Checker.Name_BBConcat.
+Register Euf_Checker.Name_BBMul as SMTCoq.Trace.Euf_Checker.Name_BBMul.
+Register Euf_Checker.Name_BBUlt as SMTCoq.Trace.Euf_Checker.Name_BBUlt.
+Register Euf_Checker.Name_BBSlt as SMTCoq.Trace.Euf_Checker.Name_BBSlt.
+Register Euf_Checker.Name_BBEq as SMTCoq.Trace.Euf_Checker.Name_BBEq.
+Register Euf_Checker.Name_BBDiseq as SMTCoq.Trace.Euf_Checker.Name_BBDiseq.
+Register Euf_Checker.Name_BBExtract as SMTCoq.Trace.Euf_Checker.Name_BBExtract.
+Register Euf_Checker.Name_BBZextend as SMTCoq.Trace.Euf_Checker.Name_BBZextend.
+Register Euf_Checker.Name_BBSextend as SMTCoq.Trace.Euf_Checker.Name_BBSextend.
+Register Euf_Checker.Name_BBShl as SMTCoq.Trace.Euf_Checker.Name_BBShl.
+Register Euf_Checker.Name_BBShr as SMTCoq.Trace.Euf_Checker.Name_BBShr.
+Register Euf_Checker.Name_RowEq as SMTCoq.Trace.Euf_Checker.Name_RowEq.
+Register Euf_Checker.Name_RowNeq as SMTCoq.Trace.Euf_Checker.Name_RowNeq.
+Register Euf_Checker.Name_Ext as SMTCoq.Trace.Euf_Checker.Name_Ext.
+Register Euf_Checker.Name_Hole as SMTCoq.Trace.Euf_Checker.Name_Hole.
+Register Euf_Checker.step as SMTCoq.Trace.Euf_Checker.step.
+Register Euf_Checker.Res as SMTCoq.Trace.Euf_Checker.Res.
+Register Euf_Checker.Weaken as SMTCoq.Trace.Euf_Checker.Weaken.
+Register Euf_Checker.ImmFlatten as SMTCoq.Trace.Euf_Checker.ImmFlatten.
+Register Euf_Checker.CTrue as SMTCoq.Trace.Euf_Checker.CTrue.
+Register Euf_Checker.CFalse as SMTCoq.Trace.Euf_Checker.CFalse.
+Register Euf_Checker.BuildDef as SMTCoq.Trace.Euf_Checker.BuildDef.
+Register Euf_Checker.BuildDef2 as SMTCoq.Trace.Euf_Checker.BuildDef2.
+Register Euf_Checker.BuildProj as SMTCoq.Trace.Euf_Checker.BuildProj.
+Register Euf_Checker.ImmBuildProj as SMTCoq.Trace.Euf_Checker.ImmBuildProj.
+Register Euf_Checker.ImmBuildDef as SMTCoq.Trace.Euf_Checker.ImmBuildDef.
+Register Euf_Checker.ImmBuildDef2 as SMTCoq.Trace.Euf_Checker.ImmBuildDef2.
+Register Euf_Checker.EqTr as SMTCoq.Trace.Euf_Checker.EqTr.
+Register Euf_Checker.EqCgr as SMTCoq.Trace.Euf_Checker.EqCgr.
+Register Euf_Checker.EqCgrP as SMTCoq.Trace.Euf_Checker.EqCgrP.
+Register Euf_Checker.LiaMicromega as SMTCoq.Trace.Euf_Checker.LiaMicromega.
+Register Euf_Checker.LiaDiseq as SMTCoq.Trace.Euf_Checker.LiaDiseq.
+Register Euf_Checker.SplArith as SMTCoq.Trace.Euf_Checker.SplArith.
+Register Euf_Checker.SplDistinctElim as SMTCoq.Trace.Euf_Checker.SplDistinctElim.
+Register Euf_Checker.BBVar as SMTCoq.Trace.Euf_Checker.BBVar.
+Register Euf_Checker.BBConst as SMTCoq.Trace.Euf_Checker.BBConst.
+Register Euf_Checker.BBOp as SMTCoq.Trace.Euf_Checker.BBOp.
+Register Euf_Checker.BBNot as SMTCoq.Trace.Euf_Checker.BBNot.
+Register Euf_Checker.BBEq as SMTCoq.Trace.Euf_Checker.BBEq.
+Register Euf_Checker.BBDiseq as SMTCoq.Trace.Euf_Checker.BBDiseq.
+Register Euf_Checker.BBNeg as SMTCoq.Trace.Euf_Checker.BBNeg.
+Register Euf_Checker.BBAdd as SMTCoq.Trace.Euf_Checker.BBAdd.
+Register Euf_Checker.BBMul as SMTCoq.Trace.Euf_Checker.BBMul.
+Register Euf_Checker.BBUlt as SMTCoq.Trace.Euf_Checker.BBUlt.
+Register Euf_Checker.BBSlt as SMTCoq.Trace.Euf_Checker.BBSlt.
+Register Euf_Checker.BBConcat as SMTCoq.Trace.Euf_Checker.BBConcat.
+Register Euf_Checker.BBExtract as SMTCoq.Trace.Euf_Checker.BBExtract.
+Register Euf_Checker.BBZextend as SMTCoq.Trace.Euf_Checker.BBZextend.
+Register Euf_Checker.BBSextend as SMTCoq.Trace.Euf_Checker.BBSextend.
+Register Euf_Checker.BBShl as SMTCoq.Trace.Euf_Checker.BBShl.
+Register Euf_Checker.BBShr as SMTCoq.Trace.Euf_Checker.BBShr.
+Register Euf_Checker.RowEq as SMTCoq.Trace.Euf_Checker.RowEq.
+Register Euf_Checker.RowNeq as SMTCoq.Trace.Euf_Checker.RowNeq.
+Register Euf_Checker.Ext as SMTCoq.Trace.Euf_Checker.Ext.
+Register Euf_Checker.Hole as SMTCoq.Trace.Euf_Checker.Hole.
+Register Euf_Checker.ForallInst as SMTCoq.Trace.Euf_Checker.ForallInst.
 
 
 (*

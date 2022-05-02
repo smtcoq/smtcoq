@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -14,7 +14,6 @@
    If you are using native-coq instead of Coq 8.11, replace it with:
      Require Import SMTCoq.
    *)
-
 Require Import SMTCoq.SMTCoq.
 Require Import Bool.
 
@@ -425,3 +424,29 @@ Section CompCert.
   Qed.
 
 End CompCert.
+
+
+(** The verit solver can be called with a timeout (a positive integer,
+    in seconds). If the goal cannot be solved within this given time,
+    then an anomaly is raised.
+    To test, one can uncomment the following examples.
+**)
+
+Section test_timeout.
+
+  Variable P : Z -> bool.
+  Variable H0 : P 0.
+  Variable HInd : forall n, implb (P n) (P (n + 1)).
+
+  Goal P 3.
+  Proof.
+    (* verit_timeout 3. *) verit.
+  Qed.
+
+  Goal true -> P 1000000000.
+  Proof.
+    intro H.
+    (* verit_timeout 5. *)
+  Abort.
+
+End test_timeout.

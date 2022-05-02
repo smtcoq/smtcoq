@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -29,7 +29,7 @@ Ltac get_hyps_acc acc :=
       | id _ => fail
       | _ =>
         let _ := match goal with _ => change P with (id P) in H end in
-        match acc with
+        lazymatch acc with
         | Some ?t => get_hyps_acc (Some (H, t))
         | None => get_hyps_acc (Some H)
         end
@@ -95,6 +95,34 @@ Tactic Notation "verit_bool_no_check"           :=
   fun Hs => verit_bool_no_check_base_auto Hs; vauto.
 
 
+(** Tactics in bool with timeout **)
+
+Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; auto with typeclass_instances.
+Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
+
+Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_base_auto_timeout (Some (h, Hs)) timeout
+  | None => verit_bool_base_auto_timeout (Some h) timeout
+  end;
+  vauto.
+Tactic Notation "verit_bool_timeout"  int_or_var(timeout)         :=
+  let Hs := get_hyps in
+  verit_bool_base_auto_timeout Hs timeout; vauto.
+
+Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_no_check_base_auto_timeout (Some (h, Hs)) timeout
+  | None => verit_bool_no_check_base_auto_timeout (Some h) timeout
+  end;
+  vauto.
+Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
+  let Hs := get_hyps in
+  verit_bool_no_check_base_auto_timeout Hs timeout; vauto.
+
+
 (** Tactics in Prop **)
 
 Ltac zchaff          := prop2bool; zchaff_bool; bool2prop.
@@ -144,6 +172,52 @@ Tactic Notation "verit_no_check"           :=
          | None => verit_bool_no_check_base_auto (@None nat)
          end; vauto
   ].
+
+Tactic Notation "verit_timeout" constr(h) int_or_var(timeout) :=
+  prop2bool;
+  [ .. | prop2bool_hyps h;
+         [ .. | let Hs := get_hyps in
+                match Hs with
+                | Some ?Hs =>
+                    prop2bool_hyps Hs;
+                    [ .. | verit_bool_base_auto_timeout (Some (h, Hs)) timeout ]
+                | None => verit_bool_base_auto_timeout (Some h) timeout
+                end; vauto
+         ]
+  ].
+Tactic Notation "verit_timeout"   int_or_var(timeout)        :=
+  prop2bool;
+  [ .. | let Hs := get_hyps in
+         match Hs with
+         | Some ?Hs =>
+             prop2bool_hyps Hs;
+             [ .. | verit_bool_base_auto_timeout (Some Hs) timeout ]
+         | None => verit_bool_base_auto_timeout (@None nat) timeout
+         end; vauto
+  ].
+Tactic Notation "verit_no_check_timeout" constr(h) int_or_var(timeout) :=
+  prop2bool;
+  [ .. | prop2bool_hyps h;
+         [ .. | let Hs := get_hyps in
+                match Hs with
+                | Some ?Hs =>
+                    prop2bool_hyps Hs;
+                    [ .. | verit_bool_no_check_base_auto_timeout (Some (h, Hs)) timeout ]
+                | None => verit_bool_no_check_base_auto_timeout (Some h) timeout
+                end; vauto
+         ]
+  ].
+Tactic Notation "verit_no_check_timeout"   int_or_var(timeout)        :=
+  prop2bool;
+  [ .. | let Hs := get_hyps in
+         match Hs with
+         | Some ?Hs =>
+             prop2bool_hyps Hs;
+             [ .. | verit_bool_no_check_base_auto_timeout (Some Hs) timeout ]
+         | None => verit_bool_no_check_base_auto_timeout (@None nat) timeout
+         end; vauto
+  ].
+
 
 Ltac cvc4            := prop2bool; [ .. | cvc4_bool; bool2prop ].
 Ltac cvc4_no_check   := prop2bool; [ .. | cvc4_bool_no_check; bool2prop ].

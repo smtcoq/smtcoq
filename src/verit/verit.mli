@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -19,5 +19,5 @@ val parse_certif :
 val checker : string -> string -> unit
 val checker_debug : string -> string -> unit
 val theorem : CoqInterface.id -> string -> string -> unit
-val tactic : EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
-val tactic_no_check : EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val tactic : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val tactic_no_check : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic

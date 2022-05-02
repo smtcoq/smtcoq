@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool Int63 Psatz Ring63 PArray Omega Misc Ring.
+Require Import List Bool Int63 Psatz Ring63 PArray Misc Ring.
 
 (* Require Import AxiomesInt. *)
 
@@ -80,7 +80,7 @@ Module Lit.
   Lemma lit_false : _false = lit Var._false.
   Proof. reflexivity. Qed.
 
-  Definition eqb (l l' : _lit) := l == l'.
+  Definition eqb (l l' : _lit) := l =? l'.
   (* Register eqb as PrimInline. *)
 
   Lemma eqb_spec : forall l l', eqb l l' = true <-> l = l'.
@@ -217,7 +217,7 @@ Module Lit.
     unfold interp, Var.interp;intros rho1 rho2 l Heq;rewrite Heq;trivial.
   Qed.
 
-  Lemma lxor_neg : forall l1 l2, (l1 lxor l2 == 1) = true -> l1 = Lit.neg l2.
+  Lemma lxor_neg : forall l1 l2, (l1 lxor l2 =? 1) = true -> l1 = Lit.neg l2.
   Proof.
     unfold Lit.neg; intros l1 l2;rewrite eqb_spec;intros Heq;rewrite <- Heq.
     rewrite lxorC, <- lxorA, lxor_nilpotent, lxor0_r;trivial.
@@ -228,14 +228,14 @@ End Lit.
 
 Lemma compare_spec' : forall x y,
     match x ?= y with
-    | Lt => x < y
+    | Lt => x <? y
     | Eq => x = y
-    | Gt => y < x
+    | Gt => y <? x
     end.
 Proof.
   intros x y;rewrite compare_def_spec;unfold compare_def.
-  case_eq (x < y);intros;[reflexivity | ].
-  case_eq (x == y);intros.
+  case_eq (x <? y);intros;[reflexivity | ].
+  case_eq (x =? y);intros.
   rewrite <- eqb_spec;trivial.
   rewrite <- not_true_iff_false in H, H0.
   unfold is_true in *;rewrite ltb_spec in H |- *;rewrite eqb_spec in H0.
@@ -264,7 +264,7 @@ Module C.
   Fixpoint has_true (c:t) :=
     match c with
       | nil => false
-      | l :: c => (l == Lit._true) || has_true c
+      | l :: c => (l =? Lit._true) || has_true c
     end.
   
 
@@ -343,9 +343,9 @@ Module C.
       | l2::c2' =>
         match compare l1 l2 with
         | Eq => l1 :: resolve c1 c2'
-        | Lt => if l1 lxor l2 == 1 then or c1 c2' else l1 :: resolve c1 c2
+        | Lt => if l1 lxor l2 =? 1 then or c1 c2' else l1 :: resolve c1 c2
         | Gt =>
-          if l1 lxor l2 == 1 then or c1 c2' else l2 :: resolve_aux c2'
+          if l1 lxor l2 =? 1 then or c1 c2' else l2 :: resolve_aux c2'
         end
       end.
 
@@ -359,13 +359,13 @@ Module C.
       induction c2;simpl;try discriminate.
       generalize (compare_spec' l1 a);destruct (l1 ?= a);intros;subst;simpl.
       simpl in Hc1;destruct (Lit.interp rho l1);simpl in *;auto.
-      generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a == 1);intros.
+      generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a =? 1);intros.
       rewrite or_correct.
       rewrite H1, Lit.interp_neg in Hc1;trivial;destruct (Lit.interp rho a).
       simpl in Hc1;rewrite Hc1;trivial.
       simpl in H0;rewrite H0, orb_true_r;trivial.
       simpl;destruct (Lit.interp rho l1);simpl;auto.
-      generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a == 1);intros.
+      generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a =? 1);intros.
       rewrite or_correct.
       rewrite H1, Lit.interp_neg in Hc1;trivial;destruct (Lit.interp rho a).
       simpl in Hc1;rewrite Hc1;trivial.
@@ -382,9 +382,9 @@ Module C.
     | l1::c1, l2::c2' =>
       match compare l1 l2 with
       | Eq => l1 :: resolve c1 c2'
-      | Lt => if l1 lxor l2 == 1 then or c1 c2' else l1 :: resolve c1 c2
+      | Lt => if l1 lxor l2 =? 1 then or c1 c2' else l1 :: resolve c1 c2
       | Gt =>
-        if l1 lxor l2 == 1 then or c1 c2' else l2 :: resolve_aux resolve l1 c1 c2'
+        if l1 lxor l2 =? 1 then or c1 c2' else l2 :: resolve_aux resolve l1 c1 c2'
       end
     end.
 
@@ -397,13 +397,13 @@ Module C.
     intros Hc1 Hc2.
     generalize (compare_spec' a i);destruct (a ?= i);intros;subst;simpl.
     destruct (Lit.interp rho i);simpl in *;auto.
-    generalize (Lit.lxor_neg a i);destruct (a lxor i == 1);intros.
+    generalize (Lit.lxor_neg a i);destruct (a lxor i =? 1);intros.
     rewrite or_correct.
     rewrite H0, Lit.interp_neg in Hc1;trivial;destruct (Lit.interp rho i).
     simpl in Hc1;rewrite Hc1;trivial.
     simpl in Hc2;rewrite Hc2, orb_true_r;trivial.
     simpl;destruct (Lit.interp rho a);simpl;auto.
-    generalize (Lit.lxor_neg a i);destruct (a lxor i == 1);intros.
+    generalize (Lit.lxor_neg a i);destruct (a lxor i =? 1);intros.
     rewrite or_correct.
     rewrite H0, Lit.interp_neg in Hc1;trivial;destruct (Lit.interp rho i).
     simpl in Hc1;rewrite Hc1;trivial.
@@ -485,7 +485,7 @@ Module S.
   Proof.
     unfold valid, get;simpl;intros.
     destruct (reflect_eqb id id0);subst.
-    case_eq (id0 < length s);intros.
+    case_eq (id0 <? length s);intros.
     rewrite PArray.get_set_same;trivial.
     rewrite PArray.get_out_of_bounds.
     rewrite PArray.default_set.
@@ -505,9 +505,9 @@ Module S.
    | nil => l1:: nil
    | l2 :: c' =>
      match l1 ?= l2 with
-     | Lt => if l1 lxor l2 == 1 then C._true else l1 :: c
+     | Lt => if l1 lxor l2 =? 1 then C._true else l1 :: c
      | Eq => c
-     | Gt => if l1 lxor l2 == 1 then C._true else l2 :: insert l1 c'
+     | Gt => if l1 lxor l2 =? 1 then C._true else l2 :: insert l1 c'
      end
    end.
 
@@ -558,10 +558,10 @@ Module S.
     intros rho Hwf l1;induction c;simpl;trivial.
     generalize (compare_spec' l1 a);destruct (l1 ?= a);intros;subst;simpl.
     destruct (Lit.interp rho a);simpl in *;auto.
-    generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a == 1);intros;trivial.
+    generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a =? 1);intros;trivial.
     rewrite C.interp_true;trivial.
     rewrite H0, Lit.interp_neg;trivial;destruct (Lit.interp rho a);trivial.
-    generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a == 1);intros.
+    generalize (Lit.lxor_neg l1 a);destruct (l1 lxor a =? 1);intros.
     rewrite C.interp_true;trivial.
     rewrite H0, Lit.interp_neg;trivial;destruct (Lit.interp rho a);trivial.
     simpl;rewrite orb_assoc,(orb_comm (Lit.interp rho l1)),<-orb_assoc,IHc;trivial.
@@ -623,7 +623,7 @@ Module S.
   Proof.
     unfold valid, get, set_clause. intros rho s Hrho Hs pos c Hc id.
     destruct (reflect_eqb pos id);subst.
-    case_eq (id < length s); intro H.
+    case_eq (id <? length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
     unfold C.valid;rewrite sort_correct;trivial.
     generalize (Hs id);rewrite !PArray.get_out_of_bounds, PArray.default_set;trivial.
@@ -641,7 +641,7 @@ Module S.
   Proof.
     unfold valid, get, set_clause_keep. intros rho s Hrho Hs pos c Hc id.
     destruct (reflect_eqb pos id);subst.
-    case_eq (id < length s); intro H.
+    case_eq (id <? length s); intro H.
     unfold get;rewrite PArray.get_set_same; trivial.
     unfold C.valid;rewrite sort_keep_correct;trivial.
     generalize (Hs id);rewrite !PArray.get_out_of_bounds, PArray.default_set;trivial.
@@ -655,7 +655,7 @@ Module S.
 
   Definition set_resolve (s:t) pos (r:resolution) : t :=
     let len := PArray.length r in
-    if len == 0 then s
+    if len =? 0 then s
     else
       let c := foldi (fun i c' => (C.resolve (get s (r.[i])) c')) 1 len (get s (r.[0])) in
       (* S.set_clause *) internal_set s pos c.
@@ -674,8 +674,8 @@ Module S.
     rewrite foldi_lt_r.
     apply C.resolve_correct; [ apply Hv | ring_simplify (i + 1 - 1); exact Hc ].
     rewrite ltb_spec, to_Z_add_1_wB, to_Z_1.
-    rewrite leb_spec, to_Z_1 in Hi1; generalize (to_Z_bounded i); omega.
-    rewrite ltb_spec in Hi2; generalize (to_Z_bounded (length r)); omega.
+    rewrite leb_spec, to_Z_1 in Hi1; generalize (to_Z_bounded i); lia.
+    rewrite ltb_spec in Hi2; generalize (to_Z_bounded (length r)); lia.
  Qed.
 
   (* Weakening *)
@@ -683,8 +683,8 @@ Module S.
 
   Definition subclause (cl1 cl2 : list _lit) :=
     List.forallb (fun l1 =>
-                    (l1 == Lit._false) || (l1 == Lit.neg Lit._true) ||
-                    List.existsb (fun l2 => l1 == l2) cl2) cl1.
+                    (l1 =? Lit._false) || (l1 =? Lit.neg Lit._true) ||
+                    List.existsb (fun l2 => l1 =? l2) cl2) cl1.
   
   Definition check_weaken (s:t) (cid:clause_id) (cl:list _lit) : C.t :=
     if subclause (get s cid) cl then cl else C._true.
@@ -737,3 +737,8 @@ Module S.
 
   
 End S.
+
+
+(* Register constants for OCaml access *)
+Register C.t as SMTCoq.State.C.t.
+Register S.t as SMTCoq.State.S.t.

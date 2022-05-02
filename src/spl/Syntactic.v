@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -77,7 +77,7 @@ Section CheckAtom.
           match o1, o2 with
             | NO_distinct t1, NO_distinct t2 => Typ.eqb t1 t2 && list_beq check_hatom l1 l2
           end
-        | Aapp f1 aargs, Aapp f2 bargs =>(f1 == f2) && list_beq check_hatom aargs bargs
+        | Aapp f1 aargs, Aapp f2 bargs =>(f1 =? f2) && list_beq check_hatom aargs bargs
 
         | _, _ => false
       end.
@@ -191,7 +191,7 @@ Section CheckAtom.
 
   Definition check_hatom h1 h2 :=
     foldi
-    (fun _ cont h1 h2 => (h1 == h2) || check_atom_aux cont (t_atom.[h1]) (t_atom.[h2]))
+    (fun _ cont h1 h2 => (h1 =? h2) || check_atom_aux cont (t_atom.[h1]) (t_atom.[h2]))
     0 (PArray.length t_atom) (fun h1 h2 => false) h1 h2.
 
   Definition check_atom := check_atom_aux check_hatom.
@@ -269,7 +269,7 @@ Section CheckAtom.
         | Val _ _, Val _ _ => False
       end.
   Proof.
-    unfold wt; unfold is_true at 1; rewrite aforallbi_spec; intros Hwt Hwf Hdef h1 h2; unfold check_neg_hatom; case_eq (get_atom h1); try discriminate; intros b1 t11 t12 H1; case_eq (get_atom h2); try discriminate; intros b2 t21 t22 H2; assert (H7: h1 < length t_atom) by (apply PArray.get_not_default_lt; rewrite H1, Hdef; discriminate); generalize (Hwt _ H7); rewrite H1; simpl; generalize H1; case b1; try discriminate; clear H1 b1; simpl; intro H1; case (get_type' t_i (t_interp t_i t_func t_atom) h1); try discriminate; simpl; rewrite andb_true_iff; intros [H30 H31]; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t11) Typ.TZ)) in H30; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t12) Typ.TZ)) in H31; rewrite Typ.eqb_spec in H30, H31; generalize (check_aux_interp_hatom _ t_func _ Hwf t11), (check_aux_interp_hatom _ t_func _ Hwf t12); rewrite H30, H31; intros [v1 Hv1] [v2 Hv2]; generalize H2; case b2; try discriminate; clear H2 b2; intro H2; unfold is_true; rewrite andb_true_iff; intros [H3 H4]; generalize (check_hatom_correct Hwf Hdef _ _ H3), (check_hatom_correct Hwf Hdef _ _ H4); unfold interp_hatom; intros H5 H6; rewrite t_interp_wf; auto; rewrite H1; simpl; rewrite Hv1, Hv2; simpl; rewrite t_interp_wf; auto; rewrite H2; simpl; rewrite <- H5; rewrite <- H6, Hv1, Hv2; simpl.
+    unfold wt; unfold is_true at 1; rewrite aforallbi_spec; intros Hwt Hwf Hdef h1 h2; unfold check_neg_hatom; case_eq (get_atom h1); try discriminate; intros b1 t11 t12 H1; case_eq (get_atom h2); try discriminate; intros b2 t21 t22 H2; assert (H7: h1 <? length t_atom) by (apply PArray.get_not_default_lt; rewrite H1, Hdef; discriminate); generalize (Hwt _ H7); rewrite H1; simpl; generalize H1; case b1; try discriminate; clear H1 b1; simpl; intro H1; case (get_type' t_i (t_interp t_i t_func t_atom) h1); try discriminate; simpl; rewrite andb_true_iff; intros [H30 H31]; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t11) Typ.TZ)) in H30; change (is_true (Typ.eqb (get_type' t_i (t_interp t_i t_func t_atom) t12) Typ.TZ)) in H31; rewrite Typ.eqb_spec in H30, H31; generalize (check_aux_interp_hatom _ t_func _ Hwf t11), (check_aux_interp_hatom _ t_func _ Hwf t12); rewrite H30, H31; intros [v1 Hv1] [v2 Hv2]; generalize H2; case b2; try discriminate; clear H2 b2; intro H2; unfold is_true; rewrite andb_true_iff; intros [H3 H4]; generalize (check_hatom_correct Hwf Hdef _ _ H3), (check_hatom_correct Hwf Hdef _ _ H4); unfold interp_hatom; intros H5 H6; rewrite t_interp_wf; auto; rewrite H1; simpl; rewrite Hv1, Hv2; simpl; rewrite t_interp_wf; auto; rewrite H2; simpl; rewrite <- H5; rewrite <- H6, Hv1, Hv2; simpl.
     rewrite Z.ltb_antisym; auto.
     rewrite Z.geb_leb, Z.ltb_antisym; auto.
     rewrite Z.leb_antisym; auto.
@@ -354,8 +354,8 @@ Section FLATTEN.
   Definition check_flatten_body frec (l lf:_lit) :=
     let l := remove_not l in
       let lf := remove_not lf in
-        if l == lf then true
-          else if 1 land (l lxor lf) == 0 then
+        if l =? lf then true
+          else if 1 land (l lxor lf) =? 0 then
             match get_form (Lit.blit l), get_form (Lit.blit lf) with
               | Fatom a1, Fatom a2 => check_atom a1 a2
               | Ftrue, Ftrue => true
@@ -371,7 +371,7 @@ Section FLATTEN.
               | Fxor l1 l2, Fxor lf1 lf2 =>
                 frec l1 lf1 && frec l2 lf2
               | Fimp args1, Fimp args2 =>
-                if PArray.length args1 == PArray.length args2 then
+                if PArray.length args1 =? PArray.length args2 then
                   aforallbi (fun i l => frec l (args2.[i])) args1
                   else false
               | Fiff l1 l2, Fiff lf1 lf2 =>
