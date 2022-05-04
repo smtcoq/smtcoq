@@ -240,30 +240,30 @@ Ltac prop2bool_hyps Hs :=
 
 
 
-Section Test.
-  Variable A : Type.
+(* Section Test. *)
+(*   Variable A : Type. *)
 
-  Hypothesis basic : forall (l1 l2:list A), length (l1++l2) = length l1 + length l2.
-  Hypothesis no_eq : forall (z1 z2:Z), (z1 < z2)%Z.
-  Hypothesis uninterpreted_type : forall (a:A), a = a.
-  Hypothesis bool_eq : forall (b:bool), negb (negb b) = b.
+(*   Hypothesis basic : forall (l1 l2:list A), length (l1++l2) = length l1 + length l2. *)
+(*   Hypothesis no_eq : forall (z1 z2:Z), (z1 < z2)%Z. *)
+(*   Hypothesis uninterpreted_type : forall (a:A), a = a. *)
+(*   Hypothesis bool_eq : forall (b:bool), negb (negb b) = b. *)
 
-  Goal True.
-  Proof.
-    prop2bool_hyp basic.
-    prop2bool_hyp no_eq.
-    prop2bool_hyp uninterpreted_type.
-    admit.
-    prop2bool_hyp bool_eq.
-    prop2bool_hyp plus_n_O.
-  Abort.
+(*   Goal True. *)
+(*   Proof. *)
+(*     prop2bool_hyp basic. *)
+(*     prop2bool_hyp no_eq. *)
+(*     prop2bool_hyp uninterpreted_type. *)
+(*     admit. *)
+(*     prop2bool_hyp bool_eq. *)
+(*     prop2bool_hyp plus_n_O. *)
+(*   Abort. *)
 
-  Goal True.
-  Proof.
-    prop2bool_hyps (basic, plus_n_O, no_eq, uninterpreted_type, bool_eq, plus_O_n).
-    admit.
-  Abort.
-End Test.
+(*   Goal True. *)
+(*   Proof. *)
+(*     prop2bool_hyps (basic, plus_n_O, no_eq, uninterpreted_type, bool_eq, plus_O_n). *)
+(*     admit. *)
+(*   Abort. *)
+(* End Test. *)
 
 Section Group.
 
