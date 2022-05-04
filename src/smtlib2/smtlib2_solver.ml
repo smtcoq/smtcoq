@@ -15,7 +15,6 @@ open Format
 type result = Sat | Unsat
 
 type t = {
-  cmd : string array;
   pid : int;
   stdin : Unix.file_descr;
   stdout : Unix.file_descr;
@@ -54,7 +53,7 @@ let create cmd =
   let lexbuf = Lexing.from_channel stdout_ch in
 
   (* Create the solver instance *)
-  { cmd; pid;
+  { pid;
     stdin = stdin_out; stdout = stdout_in; stderr = stderr_in; lexbuf }
 
 
