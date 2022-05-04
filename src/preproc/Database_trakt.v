@@ -45,10 +45,10 @@ Lemma geZ_Zgeb_embedding: forall n m : Z, (n >= m)%Z <-> (Z.geb n m) = true.
 Proof. intros n m. rewrite Z.geb_le. now apply Z.ge_le_iff. Qed.
 Trakt Add Relation (@Z.ge) (Z.geb) (geZ_Zgeb_embedding).
 
-Goal forall (x y : Z), ((x < y)%Z \/ x = y \/ (x > y)%Z) /\ ((x <= y)%Z \/ (x >= y)%Z).
-Proof.
-  trakt Z bool.
-Abort.
+(* Goal forall (x y : Z), ((x < y)%Z \/ x = y \/ (x > y)%Z) /\ ((x <= y)%Z \/ (x >= y)%Z). *)
+(* Proof. *)
+(*   trakt Z bool. *)
+(* Abort. *)
 
 
 (* Embedding for nat *)
@@ -217,8 +217,46 @@ Trakt Add Embedding
       (N_Z_ConditionProof_bool).
 
 
+(* Boolean relations for bitvectors *)
+
+Require BVList.
+
+Lemma eqBV_BVeqb_embedding: forall s (a b : BVList.BITVECTOR_LIST.bitvector s),
+    a = b <-> (BVList.BITVECTOR_LIST.bv_eq a b) = true.
+Proof. intros s a b. now rewrite BVList.BITVECTOR_LIST.bv_eq_reflect. Qed.
+(* Trakt Add Relation (@eq Z) (Z.eqb) (eqZ_Zeqb_embedding). *)
+
+(* Lemma ltZ_Zltb_embedding: forall n m : Z, (n < m)%Z <-> (Z.ltb n m) = true. *)
+(* Proof. intros n m. now rewrite Z.ltb_lt. Qed. *)
+(* Trakt Add Relation (@Z.lt) (Z.ltb) (ltZ_Zltb_embedding). *)
+
+(* Lemma leZ_Zleb_embedding: forall n m : Z, (n <= m)%Z <-> (Z.leb n m) = true. *)
+(* Proof. intros n m. now rewrite Z.leb_le. Qed. *)
+(* Trakt Add Relation (@Z.le) (Z.leb) (leZ_Zleb_embedding). *)
+
+(* Lemma gtZ_Zgtb_embedding: forall n m : Z, (n > m)%Z <-> (Z.gtb n m) = true. *)
+(* Proof. intros n m. rewrite Z.gtb_lt. now apply Z.gt_lt_iff. Qed. *)
+(* Trakt Add Relation (@Z.gt) (Z.gtb) (gtZ_Zgtb_embedding). *)
+
+(* Lemma geZ_Zgeb_embedding: forall n m : Z, (n >= m)%Z <-> (Z.geb n m) = true. *)
+(* Proof. intros n m. rewrite Z.geb_le. now apply Z.ge_le_iff. Qed. *)
+(* Trakt Add Relation (@Z.ge) (Z.geb) (geZ_Zgeb_embedding). *)
+
+(* (* Goal forall (x y : Z), ((x < y)%Z \/ x = y \/ (x > y)%Z) /\ ((x <= y)%Z \/ (x >= y)%Z). *) *)
+(* (* Proof. *) *)
+(* (*   trakt Z bool. *) *)
+(* (* Abort. *) *)
+
+
 (* This is about Z, but it fails if we put it upper in the file...?? *)
 
 (* Lemma Zneg_Zopp_embedding_equality : forall (x : positive), Zneg x = Z.opp (Zpos x).
 Admitted.
 Trakt Add Symbol (Zneg) (Z.opp) (Zneg_Zopp_embedding_equality). *)
+
+
+(*
+   Local Variables:
+   coq-load-path: ((rec ".." "SMTCoq"))
+   End:
+*)
