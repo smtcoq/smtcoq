@@ -25,7 +25,7 @@ type 'a gen_hashed = { index : int; mutable hval : 'a }
 
 
 (** Functions over constr *)
-let mklApp f args = CoqInterface.mkApp (Lazy.force f, args)
+let mklApp f args = CoqInterface.mkApp (f, args)
 
 let string_of_name_def d n = try CoqInterface.string_of_name n with | _ -> d
 

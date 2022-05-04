@@ -134,7 +134,7 @@ let warning n s = CWarnings.create ~name:n ~category:"SMTCoq plugin" Pp.str s
 
 
 (* VM conversion *)
-(* let vm_conv = Vconv.vm_conv *)
+let vm_conv = Vconv.vm_conv
 let cbv_vm env sigma c t = Vnorm.cbv_vm env sigma c t
 
 

@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-type coqTerm = CoqInterface.constr lazy_t
+type coqTerm = CoqInterface.constr Evd.MonadR.t
 
 (* Int63 *)
 val cint : coqTerm
@@ -233,20 +233,20 @@ val cFArray_compdec : coqTerm
 
 (* SMTCoq Trace *)
 type certif_ops =
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm * coqTerm *
-  coqTerm * coqTerm
+  (CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr * CoqInterface.constr *
+   CoqInterface.constr * CoqInterface.constr) Evd.MonadR.t
 
 val csat_checker_valid : coqTerm
 val csat_checker_interp_var : coqTerm
@@ -319,22 +319,22 @@ val ceuf_checker_certif_ops : CoqInterface.constr array option -> certif_ops
 
 (* Some constructions *)
 val ceq_refl_true : coqTerm
-val eq_refl_true : unit -> CoqInterface.constr
-val vm_cast_true_no_check : CoqInterface.constr -> CoqInterface.constr
-val vm_cast_true : Environ.env -> CoqInterface.constr -> CoqInterface.constr
-val mkNat : int -> CoqInterface.constr
-val mkN : int -> CoqInterface.constr
-val mk_bv_list : bool list -> CoqInterface.constr
-val mkArray : Constr.types * Constr.t array -> Constr.t
+val vm_cast_true_no_check : CoqInterface.constr -> coqTerm
+val vm_cast_true : Environ.env -> CoqInterface.constr -> coqTerm
+val mkNat : int -> coqTerm
+val mkN : int -> coqTerm
+val mk_list : coqTerm -> ('a -> coqTerm) -> 'a list -> coqTerm
+val mk_bv_list : bool list -> coqTerm
+val mkArray : coqTerm * CoqInterface.constr array -> coqTerm
 
 (* Reification *)
-val mk_bool : CoqInterface.constr -> bool
-val mk_bool_list : CoqInterface.constr -> bool list
-val mk_nat : CoqInterface.constr -> int
-val mk_N : CoqInterface.constr -> int
-val mk_Z : CoqInterface.constr -> int
-val mk_bvsize : CoqInterface.constr -> int
+val mk_bool : Evd.evar_map -> CoqInterface.constr -> bool
+val mk_bool_list : Evd.evar_map -> CoqInterface.constr -> bool list
+val mk_nat : Evd.evar_map -> CoqInterface.constr -> int
+val mk_N : Evd.evar_map -> CoqInterface.constr -> int
+val mk_Z : Evd.evar_map -> CoqInterface.constr -> int
+val mk_bvsize : Evd.evar_map -> CoqInterface.constr -> int
 
 (* Switches between constr and OCaml *)
-val option_of_constr_option : CoqInterface.constr -> CoqInterface.constr option
-val list_of_constr_tuple : CoqInterface.constr -> CoqInterface.constr list
+val option_of_constr_option : Evd.evar_map -> CoqInterface.constr -> CoqInterface.constr option
+val list_of_constr_tuple : Evd.evar_map -> CoqInterface.constr -> CoqInterface.constr list

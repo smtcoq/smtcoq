@@ -85,7 +85,7 @@ val warning : string -> string -> unit
 
 
 (* VM conversion *)
-(* val vm_conv : Reduction.conv_pb -> types Reduction.kernel_conversion_function *)
+val vm_conv : Reduction.conv_pb -> Constr.types Reduction.kernel_conversion_function
 val cbv_vm : Environ.env -> Evd.evar_map -> constr -> types -> constr
 
 
