@@ -27,11 +27,11 @@ type uninterpreted_type =
        via a cut
      The constr is of type Type
    *)
-  | Delayed of CoqInterface.constr
+  | Delayed of CoqTerms.coqTerm
 
 type indexed_type = uninterpreted_type gen_hashed
 
-let dummy_indexed_type i = {index = i; hval = Delayed (CoqInterface.mkProp)}
+let dummy_indexed_type i = {index = i; hval = Delayed (Evd.MonadR.return CoqInterface.mkProp)}
 let indexed_type_index i = i.index
 let indexed_type_compdec i =
   match i.hval with
@@ -48,10 +48,12 @@ type btype =
 
 let index_tbl = Hashtbl.create 17
 
-let index_to_coq i =
+let index_to_coq i sigma =
   try Hashtbl.find index_tbl i
   with Not_found ->
-    let interp = mklApp cTindex [|mkN i|] in
+    let sigma, cTindex = cTindex sigma in
+    let sigma, i' = mkN i sigma in
+    let interp = sigma, mklApp cTindex [|i'|] in
     Hashtbl.add index_tbl i interp;
     interp
 
@@ -77,14 +79,21 @@ module HashedBtype : Hashtbl.HashedType with type t = btype = struct
     | Tindex i -> (i.index lsl 3) lxor 6
 end
 
-let rec to_coq = function
-  | TZ -> Lazy.force cTZ
-  | Tbool -> Lazy.force cTbool
-  | Tpositive -> Lazy.force cTpositive
-  | TBV n -> mklApp cTBV [|mkN n|]
-  | Tindex i -> index_to_coq i.index
-  | TFArray (ti, te) ->
-     mklApp cTFArray [|to_coq ti; to_coq te|]
+let rec to_coq ty sigma =
+  match ty with
+    | TZ -> cTZ sigma
+    | Tbool -> cTbool sigma
+    | Tpositive -> cTpositive sigma
+    | TBV n ->
+       let sigma, cTBV = cTBV sigma in
+       let sigma, n' = mkN n sigma in
+       sigma, mklApp cTBV [|n'|]
+    | Tindex i -> index_to_coq i.index sigma
+    | TFArray (ti, te) ->
+       let sigma, cTFArray = cTFArray sigma in
+       let sigma, ti = to_coq ti sigma in
+       let sigma, te = to_coq te sigma in
+       sigma, mklApp cTFArray [|ti; te|]
 
 let rec to_smt fmt = function
   | TZ -> Format.fprintf fmt "Int"
@@ -110,11 +119,13 @@ type reify_tbl =
     unsup_tbl : (btype, btype) Hashtbl.t;
   }
 
-let create () =
+let create sigma =
+  let sigma, cZ = cZ sigma in
+  let sigma, cbool = cbool sigma in
   let htbl = Hashtbl.create 17 in
-  Hashtbl.add htbl (Lazy.force cZ) TZ;
-  Hashtbl.add htbl (Lazy.force cbool) Tbool;
-  (* Hashtbl.add htbl (Lazy.force cpositive) Tpositive; *)
+  Hashtbl.add htbl cZ TZ;
+  Hashtbl.add htbl cbool Tbool;
+  sigma,
   { count = 0;
     tbl = htbl;
     cuts = [];
@@ -136,14 +147,18 @@ let get_coq_type_op = Hashtbl.find op_coq_types
 (* let logic_of_coq reify t = logic (of_coq reify t) *)
 
 
-let interp_tbl reify =
-  let t = Array.make (reify.count + 1) (Lazy.force cunit_typ_compdec) in
+let interp_tbl reify sigma =
+  let sigma, cunit_typ_compdec = cunit_typ_compdec sigma in
+  let sigma, cCompDec = cCompDec sigma in
+  let sigma, cTyp_compdec = cTyp_compdec sigma in
+  let t = Array.make (reify.count + 1) cunit_typ_compdec in
   let set c bt =
     match bt with
       | Tindex it ->
          (match it.hval with
             | CompDec compdec -> t.(it.index) <- compdec; Some bt
             | Delayed ty ->
+               let sigma, ty = ty sigma in
                let n = string_of_int (List.length reify.cuts) in
                let compdec_name = CoqInterface.mkId ("CompDec"^n) in
                let compdec_var = CoqInterface.mkVar compdec_name in
@@ -156,7 +171,7 @@ let interp_tbl reify =
       | _ -> Some bt
   in
   Hashtbl.filter_map_inplace set reify.tbl;
-  CoqTerms.mkArray (Lazy.force ctyp_compdec, t)
+  CoqTerms.mkArray (ctyp_compdec, t)
 
 
 let to_list reify =
