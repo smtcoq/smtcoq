@@ -45,6 +45,7 @@ let mkLetIn (n, c1, t, c2) = EConstr.mkLetIn (mkbinder_annot n, c1, t, c2)
 let mkArrow a b = EConstr.mkArrow a Sorts.Relevant b
 
 let pr_constr env sigma t = Printer.pr_econstr_env env sigma t
+let pr_constr_string env sigma t = Pp.string_of_ppcmds (pr_constr env sigma t)
 
 
 (* let mkUConst : Constr.t -> Evd.side_effects Declare.proof_entry = fun c ->

@@ -40,7 +40,8 @@ val mkProd : name * types * types -> types
 val mkLetIn : name * constr * types * constr -> constr
 val mkArrow : types -> types -> constr
 
-val pr_constr : Environ.env -> Evd.evar_map -> EConstr.t -> Pp.t
+val pr_constr : Environ.env -> Evd.evar_map -> constr -> Pp.t
+val pr_constr_string : Environ.env -> Evd.evar_map -> constr -> string
 
 (* val mkUConst : constr -> Evd.side_effects Declare.proof_entry
  * val mkTConst : constr -> constr -> types -> Evd.side_effects Declare.proof_entry *)

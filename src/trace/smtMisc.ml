@@ -29,12 +29,6 @@ let mklApp f args = CoqInterface.mkApp (Lazy.force f, args)
 
 let string_of_name_def d n = try CoqInterface.string_of_name n with | _ -> d
 
-let string_coq_constr t =
-  let rec fix rf x = rf (fix rf) x in
-  let pr = fix
-      Ppconstr.modular_constr_pr Pp.mt CoqInterface.ppconstr_lsimpleconstr in
-  Pp.string_of_ppcmds (pr (CoqInterface.constrextern_extern_constr t))
-
 
 (** Logics *)
 
@@ -110,10 +104,10 @@ let main_failure lexbuf msg =
 let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
   let rec mkTrace s =
     if s = size then
-      mkApp (Lazy.force cnil, [|step|])
+      mklApp cnil [|step|]
     else (
       r := next !r;
       let st = step_to_coq !r in
-      mkApp (Lazy.force ccons, [|step; st; mkTrace (s+1)|])
+      mklApp ccons [|step; st; mkTrace (s+1)|]
     ) in
-  mkApp (Lazy.force cpair, [|mkApp (Lazy.force clist, [|step|]); step; mkTrace 0; def_step|])
+  mklApp cpair [|mklApp clist [|step|]; step; mkTrace 0; def_step|]
