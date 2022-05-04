@@ -31,3 +31,15 @@ val hex_code : char -> char -> int
 val found_newline : Lexing.lexbuf -> int -> unit
 val lexeme_len : Lexing.lexbuf -> int
 val main_failure : Lexing.lexbuf -> string -> 'a
+
+
+(** Traces *)
+val mkTrace :
+  ('a -> CoqInterface.constr) ->
+  ('a -> 'a) ->
+  'b ->
+  CoqInterface.constr Lazy.t ->
+  CoqInterface.constr Lazy.t ->
+  CoqInterface.constr Lazy.t ->
+  CoqInterface.constr Lazy.t ->
+  int -> CoqInterface.constr -> CoqInterface.constr -> 'a ref -> CoqInterface.constr

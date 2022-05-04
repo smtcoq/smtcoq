@@ -96,21 +96,6 @@ let mkInt : int -> EConstr.constr =
 let max_array_size : int = 4194302
 
 
-(* Traces *)
-(* WARNING: side effect on r! *)
-(* TODO: move to another file *)
-let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
-  let rec mkTrace s =
-    if s = size then
-      mkApp (Lazy.force cnil, [|step|])
-    else (
-      r := next !r;
-      let st = step_to_coq !r in
-      mkApp (Lazy.force ccons, [|step; st; mkTrace (s+1)|])
-    ) in
-  mkApp (Lazy.force cpair, [|mkApp (Lazy.force clist, [|step|]); step; mkTrace 0; def_step|])
-
-
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate

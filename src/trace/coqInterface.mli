@@ -61,18 +61,6 @@ val mkInt : int -> constr
 val max_array_size : int
 
 
-(* Traces *)
-val mkTrace :
-  ('a -> constr) ->
-  ('a -> 'a) ->
-  'b ->
-  constr Lazy.t ->
-  constr Lazy.t ->
-  constr Lazy.t ->
-  constr Lazy.t ->
-  int -> constr -> constr -> 'a ref -> constr
-
-
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate

@@ -103,3 +103,17 @@ let main_failure lexbuf msg =
       msg pos_lnum (pos_cnum - pos_bol)
   in
   failwith msg
+
+
+(** Compute trace *)
+(* WARNING: side effect on r! *)
+let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
+  let rec mkTrace s =
+    if s = size then
+      mkApp (Lazy.force cnil, [|step|])
+    else (
+      r := next !r;
+      let st = step_to_coq !r in
+      mkApp (Lazy.force ccons, [|step; st; mkTrace (s+1)|])
+    ) in
+  mkApp (Lazy.force cpair, [|mkApp (Lazy.force clist, [|step|]); step; mkTrace 0; def_step|])
