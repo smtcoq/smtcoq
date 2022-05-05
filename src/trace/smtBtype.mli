@@ -31,7 +31,7 @@ val indexed_type_of_int : int -> indexed_type
 
 module HashedBtype : Hashtbl.HashedType with type t = btype
 
-val to_coq : btype -> CoqInterface.constr
+val to_coq : btype -> CoqTerms.coqTerm
 
 val to_smt : Format.formatter -> btype -> unit
 
@@ -45,19 +45,19 @@ val of_coq_compdec : reify_tbl -> CoqInterface.constr -> CoqInterface.constr -> 
 
 val get_coq_type_op : int -> CoqInterface.constr
 
-val interp_tbl : reify_tbl -> CoqInterface.constr
+val interp_tbl : reify_tbl -> CoqTerms.coqTerm
 
 val to_list : reify_tbl ->  (int * indexed_type) list
 
-val make_t_i : reify_tbl -> CoqInterface.constr
+val make_t_i : reify_tbl -> CoqTerms.coqTerm
 
-val dec_interp : CoqInterface.constr -> btype -> CoqInterface.constr
-val ord_interp : CoqInterface.constr -> btype -> CoqInterface.constr
-val comp_interp : CoqInterface.constr -> btype -> CoqInterface.constr
-val inh_interp : CoqInterface.constr -> btype -> CoqInterface.constr
-val interp : CoqInterface.constr -> btype -> CoqInterface.constr
+val dec_interp : CoqInterface.constr -> btype -> CoqTerms.coqTerm
+val ord_interp : CoqInterface.constr -> btype -> CoqTerms.coqTerm
+val comp_interp : CoqInterface.constr -> btype -> CoqTerms.coqTerm
+val inh_interp : CoqInterface.constr -> btype -> CoqTerms.coqTerm
+val interp : CoqInterface.constr -> btype -> CoqTerms.coqTerm
 
-val interp_to_coq : reify_tbl -> btype -> CoqInterface.constr
+val interp_to_coq : reify_tbl -> btype -> CoqTerms.coqTerm
 
 val get_cuts : reify_tbl -> (CoqInterface.id * CoqInterface.types) list
 

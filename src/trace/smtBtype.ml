@@ -170,8 +170,9 @@ let interp_tbl reify sigma =
          )
       | _ -> Some bt
   in
+  (* WARNING: sigmas are not chained *)
   Hashtbl.filter_map_inplace set reify.tbl;
-  CoqTerms.mkArray (ctyp_compdec, t)
+  CoqTerms.mkArray (ctyp_compdec, t) sigma
 
 
 let to_list reify =
@@ -183,38 +184,54 @@ let to_list reify =
 let make_t_i rt = interp_tbl rt
 
 
-(* let interp_t t_i t =
- *   mklApp cinterp_t [|t_i ; to_coq t|] *)
+let dec_interp t_i t sigma =
+  let sigma, cdec_interp = cdec_interp sigma in
+  let sigma, t = to_coq t sigma in
+  sigma, mklApp cdec_interp [|t_i ; t|]
 
-let dec_interp t_i t =
-  mklApp cdec_interp [|t_i ; to_coq t|]
+let ord_interp t_i t sigma =
+  let sigma, cord_interp = cord_interp sigma in
+  let sigma, t = to_coq t sigma in
+  sigma, mklApp cord_interp [|t_i ; t|]
 
-let ord_interp t_i t =
-  mklApp cord_interp [|t_i ; to_coq t|]
+let comp_interp t_i t sigma =
+  let sigma, ccomp_interp = ccomp_interp sigma in
+  let sigma, t = to_coq t sigma in
+  sigma, mklApp ccomp_interp [|t_i ; t|]
 
-let comp_interp t_i t =
-  mklApp ccomp_interp [|t_i ; to_coq t|]
+let inh_interp t_i t sigma =
+  let sigma, cinh_interp = cinh_interp sigma in
+  let sigma, t = to_coq t sigma in
+  sigma, mklApp cinh_interp [|t_i ; t|]
 
-let inh_interp t_i t =
-  mklApp cinh_interp [|t_i ; to_coq t|]
+let rec interp t_i t sigma =
+  match t with
+    | TZ -> cZ sigma
+    | Tbool -> cbool sigma
+    | Tpositive -> cpositive sigma
+    | TBV n ->
+       let sigma, cbitvector = cbitvector sigma in
+       let sigma, n = mkN n sigma in
+       sigma, mklApp cbitvector [|n|]
+    | Tindex c ->
+       (match c.hval with
+          | CompDec t ->
+             let sigma, cte_carrier = cte_carrier sigma in
+             sigma, mklApp cte_carrier [|t|]
+          | Delayed _ -> assert false
+       )
+    | TFArray (ti,te) ->
+       let sigma, cfarray = cfarray sigma in
+       let sigma, interpti = interp t_i ti sigma in
+       let sigma, interpte = interp t_i te sigma in
+       let sigma, ordi = ord_interp t_i ti sigma in
+       let sigma, inhi = inh_interp t_i te sigma in
+       sigma, mklApp cfarray [| interpti; interpte; ordi; inhi |]
 
-let rec interp t_i = function
-  | TZ -> Lazy.force cZ
-  | Tbool -> Lazy.force cbool
-  | Tpositive -> Lazy.force cpositive
-  | TBV n -> mklApp cbitvector [|mkN n|]
-  | Tindex c ->
-     (match c.hval with
-        | CompDec t -> mklApp cte_carrier [|t|]
-        | Delayed _ -> assert false
-     )
-  (* | TFArray _ as t -> interp_t t_i t *)
-  | TFArray (ti,te) ->
-     mklApp cfarray [| interp t_i ti; interp t_i te;
-                       ord_interp t_i ti; inh_interp t_i te |]
 
-
-let interp_to_coq reify t = interp (make_t_i reify) t
+let interp_to_coq reify t sigma =
+  let sigma, t_i = make_t_i reify sigma in
+  interp t_i t sigma
 
 let get_cuts reify = reify.cuts
 
@@ -225,11 +242,12 @@ let declare reify t typ_uninterpreted_type =
   reify.count <- reify.count + 1;
   res
 
-let declare_compdec reify t compdec =
+let declare_compdec reify t compdec sigma =
+  let sigma, cTyp_compdec = cTyp_compdec sigma in
   let ce = mklApp cTyp_compdec [|t; compdec|] in
   let ty = declare reify t (CompDec ce) in
   (match ty with Tindex h -> Hashtbl.add op_coq_types h.index t | _ -> assert false);
-  ty
+  sigma, ty
 
 let declare_delayed reify t delayed =
   let ty = declare reify t (Delayed delayed) in
