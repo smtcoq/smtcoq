@@ -1562,3 +1562,22 @@ Section TimeoutProp.
     verit_no_check_timeout 10.
   Qed.
 End TimeoutProp.
+
+
+(* Test CompDec open goals *)
+
+Section OpenCompdec.
+
+  Variable A : Type.
+  Variable l : list A.
+  Variable x : A.
+  Variable H1 : hd_error l = Some x.
+  Variable H2 : hd_error (@nil A) = None.
+  Variable H3 : forall x : A, Some x = None -> False.
+  Variable Hpb : forall x x0 : A, Some x = Some x0 -> x = x0.
+
+  Goal l <> nil.
+  Proof. verit. Abort.
+  (* Should leave open CompDec goals but not fail *)
+
+End OpenCompdec.

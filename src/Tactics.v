@@ -125,108 +125,134 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
 
 (** Tactics in Prop **)
 
-Ltac zchaff          := prop2bool; zchaff_bool; bool2prop.
-Ltac zchaff_no_check := prop2bool; zchaff_bool_no_check; bool2prop.
+Ltac zchaff          := add_compdecs; [ .. | prop2bool; zchaff_bool; bool2prop ].
+Ltac zchaff_no_check := add_compdecs; [ .. | prop2bool; zchaff_bool_no_check; bool2prop].
 
 Tactic Notation "verit" constr(h) :=
-  prop2bool;
-  [ .. | prop2bool_hyps h;
-         [ .. | let Hs := get_hyps in
-                match Hs with
-                | Some ?Hs =>
-                  prop2bool_hyps Hs;
-                  [ .. | verit_bool_base_auto (Some (h, Hs)) ]
-                | None => verit_bool_base_auto (Some h)
-                end; vauto
-         ]
+  intros;
+  let Hs := get_hyps in
+  let Hs :=
+    lazymatch Hs with
+    | Some ?Hs => constr:(Some (h, Hs))
+    | None => constr:(Some h)
+    end
+  in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_base_auto Hs; vauto ]
   ].
 Tactic Notation "verit"           :=
-  prop2bool;
-  [ .. | let Hs := get_hyps in
-         match Hs with
-         | Some ?Hs =>
-           prop2bool_hyps Hs;
-           [ .. | verit_bool_base_auto (Some Hs) ]
-         | None => verit_bool_base_auto (@None nat)
-         end; vauto
+  intros;
+  let Hs := get_hyps in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_base_auto Hs; vauto ]
   ].
 Tactic Notation "verit_no_check" constr(h) :=
-  prop2bool;
-  [ .. | prop2bool_hyps h;
-         [ .. | let Hs := get_hyps in
-                match Hs with
-                | Some ?Hs =>
-                  prop2bool_hyps Hs;
-                  [ .. | verit_bool_no_check_base_auto (Some (h, Hs)) ]
-                | None => verit_bool_no_check_base_auto (Some h)
-                end; vauto
-         ]
+  intros;
+  let Hs := get_hyps in
+  let Hs :=
+    lazymatch Hs with
+    | Some ?Hs => constr:(Some (h, Hs))
+    | None => constr:(Some h)
+    end
+  in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_no_check_base_auto Hs; vauto ]
   ].
 Tactic Notation "verit_no_check"           :=
-  prop2bool;
-  [ .. | let Hs := get_hyps in
-         match Hs with
-         | Some ?Hs =>
-           prop2bool_hyps Hs;
-           [ .. | verit_bool_no_check_base_auto (Some Hs) ]
-         | None => verit_bool_no_check_base_auto (@None nat)
-         end; vauto
+  intros;
+  let Hs := get_hyps in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_no_check_base_auto Hs; vauto ]
   ].
 
 Tactic Notation "verit_timeout" constr(h) int_or_var(timeout) :=
-  prop2bool;
-  [ .. | prop2bool_hyps h;
-         [ .. | let Hs := get_hyps in
-                match Hs with
-                | Some ?Hs =>
-                    prop2bool_hyps Hs;
-                    [ .. | verit_bool_base_auto_timeout (Some (h, Hs)) timeout ]
-                | None => verit_bool_base_auto_timeout (Some h) timeout
-                end; vauto
-         ]
+  intros;
+  let Hs := get_hyps in
+  let Hs :=
+    lazymatch Hs with
+    | Some ?Hs => constr:(Some (h, Hs))
+    | None => constr:(Some h)
+    end
+  in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_base_auto_timeout Hs timeout; vauto ]
   ].
-Tactic Notation "verit_timeout"   int_or_var(timeout)        :=
-  prop2bool;
-  [ .. | let Hs := get_hyps in
-         match Hs with
-         | Some ?Hs =>
-             prop2bool_hyps Hs;
-             [ .. | verit_bool_base_auto_timeout (Some Hs) timeout ]
-         | None => verit_bool_base_auto_timeout (@None nat) timeout
-         end; vauto
+Tactic Notation "verit_timeout"           int_or_var(timeout) :=
+  intros;
+  let Hs := get_hyps in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_base_auto_timeout Hs timeout; vauto ]
   ].
 Tactic Notation "verit_no_check_timeout" constr(h) int_or_var(timeout) :=
-  prop2bool;
-  [ .. | prop2bool_hyps h;
-         [ .. | let Hs := get_hyps in
-                match Hs with
-                | Some ?Hs =>
-                    prop2bool_hyps Hs;
-                    [ .. | verit_bool_no_check_base_auto_timeout (Some (h, Hs)) timeout ]
-                | None => verit_bool_no_check_base_auto_timeout (Some h) timeout
-                end; vauto
-         ]
+  intros;
+  let Hs := get_hyps in
+  let Hs :=
+    lazymatch Hs with
+    | Some ?Hs => constr:(Some (h, Hs))
+    | None => constr:(Some h)
+    end
+  in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_no_check_base_auto_timeout Hs timeout; vauto ]
   ].
-Tactic Notation "verit_no_check_timeout"   int_or_var(timeout)        :=
-  prop2bool;
-  [ .. | let Hs := get_hyps in
-         match Hs with
-         | Some ?Hs =>
-             prop2bool_hyps Hs;
-             [ .. | verit_bool_no_check_base_auto_timeout (Some Hs) timeout ]
-         | None => verit_bool_no_check_base_auto_timeout (@None nat) timeout
-         end; vauto
+Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
+  intros;
+  let Hs := get_hyps in
+  add_compdecs Hs;
+  [ .. | prop2bool;
+         lazymatch Hs with
+         | Some ?Hs => prop2bool_hyps Hs
+         | None => idtac
+         end;
+         [ .. | verit_bool_no_check_base_auto_timeout Hs timeout; vauto ]
   ].
 
+Ltac cvc4            := add_compdecs; [ .. | prop2bool; cvc4_bool; bool2prop ].
+Ltac cvc4_no_check   := add_compdecs; [ .. | prop2bool; cvc4_bool_no_check; bool2prop ].
 
-Ltac cvc4            := prop2bool; [ .. | cvc4_bool; bool2prop ].
-Ltac cvc4_no_check   := prop2bool; [ .. | cvc4_bool_no_check; bool2prop ].
-
-Tactic Notation "smt" constr(h) := (prop2bool; [ .. | try verit h; cvc4_bool; try verit h; bool2prop ]).
-Tactic Notation "smt"           := (prop2bool; [ .. | try verit  ; cvc4_bool; try verit  ; bool2prop ]).
-Tactic Notation "smt_no_check" constr(h) := (prop2bool; [ .. | try verit_no_check h; cvc4_bool_no_check; try verit_no_check h; bool2prop]).
-Tactic Notation "smt_no_check"           := (prop2bool; [ .. | try verit_no_check  ; cvc4_bool_no_check; try verit_no_check  ; bool2prop]).
-
+Tactic Notation "smt" constr(h) :=
+  add_compdecs; [ .. | prop2bool; try verit h; cvc4_bool; try verit h; bool2prop ].
+Tactic Notation "smt"           :=
+  add_compdecs; [ .. | prop2bool; try verit  ; cvc4_bool; try verit  ; bool2prop ].
+Tactic Notation "smt_no_check" constr(h) :=
+  add_compdecs; [ .. | prop2bool; try verit_no_check h; cvc4_bool_no_check; try verit_no_check h; bool2prop].
+Tactic Notation "smt_no_check"           :=
+  add_compdecs; [ .. | prop2bool; try verit_no_check  ; cvc4_bool_no_check; try verit_no_check  ; bool2prop].
 
 
 (* 
