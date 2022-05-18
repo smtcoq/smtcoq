@@ -31,34 +31,72 @@ Ltac is_interpreted_type T :=
 (* Add CompDec for types over which an equality appears in the goal or
    in a local hypothesis *)
 
-Ltac add_compdecs_term u :=
-  match u with
-  | context C [@Logic.eq ?t _ _] =>
-    let u' := context C [True] in
-    lazymatch is_interpreted_type t with
-    | true =>
-      (* For interpreted types, we need a specific Boolean equality *)
-      add_compdecs_term u'
-    | false =>
+Ltac add_compdecs_type u :=
+  lazymatch is_interpreted_type u with
+  (* For interpreted types, we need a specific Boolean equality
+     which will be injected by Prop2bool *)
+  | true => idtac
+  | false =>
       (* For uninterpreted types, we use CompDec *)
       lazymatch goal with
       (* If it is already in the local context, do nothing *)
-      | _ : SMT_classes.CompDec t |- _ => add_compdecs_term u'
-      (* Otherwise, add it in the local context *)
+      | _ : SMT_classes.CompDec u |- _ => idtac
+      (* Otherwise, add CompDec for its subterms, then for it, in the local context *)
       | _ =>
-        let p := fresh "p" in
-        assert (p:SMT_classes.CompDec t);
-        [ try (exact _)       (* Use the typeclass machinery *)
-        | add_compdecs_term u' ]
+          let p := fresh "p" in
+          assert (p:SMT_classes.CompDec u);
+          try (exact _)       (* Use the typeclass machinery *)
       end
-    end
+  end.
+
+Ltac add_compdecs_term u :=
+  lazymatch type of u with
+  (* Adding CompDec makes sense only for terms of type Type *)
+  | Type => add_compdecs_type u
+  | Set => add_compdecs_type u
+  | _ => idtac
+  end.
+
+(* Goal Type -> True. *)
+(* Proof. *)
+(*   intro A. *)
+(*   add_compdecs_term nat. *)
+(*   add_compdecs_term A. *)
+(*   add_compdecs_term Z. *)
+(*   Focus 2. *)
+(*   add_compdecs_term (option A). *)
+(* Abort. *)
+
+Ltac add_compdecs_subterms u :=
+  lazymatch u with
+  | ?f ?t =>
+      idtac "f = "; idtac f; idtac "t = "; idtac t;
+      add_compdecs_subterms t;
+      [ .. | add_compdecs_subterms f ]
+  | ?t => idtac "u = "; idtac u
+  end;
+  [ .. | add_compdecs_term u ].
+
+(* Goal Type -> Type -> True. *)
+(* Proof. *)
+(*   intros A B. *)
+(*   add_compdecs_subterms (option (A -> B)). *)
+(*   Show 2. *)
+(* Abort. *)
+
+Ltac add_compdecs_equalities u :=
+  match u with
+  | context C [@Logic.eq ?t _ _] =>
+    let u' := context C [True] in
+    add_compdecs_subterms t;
+    [ .. | add_compdecs_equalities u' ]
   | _ => idtac
   end.
 
 Ltac add_compdecs_names Hs :=
   match Hs with
   | (?Hs1, ?Hs2) => add_compdecs_names Hs1; [ .. |  add_compdecs_names Hs2 ]
-  | ?H => let t := type of H in add_compdecs_term t
+  | ?H => let t := type of H in add_compdecs_equalities t
   end.
 
 (* Goal forall (A B C:Type) (HA:SMT_classes.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
@@ -71,13 +109,14 @@ Ltac add_compdecs_names Hs :=
 (*   Show 3. *)
 (* Abort. *)
 
-(* (* It is sensitive to the order of the equalities... *) *)
+(* (* Thanks to adding CompDec for subterms first, it is not sensitive to *)
+(*    the order of the equalities *) *)
 (* Goal forall (A:Type) (a:A) (l:list A), a = a -> l = l -> True. *)
 (* Proof. *)
 (*   intros A a l H1 H2. *)
 (*   add_compdecs_names (H1, H2). *)
-
 (* Abort. *)
+
 (* Goal forall (A:Type) (a:A) (l:list A), l = l -> a = a -> True. *)
 (* Proof. *)
 (*   intros A a l H1 H2. *)
@@ -91,7 +130,7 @@ Ltac add_compdecs_names_and_goal Hs :=
   | None => idtac
   end;
   [ .. | match goal with
-         | |- ?g => add_compdecs_term g
+         | |- ?g => add_compdecs_equalities g
          end ].
 
 (* Goal forall (A B C:Type) (HA:SMT_classes.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
