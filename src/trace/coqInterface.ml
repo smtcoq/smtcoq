@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -92,41 +92,13 @@ type econstr = EConstr.t
 let econstr_of_constr = EConstr.of_constr
 
 
-(* Modules *)
-let gen_constant_in_modules s m n =
-  (* UnivGen.constr_of_monomorphic_global will crash on universe polymorphic constants *)
-  UnivGen.constr_of_monomorphic_global @@ Coqlib.gen_reference_in_modules s m n
-let gen_constant modules constant = lazy (gen_constant_in_modules "SMT" modules constant)
-let init_modules = Coqlib.init_modules
-
-
 (* Int63 *)
-let int63_module = [["Coq";"Numbers";"Cyclic";"Int63";"Int63"]]
-
 let mkInt : int -> Constr.constr =
   fun i -> Constr.mkInt (Uint63.of_int i)
 
-let cint = gen_constant int63_module "int"
-
 
 (* PArray *)
-let parray_modules = [["SMTCoq";"PArray";"PArray"]]
-
-let cmake = gen_constant parray_modules "make"
-let cset = gen_constant parray_modules "set"
-
 let max_array_size : int = 4194302
-let mkArray : Constr.types * Constr.t array -> Constr.t =
-  fun (ty, a) ->
-  let l = (Array.length a) - 1 in
-  snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' =
-                          if i = l then
-                            acc
-                          else
-                            mkApp (Lazy.force cset, [|ty; acc; mkInt i; c|]) in
-                        (i+1,acc')
-                       ) (0, mkApp (Lazy.force cmake, [|ty; mkInt l; a.(l)|])) a)
 
 
 (* Traces *)
@@ -146,10 +118,6 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-
-let micromega_coq_proofTerm =
-  (* Cannot contain evars *)
-  lazy (gen_constant_in_modules "ZMicromega" [["Coq"; "micromega";"ZMicromega"]] "ZArithProof")
 
 let micromega_dump_proof_term p =
   (* Cannot contain evars *)
@@ -182,6 +150,7 @@ let set_evars_tac noc =
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
 let error s = CErrors.user_err (Pp.str s)
+let anomaly s = CErrors.anomaly (Pp.str s)
 let warning n s = CWarnings.create ~name:n ~category:"SMTCoq plugin" Pp.str s
 
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,

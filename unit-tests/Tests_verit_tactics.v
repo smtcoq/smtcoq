@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -1498,3 +1498,86 @@ Section OCamlCompDec.
       x ++ y = a0::nil -> x = nil /\ y = a0::nil \/ x = a0::nil /\ y = nil.
   Proof. verit_no_check. Qed.
 End OCamlCompDec.
+
+
+Section TimeoutBool.
+  Variable P : Z -> bool.
+  Variable H0 : P 0.
+  Variable HInd : forall n, implb (P n) (P (n + 1)).
+
+  Goal P 3.
+  Proof.
+    verit_bool_base_auto_timeout (Some (H0, HInd)) 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_bool_no_check_base_auto_timeout (Some (H0, HInd)) 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_bool_timeout (H0, HInd) 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_bool_timeout 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_bool_no_check_timeout (H0, HInd) 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_bool_no_check_timeout 10.
+  Qed.
+End TimeoutBool.
+
+
+Section TimeoutProp.
+  Variable P : Z -> bool.
+  Variable H0 : P 0.
+  Variable HInd : forall n, (P n) -> (P (n + 1)).
+
+  Goal P 3.
+  Proof.
+    verit_timeout (H0, HInd) 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_timeout 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_no_check_timeout (H0, HInd) 10.
+  Qed.
+
+  Goal P 3.
+  Proof.
+    verit_no_check_timeout 10.
+  Qed.
+End TimeoutProp.
+
+
+(* Test CompDec open goals *)
+
+Section OpenCompdec.
+
+  Variable A : Type.
+  Variable l : list A.
+  Variable x : A.
+  Variable H1 : hd_error l = Some x.
+  Variable H2 : hd_error (@nil A) = None.
+  Variable H3 : forall x : A, Some x = None -> False.
+  Variable Hpb : forall x x0 : A, Some x = Some x0 -> x = x0.
+
+  Goal l <> nil.
+  Proof. verit. Abort.
+  (* Should leave open CompDec goals but not fail *)
+
+End OpenCompdec.

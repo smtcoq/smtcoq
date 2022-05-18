@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -385,7 +385,7 @@ module Op =
         let index, hval = destruct "destruct on a Rel: called by set in interp_tbl" op in
         t.(index) <- mk_Tval hval.tparams hval.tres hval.op_val in
       Hashtbl.iter set reify.tbl;
-      CoqInterface.mkArray (tval, t)
+      CoqTerms.mkArray (tval, t)
 
     let to_list reify =
       let set _ op acc =
@@ -707,12 +707,12 @@ module Atom =
       | [] -> ()
 
 
-    let to_smt_named ?pi:(pi=false) (fmt:Format.formatter) h =
+    let to_smt_named ?(debug=false) ?pi:(pi=false) (fmt:Format.formatter) h =
       let rec to_smt fmt h =
         if pi then Format.fprintf fmt "%d:" (index h);
-        to_smt_atom (atom h)
+        to_smt_atom ~debug:debug (atom h)
 
-      and to_smt_atom = function
+      and to_smt_atom ?(debug=false) = function
         | Acop (CO_BV bv) -> if List.length bv = 0 then CoqInterface.error "Empty bit-vectors are not valid in SMT" else Format.fprintf fmt "#b%a" bv_to_smt bv
         | Acop _ as a -> to_smt_int fmt (compute_int a)
         | Auop (op,h) -> to_smt_uop op h
@@ -722,7 +722,9 @@ module Atom =
         | Aapp ((i,op),a) ->
            let op_smt () =
              (match i with
-                | Index index -> Format.fprintf fmt "op_%i" index
+                | Index index ->
+                   (Format.fprintf fmt "op_%i" index;
+                    if debug then Format.fprintf fmt " (aka %s)" (Pp.string_of_ppcmds (CoqInterface.pr_constr op.op_val));)
                 | Rel_name name -> Format.fprintf fmt "%s" name);
              if pi then to_smt_op op
            in
@@ -805,7 +807,7 @@ module Atom =
       in
       to_smt fmt h
 
-    let to_smt (fmt:Format.formatter) h = to_smt_named fmt h
+    let to_smt ?(debug=false) (fmt:Format.formatter) h = to_smt_named ~debug:debug fmt h
 
 
     type reify_tbl =
@@ -855,7 +857,7 @@ module Atom =
         else (
           Format.eprintf "Incorrect type: wanted %a, got %a@."
             SmtBtype.to_smt t SmtBtype.to_smt th;
-          failwith (Format.asprintf "Atom %a is not of the expected type" to_smt h)
+          failwith (Format.asprintf "Atom %a is not of the expected type" (to_smt ~debug:true) h)
         )
       in
 
@@ -1435,7 +1437,7 @@ module Atom =
 
     let interp_tbl reify =
       let t = to_array reify (Lazy.force dft_atom) a_to_coq in
-      CoqInterface.mkArray (Lazy.force catom, t)
+      CoqTerms.mkArray (Lazy.force catom, t)
 
 
     (** Producing a Coq term corresponding to the interpretation of an atom *)

@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -25,7 +25,7 @@ module type ATOM =
 
     val is_bool_type : t -> bool
     val is_bv_type : t -> bool
-    val to_smt : Format.formatter -> t -> unit
+    val to_smt : ?debug:bool -> Format.formatter -> t -> unit
     val logic : t -> logic
 
   end
@@ -173,12 +173,12 @@ module Make (Atom:ATOM) =
          to_smt_pform fmt hp.hval;
          Format.fprintf fmt ")"
 
-    and to_smt_pform fmt = function
-      | Fatom a -> Atom.to_smt fmt a
+    and to_smt_pform ?(debug=false) fmt = function
+      | Fatom a -> Atom.to_smt ~debug:debug fmt a
       | Fapp (op,args) -> to_smt_op fmt op args
       (* This is an intermediate object of proofs, it correspond to nothing in SMT *)
       | FbbT (a, l) ->
-        Format.fprintf fmt "(bbT %a [" Atom.to_smt a;
+        Format.fprintf fmt "(bbT %a [" (Atom.to_smt ~debug:debug) a;
         let fi = ref true in
         List.iter (fun f -> Format.fprintf fmt "%s%a"
                       (if !fi then "" else "; ")
@@ -296,34 +296,34 @@ module Make (Atom:ATOM) =
     let check pf =
       match pf with
       | Fatom ha ->  if not (Atom.is_bool_type ha) then
-          raise (Format.eprintf "nwt: %a" to_smt_pform pf;
+          raise (Format.eprintf "nwt: %a" (to_smt_pform ~debug:true) pf;
                  NotWellTyped pf)
       | Fapp (op, args) ->
 	(match op with
 	 | Ftrue | Ffalse ->
            if Array.length args <> 0 then
-             raise (Format.eprintf "nwt: %a" to_smt_pform pf;
+             raise (Format.eprintf "nwt: %a" (to_smt_pform ~debug:true) pf;
                     NotWellTyped pf)
 	 | Fnot2 _ ->
            if Array.length args <> 1 then
-             raise (Format.eprintf "nwt: %a" to_smt_pform pf;
+             raise (Format.eprintf "nwt: %a" (to_smt_pform ~debug:true) pf;
                     NotWellTyped pf)
 	 | Fand | For -> ()
 	 | Fxor | Fimp | Fiff ->
            if Array.length args <> 2 then
-             raise (Format.eprintf "nwt: %a" to_smt_pform pf;
+             raise (Format.eprintf "nwt: %a" (to_smt_pform ~debug:true) pf;
                     NotWellTyped pf)
 
           | Fite ->
             if Array.length args <> 3 then
-              raise (Format.eprintf "nwt: %a" to_smt_pform pf;
+              raise (Format.eprintf "nwt: %a" (to_smt_pform ~debug:true) pf;
                      NotWellTyped pf)
 
          | Fforall l -> ()
        )
 
       | FbbT (ha, l) -> if not (Atom.is_bv_type ha) then
-          raise (Format.eprintf "nwt: %a" to_smt_pform pf;
+          raise (Format.eprintf "nwt: %a" (to_smt_pform ~debug:true) pf;
                  NotWellTyped pf)
 
     let declare reify pf =
@@ -546,7 +546,7 @@ module Make (Atom:ATOM) =
     let args_to_coq args =
       let cargs = Array.make (Array.length args + 1) (mkInt 0) in
       Array.iteri (fun i hf -> cargs.(i) <- to_coq hf) args;
-      CoqInterface.mkArray (Lazy.force cint, cargs)
+      CoqTerms.mkArray (Lazy.force cint, cargs)
 
     let pf_to_coq = function
       | Fatom a -> mklApp cFatom [|mkInt (Atom.index a)|]
@@ -586,7 +586,7 @@ module Make (Atom:ATOM) =
 
     let interp_tbl reify =
       let (i,t) = to_array reify (Lazy.force cFtrue) pf_to_coq in
-      (mkInt i, CoqInterface.mkArray (Lazy.force cform, t))
+      (mkInt i, CoqTerms.mkArray (Lazy.force cform, t))
 
     let nvars reify = reify.count
     (* Producing a Coq term corresponding to the interpretation of a formula *)

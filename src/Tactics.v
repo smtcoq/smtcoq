@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -18,8 +18,6 @@ Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances 
 Declare ML Module "smtcoq_plugin".
 
 
-(** Tactics in bool *)
-
 (* Collect all the hypotheses from the context *)
 
 Ltac get_hyps_acc acc :=
@@ -32,7 +30,7 @@ Ltac get_hyps_acc acc :=
       | id _ => fail
       | _ =>
         let _ := match goal with _ => change P with (id P) in H end in
-        match acc with
+        lazymatch acc with
         | Some ?t => get_hyps_acc (Some (H, t))
         | None => get_hyps_acc (Some H)
         end
@@ -57,7 +55,7 @@ Ltac get_hyps :=
   Hs.
 
 
-(* Tactics *)
+(** Tactics in bool *)
 
 Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exact _).
 Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
@@ -85,8 +83,35 @@ Tactic Notation "verit_bool_no_check"           :=
   fun Hs => verit_bool_no_check_base_auto Hs; vauto.
 
 
-(** Tactics in Prop **)
+(** Tactics in bool with timeout **)
 
+Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; auto with typeclass_instances.
+Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
+
+Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_base_auto_timeout (Some (h, Hs)) timeout
+  | None => verit_bool_base_auto_timeout (Some h) timeout
+  end;
+  vauto.
+Tactic Notation "verit_bool_timeout"  int_or_var(timeout)         :=
+  let Hs := get_hyps in
+  verit_bool_base_auto_timeout Hs timeout; vauto.
+
+Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
+  let Hs := get_hyps in
+  match Hs with
+  | Some ?Hs => verit_bool_no_check_base_auto_timeout (Some (h, Hs)) timeout
+  | None => verit_bool_no_check_base_auto_timeout (Some h) timeout
+  end;
+  vauto.
+Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
+  let Hs := get_hyps in
+  verit_bool_no_check_base_auto_timeout Hs timeout; vauto.
+
+
+(** Tactics in Prop **)
 
 Ltac zchaff          := trakt Z bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
@@ -165,6 +190,80 @@ Tactic Notation "verit_no_check"           :=
     QInst.vauto
   ].
 
+Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
+  intros;
+  unfold is_true in *;
+  let Hsglob := pose_hyps global (@None unit) in
+  let local := get_hyps_option in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    verit_bool_base_auto_timeout Hs' timeout;
+    QInst.vauto
+  ].
+
+Tactic Notation "verit_timeout"           int_or_var(timeout) :=
+  intros;
+  unfold is_true in *;
+  let local := get_hyps_option in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' (@None unit)
+      | None => constr:(@None unit)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    verit_bool_base_auto_timeout Hs' timeout;
+    QInst.vauto
+  ].
+
+Tactic Notation "verit_no_check_timeout" constr(global) int_or_var(timeout) :=
+  intros;
+  unfold is_true in *;
+  let Hsglob := pose_hyps global (@None unit) in
+  let local := get_hyps_option in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    verit_bool_no_check_base_auto_timeout Hs' timeout;
+    QInst.vauto
+  ].
+
+Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
+  intros;
+  unfold is_true in *;
+  let local := get_hyps_option in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' (@None unit)
+      | None => constr:(@None unit)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    verit_bool_no_check_base_auto_timeout Hs' timeout;
+    QInst.vauto
+  ].
+
 Ltac cvc4            := trakt Z bool; [ .. | cvc4_bool ].
 Ltac cvc4_no_check   := trakt Z bool; [ .. | cvc4_bool_no_check ].
 
@@ -174,8 +273,6 @@ Tactic Notation "smt_no_check" constr(h) :=
   intros; try verit_no_check h; cvc4_no_check; try verit_no_check h.
 Tactic Notation "smt_no_check"           :=
   intros; try verit_no_check  ; cvc4_no_check; try verit_no_check.
-
-
 
 
 (* 

@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -1859,6 +1859,14 @@ Declare Scope farray_scope.
 Notation "a '[' i ']'" := (select a i) (at level 1, format "a [ i ]") : farray_scope.
 Notation "a '[' i '<-' v ']'" := (store a i v)
    (at level 1, format "a [ i  <-  v ]") : farray_scope.
+
+
+(* Register constants for OCaml access *)
+Register FArray.farray as SMTCoq.array.FArray.farray.
+Register select as SMTCoq.array.FArray.select.
+Register store as SMTCoq.array.FArray.store.
+Register diff as SMTCoq.array.FArray.diff.
+Register FArray.equal as SMTCoq.array.FArray.equal.
 
 
 

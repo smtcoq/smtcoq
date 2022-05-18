@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -108,17 +108,17 @@ Module Form.
       Definition lt_form i h :=
         match h with
         | Fatom _ | Ftrue | Ffalse => true
-        | Fnot2 _ l => Lit.blit l < i
+        | Fnot2 _ l => Lit.blit l <? i
         | Fand args | For args | Fimp args =>
-          aforallbi (fun _ l => Lit.blit l < i) args
-        | Fxor a b | Fiff a b => (Lit.blit a < i) && (Lit.blit b < i)
-        | Fite a b c => (Lit.blit a < i) && (Lit.blit b < i) && (Lit.blit c < i)
-        | FbbT _ ls => List.forallb (fun l => Lit.blit l < i) ls
+          aforallbi (fun _ l => Lit.blit l <? i) args
+        | Fxor a b | Fiff a b => (Lit.blit a <? i) && (Lit.blit b <? i)
+        | Fite a b c => (Lit.blit a <? i) && (Lit.blit b <? i) && (Lit.blit c <? i)
+        | FbbT _ ls => List.forallb (fun l => Lit.blit l <? i) ls
         end.
 
       Lemma lt_form_interp_form_aux :
         forall f1 f2 i h,
-          (forall j, j < i -> f1 j = f2 j) ->
+          (forall j, j <? i -> f1 j = f2 j) ->
           lt_form i h ->
           interp_aux f1 h = interp_aux f2 h.
       Proof.
@@ -161,11 +161,11 @@ Module Form.
         intros;rewrite default_set;trivial.
       Qed.
 
-      Lemma t_interp_wf : forall i, i < PArray.length t_form ->
+      Lemma t_interp_wf : forall i, i <? PArray.length t_form ->
         t_interp.[i] = interp_aux (PArray.get t_interp) (t_form.[i]).
       Proof.
         set (P' i t := length t = length t_form ->
-          forall j, j < i ->
+          forall j, j <? i ->
             t.[j] = interp_aux (PArray.get t) (t_form.[j])).
         assert (P' (length t_form) t_interp).
         unfold is_true, wf in wf_t_i;rewrite aforallbi_spec in wf_t_i.
@@ -179,7 +179,7 @@ Module Form.
         intros;rewrite get_set_other;trivial.
         intros Heq;elim (not_ltb_refl i);rewrite Heq at 1;trivial.
         rewrite H2;trivial.
-        assert (j < i).
+        assert (j <? i).
         assert ([|j|] <> [|i|]) by (intros Heq1;elim n;apply to_Z_inj;trivial).
         generalize H3;unfold is_true;rewrite !ltb_spec, (to_Z_add_1 _ _ H0);
           auto with zarith.
@@ -203,7 +203,7 @@ Module Form.
 
     Lemma wf_interp_form_lt :
       forall t_form, wf t_form ->
-        forall x, x < PArray.length t_form ->
+        forall x, x <? PArray.length t_form ->
           interp_state_var t_form x = interp t_form (t_form.[x]).
     Proof.
       unfold interp_state_var;intros.
@@ -214,7 +214,7 @@ Module Form.
       forall t_form, PArray.default t_form = Ftrue -> wf t_form ->
         forall x, interp_state_var t_form x = interp t_form (t_form.[x]).
     Proof.
-      intros t Hd Hwf x;case_eq (x < PArray.length t);intros.
+      intros t Hd Hwf x;case_eq (x <? PArray.length t);intros.
       apply wf_interp_form_lt;trivial.
       unfold interp_state_var;rewrite !PArray.get_outofbound;trivial.
       rewrite default_t_interp, Hd;trivial.
@@ -834,12 +834,12 @@ Module Atom.
   Definition eqb (t t':atom) :=
     match t,t' with
     | Acop o, Acop o' => cop_eqb o o'
-    | Auop o t, Auop o' t' => uop_eqb o o' && (t == t')
-    | Abop o t1 t2, Abop o' t1' t2' => bop_eqb o o' && (t1 == t1') && (t2 == t2')
+    | Auop o t, Auop o' t' => uop_eqb o o' && (t =? t')
+    | Abop o t1 t2, Abop o' t1' t2' => bop_eqb o o' && (t1 =? t1') && (t2 =? t2')
     | Anop o t, Anop o' t' => nop_eqb o o' && list_beq Int63.eqb t t'
     | Atop o t1 t2 t3, Atop o' t1' t2' t3' =>
-      top_eqb o o' && (t1 == t1') && (t2 == t2') && (t3 == t3')
-    | Aapp a la, Aapp b lb => (a == b) && list_beq Int63.eqb la lb
+      top_eqb o o' && (t1 =? t1') && (t2 =? t2') && (t3 =? t3')
+    | Aapp a la, Aapp b lb => (a =? b) && list_beq Int63.eqb la lb
     | _, _ => false
     end.
 
@@ -2226,15 +2226,15 @@ Qed.
       Definition lt_atom i a :=
         match a with
         | Acop _ => true
-        | Auop _ h => h < i
-        | Abop _ h1 h2 => (h1 < i) && (h2 < i)
-        | Atop _ h1 h2 h3 => (h1 < i) && (h2 < i) && (h3 < i)
-        | Anop _ ha => List.forallb (fun h => h < i) ha
-        | Aapp f args => List.forallb (fun h => h < i) args
+        | Auop _ h => h <? i
+        | Abop _ h1 h2 => (h1 <? i) && (h2 <? i)
+        | Atop _ h1 h2 h3 => (h1 <? i) && (h2 <? i) && (h3 <? i)
+        | Anop _ ha => List.forallb (fun h => h <? i) ha
+        | Aapp f args => List.forallb (fun h => h <? i) args
         end.
 
       Lemma lt_interp_aux :
-         forall f1 f2 i, (forall j, j < i -> f1 j = f2 j) ->
+         forall f1 f2 i, (forall j, j <? i -> f1 j = f2 j) ->
          forall a, lt_atom i a ->
              interp_aux f1 a = interp_aux f2 a.
       Proof.
@@ -2277,12 +2277,12 @@ Qed.
         intros;rewrite default_set;trivial.
       Qed.
 
-      Lemma t_interp_wf_lt : forall i, i < PArray.length t_atom ->
+      Lemma t_interp_wf_lt : forall i, i <? PArray.length t_atom ->
          t_interp.[i] = interp_aux (PArray.get t_interp) (t_atom.[i]).
       Proof.
         assert (Bt := to_Z_bounded (length t_atom)).
         set (P' i t := length t = length t_atom ->
-               forall j, j < i ->
+               forall j, j <? i ->
                t.[j] = interp_aux (PArray.get t) (t_atom.[j])).
         assert (P' (length t_atom) t_interp).
          unfold is_true, wf in wf_t_i;rewrite aforallbi_spec in wf_t_i.
@@ -2296,7 +2296,7 @@ Qed.
           intros;rewrite get_set_other;trivial.
           intros Heq;elim (not_ltb_refl i);rewrite Heq at 1;trivial.
           rewrite H2;trivial.
-         assert (j < i).
+         assert (j <? i).
           assert ([|j|] <> [|i|]) by(intros Heq1;elim n;apply to_Z_inj;trivial).
           generalize H3;unfold is_true;rewrite !ltb_spec,
             (to_Z_add_1 _ _ H0);auto with zarith.
@@ -2313,7 +2313,7 @@ Qed.
       Lemma t_interp_wf : forall i,
          t_interp.[i] = interp_aux (PArray.get t_interp) (t_atom.[i]).
       Proof.
-        intros i;case_eq (i< PArray.length t_atom);intros.
+        intros i;case_eq (i <? PArray.length t_atom);intros.
         apply t_interp_wf_lt;trivial.
         rewrite !PArray.get_outofbound;trivial.
         rewrite default_t_atom, default_t_interp;trivial.
@@ -2328,10 +2328,10 @@ Qed.
 
       Lemma check_aux_interp_aux_lt_aux : forall a h,
         (forall j : int,
-          j < h ->
+          j <? h ->
           exists v : interp_t (v_type Typ.type interp_t (a .[ j])),
             a .[ j] = Bval (v_type Typ.type interp_t (a .[ j])) v) ->
-        forall l, List.forallb (fun h0 : int => h0 < h) l = true ->
+        forall l, List.forallb (fun h0 : int => h0 <? h) l = true ->
           forall (f0: tval),
             exists
               v : interp_t
@@ -2356,9 +2356,9 @@ Qed.
         exists true; auto.
       Qed.
 
-      Lemma check_aux_interp_aux_lt : forall h, h < length t_atom ->
+      Lemma check_aux_interp_aux_lt : forall h, h <? length t_atom ->
         forall a,
-          (forall j, j < h ->
+          (forall j, j <? h ->
             exists v, a.[j] = Bval (v_type _ _ (a.[j])) v) ->
           exists v, interp_aux (get a) (t_atom.[h]) =
             Bval (v_type _ _ (interp_aux (get a) (t_atom.[h]))) v.
@@ -2485,19 +2485,19 @@ Qed.
              (k3 (Typ.interp t_i) z)); auto.
 
         (* N-ary operators *)
-        intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
+        intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 <? h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
         intros acc _; exists (distinct (Typ.i_eqb t_i A) (rev acc)); auto.
         intro acc; rewrite andb_true_iff; intros [H1 H2]; destruct (IH _ H1) as [va Hva]; rewrite Hva; simpl; case (Typ.cast (v_type Typ.type interp_t (a .[ i])) A); simpl; try (exists true; auto); intro k; destruct (IHl (k interp_t va :: acc) H2) as [vb Hvb]; exists vb; auto.
         (* Application *)
         intros i l H; apply (check_aux_interp_aux_lt_aux a h IH l H (t_func.[i])).
 Qed.
 
-      Lemma check_aux_interp_hatom_lt : forall h, h < length t_atom ->
+      Lemma check_aux_interp_hatom_lt : forall h, h <? length t_atom ->
         exists v, t_interp.[h] = Bval (get_type h) v.
       Proof.
         assert (Bt := to_Z_bounded (length t_atom)).
         set (P' i t := length t = length t_atom ->
-          forall j, j < i ->
+          forall j, j <? i ->
             exists v, t.[j] = Bval (v_type Typ.type interp_t (t.[j])) v).
         assert (P' (length t_atom) t_interp).
         unfold t_interp;apply foldi_ind;unfold P';intros.
@@ -2508,7 +2508,7 @@ Qed.
         rewrite e, PArray.get_set_same.
         apply check_aux_interp_aux_lt; auto.
         rewrite H2; auto.
-        assert (j < i).
+        assert (j <? i).
         assert ([|j|] <> [|i|]) by(intros Heq1;elim n;apply to_Z_inj;trivial).
         generalize H3;unfold is_true;rewrite !ltb_spec,
           (to_Z_add_1 _ _ H0);auto with zarith.
@@ -2519,7 +2519,7 @@ Qed.
       Lemma check_aux_interp_hatom : forall h,
         exists v, t_interp.[h] = Bval (get_type h) v.
       Proof.
-        intros i;case_eq (i< PArray.length t_atom);intros.
+        intros i;case_eq (i <? PArray.length t_atom);intros.
         apply check_aux_interp_hatom_lt;trivial.
         unfold get_type'; rewrite !PArray.get_outofbound;trivial.
         rewrite default_t_interp; simpl; exists (1%positive); auto.
@@ -2606,6 +2606,79 @@ Section PredefinedArrays.
 
 End PredefinedArrays.
 *)
+
+
+(* Register constants for OCaml access *)
+Register Typ.type as SMTCoq.SMT_terms.Typ.type.
+Register Typ.TFArray as SMTCoq.SMT_terms.Typ.TFArray.
+Register Typ.Tindex as SMTCoq.SMT_terms.Typ.Tindex.
+Register Typ.TZ as SMTCoq.SMT_terms.Typ.TZ.
+Register Typ.Tbool as SMTCoq.SMT_terms.Typ.Tbool.
+Register Typ.Tpositive as SMTCoq.SMT_terms.Typ.Tpositive.
+Register Typ.TBV as SMTCoq.SMT_terms.Typ.TBV.
+Register Typ.interp as SMTCoq.SMT_terms.Typ.interp.
+Register Typ.dec_interp as SMTCoq.SMT_terms.Typ.dec_interp.
+Register Typ.ord_interp as SMTCoq.SMT_terms.Typ.ord_interp.
+Register Typ.comp_interp as SMTCoq.SMT_terms.Typ.comp_interp.
+Register Typ.inh_interp as SMTCoq.SMT_terms.Typ.inh_interp.
+Register Typ.i_eqb as SMTCoq.SMT_terms.Typ.i_eqb.
+Register Atom.tval as SMTCoq.SMT_terms.Atom.tval.
+Register Atom.Tval as SMTCoq.SMT_terms.Atom.Tval.
+Register Atom.CO_xH as SMTCoq.SMT_terms.Atom.CO_xH.
+Register Atom.CO_Z0 as SMTCoq.SMT_terms.Atom.CO_Z0.
+Register Atom.CO_BV as SMTCoq.SMT_terms.Atom.CO_BV.
+Register Atom.UO_xO as SMTCoq.SMT_terms.Atom.UO_xO.
+Register Atom.UO_xI as SMTCoq.SMT_terms.Atom.UO_xI.
+Register Atom.UO_Zpos as SMTCoq.SMT_terms.Atom.UO_Zpos.
+Register Atom.UO_Zneg as SMTCoq.SMT_terms.Atom.UO_Zneg.
+Register Atom.UO_Zopp as SMTCoq.SMT_terms.Atom.UO_Zopp.
+Register Atom.UO_BVbitOf as SMTCoq.SMT_terms.Atom.UO_BVbitOf.
+Register Atom.UO_BVnot as SMTCoq.SMT_terms.Atom.UO_BVnot.
+Register Atom.UO_BVneg as SMTCoq.SMT_terms.Atom.UO_BVneg.
+Register Atom.UO_BVextr as SMTCoq.SMT_terms.Atom.UO_BVextr.
+Register Atom.UO_BVzextn as SMTCoq.SMT_terms.Atom.UO_BVzextn.
+Register Atom.UO_BVsextn as SMTCoq.SMT_terms.Atom.UO_BVsextn.
+Register Atom.BO_Zplus as SMTCoq.SMT_terms.Atom.BO_Zplus.
+Register Atom.BO_Zminus as SMTCoq.SMT_terms.Atom.BO_Zminus.
+Register Atom.BO_Zmult as SMTCoq.SMT_terms.Atom.BO_Zmult.
+Register Atom.BO_Zlt as SMTCoq.SMT_terms.Atom.BO_Zlt.
+Register Atom.BO_Zle as SMTCoq.SMT_terms.Atom.BO_Zle.
+Register Atom.BO_Zge as SMTCoq.SMT_terms.Atom.BO_Zge.
+Register Atom.BO_Zgt as SMTCoq.SMT_terms.Atom.BO_Zgt.
+Register Atom.BO_eq as SMTCoq.SMT_terms.Atom.BO_eq.
+Register Atom.BO_BVand as SMTCoq.SMT_terms.Atom.BO_BVand.
+Register Atom.BO_BVor as SMTCoq.SMT_terms.Atom.BO_BVor.
+Register Atom.BO_BVxor as SMTCoq.SMT_terms.Atom.BO_BVxor.
+Register Atom.BO_BVadd as SMTCoq.SMT_terms.Atom.BO_BVadd.
+Register Atom.BO_BVmult as SMTCoq.SMT_terms.Atom.BO_BVmult.
+Register Atom.BO_BVult as SMTCoq.SMT_terms.Atom.BO_BVult.
+Register Atom.BO_BVslt as SMTCoq.SMT_terms.Atom.BO_BVslt.
+Register Atom.BO_BVconcat as SMTCoq.SMT_terms.Atom.BO_BVconcat.
+Register Atom.BO_BVshl as SMTCoq.SMT_terms.Atom.BO_BVshl.
+Register Atom.BO_BVshr as SMTCoq.SMT_terms.Atom.BO_BVshr.
+Register Atom.BO_select as SMTCoq.SMT_terms.Atom.BO_select.
+Register Atom.BO_diffarray as SMTCoq.SMT_terms.Atom.BO_diffarray.
+Register Atom.TO_store as SMTCoq.SMT_terms.Atom.TO_store.
+Register Atom.NO_distinct as SMTCoq.SMT_terms.Atom.NO_distinct.
+Register Atom.atom as SMTCoq.SMT_terms.Atom.atom.
+Register Atom.Acop as SMTCoq.SMT_terms.Atom.Acop.
+Register Atom.Auop as SMTCoq.SMT_terms.Atom.Auop.
+Register Atom.Abop as SMTCoq.SMT_terms.Atom.Abop.
+Register Atom.Atop as SMTCoq.SMT_terms.Atom.Atop.
+Register Atom.Anop as SMTCoq.SMT_terms.Atom.Anop.
+Register Atom.Aapp as SMTCoq.SMT_terms.Atom.Aapp.
+Register Form.form as SMTCoq.SMT_terms.Form.form.
+Register Form.Fatom as SMTCoq.SMT_terms.Form.Fatom.
+Register Form.Ftrue as SMTCoq.SMT_terms.Form.Ftrue.
+Register Form.Ffalse as SMTCoq.SMT_terms.Form.Ffalse.
+Register Form.Fnot2 as SMTCoq.SMT_terms.Form.Fnot2.
+Register Form.Fand as SMTCoq.SMT_terms.Form.Fand.
+Register Form.For as SMTCoq.SMT_terms.Form.For.
+Register Form.Fxor as SMTCoq.SMT_terms.Form.Fxor.
+Register Form.Fimp as SMTCoq.SMT_terms.Form.Fimp.
+Register Form.Fiff as SMTCoq.SMT_terms.Form.Fiff.
+Register Form.Fite as SMTCoq.SMT_terms.Form.Fite.
+Register Form.FbbT as SMTCoq.SMT_terms.Form.FbbT.
 
 
 (* 

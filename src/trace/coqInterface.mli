@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -59,21 +59,12 @@ type econstr = EConstr.t
 val econstr_of_constr : constr -> econstr
 
 
-(* Modules *)
-val gen_constant : string list list -> string -> constr lazy_t
-val init_modules : string list list
-
-
 (* Int63 *)
-val int63_module : string list list
 val mkInt : int -> constr
-val cint : constr lazy_t
 
 
 (* PArray *)
-val parray_modules : string list list
 val max_array_size : int
-val mkArray : types * constr array -> constr
 
 
 (* Traces *)
@@ -91,8 +82,6 @@ val mkTrace :
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-
-val micromega_coq_proofTerm : constr lazy_t
 val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
 
 
@@ -109,6 +98,7 @@ val set_evars_tac : constr -> tactic
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
+val anomaly : string -> 'a
 val warning : string -> string -> unit
 val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
