@@ -15,6 +15,7 @@ Require Import Int63.
 Require Import State BVList FArray.
 Require Structures.
 Require Export SMT_classes.
+Require Eqdep_dec.
 
 
 Section Unit.
@@ -748,3 +749,127 @@ Section prod.
   |}.
 
 End prod.
+
+Section injection.
+  Context {A B : Type} (g : B -> A)
+          (g_inj : forall (y1 y2 : B), g y1 = g y2 -> y1 = y2).
+
+  Lemma g_inj_iff (y1 y2 : B) : g y1 = g y2 <-> y1 = y2.
+  Proof.
+    split.
+    - apply g_inj.
+    - congruence.
+  Qed.
+
+  Definition EqbType_inj : EqbType A -> EqbType B.
+  Proof.
+    intros (eqb, eqb_spec).
+    exists (fun y1 y2 => eqb (g y1) (g y2)).
+    intros y1 y2.
+    rewrite eqb_spec.
+    apply g_inj_iff.
+  Defined.
+
+  Definition OrdType_inj : OrdType A -> OrdType B.
+  Proof.
+    intros (lt, lt_trans, lt_not_eq).
+    exists (fun y1 y2 => lt (g y1) (g y2)).
+    - intros y1 y2 y3 H12 H23.
+      apply (lt_trans _ _ _ H12 H23).
+    - intros y1 y2 H12 He.
+      apply lt_not_eq in H12.
+      congruence.
+  Defined.
+
+  Definition Comparable_inj (oA : OrdType A) :
+    Comparable A ->
+    @Comparable B (OrdType_inj oA).
+  Proof.
+    intros [compare].
+    constructor.
+    intros y1 y2.
+    destruct (compare (g y1) (g y2)) as [H|H|H].
+    - apply OrderedType.LT; destruct oA; exact H.
+    - apply OrderedType.EQ.
+      apply g_inj; assumption.
+    - apply OrderedType.GT; destruct oA; exact H.
+  Defined.
+
+  Instance CompDec_inj : CompDec A -> Inhabited B -> CompDec B.
+  Proof.
+    intros (eA, oA, cA, iA) iB.
+    subst ty.
+    exact (Build_CompDec
+             B
+             (EqbType_inj eA)
+             (OrdType_inj oA)
+             (Comparable_inj oA cA)
+             iB).
+  Defined.
+
+End injection.
+
+Section subtype.
+
+  Generalizable Variable A.
+  Context {A : Type} (P : A -> bool).
+
+  Lemma UIP_bool (b1 b2 : bool) (H1 H2 : b1 = b2) : H1 = H2.
+  Proof.
+    destruct H2.
+    apply Eqdep_dec.UIP_refl_bool.
+  Qed.
+
+  Lemma P_irrel (x : A) (H1 H2 : P x) : H1 = H2.
+  Proof.
+    apply UIP_bool.
+  Qed.
+
+  Instance CompDec_sub :
+    CompDec A -> Inhabited {x : A | P x} -> CompDec {x : A | P x}.
+  Proof.
+    intros cA iB.
+    refine (@CompDec_inj _ _ (fun '(exist _ x _) => x) _ cA iB).
+    intros (x1, H1) (x2, H2) He.
+    subst x2.
+    f_equal.
+    apply P_irrel.
+  Defined.
+
+  Instance Inhabited_subtype: forall (x : A),
+      Inhabited (P x) ->
+      Inhabited {x : A | P x}.
+  Proof.
+    intros.
+    constructor.
+    exists x.
+    apply default_value.
+  Defined.
+
+  Instance Inhabited_def (x : A) : Inhabited A.
+  Proof.
+    constructor.
+    assumption.
+  Defined.
+
+  Goal CompDec A -> forall (x : A),
+      Inhabited (P x) -> CompDec {x : A | P x}.
+    intros.
+  typeclasses eauto.
+
+End subtype.
+
+  Instance Inhabited_subtype_aux: forall (x : A),
+      Inhabited (P x) ->
+      Inhabited {x : A | P x}.
+  Proof.
+    intros.
+    constructor.
+    exists x.
+    typeclasses eauto.
+    exact _.
+    assumption.
+  Defined.
+
+End subtype.
+
