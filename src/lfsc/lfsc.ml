@@ -344,7 +344,21 @@ let string_logic ro f =
     (if SL.mem LBitvectors l then "BV" else "")
     (if SL.mem LLia l then "LIA" else "")
 
-
+let check_cvc4_version () =
+  begin
+    try (ignore (FileUtil.which "cvc4"))
+    with Not_found ->  Structures.error "cvc4 not found"
+  end ;
+  let re = Str.regexp_string "version 1.6" 
+  and chan = Unix.open_process_in "cvc4 --version" in
+  let first_line = input_line chan in
+  begin
+    begin
+      try ignore (Str.search_forward re first_line 0)
+      with Not_found -> Structures.error "Please use version 1.6 of cvc4"
+    end ;
+    ignore (Unix.close_process_in chan)
+  end
 
 let call_cvc4 env rt ro ra rf root _ =
   let open Smtlib2_solver in
@@ -487,6 +501,7 @@ let cvc4_logic =
 
 
 let tactic_gen vm_cast =
+  check_cvc4_version () ;
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
