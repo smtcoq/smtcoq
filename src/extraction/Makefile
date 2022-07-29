@@ -1,6 +1,6 @@
 # List of user's files and name of the final program (edit this part)
 
-USERFILES=smtcoq.ml smtcoq.mli
+USERFILES=smtcoq.ml
 PROGRAM=smtcoq
 # USERFILES=test.ml
 # PROGRAM=test
