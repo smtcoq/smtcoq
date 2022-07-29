@@ -11,6 +11,8 @@
 
 
 let mkInt = Uint63.of_int
+
+(* From trace/coqTerms.ml *)
 let mkArray a =
   let l = (Array.length a) - 1 in
   snd (Array.fold_left (fun (i,acc) c ->
