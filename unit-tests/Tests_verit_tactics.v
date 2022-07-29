@@ -1365,6 +1365,33 @@ Section Vauto.
 End Vauto.
 
 
+Require QInst.
+
+Section Vauto2.
+  Variable A : Type.
+  Variable Inv_A : Z -> A -> Prop.
+  Variable Inv_A_bool : Z -> A -> bool.
+  Variable y : Z.
+  Variable l : A.
+  Variable z : Z.
+  Variable H : Inv_A y l.
+  Variable H0 : z <= y.
+  Variable H2 : forall (H2 : A) (a b : Z),
+      Inv_A_bool a H2 ---> (b <=? a) ---> Inv_A_bool b H2 = true.
+  Variable H3 : Inv_A_bool y l = true.
+  Variable H4 : (z <=? y) = true.
+  Variable H5 : forall (c : A) (a b : Z),
+      Inv_A_bool a c ---> (b <=? a) ---> Inv_A_bool b c = true.
+  Variable CompDec0 : CompDec A.
+
+  Goal
+    (forall (c : A) (a b : Z),
+        Inv_A_bool a c ---> (b <=? a) ---> Inv_A_bool b c = true) ->
+    negb (Inv_A_bool y l) || negb (z <=? y) || Inv_A_bool z l.
+  Proof. QInst.vauto. Qed.
+End Vauto2.
+
+
 Section PropToBool.
   Goal (forall (x x0 : bool) (x1 x2 : list bool), x :: x1 = x0 :: x2 -> x = x0) -> true.
   Proof. verit. Qed.
