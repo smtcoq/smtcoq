@@ -1,12 +1,9 @@
 # List of user's files and name of the final program (edit this part)
 
 USERFILES=smtcoq.ml
+# USERFILES=test.ml
 PROGRAM=smtcoq
 LIB=smtcoq_plugin.cmx
-# USERFILES=test.ml
-# PROGRAM=test
-# USERFILES=../../../../examples/example.ml
-# PROGRAM=../../../../examples/example
 
 
 # Compilation
