@@ -54,6 +54,3 @@ let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/lia6.smt2\" \"..
 let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/lia7.smt2\" \"../../unit-tests/lia7.vtlog\" = %b\n" (Verit_checker.checker "../../unit-tests/lia7.smt2" "../../unit-tests/lia7.vtlog")
 let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/let1.smt2\" \"../../unit-tests/let1.vtlog\" = %b\n" (Verit_checker.checker "../../unit-tests/let1.smt2" "../../unit-tests/let1.vtlog")
 let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/let2.smt2\" \"../../unit-tests/let2.vtlog\" = %b\n" (Verit_checker.checker "../../unit-tests/let2.smt2" "../../unit-tests/let2.vtlog")
-let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/bv1.smt2\" \"../../unit-tests/bv1.vtlog\" = %b\n" (Verit_checker.checker "../../unit-tests/bv1.smt2" "../../unit-tests/bv1.vtlog")
-let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/bv2.smt2\" \"../../unit-tests/bv2.vtlog\" = %b\n" (Verit_checker.checker "../../unit-tests/bv2.smt2" "../../unit-tests/bv2.vtlog")
-let _ = Printf.printf "Verit_checker.checker \"../../unit-tests/ex1.smt2\" \"../../unit-tests/ex1.vtlog\" = %b\n" (Verit_checker.checker "../../unit-tests/ex1.smt2" "../../unit-tests/ex1.vtlog")
