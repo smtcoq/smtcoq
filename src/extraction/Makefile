@@ -2,6 +2,7 @@
 
 USERFILES=smtcoq.ml
 PROGRAM=smtcoq
+LIB=smtcoq_plugin.cmx
 # USERFILES=test.ml
 # PROGRAM=test
 # USERFILES=../../../../examples/example.ml
@@ -13,7 +14,9 @@ PROGRAM=smtcoq
 COQLIBPATH=$(shell coqtop -where)/
 
 FLAGS=-rectypes
-COMPILEFLAGS=-cclib -lunix -linkall
+COMPILEFLAGS=-for-pack Smtcoq_plugin
+PROGRAMFLAGS=-cclib -lunix -linkall
+LIBFLAGS=-cclib -lunix -pack
 
 SMTLIB=-I ..
 COQLIB=-I ${COQLIBPATH}kernel -I ${COQLIBPATH}lib -I ${COQLIBPATH}library -I ${COQLIBPATH}parsing -I ${COQLIBPATH}pretyping -I ${COQLIBPATH}interp -I ${COQLIBPATH}proofs -I ${COQLIBPATH}tactics -I ${COQLIBPATH}toplevel -I ${COQLIBPATH}plugins/btauto -I ${COQLIBPATH}plugins/cc -I ${COQLIBPATH}plugins/decl_mode -I ${COQLIBPATH}plugins/extraction -I ${COQLIBPATH}plugins/field -I ${COQLIBPATH}plugins/firstorder -I ${COQLIBPATH}plugins/fourier -I ${COQLIBPATH}plugins/funind -I ${COQLIBPATH}plugins/micromega -I ${COQLIBPATH}plugins/nsatz -I ${COQLIBPATH}plugins/omega -I ${COQLIBPATH}plugins/quote -I ${COQLIBPATH}plugins/ring -I ${COQLIBPATH}plugins/romega -I ${COQLIBPATH}plugins/rtauto -I ${COQLIBPATH}plugins/setoid_ring -I ${COQLIBPATH}plugins/syntax -I ${COQLIBPATH}plugins/xml -I ${COQLIBPATH}clib -I ${COQLIBPATH}gramlib/.pack -I ${COQLIBPATH}engine -I ${COQLIBPATH}config -I ${COQLIBPATH}printing -I ${COQLIBPATH}vernac -I ${COQLIBPATH}plugins/ltac -I ${COQLIBPATH}stm -I ${COQLIBPATH}kernel/byterun
@@ -33,16 +36,19 @@ OCAMLFIND=ocamlfind
 OCAMLFINDLIB=-I +threads -package zarith
 
 
-all: $(PROGRAM)
+all: $(PROGRAM) $(LIB)
 
 %.cmi: %.mli
 	$(OCAMLC) -c $(FLAGS) $(SMTLIB) $(COQLIB) $<
 
 %.cmx: %.ml
-	$(OCAMLOPT) -c $(FLAGS) $(SMTLIB) $(COQLIB) $<
+	$(OCAMLOPT) -c $(FLAGS) $(COMPILEFLAGS) $(SMTLIB) $(COQLIB) $<
 
 $(PROGRAM): $(CMI) $(CMX) $(USERCMI) $(USERCMX)
-	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(COQLIB) -o $@ $(COMPILEFLAGS) $(CMXA) $(SMTCOQCMX) $(CMX) $(USERCMX)
+	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(COQLIB) -o $@ $(PROGRAMFLAGS) $(CMXA) $(SMTCOQCMX) $(CMX) $(USERCMX)
+
+$(LIB): $(CMI) $(CMX) $(USERCMI) $(USERCMX)
+	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(COQLIB) -o $@ $(LIBFLAGS) $(CMX)
 
 
 .PHONY: clean mrproper
