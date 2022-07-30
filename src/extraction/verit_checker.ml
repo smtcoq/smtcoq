@@ -10,6 +10,9 @@
 (**************************************************************************)
 
 
+open Smtcoq_plugin
+
+
 module Mc = CoqInterface.Micromega_plugin_Certificate.Mc
 
 

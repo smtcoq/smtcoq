@@ -10,6 +10,9 @@
 (**************************************************************************)
 
 
+open Smtcoq_plugin
+
+
 let mkInt = Uint63.of_int
 
 (* From trace/coqTerms.ml *)
@@ -104,8 +107,10 @@ let checker fdimacs ftrace =
 
   let max_id, confl = Zchaff.import_cnf_trace reloc ftrace first last in
   let (tres,_) =
-    to_coq (fun (pos, args) -> Sat_checker.Sat_Checker.Res (pos, args)) confl in
+    to_coq (fun (pos, args) -> Sat_checker.Sat_Checker.Res (pos, args)) confl
+  in
   let certif =
-    Sat_checker.Sat_Checker.Certif (mkInt (max_id + 1), tres, mkInt (SmtTrace.get_pos confl)) in
+    Sat_checker.Sat_Checker.Certif (mkInt (max_id + 1), tres, mkInt (SmtTrace.get_pos confl))
+  in
 
   Sat_checker.Sat_Checker.checker d certif
