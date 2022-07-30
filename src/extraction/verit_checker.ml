@@ -13,6 +13,10 @@
 open Smtcoq_plugin
 
 
+let error_hole = "The proof contains a hole, which is not supported by the current version of the extracted checker; in a future version, a warning will be output but the remaining of the proof will be checked"
+let error_quant = "The current version of the extracted checker does not support quantifiers"
+
+
 module Mc = CoqInterface.Micromega_plugin_Certificate.Mc
 
 
@@ -210,8 +214,8 @@ let to_coq to_lit
           in
           cRowNeq (out_c c, out_cl cl)
         | Ext (res) -> cExt (out_c c, out_f res)
-        | Hole (prem_id, concl) -> failwith "The proof contains a hole, which is not supported by the current version of the extracted checker; in a future version, a warning will be output but the remaining of the proof will be checked"
-        | Forall_inst (cl, concl) | Qf_lemma (cl, concl) -> failwith "The current version of the extracted checker does not support quantifiers"
+        | Hole (prem_id, concl) -> failwith error_hole
+        | Forall_inst (cl, concl) | Qf_lemma (cl, concl) -> failwith error_quant
 	end
     | _ -> assert false in
   let def_step =
@@ -359,7 +363,7 @@ let pf_to_coq pf =
         | SmtForm.Fiff -> if Array.length args = 2 then Smt_checker.Form.Fiff (form_to_coq args.(0), form_to_coq args.(1)) else assert false
         | SmtForm.Fite -> if Array.length args = 3 then Smt_checker.Form.Fite (form_to_coq args.(0), form_to_coq args.(1), form_to_coq args.(2)) else assert false
         | SmtForm.Fnot2 i -> Smt_checker.Form.Fnot2 (mkInt i, form_to_coq args.(0))
-        | SmtForm.Fforall _ -> failwith "The current version of the extracted checker does not support quantifiers"
+        | SmtForm.Fforall _ -> failwith error_quant
      )
   | SmtForm.FbbT (a, args) -> Smt_checker.Form.FbbT (hatom_to_coq a, dump_list form_to_coq args)
 
@@ -458,8 +462,8 @@ let certif_ops =
    (fun (a, b) -> Smt_checker.Checker_Ext.RowEq (a, b)),
    (fun (a, b) -> Smt_checker.Checker_Ext.RowNeq (a, b)),
    (fun (a, b) -> Smt_checker.Checker_Ext.Ext (a, b)),
-   (fun () -> assert false),
-   (fun () -> assert false))
+   (fun () -> failwith error_hole),
+   (fun () -> failwith error_quant))
 
 
 (* From verit/verit.ml and trace/smtCommands.ml *)
