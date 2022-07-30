@@ -41,17 +41,7 @@ let run s pb trace =
 
 
 let _ =
-
-  let usage_verit = "Uses the verifier for veriT (default); the problem must be a SMTLIB2 file, and the trace, veriT unsatisfiability trace" in
-  let usage_zchaff = "Uses the verifier for ZChaff; the problem must be a dimacs file, and the trace, ZChaff unsatisfiability trace" in
-  let usage_msg = Printf.sprintf
-"
-Usage: smtcoq [solver] problem trace
-Solver:
-  -verit    %s
-  -zchaff   %s
-" usage_verit usage_zchaff
-  in
+  let usage_msg = "Usage: smtcoq [-verit|-zchaff] <problem> <trace>" in
 
   let verit = ref true in
   let input_files = ref [] in
@@ -60,6 +50,8 @@ Solver:
     input_files := filename::!input_files
   in
 
+  let usage_verit = "Uses the verifier for veriT (default); the problem must be a SMTLIB2 file, and the trace, veriT unsatisfiability trace" in
+  let usage_zchaff = "Uses the verifier for ZChaff; the problem must be a dimacs file, and the trace, ZChaff unsatisfiability trace" in
   let speclist =
     [("-verit", Arg.Set verit, usage_verit);
      ("-zchaff", Arg.Clear verit, usage_zchaff)]
@@ -74,6 +66,6 @@ Solver:
         | [trace; pb] -> (pb, trace)
         | _ -> assert false
     with
-      | _ -> Printf.printf "%s" usage_msg; exit 0
+      | _ -> Arg.usage speclist usage_msg; exit 0
   in
   run s pb trace
