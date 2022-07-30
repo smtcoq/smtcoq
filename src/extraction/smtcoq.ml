@@ -47,7 +47,6 @@ let run s pb trace =
   with | _ -> Printf.printf "The verifier failed to check the trace :-(\n"
 
 
-
 let _ =
   let (s,pb,trace) =
     try

@@ -458,8 +458,8 @@ let certif_ops =
    (fun (a, b) -> Smt_checker.Checker_Ext.RowEq (a, b)),
    (fun (a, b) -> Smt_checker.Checker_Ext.RowNeq (a, b)),
    (fun (a, b) -> Smt_checker.Checker_Ext.Ext (a, b)),
-   assert false,
-   assert false)
+   (fun () -> assert false),
+   (fun () -> assert false))
 
 
 (* From verit/verit.ml and trace/smtCommands.ml *)
