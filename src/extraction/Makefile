@@ -3,10 +3,11 @@
 USERFILES=smtcoq.ml
 # USERFILES=test.ml
 PROGRAM=smtcoq
-LIB=smtcoq_extr.cmx
 
 
 # Compilation
+
+LIB=smtcoq_extr.cmx
 
 COQLIBPATH=$(shell coqtop -where)/
 
@@ -37,7 +38,7 @@ OCAMLFIND=ocamlfind
 OCAMLFINDLIB=-I +threads -package zarith
 
 
-all: $(PROGRAM) $(LIB)
+all: $(LIB) $(PROGRAM)
 
 %.cmi: %.mli
 	$(OCAMLC) -c $(FLAGS) $(SMTLIB) $(COQLIB) $<
@@ -45,11 +46,11 @@ all: $(PROGRAM) $(LIB)
 %.cmx: %.ml
 	$(OCAMLOPT) -c $(FLAGS) $(COMPILEFLAGS) $(SMTLIB) $(COQLIB) $<
 
-$(PROGRAM): $(CMI) $(CMX) $(USERCMI) $(USERCMX)
-	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(COQLIB) -o $@ $(PROGRAMFLAGS) $(COQCMX) $(SMTCOQCMX) $(CMX) $(USERCMX)
-
-$(LIB): $(CMI) $(CMX) $(USERCMI) $(USERCMX)
+$(LIB): $(CMI) $(CMX)
 	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(COQLIB) -o $@ $(LIBFLAGS) $(CMX)
+
+$(PROGRAM): $(LIB) $(USERCMI) $(USERCMX)
+	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(COQLIB) -o $@ $(PROGRAMFLAGS) $(COQCMX) $(SMTCOQCMX) $(LIB) $(USERCMX)
 
 
 .PHONY: clean mrproper

@@ -10,6 +10,9 @@
 (**************************************************************************)
 
 
+open Smtcoq_extr
+
+
 let _ = Printf.printf "Zchaff_checker.checker \"../../unit-tests/sat1.cnf\" \"../../unit-tests/sat1.zlog\" = %b\n" (Zchaff_checker.checker "../../unit-tests/sat1.cnf" "../../unit-tests/sat1.zlog")
 let _ = Printf.printf "Zchaff_checker.checker \"../../unit-tests/sat2.cnf\" \"../../unit-tests/sat2.zlog\" = %b\n" (Zchaff_checker.checker "../../unit-tests/sat2.cnf" "../../unit-tests/sat2.zlog")
 let _ = Printf.printf "Zchaff_checker.checker \"../../unit-tests/sat3.cnf\" \"../../unit-tests/sat3.zlog\" = %b\n" (Zchaff_checker.checker "../../unit-tests/sat3.cnf" "../../unit-tests/sat3.zlog")
