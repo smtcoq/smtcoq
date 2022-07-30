@@ -10,13 +10,12 @@
 (**************************************************************************)
 
 
-Require Int63Native.
-Require Import ExtractNative.
-Require Import SMTCoq.
+Add Rec LoadPath "." as SMTCoq.
 
-Extract Constant Int63Native.eqb => "fun i j -> ExtrNative.compare i j = ExtrNative.Eq".
+Require Import ExtrOCamlInt63.
+Require Import SMTCoq.
 
 Set Extraction AccessOpaque.
 
 Extraction "extraction/sat_checker.ml" Sat_Checker.checker.
-Extraction "extraction/smt_checker.ml" Euf_Checker.checker_ext.
+Extraction "extraction/smt_checker.ml" Checker_Ext.checker_ext.

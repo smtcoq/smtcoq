@@ -61,3 +61,6 @@ val tactic :
   CoqInterface.constr_expr list -> CoqInterface.tactic
 
 val model_string : Environ.env -> SmtBtype.reify_tbl -> 'a -> 'b -> 'c -> SExpr.t -> string
+
+(* For extraction *)
+val compute_roots : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause -> int list
