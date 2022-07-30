@@ -29,10 +29,10 @@ MLFILES=sat_checker.ml zchaff_checker.ml smt_checker.ml verit_checker.ml
 CMI=$(MLIFILES:%.mli=%.cmi)
 CMX=$(MLFILES:%.ml=%.cmx)
 
-USERML=$(filter %.ml,$(USERFILES))
-USERCMX=$(USERML:%.ml=%.cmx)
 USERMLI=$(filter %.mli,$(USERFILES))
+USERML=$(filter %.ml,$(USERFILES))
 USERCMI=$(USERMLI:%.mli=%.cmi)
+USERCMX=$(USERML:%.ml=%.cmx)
 
 OCAMLC=ocamlc
 OCAMLOPT=ocamlopt
