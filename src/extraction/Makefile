@@ -3,7 +3,7 @@
 USERFILES=smtcoq.ml
 # USERFILES=test.ml
 PROGRAM=smtcoq
-LIB=smtcoq_plugin.cmx
+LIB=smtcoq_extr.cmx
 
 
 # Compilation
@@ -11,7 +11,7 @@ LIB=smtcoq_plugin.cmx
 COQLIBPATH=$(shell coqtop -where)/
 
 FLAGS=-rectypes
-COMPILEFLAGS=-for-pack Smtcoq_plugin
+COMPILEFLAGS=-for-pack Smtcoq_extr
 PROGRAMFLAGS=-cclib -lunix -linkall
 LIBFLAGS=-cclib -lunix -pack
 
