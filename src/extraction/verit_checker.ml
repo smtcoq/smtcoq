@@ -474,19 +474,22 @@ let checker fsmt fproof =
 
   let (tres,last_root) = to_coq (fun i -> mkInt (SmtAtom.Form.to_lit i)) certif_ops confl in
   let certif =
-    Smt_checker.Checker_Ext.Certif (mkInt (max_id + 1), tres, mkInt (SmtTrace.get_pos confl)) in
+    Smt_checker.Checker_Ext.Certif (mkInt (max_id + 1), tres, mkInt (SmtTrace.get_pos confl))
+  in
   let used_roots = SmtCommands.compute_roots roots last_root in
   let used_rootsCstr =
     let l = List.length used_roots in
     let res = Array.make (l + 1) (mkInt 0) in
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
-    Smt_checker.Some (mkArray res) in
+    Smt_checker.Some (mkArray res)
+  in
   let rootsCstr =
     let res = Array.make (List.length roots + 1) (mkInt 0) in
     let i = ref 0 in
     List.iter (fun j -> res.(!i) <- mkInt (SmtAtom.Form.to_lit j); incr i) roots;
-    mkArray res in
+    mkArray res
+  in
 
   let t_atom = atom_interp_tbl ra in
   let t_form = form_interp_tbl rf in
