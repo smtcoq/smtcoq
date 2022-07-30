@@ -380,20 +380,20 @@ let count_op = ref 0
 
 
 let declare_sort sym =
-  (* let s = Smtlib2_genConstr.string_of_symbol sym in *)
+  let s = Smtlib2_genConstr.string_of_symbol sym in
   let res = SmtBtype.Tindex (SmtBtype.dummy_indexed_type !count_btype) in
   incr count_btype;
-  (* VeritSyntax.add_btype s res; *)
+  SmtMaps.add_btype s res;
   res
 
 
 let declare_fun sym arg cod =
-  (* let s = string_of_symbol sym in *)
+  let s = Smtlib2_genConstr.string_of_symbol sym in
   let tyl = List.map Smtlib2_genConstr.sort_of_sort arg in
   let ty = Smtlib2_genConstr.sort_of_sort cod in
   let op = SmtAtom.dummy_indexed_op (SmtAtom.Index !count_op) (Array.of_list tyl) ty in
   incr count_op;
-  (* VeritSyntax.add_fun s op; *)
+  SmtMaps.add_fun s op;
   op
 
 

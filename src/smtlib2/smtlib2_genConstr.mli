@@ -15,6 +15,7 @@ val parse_smt2bv : string -> bool list
 val bigint_bv : Big_int.big_int -> int -> string
 
 (* For extraction *)
+val string_of_symbol : Smtlib2_ast.symbol -> string
 val sort_of_sort : Smtlib2_ast.sort -> SmtBtype.btype
 val make_root :
   SmtAtom.Atom.reify_tbl -> SmtAtom.Form.reify -> Smtlib2_ast.term -> SmtAtom.Form.t
