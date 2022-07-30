@@ -17,8 +17,8 @@ let usage =
 "
 Usage: smtcoq [solver] problem trace
 Solver:
-  -zchaff   Uses the verifier for ZChaff (default); the problem must be a dimacs file, and the trace, ZChaff unsatisfiability trace
-  -verit    Uses the verifier for ZChaff; the problem must be a SMTLIB2 file, and the trace, veriT unsatisfiability trace
+  -verit    Uses the verifier for veriT (default); the problem must be a SMTLIB2 file, and the trace, veriT unsatisfiability trace
+  -zchaff   Uses the verifier for ZChaff; the problem must be a dimacs file, and the trace, ZChaff unsatisfiability trace
 
 "
 
@@ -50,7 +50,7 @@ let run s pb trace =
 let _ =
   let (s,pb,trace) =
     try
-      let s = if Sys.argv.(1) = "-verit" then Verit else Zchaff in
+      let s = if Sys.argv.(1) = "-zchaff" then Zchaff else Verit in
       let pb = Sys.argv.((Array.length Sys.argv)-2) in
       let trace = Sys.argv.((Array.length Sys.argv)-1) in
       (s,pb,trace)
