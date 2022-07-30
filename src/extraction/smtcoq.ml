@@ -16,16 +16,6 @@ open Smtcoq_extr
 type solver = Zchaff | Verit
 
 
-let usage =
-"
-Usage: smtcoq [solver] problem trace
-Solver:
-  -verit    Uses the verifier for veriT (default); the problem must be a SMTLIB2 file, and the trace, veriT unsatisfiability trace
-  -zchaff   Uses the verifier for ZChaff; the problem must be a dimacs file, and the trace, ZChaff unsatisfiability trace
-
-"
-
-
 let string_of_solver = function
   | Zchaff -> "ZChaff"
   | Verit -> "veriT"
@@ -51,12 +41,39 @@ let run s pb trace =
 
 
 let _ =
-  let (s,pb,trace) =
+
+  let usage_verit = "Uses the verifier for veriT (default); the problem must be a SMTLIB2 file, and the trace, veriT unsatisfiability trace" in
+  let usage_zchaff = "Uses the verifier for ZChaff; the problem must be a dimacs file, and the trace, ZChaff unsatisfiability trace" in
+  let usage_msg = Printf.sprintf
+"
+Usage: smtcoq [solver] problem trace
+Solver:
+  -verit    %s
+  -zchaff   %s
+" usage_verit usage_zchaff
+  in
+
+  let verit = ref true in
+  let input_files = ref [] in
+
+  let anon_fun filename =
+    input_files := filename::!input_files
+  in
+
+  let speclist =
+    [("-verit", Arg.Set verit, usage_verit);
+     ("-zchaff", Arg.Clear verit, usage_zchaff)]
+  in
+
+  Arg.parse speclist anon_fun usage_msg;
+
+  let s = if !verit then Verit else Zchaff in
+  let (pb, trace) =
     try
-      let s = if Sys.argv.(1) = "-zchaff" then Zchaff else Verit in
-      let pb = Sys.argv.((Array.length Sys.argv)-2) in
-      let trace = Sys.argv.((Array.length Sys.argv)-1) in
-      (s,pb,trace)
+      match !input_files with
+        | [trace; pb] -> (pb, trace)
+        | _ -> assert false
     with
-      | _ -> Printf.printf "%s" usage; exit 0 in
+      | _ -> Printf.printf "%s" usage_msg; exit 0
+  in
   run s pb trace
