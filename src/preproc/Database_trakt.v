@@ -45,6 +45,11 @@ Lemma geZ_Zgeb_embedding: forall n m : Z, (n >= m)%Z <-> (Z.geb n m) = true.
 Proof. intros n m. rewrite Z.geb_le. now apply Z.ge_le_iff. Qed.
 Trakt Add Relation (@Z.ge) (Z.geb) (geZ_Zgeb_embedding).
 
+Goal forall (x y : Z), ((x < y)%Z \/ x = y \/ (x > y)%Z) /\ ((x <= y)%Z \/ (x >= y)%Z).
+Proof.
+  trakt Z bool.
+Abort.
+
 Lemma BinIntDeflebZ_eq_Zleb : forall x y, BinIntDef.Z.leb x y = Z.leb x y.
 Proof. intros. reflexivity. Qed.
 
@@ -60,7 +65,7 @@ Proof. reflexivity. Qed.
 
 Trakt Add Symbol (BinIntDef.Z.add) (Z.add) (BinIntDefaddZ_eq_Zadd).
 
-Goal forall (x y : Z), ((x < y)%Z \/ x = y \/ (x > y)%Z) /\ ((x <= y)%Z \/ (x >= y)%Z).
+Goal forall (x y : Z), ((BinIntDef.Z.ltb x y = true)%Z \/ (BinIntDef.Z.add x y > y)%Z) /\ ((BinIntDef.Z.leb x y = true)%Z).
 Proof.
   trakt Z bool.
 Abort.
