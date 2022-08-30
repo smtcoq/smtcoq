@@ -50,6 +50,31 @@ Proof.
   trakt Z bool.
 Abort.
 
+Lemma BinIntDeflebZ_eq_Zleb : forall x y, BinIntDef.Z.leb x y = Z.leb x y.
+Proof. intros. reflexivity. Qed.
+
+Trakt Add Relation (BinIntDef.Z.leb) (Z.leb) (BinIntDeflebZ_eq_Zleb).
+
+Lemma BinIntDefltbZ_eq_Zltb : forall x y, BinIntDef.Z.ltb x y = Z.ltb x y.
+Proof. intros. reflexivity. Qed.
+
+Trakt Add Relation (BinIntDef.Z.ltb) (Z.ltb) (BinIntDefltbZ_eq_Zltb).
+
+Lemma BinIntDefaddZ_eq_Zadd : forall x y, BinIntDef.Z.add x y = Z.add x y.
+Proof. reflexivity. Qed.
+
+Trakt Add Symbol (BinIntDef.Z.add) (Z.add) (BinIntDefaddZ_eq_Zadd).
+
+Lemma BinIndDefsubZ_eq_Zsub : forall x y, BinIntDef.Z.sub x y = Z.sub x y.
+Proof. reflexivity. Qed. 
+
+Trakt Add Symbol (BinIntDef.Z.sub) (Z.sub) (BinIndDefsubZ_eq_Zsub).
+
+Goal forall (x y : Z), ((BinIntDef.Z.ltb x y = true)%Z \/ (BinIntDef.Z.add x y > y)%Z 
+\/ (BinIntDef.Z.sub x y > y)%Z) /\ ((BinIntDef.Z.leb x y = true)%Z).
+Proof.
+  trakt Z bool.
+Abort.
 
 (* Embedding for nat *)
 
