@@ -76,7 +76,6 @@ Proof.
   trakt Z bool.
 Abort.
 
-
 (* Embedding for nat *)
 
 Section Relations_nat.
