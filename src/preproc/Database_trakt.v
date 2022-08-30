@@ -65,7 +65,13 @@ Proof. reflexivity. Qed.
 
 Trakt Add Symbol (BinIntDef.Z.add) (Z.add) (BinIntDefaddZ_eq_Zadd).
 
-Goal forall (x y : Z), ((BinIntDef.Z.ltb x y = true)%Z \/ (BinIntDef.Z.add x y > y)%Z) /\ ((BinIntDef.Z.leb x y = true)%Z).
+Lemma BinIndDefsubZ_eq_Zsub : forall x y, BinIntDef.Z.sub x y = Z.sub x y.
+Proof. reflexivity. Qed. 
+
+Trakt Add Symbol (BinIntDef.Z.sub) (Z.sub) (BinIndDefsubZ_eq_Zsub).
+
+Goal forall (x y : Z), ((BinIntDef.Z.ltb x y = true)%Z \/ (BinIntDef.Z.add x y > y)%Z 
+\/ (BinIntDef.Z.sub x y > y)%Z) /\ ((BinIntDef.Z.leb x y = true)%Z).
 Proof.
   trakt Z bool.
 Abort.
