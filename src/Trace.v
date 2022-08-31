@@ -364,7 +364,8 @@ Inductive step :=
   | RowNeq (pos:int) (cl: C.t)
   | Ext (pos:int) (res: _lit)
   (* Offer the possibility to discharge parts of the proof to (manual) Coq proofs.
-     WARNING: this breaks extraction. *)
+     This breaks extraction, which is what the extractable version of
+     the checker is now in a separate module. *)
   | Hole (pos:int) (prem_id:list clause_id) (prem:list C.t) (concl:C.t)
     (p:interp_conseq_uf (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) prem concl)
   | ForallInst (pos:int) (lemma:Prop) (plemma:lemma) (concl:C.t)
@@ -749,27 +750,6 @@ Inductive step :=
    destruct H as [H1 H2]; case_eq (Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) l1); intro Heq1; case_eq (Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) l2); intro Heq2; auto with smtcoq_core; elim (checker_correct H3); unfold valid; apply afold_left_andb_true; rewrite length_amap; intros i Hi; rewrite get_amap by assumption; rewrite get_make; unfold Lit.interp; rewrite Heq'; unfold Var.interp; rewrite Form.wf_interp_form; auto with smtcoq_core; rewrite Heq; simpl; rewrite Heq1, Heq2; auto with smtcoq_core.
  Qed.
 
-
-  (* Checker for extraction, that does not know the evaluation contexts.
-     TODO: show that there always exists a well-typed evaluation
-     context. *)
-
-  (*
-  Definition checker_ext t_atom t_form d used_roots (c:certif) :=
-    let (nclauses, t, confl) := c in
-    Form.check_form t_form && Atom.check_atom t_atom &&
-    euf_checker t_atom t_form C.is_false (add_roots (S.make nclauses) d used_roots) t confl.
-  Implicit Arguments checker_ext [].
-
-  Lemma checker_ext_correct : forall t_atom t_form d used_roots c,
-    checker_ext t_atom t_form d used_roots c = true ->
-    forall t_i t_func, Atom.wt t_i t_func t_atom ->
-                       ~ valid t_func t_atom t_form d.
-  Proof.
-    unfold checker_ext; intros t_atom t_form d used_roots (nclauses, t, confl); rewrite !andb_true_iff; intros [[H1 H2] H3]; intros t_i t_func H10 H; eelim euf_checker_correct; try eassumption; apply add_roots_correct; try eassumption; apply S.valid_make; destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) _ H1) as [_ H4]; auto with smtcoq_core.
-  Qed.
-  *)
-
   End Checker.
 
 End Euf_Checker.
@@ -897,6 +877,211 @@ Register Euf_Checker.RowNeq as SMTCoq.Trace.Euf_Checker.RowNeq.
 Register Euf_Checker.Ext as SMTCoq.Trace.Euf_Checker.Ext.
 Register Euf_Checker.Hole as SMTCoq.Trace.Euf_Checker.Hole.
 Register Euf_Checker.ForallInst as SMTCoq.Trace.Euf_Checker.ForallInst.
+
+
+(* Checker for extraction, that does not know the evaluation contexts.
+   TODO: show that there always exists a well-typed evaluation
+   context. *)
+
+Module Checker_Ext.
+
+  Section Checker.
+
+  Variable t_atom : array Atom.atom.
+  Variable t_form : array Form.form.
+
+  Inductive step :=
+  | Res (pos:int) (res:resolution)
+  | Weaken (pos:int) (cid:clause_id) (cl:list _lit)
+  | ImmFlatten (pos:int) (cid:clause_id) (lf:_lit)
+  | CTrue (pos:int)
+  | CFalse (pos:int)
+  | BuildDef (pos:int) (l:_lit)
+  | BuildDef2 (pos:int) (l:_lit)
+  | BuildProj (pos:int) (l:_lit) (i:int)
+  | ImmBuildDef (pos:int) (cid:clause_id)
+  | ImmBuildDef2 (pos:int) (cid:clause_id)
+  | ImmBuildProj (pos:int) (cid:clause_id) (i:int)
+  | EqTr (pos:int) (l:_lit) (fl: list _lit)
+  | EqCgr (pos:int) (l:_lit) (fl: list (option _lit))
+  | EqCgrP (pos:int) (l1:_lit) (l2:_lit) (fl: list (option _lit))
+  | LiaMicromega (pos:int) (cl:list _lit) (c:list ZMicromega.ZArithProof)
+  | LiaDiseq (pos:int) (l:_lit)
+  | SplArith (pos:int) (orig:clause_id) (res:_lit) (l:list ZMicromega.ZArithProof)
+  | SplDistinctElim (pos:int) (orig:clause_id) (res:_lit)
+  (* Bit-blasting *)
+  | BBVar (pos:int) (res:_lit)
+  | BBConst (pos:int) (res:_lit)
+  | BBOp (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBNot (pos:int) (orig:clause_id) (res:_lit)
+  | BBNeg (pos:int) (orig:clause_id) (res:_lit)
+  | BBAdd (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBConcat (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBMul (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBUlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBSlt (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBEq (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBDiseq (pos:int) (res:_lit)
+  | BBExtract (pos:int) (orig:clause_id) (res:_lit)
+  | BBZextend (pos:int) (orig:clause_id) (res:_lit)
+  | BBSextend (pos:int) (orig:clause_id) (res:_lit)
+  | BBShl (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | BBShr (pos:int) (orig1 orig2:clause_id) (res:_lit)
+  | RowEq (pos:int) (res: _lit)
+  | RowNeq (pos:int) (cl: C.t)
+  | Ext (pos:int) (res: _lit)
+  .
+
+  Local Open Scope list_scope.
+
+  Local Notation check_flatten t_atom t_form := (check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom)) (only parsing).
+
+  Definition step_checker s (st:step) :=
+    match st with
+      | Res pos res => S.set_resolve s pos res
+      | Weaken pos cid cl => S.set_weaken s pos cid cl
+      | ImmFlatten pos cid lf => S.set_clause s pos (check_flatten t_atom t_form s cid lf)
+      | CTrue pos => S.set_clause s pos Cnf.check_True
+      | CFalse pos => S.set_clause s pos Cnf.check_False
+      | BuildDef pos l => S.set_clause s pos (check_BuildDef t_form l)
+      | BuildDef2 pos l => S.set_clause s pos (check_BuildDef2 t_form l)
+      | BuildProj pos l i => S.set_clause s pos (check_BuildProj t_form l i)
+      | ImmBuildDef pos cid => S.set_clause s pos (check_ImmBuildDef t_form s cid)
+      | ImmBuildDef2 pos cid => S.set_clause s pos (check_ImmBuildDef2 t_form s cid)
+      | ImmBuildProj pos cid i => S.set_clause s pos (check_ImmBuildProj t_form s cid i)
+      | EqTr pos l fl => S.set_clause s pos (check_trans t_form t_atom l fl)
+      | EqCgr pos l fl => S.set_clause s pos (check_congr t_form t_atom l fl)
+      | EqCgrP pos l1 l2 fl => S.set_clause s pos (check_congr_pred t_form t_atom l1 l2 fl)
+      | LiaMicromega pos cl c => S.set_clause s pos (check_micromega t_form t_atom cl c)
+      | LiaDiseq pos l => S.set_clause s pos (check_diseq t_form t_atom l)
+      | SplArith pos orig res l => S.set_clause s pos (check_spl_arith t_form t_atom (S.get s orig) res l)
+      | SplDistinctElim pos orig res => S.set_clause s pos (check_distinct_elim t_form t_atom (S.get s orig) res)
+      | BBVar pos res => S.set_clause s pos (check_bbVar t_atom t_form res)
+      | BBConst pos res => S.set_clause s pos (check_bbConst t_atom t_form res)
+      | BBOp pos orig1 orig2 res => S.set_clause s pos (check_bbOp t_atom t_form s orig1 orig2 res)
+      | BBNot pos orig res => S.set_clause s pos (check_bbNot t_atom t_form s orig res)
+      | BBNeg pos orig res => S.set_clause s pos (check_bbNeg t_atom t_form s orig res)
+      | BBAdd pos orig1 orig2 res => S.set_clause s pos (check_bbAdd t_atom t_form s orig1 orig2 res)
+      | BBConcat pos orig1 orig2 res => S.set_clause s pos (check_bbConcat t_atom t_form s orig1 orig2 res)
+      | BBMul pos orig1 orig2 res => S.set_clause s pos (check_bbMult t_atom t_form s orig1 orig2 res)
+      | BBUlt pos orig1 orig2 res => S.set_clause s pos (check_bbUlt t_atom t_form s orig1 orig2 res)
+      | BBSlt pos orig1 orig2 res => S.set_clause s pos (check_bbSlt t_atom t_form s orig1 orig2 res)
+      | BBEq pos orig1 orig2 res => S.set_clause s pos (check_bbEq t_atom t_form s orig1 orig2 res)
+      | BBDiseq pos res => S.set_clause s pos (check_bbDiseq t_atom t_form res)
+      | BBExtract pos orig res => S.set_clause s pos (check_bbExtract t_atom t_form s orig res)
+      | BBZextend pos orig res => S.set_clause s pos (check_bbZextend t_atom t_form s orig res)
+      | BBSextend pos orig res => S.set_clause s pos (check_bbSextend t_atom t_form s orig res)
+      | BBShl pos orig1 orig2 res => S.set_clause s pos (check_bbShl t_atom t_form s orig1 orig2 res)
+      | BBShr pos orig1 orig2 res => S.set_clause s pos (check_bbShr t_atom t_form s orig1 orig2 res)
+      | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
+      | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
+      | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
+    end.
+
+  (* Opaque S.set_weaken. *)
+
+  Lemma step_checker_correct :
+    Form.check_form t_form -> Atom.check_atom t_atom ->
+    forall t_i t_func,
+    let rho := Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form in
+      Atom.wt t_i t_func t_atom ->
+      forall s, S.valid rho s ->
+        forall st : step, S.valid rho (step_checker s st).
+  Proof.
+    set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
+    intros H1 H2 t_i t_func rho H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1)
+    as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as
+    [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
+    |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
+    |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res
+    |pos orig1 orig2 res|pos orig1 orig2 res
+    |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res
+    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res
+    |pos res]; simpl; try apply S.valid_set_clause; auto with smtcoq_core.
+    - apply S.valid_set_resolve; auto with smtcoq_core.
+    - apply S.valid_set_weaken; auto with smtcoq_core.
+    - apply valid_check_flatten; auto with smtcoq_core; intros h1 h2 H.
+      + rewrite (Syntactic.check_hatom_correct_bool _ _ _ Ha1 Ha2 _ _ H); auto with smtcoq_core.
+      + rewrite (Syntactic.check_neg_hatom_correct_bool _ _ _ H10 Ha1 Ha2 _ _ H); auto with smtcoq_core.
+    - apply valid_check_True; auto with smtcoq_core.
+    - apply valid_check_False; auto with smtcoq_core.
+    - apply valid_check_BuildDef; auto with smtcoq_core.
+    - apply valid_check_BuildDef2; auto with smtcoq_core.
+    - apply valid_check_BuildProj; auto with smtcoq_core.
+    - apply valid_check_ImmBuildDef; auto with smtcoq_core.
+    - apply valid_check_ImmBuildDef2; auto with smtcoq_core.
+    - apply valid_check_ImmBuildProj; auto with smtcoq_core.
+    - apply valid_check_trans; auto with smtcoq_core.
+    - apply valid_check_congr; auto with smtcoq_core.
+    - apply valid_check_congr_pred; auto with smtcoq_core.
+    - apply valid_check_micromega; auto with smtcoq_core.
+    - apply valid_check_diseq; auto with smtcoq_core.
+    - apply valid_check_spl_arith; auto with smtcoq_core.
+    - apply valid_check_distinct_elim; auto with smtcoq_core.
+    - eapply valid_check_bbVar; eauto with smtcoq_core.
+    - apply valid_check_bbConst; auto with smtcoq_core.
+    - apply valid_check_bbOp; auto with smtcoq_core.
+    - apply valid_check_bbNot; auto with smtcoq_core.
+    - apply valid_check_bbNeg; auto with smtcoq_core.
+    - apply valid_check_bbAdd; auto with smtcoq_core.
+    - apply valid_check_bbConcat; auto with smtcoq_core.
+    - apply valid_check_bbMult; auto with smtcoq_core.
+    - apply valid_check_bbUlt; auto with smtcoq_core.
+    - apply valid_check_bbSlt; auto with smtcoq_core.
+    - apply valid_check_bbEq; auto with smtcoq_core.
+    - apply valid_check_bbDiseq; auto with smtcoq_core.
+    - apply valid_check_bbExtract; auto with smtcoq_core.
+    - apply valid_check_bbZextend; auto with smtcoq_core.
+    - apply valid_check_bbSextend; auto with smtcoq_core.
+    - apply valid_check_bbShl; auto with smtcoq_core.
+    - apply valid_check_bbShr; auto with smtcoq_core.
+    - apply valid_check_roweq; auto with smtcoq_core.
+    - apply valid_check_rowneq; auto with smtcoq_core.
+    - apply valid_check_ext; auto with smtcoq_core.
+  Qed.
+
+  Definition checker s t := _checker_ (step_checker) s t.
+
+  Lemma checker_correct :
+    Form.check_form t_form -> Atom.check_atom t_atom ->
+    forall t_i t_func,
+    let rho := Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form in
+      Atom.wt t_i t_func t_atom ->
+      forall s t confl,
+        checker C.is_false s t confl ->
+        ~ (S.valid rho s).
+  Proof.
+    unfold checker; intros H1 H2 t_i t_func rho H10; apply _checker__correct.
+    intros c H; apply C.is_false_correct; auto with smtcoq_core.
+    apply step_checker_correct; auto with smtcoq_core.
+  Qed.
+
+  Inductive certif :=
+  | Certif : int -> _trace_ step -> int -> certif.
+
+  Definition checker_ext d used_roots (c:certif) :=
+    let (nclauses, t, confl) := c in
+    Form.check_form t_form && Atom.check_atom t_atom &&
+      checker C.is_false (Euf_Checker.add_roots (S.make nclauses) d used_roots) t confl.
+
+  Lemma checker_ext_correct : forall d used_roots c,
+    checker_ext d used_roots c = true ->
+    forall t_i t_func, Atom.wt t_i t_func t_atom ->
+                       ~ Euf_Checker.valid t_func t_atom t_form d.
+  Proof.
+    unfold checker_ext.
+    intros d used_roots (nclauses, t, confl).
+    rewrite !andb_true_iff.
+    intros [[H1 H2] H3] t_i t_func H10 H.
+    eelim checker_correct; try eassumption.
+    apply Euf_Checker.add_roots_correct; try assumption.
+    apply S.valid_make.
+    destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1) as [_ H4]; auto with smtcoq_core.
+  Qed.
+
+  End Checker.
+
+End Checker_Ext.
 
 
 (*
