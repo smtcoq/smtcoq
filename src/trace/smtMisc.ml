@@ -103,3 +103,12 @@ let main_failure lexbuf msg =
       msg pos_lnum (pos_cnum - pos_bol)
   in
   failwith msg
+
+
+(* Constr hashtables up to aliasing, casts, ... *)
+module ConstrHash = struct
+  type t = CoqInterface.constr
+  let equal = CoqInterface.eq_constr
+  let hash = CoqInterface.hash_constr
+end
+module ConstrHashtbl = Hashtbl.Make(ConstrHash)
