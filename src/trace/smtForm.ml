@@ -367,16 +367,9 @@ module Make (Atom:ATOM) =
       | CCifb
       | CCunknown
 
-    module ConstrHash = struct
-      type t = CoqInterface.constr
-      let equal = CoqInterface.eq_constr
-      let hash = CoqInterface.hash_constr
-    end
-    module ConstrHashtbl = Hashtbl.Make(ConstrHash)
-
     let op_tbl () =
-      let tbl = ConstrHashtbl.create 29 in
-      let add (c1,c2) = ConstrHashtbl.add tbl (Lazy.force c1) c2 in
+      let tbl = SmtMisc.ConstrHashtbl.create 29 in
+      let add (c1,c2) = SmtMisc.ConstrHashtbl.add tbl (Lazy.force c1) c2 in
       List.iter add
 	[
 	  ctrue,CCtrue; cfalse,CCfalse;
@@ -391,7 +384,7 @@ module Make (Atom:ATOM) =
     let of_coq atom_of_coq reify c =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
-        try ConstrHashtbl.find op_tbl c with Not_found -> CCunknown in
+        try SmtMisc.ConstrHashtbl.find op_tbl c with Not_found -> CCunknown in
       let rec mk_hform h =
         let c, args = CoqInterface.decompose_app h in
         match get_cst c with

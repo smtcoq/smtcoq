@@ -31,3 +31,12 @@ val hex_code : char -> char -> int
 val found_newline : Lexing.lexbuf -> int -> unit
 val lexeme_len : Lexing.lexbuf -> int
 val main_failure : Lexing.lexbuf -> string -> 'a
+
+(** Constr hashtables up to aliasing, casts, ... *)
+module ConstrHashtbl : sig
+  type 'a t
+  val create : int -> 'a t
+  val add : 'a t -> CoqInterface.constr -> 'a -> unit
+  val find : 'a t -> CoqInterface.constr -> 'a
+  val clear : 'a t -> unit
+end

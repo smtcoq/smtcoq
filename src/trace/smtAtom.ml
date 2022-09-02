@@ -1062,8 +1062,8 @@ module Atom =
 
 
     let op_tbl () =
-      let tbl = Hashtbl.create 40 in
-      let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
+      let tbl = SmtMisc.ConstrHashtbl.create 40 in
+      let add (c1,c2) = SmtMisc.ConstrHashtbl.add tbl (Lazy.force c1) c2 in
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
@@ -1104,7 +1104,7 @@ module Atom =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try
-          let cc = Hashtbl.find op_tbl c in
+          let cc = SmtMisc.ConstrHashtbl.find op_tbl c in
           if SL.subset (logic_coq_cst cc) known_logic then cc
           else CCunknown_deps (gobble_of_coq_cst cc)
         with Not_found -> CCunknown
