@@ -55,7 +55,7 @@ open SmtCertif
  *   done;
  *   Format.fprintf fmt "@."; close_out out_channel *)
 
-let import_trace ra_quant rf_quant filename first lsmt =
+let import_trace ra_quant rf_quant filename for_tactic lsmt =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let confl_num = ref (-1) in
@@ -78,31 +78,29 @@ let import_trace ra_quant rf_quant filename first lsmt =
        close_in chan;
        let cfirst = ref (VeritSyntax.get_clause !first_num) in
        let confl = ref (VeritSyntax.get_clause !confl_num) in
-       let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in
 
-       begin match first with
-       | None -> ()
-       | Some _ ->
-          let init_index = VeritSyntax.init_index lsmt re_hash in
-          let cf, lr = order_roots init_index !cfirst in
-          cfirst := cf;
-
-          (* Adding quantifier-free lemmas used as inputs in the final
-             certificate, using the ForallInst rule (which simply proves
-             lemma -> lemma) *)
-          let to_add = VeritSyntax.qf_to_add (List.tl lr) in
-          let to_add =
-            (match first, !cfirst.value with
-             | Some (root, l), Some [fl] when init_index fl = 1 && not (Form.equal l (re_hash fl)) ->
-                 let cfirst_value = !cfirst.value in
-                 !cfirst.value <- root.value;
-                 [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
-             | _ -> []) @ to_add
-          in
-          match to_add with
-            | [] -> ()
-            | _  -> confl := add_scertifs to_add !cfirst
-       end;
+       if for_tactic then (
+         (* Looking for quantifier-free hypotheses (quantified
+            hypotheses will be used in ForallInst rules) *)
+         (* TODO: the clauses may need to be flattened *)
+         let r = ref !cfirst in
+         let is_forall l = match Form.pform l with
+             | SmtForm.Fapp (SmtForm.Fforall _, _) -> true
+             | _ -> false
+         in
+         while SmtTrace.isRoot !r.kind do
+           let n = SmtTrace.next !r in
+           (match !r.value with
+              | Some [l] when not (is_forall l) ->
+                 !r.kind <- Other (Qf_lemma (!r, l))
+              | _ ->
+                 match !r.prev with
+                   | Some _ -> SmtTrace.skip !r
+                   | None -> cfirst := n; SmtTrace.clear_links !r
+           );
+           r := n
+         done;
+       );
 
        select !confl;
        occur !confl;
@@ -125,7 +123,7 @@ let import_all fsmt fproof =
   let ra_quant = VeritSyntax.ra_quant in
   let rf_quant = VeritSyntax.rf_quant in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace ra_quant rf_quant fproof None [] in
+  let (max_id, confl) = import_trace ra_quant rf_quant fproof false [] in
   (rt, ro, ra, rf, roots, max_id, confl)
 
 
@@ -177,7 +175,7 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let call_verit timeout _ rt ro ra_quant rf_quant first lsmt =
+let call_verit timeout _ rt ro ra_quant rf_quant _ lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
   close_out outchan;
@@ -219,7 +217,7 @@ let call_verit timeout _ rt ro ra_quant rf_quant first lsmt =
   try
     if exit_code <> 0 then CoqInterface.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();
-    let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
+    let res = import_trace ra_quant rf_quant logfilename true lsmt in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
             match x with
@@ -248,7 +246,7 @@ let tactic_gen vm_cast timeout lcpl lcepl =
   let rf = VeritSyntax.rf in
   let ra_quant = VeritSyntax.ra_quant in
   let rf_quant = VeritSyntax.rf_quant in
-  SmtCommands.tactic (call_verit timeout) verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl
+  SmtCommands.tactic (call_verit timeout) verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl false
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)
 

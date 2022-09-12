@@ -347,6 +347,11 @@ let string_logic ro f =
 
 
 let call_cvc4 env rt ro ra rf root _ =
+  let root =
+    match root with
+      | Some root -> root
+      | None -> failwith "Lfsc.call_cvc4: the root must be provided"
+  in
   let open Smtlib2_solver in
   let fl = snd root in
 
@@ -494,7 +499,7 @@ let tactic_gen vm_cast =
   let rf = Tosmtcoq.rf in
   let ra' = Tosmtcoq.ra in
   let rf' = Tosmtcoq.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] [] true
   (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
    *    the same ra and rf twice to have everything reifed *\)
    * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)

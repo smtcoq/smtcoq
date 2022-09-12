@@ -147,84 +147,84 @@ let rec get_pos c =
 let eq_clause c1 c2 = (repr c1).id = (repr c2).id
 
 
-(* Reorders the roots according to the order they were given in initially. *)
-let order_roots init_index first =
-  let r = ref first in
-  let acc = ref [] in
-  while isRoot !r.kind do
-    begin match !r.value with
-    | Some [f] -> let n = next !r in
-                  clear_links !r;
-                  acc := (init_index f, !r) :: !acc;
-                  r := n
-    | _ -> failwith "root value has unexpected form"
-    end
-  done;
-  let _, lr = List.sort (fun (i1, _) (i2, _) -> Stdlib.compare i1 i2) !acc
-             |> List.split
-  in
-  let link_to c1 c2 =
-    let curr_id = c2.id -1 in
-    c1.id <- curr_id;
-    c1.pos <- Some curr_id;
-    link c1 c2;
-    c1
-  in
-  List.fold_right link_to lr !r, lr
+(* (\* Reorders the roots according to the order they were given in initially. *\)
+ * let order_roots init_index first =
+ *   let r = ref first in
+ *   let acc = ref [] in
+ *   while isRoot !r.kind do
+ *     begin match !r.value with
+ *     | Some [f] -> let n = next !r in
+ *                   clear_links !r;
+ *                   acc := (init_index f, !r) :: !acc;
+ *                   r := n
+ *     | _ -> failwith "root value has unexpected form"
+ *     end
+ *   done;
+ *   let _, lr = List.sort (fun (i1, _) (i2, _) -> Stdlib.compare i1 i2) !acc
+ *              |> List.split
+ *   in
+ *   let link_to c1 c2 =
+ *     let curr_id = c2.id -1 in
+ *     c1.id <- curr_id;
+ *     c1.pos <- Some curr_id;
+ *     link c1 c2;
+ *     c1
+ *   in
+ *   List.fold_right link_to lr !r, lr *)
 
 
-(* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that
-the following clauses reference those clauses instead of the roots *)
-let add_scertifs to_add c =
-  let r = ref c in
-  clear_id (); ignore (next_id ());
-  while isRoot !r.kind do
-    ignore (next_id ());
-    r := next !r;
-  done;
-  let after_roots = !r in
-  r := prev !r;
-  let tbl : (int, 'a SmtCertif.clause) Hashtbl.t =
-    Hashtbl.create 17 in
-  let rec push_all = function
-    | [] -> ()
-    | (kind, ov, t_cl)::t -> let cl = mk_scertif kind ov in
-                             Hashtbl.add tbl t_cl.id cl;
-                             link !r cl;
-                             r := next !r;
-                             push_all t in
-  push_all to_add; link !r after_roots; r:= after_roots;
-  let uc c = try Hashtbl.find tbl c.id
-             with Not_found -> c in
-  let update_kind = function
-    | Root -> Root
-    | Same c -> Same (uc c)
-    | Res {rc1 = r1; rc2 = r2; rtail = rt} ->
-       Res {rc1 = uc r1;
-            rc2 = uc r2;
-            rtail = List.map uc rt}
-    | Other u ->
-       Other begin match u with
-         | ImmBuildProj (c, x) -> ImmBuildProj (uc c, x)
-         | ImmBuildDef c -> ImmBuildDef (uc c)
-         | ImmBuildDef2 c -> ImmBuildDef2 (uc c)
-         | Forall_inst (c, x) -> Forall_inst (uc c, x) 
-         | ImmFlatten (c, x) -> ImmFlatten (uc c, x) 
-         | SplArith (c, x, y) -> SplArith (uc c, x, y) 
-         | SplDistinctElim (c, x) -> SplDistinctElim (uc c, x) 
-
-         | Hole (cs, x) -> Hole (List.map uc cs, x)
-
-         | x -> x end in
-  let continue = ref true in
-  while !continue do
-    !r.kind <- update_kind !r.kind;
-    !r.id <- next_id ();
-    match !r.next with 
-    | None -> continue := false
-    | Some n -> r := n
-  done;
-  !r
+(* (\* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that
+ * the following clauses reference those clauses instead of the roots *\)
+ * let add_scertifs to_add c =
+ *   let r = ref c in
+ *   clear_id (); ignore (next_id ());
+ *   while isRoot !r.kind do
+ *     ignore (next_id ());
+ *     r := next !r;
+ *   done;
+ *   let after_roots = !r in
+ *   r := prev !r;
+ *   let tbl : (int, 'a SmtCertif.clause) Hashtbl.t =
+ *     Hashtbl.create 17 in
+ *   let rec push_all = function
+ *     | [] -> ()
+ *     | (kind, ov, t_cl)::t -> let cl = mk_scertif kind ov in
+ *                              Hashtbl.add tbl t_cl.id cl;
+ *                              link !r cl;
+ *                              r := next !r;
+ *                              push_all t in
+ *   push_all to_add; link !r after_roots; r:= after_roots;
+ *   let uc c = try Hashtbl.find tbl c.id
+ *              with Not_found -> c in
+ *   let update_kind = function
+ *     | Root -> Root
+ *     | Same c -> Same (uc c)
+ *     | Res {rc1 = r1; rc2 = r2; rtail = rt} ->
+ *        Res {rc1 = uc r1;
+ *             rc2 = uc r2;
+ *             rtail = List.map uc rt}
+ *     | Other u ->
+ *        Other begin match u with
+ *          | ImmBuildProj (c, x) -> ImmBuildProj (uc c, x)
+ *          | ImmBuildDef c -> ImmBuildDef (uc c)
+ *          | ImmBuildDef2 c -> ImmBuildDef2 (uc c)
+ *          | Forall_inst (c, x) -> Forall_inst (uc c, x) 
+ *          | ImmFlatten (c, x) -> ImmFlatten (uc c, x) 
+ *          | SplArith (c, x, y) -> SplArith (uc c, x, y) 
+ *          | SplDistinctElim (c, x) -> SplDistinctElim (uc c, x) 
+ * 
+ *          | Hole (cs, x) -> Hole (List.map uc cs, x)
+ * 
+ *          | x -> x end in
+ *   let continue = ref true in
+ *   while !continue do
+ *     !r.kind <- update_kind !r.kind;
+ *     !r.id <- next_id ();
+ *     match !r.next with 
+ *     | None -> continue := false
+ *     | Some n -> r := n
+ *   done;
+ *   !r *)
 
 (* Selection of useful rules *)
 (* For <select>, <occur> and <alloc> we assume that the roots and only the 

@@ -273,6 +273,8 @@ val ceuf_checker_checker_b_correct : coqTerm
 val ceuf_checker_checker_b : coqTerm
 val ceuf_checker_checker_eq_correct : coqTerm
 val ceuf_checker_checker_eq : coqTerm
+val ceuf_checker_checker_exfalso_correct : coqTerm
+val ceuf_checker_checker_exfalso : coqTerm
 val ceuf_checker_checker_debug : coqTerm
 val ceuf_checker_name_step : coqTerm
 val ceuf_checker_Name_Res : coqTerm

@@ -750,6 +750,27 @@ Inductive step :=
    destruct H as [H1 H2]; case_eq (Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) l1); intro Heq1; case_eq (Lit.interp (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form) l2); intro Heq2; auto with smtcoq_core; elim (checker_correct H3); unfold valid; apply afold_left_andb_true; rewrite length_amap; intros i Hi; rewrite get_amap by assumption; rewrite get_make; unfold Lit.interp; rewrite Heq'; unfold Var.interp; rewrite Form.wf_interp_form; auto with smtcoq_core; rewrite Heq; simpl; rewrite Heq1, Heq2; auto with smtcoq_core.
  Qed.
 
+  Definition checker_exfalso (* t_i t_func t_atom t_form *) (c:certif) :=
+    let (nclauses,_,_) := c in
+    checker (* t_i t_func t_atom t_form *) (PArray.make nclauses Lit._true) None c.
+
+  Lemma checker_exfalso_correct : forall (* t_i t_func t_atom t_form *) c,
+    checker_exfalso (* t_func t_atom t_form *) c = true -> False.
+  Proof.
+    unfold checker_exfalso.
+    intros (* t_i t_func t_atom t_form *) (nclauses, t, confl) H2.
+    elim (checker_correct H2).
+    unfold valid.
+    apply afold_left_andb_true.
+    rewrite length_amap.
+    intros i Hi.
+    rewrite get_amap by assumption.
+    rewrite get_make.
+    apply Lit.interp_true.
+    apply Form.check_form_correct.
+    unfold checker in H2. rewrite !andb_true_iff in H2. now intuition.
+  Qed.
+
   End Checker.
 
 End Euf_Checker.
@@ -795,6 +816,8 @@ Register Euf_Checker.checker_b_correct as SMTCoq.Trace.Euf_Checker.checker_b_cor
 Register Euf_Checker.checker_b as SMTCoq.Trace.Euf_Checker.checker_b.
 Register Euf_Checker.checker_eq_correct as SMTCoq.Trace.Euf_Checker.checker_eq_correct.
 Register Euf_Checker.checker_eq as SMTCoq.Trace.Euf_Checker.checker_eq.
+Register Euf_Checker.checker_exfalso_correct as SMTCoq.Trace.Euf_Checker.checker_exfalso_correct.
+Register Euf_Checker.checker_exfalso as SMTCoq.Trace.Euf_Checker.checker_exfalso.
 Register Euf_Checker.checker_debug as SMTCoq.Trace.Euf_Checker.checker_debug.
 Register Euf_Checker.name_step as SMTCoq.Trace.Euf_Checker.name_step.
 Register Euf_Checker.Name_Res as SMTCoq.Trace.Euf_Checker.Name_Res.

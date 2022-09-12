@@ -28,5 +28,5 @@ val import_trace :
   SmtAtom.Atom.reify_tbl ->
   SmtAtom.Form.reify ->
   string ->
-  (SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t) option ->
+  bool ->
   SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause

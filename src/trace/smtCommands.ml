@@ -27,6 +27,8 @@ let cchecker_b_correct = CoqTerms.ceuf_checker_checker_b_correct
 let cchecker_b = CoqTerms.ceuf_checker_checker_b
 let cchecker_eq_correct = CoqTerms.ceuf_checker_checker_eq_correct
 let cchecker_eq = CoqTerms.ceuf_checker_checker_eq
+let cchecker_exfalso_correct = CoqTerms.ceuf_checker_checker_exfalso_correct
+let cchecker_exfalso = CoqTerms.ceuf_checker_checker_exfalso
 let cchecker_debug = CoqTerms.ceuf_checker_checker_debug
 let cname_step = CoqTerms.ceuf_checker_name_step
 let cName_Res = CoqTerms.ceuf_checker_Name_Res
@@ -656,6 +658,57 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
   (proof_cast, proof_nocast, cuts)
 
 
+let build_body_exfalso rt ro ra rf (max_id, confl) vm_cast find =
+  let nti = CoqInterface.mkName "t_i" in
+  let ntfunc = CoqInterface.mkName "t_func" in
+  let ntatom = CoqInterface.mkName "t_atom" in
+  let ntform = CoqInterface.mkName "t_form" in
+  let nc = CoqInterface.mkName "c" in
+
+  let v = CoqInterface.mkRel in
+
+  let t_i = make_t_i rt in
+  let t_func = CoqInterface.lift 1 (make_t_func ro (v 0 (*t_i*))) in
+  let t_atom = Atom.interp_tbl ra in
+  let t_form = snd (Form.interp_tbl rf) in
+  let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq
+      (interp_conseq_uf t_i)
+      (certif_ops (Some [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|])) confl find in
+  let certif =
+    mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
+
+  let add_lets t =
+    CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+    CoqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
+    CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    CoqInterface.mkLetIn (nc, certif, mklApp ccertif
+             [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+    t))))) in
+
+  let ceqc =
+    add_lets
+      (mklApp cchecker_exfalso [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
+                            v 2 (*t_form*); v 1 (*certif*)|])
+      |> vm_cast
+  in
+
+  let proof_cast =
+    add_lets
+      (mklApp cchecker_exfalso_correct
+         [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
+           v 1 (*certif*); ceqc|])
+  in
+  let proof_nocast =
+    add_lets
+      (mklApp cchecker_exfalso_correct
+         [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
+           v 1 (*certif*)|])
+  in
+
+  (proof_cast, proof_nocast, cuts)
+
+
 let get_arguments concl =
   let f, args = CoqInterface.decompose_app concl in
   match args with
@@ -665,8 +718,12 @@ let get_arguments concl =
 
 
 let make_proof call_solver env rt ro ra_quant rf_quant l ls_smtc =
-  let root = SmtTrace.mkRootV [l] in
-  call_solver env rt ro ra_quant rf_quant (root,l) ls_smtc
+  let rootl =
+    match l with
+      | Some l -> Some (SmtTrace.mkRootV [l], l)
+      | None -> None
+  in
+  call_solver env rt ro ra_quant rf_quant rootl ls_smtc
 (* TODO: not generic anymore, the "lemma" part is currently specific to veriT *)
 
 (* <of_coq_lemma> reifies the given coq lemma, so we can then easily print it in a
@@ -725,9 +782,7 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
           | Some core_smt -> Some (Form.get rf_quant (Fapp (Fforall forall_args, [|core_smt|])))
           | None -> None)
 
-let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl env sigma concl =
-  let a, b = get_arguments concl in
-
+let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl use_concl env sigma concl =
   let tlcepl = List.map (CoqInterface.interp_constr env sigma) lcepl in
   let lcpl = lcpl @ tlcepl in
 
@@ -766,27 +821,35 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
   in
 
   let (body_cast, body_nocast, cuts) =
-    if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||
-        (CoqInterface.eq_constr b (Lazy.force cfalse))) then (
-      let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
-      let nl = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
-      let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env rt ro ra_quant rf_quant nl lsmt in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+    if use_concl then (
+      let a, b = get_arguments concl in
+      if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||
+            (CoqInterface.eq_constr b (Lazy.force cfalse))) then (
+        let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+        let nl = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+        let lsmt = Form.flatten rf nl :: lsmt in
+        let max_id_confl = make_proof call_solver env rt ro ra_quant rf_quant (Some nl) lsmt in
+        build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+      ) else (
+        let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+        let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
+        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
+        let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
+        let nl = Form.neg l in
+        let lsmt = Form.flatten rf nl :: lsmt in
+        let max_id_confl = make_proof call_solver env rt ro ra_quant rf_quant (Some nl) lsmt in
+        build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+          (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma)
+      )
     ) else (
-      let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
-      let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
-      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
-      let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
-      let nl = Form.neg l in
-      let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver env rt ro ra_quant rf_quant nl lsmt in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-        (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) ) in
+      let max_id_confl = make_proof call_solver env rt ro ra_quant rf_quant None lsmt in
+      build_body_exfalso rt ro ra rf max_id_confl (vm_cast env) (Some find_lemma)
+    )
+  in
 
-      let cuts = (SmtBtype.get_cuts rt) @ cuts in
+  let cuts = (SmtBtype.get_cuts rt) @ cuts in
 
   List.fold_right (fun (eqn, eqt) tac ->
       CoqInterface.tclTHENLAST
@@ -798,10 +861,10 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
        (CoqInterface.vm_cast_no_check body_cast))
 
 
-let tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl =
+let tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl use_concl =
   CoqInterface.tclTHEN
     Tactics.intros
-    (CoqInterface.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl))
+    (CoqInterface.mk_tactic (core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl use_concl))
 
 
 (**********************************************)
