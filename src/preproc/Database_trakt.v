@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2021                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -17,7 +17,7 @@ From Trakt Require Import Trakt.
 
 Lemma eqbool_Booleqb_embedding: forall n m : bool, n = m <-> (Bool.eqb n m) = true.
 Proof. intros n m. now rewrite Bool.eqb_true_iff. Qed.
-Trakt Add Relation (@eq bool) (Bool.eqb) (eqbool_Booleqb_embedding).
+Trakt Add Relation 2 (@eq bool) (Bool.eqb) (eqbool_Booleqb_embedding).
 
 
 (* Boolean relations for Z *)
@@ -27,23 +27,23 @@ From Coq Require Import ZArith.
 
 Lemma eqZ_Zeqb_embedding: forall n m : Z, n = m <-> (Z.eqb n m) = true.
 Proof. intros n m. now rewrite Z.eqb_eq. Qed.
-Trakt Add Relation (@eq Z) (Z.eqb) (eqZ_Zeqb_embedding).
+Trakt Add Relation 2 (@eq Z) (Z.eqb) (eqZ_Zeqb_embedding).
 
 Lemma ltZ_Zltb_embedding: forall n m : Z, (n < m)%Z <-> (Z.ltb n m) = true.
 Proof. intros n m. now rewrite Z.ltb_lt. Qed.
-Trakt Add Relation (@Z.lt) (Z.ltb) (ltZ_Zltb_embedding).
+Trakt Add Relation 2 (@Z.lt) (Z.ltb) (ltZ_Zltb_embedding).
 
 Lemma leZ_Zleb_embedding: forall n m : Z, (n <= m)%Z <-> (Z.leb n m) = true.
 Proof. intros n m. now rewrite Z.leb_le. Qed.
-Trakt Add Relation (@Z.le) (Z.leb) (leZ_Zleb_embedding).
+Trakt Add Relation 2 (@Z.le) (Z.leb) (leZ_Zleb_embedding).
 
 Lemma gtZ_Zgtb_embedding: forall n m : Z, (n > m)%Z <-> (Z.gtb n m) = true.
 Proof. intros n m. rewrite Z.gtb_lt. now apply Z.gt_lt_iff. Qed.
-Trakt Add Relation (@Z.gt) (Z.gtb) (gtZ_Zgtb_embedding).
+Trakt Add Relation 2 (@Z.gt) (Z.gtb) (gtZ_Zgtb_embedding).
 
 Lemma geZ_Zgeb_embedding: forall n m : Z, (n >= m)%Z <-> (Z.geb n m) = true.
 Proof. intros n m. rewrite Z.geb_le. now apply Z.ge_le_iff. Qed.
-Trakt Add Relation (@Z.ge) (Z.geb) (geZ_Zgeb_embedding).
+Trakt Add Relation 2 (@Z.ge) (Z.geb) (geZ_Zgeb_embedding).
 
 Goal forall (x y : Z), ((x < y)%Z \/ x = y \/ (x > y)%Z) /\ ((x <= y)%Z \/ (x >= y)%Z).
 Proof.
@@ -172,11 +172,11 @@ Trakt Add Symbol (Nat.eqb) (Z.eqb) (Nateqb_Zeqb_embedding_equality).
 Trakt Add Symbol (Nat.leb) (Z.leb) (Natleb_Zleb_embedding_equality).
 Trakt Add Symbol (Nat.ltb) (Z.ltb) (Natltb_Zltb_embedding_equality).
 
-Trakt Add Relation (@eq nat) (Z.eqb) (eq_Zeqb_embedding).
-Trakt Add Relation (le) (Z.leb) (le_Zleb_embedding).
-Trakt Add Relation (lt) (Z.ltb) (lt_Zltb_embedding).
-Trakt Add Relation (ge) (Z.geb) (ge_Zgeb_embedding).
-Trakt Add Relation (gt) (Z.gtb) (gt_Zgtb_embedding).
+Trakt Add Relation 2 (@eq nat) (Z.eqb) (eq_Zeqb_embedding).
+Trakt Add Relation 2 (le) (Z.leb) (le_Zleb_embedding).
+Trakt Add Relation 2 (lt) (Z.ltb) (lt_Zltb_embedding).
+Trakt Add Relation 2 (ge) (Z.geb) (ge_Zgeb_embedding).
+Trakt Add Relation 2 (gt) (Z.gtb) (gt_Zgtb_embedding).
 
 (* Goal 3%nat = 3%nat. *)
 (* Proof. trakt Z bool. Abort. *)
