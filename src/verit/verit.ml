@@ -79,12 +79,17 @@ let import_trace ra_quant rf_quant filename first lsmt =
        let cfirst = ref (VeritSyntax.get_clause !first_num) in
        let confl = ref (VeritSyntax.get_clause !confl_num) in
        let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in
+
        begin match first with
        | None -> ()
        | Some _ ->
           let init_index = VeritSyntax.init_index lsmt re_hash in
           let cf, lr = order_roots init_index !cfirst in
           cfirst := cf;
+
+          (* Adding quantifier-free lemmas used as inputs in the final
+             certificate, using the ForallInst rule (which simply proves
+             lemma -> lemma) *)
           let to_add = VeritSyntax.qf_to_add (List.tl lr) in
           let to_add =
             (match first, !cfirst.value with
@@ -92,10 +97,13 @@ let import_trace ra_quant rf_quant filename first lsmt =
                  let cfirst_value = !cfirst.value in
                  !cfirst.value <- root.value;
                  [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
-             | _ -> []) @ to_add in
-       match to_add with
-       | [] -> ()
-       | _  -> confl := add_scertifs to_add !cfirst end;
+             | _ -> []) @ to_add
+          in
+          match to_add with
+            | [] -> ()
+            | _  -> confl := add_scertifs to_add !cfirst
+       end;
+
        select !confl;
        occur !confl;
        (alloc !cfirst, !confl)
