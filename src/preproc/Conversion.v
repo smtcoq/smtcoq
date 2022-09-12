@@ -201,7 +201,7 @@ Ltac generate_rels compdecs :=
     let ty := type of HA in
     lazymatch ty with
     | SMT_classes.CompDec ?A =>
-      let rel := constr:((@eq A, @SMT_classes.eqb_of_compdec A HA, @SMT_classes.compdec_eq_eqb A HA)) in
+      let rel := constr:((2%nat, @eq A, @SMT_classes.eqb_of_compdec A HA, @SMT_classes.compdec_eq_eqb A HA)) in
       let acc := generate_rels compdecs' in
       lazymatch acc with
       | None => constr:(Some rel)
@@ -318,7 +318,7 @@ Ltac trakt1 rels Hs :=
 (*   Goal forall (a1 a2:A), a1 = a2. *)
 (*   Proof. *)
 (*     intros a1 a2. *)
-(*     trakt Z bool with rel (@eq A, @SMT_classes.eqb_of_compdec A HA, @SMT_classes.compdec_eq_eqb A HA). *)
+(*     trakt Z bool with rel (2%nat, @eq A, @SMT_classes.eqb_of_compdec A HA, @SMT_classes.compdec_eq_eqb A HA). *)
 (*   Abort. *)
 (* End Test. *)
 
