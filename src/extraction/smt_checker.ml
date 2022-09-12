@@ -4055,6 +4055,20 @@ module C =
             else Cons (l2, (resolve_aux resolve l1 c3 c2'))))
  end
 
+  let stepnum : int ref = assert false (* use the number of the last input clause *)
+
+  let print_clause (c:C.t) : unit =
+    incr stepnum;
+    Printf.printf "%d : [" !stepnum;
+    let rec pp c =
+      match c with
+        | Nil -> Printf.printf "]\n"
+        | Cons (l, c') ->
+           (Printf.printf "; %s" (Uint63.to_string l);
+            pp c')
+    in
+    pp c
+
 module S =
  struct
   type t = C.t array
@@ -4126,6 +4140,7 @@ module S =
              (Uint63.of_int (1)) len
              (get s (Coq__2.get r (Uint63.of_int (0))))
          in
+         print_clause c;
          internal_set s pos c
 
   (** val subclause : Uint63.t list -> Uint63.t list -> bool **)
@@ -7549,31 +7564,32 @@ module Checker_Ext =
   | Res (pos, res) -> S.set_resolve s pos res
   | Weaken (pos, cid, cl) -> S.set_weaken s pos cid cl
   | ImmFlatten (pos, cid, lf) ->
-    S.set_clause s pos
-      (check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom) s
-        cid lf)
+     let c = check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom) s
+        cid lf in
+     print_clause c;
+    S.set_clause s pos c
   | CTrue pos -> S.set_clause s pos check_True
   | CFalse pos -> S.set_clause s pos check_False
-  | BuildDef (pos, l) -> S.set_clause s pos (check_BuildDef t_form l)
-  | BuildDef2 (pos, l) -> S.set_clause s pos (check_BuildDef2 t_form l)
-  | BuildProj (pos, l, i) -> S.set_clause s pos (check_BuildProj t_form l i)
-  | ImmBuildDef (pos, cid) ->
-    S.set_clause s pos (check_ImmBuildDef t_form s cid)
-  | ImmBuildDef2 (pos, cid) ->
-    S.set_clause s pos (check_ImmBuildDef2 t_form s cid)
-  | ImmBuildProj (pos, cid, i) ->
-    S.set_clause s pos (check_ImmBuildProj t_form s cid i)
-  | EqTr (pos, l, fl) -> S.set_clause s pos (check_trans t_form t_atom l fl)
-  | EqCgr (pos, l, fl) -> S.set_clause s pos (check_congr t_form t_atom l fl)
-  | EqCgrP (pos, l1, l2, fl) ->
-    S.set_clause s pos (check_congr_pred t_form t_atom l1 l2 fl)
-  | LiaMicromega (pos, cl, c) ->
-    S.set_clause s pos (check_micromega t_form t_atom cl c)
-  | LiaDiseq (pos, l) -> S.set_clause s pos (check_diseq t_form t_atom l)
-  | SplArith (pos, orig, res, l) ->
-    S.set_clause s pos (check_spl_arith t_form t_atom (S.get s orig) res l)
-  | SplDistinctElim (pos, orig, res) ->
-    S.set_clause s pos (check_distinct_elim t_form t_atom (S.get s orig) res)
+  | BuildDef (pos, l) -> let c = check_BuildDef t_form l in print_clause c; S.set_clause s pos c
+  | BuildDef2 (pos, l) -> let c = check_BuildDef2 t_form l in print_clause c; S.set_clause s pos c
+  | BuildProj (pos, l, i) -> let c = check_BuildProj t_form l i in print_clause c; S.set_clause s pos c
+  | ImmBuildDef (pos, cid) -> let c = check_ImmBuildDef t_form s cid in print_clause c;
+    S.set_clause s pos c
+  | ImmBuildDef2 (pos, cid) -> let c = check_ImmBuildDef2 t_form s cid in print_clause c;
+    S.set_clause s pos c
+  | ImmBuildProj (pos, cid, i) -> let c = check_ImmBuildProj t_form s cid i in print_clause c;
+    S.set_clause s pos c
+  | EqTr (pos, l, fl) -> let c = check_trans t_form t_atom l fl in print_clause c;  S.set_clause s pos c
+  | EqCgr (pos, l, fl) -> let c = check_congr t_form t_atom l fl in print_clause c;  S.set_clause s pos c
+  | EqCgrP (pos, l1, l2, fl) -> let c = check_congr_pred t_form t_atom l1 l2 fl in print_clause c;
+    S.set_clause s pos c
+  | LiaMicromega (pos, cl, c) -> let c = check_micromega t_form t_atom cl c in print_clause c;
+    S.set_clause s pos c
+  | LiaDiseq (pos, l) -> let c = check_diseq t_form t_atom l in print_clause c;  S.set_clause s pos c
+  | SplArith (pos, orig, res, l) -> let c = check_spl_arith t_form t_atom (S.get s orig) res l in print_clause c;
+    S.set_clause s pos c
+  | SplDistinctElim (pos, orig, res) -> let c = check_distinct_elim t_form t_atom (S.get s orig) res in print_clause c;
+    S.set_clause s pos c
   | BBVar (pos, res) -> S.set_clause s pos (check_bbVar t_atom t_form res)
   | BBConst (pos, res) -> S.set_clause s pos (check_bbConst t_atom t_form res)
   | BBOp (pos, orig1, orig2, res) ->
