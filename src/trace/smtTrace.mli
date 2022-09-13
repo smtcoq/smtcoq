@@ -49,8 +49,8 @@ val alloc : 'a SmtCertif.clause -> int
 val naive_alloc : 'a SmtCertif.clause -> int
 val build_certif : 'a SmtCertif.clause -> 'b SmtCertif.clause -> int
 val to_coq :
-  ('a -> CoqInterface.constr) ->
-  ('a list list * 'a list -> CoqInterface.types) ->
+  ('hform -> CoqInterface.constr) ->
+  ('hform list list * 'hform list -> CoqInterface.types) ->
   CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
   CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
   CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
@@ -65,9 +65,9 @@ val to_coq :
   CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
   CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
   CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t ->
-  'a SmtCertif.clause ->
-  ('a SmtCertif.clause -> CoqInterface.types * CoqInterface.constr) option ->
-  CoqInterface.constr * 'a SmtCertif.clause *
+  'hform SmtCertif.clause ->
+  ('hform -> CoqInterface.types * CoqInterface.constr) option ->
+  CoqInterface.constr * 'hform SmtCertif.clause *
     (CoqInterface.id * CoqInterface.types) list
 
 

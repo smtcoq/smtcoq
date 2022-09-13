@@ -216,7 +216,7 @@ type 'hform rule =
   (* Possibility to introduce "holes" in proofs (that should be filled in Coq) *)
   | Hole of ('hform clause) list * 'hform list
   | Forall_inst of 'hform clause * 'hform
-  | Qf_lemma of 'hform clause * 'hform
+  | Qf_lemma of 'hform
 
 and 'hform clause = {
     mutable id    : clause_id;

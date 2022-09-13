@@ -487,10 +487,10 @@ let to_coq to_lit interp (cstep,
            let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
            let concl' = out_cl concl in
            mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
-        | Forall_inst (cl, concl) | Qf_lemma (cl, concl) ->
+        | Forall_inst (_, concl) | Qf_lemma concl ->
            let clemma, cplemma =
              match sf with
-               | Some find -> find cl
+               | Some find -> find concl
                | None -> assert false
            in
            let concl' = out_cl [concl] in

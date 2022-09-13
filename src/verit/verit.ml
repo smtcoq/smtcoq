@@ -116,7 +116,7 @@ let import_trace ra rf filename for_tactic lsmt =
               | Some [l] when not (is_forall l) ->
                  let x = find_qf_lemma l in
                  let id = !r.SmtCertif.id in
-                 let lem = SmtTrace.mk_scertif (SmtCertif.Other (SmtCertif.Qf_lemma (!r, x))) (Some [x]) in
+                 let lem = SmtTrace.mk_scertif (SmtCertif.Other (SmtCertif.Qf_lemma x)) (Some [x]) in
                  if SmtAtom.Form.equal x l then
                    lr := (lem, id)::!lr
                  else

@@ -220,7 +220,7 @@ type 'hform rule =
   (* Instantiation of quantified lemmas *)
   | Forall_inst of 'hform clause * 'hform
   (* Quantifier-free inputs *)
-  | Qf_lemma of 'hform clause * 'hform
+  | Qf_lemma of 'hform
 
 and 'hform clause = {
     mutable id    : clause_id;
@@ -261,13 +261,15 @@ let used_clauses r =
   | BBEq (c1,c2,_) -> [c1;c2]
 
   | Hole (cs, _) -> cs
-  | Forall_inst (c, _) | Qf_lemma (c, _) -> [c]
+
+  | Forall_inst (c, _) -> [c]
 
   | True | False | BuildDef _ | BuildDef2 _ | BuildProj _
   | EqTr _ | EqCgr _ | EqCgrP _
   | LiaMicromega _ | LiaDiseq _
   | BBVar _ | BBConst _ | BBDiseq _
   | RowEq _ | RowNeq _ | Ext _ -> []
+  | Qf_lemma _ -> []
 
 (* For debugging certif processing purposes : <add_scertif> <select> <occur> <alloc> *)
 let to_string r =

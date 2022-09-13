@@ -137,7 +137,7 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
   let ct_form = CoqInterface.mkConst (CoqInterface.declare_constant t_form ce2) in
 
   (* EMPTY LEMMA LIST *)
-  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
+  let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i)) (* TODO replace by Form.to_coq *)
       (interp_conseq_uf ct_i) (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl None in
   List.iter (fun (v,ty) ->
     let _ = CoqInterface.declare_new_variable v ty in
@@ -804,20 +804,17 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
 
   List.iter new_ref l_pl_ls;
 
-  let find_lemma cl =
+  let find_lemma l =
     let re_hash hf = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant hf in
-    match cl.value with
-    | Some [l] ->
-       let hl = re_hash l in
-       begin try Hashtbl.find lem_tbl (Form.index hl)
-             with Not_found ->
-               let oc = open_out "/tmp/find_lemma.log" in
-               let fmt = Format.formatter_of_out_channel oc in
-               List.iter (fun u -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) u) lsmt;
-               Format.fprintf fmt "\n%a\n" (Form.to_smt ~debug:true) hl;
-               flush oc; close_out oc; failwith "SmtCommands.core_tactic.find_lemma: unable to find lemma"
-       end
-      | _ -> failwith "unexpected form of root"
+    let hl = re_hash l in
+    begin try Hashtbl.find lem_tbl (Form.index hl)
+          with Not_found ->
+            let oc = open_out "/tmp/find_lemma.log" in
+            let fmt = Format.formatter_of_out_channel oc in
+            List.iter (fun u -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) u) lsmt;
+            Format.fprintf fmt "\n%a\n" (Form.to_smt ~debug:true) hl;
+            flush oc; close_out oc; failwith "SmtCommands.core_tactic.find_lemma: unable to find lemma"
+    end
   in
 
   let (body_cast, body_nocast, cuts) =

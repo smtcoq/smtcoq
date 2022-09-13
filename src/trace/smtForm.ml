@@ -630,7 +630,7 @@ module Make (Atom:ATOM) =
 		          | Fnot2 n ->
 		             (let r = ref (interp_form args.(0)) in
 		              for _ = 1 to n do
-                                r := mklApp cnegb [|!r|]
+                                r := mklApp cnegb [|mklApp cnegb [|!r|]|]
                               done;
                               !r)
                           | Fforall _ -> failwith "interp_to_coq on forall")
