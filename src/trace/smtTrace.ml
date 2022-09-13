@@ -78,6 +78,11 @@ let mkOther r ov = mk_scertif (Other r) ov
 
 
 (** Moving into the trace *)
+let has_next c =
+  match c.next with
+    | Some _ -> true
+    | None -> false
+
 let next c =
   match c.next with
   | Some c1 -> c1
@@ -173,58 +178,67 @@ let eq_clause c1 c2 = (repr c1).id = (repr c2).id
  *   List.fold_right link_to lr !r, lr *)
 
 
-(* (\* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that
- * the following clauses reference those clauses instead of the roots *\)
- * let add_scertifs to_add c =
- *   let r = ref c in
- *   clear_id (); ignore (next_id ());
- *   while isRoot !r.kind do
- *     ignore (next_id ());
- *     r := next !r;
- *   done;
- *   let after_roots = !r in
- *   r := prev !r;
- *   let tbl : (int, 'a SmtCertif.clause) Hashtbl.t =
- *     Hashtbl.create 17 in
- *   let rec push_all = function
- *     | [] -> ()
- *     | (kind, ov, t_cl)::t -> let cl = mk_scertif kind ov in
- *                              Hashtbl.add tbl t_cl.id cl;
- *                              link !r cl;
- *                              r := next !r;
- *                              push_all t in
- *   push_all to_add; link !r after_roots; r:= after_roots;
- *   let uc c = try Hashtbl.find tbl c.id
- *              with Not_found -> c in
- *   let update_kind = function
- *     | Root -> Root
- *     | Same c -> Same (uc c)
- *     | Res {rc1 = r1; rc2 = r2; rtail = rt} ->
- *        Res {rc1 = uc r1;
- *             rc2 = uc r2;
- *             rtail = List.map uc rt}
- *     | Other u ->
- *        Other begin match u with
- *          | ImmBuildProj (c, x) -> ImmBuildProj (uc c, x)
- *          | ImmBuildDef c -> ImmBuildDef (uc c)
- *          | ImmBuildDef2 c -> ImmBuildDef2 (uc c)
- *          | Forall_inst (c, x) -> Forall_inst (uc c, x) 
- *          | ImmFlatten (c, x) -> ImmFlatten (uc c, x) 
- *          | SplArith (c, x, y) -> SplArith (uc c, x, y) 
- *          | SplDistinctElim (c, x) -> SplDistinctElim (uc c, x) 
- * 
- *          | Hole (cs, x) -> Hole (List.map uc cs, x)
- * 
- *          | x -> x end in
- *   let continue = ref true in
- *   while !continue do
- *     !r.kind <- update_kind !r.kind;
- *     !r.id <- next_id ();
- *     match !r.next with 
- *     | None -> continue := false
- *     | Some n -> r := n
- *   done;
- *   !r *)
+(* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that
+the following clauses reference those clauses instead of the roots *)
+let add_scertifs to_add c =
+  let r = ref c in
+  (* clear_id (); *)
+  while isRoot !r.kind do
+    (* ignore (next_id ()); *)
+    r := next !r;
+  done;
+  let after_roots = !r in
+  r := prev !r;
+  let tbl : (int, 'a SmtCertif.clause) Hashtbl.t = Hashtbl.create 17 in
+  let rec push_all = function
+    | [] -> ()
+    | (cl, t_cl_id)::t ->
+       Hashtbl.add tbl t_cl_id cl;
+       link !r cl;
+       r := next !r;
+       push_all t
+  in
+  push_all to_add;
+  link !r after_roots;
+  r:= after_roots;
+
+  let uc c = try Hashtbl.find tbl c.id
+             with Not_found -> c
+  in
+  let update_kind = function
+    | Root -> Root
+    | Same c -> Same (uc c)
+    | Res {rc1 = r1; rc2 = r2; rtail = rt} ->
+       Res {rc1 = uc r1;
+            rc2 = uc r2;
+            rtail = List.map uc rt}
+    | Other u ->
+       Other
+         (match u with
+            | ImmBuildProj (c, x) -> ImmBuildProj (uc c, x)
+            | ImmBuildDef c -> ImmBuildDef (uc c)
+            | ImmBuildDef2 c -> ImmBuildDef2 (uc c)
+            | Forall_inst (c, x) -> Forall_inst (uc c, x)
+            | ImmFlatten (c, x) -> ImmFlatten (uc c, x)
+            | SplArith (c, x, y) -> SplArith (uc c, x, y)
+            | SplDistinctElim (c, x) -> SplDistinctElim (uc c, x)
+
+            | Hole (cs, x) -> Hole (List.map uc cs, x)
+
+            | x -> x
+         )
+  in
+  let continue = ref true in
+  while !continue do
+    !r.kind <- update_kind !r.kind;
+    (* let ni = next_id () in
+     * Printf.printf "!r.id = %d; next_id () = %d\n" !r.id ni;
+     * !r.id <- ni; *)
+    match !r.next with
+    | None -> continue := false
+    | Some n -> r := n
+  done;
+  !r
 
 (* Selection of useful rules *)
 (* For <select>, <occur> and <alloc> we assume that the roots and only the 
@@ -474,9 +488,11 @@ let to_coq to_lit interp (cstep,
            let concl' = out_cl concl in
            mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
         | Forall_inst (cl, concl) | Qf_lemma (cl, concl) ->
-           let clemma, cplemma = match sf with
-             | Some find -> find cl
-             | None -> assert false in
+           let clemma, cplemma =
+             match sf with
+               | Some find -> find cl
+               | None -> assert false
+           in
            let concl' = out_cl [concl] in
            let app_name = CoqInterface.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
            let app_var = CoqInterface.mkVar app_name in

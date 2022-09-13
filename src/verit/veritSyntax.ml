@@ -555,9 +555,9 @@ let clear_qvar () = Hashtbl.clear qvar_tbl
  *               List.iter (fun h -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) (re_hash h)) lsmt;
  *               Format.fprintf fmt "\n%a\n@." (Form.to_smt ~debug:true) re_hf;
  *               flush oc; close_out oc;
- *               failwith "Input not found: log available in /tmp/input_not_found.log" *)
-
-(* (\* Inputs which are quantifier-free lemmas will be used directly and not
+ *               failwith "Input not found: log available in /tmp/input_not_found.log"
+ * 
+ * (\* Inputs which are quantifier-free lemmas will be used directly and not
  *    throught the verit ForallInst rule. We thus find them in order to add
  *    a dummy ForallInst rule. *\)
  * let qf_to_add lr =

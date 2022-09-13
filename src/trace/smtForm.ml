@@ -86,6 +86,8 @@ module type FORM =
     val hash_hform : (hatom -> hatom) -> reify -> t -> t
     (* Flattening of [Fand] and [For], removing of [Fnot2]  *)
     val flatten : reify -> t -> t
+    (* Removing of [Fnot2] only  *)
+    val remove_double_neg : reify -> t -> t
 
     (** Turn n-ary [Fand] and [For] into their right-associative
         counter-parts *)
@@ -175,7 +177,7 @@ module Make (Atom:ATOM) =
 
     and to_smt_pform ?(debug=false) fmt = function
       | Fatom a -> Atom.to_smt ~debug:debug fmt a
-      | Fapp (op,args) -> to_smt_op fmt op args
+      | Fapp (op,args) -> to_smt_op ~debug:debug fmt op args
       (* This is an intermediate object of proofs, it correspond to nothing in SMT *)
       | FbbT (a, l) ->
         Format.fprintf fmt "(bbT %a [" (Atom.to_smt ~debug:debug) a;
@@ -185,7 +187,7 @@ module Make (Atom:ATOM) =
                       (to_smt ~debug:false) f; fi := false) l;
         Format.fprintf fmt "])"
 
-    and to_smt_op fmt op args =
+    and to_smt_op ?(debug=false) fmt op args =
       let (s1,s2) = if ((Array.length args = 0) || (match op with Fnot2 _ -> true | _ -> false)) then ("","") else ("(",")") in
       Format.fprintf fmt "%s" s1;
       (match op with
@@ -197,7 +199,7 @@ module Make (Atom:ATOM) =
          | Fimp -> Format.fprintf fmt "=>"
          | Fiff -> Format.fprintf fmt "="
          | Fite -> Format.fprintf fmt "ite"
-         | Fnot2 _ -> ()
+         | Fnot2 i -> if debug then Format.fprintf fmt "not2 %d" i
          | Fforall l ->
             (Format.fprintf fmt "forall (";
              to_smt_args fmt l;
@@ -514,6 +516,15 @@ module Make (Atom:ATOM) =
 	    let args = Array.fold_right (fun a args -> a::args) args' args in
 	    flatten_or reify acc args
 	 | _ -> flatten_or reify (flatten reify a :: acc) args
+
+    (** Removing of [Fnot2] only  *)
+    let rec remove_double_neg reify f =
+      match pform f with
+      | Fatom _ | FbbT _ -> f
+      | Fapp(Fnot2 _,args) -> set_sign f (remove_double_neg reify args.(0))
+      | Fapp(op,args) ->
+	 set_sign f (get reify (Fapp(op, Array.map (remove_double_neg reify) args)))
+
 
     let rec right_assoc reify f =
       match pform f with

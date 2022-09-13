@@ -84,6 +84,9 @@ module type FORM =
       (** Flattening of [Fand] and [For], removing of [Fnot2]  *)
       val flatten : reify -> t -> t
 
+      (** Removing of [Fnot2] only  *)
+      val remove_double_neg : reify -> t -> t
+
       (** Turn n-ary [Fand] and [For] into their right-associative
           counter-parts *)
       val right_assoc : reify -> t -> t

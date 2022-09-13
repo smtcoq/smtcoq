@@ -24,9 +24,9 @@ val tactic_no_check : int option -> EConstr.t -> CoqInterface.constr_expr list -
 
 (* For extraction *)
 val clear_all : unit -> unit
-val import_trace :
-  SmtAtom.Atom.reify_tbl ->
-  SmtAtom.Form.reify ->
-  string ->
-  bool ->
-  SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause
+(* val import_trace :
+ *   SmtAtom.Atom.reify_tbl ->
+ *   SmtAtom.Form.reify ->
+ *   string ->
+ *   bool ->
+ *   SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause *)

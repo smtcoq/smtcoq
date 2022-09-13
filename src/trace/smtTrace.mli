@@ -24,6 +24,7 @@ val mkRes :
   'a SmtCertif.clause -> 'a SmtCertif.clause list -> 'a SmtCertif.clause
 val isRes : 'a SmtCertif.clause_kind -> bool
 val mkOther : 'a SmtCertif.rule -> 'a list option -> 'a SmtCertif.clause
+val has_next : 'a SmtCertif.clause -> bool
 val next : 'a SmtCertif.clause -> 'a SmtCertif.clause
 val has_prev : 'a SmtCertif.clause -> bool
 val prev : 'a SmtCertif.clause -> 'a SmtCertif.clause
@@ -39,9 +40,9 @@ val set_same : 'a SmtCertif.clause -> 'a SmtCertif.clause -> unit
 val get_pos : 'a SmtCertif.clause -> int
 val eq_clause : 'a SmtCertif.clause -> 'b SmtCertif.clause -> bool
 (* val order_roots : ('a -> int) -> 'a SmtCertif.clause ->
- *                   'a SmtCertif.clause * 'a SmtCertif.clause list
- * val add_scertifs : ('a SmtCertif.clause_kind * 'a list option * 'a SmtCertif.clause) list -> 
- *                    'a SmtCertif.clause -> 'a SmtCertif.clause *)
+ *                   'a SmtCertif.clause * 'a SmtCertif.clause list *)
+val add_scertifs : ('a SmtCertif.clause * int) list ->
+                   'a SmtCertif.clause -> 'a SmtCertif.clause
 val select : 'a SmtCertif.clause -> unit
 val occur : 'a SmtCertif.clause -> unit
 val alloc : 'a SmtCertif.clause -> int

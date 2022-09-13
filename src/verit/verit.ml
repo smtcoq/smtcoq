@@ -15,7 +15,6 @@ open CoqTerms
 open SmtTrace
 open SmtAtom
 open SmtBtype
-open SmtCertif
 
 
 (* let debug = false *)
@@ -55,7 +54,7 @@ open SmtCertif
  *   done;
  *   Format.fprintf fmt "@."; close_out out_channel *)
 
-let import_trace ra_quant rf_quant filename for_tactic lsmt =
+let import_trace ra rf filename for_tactic lsmt =
   let chan = open_in filename in
   let lexbuf = Lexing.from_channel chan in
   let confl_num = ref (-1) in
@@ -80,27 +79,75 @@ let import_trace ra_quant rf_quant filename for_tactic lsmt =
        let confl = ref (VeritSyntax.get_clause !confl_num) in
 
        if for_tactic then (
-         (* Looking for quantifier-free hypotheses (quantified
-            hypotheses will be used in ForallInst rules) *)
-         (* TODO: the clauses may need to be flattened *)
-         let r = ref !cfirst in
+         let re_hash = Form.hash_hform (Atom.hash_hatom ra) rf in
+         (* let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in *)
          let is_forall l = match Form.pform l with
              | SmtForm.Fapp (SmtForm.Fforall _, _) -> true
              | _ -> false
          in
-         while SmtTrace.isRoot !r.kind do
-           let n = SmtTrace.next !r in
-           (match !r.value with
+         let lsmt =
+           List.fold_left (fun acc f ->
+               if is_forall f then
+                 acc
+               else
+                 let f = re_hash f in
+                 (f, SmtAtom.Form.remove_double_neg rf f)::acc
+             ) [] lsmt
+         in
+         let rec find_qf_lemma f = function
+           | [] -> assert false
+           | (x,x')::xs ->
+              (Format.printf "x = %a; x' = %a; f = %a\n" (SmtAtom.Form.to_smt ~debug:true) x (SmtAtom.Form.to_smt ~debug:true) x' (SmtAtom.Form.to_smt ~debug:true) f;
+               flush stdout;
+               if SmtAtom.Form.equal x' f then x else find_qf_lemma f xs
+              )
+         in
+         let find_qf_lemma f = find_qf_lemma f lsmt in
+         (* let init_index = VeritSyntax.init_index lsmt re_hash in
+          * let cf, lr = order_roots init_index !cfirst in
+          * cfirst := cf; *)
+
+         (* Looking for quantifier-free hypotheses (quantified
+            hypotheses will be used in ForallInst rules) *)
+         let r = ref !cfirst in
+         let lr = ref [] in
+         while SmtTrace.isRoot !r.SmtCertif.kind do
+           (match !r.SmtCertif.value with
               | Some [l] when not (is_forall l) ->
-                 !r.kind <- Other (Qf_lemma (!r, l))
-              | _ ->
-                 match !r.prev with
-                   | Some _ -> SmtTrace.skip !r
-                   | None -> cfirst := n; SmtTrace.clear_links !r
+                 let x = find_qf_lemma l in
+                 let id = !r.SmtCertif.id in
+                 let lem = SmtTrace.mk_scertif (SmtCertif.Other (SmtCertif.Qf_lemma (!r, x))) (Some [x]) in
+                 if SmtAtom.Form.equal x l then
+                   lr := (lem, id)::!lr
+                 else
+                   let lem' = SmtTrace.mk_scertif (SmtCertif.Other (SmtCertif.ImmFlatten (lem, l))) (Some [l]) in
+                   lr := (lem, id)::(lem', id)::!lr
+              | _ -> ()
            );
-           r := n
+           r := SmtTrace.next !r
          done;
+
+         SmtCertif.print_certif SmtAtom.Form.to_smt !cfirst "avant";
+
+         (* Adding quantifier-free lemmas used as inputs in the final
+            certificate, using the ForallInst rule (which simply proves
+            lemma -> lemma) *)
+         let to_add = !lr in
+         (* let to_add = VeritSyntax.qf_to_add lr in *)
+         (* let to_add =
+          *   (match first, !cfirst.value with
+          *      | Some (root, l), Some [fl] when init_index fl = 1 && not (Form.equal l (re_hash fl)) ->
+          *         let cfirst_value = !cfirst.value in
+          *         !cfirst.value <- root.value;
+          *         [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
+          *      | _ -> []) @ to_add
+          * in *)
+         match to_add with
+           | [] -> ()
+           | _  -> confl := add_scertifs to_add !cfirst
        );
+
+       SmtCertif.print_certif SmtAtom.Form.to_smt !cfirst "apres";
 
        select !confl;
        occur !confl;
@@ -120,10 +167,8 @@ let import_all fsmt fproof =
   let ro = Op.create () in
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  let ra_quant = VeritSyntax.ra_quant in
-  let rf_quant = VeritSyntax.rf_quant in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
-  let (max_id, confl) = import_trace ra_quant rf_quant fproof false [] in
+  let (max_id, confl) = import_trace ra rf fproof false [] in
   (rt, ro, ra, rf, roots, max_id, confl)
 
 
@@ -175,7 +220,7 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let call_verit timeout _ rt ro ra_quant rf_quant _ lsmt =
+let call_verit timeout _ rt ro ra rf _ lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
   close_out outchan;
@@ -217,7 +262,7 @@ let call_verit timeout _ rt ro ra_quant rf_quant _ lsmt =
   try
     if exit_code <> 0 then CoqInterface.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
     raise_warnings_errors ();
-    let res = import_trace ra_quant rf_quant logfilename true lsmt in
+    let res = import_trace ra rf logfilename true lsmt in
     close_in win; Sys.remove wname; res
   with x -> close_in win; Sys.remove wname;
             match x with
