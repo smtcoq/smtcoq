@@ -536,41 +536,6 @@ let find_opt_qvar s = try Some (Hashtbl.find qvar_tbl s)
 let add_qvar s bt = Hashtbl.add qvar_tbl s bt
 let clear_qvar () = Hashtbl.clear qvar_tbl
 
-(* (\* Finding the index of a root in <lsmt> modulo the <re_hash> function.
- *    This function is used by SmtTrace.order_roots *\)
- * let init_index lsmt re_hash =
- *   let form_index_init_rank : (int, int) Hashtbl.t = Hashtbl.create 20 in
- *   let add = Hashtbl.add form_index_init_rank in
- *   let find = Hashtbl.find form_index_init_rank in
- *   let rec walk rank = function
- *     | [] -> ()
- *     | h::t -> add (Form.to_lit (re_hash h)) rank;
- *               walk (rank+1) t in
- *   walk 1 lsmt;
- *   fun hf -> let re_hf = re_hash hf in
- *             try find (Form.to_lit re_hf)
- *             with Not_found ->
- *               let oc = open_out "/tmp/input_not_found.log" in
- *               let fmt = Format.formatter_of_out_channel oc in
- *               List.iter (fun h -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) (re_hash h)) lsmt;
- *               Format.fprintf fmt "\n%a\n@." (Form.to_smt ~debug:true) re_hf;
- *               flush oc; close_out oc;
- *               failwith "Input not found: log available in /tmp/input_not_found.log"
- * 
- * (\* Inputs which are quantifier-free lemmas will be used directly and not
- *    throught the verit ForallInst rule. We thus find them in order to add
- *    a dummy ForallInst rule. *\)
- * let qf_to_add lr =
- *   let is_forall l = match Form.pform l with
- *     | Fapp (Fforall _, _) -> true
- *     | _ -> false in
- *   let rec qf_lemmas = function
- *     | [] -> []
- *     | ({value = Some [l]} as r)::t when not (is_forall l) ->
- *        (Other (Qf_lemma (r, l)), r.value, r) :: qf_lemmas t
- *     | _::t -> qf_lemmas t in
- *   qf_lemmas lr *)
-
 let ra = Atom.create ()
 let rf = Form.create ()
 let ra_quant = Atom.create ()

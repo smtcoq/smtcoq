@@ -81,7 +81,6 @@ let import_trace ra rf filename for_tactic lsmt =
        if for_tactic then (
          let re_hash = Form.hash_hform (Atom.hash_hatom ~eqsym:false ra) rf in
          let re_hash_eqsym = Form.hash_hform (Atom.hash_hatom ra) rf in
-         (* let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in *)
          let is_forall l = match Form.pform l with
              | SmtForm.Fapp (SmtForm.Fforall _, _) -> true
              | _ -> false
@@ -104,9 +103,6 @@ let import_trace ra rf filename for_tactic lsmt =
               )
          in
          let find_qf_lemma f = find_qf_lemma f lsmt in
-         (* let init_index = VeritSyntax.init_index lsmt re_hash in
-          * let cf, lr = order_roots init_index !cfirst in
-          * cfirst := cf; *)
 
          (* Looking for quantifier-free hypotheses (quantified
             hypotheses will be used in veriT's ForallInst rules) *)
@@ -135,15 +131,6 @@ let import_trace ra rf filename for_tactic lsmt =
             certificate, using the ForallInst rule (which simply proves
             lemma -> lemma) *)
          let to_add = !lr in
-         (* let to_add = VeritSyntax.qf_to_add lr in *)
-         (* let to_add =
-          *   (match first, !cfirst.value with
-          *      | Some (root, l), Some [fl] when init_index fl = 1 && not (Form.equal l (re_hash fl)) ->
-          *         let cfirst_value = !cfirst.value in
-          *         !cfirst.value <- root.value;
-          *         [Other (ImmFlatten (root, fl)), cfirst_value, !cfirst]
-          *      | _ -> []) @ to_add
-          * in *)
          match to_add with
            | [] -> ()
            | _  -> confl := add_scertifs to_add !cfirst

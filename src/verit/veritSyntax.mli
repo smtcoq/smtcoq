@@ -45,11 +45,6 @@ val find_opt_qvar : string -> SmtBtype.btype option
 val add_qvar : string -> SmtBtype.btype -> unit
 val clear_qvar : unit -> unit
 
-(* val init_index : SmtAtom.Form.t list -> (SmtAtom.Form.t -> SmtAtom.Form.t) ->
- *                  SmtAtom.Form.t -> int
- * 
- * val qf_to_add : SmtAtom.Form.t SmtCertif.clause list -> (SmtAtom.Form.t SmtCertif.clause_kind * SmtAtom.Form.t list option * SmtAtom.Form.t SmtCertif.clause) list *)
-
 val ra : SmtAtom.Atom.reify_tbl
 val rf : SmtAtom.Form.reify
 val ra_quant : SmtAtom.Atom.reify_tbl
