@@ -88,6 +88,7 @@ Ltac intro_goal := let H := fresh "H" in intro_goal_name H.
 
 (** Tactics in bool *)
 
+(* The following two tactics should not be used directly *)
 Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exact _).
 Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
 
@@ -120,6 +121,7 @@ Tactic Notation "verit_bool_no_check"           :=
 
 (** Tactics in bool with timeout **)
 
+(* The following two tactics should not be used directly *)
 Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; auto with typeclass_instances.
 Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
 

@@ -1532,16 +1532,6 @@ Section TimeoutBool.
 
   Goal P 3.
   Proof.
-    verit_bool_base_auto_timeout (Some (H0, HInd)) 10.
-  Qed.
-
-  Goal P 3.
-  Proof.
-    verit_bool_no_check_base_auto_timeout (Some (H0, HInd)) 10.
-  Qed.
-
-  Goal P 3.
-  Proof.
     verit_bool_timeout (H0, HInd) 10.
   Qed.
 
