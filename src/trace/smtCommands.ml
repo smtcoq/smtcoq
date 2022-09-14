@@ -764,7 +764,7 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
     match core_f with
       | Some core_f ->
          (try
-            Some (Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env_lemma sigma) rf_quant core_f)
+            Some (Form.of_coq (Atom.of_coq rt ro ra_quant solver_logic env_lemma sigma) rf_quant core_f)
           with
             | Atom.UnknownUnderForall -> warn ()
          )
@@ -805,7 +805,7 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
   List.iter new_ref l_pl_ls;
 
   let find_lemma l =
-    let re_hash hf = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant hf in
+    let re_hash hf = Form.hash_hform (Atom.hash_hatom ~eqsym:false ra_quant) rf_quant hf in
     let hl = re_hash l in
     begin try Hashtbl.find lem_tbl (Form.index hl)
           with Not_found ->
@@ -823,16 +823,16 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
       if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||
             (CoqInterface.eq_constr b (Lazy.force cfalse))) then (
         let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+        let _ = Form.of_coq (Atom.of_coq rt ro ra_quant solver_logic env sigma) rf_quant a in
         let nl = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
         let lsmt = Form.flatten rf nl :: lsmt in
         let max_id_confl = make_proof call_solver env rt ro ra rf (Some nl) lsmt in
         build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
       ) else (
         let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+        let _ = Form.of_coq (Atom.of_coq rt ro ra_quant solver_logic env sigma) rf_quant a in
         let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
-        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
+        let _ = Form.of_coq (Atom.of_coq rt ro ra_quant solver_logic env sigma) rf_quant b in
         let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
         let nl = Form.neg l in
         let lsmt = Form.flatten rf nl :: lsmt in

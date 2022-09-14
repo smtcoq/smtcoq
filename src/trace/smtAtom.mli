@@ -131,13 +131,15 @@ module Atom :
 
       val mk_neg : reify_tbl -> t -> t
 
-      val hash_hatom : reify_tbl -> t -> t
+      (* Re-hashes atoms; if ~eqsym is set to true (default), it also
+         collapses symmetric occurrences of the same equality *)
+      val hash_hatom : ?eqsym:bool -> reify_tbl -> t -> t
 
       (** for debugging purposes **)
 
       val copy : reify_tbl -> reify_tbl
 
-      val print_atoms : reify_tbl -> string -> unit
+      val print_atoms : ?debug:bool -> reify_tbl -> string -> unit
 
       (** Given a coq term, build the corresponding atom *)
       exception UnknownUnderForall

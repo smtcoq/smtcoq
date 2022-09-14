@@ -84,9 +84,11 @@ module type FORM =
     val of_coq : (CoqInterface.constr -> hatom) -> reify -> CoqInterface.constr -> t
 
     val hash_hform : (hatom -> hatom) -> reify -> t -> t
-    (* Flattening of [Fand] and [For], removing of [Fnot2]  *)
+
+    (* Flattening of [Fand] and [For], removing of [Fnot2] *)
     val flatten : reify -> t -> t
-    (* Removing of [Fnot2] only  *)
+
+    (* Removing of [Fnot2] only *)
     val remove_double_neg : reify -> t -> t
 
     (** Turn n-ary [Fand] and [For] into their right-associative

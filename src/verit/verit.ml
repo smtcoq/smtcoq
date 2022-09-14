@@ -79,7 +79,8 @@ let import_trace ra rf filename for_tactic lsmt =
        let confl = ref (VeritSyntax.get_clause !confl_num) in
 
        if for_tactic then (
-         let re_hash = Form.hash_hform (Atom.hash_hatom ra) rf in
+         let re_hash = Form.hash_hform (Atom.hash_hatom ~eqsym:false ra) rf in
+         let re_hash_eqsym = Form.hash_hform (Atom.hash_hatom ra) rf in
          (* let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in *)
          let is_forall l = match Form.pform l with
              | SmtForm.Fapp (SmtForm.Fforall _, _) -> true
@@ -90,14 +91,15 @@ let import_trace ra rf filename for_tactic lsmt =
                if is_forall f then
                  acc
                else
-                 let f = re_hash f in
-                 (f, SmtAtom.Form.remove_double_neg rf f)::acc
+                 let forig = re_hash f in
+                 let fsym = re_hash_eqsym f in
+                 (forig, SmtAtom.Form.remove_double_neg rf fsym)::acc
              ) [] lsmt
          in
          let rec find_qf_lemma f = function
            | [] -> assert false
            | (x,x')::xs ->
-              (Format.printf "x = %a; x' = %a; f = %a\n" (SmtAtom.Form.to_smt ~debug:true) x (SmtAtom.Form.to_smt ~debug:true) x' (SmtAtom.Form.to_smt ~debug:true) f;
+              (Format.printf "x  = %a\nx' = %a\nf  = %a\n\n" (SmtAtom.Form.to_smt ~debug:true) x (SmtAtom.Form.to_smt ~debug:true) x' (SmtAtom.Form.to_smt ~debug:true) f;
                flush stdout;
                if SmtAtom.Form.equal x' f then x else find_qf_lemma f xs
               )
@@ -108,15 +110,17 @@ let import_trace ra rf filename for_tactic lsmt =
           * cfirst := cf; *)
 
          (* Looking for quantifier-free hypotheses (quantified
-            hypotheses will be used in ForallInst rules) *)
+            hypotheses will be used in veriT's ForallInst rules) *)
          let r = ref !cfirst in
          let lr = ref [] in
          while SmtTrace.isRoot !r.SmtCertif.kind do
            (match !r.SmtCertif.value with
               | Some [l] when not (is_forall l) ->
+                 let l = re_hash_eqsym l in
                  let x = find_qf_lemma l in
                  let id = !r.SmtCertif.id in
                  let lem = SmtTrace.mk_scertif (SmtCertif.Other (SmtCertif.Qf_lemma x)) (Some [x]) in
+                 Format.printf "x = %a; l = %a\n" (SmtAtom.Form.to_smt ~debug:true) x (SmtAtom.Form.to_smt ~debug:true) l;
                  if SmtAtom.Form.equal x l then
                    lr := (lem, id)::!lr
                  else

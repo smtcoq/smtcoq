@@ -709,13 +709,13 @@ module Atom =
 
     let to_smt_named ?(debug=false) ?pi:(pi=false) (fmt:Format.formatter) h =
       let rec to_smt fmt h =
-        if pi then Format.fprintf fmt "%d:" (index h);
+        if debug then Format.fprintf fmt "%d:" (index h);
         to_smt_atom ~debug:debug (atom h)
 
       and to_smt_atom ?(debug=false) = function
         | Acop (CO_BV bv) -> if List.length bv = 0 then CoqInterface.error "Empty bit-vectors are not valid in SMT" else Format.fprintf fmt "#b%a" bv_to_smt bv
         | Acop _ as a -> to_smt_int fmt (compute_int a)
-        | Auop (op,h) -> to_smt_uop op h
+        | Auop (op,h) -> to_smt_uop ~debug:debug op h
         | Abop (op,h1,h2) -> to_smt_bop op h1 h2
         | Atop (op,h1,h2,h3) -> to_smt_top op h1 h2 h3
         | Anop (op,a) -> to_smt_nop op a
@@ -744,14 +744,14 @@ module Atom =
         SmtBtype.to_smt fmt bt;
         Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (CoqInterface.pr_constr t))
 
-      and to_smt_uop op h =
+      and to_smt_uop ?(debug=false) op h =
         match op with
           | UO_Zpos ->
              Format.fprintf fmt "%a" to_smt h
           | UO_Zneg ->
-             Format.fprintf fmt "(- %a)" to_smt h
+             Format.fprintf fmt "(- %a %s)" to_smt h (if debug then "Zneg" else "")
           | UO_Zopp ->
-             Format.fprintf fmt "(- %a)" to_smt h
+             Format.fprintf fmt "(- %a %s)" to_smt h (if debug then "Zopp" else "")
           | UO_BVbitOf (_, i) ->
              Format.fprintf fmt "(bitof %d %a)" i to_smt h
           | UO_BVnot _ ->
@@ -891,13 +891,11 @@ module Atom =
     (* Identifies two equalities modulo symmetry *)
     let mk_eq_sym reify ?declare:(decl=true) ty h1 h2 =
       let op = BO_eq ty in
+      let (h1, h2) = if h1 <= h2 then (h1, h2) else (h2, h1) in
       try
         HashAtom.find reify.tbl (Abop (op, h1, h2))
       with Not_found ->
-        try
-          HashAtom.find reify.tbl (Abop (op, h2, h1))
-        with Not_found ->
-          get ~declare:decl reify (Abop (op, h1, h2))
+        get ~declare:decl reify (Abop (op, h1, h2))
 
     let mk_neg reify ({index = i; hval = a} as ha) =
       try HashAtom.find reify.tbl (Auop (UO_Zopp, ha))
@@ -908,27 +906,28 @@ module Atom =
           | _ -> failwith "opp not on Z" in
         get reify na
 
-    let rec hash_hatom ra_quant {index = _; hval = a} =
+    let rec hash_hatom ?(eqsym=true) ra_quant {index = _; hval = a} =
       match a with
       | Acop cop -> get ra_quant a
-      | Auop (uop, ha) -> get ra_quant (Auop (uop, hash_hatom ra_quant ha))
+      | Auop (uop, ha) -> get ra_quant (Auop (uop, hash_hatom ~eqsym:eqsym ra_quant ha))
       | Abop (bop, ha1, ha2) ->
-         let new_ha1 = hash_hatom ra_quant ha1 in
-         let new_ha2 = hash_hatom ra_quant ha2 in
-         begin match bop with
-         | BO_eq ty -> mk_eq_sym ra_quant ty new_ha1 new_ha2
-         | _ -> get ra_quant (Abop (bop, new_ha1, new_ha2)) end
+         let new_ha1 = hash_hatom ~eqsym:eqsym ra_quant ha1 in
+         let new_ha2 = hash_hatom ~eqsym:eqsym ra_quant ha2 in
+         (match bop with
+            | BO_eq ty when eqsym -> mk_eq_sym ra_quant ty new_ha1 new_ha2
+            | _ -> get ra_quant (Abop (bop, new_ha1, new_ha2))
+         )
       | Atop (top, ha1, ha2, ha3) ->
-         let new_ha1 = hash_hatom ra_quant ha1 in
-         let new_ha2 = hash_hatom ra_quant ha2 in
-         let new_ha3 = hash_hatom ra_quant ha3 in
+         let new_ha1 = hash_hatom ~eqsym:eqsym ra_quant ha1 in
+         let new_ha2 = hash_hatom ~eqsym:eqsym ra_quant ha2 in
+         let new_ha3 = hash_hatom ~eqsym:eqsym ra_quant ha3 in
          get ra_quant (Atop (top, new_ha1, new_ha2, new_ha3))
       | Anop _ -> assert false
-      | Aapp (op, arr) -> get ra_quant (Aapp (op, Array.map (hash_hatom ra_quant) arr))
+      | Aapp (op, arr) -> get ra_quant (Aapp (op, Array.map (hash_hatom ~eqsym:eqsym ra_quant) arr))
 
     let copy {count=c; tbl=t} = {count = c; tbl = HashAtom.copy t}
 
-    let print_atoms reify where =
+    let print_atoms ?(debug=false) reify where =
       let oc = open_out where in
       let fmt = Format.formatter_of_out_channel oc in
       let accumulate _ ha acc = ha :: acc in
@@ -936,7 +935,7 @@ module Atom =
       let compare ha1 ha2 = compare ha1.index ha2.index in
       let slist = List.sort compare list in
       let print ha = Format.fprintf fmt "%i: " ha.index;
-                     to_smt fmt ha; Format.fprintf fmt "\n" in
+                     to_smt ~debug:debug fmt ha; Format.fprintf fmt "\n" in
       List.iter print slist;
       Format.fprintf fmt "@.";
       close_out oc
