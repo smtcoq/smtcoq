@@ -795,19 +795,21 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
   let l_pl_ls = SmtMisc.filter_map create_lemma lcpl in
   let lsmt = List.map snd l_pl_ls in
 
+  let re_hash hf = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant hf in
+
   let lem_tbl : (int, CoqInterface.constr * CoqInterface.constr) Hashtbl.t =
     Hashtbl.create 100
   in
   let new_ref ((l, pl), ls) =
-    Hashtbl.add lem_tbl (Form.index ls) (l, pl)
+    let ls = re_hash ls in
+    Hashtbl.add lem_tbl (Form.to_lit ls) (l, pl)
   in
 
   List.iter new_ref l_pl_ls;
 
   let find_lemma l =
-    let re_hash hf = Form.hash_hform (Atom.hash_hatom ~eqsym:false ra_quant) rf_quant hf in
     let hl = re_hash l in
-    begin try Hashtbl.find lem_tbl (Form.index hl)
+    begin try Hashtbl.find lem_tbl (Form.to_lit hl)
           with Not_found ->
             let oc = open_out "/tmp/find_lemma.log" in
             let fmt = Format.formatter_of_out_channel oc in

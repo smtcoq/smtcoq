@@ -99,7 +99,7 @@ let import_trace ra rf filename for_tactic lsmt =
          let rec find_qf_lemma f = function
            | [] -> assert false
            | (x,x')::xs ->
-               flush stdout;
+              (
                if SmtAtom.Form.equal x' f then x else find_qf_lemma f xs
               )
          in
@@ -119,7 +119,6 @@ let import_trace ra rf filename for_tactic lsmt =
                  let x = find_qf_lemma l in
                  let id = !r.SmtCertif.id in
                  let lem = SmtTrace.mk_scertif (SmtCertif.Other (SmtCertif.Qf_lemma x)) (Some [x]) in
-                 Format.printf "x = %a; l = %a\n" (SmtAtom.Form.to_smt ~debug:true) x (SmtAtom.Form.to_smt ~debug:true) l;
                  if SmtAtom.Form.equal x l then
                    lr := (lem, id)::!lr
                  else

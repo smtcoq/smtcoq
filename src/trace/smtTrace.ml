@@ -368,6 +368,7 @@ let build_certif first_root confl =
   alloc first_root
 
 
+(* Generation of the Coq representation of the certificate *)
 let to_coq to_lit interp (cstep,
     cRes, cWeaken, cImmFlatten,
     cTrue, cFalse, cBuildDef, cBuildDef2, cBuildProj,
@@ -386,6 +387,23 @@ let to_coq to_lit interp (cstep,
   let out_f f = to_lit f in
   let out_c c = mkInt (get_pos c) in
   let out_cl cl = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
+
+  (* Code to generate ForallInst, used for both ForallInst and Qf_lemma *)
+  let gen_forallinst c value concl sf =
+    let clemma, cplemma =
+      match sf with
+        | Some find -> find value
+        | None -> assert false
+    in
+    let concl' = out_cl [concl] in
+    let app_name = CoqInterface.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
+    let app_var = CoqInterface.mkVar app_name in
+    let app_ty = CoqInterface.mkArrow clemma (interp ([], [concl])) in
+    cuts := (app_name, app_ty)::!cuts;
+    mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
+  in
+
+  (* Main part *)
   let step_to_coq c =
     match c.kind with
     | Res res ->
@@ -487,18 +505,11 @@ let to_coq to_lit interp (cstep,
            let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
            let concl' = out_cl concl in
            mklApp cHole [|out_c c; prem_id'; prem'; concl'; ass_var|]
-        | Forall_inst (_, concl) | Qf_lemma concl ->
-           let clemma, cplemma =
-             match sf with
-               | Some find -> find concl
-               | None -> assert false
-           in
-           let concl' = out_cl [concl] in
-           let app_name = CoqInterface.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
-           let app_var = CoqInterface.mkVar app_name in
-           let app_ty = CoqInterface.mkArrow clemma (interp ([], [concl])) in
-           cuts := (app_name, app_ty)::!cuts;
-           mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
+        | Forall_inst (cl, concl) ->
+           (match cl.value with
+              | Some [value] -> gen_forallinst c value concl sf
+              | _ -> assert false)
+        | Qf_lemma concl -> gen_forallinst c concl concl sf
 	end
     | _ -> assert false in
   let step = Lazy.force cstep in
