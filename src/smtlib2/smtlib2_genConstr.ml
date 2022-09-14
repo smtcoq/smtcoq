@@ -222,7 +222,7 @@ let make_root ra rf t =
           | _, _ -> assert false)
       | "-", [a] ->
         (match make_root_term a with
-          | Atom a' -> Atom (Atom.mk_opp ra a')
+          | Atom a' -> Atom (Atom.mk_neg ra a')
           | _ -> assert false)
       | "bvnot", [a] ->
         (match make_root_term a with

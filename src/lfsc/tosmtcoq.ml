@@ -389,7 +389,7 @@ let rec term_smtcoq_old t =
       | Some (n, [a; b]) when n == H.times_Int ->
         Form.Atom (Atom.mk_mult ra (term_smtcoq_atom a) (term_smtcoq_atom b))
       | Some (n, [a]) when n == H.uminus_Int ->
-        Form.Atom (Atom.mk_opp ra (term_smtcoq_atom a))
+        Form.Atom (Atom.mk_neg ra (term_smtcoq_atom a))
       | Some (n, _) ->
         Format.eprintf "\nTerm: %a\n@." print_term t;
         failwith ("LFSC function symbol "^Hstring.view n^" not supported.")

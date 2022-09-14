@@ -99,7 +99,6 @@ let import_trace ra rf filename for_tactic lsmt =
          let rec find_qf_lemma f = function
            | [] -> assert false
            | (x,x')::xs ->
-              (Format.printf "x  = %a\nx' = %a\nf  = %a\n\n" (SmtAtom.Form.to_smt ~debug:true) x (SmtAtom.Form.to_smt ~debug:true) x' (SmtAtom.Form.to_smt ~debug:true) f;
                flush stdout;
                if SmtAtom.Form.equal x' f then x else find_qf_lemma f xs
               )

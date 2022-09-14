@@ -179,7 +179,6 @@ rule token = parse
   | ">="                       { GEQ }
   | "+"                        { PLUS }
   | "-"                        { MINUS }
-  | "~"                        { OPP }
   | "*"                        { MULT }
   | "=>"                       { IMP }
 

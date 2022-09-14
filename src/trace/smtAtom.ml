@@ -749,9 +749,9 @@ module Atom =
           | UO_Zpos ->
              Format.fprintf fmt "%a" to_smt h
           | UO_Zneg ->
-             Format.fprintf fmt "(- %a %s)" to_smt h (if debug then "Zneg" else "")
+             Format.fprintf fmt "(- %a%s)" to_smt h (if debug then " [Zneg]" else "")
           | UO_Zopp ->
-             Format.fprintf fmt "(- %a %s)" to_smt h (if debug then "Zopp" else "")
+             Format.fprintf fmt "(- %a%s)" to_smt h (if debug then " [Zopp]" else "")
           | UO_BVbitOf (_, i) ->
              Format.fprintf fmt "(bitof %d %a)" i to_smt h
           | UO_BVnot _ ->
@@ -896,15 +896,6 @@ module Atom =
         HashAtom.find reify.tbl (Abop (op, h1, h2))
       with Not_found ->
         get ~declare:decl reify (Abop (op, h1, h2))
-
-    let mk_neg reify ({index = i; hval = a} as ha) =
-      try HashAtom.find reify.tbl (Auop (UO_Zopp, ha))
-      with Not_found ->
-        let na = match a with
-          | Auop (UO_Zpos, x) -> Auop (UO_Zneg, x)
-          | Auop (UO_Zneg, x) -> Auop (UO_Zpos, x)
-          | _ -> failwith "opp not on Z" in
-        get reify na
 
     let rec hash_hatom ?(eqsym=true) ra_quant {index = _; hval = a} =
       match a with
@@ -1097,6 +1088,18 @@ module Atom =
       Hashtbl.find op_coq_terms
 
 
+    (* mk_neg generates the opposite of an atom of type Z, normalized:
+       constants should be Zneg (and not Zopp) *)
+    let mk_neg ra ?declare:(decl=true) ({index = i; hval = a} as ha) =
+      let na =
+        match a with
+          | Auop (UO_Zpos, x) -> Auop (UO_Zneg, x)
+          | Auop (UO_Zneg, x) -> Auop (UO_Zpos, x)
+          | _ -> Auop (UO_Zopp, ha)
+      in
+      get ~declare:decl ra na
+
+
     exception UnknownUnderForall
 
     let of_coq ?eqsym:(eqsym=false) rt ro reify known_logic env sigma c =
@@ -1118,7 +1121,8 @@ module Atom =
         | CCxI -> mk_uop UO_xI args
         | CCZpos -> mk_uop UO_Zpos args
         | CCZneg -> mk_uop UO_Zneg args
-        | CCZopp -> mk_uop UO_Zopp args
+        (* Special case, to reify constants as Zneg instead of Zopp *)
+        | CCZopp -> mk_uop_zopp args
         | CCBVbitOf -> mk_bvbitof args
         | CCBVnot -> mk_bvnot args
         | CCBVneg -> mk_bvneg args
@@ -1166,6 +1170,12 @@ module Atom =
       and mk_uop op = function
         | [a] -> let h = mk_hatom a in
           get reify (Auop (op,h))
+        | _ -> assert false
+
+      and mk_uop_zopp = function
+        | [a] ->
+           let h = mk_hatom a in
+           mk_neg reify h
         | _ -> assert false
 
       and mk_bvbitof = function
@@ -1532,7 +1542,6 @@ module Atom =
     let mk_bvult reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVult s) reify
     let mk_bvslt reify ?declare:(decl=true) s = mk_binop ~declare:decl (BO_BVslt s) reify
     let mk_bvconcat reify ?declare:(decl=true) s1 s2 = mk_binop ~declare:decl (BO_BVconcat (s1, s2)) reify
-    let mk_opp ra ?declare:(decl=true) = mk_unop ~declare:decl UO_Zopp ra
     let mk_distinct reify ?declare:(decl=true) ty = mk_nop ~declare:decl (NO_distinct ty) reify
     let mk_bitof reify ?declare:(decl=true) s i = mk_unop ~declare:decl (UO_BVbitOf (s, i)) reify
     let mk_bvnot reify ?declare:(decl=true) s = mk_unop ~declare:decl (UO_BVnot s) reify

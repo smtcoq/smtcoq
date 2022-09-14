@@ -32,13 +32,13 @@
 
 
 /*
-  définition des lexèmes
+  lexemes definition
 */
 
 %token EOL SAT
 %token COLON
 %token LPAR RPAR LBRACKET RBRACKET
-%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT OPP LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVULE BVSLE BVCONC BVEXTR BVZEXT BVSEXT BVNOT BVNEG SELECT STORE DIFF BVSHL BVSHR
+%token NOT XOR ITE EQ LT LEQ GT GEQ PLUS MINUS MULT LET DIST BBT BITOF BVAND BVOR BVXOR BVADD BVMUL BVULT BVSLT BVULE BVSLE BVCONC BVEXTR BVZEXT BVSEXT BVNOT BVNEG SELECT STORE DIFF BVSHL BVSHR
 %token TBOOL TINT
 %token<int> TINDEX
 %token INPU DEEP TRUE FALS ANDP ANDN ORP ORN XORP1 XORP2 XORN1 XORN2 IMPP IMPN1 IMPN2 EQUP1 EQUP2 EQUN1 EQUN2 ITEP1 ITEP2 ITEN1 ITEN2 EQRE EQTR EQCO EQCP DLGE LAGE LATA DLDE LADE FINS EINS SKEA SKAA QNTS QNTM RESO WEAK AND NOR OR NAND XOR1 XOR2 NXOR1 NXOR2 IMP NIMP1 NIMP2 EQU1 EQU2 NEQU1 NEQU2 ITE1 ITE2 NITE1 NITE2 TPAL TLAP TPLE TPNE TPDE TPSA TPIE TPMA TPBR TPBE TPSC TPPP TPQT TPQS TPSK SUBP FLAT HOLE FORALL BBVA BBCONST BBEXTR BBZEXT BBSEXT BBEQ BBDIS BBOP BBADD BBMUL BBULT BBSLT BBNOT BBNEG BBCONC ROW1 ROW2 EXTE BBSHL BBSHR
@@ -46,7 +46,7 @@
 %token <Big_int.big_int> BIGINT
 %token <string> VAR BINDVAR ATVAR BITV
 
-/* type de "retour" du parseur : une clause */
+/* "return" type of the parser: a clause */
 %type <int> line
 /*
 %type <VeritSyntax.atom_form_lit> term
@@ -241,9 +241,9 @@ term:   /* returns a bool * (SmtAtom.Form.pform or SmtAtom.hatom), the boolean i
   | GEQ name_term name_term                                { apply_bdec_atom (Atom.mk_ge ra) $2 $3 }
   | PLUS name_term name_term                               { apply_bdec_atom (Atom.mk_plus ra) $2 $3 }
   | MULT name_term name_term                               { apply_bdec_atom (Atom.mk_mult ra) $2 $3 }
-  | MINUS name_term name_term                              { apply_bdec_atom (Atom.mk_minus ra) $2 $3}
-  | MINUS name_term                                        { apply_dec_atom (fun ?declare:d a -> Atom.mk_neg ra a) $2 }
-  | OPP name_term                                          { apply_dec_atom (Atom.mk_opp ra) $2 }
+  | MINUS name_term name_term                              { apply_bdec_atom (Atom.mk_minus ra) $2 $3 }
+  | MINUS name_term                                        { apply_dec_atom (Atom.mk_neg ra) $2 }
+  /* | OPP name_term                                          { apply_dec_atom (Atom.mk_opp ra) $2 } */
   | DIST args                                              { let da, la = list_dec $2 in
     	 						     let a = Array.of_list la in
                                                              da, Form.Atom (Atom.mk_distinct ra ~declare:da (Atom.type_of a.(0)) a) }

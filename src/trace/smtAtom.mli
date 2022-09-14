@@ -129,8 +129,6 @@ module Atom :
 
       val get : ?declare:bool -> reify_tbl -> atom -> t
 
-      val mk_neg : reify_tbl -> t -> t
-
       (* Re-hashes atoms; if ~eqsym is set to true (default), it also
          collapses symmetric occurrences of the same equality *)
       val hash_hatom : ?eqsym:bool -> reify_tbl -> t -> t
@@ -178,7 +176,7 @@ module Atom :
       val mk_bvult : reify_tbl -> ?declare:bool -> int -> t -> t -> t
       val mk_bvslt : reify_tbl -> ?declare:bool -> int -> t -> t -> t
       val mk_bvconcat : reify_tbl -> ?declare:bool -> int -> int -> t -> t -> t
-      val mk_opp : reify_tbl -> ?declare:bool -> t -> t
+      val mk_neg : reify_tbl -> ?declare:bool -> t -> t
       val mk_distinct : reify_tbl -> ?declare:bool -> btype -> t array -> t
       val mk_bitof : reify_tbl -> ?declare:bool -> int -> int -> t -> t
       val mk_bvnot : reify_tbl -> ?declare:bool -> int -> t -> t

@@ -170,11 +170,11 @@ module Make (Atom:ATOM) =
     let rec to_smt ?debug:(debug=false) fmt = function
       | Pos hp ->
          if debug then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
-         to_smt_pform fmt hp.hval
+         to_smt_pform ~debug:debug fmt hp.hval
       | Neg hp ->
          if debug then Format.fprintf fmt "%s" (string_of_int hp.index ^ ":");
          Format.fprintf fmt "(not ";
-         to_smt_pform fmt hp.hval;
+         to_smt_pform ~debug:debug fmt hp.hval;
          Format.fprintf fmt ")"
 
     and to_smt_pform ?(debug=false) fmt = function
@@ -208,7 +208,7 @@ module Make (Atom:ATOM) =
              Format.fprintf fmt  ")")
       );
 
-      Array.iter (fun h -> Format.fprintf fmt " "; to_smt fmt h) args;
+      Array.iter (fun h -> Format.fprintf fmt " "; to_smt ~debug:debug fmt h) args;
       Format.fprintf fmt "%s" s2
 
     and to_smt_args fmt = function
