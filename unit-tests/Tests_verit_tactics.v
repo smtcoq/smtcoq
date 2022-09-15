@@ -1596,3 +1596,16 @@ Section OpenCompdec.
   (* Should leave open CompDec goals but not fail *)
 
 End OpenCompdec.
+
+
+(* Use veriT when the context is inconsistent, whatever the goal is *)
+Section ExFalso.
+
+  Variable a : Z.
+  Hypothesis H : (a >? a) = true.
+
+  Goal False. Proof. verit. Qed.
+
+  Goal (3 = 4)%nat. Proof. verit. Qed.
+
+End ExFalso.
