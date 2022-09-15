@@ -895,7 +895,10 @@ module Atom =
       try
         HashAtom.find reify.tbl (Abop (op, h1, h2))
       with Not_found ->
-        get ~declare:decl reify (Abop (op, h1, h2))
+        try
+          HashAtom.find reify.tbl (Abop (op, h2, h1))
+        with Not_found ->
+          get ~declare:decl reify (Abop (op, h1, h2))
 
     let rec hash_hatom ?(eqsym=true) ra_quant {index = _; hval = a} =
       match a with
