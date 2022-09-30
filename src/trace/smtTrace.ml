@@ -154,22 +154,26 @@ let order_roots init_index first =
   while isRoot !r.kind do
     begin match !r.value with
     | Some [f] -> let n = next !r in
-                  clear_links !r; 
+                  clear_links !r;
                   acc := (init_index f, !r) :: !acc;
                   r := n
-    | _ -> failwith "root value has unexpected form" end
+    | _ -> failwith "root value has unexpected form"
+    end
   done;
   let _, lr = List.sort (fun (i1, _) (i2, _) -> Stdlib.compare i1 i2) !acc
-             |> List.split in
+             |> List.split
+  in
   let link_to c1 c2 =
     let curr_id = c2.id -1 in
     c1.id <- curr_id;
     c1.pos <- Some curr_id;
-    link c1 c2; c1 in
+    link c1 c2;
+    c1
+  in
   List.fold_right link_to lr !r, lr
 
 
-(* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that 
+(* <add_scertifs> adds the clauses <to_add> after the roots and makes sure that
 the following clauses reference those clauses instead of the roots *)
 let add_scertifs to_add c =
   let r = ref c in

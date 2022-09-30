@@ -741,9 +741,11 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
   let lsmt = List.map snd l_pl_ls in
 
   let lem_tbl : (int, CoqInterface.constr * CoqInterface.constr) Hashtbl.t =
-    Hashtbl.create 100 in
+    Hashtbl.create 100
+  in
   let new_ref ((l, pl), ls) =
-    Hashtbl.add lem_tbl (Form.index ls) (l, pl) in
+    Hashtbl.add lem_tbl (Form.index ls) (l, pl)
+  in
 
   List.iter new_ref l_pl_ls;
 
@@ -758,8 +760,10 @@ let core_tactic call_solver solver_logic rt ro ra rf ra_quant rf_quant vm_cast l
                let fmt = Format.formatter_of_out_channel oc in
                List.iter (fun u -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) u) lsmt;
                Format.fprintf fmt "\n%a\n" (Form.to_smt ~debug:true) hl;
-               flush oc; close_out oc; failwith "find_lemma" end
-      | _ -> failwith "unexpected form of root" in
+               flush oc; close_out oc; failwith "find_lemma"
+       end
+      | _ -> failwith "unexpected form of root"
+  in
 
   let (body_cast, body_nocast, cuts) =
     if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||

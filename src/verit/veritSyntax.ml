@@ -557,6 +557,9 @@ let init_index lsmt re_hash =
               flush oc; close_out oc;
               failwith "Input not found: log available in /tmp/input_not_found.log"
 
+(* Inputs which are quantifier-free lemmas will be used directly and not
+   throught the verit ForallInst rule. We thus find them in order to add
+   a dummy ForallInst rule. *)
 let qf_to_add lr =
   let is_forall l = match Form.pform l with
     | Fapp (Fforall _, _) -> true
