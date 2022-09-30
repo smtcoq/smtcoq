@@ -11,7 +11,7 @@
 
 
 Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
-Require Import Int63.
+Require Import Uint63.
 Require Import State BVList FArray.
 Require Export SMT_classes.
 
@@ -469,9 +469,9 @@ Section FArray.
 End FArray.
 
 
-Section Int63.
+Section Uint63.
 
-  Local Open Scope int63_scope.
+  Local Open Scope uint63_scope.
 
   Let int_lt x y :=
     if x <? y then True else False.
@@ -503,14 +503,14 @@ Section Int63.
     intros x y.
     case_eq (x <? y); intro;
       case_eq (x =? y); intro; unfold lt in *; simpl.
-    - rewrite Int63.eqb_spec in H0.
+    - rewrite Uint63.eqb_spec in H0.
       contradict H0.
       assert (int_lt x y). unfold int_lt.
       rewrite H; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
     - apply LT. unfold int_lt. rewrite H; trivial.
-    - apply EQ. rewrite Int63.eqb_spec in H0; trivial.
+    - apply EQ. rewrite Uint63.eqb_spec in H0; trivial.
     - apply GT. unfold int_lt.
       case_eq (y <? x); intro; simpl; try easy.
       specialize (Misc.leb_ltb_eqb x y); intro.
@@ -523,7 +523,7 @@ Section Int63.
   Defined.
 
   Global Instance int63_eqbtype : EqbType int :=
-    {| eqb := Int63.eqb; eqb_spec := Int63.eqb_spec |}.
+    {| eqb := Uint63.eqb; eqb_spec := Uint63.eqb_spec |}.
 
   Global Instance int63_dec : DecType int := EqbToDecType.
 
@@ -537,7 +537,7 @@ Section Int63.
     Inh := int63_inh
   |}.
 
-End Int63.
+End Uint63.
 
 
 Section option.

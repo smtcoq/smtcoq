@@ -10,14 +10,14 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray Psatz ZArith.
+Require Import Bool List Uint63 PArray Psatz ZArith.
 Require Import Misc State SMT_terms FArray SMT_classes.
 
 Import Form.
 Import Atom.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Section certif.
 
@@ -226,14 +226,14 @@ Section certif.
         apply Typ.eqb_spec in Heq6a.
         apply Typ.eqb_spec in Heq6b.
         apply Typ.eqb_spec in Heq6c.
-        apply Int63.eqb_spec in Heq6d.
-        apply Int63.eqb_spec in Heq6e.
+        apply Uint63.eqb_spec in Heq6d.
+        apply Uint63.eqb_spec in Heq6e.
 
         pose proof (rho_interp (Lit.blit lres)) as Hrho.
         rewrite Heq2 in Hrho. simpl in Hrho.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). assert (a <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq3. easy.
@@ -440,7 +440,7 @@ Section certif.
         subst t1 t2 t3 t4.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H2.
 
         assert (H15: b1 <? PArray.length t_atom).
         apply PArray.get_not_default_lt. rewrite def_t_atom. rewrite Heq7. discriminate.
@@ -629,9 +629,9 @@ Section certif.
 
           apply Typ.eqb_spec in Heq11a.
           apply Typ.eqb_spec in Heq11b.
-          apply Int63.eqb_spec in Heq11c.
+          apply Uint63.eqb_spec in Heq11c.
           rewrite !andb_true_iff in Heq11d.
-          rewrite !Int63.eqb_spec in Heq11d.
+          rewrite !Uint63.eqb_spec in Heq11d.
 
 
           rewrite !Atom.t_interp_wf in isif; trivial.
@@ -785,9 +785,9 @@ Section certif.
 
           apply Typ.eqb_spec in Heq11a.
           apply Typ.eqb_spec in Heq11b.
-          apply Int63.eqb_spec in Heq11d.
+          apply Uint63.eqb_spec in Heq11d.
           rewrite !andb_true_iff in Heq11c.
-          rewrite !Int63.eqb_spec in Heq11c.
+          rewrite !Uint63.eqb_spec in Heq11c.
 
 
           rewrite !Atom.t_interp_wf in isif; trivial.
@@ -955,14 +955,14 @@ Section certif.
     apply Typ.eqb_spec in Heq15.
     apply Typ.eqb_spec in Heq15a.
     subst t3 t5 t4 t6 t7 t8.
-    rewrite !Int63.eqb_spec in Heq1314.
+    rewrite !Uint63.eqb_spec in Heq1314.
 
     unfold Lit.interp. rewrite Heq.
     unfold Var.interp.
     rewrite !wf_interp_form; trivial. rewrite Heq2. simpl.
     rewrite afold_left_or.
     unfold to_list.
-    rewrite Int63.eqb_spec in Heq3.
+    rewrite Uint63.eqb_spec in Heq3.
     rewrite Heq3.
 
     (* simpl. *)
@@ -972,9 +972,6 @@ Section certif.
     change (2 - 1) with 1; change (2 - 1 - 1) with 0.
 
     simpl. rewrite orb_false_r.
-    assert (1 - 1 = 0) as Has2. { auto. }
-                                rewrite Has2.
-
     case_eq (Lit.interp rho (a .[ 0])). intro Hisa0.
     rewrite orb_true_l. easy. intro Hisa. rewrite orb_false_l.
 
@@ -996,7 +993,7 @@ Section certif.
     rewrite H0.
 
     generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-    rewrite aforallbi_spec;intros.
+    rewrite aforallbi_spec;intro H1.
 
     (* b *)
     pose proof (H1 b). assert (b <? PArray.length t_atom).

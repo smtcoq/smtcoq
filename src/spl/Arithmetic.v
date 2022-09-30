@@ -12,12 +12,12 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-Require Import List PArray Bool Int63 ZMicromega.
+Require Import List PArray Bool Uint63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 
 (* Arbritrary arithmetic simplifications *)

@@ -1,0 +1,1 @@
+$(ALLDFILES): | ../3rdparty/alt-ergo/smtlib2_lex.ml lfsc/lfscLexer.ml smtlib2/sExprLexer.ml verit/veritLexer.ml ../3rdparty/alt-ergo/smtlib2_parse.mli ../3rdparty/alt-ergo/smtlib2_parse.ml lfsc/lfscParser.mli lfsc/lfscParser.ml smtlib2/sExprParser.mli smtlib2/sExprParser.ml verit/veritParser.mli verit/veritParser.ml

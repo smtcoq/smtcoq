@@ -16,7 +16,7 @@ Require Import Misc State SMT_terms BVList.
 Import Form.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -49,7 +49,7 @@ Lemma get_or_of_imp2 : forall args i, 0 <? PArray.length args ->
   i = (PArray.length args) - 1 -> (or_of_imp args).[i] = args.[i].
 Proof.
   unfold or_of_imp; intros args i Heq Hi; rewrite get_amapi; subst i.
-  rewrite Int63.eqb_refl; auto.
+  rewrite Uint63.eqb_refl; auto.
   rewrite ltb_spec, (to_Z_sub_1 _ _ Heq); lia.
 Qed.
 
@@ -413,7 +413,7 @@ Section CHECKER.
                  by (intro H; apply Hl; now apply to_Z_inj).
                destruct (to_Z_bounded (PArray.length a)) as [H1 _].
                lia.
-             + now rewrite Int63.eqb_spec in Heq.
+             + now rewrite Uint63.eqb_spec in Heq.
          }
        * now rewrite orb_true_r.
      + rewrite orb_false_r.
@@ -495,7 +495,7 @@ Section CHECKER.
                                                         existsb_exists;case_eq (Lit.interp rho (a .[ i]));trivial;
          intros Heq2 Hex;elim Hex.
      exists (a.[i]);split;trivial.
-     assert (H1: 0 <? PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Int63.eqb_spec in Heq'; rewrite <- (get_or_of_imp2 H1 Heq'); apply to_list_In; rewrite length_or_of_imp; auto.
+     assert (H1: 0 <? PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Uint63.eqb_spec in Heq'; rewrite <- (get_or_of_imp2 H1 Heq'); apply to_list_In; rewrite length_or_of_imp; auto.
      exists (Lit.neg (a.[i]));rewrite Lit.interp_neg, Heq2;split;trivial.
      assert (H1: i <? PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq'; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; lia); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
   Qed.

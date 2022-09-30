@@ -10,10 +10,10 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 PArray.
+Require Import Bool List Uint63 PArray.
 Require Import State SMT_terms.
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Section certif.
 
@@ -214,7 +214,7 @@ Section certif.
       case_eq (t_atom.[i]);trivial with smtcoq_euf;intros.
       destruct b;trivial with smtcoq_euf.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite Misc.aforallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intro H1.
       assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H0, def_t_atom;discriminate.
@@ -476,7 +476,7 @@ Section certif.
        destruct (rho (Lit.blit lpa));reflexivity.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite Misc.aforallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intro H4.
       assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom;discriminate.
@@ -497,7 +497,7 @@ Section certif.
        destruct (rho (Lit.blit lpa));reflexivity.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite Misc.aforallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intro H4.
       assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom. discriminate.
@@ -519,7 +519,7 @@ Section certif.
        destruct (rho (Lit.blit lpa));reflexivity.
       rewrite !wf_interp_form, H, H0;simpl.
       generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite Misc.aforallbi_spec;intros.
+       rewrite Misc.aforallbi_spec;intro H4.
       assert (i <? length t_atom).
         apply PArray.get_not_default_lt.
         rewrite H1, def_t_atom;discriminate.

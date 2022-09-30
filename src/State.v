@@ -10,11 +10,11 @@
 (**************************************************************************)
 
 
-Require Import List Bool Int63 Psatz Ring63 PArray Misc Ring.
+Require Import List Bool Uint63 Psatz Ring63 PArray Misc Ring.
 
 (* Require Import AxiomesInt. *)
 
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 Local Open Scope array_scope.
 
 Coercion is_true : bool >-> Sortclass.
@@ -651,7 +651,7 @@ Module S.
 
   (* Resolution *)
 
-  Open Scope int63_scope.
+  Open Scope uint63_scope.
 
   Definition set_resolve (s:t) pos (r:resolution) : t :=
     let len := PArray.length r in

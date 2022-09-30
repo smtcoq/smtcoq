@@ -10,13 +10,13 @@
 (**************************************************************************)
 
 
-Require Import Bool Int63 Psatz PArray BinNat BinPos ZArith SMT_classes_instances.
+Require Import Bool Uint63 Psatz PArray BinNat BinPos ZArith SMT_classes_instances.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
 Require List .
 Local Open Scope list_scope.
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 #[export] Hint Unfold is_true : smtcoq_core.
 
@@ -836,10 +836,10 @@ Module Atom.
     | Acop o, Acop o' => cop_eqb o o'
     | Auop o t, Auop o' t' => uop_eqb o o' && (t =? t')
     | Abop o t1 t2, Abop o' t1' t2' => bop_eqb o o' && (t1 =? t1') && (t2 =? t2')
-    | Anop o t, Anop o' t' => nop_eqb o o' && list_beq Int63.eqb t t'
+    | Anop o t, Anop o' t' => nop_eqb o o' && list_beq Uint63.eqb t t'
     | Atop o t1 t2 t3, Atop o' t1' t2' t3' =>
       top_eqb o o' && (t1 =? t1') && (t2 =? t2') && (t3 =? t3')
-    | Aapp a la, Aapp b lb => (a =? b) && list_beq Int63.eqb la lb
+    | Aapp a la, Aapp b lb => (a =? b) && list_beq Uint63.eqb la lb
     | _, _ => false
     end.
 
