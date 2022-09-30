@@ -11,6 +11,7 @@
 
 
 From Trakt Require Import Trakt.
+Require Import Setoid.
 
 
 (* Boolean equality *)
