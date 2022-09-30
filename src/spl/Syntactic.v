@@ -11,12 +11,12 @@
 
 
 (*** Spl -- a small checker for simplifications ***)
-Require Import List PArray Bool Int63 ZMicromega ZArith.
+Require Import List PArray Bool Uint63 ZMicromega ZArith.
 Require Import Misc State SMT_terms BVList.
 Require Lia.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 
 (* Flattening and small arithmetic simplifications *)
@@ -184,7 +184,7 @@ Section CheckAtom.
       (* N-ary operators *)
       - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; destruct op1 as [t1]; destruct op2 as [t2]; unfold is_true; rewrite andb_true_iff; change (Typ.eqb t1 t2 = true) with (is_true (Typ.eqb t1 t2)); rewrite Typ.eqb_spec; intros [H1 H2]; subst t2; rewrite (list_beq_compute_interp _ _ _ H2); auto.
       (* Application *)
-      - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff, Int63.eqb_spec; intros [H2 H1]; subst f2; rewrite (list_beq_correct _ _ H1); auto.
+      - intros [op2|op2 i2|op2 i2 j2|op2 i2 j2|op2 li2|f2 args2]; simpl; try discriminate; unfold is_true; rewrite andb_true_iff, Uint63.eqb_spec; intros [H2 H1]; subst f2; rewrite (list_beq_correct _ _ H1); auto.
     Qed.
 
   End AUX.
@@ -234,7 +234,7 @@ Section CheckAtom.
   apply leb_0.
    intros i cont _ _ Hrec h1 h2.
    unfold is_true; rewrite orb_true_iff; intros [H|H].
-   rewrite Int63.eqb_spec in H; rewrite H; reflexivity.
+   rewrite Uint63.eqb_spec in H; rewrite H; reflexivity.
    unfold interp_hatom;rewrite !t_interp_wf;trivial.
    apply check_atom_aux_correct with cont;trivial.
   Qed.

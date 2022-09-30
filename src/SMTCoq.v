@@ -11,7 +11,7 @@
 
 
 Require Export PropToBool.
-Require Export Int63 List.
+Require Export Uint63 List.
 Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
 Require Export Tactics.
 Require Export Conversion_tactics.

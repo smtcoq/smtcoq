@@ -12,7 +12,7 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-Require Import Int63 PArray SMT_classes ZArith.
+Require Import Uint63 PArray SMT_classes ZArith.
 
 Require Import Misc State SMT_terms BVList Psatz.
 Require Import Bool List BoolEq NZParity Nnat.
@@ -25,7 +25,7 @@ Import ListNotations.
 Import Form.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 Local Open Scope list_scope.
 
 Set Implicit Arguments.
@@ -1207,7 +1207,7 @@ Proof.
   rewrite Typ.N_cast_refl. simpl.
 
   generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-  rewrite aforallbi_spec;intros.
+  rewrite aforallbi_spec;intro H.
 
   (* a *)
   pose proof (H a).
@@ -1351,7 +1351,7 @@ Proof. intros a bs.
          rewrite Hif0. rewrite <- Hd.
 
          generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-         rewrite aforallbi_spec;intros.
+         rewrite aforallbi_spec;intro H3.
          assert (i1 <? PArray.length t_atom).
          {
            apply PArray.get_not_default_lt.
@@ -1498,24 +1498,21 @@ Lemma rho_1: Lit.interp rho 1 = false.
 Proof. unfold Lit.interp.
        unfold Lit.is_pos.
        simpl.
-       cut (is_even 1 = false). intro Hev. rewrite Hev.
        unfold Var.interp.
        destruct wf_rho. unfold Lit.blit.
        cut (1 >> 1 = 0). intros Heq0. rewrite Heq0. 
        unfold negb. now rewrite H.
-       easy. easy.
+       easy.
 Qed.
 
 Lemma rho_false: Lit.interp rho false = true.
 Proof. unfold Lit.interp.
        unfold Lit.is_pos.
        simpl.
-       cut (is_even 0 = true). intro Hev. rewrite Hev.
        unfold Var.interp.
        destruct wf_rho. simpl. unfold Lit.blit.
        cut (0 >> 1 = 0). intros Heq0. rewrite Heq0. exact H.
        now rewrite lsr0_l.
-       apply is_even_0.
 Qed.
 
 Lemma bitOf_of_bits: forall l (a: BITVECTOR_LIST.bitvector (N.of_nat (length l))), 
@@ -1748,7 +1745,7 @@ Proof.
     + simpl in Hcheck; now contradict Hcheck.
     + simpl in Hlen. inversion Hlen as [Hlen'].
       simpl in Hcheck. rewrite andb_true_iff in Hcheck; destruct Hcheck as (Hcheck1, Hcheck2).
-      apply Int63.eqb_spec in Hcheck1; rewrite Hcheck1.
+      apply Uint63.eqb_spec in Hcheck1; rewrite Hcheck1.
       simpl. rewrite Lit.interp_neg. apply f_equal.
       apply IHbs; auto.
 Qed.
@@ -1793,7 +1790,7 @@ Proof.
   rewrite !andb_true_iff in Hc.
   destruct Hc as ((Ha, Hcheck), Hlen).
   rewrite N.eqb_eq in Hlen.
-  apply Int63.eqb_spec in Ha.
+  apply Uint63.eqb_spec in Ha.
   generalize (Hs pos).
   rewrite Hpos, Hnil.
   unfold C.valid, C.interp; simpl; rewrite !orb_false_r.
@@ -1809,7 +1806,7 @@ Proof.
 
 
   generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-  rewrite aforallbi_spec;intros.
+  rewrite aforallbi_spec;intro H.
 
   pose proof (H r). 
   assert (r <? PArray.length t_atom).
@@ -3224,7 +3221,7 @@ Proof.
         rewrite Atom.t_interp_wf; trivial.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -3557,7 +3554,7 @@ Proof.
         rewrite Atom.t_interp_wf; trivial.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -3889,7 +3886,7 @@ Proof.
         rewrite Atom.t_interp_wf; trivial.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a).
         assert (a <? PArray.length t_atom).
@@ -4517,7 +4514,7 @@ Lemma valid_check_bbEq pos1 pos2 lres : C.valid rho (check_bbEq pos1 pos2 lres).
        rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
 
        generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-       rewrite aforallbi_spec;intros.
+       rewrite aforallbi_spec;intro H.
 
        pose proof (H a3).
        assert (a3 <? PArray.length t_atom).
@@ -5173,7 +5170,7 @@ Proof.
        rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
 
        generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-       rewrite aforallbi_spec;intros.
+       rewrite aforallbi_spec;intro H.
 
        pose proof (H a3).
        assert (a3 <? PArray.length t_atom).
@@ -5398,7 +5395,7 @@ Proof.
        rewrite wf_interp_form; trivial. rewrite Heq8. simpl.
 
        generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-       rewrite aforallbi_spec;intros.
+       rewrite aforallbi_spec;intro H.
 
        pose proof (H a3).
        assert (a3 <? PArray.length t_atom).
@@ -5810,7 +5807,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -6258,7 +6255,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -6290,7 +6287,7 @@ Proof.
         do 2 rewrite andb_true_iff in Heq11.
         destruct Heq11 as (Heq10, Heq11).
         destruct Heq10 as (Heq10a1 & Heq10a2). 
-        rewrite Int63.eqb_spec in Heq10a1; rewrite Heq10a1 in *.
+        rewrite Uint63.eqb_spec in Heq10a1; rewrite Heq10a1 in *.
 
        (* interp_form_hatom_bv a = 
                 interp_bv t_i (interp_atom (t_atom .[a])) *)
@@ -6608,7 +6605,7 @@ Proof.
 
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -6913,7 +6910,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -7229,7 +7226,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -7489,7 +7486,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -7735,7 +7732,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -8059,7 +8056,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).
@@ -8389,7 +8386,7 @@ Proof.
         apply BITVECTOR_LIST.bv_eq_reflect.
 
         generalize wt_t_atom. unfold Atom.wt. unfold is_true.
-        rewrite aforallbi_spec;intros.
+        rewrite aforallbi_spec;intro H.
 
         pose proof (H a). 
         assert (a <? PArray.length t_atom).

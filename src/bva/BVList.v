@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith Psatz Int63 Nnat ZArith.
+Require Import List Bool NArith Psatz Uint63 Nnat ZArith.
 Require Import Misc.
 Require Import ProofIrrelevance.
 Import ListNotations.
@@ -665,7 +665,7 @@ Fixpoint mult_bool_step_k_h (a b: list bool) (c: bool) (k: Z) : list bool :=
     | ai :: a' , nil => ai :: mult_bool_step_k_h a' b c k
   end.
 
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Fixpoint top_k_bools (a: list bool) (k: int) : list bool :=
   if (k =? 0) then nil

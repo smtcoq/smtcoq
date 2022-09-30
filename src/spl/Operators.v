@@ -12,11 +12,11 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-Require Import List PArray Bool Int63 ZMicromega.
+Require Import List PArray Bool Uint63 ZMicromega.
 Require Import Misc State SMT_terms.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 
 (* Simplification of SMTLIB-2 operators *)
@@ -68,7 +68,7 @@ Section Operators.
   Proof.
     intros a dist t; induction dist as [ |b q IHq]; simpl; split; auto.
     intros _ y H; inversion H.
-    case_eq (aexistsbi (fun _ (x : option (int * int)) => match x with | Some (a', b') => (a =? a') && (b =? b') || (a =? b') && (b =? a') | None => false end) t); try discriminate; rewrite aexistsbi_spec; intros [i [H1 H2]]; rewrite IHq; clear IHq; intros H3 y [H4|H4]; auto; subst y; exists i; split; auto; generalize H2; case (t .[ i]); try discriminate; intros [a' b']; rewrite orb_true_iff, !andb_true_iff, !Int63.eqb_spec; intros [[H4 H5]|[H4 H5]]; subst a' b'; auto.
+    case_eq (aexistsbi (fun _ (x : option (int * int)) => match x with | Some (a', b') => (a =? a') && (b =? b') || (a =? b') && (b =? a') | None => false end) t); try discriminate; rewrite aexistsbi_spec; intros [i [H1 H2]]; rewrite IHq; clear IHq; intros H3 y [H4|H4]; auto; subst y; exists i; split; auto; generalize H2; case (t .[ i]); try discriminate; intros [a' b']; rewrite orb_true_iff, !andb_true_iff, !Uint63.eqb_spec; intros [[H4 H5]|[H4 H5]]; subst a' b'; auto.
     intro H1; case_eq (aexistsbi (fun _ (x : option (int * int)) => match x with | Some (a', b') => (a =? a') && (b =? b') || (a =? b') && (b =? a') | None => false end) t).
     intros _; rewrite IHq; clear IHq; intros y Hy; apply H1; auto.
     rewrite aexistsbi_false_spec; destruct (H1 b (or_introl (refl_equal b))) as [i [H2 H3]]; intro H; rewrite <- (H _ H2); destruct H3 as [H3|H3]; rewrite H3; rewrite !eqb_refl; auto; rewrite orb_true_r; auto.
@@ -247,7 +247,7 @@ intros. destruct H0; now contradict H0.
        get_atom hb = Atom.Abop (Atom.BO_eq ty) y x).
   Proof.
     intros f1 f2; unfold check_distinct_two_args; split.
-    case (get_form f1); try discriminate; intro ha; case (get_form f2); try discriminate; intro hb; case_eq (get_atom ha); try discriminate; intros [A] [ |x [ |y [ |l]]] Heq1; try discriminate; case_eq (get_atom hb); try discriminate; intros [ | | | | | | |B | | | | | | | | | | | | ] x' y' Heq2; try discriminate; rewrite !andb_true_iff, orb_true_iff, !andb_true_iff; change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec, !Int63.eqb_spec; intros [H1 [[H2 H3]|[H2 H3]]]; subst B x' y'; exists ha, hb, A, x, y; auto.
+    case (get_form f1); try discriminate; intro ha; case (get_form f2); try discriminate; intro hb; case_eq (get_atom ha); try discriminate; intros [A] [ |x [ |y [ |l]]] Heq1; try discriminate; case_eq (get_atom hb); try discriminate; intros [ | | | | | | |B | | | | | | | | | | | | ] x' y' Heq2; try discriminate; rewrite !andb_true_iff, orb_true_iff, !andb_true_iff; change (Typ.eqb A B = true) with (is_true (Typ.eqb A B)); rewrite Typ.eqb_spec, !Uint63.eqb_spec; intros [H1 [[H2 H3]|[H2 H3]]]; subst B x' y'; exists ha, hb, A, x, y; auto.
     intros [ha [hb [A [x [y [H1 [H2 [H3 [H4|H4]]]]]]]]]; rewrite H1, H2, H3, H4, Typ.eqb_refl, !eqb_refl; auto; rewrite orb_true_r; auto.
   Qed.
 
@@ -391,7 +391,7 @@ intros. destruct H0; now contradict H0.
     (*   check_lit l1 l2 -> Lit.interp rho l1 -> Lit.interp rho l2 = true. *)
     (* Proof. *)
     (*   unfold check_lit; intros l1 l2; unfold is_true; rewrite !orb_true_iff, !andb_true_iff; intros [[H1|[[H1 H2] H3]]|[[H1 H2] H3]]. *)
-    (*   rewrite Int63.eqb_spec in H1; subst l1; auto with smtcoq_core. *)
+    (*   rewrite Uint63.eqb_spec in H1; subst l1; auto with smtcoq_core. *)
     (*   unfold Lit.interp; rewrite H1, H2; apply interp_check_var; auto with smtcoq_core. *)
     (*   unfold Lit.interp; case_eq (Lit.is_pos l1); intro Heq; rewrite Heq in H1; try discriminate; clear Heq H1; case_eq (Lit.is_pos l2); intro Heq; rewrite Heq in H2; try discriminate; clear Heq H2; case_eq (Var.interp rho (Lit.blit l1)); try discriminate; intros H4 _; case_eq (Var.interp rho (Lit.blit l2)); auto with smtcoq_core; intro H5; rewrite (interp_check_var _ _ H3 H5) in H4; discriminate. *)
     (* Qed. *)
@@ -404,11 +404,11 @@ intros. destruct H0; now contradict H0.
     Proof.
       intros [a| | |i1 l1|a1|a1|a1|l1 l2|l1 l2|l1 l2 l3|a l1] [b| | |j1 m1|a2|a2|a2|j1 j2|j1 j2|j1 j2 j3|b m1]; simpl; try discriminate;auto with smtcoq_core.
       (* Atom *)
-      unfold is_true; rewrite Int63.eqb_spec; intro; subst a; auto with smtcoq_core.
+      unfold is_true; rewrite Uint63.eqb_spec; intro; subst a; auto with smtcoq_core.
       (* Interesting case *)
       apply interp_check_distinct; auto with smtcoq_core.
       (* Double negation *)
-      unfold is_true; rewrite andb_true_iff, Int63.eqb_spec; intros [H1 H2]; subst j1. rewrite (interp_check_lit _ _ H2). auto with smtcoq_core.
+      unfold is_true; rewrite andb_true_iff, Uint63.eqb_spec; intros [H1 H2]; subst j1. rewrite (interp_check_lit _ _ H2). auto with smtcoq_core.
       (* Conjunction *)
       unfold is_true; rewrite andb_true_iff, eqb_spec, aforallbi_spec; intros [H1 H2]; apply afold_left_eq; rewrite ?length_amap; auto with smtcoq_core; intros i Hi; rewrite 2!get_amap by (rewrite <- ?H1; assumption); apply interp_check_lit; auto with smtcoq_core.
       (* Disjunction *)
@@ -518,7 +518,7 @@ intros. destruct H0; now contradict H0.
       check_hform h1 h2 -> Var.interp rho h1 = Var.interp rho h2.
     Proof.
       unfold check_hform; apply foldi_ind; try discriminate. apply leb_0. intros i cont _ _ Hrec h1 h2. unfold is_true; rewrite orb_true_iff; intros [H|H].
-      rewrite Int63.eqb_spec in H; rewrite H; auto with smtcoq_core.
+      rewrite Uint63.eqb_spec in H; rewrite H; auto with smtcoq_core.
       unfold Var.interp; rewrite !wf_interp_form; auto with smtcoq_core; eapply interp_check_form_aux; eauto with smtcoq_core.
     Qed.
 

@@ -15,11 +15,11 @@
 
 Declare Scope array_scope.
 
-Require Export Int63 Psatz.
+Require Export Uint63 Psatz.
 Require FMapAVL.
 Require Import ZArith.
 
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Import OrderedType.
 

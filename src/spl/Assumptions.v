@@ -11,11 +11,11 @@
 
 
 Require Import State SMT_terms.
-Require Import List Bool PArray Int63.
+Require Import List Bool PArray Uint63.
 
 Local Open Scope list_scope.
 Local Open Scope bool_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Set Implicit Arguments.
 
@@ -93,7 +93,7 @@ Section Checker_correct.
   Proof.
     induction c1 as [ |l1 c1 IHc1]; simpl; intros [ |l2 c2]; simpl; auto; try discriminate.
     unfold is_true. rewrite andb_true_iff. intros [H1 H2].
-    rewrite Int63.eqb_spec in H1. now rewrite (IHc1 _ H2), H1.
+    rewrite Uint63.eqb_spec in H1. now rewrite (IHc1 _ H2), H1.
   Qed.
 
   Lemma valid_check_clause cid c :

@@ -132,7 +132,6 @@ Lemma impl_and_split_right a b c:
 Proof.
   intro H.
   destruct a; destruct c; intuition.
-  now rewrite andb_false_r in H.
 Qed.
 
 Lemma impl_and_split_left a b c:

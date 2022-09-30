@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool List PArray Int63 Ring63 ZArith Psatz.
-Local Open Scope int63_scope.
+Require Import Bool List PArray Uint63 Ring63 ZArith Psatz.
+Local Open Scope uint63_scope.
 Local Open Scope array_scope.
 
 Global Notation "[| x |]" := (φ x).
@@ -23,7 +23,7 @@ Lemma implb_true_r : forall a, implb a true = true.
 Proof. intros [ | ]; reflexivity. Qed.
 
 
-(** Lemmas about Int63 *)
+(** Lemmas about Uint63 *)
 
 Lemma reflect_eqb : forall i j, reflect (i = j)%Z (i =? j).
 Proof.
@@ -157,14 +157,14 @@ Proof.
    rewrite leb_spec;intros;rewrite sub_spec, Zmod_small;lia.
 Qed.
 
-Lemma to_Z_sub_1 : forall x y, y <? x = true -> ([| x - 1|] = [|x|] - 1)%Z.
+Lemma to_Z_sub_1 : forall x y, y <? x = true -> [|x - 1|] = ([|x|] - 1)%Z.
 Proof.
  intros;apply to_Z_sub_gt.
  generalize (leb_ltb_trans _ _ _ (leb_0 y) H).
  rewrite ltb_spec, leb_spec, to_Z_0, to_Z_1;auto with zarith.
 Qed.
 
-Lemma to_Z_sub_1_diff : forall x, x <> 0 -> ([| x - 1|] = [|x|] - 1)%Z.
+Lemma to_Z_sub_1_diff : forall x, x <> 0 -> [|x - 1|] = ([|x|] - 1)%Z.
 Proof.
   intros x;rewrite not_0_ltb;apply to_Z_sub_1.
 Qed.
@@ -206,7 +206,7 @@ Proof.
  case (_ <=? _); auto.
 Qed.
 
-Lemma bit_or_split i : i = (i>>1)<<1 lor bit i 0.
+Lemma bit_or_split i : i = (i>>1)<<1 lor (bit i 0).
 Proof.
  apply bit_ext.
  intros n; rewrite lor_spec.
@@ -730,7 +730,11 @@ Lemma In_to_list : forall {A} (t: array A) x,
 Proof.
   intros A t x; assert (Bt := to_Z_bounded (length t)); unfold to_list.
   rewrite <- in_rev.
-  set (a := foldi _ _ _ _); pattern (length t) at 0, a; subst a; apply foldi_ind.
+  set (a := foldi _ _ _ _).
+  change ((fun (_ : int) (l : list A) =>
+             In x l -> exists i0 : int, (i0 <? length t) = true /\ x = t .[ i0])
+            (length t) a).
+  subst a; apply foldi_ind.
   rewrite leb_spec, to_Z_0; lia.
   intro H; elim (in_nil H).
   intros i a _; assert (Bi := to_Z_bounded i); rewrite ltb_spec; intros Hi IH.
@@ -1659,7 +1663,7 @@ Proof. now unfold is_true. Qed.
 (* Register constants for OCaml access *)
 Register distinct as SMTCoq.Misc.distinct.
 
-Register Int63.eqb as num.int63.eqb.
+Register Uint63.eqb as num.int63.eqb.
 Register PArray.array as array.array.type.
 Register PArray.make as array.array.make.
 Register PArray.set as array.array.set.

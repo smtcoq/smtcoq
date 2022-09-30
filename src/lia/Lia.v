@@ -10,13 +10,13 @@
 (**************************************************************************)
 
 
-Require Import Bool List Int63 Ring63 PArray ZArith.
+Require Import Bool List Uint63 Ring63 PArray ZArith.
 Require Import Misc State SMT_terms Euf.
 
 Require Import RingMicromega ZMicromega Coq.micromega.Tauto Psatz.
 
 Local Open Scope array_scope.
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 Section certif.
 
@@ -1188,7 +1188,7 @@ Transparent build_z_atom.
       (* Fnot2 *)
       case_eq (build_var vm (Lit.blit l)); try discriminate; intros [vm0 f] Heq H H1; inversion H; subst vm0; subst bf; destruct (Hbv _ _ _ _ Heq H1) as [H2 [H3 [H4 [H5 H6]]]]; do 3 (split; auto); case_eq (Lit.is_pos l); [apply build_not2_pos_correct|apply build_not2_neg_correct]; auto.
       (* Fand *)
-      simpl; unfold afold_left; rewrite !length_amap; case_eq (length l =? 0); [ rewrite Int63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
+      simpl; unfold afold_left; rewrite !length_amap; case_eq (length l =? 0); [ rewrite Uint63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
       intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [lia| ]; do 3 (split; auto with smtcoq_core).
       revert vm' bf; rewrite !get_amap by exact Hl; set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern (length l), a, b; subst a b; apply foldi_ind2.
       rewrite ltb_spec, to_Z_0 in Hl; rewrite leb_spec, to_Z_1; lia.
@@ -1201,7 +1201,7 @@ Transparent build_z_atom.
       simpl; rewrite (bounded_bformula_le _ _ H11 _ H8); case (Lit.is_pos (l .[ i])); rewrite H13; auto with smtcoq_core.
       simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; rewrite get_amap by exact H1; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite andb_true_r; try rewrite andb_false_r; try (intros; split; auto with smtcoq_core); try discriminate; intros [H20 H21]; auto with smtcoq_core.
       (* For *)
-      simpl; unfold afold_left; rewrite !length_amap; case_eq (length l =? 0); [ rewrite Int63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
+      simpl; unfold afold_left; rewrite !length_amap; case_eq (length l =? 0); [ rewrite Uint63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
       intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [lia| ]; do 3 (split; auto with smtcoq_core); discriminate.
       revert vm' bf; rewrite !get_amap by exact Hl; set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern (length l), a, b; subst a b; apply foldi_ind2.
       rewrite ltb_spec, to_Z_0 in Hl; rewrite leb_spec, to_Z_1; lia.
@@ -1215,7 +1215,7 @@ Transparent build_z_atom.
       simpl; rewrite (interp_bformula_le _ _ H12 _ H8) in H9; rewrite <- H9; rewrite get_amap by exact H1; case_eq (Lit.is_pos (l .[ i])); intro Heq2; simpl; rewrite <- H14; unfold Lit.interp; rewrite Heq2; split; case (Var.interp rho (Lit.blit (l .[ i]))); try rewrite orb_false_r; try rewrite orb_true_r; auto with smtcoq_core; try (intros [H20|H20]; auto with smtcoq_core; discriminate); right; intro H20; discriminate.
       (* Fimp *)
       {
-      simpl; unfold afold_right; rewrite !length_amap; case_eq (length l =? 0); [ rewrite Int63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
+      simpl; unfold afold_right; rewrite !length_amap; case_eq (length l =? 0); [ rewrite Uint63.eqb_spec | rewrite eqb_false_spec, not_0_ltb ]; intro Hl.
       intro H; inversion H; subst vm'; subst bf; simpl; intro H1; split; auto with smtcoq_core; split; [lia| ]; do 3 (split; auto with smtcoq_core).
       revert vm' bf; rewrite !get_amap by (apply minus_1_lt; rewrite eqb_false_spec, not_0_ltb; exact Hl); set (a := foldi _ _ _ _); set (b := foldi _ _ _ _); pattern (length l), a, b; subst a b; apply foldi_ind2.
       rewrite ltb_spec, to_Z_0 in Hl; rewrite leb_spec, to_Z_1; lia.
@@ -1448,7 +1448,7 @@ Transparent build_z_atom.
      try(case_eq (t_atom.[i]);trivial;intros); try (apply valid_C_true; trivial).
      destruct b; try (apply valid_C_true; trivial).
      generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite aforallbi_spec;intros.
+       rewrite aforallbi_spec;intro H1.
      assert (i <? length t_atom).
      apply PArray.get_not_default_lt.
      rewrite H0, def_t_atom;discriminate.
@@ -1479,7 +1479,7 @@ Transparent build_z_atom.
      try(case_eq (t_atom.[i]);trivial;intros); try (apply valid_C_true; trivial).
      destruct b; try (apply valid_C_true; trivial).
      generalize wt_t_atom;unfold Atom.wt;unfold is_true;
-       rewrite aforallbi_spec;intros.
+       rewrite aforallbi_spec;intro H1.
      assert (i <? length t_atom).
      apply PArray.get_not_default_lt.
      rewrite H0, def_t_atom;discriminate.
@@ -1556,7 +1556,7 @@ Transparent build_z_atom.
      case_eq ((a0 =? a1) && (a0 =? b1) && (b =? b0) && (b =? a2)); intros; subst;
        try (unfold C.valid; apply valid_C_true; trivial).
      repeat(apply andb_prop in H19; destruct H19).
-     apply Int63.eqb_spec in H19;apply Int63.eqb_spec in H20;apply Int63.eqb_spec in H21;apply Int63.eqb_spec in H22; subst a0 b.
+     apply Uint63.eqb_spec in H19;apply Uint63.eqb_spec in H20;apply Uint63.eqb_spec in H21;apply Uint63.eqb_spec in H22; subst a0 b.
      unfold C.interp; simpl; rewrite orb_false_r.
      unfold Lit.interp; rewrite Lit.is_pos_lit.
      unfold Var.interp; rewrite Lit.blit_lit.
@@ -1601,7 +1601,7 @@ Transparent build_z_atom.
      case_eq ((a0 =? b0) && (a0 =? a2) && (b =? a1) && (b =? b1)); intros; subst;
        try (unfold C.valid; apply valid_C_true; trivial).
      repeat(apply andb_prop in H19; destruct H19).
-     apply Int63.eqb_spec in H19;apply Int63.eqb_spec in H20;apply Int63.eqb_spec in H21;apply Int63.eqb_spec in H22;subst a0 b.
+     apply Uint63.eqb_spec in H19;apply Uint63.eqb_spec in H20;apply Uint63.eqb_spec in H21;apply Uint63.eqb_spec in H22;subst a0 b.
      unfold C.interp; simpl; rewrite orb_false_r.
      unfold Lit.interp; rewrite Lit.is_pos_lit.
      unfold Var.interp; rewrite Lit.blit_lit.

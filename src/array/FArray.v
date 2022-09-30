@@ -632,9 +632,9 @@ Module Raw.
       | _ => idtac
       end.
     rewrite In_alt.
-    inversion_clear 3; auto with smtcoq_array.
+    inversion_clear 3 as [x H2]; auto with smtcoq_array.
     inversion H2.
-    unfold eqk in H3. simpl in H3. subst. now contradict H0.
+    unfold eqk in H3. simpl in H3. subst. now contradict H.
     apply In_alt.
     exists x. auto with smtcoq_array.
     apply lt_not_eq in _x.
