@@ -29,7 +29,7 @@ cleanall::
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
-CAMLPKGS += -package num
+CAMLPKGS += -package num,num-top,num.core,coq-core.plugins.micromega
 
 merlin-hook::
 	$(HIDE)echo 'PKG num' >> .merlin

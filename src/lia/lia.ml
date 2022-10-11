@@ -160,7 +160,7 @@ let tauto_lia ff =
       match xwitness_list l with
       | None -> None
       | Some l ->
-         match CoqInterface.Micromega_plugin_Certificate.lia true max_int (List.map (fun ((e, o), _) -> CoqInterface.Micromega_plugin_Micromega.denorm e, o) e) with
+         match CoqInterface.Micromega_plugin_Certificate.lia max_int (List.map (fun ((e, o), _) -> CoqInterface.Micromega_plugin_Micromega.denorm e, o) e) with
          | CoqInterface.Micromega_plugin_Certificate.Prf w -> Some (w::l)
          | _ -> None in
  xwitness_list cnf_ff
