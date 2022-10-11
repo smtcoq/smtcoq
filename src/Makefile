@@ -7,7 +7,7 @@
 ##         #     GNU Lesser General Public License Version 2.1          ##
 ##         #     (see LICENSE file for the text of the license)         ##
 ##########################################################################
-## GNUMakefile for Coq 8.14.1
+## GNUMakefile for Coq 8.15.2
 
 # For debugging purposes (must stay here, don't move below)
 INITIAL_VARS := $(.VARIABLES)
@@ -90,6 +90,7 @@ else
 STDTIME?=command time -f $(TIMEFMT)
 endif
 
+COQBIN?=
 ifneq (,$(COQBIN))
 # add an ending /
 COQBIN:=$(COQBIN)/
@@ -168,7 +169,7 @@ destination_path = $(if $(DESTDIR),$(DESTDIR)/$(call windrive_path,$(1)),$(1))
 
 # Installation paths of libraries and documentation.
 COQLIBINSTALL ?= $(call destination_path,$(COQLIB)/user-contrib)
-COQDOCINSTALL ?= $(call destination_path,$(DOCDIR)/user-contrib)
+COQDOCINSTALL ?= $(call destination_path,$(DOCDIR)/coq/user-contrib)
 COQTOPINSTALL ?= $(call destination_path,$(COQLIB)/toploop) # FIXME: Unused variable?
 
 ########## End of parameters ##################################################
@@ -256,7 +257,7 @@ COQDOCLIBS?=$(COQLIBS_NOML)
 # The version of Coq being run and the version of coq_makefile that
 # generated this makefile
 COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
-COQMAKEFILE_VERSION:=8.14.1
+COQMAKEFILE_VERSION:=8.15.2
 
 # COQ_SRC_SUBDIRS is for user-overriding, usually to add
 # `user-contrib/Foo` to the includes, we keep COQCORE_SRC_SUBDIRS for
@@ -758,7 +759,7 @@ else
 TIMING_EXTRA =
 endif
 
-$(VOFILES): %.vo: %.v
+$(VOFILES): %.vo: %.v | $(VDFILE)
 	$(SHOW)COQC $<
 	$(HIDE)$(TIMER) $(COQC) $(COQDEBUG) $(TIMING_ARG) $(COQFLAGS) $(COQLIBS) $< $(TIMING_EXTRA)
 ifeq ($(COQDONATIVE), "yes")

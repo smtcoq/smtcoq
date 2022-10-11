@@ -13,9 +13,9 @@
 Add Rec LoadPath "../src" as SMTCoq.
 
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith.
+Require Import Bool PArray Uint63 List ZArith.
 
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 
 (* First a tactic, to test the universe computation in an empty
@@ -136,15 +136,15 @@ Qed.
 (* The same, but with a, b and c being concrete terms *)
 
 Goal forall i j k,
-  ((i == j) || (j == k) || (k == i)) && ((negb (i == j)) || (negb (j == k)) || (negb (k == i))) && ((negb (i == j)) || (j == k)) && ((negb (j == k)) || (k == i)) && ((negb (k == i)) || (i == j)) = false.
+  ((i =? j) || (j =? k) || (k =? i)) && ((negb (i =? j)) || (negb (j =? k)) || (negb (k =? i))) && ((negb (i =? j)) || (j =? k)) && ((negb (j =? k)) || (k =? i)) && ((negb (k =? i)) || (i =? j)) = false.
 Proof using.
   zchaff.
 Qed.
 
 Goal forall i j k,
-  let a := i == j in
-  let b := j == k in
-  let c := k == i in
+  let a := i =? j in
+  let b := j =? k in
+  let c := k =? i in
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof using.
   zchaff.

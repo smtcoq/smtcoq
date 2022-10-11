@@ -16,7 +16,7 @@ open SmtMisc
 type coqTerm = CoqInterface.constr lazy_t
 
 let gc prefix constant =
-  lazy (UnivGen.constr_of_monomorphic_global (Coqlib.lib_ref (prefix ^ "." ^ constant)))
+  lazy (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref (prefix ^ "." ^ constant)))
 
 
 (* Int63 *)

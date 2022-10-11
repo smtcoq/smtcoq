@@ -47,7 +47,7 @@ let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 let pr_constr = pr_constr_env Environ.empty_env
 
 
-let mkUConst : Constr.t -> Evd.side_effects Declare.proof_entry = fun c ->
+let mkUConst : Constr.t -> Declare.proof_entry = fun c ->
   let env = Global.env () in
   let evd = Evd.from_env env in
   let evd, ty = Typing.type_of env evd (EConstr.of_constr c) in
@@ -69,13 +69,17 @@ let mkTConst c noc ty =
     ~univs:(Evd.univ_entry ~poly:false evd)
     c
 
+(* TODO: when switching to econstr, may have universe constraints *)
+let empty_named_universes_entry =
+  UState.univ_entry ~poly:false UState.empty
+
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = ComAssumption.declare_variable false ~kind:Decls.Definitional Constr.mkSet [] Glob_term.Explicit (CAst.make t) in
+  let _ = ComAssumption.declare_variable false ~kind:Decls.Definitional Constr.mkSet empty_named_universes_entry [] Glob_term.Explicit (CAst.make t) in
   Constr.mkVar t
 
 let declare_new_variable v constr_t =
-  let _ = ComAssumption.declare_variable false ~kind:Decls.Definitional constr_t [] Glob_term.Explicit (CAst.make v) in
+  let _ = ComAssumption.declare_variable false ~kind:Decls.Definitional constr_t empty_named_universes_entry [] Glob_term.Explicit (CAst.make v) in
   Constr.mkVar v
 
 let declare_constant n c =
@@ -126,8 +130,8 @@ let micromega_dump_proof_term p =
 
 (* Tactics *)
 type tactic = unit Proofview.tactic
-let tclTHEN = Tacticals.New.tclTHEN
-let tclTHENLAST = Tacticals.New.tclTHENLAST
+let tclTHEN = Tacticals.tclTHEN
+let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
 
 let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
@@ -135,7 +139,7 @@ let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
 let mk_tactic tac =
   Proofview.Goal.enter (fun gl ->
     let env = Proofview.Goal.env gl in
-    let sigma = Tacmach.New.project gl in
+    let sigma = Tacmach.project gl in
     let t = Proofview.Goal.concl gl in
     let t = EConstr.to_constr sigma t in (* The goal should not contain uninstanciated evars *)
     tac env sigma t

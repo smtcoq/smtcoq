@@ -13,9 +13,9 @@
 Add Rec LoadPath "../src" as SMTCoq.
 
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith.
+Require Import Bool PArray Uint63 List ZArith.
 
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 Open Scope Z_scope.
 
 
@@ -202,9 +202,9 @@ Qed.
 (* The same, but with a, b and c being concrete terms *)
 
 Goal forall i j k,
-    let a := i == j in
-    let b := j == k in
-    let c := k == i in
+    let a := i =? j in
+    let b := j =? k in
+    let c := k =? i in
     (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
 Proof using.
   verit.
@@ -484,21 +484,23 @@ Qed.
 (* With concrete terms *)
 
 Goal forall i j,
-    let a := i == j in
+    let a := i =? j in
     a && (negb a) = false.
 Proof using.
   verit.
 Qed.
 
 Goal forall i j,
-    let a := i == j in
+    let a := i =? j in
     a || (negb a) = true.
 Proof using.
   verit.
 Qed.
 
+Local Open Scope uint63_scope.
+
 Goal forall (i j:int),
-    (i == j) && (negb (i == j)) = false.
+    (i =? j) && (negb (i =? j)) = false.
 Proof using.
   verit.
 Qed.
@@ -507,7 +509,7 @@ Goal forall (i j:int),
     ~ ((i = j) /\ (~ (i = j))).
 Proof using. verit. Qed.
 
-Goal forall i j, (i == j) || (negb (i == j)).
+Goal forall i j, (i =? j) || (negb (i =? j)).
 Proof using.
   verit.
 Qed.
@@ -519,6 +521,8 @@ Qed.
 
 
 (* Congruence in which some premises are REFL *)
+
+Local Open Scope Z_scope.
 
 Goal forall (f:Z -> Z -> Z) x y z,
     implb (x =? y) (f z x =? f z y).

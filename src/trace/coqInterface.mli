@@ -43,11 +43,11 @@ val mkArrow : types -> types -> constr
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val pr_constr : constr -> Pp.t
 
-val mkUConst : constr -> Evd.side_effects Declare.proof_entry
-val mkTConst : constr -> constr -> types -> Evd.side_effects Declare.proof_entry
+val mkUConst : constr -> Declare.proof_entry
+val mkTConst : constr -> constr -> types -> Declare.proof_entry
 val declare_new_type : id -> types
 val declare_new_variable : id -> types -> constr
-val declare_constant : id -> Evd.side_effects Declare.proof_entry -> Names.Constant.t
+val declare_constant : id -> Declare.proof_entry -> Names.Constant.t
 
 type cast_kind
 val vmcast : cast_kind
