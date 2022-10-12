@@ -145,3 +145,5 @@ Trace.v
 
 g_smtcoq.mlg
 smtcoq_plugin.mlpack
+
+META.coq-smtcoq
