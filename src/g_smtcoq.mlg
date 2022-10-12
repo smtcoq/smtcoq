@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-DECLARE PLUGIN "smtcoq_plugin"
+DECLARE PLUGIN "coq-smtcoq.smtcoq"
 
 {
 
