@@ -524,10 +524,10 @@ Module Typ.
     Fixpoint cast_refl A:
       cast A A = Cast (fun P (H : P A) => H).
     Proof.
-      destruct A;simpl;trivial.
-      do 2 rewrite cast_refl. easy.
-      rewrite N_cast_refl;trivial.
-      rewrite N_cast_refl;trivial.
+      destruct A;simpl; try reflexivity.
+      - do 2 rewrite cast_refl. reflexivity.
+      - rewrite N_cast_refl. reflexivity.
+      - rewrite N_cast_refl. reflexivity.
     Qed.
 
 
@@ -604,21 +604,21 @@ Module Typ.
 
     Fixpoint reflect_eqb x y: reflect (x = y) (eqb x y).
     Proof.
-      destruct x;destruct y;simpl;try constructor;trivial;try discriminate.
-      apply iff_reflect.
-      split.
-      intro H. inversion H. subst.
-      rewrite andb_true_iff.
-      split;
-      [specialize (reflect_eqb y1 y1) | specialize (reflect_eqb y2 y2)];
-      apply reflect_iff in reflect_eqb; apply reflect_eqb; auto.
-      intros.
-      rewrite andb_true_iff in H; destruct H.
-      apply (reflect_iff _ _ (reflect_eqb x1 y1)) in H.
-      apply (reflect_iff _ _ (reflect_eqb x2 y2)) in H0.
-      subst; auto.
-      apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial.
-      apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial.
+      destruct x;destruct y;simpl;try constructor; try reflexivity;try discriminate.
+      - apply iff_reflect.
+        split.
+        + intro H. inversion H. subst.
+          rewrite andb_true_iff.
+          split;
+            [specialize (reflect_eqb y1 y1) | specialize (reflect_eqb y2 y2)];
+            apply reflect_iff in reflect_eqb; apply reflect_eqb; auto.
+        + intros.
+          rewrite andb_true_iff in H; destruct H.
+          apply (reflect_iff _ _ (reflect_eqb x1 y1)) in H.
+          apply (reflect_iff _ _ (reflect_eqb x2 y2)) in H0.
+          subst; auto.
+      - apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial.
+      - apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial.
     Qed.
 
     Lemma eqb_spec : forall x y, eqb x y <-> x = y.

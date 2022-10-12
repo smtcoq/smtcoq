@@ -7,7 +7,7 @@
 ##         #     GNU Lesser General Public License Version 2.1          ##
 ##         #     (see LICENSE file for the text of the license)         ##
 ##########################################################################
-## GNUMakefile for Coq 8.16.0
+## GNUMakefile for Coq 8.17+alpha
 
 # For debugging purposes (must stay here, don't move below)
 INITIAL_VARS := $(.VARIABLES)
@@ -76,7 +76,7 @@ VERBOSE ?=
 TIMED?=
 TIMECMD?=
 # Use command time on linux, gtime on Mac OS
-TIMEFMT?="$@ (real: %e, user: %U, sys: %S, mem: %M ko)"
+TIMEFMT?="$(if $(findstring undefined, $(flavor 1)),$@,$(1)) (real: %e, user: %U, sys: %S, mem: %M ko)"
 ifneq (,$(TIMED))
 ifeq (0,$(shell command time -f "" true >/dev/null 2>/dev/null; echo $$?))
 STDTIME?=command time -f $(TIMEFMT)
@@ -278,7 +278,7 @@ COQDOCLIBS?=$(COQLIBS_NOML)
 # The version of Coq being run and the version of coq_makefile that
 # generated this makefile
 COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
-COQMAKEFILE_VERSION:=8.16.0
+COQMAKEFILE_VERSION:=8.17+alpha
 
 # COQ_SRC_SUBDIRS is for user-overriding, usually to add
 # `user-contrib/Foo` to the includes, we keep COQCORE_SRC_SUBDIRS for
@@ -793,7 +793,7 @@ $(VOFILES): %.vo: %.v | $(VDFILE)
 	$(HIDE)$(TIMER) $(COQC) $(COQDEBUG) $(TIMING_ARG) $(COQFLAGS) $(COQLIBS) $< $(TIMING_EXTRA)
 ifeq ($(COQDONATIVE), "yes")
 	$(SHOW)COQNATIVE $@
-	$(HIDE)$(COQNATIVE) $(COQLIBS) $@
+	$(HIDE)$(call TIMER,$@.native) $(COQNATIVE) $(COQLIBS) $@
 endif
 
 # FIXME ?merge with .vo / .vio ?
