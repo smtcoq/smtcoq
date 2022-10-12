@@ -9,7 +9,7 @@
 #   On Mac, see: https://docs.docker.com/docker-for-mac/#advanced.
 ############################################################
 
-FROM coqorg/base:4.09.1-flambda
+FROM coqorg/coq:dev
 USER coq
 
 ##################### PREREQUISITES ########################
@@ -17,14 +17,13 @@ USER coq
 RUN sudo apt-get -y update && \
     sudo apt-get -y install wget atool bison flex
 
-################# INSTALL Coq and SMTCoq ###################
+##################### INSTALL SMTCoq #######################
 
 WORKDIR /home/coq
 
-RUN opam repo add coq-released https://coq.inria.fr/opam/released && \
-    opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev && \
-    opam depext -y coq-smtcoq coqide && \
-    opam install -y coq-smtcoq coqide
+RUN git clone https://github.com/smtcoq/smtcoq.git && \
+    cd smtcoq/src && git checkout coq-master && \
+    make && make install
 
 ###################### COMPILE ZChaff ######################
 
@@ -58,8 +57,6 @@ RUN wget http://cvc4.cs.stanford.edu/downloads/builds/x86_64-linux-opt/cvc4-1.6-
 
 WORKDIR /home/coq
 
-RUN git clone https://github.com/smtcoq/smtcoq.git
-
 ENV LFSCSIGS="/home/coq/smtcoq/src/lfsc/tests/signatures/"
 
 ENV DONTSHOWVERIT="yes"
@@ -73,3 +70,15 @@ RUN ln -s /home/coq/zchaff/zchaff && \
     ln -s /home/coq/cvc4-1.6-x86_64-linux-opt cvc4
 
 ENV PATH="/home/coq/bin:${PATH}"
+
+######################### RUN TESTS ########################
+
+WORKDIR /home/coq/smtcoq/src
+
+RUN make test
+
+####################### RUN EXAMPLES #######################
+
+WORKDIR /home/coq/smtcoq/examples
+
+RUN coqc Example.v
