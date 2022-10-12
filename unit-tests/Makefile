@@ -8,7 +8,7 @@ COQLIBS?= -R ../src SMTCoq
 OPT?=
 COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 VIOFLAG?=-quick
-COQC?=$(COQBIN)coqc
+COQC?=$(COQBIN)coqc -I ../src
 
 
 all: zchaff verit lfsc

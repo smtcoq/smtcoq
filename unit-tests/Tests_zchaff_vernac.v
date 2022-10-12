@@ -10,12 +10,10 @@
 (**************************************************************************)
 
 
-Add Rec LoadPath "../src" as SMTCoq.
-
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith.
+Require Import Bool PArray Uint63 List ZArith.
 
-Local Open Scope int63_scope.
+Local Open Scope uint63_scope.
 
 
 (* zChaff vernacular commands *)

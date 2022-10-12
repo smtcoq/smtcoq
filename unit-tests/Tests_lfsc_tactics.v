@@ -10,10 +10,8 @@
 (**************************************************************************)
 
 
-Add Rec LoadPath "../src" as SMTCoq.
-
 Require Import SMTCoq.
-Require Import Bool PArray Int63 List ZArith Logic.
+Require Import Bool PArray Uint63 List ZArith Logic.
 
 Local Open Scope Z_scope.
 
@@ -203,7 +201,7 @@ End LIA.
 
 Section PR.
 
- Local Open Scope int63_scope.
+ Local Open Scope uint63_scope.
 
 (* Simple connectors *)
 
