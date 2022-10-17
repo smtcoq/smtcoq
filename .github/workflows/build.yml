@@ -1,0 +1,46 @@
+on:
+  push:
+    branches:
+      - coq-8.13
+      - coq-8.14
+      - coq-8.15
+      - coq-8.16
+  pull_request:
+    branches:
+      - coq-8.13
+      - coq-8.14
+      - coq-8.15
+      - coq-8.16
+
+jobs:
+  test-and-install:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - smtcoq/smtcoq:latest-${{ github.ref_name }}
+      fail-fast: false  # don't stop jobs if one fails
+    steps:
+      - uses: actions/checkout@v2
+      - uses: coq-community/docker-coq-action@v1
+        with:
+          opam_file: 'coq-smtcoq.opam'
+          custom_image: ${{ matrix.image }}
+          before_script: |
+            startGroup "Compile and make tests"
+              sudo chown -R coq:coq .
+              cd src
+              make
+              make test
+              make clean
+              cd ..
+              sudo chown -R 1001:116 .
+            endGroup
+          after_script: |
+            startGroup "Check examples"
+              sudo chown -R coq:coq .
+              cd examples
+              coqc Example.v
+              cd ..
+              sudo chown -R 1001:116 .
+            endGroup
