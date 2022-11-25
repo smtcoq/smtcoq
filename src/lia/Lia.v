@@ -899,7 +899,7 @@ Transparent build_z_atom.
      apply leb_0.
      intros h vm vm' pe Hh.
      assert (W:=to_Z_bounded h);rewrite to_Z_0 in Hh.
-     elimtype False;lia.
+     exfalso;lia.
      intros i cont Hpos Hlen Hrec.
      intros h vm vm' pe;unfold is_true;rewrite <-ltb_spec;intros.
      rewrite t_interp_wf;trivial.

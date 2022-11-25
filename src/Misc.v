@@ -83,7 +83,7 @@ Proof.
   split.
   pose (H3 := to_Z_bounded j); lia.
   assumption.
-  rewrite H2, Z_mod_same_full in H1; elimtype False. destruct (to_Z_bounded i) as [H3 _]. lia.
+  rewrite H2, Z_mod_same_full in H1; exfalso. destruct (to_Z_bounded i) as [H3 _]. lia.
 Qed.
 
 Lemma not_0_ltb : forall x, x <> 0 <-> 0 <? x = true.
@@ -91,7 +91,7 @@ Proof.
  intros x;rewrite ltb_spec, to_Z_0;assert (W:=to_Z_bounded x);split.
  intros Hd;assert ([|x|] <> 0)%Z;[ | lia].
    intros Heq;elim Hd;apply to_Z_inj;trivial.
- intros Hlt Heq;elimtype False.
+ intros Hlt Heq;exfalso.
  assert ([|x|] = 0)%Z;[ rewrite Heq, to_Z_0;trivial | lia].
 Qed.
 
