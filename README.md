@@ -58,8 +58,9 @@ own improvements!
 ## People
 ### Current team
 * [Clark Barrett](http://www.cs.nyu.edu/~barrett) (Stanford University)
-* [Valentin Blot](https://valentinblot.org/pro) (Université Paris-Sud, Université Paris-Diderot)
+* [Valentin Blot](https://valentinblot.org/pro) (Inria)
 * Amina Bousalem (Université Paris-Sud)
+* [Louise Dubois de Prisque](https://louiseddp.github.io) (Inria)
 * [Burak Ekici](http://ekiciburak.github.io/) (The University of Iowa)
 * Quentin Garchery (Université Paris-Sud, Inria)
 * [Benjamin Grégoire](https://www-sop.inria.fr/members/Benjamin.Gregoire/) (Inria Sophia Antipolis)
@@ -69,6 +70,7 @@ own improvements!
 * [Andrew Reynolds](http://homepage.divms.uiowa.edu/~ajreynol) (The University of Iowa)
 * [Laurent Théry](https://www-sop.inria.fr/marelle/Laurent.Thery/moi.html) (Inria Sophia Antipolis)
 * [Cesare Tinelli](http://homepage.cs.uiowa.edu/~tinelli/) (The University of Iowa)
+* [Pierre Vial](https://pierrevial.github.io) (Formal Land)
 
 ### Past contributors
 * Mikaël Armand (Inria Sophia Antipolis)
