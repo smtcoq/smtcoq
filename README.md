@@ -51,9 +51,8 @@ End group.
 ## Want to participate?
 
 SMTCoq is an ambitious, collaborative project: everyone is welcome!
-There are many and varied enhancement to do. You can have a look at the
-[task list](https://github.com/smtcoq/smtcoq/issues/40) or propose your
-own improvements!
+There are many and varied enhancement to do: join the [SMTCoq
+forum](https://framateam.org/smtcoq) to discuss!
 
 ## People
 ### Current team
