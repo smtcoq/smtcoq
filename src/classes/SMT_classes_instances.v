@@ -13,7 +13,6 @@
 Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
 Require Import Int63.
 Require Import State BVList FArray.
-Require Structures.
 Require Export SMT_classes.
 
 
@@ -253,7 +252,7 @@ Section Nat.
   Defined.
 
   Global Instance Nat_eqbtype : EqbType nat :=
-    {| eqb := Structures.nat_eqb; eqb_spec := Structures.nat_eqb_eq |}.
+    {| eqb := Nat.eqb; eqb_spec := Nat.eqb_eq |}.
 
   Global Instance Nat_dec : DecType nat := EqbToDecType.
 
@@ -475,25 +474,25 @@ Section Int63.
   Local Open Scope int63_scope.
 
   Let int_lt x y :=
-    if Int63Native.ltb x y then True else False.
+    if x <? y then True else False.
 
   Global Instance int63_ord : OrdType int.
   Proof.
     exists int_lt; unfold int_lt.
     - intros x y z.
-      case_eq (x < y); intro;
-        case_eq (y < z); intro;
-          case_eq (x < z); intro;
+      case_eq (x <? y); intro;
+        case_eq (y <? z); intro;
+          case_eq (x <? z); intro;
             simpl; try easy.
       contradict H1.
       rewrite not_false_iff_true.
-      rewrite Int63Axioms.ltb_spec in *.
+      rewrite ltb_spec in *.
       exact (Z.lt_trans _ _ _ H H0).
     - intros x y.
-      case_eq (x < y); intro; simpl; try easy.
+      case_eq (x <? y); intro; simpl; try easy.
       intros.
-      rewrite Int63Axioms.ltb_spec in *.
-      rewrite <- Int63Properties.to_Z_eq.
+      rewrite ltb_spec in *.
+      rewrite <- Misc.to_Z_eq.
       exact (Z.lt_neq _ _ H).
   Defined.
 
@@ -502,21 +501,21 @@ Section Int63.
   Proof.
     constructor.
     intros x y.
-    case_eq (x < y); intro;
-      case_eq (x == y); intro; unfold lt in *; simpl.
-    - rewrite Int63Properties.eqb_spec in H0.
+    case_eq (x <? y); intro;
+      case_eq (x =? y); intro; unfold lt in *; simpl.
+    - rewrite Int63.eqb_spec in H0.
       contradict H0.
       assert (int_lt x y). unfold int_lt.
       rewrite H; trivial.
       remember lt_not_eq. unfold lt in *. simpl in n.
       exact (n _ _ H0).
     - apply LT. unfold int_lt. rewrite H; trivial.
-    - apply EQ. rewrite Int63Properties.eqb_spec in H0; trivial.
+    - apply EQ. rewrite Int63.eqb_spec in H0; trivial.
     - apply GT. unfold int_lt.
-      case_eq (y < x); intro; simpl; try easy.
-      specialize (leb_ltb_eqb x y); intro.
+      case_eq (y <? x); intro; simpl; try easy.
+      specialize (Misc.leb_ltb_eqb x y); intro.
       contradict H2.
-      rewrite leb_negb_gtb. rewrite H1. simpl.
+      rewrite Misc.leb_negb_gtb. rewrite H1. simpl.
       red. intro. symmetry in H2.
       rewrite orb_true_iff in H2. destruct H2; contradict H2.
       rewrite H. auto.
@@ -524,7 +523,7 @@ Section Int63.
   Defined.
 
   Global Instance int63_eqbtype : EqbType int :=
-    {| eqb := Int63Native.eqb; eqb_spec := Int63Properties.eqb_spec |}.
+    {| eqb := Int63.eqb; eqb_spec := Int63.eqb_spec |}.
 
   Global Instance int63_dec : DecType int := EqbToDecType.
 
@@ -748,3 +747,12 @@ Section prod.
   |}.
 
 End prod.
+
+
+(* Register constants for OCaml access *)
+Register unit_typ_compdec as SMTCoq.classes.SMT_classes_instances.unit_typ_compdec.
+Register bool_compdec as SMTCoq.classes.SMT_classes_instances.bool_compdec.
+Register Z_compdec as SMTCoq.classes.SMT_classes_instances.Z_compdec.
+Register Positive_compdec as SMTCoq.classes.SMT_classes_instances.Positive_compdec.
+Register BV_compdec as SMTCoq.classes.SMT_classes_instances.BV_compdec.
+Register FArray_compdec as SMTCoq.classes.SMT_classes_instances.FArray_compdec.

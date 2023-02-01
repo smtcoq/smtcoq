@@ -12,10 +12,8 @@
 
 (*** Linking SMT Terms to Micromega Terms ***)
 open Util
-open Structures.Micromega_plugin_Micromega
-open Structures.Micromega_plugin_Coq_micromega
+open CoqInterface.Micromega_plugin_Micromega
 
-open SmtMisc
 open SmtForm
 open SmtAtom
 
@@ -28,14 +26,6 @@ let rec pos_of_int i =
     if i land 1 = 0
     then XO(pos_of_int (i lsr 1))
     else XI(pos_of_int (i lsr 1))
-
-let z_of_int i =
-  if i = 0
-  then Z0
-  else
-    if i > 0
-    then Zpos (pos_of_int i)
-    else Zneg (pos_of_int (-i))
 
 type my_tbl =
     {tbl:(hatom,int) Hashtbl.t; mutable count:int}
@@ -102,7 +92,7 @@ let smt_binop_to_micromega_formula tbl op ha hb =
     | BO_Zge -> OpGe
     | BO_Zgt -> OpGt
     | BO_eq _ -> OpEq
-    | _ -> Structures.error
+    | _ -> CoqInterface.error
 	  "lia.ml: smt_binop_to_micromega_formula expecting a formula"
   in
   let lhs = smt_Atom_to_micromega_pExpr tbl ha in
@@ -112,13 +102,11 @@ let smt_binop_to_micromega_formula tbl op ha hb =
 let smt_Atom_to_micromega_formula tbl ha =
   match Atom.atom ha with
     | Abop (op,ha,hb) -> smt_binop_to_micromega_formula tbl op ha hb
-    | _ -> Structures.error
+    | _ -> CoqInterface.error
 	  "lia.ml: smt_Atom_to_micromega_formula was expecting an LIA formula"
 
 (* specialized fold *)
 
-let default_constr = lazy (Structures.econstr_of_constr (mkInt 0))
-let default_tag = Structures.Micromega_plugin_Mutils.Tag.from 0
 (* morphism for general formulas *)
 
 let binop_array g tbl op def t =
@@ -135,15 +123,13 @@ let binop_array g tbl op def t =
 let rec smt_Form_to_coq_micromega_formula tbl l =
   let v =
     match Form.pform l with
-      | Fatom ha ->
-	A (smt_Atom_to_micromega_formula tbl ha,
-	   default_tag, Lazy.force default_constr)
-      | Fapp (Ftrue, _) -> TT
-      | Fapp (Ffalse, _) -> FF
-      | Fapp (Fand, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> C (x,y)) TT l
-      | Fapp (For, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> D (x,y)) FF l
+      | Fatom ha -> A (IsProp, smt_Atom_to_micromega_formula tbl ha, Tt)
+      | Fapp (Ftrue, _) -> TT IsProp
+      | Fapp (Ffalse, _) -> FF IsProp
+      | Fapp (Fand, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> AND (IsProp, x,y)) (TT IsProp) l
+      | Fapp (For, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> OR (IsProp, x,y)) (FF IsProp) l
       | Fapp (Fxor, l) -> failwith "todo:Fxor"
-      | Fapp (Fimp, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> I (x,None,y)) TT l
+      | Fapp (Fimp, l) -> binop_array smt_Form_to_coq_micromega_formula tbl (fun x y -> IMPL (IsProp, x,None,y)) (TT IsProp) l
       | Fapp (Fiff, l) -> failwith "todo:Fiff"
       | Fapp (Fite, l) -> failwith "todo:Fite"
       | Fapp (Fnot2 _, l) ->
@@ -155,56 +141,32 @@ let rec smt_Form_to_coq_micromega_formula tbl l =
       | Fapp (Fforall _, _) -> assert false
   in
   if Form.is_pos l then v
-  else N(v)
+  else NOT(IsProp, v)
 
 let binop_list tbl op def l =
   match l with
   | [] -> def
   | f::l -> List.fold_left (fun x y -> op x (smt_Form_to_coq_micromega_formula tbl y)) (smt_Form_to_coq_micromega_formula tbl f) l
 
-
-(* let rec binop_list tbl op def l = *)
-(*   match l with *)
-(*   | [] -> def *)
-(*   | [f] -> smt_Form_to_coq_micromega_formula tbl f *)
-(*   | f::l -> *)
-(*       op (smt_Form_to_coq_micromega_formula tbl f) (binop_list tbl op def l) *)
-
-(* and smt_Form_to_coq_micromega_formula tbl l = *)
-(*   let v = *)
-(*     match Form.pform l with *)
-(*       | Fatom ha -> *)
-(* 	A (smt_Atom_to_micromega_formula tbl ha, *)
-(* 	   default_tag,default_constr) *)
-(*       | Fapp (Ftrue, _) -> TT *)
-(*       | Fapp (Ffalse, _) -> FF *)
-(*       | Fapp (Fand, l) -> binop_list tbl (fun x y -> C (x,y)) TT l *)
-(*       | Fapp (For, l) -> binop_list tbl (fun x y -> D (x,y)) FF l *)
-(*       | Fapp (Fxor, l) -> failwith "todo:Fxor" *)
-(*       | Fapp (Fimp, l) -> binop_list tbl (fun x y -> I (x,None,y)) TT l *)
-(*       | Fapp (Fiff, l) -> failwith "todo:Fiff" *)
-(*       | Fapp (Fite, l) -> failwith "todo:Fite" *)
-(*       | Fapp (Fnot2 _, l) -> smt_Form_to_coq_micromega_formula tbl l *)
-(*   in *)
-(*   if Form.is_pos l then v *)
-(*   else N(v) *)
-
-
 let smt_clause_to_coq_micromega_formula tbl cl =
-  binop_list tbl (fun x y -> C(x,y)) TT (List.map Form.neg cl)
+  binop_list tbl (fun x y -> AND (IsProp, x,y)) (TT IsProp) (List.map Form.neg cl)
 
-(* backported from Coq-8.8.2 *)
-(* val tauto_lia : Mc.z formula -> Certificate.Mc.zArithProof list option *)
 let tauto_lia ff =
-  let prover = linear_Z in
-  let cnf_ff,_ = Structures.Micromega_plugin_Coq_micromega.cnf Mc.negate Mc.normalise Mc.zunsat Mc.zdeduce  ff in
-  match witness_list_tags [prover] cnf_ff with
-    | None -> None
-    | Some l -> Some (List.map fst l)
+  let cnf_ff,_ = CoqInterface.Micromega_plugin_Micromega.cnfZ IsProp ff in
+ let rec xwitness_list l =
+  match l with
+   | [] -> Some []
+   | e :: l ->
+      match xwitness_list l with
+      | None -> None
+      | Some l ->
+         match CoqInterface.Micromega_plugin_Certificate.lia true max_int (List.map (fun ((e, o), _) -> CoqInterface.Micromega_plugin_Micromega.denorm e, o) e) with
+         | CoqInterface.Micromega_plugin_Certificate.Prf w -> Some (w::l)
+         | _ -> None in
+ xwitness_list cnf_ff
 
 (* call to micromega solver *)
 let build_lia_certif cl =
   let tbl = create_tbl 13 in
-  let f = I(smt_clause_to_coq_micromega_formula tbl cl, None, FF) in
-  tbl, f, tauto_lia f
-
+  let f = IMPL(IsProp, smt_clause_to_coq_micromega_formula tbl cl, None, (FF IsProp)) in
+  tauto_lia f

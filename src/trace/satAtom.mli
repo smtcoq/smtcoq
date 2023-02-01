@@ -18,18 +18,18 @@ module Atom : sig
 
   val is_bool_type : t -> bool
   val is_bv_type : t -> bool
-  val to_smt : Format.formatter -> t -> unit
+  val to_smt : ?debug:bool -> Format.formatter -> t -> unit
   val logic : t -> SmtMisc.logic
 
   type reify_tbl = {
       mutable count : int;
-      tbl : (Structures.constr, t) Hashtbl.t;
+      tbl : (CoqInterface.constr, t) Hashtbl.t;
     }
   val create : unit -> reify_tbl
-  val declare : reify_tbl -> Structures.constr -> t
-  val get : reify_tbl -> Structures.constr -> t
-  val atom_tbl : reify_tbl -> Structures.constr array
-  val interp_tbl : reify_tbl -> Structures.constr
+  val declare : reify_tbl -> CoqInterface.constr -> t
+  val get : reify_tbl -> CoqInterface.constr -> t
+  val atom_tbl : reify_tbl -> CoqInterface.constr array
+  val interp_tbl : reify_tbl -> CoqInterface.constr
 end
 
 

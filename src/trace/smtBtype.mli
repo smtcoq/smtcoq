@@ -17,7 +17,7 @@ type indexed_type
 
 val dummy_indexed_type: int -> indexed_type
 val indexed_type_index : indexed_type -> int
-val indexed_type_compdec : indexed_type -> Structures.constr
+val indexed_type_compdec : indexed_type -> CoqInterface.constr
 
 type btype =
   | TZ
@@ -31,7 +31,7 @@ val indexed_type_of_int : int -> indexed_type
 
 module HashedBtype : Hashtbl.HashedType with type t = btype
 
-val to_coq : btype -> Structures.constr
+val to_coq : btype -> CoqInterface.constr
 
 val to_smt : Format.formatter -> btype -> unit
 
@@ -40,25 +40,25 @@ type reify_tbl
 val create : unit -> reify_tbl
 val copy : reify_tbl -> reify_tbl
 
-val of_coq : reify_tbl -> logic -> Structures.constr -> btype
-val of_coq_compdec : reify_tbl -> Structures.constr -> Structures.constr -> btype
+val of_coq : reify_tbl -> logic -> CoqInterface.constr -> btype
+val of_coq_compdec : reify_tbl -> CoqInterface.constr -> CoqInterface.constr -> btype
 
-val get_coq_type_op : int -> Structures.constr
+val get_coq_type_op : int -> CoqInterface.constr
 
-val interp_tbl : reify_tbl -> Structures.constr
+val interp_tbl : reify_tbl -> CoqInterface.constr
 
 val to_list : reify_tbl ->  (int * indexed_type) list
 
-val make_t_i : reify_tbl -> Structures.constr
+val make_t_i : reify_tbl -> CoqInterface.constr
 
-val dec_interp : Structures.constr -> btype -> Structures.constr
-val ord_interp : Structures.constr -> btype -> Structures.constr
-val comp_interp : Structures.constr -> btype -> Structures.constr
-val inh_interp : Structures.constr -> btype -> Structures.constr
-val interp : Structures.constr -> btype -> Structures.constr
+val dec_interp : CoqInterface.constr -> btype -> CoqInterface.constr
+val ord_interp : CoqInterface.constr -> btype -> CoqInterface.constr
+val comp_interp : CoqInterface.constr -> btype -> CoqInterface.constr
+val inh_interp : CoqInterface.constr -> btype -> CoqInterface.constr
+val interp : CoqInterface.constr -> btype -> CoqInterface.constr
 
-val interp_to_coq : reify_tbl -> btype -> Structures.constr
+val interp_to_coq : reify_tbl -> btype -> CoqInterface.constr
 
-val get_cuts : reify_tbl -> (Structures.id * Structures.types) list
+val get_cuts : reify_tbl -> (CoqInterface.id * CoqInterface.types) list
 
 val logic : btype -> logic

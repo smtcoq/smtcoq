@@ -11,9 +11,17 @@
 
 
 val pp_trace : Format.formatter -> SatAtom.Form.t SmtCertif.clause -> unit
-val parse_certif : Structures.id -> Structures.id -> string -> string -> unit
+val parse_certif : CoqInterface.id -> CoqInterface.id -> string -> string -> unit
 val checker : string -> string -> unit
-val theorem : Structures.id -> string -> string -> unit
-val theorem_abs : Structures.id -> string -> string -> unit
-val tactic : unit -> Structures.tactic
-val tactic_no_check : unit -> Structures.tactic
+val theorem : CoqInterface.id -> string -> string -> unit
+val theorem_abs : CoqInterface.id -> string -> string -> unit
+val tactic : unit -> CoqInterface.tactic
+val tactic_no_check : unit -> CoqInterface.tactic
+val import_cnf : string ->
+                 int * SatAtom.Form.t SmtCertif.clause *
+                   SatAtom.Form.t SmtCertif.clause *
+                     (int, SatAtom.Form.t SmtCertif.clause) Hashtbl.t
+val import_cnf_trace : (int, 'a SmtCertif.clause) Hashtbl.t ->
+                       string ->
+                       SatAtom.Form.t SmtCertif.clause ->
+                       'a SmtCertif.clause -> int * 'a SmtCertif.clause

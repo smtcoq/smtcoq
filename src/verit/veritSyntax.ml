@@ -150,7 +150,7 @@ let mkCongrPred p =
 (* Linear arithmetic *)
 
 let mkMicromega cl =
-  let _tbl, _f, cert = Lia.build_lia_certif cl in
+  let cert = Lia.build_lia_certif cl in
   let c =
     match cert with
     | None -> failwith "VeritSyntax.mkMicromega: micromega can't solve this"
@@ -168,7 +168,7 @@ let mkSplArith orig cl =
       match orig.value with
       | Some [orig'] -> orig'
       | _ -> failwith "VeritSyntax.mkSplArith: wrong number of literals in the premise clause" in
-    let _tbl, _f, cert = Lia.build_lia_certif [Form.neg orig';res] in
+    let cert = Lia.build_lia_certif [Form.neg orig';res] in
     let c =
       match cert with
       | None -> failwith "VeritSyntax.mkSplArith: micromega can't solve this"
@@ -493,7 +493,7 @@ let mk_clause (id,typ,value,ids_params) =
 let mk_clause cl =
   try mk_clause cl
   with Failure f ->
-    Structures.error ("SMTCoq was not able to check the certificate \
+    CoqInterface.error ("SMTCoq was not able to check the certificate \
                        for the following reason.\n"^f)
 
 let apply_dec f (decl, a) = decl, f a
@@ -557,6 +557,9 @@ let init_index lsmt re_hash =
               flush oc; close_out oc;
               failwith "Input not found: log available in /tmp/input_not_found.log"
 
+(* Inputs which are quantifier-free lemmas will be used directly and not
+   throught the verit ForallInst rule. We thus find them in order to add
+   a dummy ForallInst rule. *)
 let qf_to_add lr =
   let is_forall l = match Form.pform l with
     | Fapp (Fforall _, _) -> true

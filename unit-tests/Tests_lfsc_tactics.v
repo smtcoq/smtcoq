@@ -503,8 +503,8 @@ Qed.
 
 
 
-Goal forall x y z, ((x <=? 3) && ((y <=? 7) || (z <=? 9))) -->
-  ((x + y <=? 10) || (x + z <=? 12)) = true.
+Goal forall x y z, ((x <=? 3) && ((y <=? 7) || (z <=? 9)))%Z -->
+  ((x + y <=? 10) || (x + z <=? 12))%Z = true.
 Proof using.
   smt.
 Qed.
@@ -515,29 +515,29 @@ Proof using.
 Qed.
 
 
-Goal forall x y, (x >? y) --> (y + 1 <=? x) = true.
+Goal forall x y, (x >? y)%Z --> (y + 1 <=? x)%Z = true.
 Proof using.
   smt.
 Qed.
 
 
-Goal forall x y, Bool.eqb (x <? y) (x <=? y - 1) = true.
+Goal forall x y, Bool.eqb (x <? y)%Z (x <=? y - 1)%Z = true.
 Proof using.
   smt.
 Qed.
 
 Goal forall x y, ((x + y <=? - (3)) && (y >=? 0) 
-        || (x <=? - (3))) && (x >=? 0) = false. 
+        || (x <=? - (3)))%Z && (x >=? 0) = false. 
  Proof using. 
    smt.
  Qed. 
 
-Goal forall x, (andb ((x - 3) <=? 7) (7 <=? (x - 3))) --> (x >=? 10) = true.
+Goal forall x, (andb ((x - 3) <=? 7) (7 <=? (x - 3)))%Z --> (x >=? 10) = true.
 Proof using.
   smt.
 Qed.
 
-Goal forall x, (Z.eqb (x - 3) 7) --> (10 <=? x) = true.
+Goal forall x, (Z.eqb (x - 3) 7)%Z --> (10 <=? x)%Z = true.
 Proof using.
   smt.
 Qed.

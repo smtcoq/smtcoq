@@ -27,7 +27,7 @@ module Atom =
 
     type reify_tbl =
         { mutable count : int;
-	          tbl : (Structures.constr, int) Hashtbl.t
+	          tbl : (CoqInterface.constr, int) Hashtbl.t
 	}
 
     let create () = 
@@ -51,11 +51,11 @@ module Atom =
       t
 
     let interp_tbl reify =
-      Structures.mkArray (Lazy.force cbool, atom_tbl reify)
+      CoqTerms.mkArray (Lazy.force cbool, atom_tbl reify)
 
     let logic _ = SL.empty
 
-    let to_smt = Format.pp_print_int
+    let to_smt ?(debug=false) = Format.pp_print_int
     
   end
 

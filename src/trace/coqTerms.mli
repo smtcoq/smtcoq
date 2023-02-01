@@ -10,258 +10,331 @@
 (**************************************************************************)
 
 
-val gen_constant : string list list -> string -> Structures.constr lazy_t
+type coqTerm = CoqInterface.constr lazy_t
 
 (* Int63 *)
-val cint : Structures.constr lazy_t
-val ceq63 : Structures.constr lazy_t
+val cint : coqTerm
+val ceq63 : coqTerm
 
 (* PArray *)
-val carray : Structures.constr lazy_t
+val carray : coqTerm
+val cmake : coqTerm
+val cset : coqTerm
+
+(* is_true *)
+val cis_true : coqTerm
 
 (* nat *)
-val cnat : Structures.constr lazy_t
-val cO : Structures.constr lazy_t
-val cS : Structures.constr lazy_t
+val cnat : coqTerm
+val cO : coqTerm
+val cS : coqTerm
 
 (* Positive *)
-val cpositive : Structures.constr lazy_t
-val cxI : Structures.constr lazy_t
-val cxO : Structures.constr lazy_t
-val cxH : Structures.constr lazy_t
-val ceqbP : Structures.constr lazy_t
+val cpositive : coqTerm
+val cxI : coqTerm
+val cxO : coqTerm
+val cxH : coqTerm
+val ceqbP : coqTerm
 
 (* N *)
-val cN : Structures.constr lazy_t
-val cN0 : Structures.constr lazy_t
-val cNpos : Structures.constr lazy_t
-val cof_nat : Structures.constr lazy_t
+val cN : coqTerm
+val cN0 : coqTerm
+val cNpos : coqTerm
+val cof_nat : coqTerm
 
 (* Z *)
-val cZ : Structures.constr lazy_t
-val cZ0 : Structures.constr lazy_t
-val cZpos : Structures.constr lazy_t
-val cZneg : Structures.constr lazy_t
-val copp : Structures.constr lazy_t
-val cadd : Structures.constr lazy_t
-val csub : Structures.constr lazy_t
-val cmul : Structures.constr lazy_t
-val cltb : Structures.constr lazy_t
-val cleb : Structures.constr lazy_t
-val cgeb : Structures.constr lazy_t
-val cgtb : Structures.constr lazy_t
-val ceqbZ : Structures.constr lazy_t
+val cZ : coqTerm
+val cZ0 : coqTerm
+val cZpos : coqTerm
+val cZneg : coqTerm
+val copp : coqTerm
+val cadd : coqTerm
+val csub : coqTerm
+val cmul : coqTerm
+val cltb : coqTerm
+val cleb : coqTerm
+val cgeb : coqTerm
+val cgtb : coqTerm
+val ceqbZ : coqTerm
 
 (* Booleans *)
-val cbool : Structures.constr lazy_t
-val ctrue : Structures.constr lazy_t
-val cfalse : Structures.constr lazy_t
-val candb : Structures.constr lazy_t
-val corb : Structures.constr lazy_t
-val cxorb : Structures.constr lazy_t
-val cnegb : Structures.constr lazy_t
-val cimplb : Structures.constr lazy_t
-val ceqb : Structures.constr lazy_t
-val cifb : Structures.constr lazy_t
-val ciff : Structures.constr lazy_t
-val creflect : Structures.constr lazy_t
+val cbool : coqTerm
+val ctrue : coqTerm
+val cfalse : coqTerm
+val candb : coqTerm
+val corb : coqTerm
+val cxorb : coqTerm
+val cnegb : coqTerm
+val cimplb : coqTerm
+val ceqb : coqTerm
+val cifb : coqTerm
+val creflect : coqTerm
 
 (* Lists *)
-val clist : Structures.constr lazy_t
-val cnil : Structures.constr lazy_t
-val ccons : Structures.constr lazy_t
-val clength : Structures.constr lazy_t
+val clist : coqTerm
+val cnil : coqTerm
+val ccons : coqTerm
+val clength : coqTerm
 
 (* Option *)
-val coption : Structures.constr lazy_t
-val cSome : Structures.constr lazy_t
-val cNone : Structures.constr lazy_t
+val coption : coqTerm
+val cSome : coqTerm
+val cNone : coqTerm
 
 (* Pairs *)
-val cpair : Structures.constr lazy_t
-val cprod : Structures.constr lazy_t
+val cpair : coqTerm
+val cprod : coqTerm
 
 (* Dependent pairs *)
-val csigT : Structures.constr lazy_t
+val csigT : coqTerm
 
 (* Logical Operators *)
-val cnot : Structures.constr lazy_t
-val ceq : Structures.constr lazy_t
-val crefl_equal : Structures.constr lazy_t
-val cconj : Structures.constr lazy_t
-val cand : Structures.constr lazy_t
+val cnot : coqTerm
+val cconj : coqTerm
+val cand : coqTerm
+val ciff : coqTerm
+
+(* Equality *)
+val ceq : coqTerm
+val crefl_equal : coqTerm
+
+(* Micromega *)
+val micromega_coq_proofTerm : coqTerm
 
 (* Bit vectors *)
-val cbitvector : Structures.constr lazy_t
-val cof_bits : Structures.constr lazy_t
-val cbitOf : Structures.constr lazy_t
-val cbv_eq : Structures.constr lazy_t
-val cbv_not : Structures.constr lazy_t
-val cbv_neg : Structures.constr lazy_t
-val cbv_and : Structures.constr lazy_t
-val cbv_or : Structures.constr lazy_t
-val cbv_xor : Structures.constr lazy_t
-val cbv_add : Structures.constr lazy_t
-val cbv_mult : Structures.constr lazy_t
-val cbv_ult : Structures.constr lazy_t
-val cbv_slt : Structures.constr lazy_t
-val cbv_concat : Structures.constr lazy_t
-val cbv_extr : Structures.constr lazy_t
-val cbv_zextn : Structures.constr lazy_t
-val cbv_sextn : Structures.constr lazy_t
-val cbv_shl : Structures.constr lazy_t
-val cbv_shr : Structures.constr lazy_t
+val cbitvector : coqTerm
+val cof_bits : coqTerm
+val cbitOf : coqTerm
+val cbv_eq : coqTerm
+val cbv_not : coqTerm
+val cbv_neg : coqTerm
+val cbv_and : coqTerm
+val cbv_or : coqTerm
+val cbv_xor : coqTerm
+val cbv_add : coqTerm
+val cbv_mult : coqTerm
+val cbv_ult : coqTerm
+val cbv_slt : coqTerm
+val cbv_concat : coqTerm
+val cbv_extr : coqTerm
+val cbv_zextn : coqTerm
+val cbv_sextn : coqTerm
+val cbv_shl : coqTerm
+val cbv_shr : coqTerm
 
 (* Arrays *)
-val cfarray : Structures.constr lazy_t
-val cselect : Structures.constr lazy_t
-val cstore : Structures.constr lazy_t
-val cdiff : Structures.constr lazy_t
-val cequalarray : Structures.constr lazy_t
+val cfarray : coqTerm
+val cselect : coqTerm
+val cstore : coqTerm
+val cdiff : coqTerm
+val cequalarray : coqTerm
 
-(* OrderedType *)
+(* SMTCoq terms *)
+val cState_C_t : coqTerm
+val cState_S_t : coqTerm
 
-(* SMT_terms *)
-val cState_C_t : Structures.constr lazy_t
-val cState_S_t : Structures.constr lazy_t
+val cdistinct : coqTerm
 
-val cdistinct : Structures.constr lazy_t
+val ctype : coqTerm
+val cTZ : coqTerm
+val cTbool : coqTerm
+val cTpositive : coqTerm
+val cTBV : coqTerm
+val cTFArray : coqTerm
+val cTindex : coqTerm
 
-val ctype : Structures.constr lazy_t
-val cTZ : Structures.constr lazy_t
-val cTbool : Structures.constr lazy_t
-val cTpositive : Structures.constr lazy_t
-val cTBV : Structures.constr lazy_t
-val cTFArray : Structures.constr lazy_t
-val cTindex : Structures.constr lazy_t
+val cinterp_t : coqTerm
+val cdec_interp : coqTerm
+val cord_interp : coqTerm
+val ccomp_interp : coqTerm
+val cinh_interp : coqTerm
 
-val cinterp_t : Structures.constr lazy_t
-val cdec_interp : Structures.constr lazy_t
-val cord_interp : Structures.constr lazy_t
-val ccomp_interp : Structures.constr lazy_t
-val cinh_interp : Structures.constr lazy_t
+val cinterp_eqb : coqTerm
 
-val cinterp_eqb : Structures.constr lazy_t
+val ctval : coqTerm
+val cTval : coqTerm
 
-val ctyp_compdec : Structures.constr lazy_t
-val cTyp_compdec : Structures.constr lazy_t
-val cunit_typ_compdec : Structures.constr lazy_t
-val cte_carrier : Structures.constr lazy_t
-val cte_compdec : Structures.constr lazy_t
-val ceqb_of_compdec : Structures.constr lazy_t
-val cCompDec : Structures.constr lazy_t
+val cCO_xH : coqTerm
+val cCO_Z0 : coqTerm
+val cCO_BV : coqTerm
 
-val cbool_compdec : Structures.constr lazy_t
-val cZ_compdec : Structures.constr lazy_t
-val cPositive_compdec : Structures.constr lazy_t
-val cBV_compdec : Structures.constr lazy_t
-val cFArray_compdec : Structures.constr lazy_t
+val cUO_xO : coqTerm
+val cUO_xI : coqTerm
+val cUO_Zpos : coqTerm
+val cUO_Zneg : coqTerm
+val cUO_Zopp : coqTerm
+val cUO_BVbitOf : coqTerm
+val cUO_BVnot : coqTerm
+val cUO_BVneg : coqTerm
+val cUO_BVextr : coqTerm
+val cUO_BVzextn : coqTerm
+val cUO_BVsextn : coqTerm
 
-val ctval : Structures.constr lazy_t
-val cTval : Structures.constr lazy_t
+val cBO_Zplus : coqTerm
+val cBO_Zminus : coqTerm
+val cBO_Zmult : coqTerm
+val cBO_Zlt : coqTerm
+val cBO_Zle : coqTerm
+val cBO_Zge : coqTerm
+val cBO_Zgt : coqTerm
+val cBO_eq : coqTerm
+val cBO_BVand : coqTerm
+val cBO_BVor : coqTerm
+val cBO_BVxor : coqTerm
+val cBO_BVadd : coqTerm
+val cBO_BVmult : coqTerm
+val cBO_BVult : coqTerm
+val cBO_BVslt : coqTerm
+val cBO_BVconcat : coqTerm
+val cBO_BVshl : coqTerm
+val cBO_BVshr : coqTerm
+val cBO_select : coqTerm
+val cBO_diffarray : coqTerm
 
-val cCO_xH : Structures.constr lazy_t
-val cCO_Z0 : Structures.constr lazy_t
-val cCO_BV : Structures.constr lazy_t
+val cTO_store : coqTerm
 
-val cUO_xO : Structures.constr lazy_t
-val cUO_xI : Structures.constr lazy_t
-val cUO_Zpos : Structures.constr lazy_t
-val cUO_Zneg : Structures.constr lazy_t
-val cUO_Zopp : Structures.constr lazy_t
-val cUO_BVbitOf : Structures.constr lazy_t
-val cUO_BVnot : Structures.constr lazy_t
-val cUO_BVneg : Structures.constr lazy_t
-val cUO_BVextr : Structures.constr lazy_t
-val cUO_BVzextn : Structures.constr lazy_t
-val cUO_BVsextn : Structures.constr lazy_t
+val cNO_distinct : coqTerm
 
-val cBO_Zplus : Structures.constr lazy_t
-val cBO_Zminus : Structures.constr lazy_t
-val cBO_Zmult : Structures.constr lazy_t
-val cBO_Zlt : Structures.constr lazy_t
-val cBO_Zle : Structures.constr lazy_t
-val cBO_Zge : Structures.constr lazy_t
-val cBO_Zgt : Structures.constr lazy_t
-val cBO_eq : Structures.constr lazy_t
-val cBO_BVand : Structures.constr lazy_t
-val cBO_BVor : Structures.constr lazy_t
-val cBO_BVxor : Structures.constr lazy_t
-val cBO_BVadd : Structures.constr lazy_t
-val cBO_BVmult : Structures.constr lazy_t
-val cBO_BVult : Structures.constr lazy_t
-val cBO_BVslt : Structures.constr lazy_t
-val cBO_BVconcat : Structures.constr lazy_t
-val cBO_BVshl : Structures.constr lazy_t
-val cBO_BVshr : Structures.constr lazy_t
-val cBO_select : Structures.constr lazy_t
-val cBO_diffarray : Structures.constr lazy_t
+val catom : coqTerm
+val cAcop : coqTerm
+val cAuop : coqTerm
+val cAbop : coqTerm
+val cAtop : coqTerm
+val cAnop : coqTerm
+val cAapp : coqTerm
 
-val cTO_store : Structures.constr lazy_t
+val cform : coqTerm
+val cFatom : coqTerm
+val cFtrue : coqTerm
+val cFfalse : coqTerm
+val cFnot2 : coqTerm
+val cFand : coqTerm
+val cFor : coqTerm
+val cFxor : coqTerm
+val cFimp : coqTerm
+val cFiff : coqTerm
+val cFite : coqTerm
+val cFbbT : coqTerm
 
-val cNO_distinct : Structures.constr lazy_t
+(* SMTCoq Classes *)
+val ctyp_compdec : coqTerm
+val cTyp_compdec : coqTerm
+val cte_carrier : coqTerm
+val cte_compdec : coqTerm
+val ceqb_of_compdec : coqTerm
+val cCompDec : coqTerm
 
-val catom : Structures.constr lazy_t
-val cAcop : Structures.constr lazy_t
-val cAuop : Structures.constr lazy_t
-val cAbop : Structures.constr lazy_t
-val cAtop : Structures.constr lazy_t
-val cAnop : Structures.constr lazy_t
-val cAapp : Structures.constr lazy_t
+val cunit_typ_compdec : coqTerm
+val cbool_compdec : coqTerm
+val cZ_compdec : coqTerm
+val cPositive_compdec : coqTerm
+val cBV_compdec : coqTerm
+val cFArray_compdec : coqTerm
 
-val cform : Structures.constr lazy_t
-val cFatom : Structures.constr lazy_t
-val cFtrue : Structures.constr lazy_t
-val cFfalse : Structures.constr lazy_t
-val cFnot2 : Structures.constr lazy_t
-val cFand : Structures.constr lazy_t
-val cFor : Structures.constr lazy_t
-val cFxor : Structures.constr lazy_t
-val cFimp : Structures.constr lazy_t
-val cFiff : Structures.constr lazy_t
-val cFite : Structures.constr lazy_t
-val cFbbT : Structures.constr lazy_t
+(* SMTCoq Trace *)
+type certif_ops =
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm * coqTerm *
+  coqTerm * coqTerm
 
-val cis_true : Structures.constr lazy_t
+val csat_checker_valid : coqTerm
+val csat_checker_interp_var : coqTerm
+val csat_checker_Certif : coqTerm
+val csat_checker_dimacs : coqTerm
+val csat_checker_certif : coqTerm
+val csat_checker_theorem_checker : coqTerm
+val csat_checker_checker : coqTerm
+val csat_checker_certif_ops : certif_ops
 
-val cvalid_sat_checker : Structures.constr lazy_t
-val cinterp_var_sat_checker : Structures.constr lazy_t
+val ccnf_checker_certif : coqTerm
+val ccnf_checker_Certif : coqTerm
+val ccnf_checker_checker_b_correct : coqTerm
+val ccnf_checker_checker_b : coqTerm
+val ccnf_checker_checker_eq_correct : coqTerm
+val ccnf_checker_checker_eq : coqTerm
+val ccnf_checker_certif_ops : certif_ops
 
-val make_certif_ops :
-           string list list ->
-           Structures.constr array option ->
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t * Structures.constr lazy_t *
-           Structures.constr lazy_t * Structures.constr lazy_t
+val ceuf_checker_Certif : coqTerm
+val ceuf_checker_certif : coqTerm
+val ceuf_checker_checker : coqTerm
+val ceuf_checker_checker_correct : coqTerm
+val ceuf_checker_checker_b_correct : coqTerm
+val ceuf_checker_checker_b : coqTerm
+val ceuf_checker_checker_eq_correct : coqTerm
+val ceuf_checker_checker_eq : coqTerm
+val ceuf_checker_checker_debug : coqTerm
+val ceuf_checker_name_step : coqTerm
+val ceuf_checker_Name_Res : coqTerm
+val ceuf_checker_Name_Weaken : coqTerm
+val ceuf_checker_Name_ImmFlatten : coqTerm
+val ceuf_checker_Name_CTrue : coqTerm
+val ceuf_checker_Name_CFalse : coqTerm
+val ceuf_checker_Name_BuildDef : coqTerm
+val ceuf_checker_Name_BuildDef2 : coqTerm
+val ceuf_checker_Name_BuildProj : coqTerm
+val ceuf_checker_Name_ImmBuildDef : coqTerm
+val ceuf_checker_Name_ImmBuildDef2 : coqTerm
+val ceuf_checker_Name_ImmBuildProj : coqTerm
+val ceuf_checker_Name_EqTr : coqTerm
+val ceuf_checker_Name_EqCgr : coqTerm
+val ceuf_checker_Name_EqCgrP : coqTerm
+val ceuf_checker_Name_LiaMicromega : coqTerm
+val ceuf_checker_Name_LiaDiseq : coqTerm
+val ceuf_checker_Name_SplArith : coqTerm
+val ceuf_checker_Name_SplDistinctElim : coqTerm
+val ceuf_checker_Name_BBVar : coqTerm
+val ceuf_checker_Name_BBConst : coqTerm
+val ceuf_checker_Name_BBOp : coqTerm
+val ceuf_checker_Name_BBNot : coqTerm
+val ceuf_checker_Name_BBNeg : coqTerm
+val ceuf_checker_Name_BBAdd : coqTerm
+val ceuf_checker_Name_BBConcat : coqTerm
+val ceuf_checker_Name_BBMul : coqTerm
+val ceuf_checker_Name_BBUlt : coqTerm
+val ceuf_checker_Name_BBSlt : coqTerm
+val ceuf_checker_Name_BBEq : coqTerm
+val ceuf_checker_Name_BBDiseq : coqTerm
+val ceuf_checker_Name_BBExtract : coqTerm
+val ceuf_checker_Name_BBZextend : coqTerm
+val ceuf_checker_Name_BBSextend : coqTerm
+val ceuf_checker_Name_BBShl : coqTerm
+val ceuf_checker_Name_BBShr : coqTerm
+val ceuf_checker_Name_RowEq : coqTerm
+val ceuf_checker_Name_RowNeq : coqTerm
+val ceuf_checker_Name_Ext : coqTerm
+val ceuf_checker_Name_Hole : coqTerm
+val ceuf_checker_certif_ops : CoqInterface.constr array option -> certif_ops
+
 
 (* Some constructions *)
-val ceq_refl_true : Structures.constr lazy_t
-val eq_refl_true : unit -> Structures.constr
-val vm_cast_true_no_check : Structures.constr -> Structures.constr
-val vm_cast_true : Environ.env -> Structures.constr -> Structures.constr
-val mkNat : int -> Structures.constr
-val mkN : int -> Structures.constr
-val mk_bv_list : bool list -> Structures.constr
+val ceq_refl_true : coqTerm
+val eq_refl_true : unit -> CoqInterface.constr
+val vm_cast_true_no_check : CoqInterface.constr -> CoqInterface.constr
+val vm_cast_true : Environ.env -> CoqInterface.constr -> CoqInterface.constr
+val mkNat : int -> CoqInterface.constr
+val mkN : int -> CoqInterface.constr
+val mk_bv_list : bool list -> CoqInterface.constr
+val mkArray : Constr.types * Constr.t array -> Constr.t
 
 (* Reification *)
-val mk_bool : Structures.constr -> bool
-val mk_bool_list : Structures.constr -> bool list
-val mk_nat : Structures.constr -> int
-val mk_N : Structures.constr -> int
-val mk_Z : Structures.constr -> int
-val mk_bvsize : Structures.constr -> int
+val mk_bool : CoqInterface.constr -> bool
+val mk_bool_list : CoqInterface.constr -> bool list
+val mk_nat : CoqInterface.constr -> int
+val mk_N : CoqInterface.constr -> int
+val mk_Z : CoqInterface.constr -> int
+val mk_bvsize : CoqInterface.constr -> int
 
 (* Switches between constr and OCaml *)
-val option_of_constr_option : Structures.constr -> Structures.constr option
-val list_of_constr_tuple : Structures.constr -> Structures.constr list
+val option_of_constr_option : CoqInterface.constr -> CoqInterface.constr option
+val list_of_constr_tuple : CoqInterface.constr -> CoqInterface.constr list

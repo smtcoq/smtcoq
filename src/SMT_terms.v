@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool Int63 PArray BinNat BinPos ZArith SMT_classes_instances.
+Require Import Bool Int63 Psatz PArray BinNat BinPos ZArith SMT_classes_instances.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
 Require List .
@@ -18,7 +18,7 @@ Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope int63_scope.
 
-Hint Unfold is_true.
+#[export] Hint Unfold is_true : smtcoq_core.
 
 
 (* Remark: I use Notation instead of Definition du eliminate conversion check during the type checking *)
@@ -79,10 +79,10 @@ Module Form.
         | Fatom a => interp_atom a
         | Ftrue => true
         | Ffalse => false
-        | Fnot2 i l => fold (fun b => negb (negb b)) 1 i (Lit.interp interp_var l)
-        | Fand args => afold_left _ _ true andb (Lit.interp interp_var) args
-        | For args => afold_left _ _ false orb (Lit.interp interp_var) args
-        | Fimp args => afold_right _ _ true implb (Lit.interp interp_var) args
+        | Fnot2 i l => foldi (fun _ b => negb (negb b)) 0 i (Lit.interp interp_var l)
+        | Fand args => afold_left _ true andb (amap (Lit.interp interp_var) args)
+        | For args => afold_left _ false orb (amap (Lit.interp interp_var) args)
+        | Fimp args => afold_right _ true implb (amap (Lit.interp interp_var) args)
         | Fxor a b => xorb (Lit.interp interp_var a) (Lit.interp interp_var b)
         | Fiff a b => Bool.eqb (Lit.interp interp_var a) (Lit.interp interp_var b)
         | Fite a b c =>
@@ -98,95 +98,97 @@ Module Form.
 
     Section Interp_get.
 
-      Variable t_form : PArray.array form.
+      Variable t_form : array form.
 
-      Definition t_interp : PArray.array bool :=
-        PArray.foldi_left (fun i t_b hf =>
-            t_b.[i <- interp_aux (PArray.get t_b) hf])
-        (PArray.make (PArray.length t_form) true) t_form.
+      Definition t_interp : array bool :=
+        foldi (fun i t_b =>
+            t_b.[i <- interp_aux (get t_b) (t_form.[i])]) 0 (length t_form)
+        (make (length t_form) true).
 
-      Fixpoint lt_form i h {struct h} :=
+      Definition lt_form i h :=
         match h with
         | Fatom _ | Ftrue | Ffalse => true
-        | Fnot2 _ l => Lit.blit l < i
+        | Fnot2 _ l => Lit.blit l <? i
         | Fand args | For args | Fimp args =>
-          PArray.forallb (fun l => Lit.blit l < i) args
-        | Fxor a b | Fiff a b => (Lit.blit a < i) && (Lit.blit b < i)
-        | Fite a b c => (Lit.blit a < i) && (Lit.blit b < i) && (Lit.blit c < i)
-        | FbbT _ ls => List.forallb (fun l => Lit.blit l < i) ls
+          aforallbi (fun _ l => Lit.blit l <? i) args
+        | Fxor a b | Fiff a b => (Lit.blit a <? i) && (Lit.blit b <? i)
+        | Fite a b c => (Lit.blit a <? i) && (Lit.blit b <? i) && (Lit.blit c <? i)
+        | FbbT _ ls => List.forallb (fun l => Lit.blit l <? i) ls
         end.
 
       Lemma lt_form_interp_form_aux :
         forall f1 f2 i h,
-          (forall j, j < i -> f1 j = f2 j) ->
+          (forall j, j <? i -> f1 j = f2 j) ->
           lt_form i h ->
           interp_aux f1 h = interp_aux f2 h.
       Proof.
         destruct h;simpl;intros;trivial;
-          try (apply afold_left_eq;unfold is_true in H0;
-            rewrite PArray.forallb_spec in H0;intros;
-              auto using Lit.interp_eq_compat).
+          try (try apply afold_left_eq; try apply afold_right_eq;unfold is_true in H0;
+            rewrite ?forallb_spec, ?aforallbi_spec, ?andb_true_iff in H0;intros;
+            rewrite ?length_amap; try rewrite length_amap in H1;
+            rewrite ?get_amap by assumption;
+              auto using Lit.interp_eq_compat with smtcoq_core).
         - f_equal;auto using Lit.interp_eq_compat.
-        - apply afold_right_eq;unfold is_true in H0;
-            rewrite PArray.forallb_spec in H0;intros;
-              auto using Lit.interp_eq_compat.
-        - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
-            rewrite !(Lit.interp_eq_compat f1 f2);auto.
-        - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
-            rewrite !(Lit.interp_eq_compat f1 f2);auto.
-        - unfold is_true in H0;rewrite !andb_true_iff in H0;decompose [and] H0;
-            rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - decompose [and] H0; rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - decompose [and] H0; rewrite !(Lit.interp_eq_compat f1 f2);auto.
+        - decompose [and] H0; rewrite !(Lit.interp_eq_compat f1 f2);auto.
         - replace (List.map (Lit.interp f2) l) with (List.map (Lit.interp f1) l); auto.
           unfold is_true in H0. rewrite List.forallb_forall in H0.
-          apply List_map_ext_in. intros x Hx. apply Lit.interp_eq_compat; auto.
+          apply List.map_ext_in. intros x Hx. apply Lit.interp_eq_compat; auto with smtcoq_core.
       Qed.
 
-      Definition wf := PArray.forallbi lt_form t_form.
+      Definition wf := aforallbi lt_form t_form.
 
       Hypothesis wf_t_i : wf.
 
       Lemma length_t_interp : length t_interp = length t_form.
       Proof.
-        unfold t_interp;apply PArray.foldi_left_Ind with (P := fun i a => length a = length t_form).
+        unfold t_interp.
+        assert (Bt := to_Z_bounded (length t_form)).
+        apply (foldi_ind _ (fun i a => length a = length t_form)).
+        rewrite leb_spec, to_Z_0; lia.
+        rewrite length_make, leb_length; reflexivity.
         intros;rewrite length_set;trivial.
-        rewrite length_make, ltb_length;trivial.
       Qed.
 
       Lemma default_t_interp : default t_interp = true.
       Proof.
-        unfold t_interp;apply PArray.foldi_left_Ind with
-          (P := fun i a => default a = true).
-        intros;rewrite default_set;trivial.
+        unfold t_interp.
+        assert (Bt := to_Z_bounded (length t_form)).
+        apply (foldi_ind _ (fun i a => default a = true)).
+        rewrite leb_spec, to_Z_0; lia.
         apply default_make.
+        intros;rewrite default_set;trivial.
       Qed.
 
-      Lemma t_interp_wf : forall i, i < PArray.length t_form ->
+      Lemma t_interp_wf : forall i, i <? PArray.length t_form ->
         t_interp.[i] = interp_aux (PArray.get t_interp) (t_form.[i]).
       Proof.
         set (P' i t := length t = length t_form ->
-          forall j, j < i ->
+          forall j, j <? i ->
             t.[j] = interp_aux (PArray.get t) (t_form.[j])).
         assert (P' (length t_form) t_interp).
-        unfold is_true, wf in wf_t_i;rewrite PArray.forallbi_spec in wf_t_i.
-        unfold t_interp;apply foldi_left_Ind;unfold P';intros.
-        rewrite length_set in H1.
-        destruct (Int63Properties.reflect_eqb j i).
-        rewrite e, PArray.get_set_same.
-        apply lt_form_interp_form_aux with (2:= wf_t_i i H).
+        unfold is_true, wf in wf_t_i;rewrite aforallbi_spec in wf_t_i.
+        unfold t_interp;apply foldi_ind;unfold P';intros.
+        apply leb_0.
+        elim (ltb_0 _ H0).
+        rewrite length_set in H2.
+        destruct (reflect_eqb j i).
+        rewrite e, get_set_same.
+        apply lt_form_interp_form_aux with (2:= wf_t_i i H0).
         intros;rewrite get_set_other;trivial.
         intros Heq;elim (not_ltb_refl i);rewrite Heq at 1;trivial.
-        rewrite H1;trivial.
-        assert (j < i).
+        rewrite H2;trivial.
+        assert (j <? i).
         assert ([|j|] <> [|i|]) by (intros Heq1;elim n;apply to_Z_inj;trivial).
-        generalize H2;unfold is_true;rewrite !ltb_spec, (to_Z_add_1 _ _ H);
+        generalize H3;unfold is_true;rewrite !ltb_spec, (to_Z_add_1 _ _ H0);
           auto with zarith.
-        rewrite get_set_other, H0;auto.
+        rewrite get_set_other, H1;auto.
         apply lt_form_interp_form_aux with
-          (2:= wf_t_i j (ltb_trans _ _ _ H3 H)).
+          (2:= wf_t_i j (ltb_trans _ _ _ H4 H0)).
         intros;rewrite get_set_other;trivial.
         intros Heq;elim (not_ltb_refl i);apply ltb_trans with j;
           [ rewrite Heq| ];trivial.
-        elim (ltb_0 _ H0).
         apply H;apply length_t_interp.
       Qed.
 
@@ -201,7 +203,7 @@ Module Form.
 
     Lemma wf_interp_form_lt :
       forall t_form, wf t_form ->
-        forall x, x < PArray.length t_form ->
+        forall x, x <? PArray.length t_form ->
           interp_state_var t_form x = interp t_form (t_form.[x]).
     Proof.
       unfold interp_state_var;intros.
@@ -212,7 +214,7 @@ Module Form.
       forall t_form, PArray.default t_form = Ftrue -> wf t_form ->
         forall x, interp_state_var t_form x = interp t_form (t_form.[x]).
     Proof.
-      intros t Hd Hwf x;case_eq (x < PArray.length t);intros.
+      intros t Hd Hwf x;case_eq (x <? PArray.length t);intros.
       apply wf_interp_form_lt;trivial.
       unfold interp_state_var;rewrite !PArray.get_outofbound;trivial.
       rewrite default_t_interp, Hd;trivial.
@@ -252,7 +254,7 @@ Module Typ.
 
   Import FArray.
 
-  Notation index := int (only parsing).
+  Notation index := N (only parsing).
 
   Inductive type :=
   | TFArray : type -> type -> type
@@ -287,7 +289,7 @@ Module Typ.
                (FArray_compdec tti tte)
       | Tindex i =>
         existT (fun ty : Type => CompDec ty)
-               (te_carrier (t_i .[ i])) (te_compdec (t_i .[ i]))
+               (te_carrier (t_i .[of_Z (Z.of_N i)])) (te_compdec (t_i .[of_Z (Z.of_N i)]))
       | TZ => existT (fun ty : Type => CompDec ty) Z Z_compdec
       | Tbool => existT (fun ty : Type => CompDec ty) bool bool_compdec
       | Tpositive => existT (fun ty : Type => CompDec ty) positive Positive_compdec
@@ -360,7 +362,7 @@ Module Typ.
           reflect (x = y) (eqb_of_compdec c x y).
       Proof.
         intros x y.
-        apply reflect_eqb.
+        apply SMT_classes.reflect_eqb.
       Qed.
 
 
@@ -377,7 +379,7 @@ Module Typ.
 
       Definition i_eqb_eqb (t:type) : interp t -> interp t -> bool :=
         match t with
-        | Tindex i => eqb_of_compdec (t_i.[i]).(te_compdec)
+        | Tindex i => eqb_of_compdec (t_i.[of_Z (Z.of_N i)]).(te_compdec)
         | TZ => Z.eqb (* Zeq_bool *)
         | Tbool => Bool.eqb
         | Tpositive => Pos.eqb
@@ -486,7 +488,7 @@ Module Typ.
     Fixpoint cast (A B: type) : cast_result A B :=
       match A as C, B as D return cast_result C D with
       | Tindex i, Tindex j =>
-        match Int63Op.cast i j with
+        match N_cast i j with
         | Some k => Cast (fun P => k (fun y => P (Tindex y)))
         | None => NoCast
         end
@@ -524,7 +526,7 @@ Module Typ.
     Proof.
       destruct A;simpl;trivial.
       do 2 rewrite cast_refl. easy.
-      rewrite Int63Properties.cast_refl;trivial.
+      rewrite N_cast_refl;trivial.
       rewrite N_cast_refl;trivial.
     Qed.
 
@@ -532,7 +534,7 @@ Module Typ.
     (* Remark : I use this definition because eqb will not be used only in the interpretation *)
     Fixpoint eqb (A B: type) : bool :=
       match A, B with
-      | Tindex i, Tindex j => i == j
+      | Tindex i, Tindex j => N.eqb i j
       | TZ, TZ => true
       | Tbool, Tbool => true
       | Tpositive, Tpositive => true
@@ -546,11 +548,11 @@ Module Typ.
     (* TODO : Move this *)
     Lemma not_false : ~ false.
     Proof. intro;discriminate. Qed.
-    Hint Resolve not_false.
+    Hint Resolve not_false : smtcoq_core.
 
     Lemma is_true_true : true.
     Proof. reflexivity. Qed.
-    Hint Resolve is_true_true.
+    Hint Resolve is_true_true : smtcoq_core.
 
     Lemma not_is_true_eq_false : forall b:bool, ~ b <-> b = false.
     Proof. exact not_true_iff_false. Qed.
@@ -580,7 +582,7 @@ Module Typ.
       rewrite andb_false_iff in H.
       destruct H; apply cast_diff in H; rewrite H; auto.
       case (cast A1 B1); auto.
-      intros H. rewrite (Int63Properties.cast_diff _ _ H);trivial.
+      rewrite N.eqb_neq. intro Heq. now rewrite N_cast_diff.
       rewrite N.eqb_neq. intro Heq. now rewrite N_cast_diff.
     Qed.
 
@@ -615,7 +617,7 @@ Module Typ.
       apply (reflect_iff _ _ (reflect_eqb x1 y1)) in H.
       apply (reflect_iff _ _ (reflect_eqb x2 y2)) in H0.
       subst; auto.
-      apply iff_reflect;rewrite Int63Properties.eqb_spec;split;intros H;[inversion H | subst]; trivial.
+      apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial.
       apply iff_reflect. rewrite N.eqb_eq. split;intros H;[inversion H | subst]; trivial.
     Qed.
 
@@ -785,7 +787,7 @@ Module Atom.
    | UO_Zpos, UO_Zpos
    | UO_Zneg, UO_Zneg
    | UO_Zopp, UO_Zopp => true
-   | UO_BVbitOf s1 n, UO_BVbitOf s2 m => Nat_eqb n m && N.eqb s1 s2
+   | UO_BVbitOf s1 n, UO_BVbitOf s2 m => Nat.eqb n m && N.eqb s1 s2
    | UO_BVnot s1, UO_BVnot s2 => N.eqb s1 s2
    | UO_BVneg s1, UO_BVneg s2 => N.eqb s1 s2
    | UO_BVextr i0 n00 n01, UO_BVextr i1 n10 n11 => N.eqb i0 i1 && N.eqb n00 n10 && N.eqb n01 n11
@@ -832,12 +834,12 @@ Module Atom.
   Definition eqb (t t':atom) :=
     match t,t' with
     | Acop o, Acop o' => cop_eqb o o'
-    | Auop o t, Auop o' t' => uop_eqb o o' && (t == t')
-    | Abop o t1 t2, Abop o' t1' t2' => bop_eqb o o' && (t1 == t1') && (t2 == t2')
-    | Anop o t, Anop o' t' => nop_eqb o o' && list_beq Int63Native.eqb t t'
+    | Auop o t, Auop o' t' => uop_eqb o o' && (t =? t')
+    | Abop o t1 t2, Abop o' t1' t2' => bop_eqb o o' && (t1 =? t1') && (t2 =? t2')
+    | Anop o t, Anop o' t' => nop_eqb o o' && list_beq Int63.eqb t t'
     | Atop o t1 t2 t3, Atop o' t1' t2' t3' =>
-      top_eqb o o' && (t1 == t1') && (t2 == t2') && (t3 == t3')
-    | Aapp a la, Aapp b lb => (a == b) && list_beq Int63Native.eqb la lb
+      top_eqb o o' && (t1 =? t1') && (t2 =? t2') && (t3 =? t3')
+    | Aapp a la, Aapp b lb => (a =? b) && list_beq Int63.eqb la lb
     | _, _ => false
     end.
 
@@ -861,7 +863,7 @@ Module Atom.
   Lemma reflect_uop_eqb : forall o1 o2, reflect (o1 = o2) (uop_eqb o1 o2).
   Proof.
     intros [ | | | | | s1 n1 | s1 | s1 | s1 | s1 | s1 ] [ | | | | |s2 n2 | s2 | s2 | s2 | s2 | s2 ];simpl; try constructor;trivial; try discriminate.
-    - apply iff_reflect. case_eq (Nat_eqb n1 n2).
+    - apply iff_reflect. case_eq (Nat.eqb n1 n2).
       + case_eq ((s1 =? s2)%N).
         * rewrite N.eqb_eq, beq_nat_true_iff.
           intros -> ->. split; reflexivity.
@@ -963,26 +965,26 @@ Qed.
     (* Constants *)
     preflect (reflect_cop_eqb c c0);constructor;subst;trivial.
     (* Unary operators *)
-    preflect (reflect_uop_eqb u u0); preflect (Int63Properties.reflect_eqb i i0);
+    preflect (reflect_uop_eqb u u0); preflect (Misc.reflect_eqb i i0);
       constructor;subst;trivial.
     (* Binary operators *)
     preflect (reflect_bop_eqb b b0);
-    preflect (Int63Properties.reflect_eqb i i1);
-    preflect (Int63Properties.reflect_eqb i0 i2);
+    preflect (Misc.reflect_eqb i i1);
+    preflect (Misc.reflect_eqb i0 i2);
     constructor;subst;trivial.
     (* Ternary operators *)
     preflect (reflect_top_eqb t t0).
-    preflect (Int63Properties.reflect_eqb i i2).
-    preflect (Int63Properties.reflect_eqb i0 i3).
-    preflect (Int63Properties.reflect_eqb i1 i4).
+    preflect (Misc.reflect_eqb i i2).
+    preflect (Misc.reflect_eqb i0 i3).
+    preflect (Misc.reflect_eqb i1 i4).
     constructor;subst;trivial.
     (* N-ary operators *)
     preflect (reflect_nop_eqb n n0);
-    preflect (reflect_list_beq _ _ Int63Properties.reflect_eqb l l0);
+    preflect (reflect_list_beq _ _ Misc.reflect_eqb l l0);
     constructor; subst; reflexivity.
     (* Application *)
-    preflect (Int63Properties.reflect_eqb i i0);
-    preflect (reflect_list_beq _ _ Int63Properties.reflect_eqb l l0);
+    preflect (Misc.reflect_eqb i i0);
+    preflect (reflect_list_beq _ _ Misc.reflect_eqb l l0);
     constructor;subst;trivial.
   Qed.
 
@@ -1183,8 +1185,8 @@ Qed.
         intros [op|op h|op h1 h2|op ha i i0|f args | i e ]; simpl.
         (* Constants *)
         left; destruct op; simpl.
-        exists Typ.Tpositive; auto.
-        exists Typ.TZ; auto.
+        exists Typ.Tpositive; auto with smtcoq_core.
+        exists Typ.TZ; auto with smtcoq_core.
         exists (Typ.TBV n); now rewrite N.eqb_refl.
         (* Unary operators *)
         destruct op; simpl;
@@ -1386,7 +1388,7 @@ Qed.
           right. intros. rewrite andb_false_r. easy.
         (* N-ary operators *)
         destruct f as [ty]; simpl; case (List.forallb (fun t1 : int => Typ.eqb (get_type t1) ty) args).
-        left; exists Typ.Tbool; auto.
+        left; exists Typ.Tbool; auto with smtcoq_core.
         right; intro T; rewrite andb_false_r; auto.
         (* Application *)
         case (v_type Typ.ftype interp_ft (t_func .[ i])); intros; apply check_args_dec.
@@ -2217,22 +2219,22 @@ Qed.
 
       Variable t_atom : PArray.array atom.
 
-      Definition t_interp : PArray.array bval :=
-        PArray.foldi_left (fun i t_a a => t_a.[i <- interp_aux (PArray.get t_a) a])
-          (PArray.make (PArray.length t_atom) (interp_cop CO_xH)) t_atom.
+      Definition t_interp : array bval :=
+        foldi (fun i t_a => t_a.[i <- interp_aux (get t_a) (t_atom.[i])]) 0 (length t_atom)
+          (make (length t_atom) (interp_cop CO_xH)).
 
       Definition lt_atom i a :=
         match a with
         | Acop _ => true
-        | Auop _ h => h < i
-        | Abop _ h1 h2 => (h1 < i) && (h2 < i)
-        | Atop _ h1 h2 h3 => (h1 < i) && (h2 < i) && (h3 < i)
-        | Anop _ ha => List.forallb (fun h => h < i) ha
-        | Aapp f args => List.forallb (fun h => h < i) args
+        | Auop _ h => h <? i
+        | Abop _ h1 h2 => (h1 <? i) && (h2 <? i)
+        | Atop _ h1 h2 h3 => (h1 <? i) && (h2 <? i) && (h3 <? i)
+        | Anop _ ha => List.forallb (fun h => h <? i) ha
+        | Aapp f args => List.forallb (fun h => h <? i) args
         end.
 
       Lemma lt_interp_aux :
-         forall f1 f2 i, (forall j, j < i -> f1 j = f2 j) ->
+         forall f1 f2 i, (forall j, j <? i -> f1 j = f2 j) ->
          forall a, lt_atom i a ->
              interp_aux f1 a = interp_aux f2 a.
       Proof.
@@ -2251,52 +2253,58 @@ Qed.
         unfold is_true in H;rewrite andb_true_iff in H;destruct H;rewrite Hf, IHl;trivial.
       Qed.
 
-      Definition wf := PArray.forallbi lt_atom t_atom.
+      Definition wf := aforallbi lt_atom t_atom.
 
       Hypothesis wf_t_i : wf.
 
       Lemma length_t_interp : length t_interp = length t_atom.
       Proof.
-        unfold t_interp;apply PArray.foldi_left_Ind with
-          (P := fun i a => length a = length t_atom).
+        unfold t_interp.
+        assert (Bt := to_Z_bounded (length t_atom)).
+        apply (foldi_ind _ (fun i a => length a = length t_atom)).
+        rewrite leb_spec, to_Z_0; lia.
+        rewrite length_make, leb_length;trivial.
         intros;rewrite length_set;trivial.
-        rewrite length_make, ltb_length;trivial.
       Qed.
 
       Lemma default_t_interp : default t_interp = interp_cop CO_xH.
       Proof.
-        unfold t_interp;apply PArray.foldi_left_Ind with
-          (P := fun i a => default a = interp_cop CO_xH).
-        intros;rewrite default_set;trivial.
+        unfold t_interp.
+        assert (Bt := to_Z_bounded (length t_atom)).
+        apply (foldi_ind _ (fun i a => default a = interp_cop CO_xH)).
+        rewrite leb_spec, to_Z_0; lia.
         apply default_make.
+        intros;rewrite default_set;trivial.
       Qed.
 
-      Lemma t_interp_wf_lt : forall i, i < PArray.length t_atom ->
+      Lemma t_interp_wf_lt : forall i, i <? PArray.length t_atom ->
          t_interp.[i] = interp_aux (PArray.get t_interp) (t_atom.[i]).
       Proof.
+        assert (Bt := to_Z_bounded (length t_atom)).
         set (P' i t := length t = length t_atom ->
-               forall j, j < i ->
+               forall j, j <? i ->
                t.[j] = interp_aux (PArray.get t) (t_atom.[j])).
         assert (P' (length t_atom) t_interp).
-         unfold is_true, wf in wf_t_i;rewrite PArray.forallbi_spec in wf_t_i.
-         unfold t_interp;apply foldi_left_Ind;unfold P';intros.
-         rewrite length_set in H1.
-         destruct (Int63Properties.reflect_eqb j i).
+         unfold is_true, wf in wf_t_i;rewrite aforallbi_spec in wf_t_i.
+         unfold t_interp;apply foldi_ind;unfold P';intros.
+         rewrite leb_spec, to_Z_0; lia.
+         elim (ltb_0 _ H0).
+         rewrite length_set in H2.
+         destruct (Misc.reflect_eqb j i).
           rewrite e, PArray.get_set_same.
-          apply lt_interp_aux with (2:= wf_t_i i H).
+          apply lt_interp_aux with (2:= wf_t_i i H0).
           intros;rewrite get_set_other;trivial.
           intros Heq;elim (not_ltb_refl i);rewrite Heq at 1;trivial.
-          rewrite H1;trivial.
-         assert (j < i).
+          rewrite H2;trivial.
+         assert (j <? i).
           assert ([|j|] <> [|i|]) by(intros Heq1;elim n;apply to_Z_inj;trivial).
-          generalize H2;unfold is_true;rewrite !ltb_spec,
-            (to_Z_add_1 _ _ H);auto with zarith.
-         rewrite get_set_other, H0;auto.
-         apply lt_interp_aux with (2:= wf_t_i j (ltb_trans _ _ _ H3 H)).
+          generalize H3;unfold is_true;rewrite !ltb_spec,
+            (to_Z_add_1 _ _ H0);auto with zarith.
+         rewrite get_set_other, H1;auto.
+         apply lt_interp_aux with (2:= wf_t_i j (ltb_trans _ _ _ H4 H0)).
          intros;rewrite get_set_other;trivial.
          intros Heq;elim (not_ltb_refl i);apply ltb_trans with j;
            [ rewrite Heq| ];trivial.
-         elim (ltb_0 _ H0).
         apply H;apply length_t_interp.
       Qed.
 
@@ -2305,7 +2313,7 @@ Qed.
       Lemma t_interp_wf : forall i,
          t_interp.[i] = interp_aux (PArray.get t_interp) (t_atom.[i]).
       Proof.
-        intros i;case_eq (i< PArray.length t_atom);intros.
+        intros i;case_eq (i <? PArray.length t_atom);intros.
         apply t_interp_wf_lt;trivial.
         rewrite !PArray.get_outofbound;trivial.
         rewrite default_t_atom, default_t_interp;trivial.
@@ -2320,10 +2328,10 @@ Qed.
 
       Lemma check_aux_interp_aux_lt_aux : forall a h,
         (forall j : int,
-          j < h ->
+          j <? h ->
           exists v : interp_t (v_type Typ.type interp_t (a .[ j])),
             a .[ j] = Bval (v_type Typ.type interp_t (a .[ j])) v) ->
-        forall l, List.forallb (fun h0 : int => h0 < h) l = true ->
+        forall l, List.forallb (fun h0 : int => h0 <? h) l = true ->
           forall (f0: tval),
             exists
               v : interp_t
@@ -2348,14 +2356,14 @@ Qed.
         exists true; auto.
       Qed.
 
-      Lemma check_aux_interp_aux_lt : forall h, h < length t_atom ->
+      Lemma check_aux_interp_aux_lt : forall h, h <? length t_atom ->
         forall a,
-          (forall j, j < h ->
+          (forall j, j <? h ->
             exists v, a.[j] = Bval (v_type _ _ (a.[j])) v) ->
           exists v, interp_aux (get a) (t_atom.[h]) =
             Bval (v_type _ _ (interp_aux (get a) (t_atom.[h]))) v.
       Proof.
-        unfold wf, is_true in wf_t_i; rewrite forallbi_spec in wf_t_i.
+        unfold wf, is_true in wf_t_i; rewrite aforallbi_spec in wf_t_i.
         intros h Hh a IH; generalize (wf_t_i h Hh).
         case (t_atom.[h]); simpl.
         (* Constants *)
@@ -2477,39 +2485,41 @@ Qed.
              (k3 (Typ.interp t_i) z)); auto.
 
         (* N-ary operators *)
-        intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 < h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
+        intros [A] l; assert (forall acc, List.forallb (fun h0 : int => h0 <? h) l = true -> exists v, match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end = Bval (v_type Typ.type interp_t match compute_interp (get a) A acc l with | Some l0 => Bval Typ.Tbool (distinct (Typ.i_eqb t_i A) (rev l0)) | None => bvtrue end) v); auto; induction l as [ |i l IHl]; simpl.
         intros acc _; exists (distinct (Typ.i_eqb t_i A) (rev acc)); auto.
         intro acc; rewrite andb_true_iff; intros [H1 H2]; destruct (IH _ H1) as [va Hva]; rewrite Hva; simpl; case (Typ.cast (v_type Typ.type interp_t (a .[ i])) A); simpl; try (exists true; auto); intro k; destruct (IHl (k interp_t va :: acc) H2) as [vb Hvb]; exists vb; auto.
         (* Application *)
         intros i l H; apply (check_aux_interp_aux_lt_aux a h IH l H (t_func.[i])).
 Qed.
 
-      Lemma check_aux_interp_hatom_lt : forall h, h < length t_atom ->
+      Lemma check_aux_interp_hatom_lt : forall h, h <? length t_atom ->
         exists v, t_interp.[h] = Bval (get_type h) v.
       Proof.
+        assert (Bt := to_Z_bounded (length t_atom)).
         set (P' i t := length t = length t_atom ->
-          forall j, j < i ->
+          forall j, j <? i ->
             exists v, t.[j] = Bval (v_type Typ.type interp_t (t.[j])) v).
         assert (P' (length t_atom) t_interp).
-        unfold t_interp;apply foldi_left_Ind;unfold P';intros.
-        rewrite length_set in H1.
-        destruct (Int63Properties.reflect_eqb j i).
+        unfold t_interp;apply foldi_ind;unfold P';intros.
+        rewrite leb_spec, to_Z_0; lia.
+        elim (ltb_0 _ H0).
+        rewrite length_set in H2.
+        destruct (Misc.reflect_eqb j i).
         rewrite e, PArray.get_set_same.
         apply check_aux_interp_aux_lt; auto.
-        rewrite H1; auto.
-        assert (j < i).
+        rewrite H2; auto.
+        assert (j <? i).
         assert ([|j|] <> [|i|]) by(intros Heq1;elim n;apply to_Z_inj;trivial).
-        generalize H2;unfold is_true;rewrite !ltb_spec,
-          (to_Z_add_1 _ _ H);auto with zarith.
+        generalize H3;unfold is_true;rewrite !ltb_spec,
+          (to_Z_add_1 _ _ H0);auto with zarith.
         rewrite get_set_other;auto.
-        elim (ltb_0 _ H0).
         apply H;apply length_t_interp.
       Qed.
 
       Lemma check_aux_interp_hatom : forall h,
         exists v, t_interp.[h] = Bval (get_type h) v.
       Proof.
-        intros i;case_eq (i< PArray.length t_atom);intros.
+        intros i;case_eq (i <? PArray.length t_atom);intros.
         apply check_aux_interp_hatom_lt;trivial.
         unfold get_type'; rewrite !PArray.get_outofbound;trivial.
         rewrite default_t_interp; simpl; exists (1%positive); auto.
@@ -2541,7 +2551,7 @@ Qed.
     Definition wt t_atom :=
       let t_interp := t_interp t_atom in
       let get_type := get_type' t_interp in
-        PArray.forallbi (fun i h => check_aux get_type h (get_type i)) t_atom.
+        aforallbi (fun i h => check_aux get_type h (get_type i)) t_atom.
 
     Definition interp_hatom (t_atom : PArray.array atom) :=
       let t_a := t_interp t_atom in
@@ -2596,6 +2606,79 @@ Section PredefinedArrays.
 
 End PredefinedArrays.
 *)
+
+
+(* Register constants for OCaml access *)
+Register Typ.type as SMTCoq.SMT_terms.Typ.type.
+Register Typ.TFArray as SMTCoq.SMT_terms.Typ.TFArray.
+Register Typ.Tindex as SMTCoq.SMT_terms.Typ.Tindex.
+Register Typ.TZ as SMTCoq.SMT_terms.Typ.TZ.
+Register Typ.Tbool as SMTCoq.SMT_terms.Typ.Tbool.
+Register Typ.Tpositive as SMTCoq.SMT_terms.Typ.Tpositive.
+Register Typ.TBV as SMTCoq.SMT_terms.Typ.TBV.
+Register Typ.interp as SMTCoq.SMT_terms.Typ.interp.
+Register Typ.dec_interp as SMTCoq.SMT_terms.Typ.dec_interp.
+Register Typ.ord_interp as SMTCoq.SMT_terms.Typ.ord_interp.
+Register Typ.comp_interp as SMTCoq.SMT_terms.Typ.comp_interp.
+Register Typ.inh_interp as SMTCoq.SMT_terms.Typ.inh_interp.
+Register Typ.i_eqb as SMTCoq.SMT_terms.Typ.i_eqb.
+Register Atom.tval as SMTCoq.SMT_terms.Atom.tval.
+Register Atom.Tval as SMTCoq.SMT_terms.Atom.Tval.
+Register Atom.CO_xH as SMTCoq.SMT_terms.Atom.CO_xH.
+Register Atom.CO_Z0 as SMTCoq.SMT_terms.Atom.CO_Z0.
+Register Atom.CO_BV as SMTCoq.SMT_terms.Atom.CO_BV.
+Register Atom.UO_xO as SMTCoq.SMT_terms.Atom.UO_xO.
+Register Atom.UO_xI as SMTCoq.SMT_terms.Atom.UO_xI.
+Register Atom.UO_Zpos as SMTCoq.SMT_terms.Atom.UO_Zpos.
+Register Atom.UO_Zneg as SMTCoq.SMT_terms.Atom.UO_Zneg.
+Register Atom.UO_Zopp as SMTCoq.SMT_terms.Atom.UO_Zopp.
+Register Atom.UO_BVbitOf as SMTCoq.SMT_terms.Atom.UO_BVbitOf.
+Register Atom.UO_BVnot as SMTCoq.SMT_terms.Atom.UO_BVnot.
+Register Atom.UO_BVneg as SMTCoq.SMT_terms.Atom.UO_BVneg.
+Register Atom.UO_BVextr as SMTCoq.SMT_terms.Atom.UO_BVextr.
+Register Atom.UO_BVzextn as SMTCoq.SMT_terms.Atom.UO_BVzextn.
+Register Atom.UO_BVsextn as SMTCoq.SMT_terms.Atom.UO_BVsextn.
+Register Atom.BO_Zplus as SMTCoq.SMT_terms.Atom.BO_Zplus.
+Register Atom.BO_Zminus as SMTCoq.SMT_terms.Atom.BO_Zminus.
+Register Atom.BO_Zmult as SMTCoq.SMT_terms.Atom.BO_Zmult.
+Register Atom.BO_Zlt as SMTCoq.SMT_terms.Atom.BO_Zlt.
+Register Atom.BO_Zle as SMTCoq.SMT_terms.Atom.BO_Zle.
+Register Atom.BO_Zge as SMTCoq.SMT_terms.Atom.BO_Zge.
+Register Atom.BO_Zgt as SMTCoq.SMT_terms.Atom.BO_Zgt.
+Register Atom.BO_eq as SMTCoq.SMT_terms.Atom.BO_eq.
+Register Atom.BO_BVand as SMTCoq.SMT_terms.Atom.BO_BVand.
+Register Atom.BO_BVor as SMTCoq.SMT_terms.Atom.BO_BVor.
+Register Atom.BO_BVxor as SMTCoq.SMT_terms.Atom.BO_BVxor.
+Register Atom.BO_BVadd as SMTCoq.SMT_terms.Atom.BO_BVadd.
+Register Atom.BO_BVmult as SMTCoq.SMT_terms.Atom.BO_BVmult.
+Register Atom.BO_BVult as SMTCoq.SMT_terms.Atom.BO_BVult.
+Register Atom.BO_BVslt as SMTCoq.SMT_terms.Atom.BO_BVslt.
+Register Atom.BO_BVconcat as SMTCoq.SMT_terms.Atom.BO_BVconcat.
+Register Atom.BO_BVshl as SMTCoq.SMT_terms.Atom.BO_BVshl.
+Register Atom.BO_BVshr as SMTCoq.SMT_terms.Atom.BO_BVshr.
+Register Atom.BO_select as SMTCoq.SMT_terms.Atom.BO_select.
+Register Atom.BO_diffarray as SMTCoq.SMT_terms.Atom.BO_diffarray.
+Register Atom.TO_store as SMTCoq.SMT_terms.Atom.TO_store.
+Register Atom.NO_distinct as SMTCoq.SMT_terms.Atom.NO_distinct.
+Register Atom.atom as SMTCoq.SMT_terms.Atom.atom.
+Register Atom.Acop as SMTCoq.SMT_terms.Atom.Acop.
+Register Atom.Auop as SMTCoq.SMT_terms.Atom.Auop.
+Register Atom.Abop as SMTCoq.SMT_terms.Atom.Abop.
+Register Atom.Atop as SMTCoq.SMT_terms.Atom.Atop.
+Register Atom.Anop as SMTCoq.SMT_terms.Atom.Anop.
+Register Atom.Aapp as SMTCoq.SMT_terms.Atom.Aapp.
+Register Form.form as SMTCoq.SMT_terms.Form.form.
+Register Form.Fatom as SMTCoq.SMT_terms.Form.Fatom.
+Register Form.Ftrue as SMTCoq.SMT_terms.Form.Ftrue.
+Register Form.Ffalse as SMTCoq.SMT_terms.Form.Ffalse.
+Register Form.Fnot2 as SMTCoq.SMT_terms.Form.Fnot2.
+Register Form.Fand as SMTCoq.SMT_terms.Form.Fand.
+Register Form.For as SMTCoq.SMT_terms.Form.For.
+Register Form.Fxor as SMTCoq.SMT_terms.Form.Fxor.
+Register Form.Fimp as SMTCoq.SMT_terms.Form.Fimp.
+Register Form.Fiff as SMTCoq.SMT_terms.Form.Fiff.
+Register Form.Fite as SMTCoq.SMT_terms.Form.Fite.
+Register Form.FbbT as SMTCoq.SMT_terms.Form.FbbT.
 
 
 (* 

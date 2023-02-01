@@ -63,8 +63,6 @@ Section Arith.
     Let wf_rho : Valuation.wf rho.
     Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form); auto. Qed.
 
-    Hint Immediate wf_rho.
-
 
     Lemma valid_check_spl_arith :
       forall orig, C.valid rho orig ->
@@ -76,7 +74,7 @@ Section Arith.
       (* List with one element *)
       intros H res l; case_eq (build_clause Lia.empty_vmap (Lit.neg li :: res :: nil)); [ |intros; apply C.interp_true; auto].
       intros (vm1, bf) Heq; destruct (Lia.build_clause_correct _ _ _ t_func ch_atom ch_form wt_t_atom _ _ _ _ Heq) as [H1 H0].
-      red; simpl; auto.
+      red; simpl; auto with smtcoq_core.
       decompose [and] H0; case_eq (ZTautoChecker bf l); [intros Heq3|intros; apply C.interp_true; auto].
       unfold C.valid; replace (C.interp rho (res :: nil)) with (C.interp rho (Lit.neg li :: res :: nil)).
       rewrite H6; apply ZTautoChecker_sound with l;trivial.

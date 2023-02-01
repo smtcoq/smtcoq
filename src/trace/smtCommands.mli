@@ -11,13 +11,13 @@
 
 
 val parse_certif :
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
   SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl *
   SmtAtom.Atom.reify_tbl * SmtAtom.Form.reify *
   SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
@@ -29,7 +29,7 @@ val checker_debug :
   SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause -> 'a
 
 val theorem :
-  Structures.id ->
+  CoqInterface.id ->
   SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl *
   SmtAtom.Atom.reify_tbl * SmtAtom.Form.reify *
   SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
@@ -56,8 +56,11 @@ val tactic :
   SmtAtom.Form.reify ->
   SmtAtom.Atom.reify_tbl ->
   SmtAtom.Form.reify ->
-  (Environ.env -> Structures.constr -> Structures.constr) ->
-  Structures.constr list ->
-  Structures.constr_expr list -> Structures.tactic
+  (Environ.env -> CoqInterface.constr -> CoqInterface.constr) ->
+  CoqInterface.constr list ->
+  CoqInterface.constr_expr list -> CoqInterface.tactic
 
 val model_string : Environ.env -> SmtBtype.reify_tbl -> 'a -> 'b -> 'c -> SExpr.t -> string
+
+(* For extraction *)
+val compute_roots : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause -> int list

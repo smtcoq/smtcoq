@@ -97,10 +97,10 @@ let rec sort_of_sort = function
 
 
 let declare_sort_from_name rt s =
-  let cons_t = Structures.declare_new_type (Structures.mkId ("Smt_sort_"^s)) in
+  let cons_t = CoqInterface.declare_new_type (CoqInterface.mkId ("Smt_sort_"^s)) in
   let compdec_type = mklApp cCompDec [| cons_t |] in
   let compdec_var =
-    Structures.declare_new_variable (Structures.mkId ("CompDec_"^s)) compdec_type in
+    CoqInterface.declare_new_variable (CoqInterface.mkId ("CompDec_"^s)) compdec_type in
   let res = SmtBtype.of_coq_compdec rt cons_t compdec_var in
   SmtMaps.add_btype s res;
   res
@@ -110,9 +110,9 @@ let declare_sort rt sym = declare_sort_from_name rt (string_of_symbol sym)
 
 let declare_fun_from_name rt ro s tyl ty =
   let coqTy = List.fold_right (fun typ c ->
-      Term.mkArrow (interp_to_coq rt typ) c)
+      CoqInterface.mkArrow (interp_to_coq rt typ) c)
       tyl (interp_to_coq rt ty) in
-  let cons_v = Structures.declare_new_variable (Structures.mkId ("Smt_var_"^s)) coqTy in
+  let cons_v = CoqInterface.declare_new_variable (CoqInterface.mkId ("Smt_var_"^s)) coqTy in
   let op = Op.declare ro cons_v (Array.of_list tyl) ty None in
   SmtMaps.add_fun s op;
   op

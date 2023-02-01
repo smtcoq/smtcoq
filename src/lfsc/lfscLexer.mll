@@ -17,51 +17,6 @@
   open Lexing
   open LfscParser
 
-  let char_for_backslash = function
-    | 'n' -> '\010'
-    | 'r' -> '\013'
-    | 'b' -> '\008'
-    | 't' -> '\009'
-    | c -> c
-
-  let lf = '\010'
-
-  let dec_code c1 c2 c3 =
-    100 * (Char.code c1 - 48) + 10 * (Char.code c2 - 48) + (Char.code c3 - 48)
-
-  let hex_code c1 c2 =
-    let d1 = Char.code c1 in
-    let val1 =
-      if d1 >= 97 then d1 - 87
-      else if d1 >= 65 then d1 - 55
-      else d1 - 48 in
-    let d2 = Char.code c2 in
-    let val2 =
-      if d2 >= 97 then d2 - 87
-      else if d2 >= 65 then d2 - 55
-      else d2 - 48 in
-    val1 * 16 + val2
-
-  let found_newline ({ lex_curr_p; _ } as lexbuf) diff =
-    lexbuf.lex_curr_p <-
-      {
-        lex_curr_p with
-        pos_lnum = lex_curr_p.pos_lnum + 1;
-        pos_bol = lex_curr_p.pos_cnum - diff;
-      }
-
-  (* same length computation as in [Lexing.lexeme] *)
-  let lexeme_len { lex_start_pos; lex_curr_pos; _ } = lex_curr_pos - lex_start_pos
-
-  let main_failure lexbuf msg =
-    let { pos_lnum; pos_bol; pos_cnum; pos_fname = _ } = lexeme_start_p lexbuf in
-    let msg =
-      sprintf
-        "Sexplib.Lexer.main: %s at line %d char %d"
-        msg pos_lnum (pos_cnum - pos_bol)
-    in
-    failwith msg
-
   module type T = sig
     module Quoted_string_buffer : sig
       type t
@@ -138,7 +93,7 @@ let ident = ('_')* ['a'-'z' 'A'-'Z' '\'' ]['a'-'z' 'A'-'Z' '0'-'9' '\\' '_']*
 
 
 rule main buf = parse
-  | lf | dos_newline { found_newline lexbuf 0;
+  | lf | dos_newline { SmtMisc.found_newline lexbuf 0;
                        main buf lexbuf }
   | blank+ { main buf lexbuf }
   | (';' (_ # lf_cr)*) as text { Token.comment text ~main buf lexbuf }
@@ -172,13 +127,13 @@ rule main buf = parse
         Quoted_string_buffer.clear buf;
         tok
       }
-  | "|#" { main_failure lexbuf "illegal end of comment" }
+  | "|#" { SmtMisc.main_failure lexbuf "illegal end of comment" }
   | "#" "#"+ "|" unquoted* (* unquoted_start can match ##, so ##| (which should be
                               refused) would not not be parsed by this case if the regexp
                               on the left was not there *)
   | "|" "|"+ "#" unquoted*
   | unquoted_start unquoted* ("#|" | "|#") unquoted*
-      { main_failure lexbuf "comment tokens in unquoted atom" }
+      { SmtMisc.main_failure lexbuf "comment tokens in unquoted atom" }
   | "#" | "|" | unquoted_start unquoted* as str { Token.simple_string str }
   | eof { Token.eof }
 
@@ -186,27 +141,27 @@ and scan_string buf start = parse
   | '"' { Quoted_string_buffer.add_lexeme buf lexbuf; () }
   | '\\' lf [' ' '\t']*
       {
-        let len = lexeme_len lexbuf - 2 in
-        found_newline lexbuf len;
+        let len = SmtMisc.lexeme_len lexbuf - 2 in
+        SmtMisc.found_newline lexbuf len;
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
       }
   | '\\' dos_newline [' ' '\t']*
       {
-        let len = lexeme_len lexbuf - 3 in
-        found_newline lexbuf len;
+        let len = SmtMisc.lexeme_len lexbuf - 3 in
+        SmtMisc.found_newline lexbuf len;
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
       }
   | '\\' (['\\' '\'' '"' 'n' 't' 'b' 'r' ' '] as c)
       {
-        Quoted_string_buffer.add_char buf (char_for_backslash c);
+        Quoted_string_buffer.add_char buf (SmtMisc.char_for_backslash c);
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
       }
   | '\\' (digit as c1) (digit as c2) (digit as c3)
       {
-        let v = dec_code c1 c2 c3 in
+        let v = SmtMisc.dec_code c1 c2 c3 in
         if v > 255 then (
           let { pos_lnum; pos_bol; pos_cnum; pos_fname = _ } = lexeme_end_p lexbuf in
           let msg =
@@ -222,7 +177,7 @@ and scan_string buf start = parse
       }
   | '\\' 'x' (hexdigit as c1) (hexdigit as c2)
       {
-        let v = hex_code c1 c2 in
+        let v = SmtMisc.hex_code c1 c2 in
         Quoted_string_buffer.add_char buf (Char.chr v);
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
@@ -236,8 +191,8 @@ and scan_string buf start = parse
       }
   | lf
       {
-        found_newline lexbuf 0;
-        Quoted_string_buffer.add_char buf lf;
+        SmtMisc.found_newline lexbuf 0;
+        Quoted_string_buffer.add_char buf SmtMisc.lf;
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
       }
@@ -262,7 +217,7 @@ and scan_string buf start = parse
 and scan_block_comment buf locs = parse
   | ('#'* | '|'*) lf
       { Quoted_string_buffer.add_lexeme buf lexbuf;
-        found_newline lexbuf 0; scan_block_comment buf locs lexbuf }
+        SmtMisc.found_newline lexbuf 0; scan_block_comment buf locs lexbuf }
   | (('#'* | '|'*) [^ '"' '#' '|'] # lf)+
       { Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_block_comment buf locs lexbuf }

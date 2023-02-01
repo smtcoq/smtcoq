@@ -65,7 +65,7 @@ Section Checker.
   End Forallb2.
 
   Definition check_hole (s:S.t) (prem_id:list clause_id) (prem:list C.t) (concl:C.t) : C.t :=
-    if forallb2 (fun id c => forallb2 (fun i j => i == j) (S.get s id) (S.sort_uniq c)) prem_id prem
+    if forallb2 (fun id c => forallb2 (fun i j => i =? j) (S.get s id) (S.sort_uniq c)) prem_id prem
     then concl
     else C._true.
 
@@ -89,15 +89,15 @@ Section Checker_correct.
              t_form).
 
   Lemma interp_check_clause c1 : forall c2,
-    forallb2 (fun i j => i == j) c1 c2 -> C.interp rho c1 = C.interp rho c2.
+    forallb2 (fun i j => i =? j) c1 c2 -> C.interp rho c1 = C.interp rho c2.
   Proof.
     induction c1 as [ |l1 c1 IHc1]; simpl; intros [ |l2 c2]; simpl; auto; try discriminate.
     unfold is_true. rewrite andb_true_iff. intros [H1 H2].
-    rewrite Int63Properties.eqb_spec in H1. now rewrite (IHc1 _ H2), H1.
+    rewrite Int63.eqb_spec in H1. now rewrite (IHc1 _ H2), H1.
   Qed.
 
   Lemma valid_check_clause cid c :
-    forallb2 (fun i j => i == j) (S.get s cid) (S.sort_uniq c) ->
+    forallb2 (fun i j => i =? j) (S.get s cid) (S.sort_uniq c) ->
     interp_uf rho c.
   Proof.
     intro H. rewrite <- interp_equiv, <- S.sort_uniq_correct; auto.
@@ -131,7 +131,7 @@ Section Checker_correct.
     - unfold C.valid. now rewrite interp_equiv.
     - now apply C.interp_true.
     - now apply C.interp_true.
-    - case_eq (forallb2 (fun i j => i == j) (S.get s pid) (S.sort_uniq p));
+    - case_eq (forallb2 (fun i j => i =? j) (S.get s pid) (S.sort_uniq p));
       simpl; intro Heq; [ |now apply C.interp_true].
       apply IHpids. apply H. apply (valid_check_clause _ _ Heq).
   Qed.

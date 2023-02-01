@@ -11,13 +11,22 @@
 
 
 val parse_certif :
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
-  Structures.id ->
-  Structures.id -> Structures.id -> Structures.id -> string -> string -> unit
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id -> CoqInterface.id -> CoqInterface.id -> string -> string -> unit
 val checker : string -> string -> unit
 val checker_debug : string -> string -> unit
-val theorem : Structures.id -> string -> string -> unit
-val tactic : EConstr.t -> Structures.constr_expr list -> Structures.tactic
-val tactic_no_check : EConstr.t -> Structures.constr_expr list -> Structures.tactic
+val theorem : CoqInterface.id -> string -> string -> unit
+val tactic : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val tactic_no_check : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+
+(* For extraction *)
+val clear_all : unit -> unit
+val import_trace :
+  SmtAtom.Atom.reify_tbl ->
+  SmtAtom.Form.reify ->
+  string ->
+  (SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t) option ->
+  SmtAtom.Form.t list -> int * SmtAtom.Form.t SmtCertif.clause

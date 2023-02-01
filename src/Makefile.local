@@ -23,12 +23,16 @@ clean::
 	cd ../unit-tests; make clean
 
 cleanall::
-	rm -f ../3rdparty/alt-ergo/smtlib2_lex.ml ../3rdparty/alt-ergo/smtlib2_parse.ml ../3rdparty/alt-ergo/smtlib2_parse.mli .lia.cache Makefile Makefile.conf Makefile.local Tactics.v _CoqProject g_smtcoq.ml4 lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtcoq_plugin.mlpack smtlib2/sExprLexer.ml smtlib2/sExprParser.ml smtlib2/sExprParser.mli verit/veritLexer.ml verit/veritParser.ml verit/veritParser.mli versions/standard/Array/PArray.v versions/standard/Int63/Int63.v versions/standard/Int63/Int63Axioms.v versions/standard/Int63/Int63Native.v versions/standard/Int63/Int63Op.v versions/standard/Int63/Int63Properties.v versions/standard/Structures.v
+	rm -f ../3rdparty/alt-ergo/smtlib2_lex.ml ../3rdparty/alt-ergo/smtlib2_parse.ml ../3rdparty/alt-ergo/smtlib2_parse.mli .lia.cache Makefile.conf lfsc/lfscLexer.ml lfsc/lfscParser.ml lfsc/lfscParser.mli smtlib2/sExprLexer.ml smtlib2/sExprParser.ml smtlib2/sExprParser.mli verit/veritLexer.ml verit/veritParser.ml verit/veritParser.mli
 
 
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
+CAMLPKGS += -package num
+
+merlin-hook::
+	$(HIDE)echo 'PKG num' >> .merlin
 
 %.ml :  %.mll
 	$(CAMLLEX) $<

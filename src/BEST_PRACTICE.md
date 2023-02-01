@@ -9,6 +9,14 @@ except:
   implemented as dependent types).
 
 
+## Hints
+
+Every hint should be put in a hint database, whose name starts with
+"smtcoq_". There should be a different database for each part of SMTCoq
+(e.g., one for each theory). The general database that is used across
+the project is named `smtcoq_core`.
+
+
 # Code organization
 ## Documentation
 Every OCaml module comes with a documented interface.

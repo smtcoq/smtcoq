@@ -38,15 +38,16 @@ val decompose_app : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
 val mkProd : name * types * types -> types
 val mkLetIn : name * constr * types * constr -> constr
+val mkArrow : types -> types -> constr
 
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val pr_constr : constr -> Pp.t
 
-val mkUConst : constr -> Safe_typing.private_constants Entries.definition_entry
-val mkTConst : constr -> constr -> types -> Safe_typing.private_constants Entries.definition_entry
+val mkUConst : constr -> Evd.side_effects Declare.proof_entry
+val mkTConst : constr -> constr -> types -> Evd.side_effects Declare.proof_entry
 val declare_new_type : id -> types
 val declare_new_variable : id -> types -> constr
-val declare_constant : id -> Safe_typing.private_constants Entries.definition_entry -> Names.Constant.t
+val declare_constant : id -> Evd.side_effects Declare.proof_entry -> Names.Constant.t
 
 type cast_kind
 val vmcast : cast_kind
@@ -58,20 +59,12 @@ type econstr = EConstr.t
 val econstr_of_constr : constr -> econstr
 
 
-(* Modules *)
-val gen_constant : string list list -> string -> constr lazy_t
-
-
 (* Int63 *)
-val int63_modules : string list list
 val mkInt : int -> constr
-val cint : constr lazy_t
 
 
 (* PArray *)
-val parray_modules : string list list
 val max_array_size : int
-val mkArray : types * constr array -> constr
 
 
 (* Traces *)
@@ -88,11 +81,7 @@ val mkTrace :
 
 (* Micromega *)
 module Micromega_plugin_Micromega = Micromega_plugin.Micromega
-module Micromega_plugin_Mutils = Mutils_full
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
-module Micromega_plugin_Coq_micromega = Coq_micromega_full
-
-val micromega_coq_proofTerm : constr lazy_t
 val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
 
 
@@ -109,11 +98,11 @@ val set_evars_tac : constr -> tactic
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
+val anomaly : string -> 'a
 val warning : string -> string -> unit
-val extern_constr : constr -> constr_expr
 val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
-val ppconstr_lsimpleconstr : Notation_gram.tolerability
+val ppconstr_lsimpleconstr : Constrexpr.entry_relative_level
 val constrextern_extern_constr : constr -> constr_expr
 val get_rel_dec_name : (constr, types) Context.Rel.Declaration.pt -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr

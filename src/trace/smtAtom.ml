@@ -85,7 +85,7 @@ type nop =
 type op_def = {
     tparams : SmtBtype.btype array;
     tres : SmtBtype.btype;
-    op_val : Structures.constr }
+    op_val : CoqInterface.constr }
 
 type index = Index of int
            | Rel_name of string
@@ -97,14 +97,14 @@ let destruct s (i, hval) = match i with
     | Rel_name _ -> failwith s
 
 let dummy_indexed_op i dom codom =
-  (i, {tparams = dom; tres = codom; op_val = Structures.mkProp})
+  (i, {tparams = dom; tres = codom; op_val = CoqInterface.mkProp})
 
 let indexed_op_index i =
   let index, _ = destruct "destruct on a Rel: called by indexed_op_index" i in
   index
 
 let debruijn_indexed_op i ty =
-  (Index i, {tparams = [||]; tres = ty; op_val = Structures.mkRel i})
+  (Index i, {tparams = [||]; tres = ty; op_val = CoqInterface.mkRel i})
 
 module Op =
   struct
@@ -357,7 +357,7 @@ module Op =
     (* reify table *)
     type reify_tbl =
       { mutable count : int;
-	        tbl : (Structures.constr, indexed_op) Hashtbl.t
+	        tbl : (CoqInterface.constr, indexed_op) Hashtbl.t
       }
 
     let create () =
@@ -385,7 +385,7 @@ module Op =
         let index, hval = destruct "destruct on a Rel: called by set in interp_tbl" op in
         t.(index) <- mk_Tval hval.tparams hval.tres hval.op_val in
       Hashtbl.iter set reify.tbl;
-      Structures.mkArray (tval, t)
+      CoqTerms.mkArray (tval, t)
 
     let to_list reify =
       let set _ op acc =
@@ -707,13 +707,13 @@ module Atom =
       | [] -> ()
 
 
-    let to_smt_named ?pi:(pi=false) (fmt:Format.formatter) h =
+    let to_smt_named ?(debug=false) ?pi:(pi=false) (fmt:Format.formatter) h =
       let rec to_smt fmt h =
         if pi then Format.fprintf fmt "%d:" (index h);
-        to_smt_atom (atom h)
+        to_smt_atom ~debug:debug (atom h)
 
-      and to_smt_atom = function
-        | Acop (CO_BV bv) -> if List.length bv = 0 then Structures.error "Empty bit-vectors are not valid in SMT" else Format.fprintf fmt "#b%a" bv_to_smt bv
+      and to_smt_atom ?(debug=false) = function
+        | Acop (CO_BV bv) -> if List.length bv = 0 then CoqInterface.error "Empty bit-vectors are not valid in SMT" else Format.fprintf fmt "#b%a" bv_to_smt bv
         | Acop _ as a -> to_smt_int fmt (compute_int a)
         | Auop (op,h) -> to_smt_uop op h
         | Abop (op,h1,h2) -> to_smt_bop op h1 h2
@@ -722,7 +722,9 @@ module Atom =
         | Aapp ((i,op),a) ->
            let op_smt () =
              (match i with
-                | Index index -> Format.fprintf fmt "op_%i" index
+                | Index index ->
+                   (Format.fprintf fmt "op_%i" index;
+                    if debug then Format.fprintf fmt " (aka %s)" (Pp.string_of_ppcmds (CoqInterface.pr_constr op.op_val));)
                 | Rel_name name -> Format.fprintf fmt "%s" name);
              if pi then to_smt_op op
            in
@@ -740,7 +742,7 @@ module Atom =
         Array.iter (fun bt -> SmtBtype.to_smt fmt bt; Format.fprintf fmt " ") bta;
         Format.fprintf fmt ") ( ";
         SmtBtype.to_smt fmt bt;
-        Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (Structures.pr_constr t))
+        Format.fprintf fmt " ) ( %s )]" (Pp.string_of_ppcmds (CoqInterface.pr_constr t))
 
       and to_smt_uop op h =
         match op with
@@ -805,7 +807,7 @@ module Atom =
       in
       to_smt fmt h
 
-    let to_smt (fmt:Format.formatter) h = to_smt_named fmt h
+    let to_smt ?(debug=false) (fmt:Format.formatter) h = to_smt_named ~debug:debug fmt h
 
 
     type reify_tbl =
@@ -855,7 +857,7 @@ module Atom =
         else (
           Format.eprintf "Incorrect type: wanted %a, got %a@."
             SmtBtype.to_smt t SmtBtype.to_smt th;
-          failwith (Format.asprintf "Atom %a is not of the expected type" to_smt h)
+          failwith (Format.asprintf "Atom %a is not of the expected type" (to_smt ~debug:true) h)
         )
       in
 
@@ -1060,8 +1062,8 @@ module Atom =
 
 
     let op_tbl () =
-      let tbl = Hashtbl.create 40 in
-      let add (c1,c2) = Hashtbl.add tbl (Lazy.force c1) c2 in
+      let tbl = SmtMisc.ConstrHashtbl.create 40 in
+      let add (c1,c2) = SmtMisc.ConstrHashtbl.add tbl (Lazy.force c1) c2 in
       List.iter add
 	[ cxH,CCxH; cZ0,CCZ0; cof_bits, CCBV;
           cxO,CCxO; cxI,CCxI; cZpos,CCZpos; cZneg,CCZneg; copp,CCZopp;
@@ -1102,13 +1104,13 @@ module Atom =
       let op_tbl = Lazy.force op_tbl in
       let get_cst c =
 	try
-          let cc = Hashtbl.find op_tbl c in
+          let cc = SmtMisc.ConstrHashtbl.find op_tbl c in
           if SL.subset (logic_coq_cst cc) known_logic then cc
           else CCunknown_deps (gobble_of_coq_cst cc)
         with Not_found -> CCunknown
       in
-      let rec mk_hatom (h : Structures.constr) =
-        let c, args = Structures.decompose_app h in
+      let rec mk_hatom (h : CoqInterface.constr) =
+        let c, args = CoqInterface.decompose_app h in
 	match get_cst c with
         | CCxH -> mk_cop CCxH args
         | CCZ0 -> mk_cop CCZ0 args
@@ -1150,9 +1152,9 @@ module Atom =
         | CCselect -> mk_bop_select args
         | CCdiff -> mk_bop_diff args
         | CCstore -> mk_top_store args
-	| CCunknown -> mk_unknown c args (Structures.retyping_get_type_of env sigma h)
+	| CCunknown -> mk_unknown c args (CoqInterface.retyping_get_type_of env sigma h)
         | CCunknown_deps gobble ->
-          mk_unknown_deps c args (Structures.retyping_get_type_of env sigma h) gobble
+          mk_unknown_deps c args (CoqInterface.retyping_get_type_of env sigma h) gobble
 
 
       and mk_cop op args = match op, args with
@@ -1346,10 +1348,10 @@ module Atom =
              let (l1, l2) = collect_types xs in
              match l1 with
                | [] -> 
-                 let ty = Structures.retyping_get_type_of env sigma x in
+                 let ty = CoqInterface.retyping_get_type_of env sigma x in
                  if Constr.iskind ty ||
-                      let c, _ = Structures.decompose_app ty in
-                      Structures.eq_constr c (Lazy.force cCompDec)
+                      let c, _ = CoqInterface.decompose_app ty in
+                      CoqInterface.eq_constr c (Lazy.force cCompDec)
                  then
                    ([x], xs)
                  else
@@ -1368,10 +1370,10 @@ module Atom =
           with | Not_found ->
             let targs = Array.map type_of hargs in
             let tres = SmtBtype.of_coq rt known_logic ty in
-            let os = if Structures.isRel c then
-                       let i = Structures.destRel c in
-                       let n, _ = Structures.destruct_rel_decl (Environ.lookup_rel i env) in
-                       Some (Structures.string_of_name n)
+            let os = if CoqInterface.isRel c then
+                       let i = CoqInterface.destRel c in
+                       let n, _ = CoqInterface.destruct_rel_decl (Environ.lookup_rel i env) in
+                       Some (CoqInterface.string_of_name n)
                      else if Vars.closed0 c then
                        None
                      else
@@ -1394,7 +1396,7 @@ module Atom =
          [gobble] *)
       and mk_unknown_deps c args ty gobble =
         let deps, args = split_list_at gobble args in
-        let c = Structures.mkApp (c, Array.of_list deps) in
+        let c = CoqInterface.mkApp (c, Array.of_list deps) in
         mk_unknown c args ty
 
       in
@@ -1435,7 +1437,7 @@ module Atom =
 
     let interp_tbl reify =
       let t = to_array reify (Lazy.force dft_atom) a_to_coq in
-      Structures.mkArray (Lazy.force catom, t)
+      CoqTerms.mkArray (Lazy.force catom, t)
 
 
     (** Producing a Coq term corresponding to the interpretation of an atom *)
@@ -1447,12 +1449,12 @@ module Atom =
 	  let pc =
 	    match atom a with
               | Acop c -> Op.interp_cop c
-              | Auop (op,h) -> Structures.mkApp (Op.interp_uop op, [|interp_atom h|])
+              | Auop (op,h) -> CoqInterface.mkApp (Op.interp_uop op, [|interp_atom h|])
               | Abop (op,h1,h2) ->
-                Structures.mkApp (Op.interp_bop t_i op,
+                CoqInterface.mkApp (Op.interp_bop t_i op,
                             [|interp_atom h1; interp_atom h2|])
               | Atop (op,h1,h2,h3) ->
-                Structures.mkApp (Op.interp_top t_i op,
+                CoqInterface.mkApp (Op.interp_top t_i op,
                             [|interp_atom h1; interp_atom h2; interp_atom h3|])
               | Anop (NO_distinct ty as op,ha) ->
                 let cop = Op.interp_nop t_i op in
@@ -1460,9 +1462,9 @@ module Atom =
                 let cargs = Array.fold_right (fun h l ->
                     mklApp ccons [|typ; interp_atom h; l|])
                     ha (mklApp cnil [|typ|]) in
-                Structures.mkApp (cop,[|cargs|])
+                CoqInterface.mkApp (cop,[|cargs|])
               | Aapp (op,t) ->
-                Structures.mkApp ((snd op).op_val, Array.map interp_atom t) in
+                CoqInterface.mkApp ((snd op).op_val, Array.map interp_atom t) in
 	  Hashtbl.add atom_tbl l pc;
 	  pc in
       interp_atom a
