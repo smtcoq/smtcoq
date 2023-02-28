@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+open Smtcoq_plugin
 open Format
 open Ast
 open Builtin
