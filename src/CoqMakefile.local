@@ -1,3 +1,9 @@
+########################################################################
+##   This file is intended to developers: please do not use it        ##
+## directly                                                           ##
+########################################################################
+
+
 test :
 	cd ../unit-tests; make cleanvo; make
 
