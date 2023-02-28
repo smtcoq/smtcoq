@@ -10,11 +10,10 @@
 (**************************************************************************)
 
 
-open Smtcoq_plugin
 open Format
-open Ast
-open Builtin
-open Translator_sig  
+open Smtcoq_plugin.Ast
+open Smtcoq_plugin.Builtin
+open Smtcoq_plugin.Translator_sig
 
 
 type lit = term
@@ -331,7 +330,7 @@ let print_clause_elim_or fmt t = fprintf fmt "(%a)" (print_clause true) t
 let print_clause fmt t = fprintf fmt "(%a)" (print_clause false) t
   
 
-let rec to_clause acc t = match name t with
+let rec to_clause (acc:clause) (t:term) : clause = match name t with
   | Some n when n == H.cln || n == H.tfalse -> acc
   | Some n -> t :: acc
   | None ->
@@ -351,7 +350,7 @@ let rec to_clause acc t = match name t with
     | _ -> t :: acc
 
 
-let to_clause = to_clause [] 
+let to_clause : term -> clause = to_clause []
 
 
 let rec print_clause fmt = function
