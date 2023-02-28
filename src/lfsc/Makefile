@@ -20,6 +20,7 @@ SMTCOQCMX=smtcoq_plugin.cmx
 
 MLFILES=veritPrinter.ml lfsctosmtcoq.ml
 CMX=$(MLFILES:%.ml=%.cmx)
+GEN=$(CMX) $(MLFILES:%.ml=%.cmi) $(MLFILES:%.ml=%.o)
 
 OCAMLC=ocamlc
 OCAMLOPT=ocamlopt
@@ -46,7 +47,7 @@ $(PROGRAM): $(CMX)
 
 
 clean:
-	rm -f *.cmx *.cmi *.o
+	rm -f $(GEN)
 
 mrproper: clean
 	rm -f $(PROGRAM)
