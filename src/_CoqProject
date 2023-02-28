@@ -8,7 +8,7 @@
 
 ########################################################################
 ## To generate the Makefile:                                          ##
-##   coq_makefile -f Make -o Makefile                                 ##
+##   coq_makefile -f _CoqProject -o Makefile                          ##
 ##   sed -i 's/^CAMLDONTLINK=unix,str$/CAMLDONTLINK=num,str,unix,dynlink,threads/' Makefile ##
 ## WARNING: DO NOT FORGET THE SECOND LINE (see PR#62)                 ##
 ########################################################################
