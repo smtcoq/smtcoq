@@ -13,58 +13,73 @@
 Require Import PropToBool.
 Require Import Int63 List PArray Bool ZArith.
 Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances QInst.
+From Ltac2 Require Import Ltac2.
 
 Declare ML Module "smtcoq_plugin".
+
+(** A printer for testing Ltac2 functions returning hypothesis *)
+
+Ltac2 rec hyps_printer (h : (ident * constr option * constr) list) 
+:=
+match h with
+| [] => ()
+| x :: xs => match x with
+            | (id, opt, cstr) => 
+let () := Message.print (Message.concat (Message.of_ident id)
+                                        (Message.concat (Message.of_string " : ")
+                                                        (Message.of_constr cstr))) 
+in hyps_printer xs
+end 
+end.
 
 
 (** Collect all the hypotheses from the context *)
 
-Ltac get_hyps_acc acc :=
-  match goal with
-  | [ H : ?P |- _ ] =>
-    let T := type of P in
-    lazymatch T with
-    | Prop =>
-      lazymatch P with
-      | id _ => fail
-      | _ =>
-        let _ := match goal with _ => change P with (id P) in H end in
-        lazymatch acc with
-        | Some ?t => get_hyps_acc (Some (H, t))
-        | None => get_hyps_acc (Some H)
+Ltac2 get_hyps_aux () :=
+let h := Control.hyps () in
+List.filter (fun x => match x with
+                    | (id, opt, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
+                    end) h.
+
+Ltac2 get_hyps () :=
+let hs := get_hyps_aux () in
+match hs with
+| [] => '(@None nat)
+| x :: xs => 
+    match x with
+    | (id, opt, c) => 
+    let h := Control.hyp id in
+    let rec tac_aux xs acc :=
+      match xs with
+      | y :: ys => 
+        match y with
+        | (id', opt', c') => 
+        let h1 := Control.hyp id' in let res := tac_aux ys acc in '($h1, $res)
         end
-      end
-    | _ => fail
-    end
-  | _ => acc
-  end.
+      | [] => acc
+      end in let res := tac_aux xs h in '(Some ($res))
+  end
+end. 
 
-Ltac eliminate_id :=
-  repeat match goal with
-  | [ H : ?P |- _ ] =>
-    lazymatch P with
-    | id ?Q => change P with Q in H
-    | _ => fail
-    end
-  end.
+(* Section Test.
+Variable A : Type.
+Hypothesis H1 : forall a:A, a = a.
+Variable n : Z.
+Hypothesis H2 : n = 17%Z.
 
-Ltac get_hyps :=
-  let Hs := get_hyps_acc (@None nat) in
-  let _ := match goal with _ => eliminate_id end in
-  Hs.
+Goal True.
+Proof.
+let hs := get_hyps_aux () in hyps_printer hs. 
+let hs := get_hyps () in Message.print (Message.of_constr hs).
+Abort.
 
+Goal True.
+Proof. clear A H1 n H2.
+let hs := get_hyps_aux () in hyps_printer hs. 
+let hs := get_hyps () in Message.print (Message.of_constr hs).
+Abort.
+End Test.  *)
 
-(* Section Test. *)
-(*   Variable A : Type. *)
-(*   Hypothesis H1 : forall a:A, a = a. *)
-(*   Variable n : Z. *)
-(*   Hypothesis H2 : n = 17%Z. *)
-
-(*   Goal True. *)
-(*   Proof. *)
-(*     let Hs := get_hyps in idtac Hs. *)
-(*   Abort. *)
-(* End Test. *)
 
 
 (** Tactics in bool *)
@@ -73,9 +88,9 @@ Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exac
 Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
 
 Tactic Notation "verit_bool" constr(h) :=
-  let Hs := get_hyps in
-  match Hs with
-  | Some ?Hs => verit_bool_base_auto (Some (h, Hs))
+  let hs := ltac2:(get_hyps ()) in
+  match hs with
+  | Some ?hs => verit_bool_base_auto (Some (h, hs))
   | None => verit_bool_base_auto (Some h)
   end;
   vauto.
