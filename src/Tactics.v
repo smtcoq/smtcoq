@@ -163,7 +163,7 @@ Ltac zchaff_no_check := add_compdecs; [ .. | prop2bool; zchaff_bool_no_check; bo
 Tactic Notation "verit" constr(h) :=
   let tac :=
   ltac2:(h |- get_hyps_cont_ltac1
-  (ltac1:(h hs |- intros ; let hs :=
+  (ltac1:(h hs |- intros ; idtac h; let hs :=
     lazymatch hs with
     | Some ?hs => constr:(Some (h, hs))
     | None => constr:(Some h)
@@ -175,7 +175,7 @@ Tactic Notation "verit" constr(h) :=
          | Some ?hs => prop2bool_hyps hs
          | None => idtac
          end;
-         [ .. | verit_bool_base_auto hs; vauto ]
+         [ .. | idtac hs; verit_bool_base_auto hs; vauto ]
   ]) h)) in tac h.
 
 Tactic Notation "verit"           :=
