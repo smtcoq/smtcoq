@@ -41,7 +41,7 @@ List.filter (fun x => match x with
                     | (id, opt, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
                     end) h.
 
-Ltac2 get_hyps () :=
+Ltac2 get_hyps_ltac2 () :=
 let hs := get_hyps_aux () in
 match hs with
 | [] => '(@None nat)
@@ -61,6 +61,10 @@ match hs with
   end
 end. 
 
+Ltac2 get_hyps_cont_ltac1 (tac : Ltac1.t -> unit) := 
+let hs := Ltac1.of_constr (get_hyps_ltac2 ()) in
+tac hs.
+
 (* Section Test.
 Variable A : Type.
 Hypothesis H1 : forall a:A, a = a.
@@ -70,7 +74,8 @@ Hypothesis H2 : n = 17%Z.
 Goal True.
 Proof.
 let hs := get_hyps_aux () in hyps_printer hs. 
-let hs := get_hyps () in Message.print (Message.of_constr hs).
+let hs := get_hyps_ltac2 () in Message.print (Message.of_constr hs).
+get_hyps_cont_ltac1 ltac1:(H |- idtac H).
 Abort.
 
 Goal True.
@@ -88,26 +93,29 @@ Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exac
 Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
 
 Tactic Notation "verit_bool" constr(h) :=
-  let hs := ltac2:(get_hyps ()) in
+  let tac :=
+  ltac2:(h |- get_hyps_cont_ltac1
+  (ltac1:(h hs |- 
   match hs with
   | Some ?hs => verit_bool_base_auto (Some (h, hs))
   | None => verit_bool_base_auto (Some h)
   end;
-  vauto.
-Tactic Notation "verit_bool"           :=
-  let Hs := get_hyps in
-  verit_bool_base_auto Hs; vauto.
+  vauto) h)) in tac h.
+
+Tactic Notation "verit_bool" :=
+  ltac2:(get_hyps_cont_ltac1 ltac1:(hs |- verit_bool_base_auto hs; vauto)).
 
 Tactic Notation "verit_bool_no_check" constr(h) :=
-  let Hs := get_hyps in
-  match Hs with
-  | Some ?Hs => verit_bool_no_check_base_auto (Some (h, Hs))
+  let tac :=
+  ltac2:(h |- get_hyps_cont_ltac1 (ltac1:(h hs |-
+  match hs with
+  | Some ?hs => verit_bool_no_check_base_auto (Some (h, hs))
   | None => verit_bool_no_check_base_auto (Some h)
   end;
-  vauto.
-Tactic Notation "verit_bool_no_check"           :=
-  let Hs := get_hyps in
-  fun Hs => verit_bool_no_check_base_auto Hs; vauto.
+  vauto) h)) in tac h.
+
+Tactic Notation "verit_bool_no_check" :=
+  ltac2:(get_hyps_cont_ltac1 ltac1:(hs |- verit_bool_no_check_base_auto hs; vauto)).
 
 
 (** Tactics in bool with timeout **)
