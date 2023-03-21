@@ -62,10 +62,12 @@ match hs with
 end. 
 
 Ltac2 get_hyps_cont_ltac1 (tac : Ltac1.t -> unit) := 
+Control.enter (fun () =>
 let hs := Ltac1.of_constr (get_hyps_ltac2 ()) in
-tac hs.
+tac hs).
 
-(* Section Test.
+(*
+Section Test.
 Variable A : Type.
 Hypothesis H1 : forall a:A, a = a.
 Variable n : Z.
