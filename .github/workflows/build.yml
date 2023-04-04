@@ -24,4 +24,4 @@ jobs:
       push: ${{ 42 }}
       pull_request: ${{ 17 }}
     steps:
-      - run: echo "${{ env.${{ github.event_name }} }}"
+      - run: echo "${{ env[github.event_name] }}"
