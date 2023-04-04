@@ -23,4 +23,4 @@ jobs:
     env:
       foo: $${{ 42 }}
     steps:
-      - run: echo "${{ env.foo }}"
+      - run: echo "env.foo"
