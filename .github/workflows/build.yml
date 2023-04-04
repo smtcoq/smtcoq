@@ -20,5 +20,7 @@ jobs:
         image:
           - smtcoq/smtcoq:latest-${{ github.base_ref }}
       fail-fast: false  # don't stop jobs if one fails
+    env:
+      foo: $${{ 42 }}
     steps:
-      - run: echo "${{ fromJSON('[\"foo\"]') }}"
+      - run: echo "${{ foo }}"
