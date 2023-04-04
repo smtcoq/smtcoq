@@ -21,4 +21,4 @@ jobs:
           - smtcoq/smtcoq:latest-${{ github.base_ref }}
       fail-fast: false  # don't stop jobs if one fails
     steps:
-      - run: echo "smtcoq/smtcoq:latest-${{ fromJSON('[\"push\"=>github.ref_name, \"pull_request\"=>github.base_ref]')[github.event_name] }}"
+      - run: echo "${{ fromJSON({\"foo\":\"bar\"}) }}"
