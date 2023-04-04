@@ -17,9 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        - if: ${{ github.event.push }}
+        - if: github.event_name == 'push'
           image: smtcoq/smtcoq:latest-${{ github.ref_name }}
-        - if: ${{ github.event.pull_request }}
+        - if: github.event_name == 'pull_request'
           image: smtcoq/smtcoq:latest-${{ github.base_ref }}
       fail-fast: false  # don't stop jobs if one fails
     steps:
