@@ -43,4 +43,4 @@ jobs:
               cd ..
               sudo chown -R 1001:116 .
             endGroup
-      - run: echo "smtcoq/smtcoq:latest-${{ fromJSON('['push'=>github.ref_name, 'pull_request'=>github.base_ref]')[github.event_name] }}"
+      - run: echo "smtcoq/smtcoq:latest-${{ fromJSON('[\"push\"=>github.ref_name, \"pull_request\"=>github.base_ref]')[github.event_name] }}"
