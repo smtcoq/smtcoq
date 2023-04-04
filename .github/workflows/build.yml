@@ -15,13 +15,13 @@ on:
 jobs:
   test-and-install:
     runs-on: ubuntu-latest
+    env:
+      push: ${{ github.ref_name }}
+      pull_request: ${{ github.base_ref }}
     strategy:
       matrix:
         image:
-          - smtcoq/smtcoq:latest-${{ github.base_ref }}
+          - smtcoq/smtcoq:latest-${{ env[github.event_name] }}
       fail-fast: false  # don't stop jobs if one fails
-    env:
-      push: ${{ 42 }}
-      pull_request: ${{ 17 }}
     steps:
-      - run: echo "${{ env[github.event_name] }}"
+      - run: echo "yeepee"
