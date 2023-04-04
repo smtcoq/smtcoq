@@ -25,7 +25,7 @@ jobs:
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'coq-smtcoq.opam'
-          custom_image: ${{ smtcoq/smtcoq:latest-${{ env[github.event_name] }} }}
+          custom_image: smtcoq/smtcoq:latest-${{ env[github.event_name] }}
           before_script: |
             startGroup "Compile and make tests"
               sudo chown -R coq:coq .
