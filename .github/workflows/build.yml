@@ -15,17 +15,17 @@ on:
 jobs:
   test-and-install:
     runs-on: ubuntu-latest
+    env:
+      push: ${{ github.ref_name }}
+      pull_request: ${{ github.base_ref }}
     strategy:
-      matrix:
-        image:
-          - smtcoq/smtcoq:latest-${{ github.ref_name }}
       fail-fast: false  # don't stop jobs if one fails
     steps:
       - uses: actions/checkout@v2
       - uses: coq-community/docker-coq-action@v1
         with:
           opam_file: 'coq-smtcoq.opam'
-          custom_image: ${{ matrix.image }}
+          custom_image: smtcoq/smtcoq:latest-${{ env[github.event_name] }}
           before_script: |
             startGroup "Compile and make tests"
               sudo chown -R coq:coq .
