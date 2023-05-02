@@ -413,12 +413,12 @@ let vm_cast_true_no_check t =
    SMTCoq's tactics. *)
 let vm_cast_true env t =
   try
-    CoqInterface.vm_conv Reduction.CUMUL env
+    CoqInterface.vm_conv CUMUL env
       (mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
       (mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|]);
     vm_cast_true_no_check t
-  with Reduction.NotConvertible ->
+  with Conversion.NotConvertible ->
     CoqInterface.error ("SMTCoq was not able to check the proof certificate.")
 
 
