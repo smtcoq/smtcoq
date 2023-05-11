@@ -32,6 +32,14 @@ Lemma fun_const2 :
     (forall x, g (f x) 2) -> g (f 3) 2.
 Proof using. verit. Qed.
 
+(* Two goals : Ltac2 may throw exceptions whenever several goals are under focus
+so this case need to be tested *)
+
+Lemma fun_const2goals :
+  forall f (g : Z -> Z -> bool),
+    (forall x, g (f x) 2) -> (g (f 3) 2 /\ g (f 3) 2).
+Proof using. intros; split; verit. Qed.
+
 
 (* Simple connectives *)
 
