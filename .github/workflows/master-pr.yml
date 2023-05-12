@@ -1,0 +1,12 @@
+name: Workflow for pull request on master version of Coq
+
+on:
+  pull_request:
+    branches:
+      - coq-master
+
+jobs:
+  from-sources:
+    uses: ./.github/workflows/from-sources.yml
+    with:
+      image-version: ${{ github.base_ref }}
