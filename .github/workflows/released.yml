@@ -7,25 +7,19 @@ on:
       - coq-8.14
       - coq-8.15
       - coq-8.16
-  pull_request:
-    branches:
-      - coq-8.13
-      - coq-8.14
-      - coq-8.15
-      - coq-8.16
+  # pull_request:
+  #   branches:
+  #     - coq-8.13
+  #     - coq-8.14
+  #     - coq-8.15
+  #     - coq-8.16
 
 jobs:
   from-sources:
-    env:
-      push: ${{ github.ref_name }}
-      pull_request: ${{ github.base_ref }}
     uses: ./.github/workflows/from-sources.yml
     with:
-      image-version: ${{ env[github.event_name] }}
+      image-version: ${{ github.ref_name }}
   from-opam:
-    env:
-      push: ${{ github.ref_name }}
-      pull_request: ${{ github.base_ref }}
     uses: ./.github/workflows/from-opam.yml
     with:
-      image-version: ${{ env[github.event_name] }}
+      image-version: ${{ github.ref_name }}
