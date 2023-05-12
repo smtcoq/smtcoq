@@ -1,4 +1,4 @@
-name: Workflow for released versions of Coq
+name: Workflow for push on released versions of Coq
 
 on:
   push:
@@ -7,12 +7,6 @@ on:
       - coq-8.14
       - coq-8.15
       - coq-8.16
-  # pull_request:
-  #   branches:
-  #     - coq-8.13
-  #     - coq-8.14
-  #     - coq-8.15
-  #     - coq-8.16
 
 jobs:
   from-sources:
