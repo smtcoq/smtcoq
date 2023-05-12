@@ -10,13 +10,13 @@ on:
 jobs:
   from-opam:
     runs-on: ubuntu-latest
-    container: smtcoq/smtcoq:latest-${{ inputs.image-version }}
     strategy:
       fail-fast: false  # don't stop jobs if one fails
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: coq-community/docker-coq-action@v1
         with:
+          custom_image: smtcoq/smtcoq:latest-${{ inputs.image-version }}
           opam_file: 'coq-smtcoq.opam'
           after_script: |
             startGroup "Check examples"
