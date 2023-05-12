@@ -10,19 +10,21 @@ on:
 jobs:
   from-sources:
     runs-on: ubuntu-latest
-    container: smtcoq/smtcoq:latest-${{ inputs.image-version }}
     strategy:
       fail-fast: false  # don't stop jobs if one fails
     steps:
       - uses: actions/checkout@v3
-      - run: |
-          sudo chown -R coq:coq .
-          cd src
-          make
-          make test
-          make install
-          make clean
-          cd ../examples
-          coqc Example.v
-          cd ..
-          sudo chown -R 1001:116 .
+      - uses: coq-community/docker-coq-action@v1
+        with:
+          custom_image: smtcoq/smtcoq:latest-${{ inputs.image-version }}
+          custom_script: |
+            sudo chown -R coq:coq .
+            cd src
+            make
+            make test
+            make install
+            make clean
+            cd ../examples
+            coqc Example.v
+            cd ..
+            sudo chown -R 1001:116 .
