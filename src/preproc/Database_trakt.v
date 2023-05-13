@@ -345,7 +345,7 @@ Section Relations_positive.
 
 End Relations_positive.
 
-(* This would embed posities appearing in Z *)
+(* This would embed positives appearing in Z *)
 (* Trakt Add Embedding *)
 (*       (positive) (Z) (Z.pos) (Z.to_pos) (positive_Z_FBInverseProof) (positive_Z_BFPartialInverseProof_bool) *)
 (*       (positive_Z_ConditionProof_bool). *)
@@ -552,8 +552,8 @@ Proof. now rewrite BITVECTOR_LIST.bv_slt_B2P. Qed.
 
 Trakt Add Relation 2
   (fun n => @eq (BITVECTOR_LIST.bitvector n))
-  (@BITVECTOR_LIST.bv_eq)
-  (bv_eq_P2B).
+  (fun n => @BITVECTOR_LIST.bv_eq n)
+  (fun n a b => bv_eq_P2B n a b).
 
 Trakt Add Relation 2
   (fun n => @BITVECTOR_LIST.bv_ultP n)
@@ -575,10 +575,10 @@ Trakt Add Relation 2
 (*   intros. trakt Z bool. *)
 (* Abort. *)
 
-(* Goal forall (a b c : bitvector 4), *)
-(*     bv_and c a = c. *)
+(* Goal forall (a : bitvector 4), *)
+(*     bv_and (n:=4) a a = a. *)
 (* Proof. *)
-(*   intros a b c. trakt Z bool. *)
+(*   intro a. trakt Z bool. *)
 (* Abort. *)
 
 
