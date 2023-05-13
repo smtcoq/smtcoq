@@ -1,0 +1,19 @@
+name: Workflow for pull request on released versions of Coq
+
+on:
+  pull_request:
+    branches:
+      - coq-8.13
+      - coq-8.14
+      - coq-8.15
+      - coq-8.16
+
+jobs:
+  from-sources:
+    uses: ./.github/workflows/from-sources.yml
+    with:
+      image-version: ${{ github.base_ref }}
+  from-opam:
+    uses: ./.github/workflows/from-opam.yml
+    with:
+      image-version: ${{ github.base_ref }}
