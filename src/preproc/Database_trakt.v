@@ -532,3 +532,26 @@ Trakt Add Relation 2 (N.gt) (Z.gtb) (Ngt_Zgtb_embedding).
 (* Lemma Zneg_Zopp_embedding_equality : forall (x : positive), Zneg x = Z.opp (Zpos x).
 Admitted.
 Trakt Add Symbol (Zneg) (Z.opp) (Zneg_Zopp_embedding_equality). *)
+
+
+(* Boolean predicates for other theories *)
+
+Require Import BVList.
+
+Lemma bv_ult_P2B (n:N) (a b:BITVECTOR_LIST.bitvector n) :
+  BITVECTOR_LIST.bv_ultP (n:=n) a b <-> BITVECTOR_LIST.bv_ult (n:=n) a b = true.
+Proof. now rewrite BITVECTOR_LIST.bv_ult_B2P. Qed.
+
+Lemma bv_slt_P2B (n:N) (a b:BITVECTOR_LIST.bitvector n) :
+  BITVECTOR_LIST.bv_sltP (n:=n) a b <-> BITVECTOR_LIST.bv_slt (n:=n) a b = true.
+Proof. now rewrite BITVECTOR_LIST.bv_slt_B2P. Qed.
+
+Trakt Add Relation 2
+  (fun n => BITVECTOR_LIST.bv_ultP (n:=n))
+  (fun n => BITVECTOR_LIST.bv_ult (n:=n))
+  (bv_ult_P2B).
+
+Trakt Add Relation 2
+  (fun n => BITVECTOR_LIST.bv_sltP (n:=n))
+  (fun n => BITVECTOR_LIST.bv_slt (n:=n))
+  (bv_slt_P2B).
