@@ -538,6 +538,10 @@ Trakt Add Symbol (Zneg) (Z.opp) (Zneg_Zopp_embedding_equality). *)
 
 Require Import BVList.
 
+Lemma bv_eq_P2B (n:N) (a b:BITVECTOR_LIST.bitvector n) :
+  a = b <-> BITVECTOR_LIST.bv_eq a b = true.
+Proof. now rewrite BITVECTOR_LIST.bv_eq_reflect. Qed.
+
 Lemma bv_ult_P2B (n:N) (a b:BITVECTOR_LIST.bitvector n) :
   BITVECTOR_LIST.bv_ultP (n:=n) a b <-> BITVECTOR_LIST.bv_ult (n:=n) a b = true.
 Proof. now rewrite BITVECTOR_LIST.bv_ult_B2P. Qed.
@@ -547,11 +551,83 @@ Lemma bv_slt_P2B (n:N) (a b:BITVECTOR_LIST.bitvector n) :
 Proof. now rewrite BITVECTOR_LIST.bv_slt_B2P. Qed.
 
 Trakt Add Relation 2
-  (fun n => BITVECTOR_LIST.bv_ultP (n:=n))
-  (fun n => BITVECTOR_LIST.bv_ult (n:=n))
+  (fun n => @eq (BITVECTOR_LIST.bitvector n))
+  (@BITVECTOR_LIST.bv_eq)
+  (bv_eq_P2B).
+
+Trakt Add Relation 2
+  (fun n => @BITVECTOR_LIST.bv_ultP n)
+  (@BITVECTOR_LIST.bv_ult)
   (bv_ult_P2B).
 
 Trakt Add Relation 2
-  (fun n => BITVECTOR_LIST.bv_sltP (n:=n))
-  (fun n => BITVECTOR_LIST.bv_slt (n:=n))
+  (fun n => @BITVECTOR_LIST.bv_sltP n)
+  (@BITVECTOR_LIST.bv_slt)
   (bv_slt_P2B).
+
+
+(* (* Tests *) *)
+(* Import BITVECTOR_LIST. *)
+
+(* Goal forall (a b : bitvector 42), *)
+(*     a = b /\ bv_ultP a b /\ bv_sltP a b. *)
+(* Proof. *)
+(*   intros. trakt Z bool. *)
+(* Abort. *)
+
+(* Goal forall (a b c : bitvector 4), *)
+(*     bv_and c a = c. *)
+(* Proof. *)
+(*   intros a b c. trakt Z bool. *)
+(* Abort. *)
+
+
+(* Require FArray. *)
+(* Require Import SMT_classes. *)
+
+(* Lemma farray_eq_P2B (key elt : Type) *)
+(*   (keyC : CompDec key) (eltC : CompDec elt) *)
+(*   (a b : FArray.farray key elt) : *)
+(*   a = b <-> FArray.equal a b = true. *)
+(* Proof. intros. now rewrite FArray.equal_iff_eq. Qed. *)
+
+(* Trakt Add Relation 2 *)
+(*   (fun key elt (keyC : CompDec key) (eltC : CompDec elt) => *)
+(*      @eq (@FArray.farray key elt _ _)) *)
+(*   (fun key elt (keyC : CompDec key) (eltC : CompDec elt) => *)
+(*      @FArray.equal key elt _ _ _ _ _) *)
+(*   (fun key elt (keyC : CompDec key) (eltC : CompDec elt) => *)
+(*      farray_eq_P2B key elt keyC eltC). *)
+
+(* (* Section Array. *) *)
+
+(* (*   Variables (key elt : Type) *) *)
+(* (*     (* (key_ord : SMT_classes.OrdType key) (key_comp : SMT_classes.Comparable key) *) *) *)
+(* (*     (* (elt_ord : SMT_classes.OrdType elt) (elt_comp : SMT_classes.Comparable elt) *) *) *)
+(* (*     (* (elt_inh : SMT_classes.Inhabited elt). *) *) *)
+(* (*     (keyC : CompDec key) (eltC : CompDec elt). *) *)
+
+(* (*   Lemma farray_eq_P2B (a b : FArray.farray key elt) : *) *)
+(* (*     a = b <-> FArray.equal a b = true. *) *)
+(* (*   Proof. intros. now rewrite FArray.equal_iff_eq. Qed. *) *)
+
+(* (*   Trakt Add Relation 2 *) *)
+(* (*     (@eq (@FArray.farray key elt _ _)) *) *)
+(* (*     (FArray.equal (key:=key) (elt:=elt)) *) *)
+(* (*     (farray_eq_P2B). *) *)
+
+(* (*   Import FArray. *) *)
+
+(* (*   Goal forall (a b : farray key elt), a = b. *) *)
+(* (*     intros. trakt Z bool. *) *)
+(* (*   Abort. *) *)
+
+(* (* End Array. *) *)
+
+(* (* Test *) *)
+(* Import FArray. *)
+(* Require Import SMT_classes_instances. *)
+
+(* Goal forall (a b : farray Z Z), a = b. *)
+(*   intros. trakt Z bool. *)
+(* Abort. *)
