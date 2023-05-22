@@ -679,9 +679,15 @@ let gen_rel_name =
   let num = ref (-1) in
   fun () -> incr num; "SMTCoqRelName"^(string_of_int !num)
 
+let warn_discarding_lemma =
+  CWarnings.create ~name:"SMTCoq-discarding-lemma" ~category:CoqInterface.smtcoq_cat
+    Pp.(fun clemma ->
+        str "Discarding the following lemma (unsupported):" ++ spc() ++
+        str (SmtMisc.string_coq_constr clemma))
+
 let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let warn () =
-    CoqInterface.warning "Lemma" ("Discarding the following lemma (unsupported): "^(SmtMisc.string_coq_constr clemma));
+    warn_discarding_lemma clemma;
     None
   in
 
