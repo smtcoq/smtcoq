@@ -34,7 +34,7 @@ val isRel : constr -> bool
 val destRel : constr -> int
 val lift : int -> constr -> constr
 val mkApp : constr * constr array -> constr
-val decompose_app : constr -> constr * constr list
+val decompose_app_list : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
 val mkProd : name * types * types -> types
 val mkLetIn : name * constr * types * constr -> constr
