@@ -382,14 +382,14 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
          [|mklApp cprod
              [|Lazy.force cnat; Lazy.force cname_step|]|]) in
 
-  match CoqInterface.decompose_app res with
+  match CoqInterface.decompose_app_list res with
   | c, _ when CoqInterface.eq_constr c (Lazy.force cNone) ->
     CoqInterface.error ("Debug checker is only meant to be used for certificates \
                        that fail to be checked by SMTCoq.")
   | c, [_; n] when CoqInterface.eq_constr c (Lazy.force cSome) ->
-    (match CoqInterface.decompose_app n with
+    (match CoqInterface.decompose_app_list n with
      | c, [_; _; cnb; cn] when CoqInterface.eq_constr c (Lazy.force cpair) ->
-       let n = fst (CoqInterface.decompose_app cn) in
+       let n = fst (CoqInterface.decompose_app_list cn) in
        let name =
          if CoqInterface.eq_constr n (Lazy.force cName_Res ) then "Res"
          else if CoqInterface.eq_constr n (Lazy.force cName_Weaken) then "Weaken"
@@ -442,7 +442,7 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 
 
 (* let rec of_coq_list cl =
- *   match CoqInterface.decompose_app cl with
+ *   match CoqInterface.decompose_app_list cl with
  *   | c, _ when CoqInterface.eq_constr c (Lazy.force cnil) -> []
  *   | c, [_; x; cr] when CoqInterface.eq_constr c (Lazy.force ccons) ->
  *     x :: of_coq_list cr
@@ -513,7 +513,7 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *            mklApp clist [|mklApp cstep
  *                             [|ct_i; ct_func; ct_atom; ct_form|]|]|]) in
  * 
- *   let s, steps = match CoqInterface.decompose_app setup with
+ *   let s, steps = match CoqInterface.decompose_app_list setup with
  *     | c, [_; _; s; csteps] when CoqInterface.eq_constr c (Lazy.force cpair) ->
  *       s, of_coq_list csteps
  *     | _ -> assert false
@@ -531,12 +531,12 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *       CoqInterface.cbv_vm (Global.env ()) tm
  *           (mklApp cprod [|Lazy.force cState_S_t; Lazy.force cbool|]) in
  * 
- *     match CoqInterface.decompose_app res with
+ *     match CoqInterface.decompose_app_list res with
  *     | c, [_; _; s; cbad] when CoqInterface.eq_constr c (Lazy.force cpair) ->
  *       if not (mk_bool cbad) then s
  *       else CoqInterface.error ("Step number " ^ string_of_int !cpt ^
  *                              " (" ^ string_coq_constr
- *                                (fst (CoqInterface.decompose_app step)) ^ ")" ^
+ *                                (fst (CoqInterface.decompose_app_list step)) ^ ")" ^
  *                              " of the certificate likely failed." )
  *     | _ -> assert false
  *   in
@@ -657,7 +657,7 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
 
 
 let get_arguments concl =
-  let f, args = CoqInterface.decompose_app concl in
+  let f, args = CoqInterface.decompose_app_list concl in
   match args with
   | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
   | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
@@ -696,7 +696,7 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let rel_context = List.map (fun rel -> Context.Rel.Declaration.set_name (Names.Name.mk_name (Names.Id.of_string (gen_rel_name ()))) rel) rel_context in
 
   let env_lemma = Environ.push_rel_context rel_context env in
-  let f, args = CoqInterface.decompose_app qf_lemma in
+  let f, args = CoqInterface.decompose_app_list qf_lemma in
   let core_f =
     if CoqInterface.eq_constr f (Lazy.force cis_true) then
       match args with

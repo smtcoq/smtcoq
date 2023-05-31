@@ -1110,7 +1110,7 @@ module Atom =
         with Not_found -> CCunknown
       in
       let rec mk_hatom (h : CoqInterface.constr) =
-        let c, args = CoqInterface.decompose_app h in
+        let c, args = CoqInterface.decompose_app_list h in
 	match get_cst c with
         | CCxH -> mk_cop CCxH args
         | CCZ0 -> mk_cop CCZ0 args
@@ -1350,7 +1350,7 @@ module Atom =
                | [] -> 
                  let ty = CoqInterface.retyping_get_type_of env sigma x in
                  if Constr.iskind ty ||
-                      let c, _ = CoqInterface.decompose_app ty in
+                      let c, _ = CoqInterface.decompose_app_list ty in
                       CoqInterface.eq_constr c (Lazy.force cCompDec)
                  then
                    ([x], xs)

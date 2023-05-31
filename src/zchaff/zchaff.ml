@@ -415,7 +415,7 @@ let build_body_eq reify_atom reify_form l1 l2 l (max_id, confl) vm_cast =
   (proof_cast, proof_nocast)
 
 let get_arguments concl =
-  let f, args = CoqInterface.decompose_app concl in
+  let f, args = CoqInterface.decompose_app_list concl in
   match args with
   | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
   | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
