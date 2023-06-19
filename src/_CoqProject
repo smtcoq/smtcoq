@@ -85,6 +85,7 @@ smtlib2/smtlib2_solver.mli
 smtlib2/sExprParser.ml
 smtlib2/sExprParser.mli
 smtlib2/sExprLexer.ml
+smtlib2/sExprLexer.mli
 
 verit/veritParser.ml
 verit/veritParser.mli
@@ -95,23 +96,28 @@ verit/verit.mli
 verit/veritSyntax.ml
 verit/veritSyntax.mli
 
-lfsc/shashcons.mli
 lfsc/shashcons.ml
-lfsc/hstring.mli
+lfsc/shashcons.mli
 lfsc/hstring.ml
+lfsc/hstring.mli
 lfsc/lfscParser.ml
 lfsc/lfscParser.mli
 lfsc/type.ml
+lfsc/type.mli
 lfsc/ast.ml
 lfsc/ast.mli
 lfsc/translator_sig.ml
 lfsc/translator_sig.mli
 lfsc/builtin.ml
+lfsc/builtin.mli
 lfsc/tosmtcoq.ml
 lfsc/tosmtcoq.mli
 lfsc/converter.ml
+lfsc/converter.mli
 lfsc/lfsc.ml
+lfsc/lfsc.mli
 lfsc/lfscLexer.ml
+lfsc/lfscLexer.mli
 
 zchaff/cnfParser.ml
 zchaff/cnfParser.mli
