@@ -70,7 +70,6 @@ trace/coqInterface.mli
 ../3rdparty/alt-ergo/smtlib2_parse.ml
 ../3rdparty/alt-ergo/smtlib2_parse.mli
 ../3rdparty/alt-ergo/smtlib2_lex.ml
-../3rdparty/alt-ergo/smtlib2_lex.mli
 ../3rdparty/alt-ergo/smtlib2_ast.ml
 ../3rdparty/alt-ergo/smtlib2_ast.mli
 ../3rdparty/alt-ergo/smtlib2_util.ml
@@ -85,12 +84,10 @@ smtlib2/smtlib2_solver.mli
 smtlib2/sExprParser.ml
 smtlib2/sExprParser.mli
 smtlib2/sExprLexer.ml
-smtlib2/sExprLexer.mli
 
 verit/veritParser.ml
 verit/veritParser.mli
 verit/veritLexer.ml
-verit/veritLexer.mli
 verit/verit.ml
 verit/verit.mli
 verit/veritSyntax.ml
@@ -117,7 +114,6 @@ lfsc/converter.mli
 lfsc/lfsc.ml
 lfsc/lfsc.mli
 lfsc/lfscLexer.ml
-lfsc/lfscLexer.mli
 
 zchaff/cnfParser.ml
 zchaff/cnfParser.mli
