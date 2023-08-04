@@ -32,7 +32,7 @@ let string_of_name_def d n = try CoqInterface.string_of_name n with | _ -> d
 let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in
   let pr = fix
-      Ppconstr.modular_constr_pr Pp.mt CoqInterface.ppconstr_lsimpleconstr in
+      Ppconstr.modular_constr_pr Pp.mt None CoqInterface.ppconstr_lsimpleconstr in
   Pp.string_of_ppcmds (pr (CoqInterface.constrextern_extern_constr t))
 
 
