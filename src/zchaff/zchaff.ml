@@ -517,7 +517,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
 let core_tactic vm_cast env sigma concl =
   SmtTrace.clear ();
 
-  let (forall_let, concl) = Term.decompose_prod_assum concl in
+  let (forall_let, concl) = Term.decompose_prod_decls concl in
   let a, b = get_arguments concl in
   let reify_atom = Atom.create () in
   let reify_form = Form.create () in
