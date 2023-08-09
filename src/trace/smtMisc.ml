@@ -30,9 +30,8 @@ let mklApp f args = CoqInterface.mkApp (Lazy.force f, args)
 let string_of_name_def d n = try CoqInterface.string_of_name n with | _ -> d
 
 let string_coq_constr t =
-  let rec fix rf x = rf (fix rf) x in
-  let pr = fix
-      Ppconstr.modular_constr_pr Pp.mt CoqInterface.ppconstr_lsimpleconstr in
+  let env = Global.env () in
+  let pr = Ppconstr.pr_constr_expr env (Evd.from_env env) in
   Pp.string_of_ppcmds (pr (CoqInterface.constrextern_extern_constr t))
 
 
