@@ -691,7 +691,7 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
     None
   in
 
-  let rel_context, qf_lemma = Term.decompose_prod_assum clemma in
+  let rel_context, qf_lemma = Term.decompose_prod_decls clemma in
   (* Bound variables are given fresh names to avoid variable capture *)
   let rel_context = List.map (fun rel -> Context.Rel.Declaration.set_name (Names.Name.mk_name (Names.Id.of_string (gen_rel_name ()))) rel) rel_context in
 
