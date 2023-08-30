@@ -579,27 +579,18 @@ let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
-let tactic_gen _ vm_cast =
-  (* Transform the tuple of lemmas given by the user into a list *)
-  let lcpl =
-    let lcpl = EConstr.Unsafe.to_constr lcpl in
-    let lcpl = CoqTerms.option_of_constr_option lcpl in
-    match lcpl with
-      | Some lcpl -> CoqTerms.list_of_constr_tuple lcpl
-      | None -> []
-  in
-  (* Core tactic *)
-  clear_all ();
-  let rt = SmtBtype.create () in
-  let ro = Op.create () in
-  let ra = Tosmtcoq.ra in
-  let rf = Tosmtcoq.rf in
-  let ra' = Tosmtcoq.ra in
-  let rf' = Tosmtcoq.rf in
-  SmtCommands.tactic call_cvc4 0 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
-  (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
-   *    the same ra and rf twice to have everything reifed *\)
-   * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
+  let tactic_gen vm_cast =
+    clear_all ();
+    let rt = SmtBtype.create () in
+    let ro = Op.create () in
+    let ra = Tosmtcoq.ra in
+    let rf = Tosmtcoq.rf in
+    let ra' = Tosmtcoq.ra in
+    let rf' = Tosmtcoq.rf in
+    SmtCommands.tactic 0 call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+    (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
+     *    the same ra and rf twice to have everything reifed *\)
+     * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
 
 let tactic_gen_abduct i vm_cast lcpl lcepl =
   (* Transform the tuple of lemmas given by the user into a list *)
@@ -619,8 +610,8 @@ let tactic_gen_abduct i vm_cast lcpl lcepl =
   let rf = Tosmtcoq.rf in
   let ra' = Tosmtcoq.ra in
   let rf' = Tosmtcoq.rf in
-  SmtCommands.tactic call_cvc4_abduct i cvc4_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl
+  SmtCommands.tactic i call_cvc4_abduct cvc4_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl
 
-let tactic () = tactic_gen 0 vm_cast_true
-let tactic_no_check () = tactic_gen 0 (fun _ -> vm_cast_true_no_check)
+let tactic () = tactic_gen vm_cast_true
+let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)
 let tactic_abduct i = tactic_gen_abduct i vm_cast_true
