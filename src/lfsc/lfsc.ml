@@ -344,9 +344,52 @@ let string_logic ro f =
     (if SL.mem LBitvectors l then "BV" else "")
     (if SL.mem LLia l then "LIA" else "")
 
+let call_abduce i env rt ro ra rf root lsmt =
+    let open Smtlib2_solver in
+    let fl = Form.neg (snd root) in
+    let solver_call = [| "cvc5"; "--produce-abducts"; "--incremental"; "--tlimit-per=60000"; "--dag-thresh=0"; "--no-sygus-core-connective" |] in
+    let cvc5 = create solver_call in
+
+    set_option cvc5 "print-success" true;
+    set_option cvc5 "produce-assignments" true;
+    set_logic cvc5 (string_logic ro fl);
+
+    List.iter (fun (i,t) ->
+      let s = "Tindex_"^(string_of_int i) in
+      SmtMaps.add_btype s (SmtBtype.Tindex t);
+      declare_sort cvc5 s 0;
+    ) (SmtBtype.to_list rt);
+
+    List.iter (fun (i,cod,dom,op) ->
+      let s = "op_"^(string_of_int i) in
+      SmtMaps.add_fun s op;
+      let args =
+        Array.fold_right
+          (fun t acc -> asprintf "%a" SmtBtype.to_smt t :: acc) cod [] in
+      let ret = asprintf "%a" SmtBtype.to_smt dom in
+      declare_fun cvc5 s args ret
+    ) (Op.to_list ro);
+    (* Expecting List.hd lsmt to be the negation of the goal *)
+    List.iter (fun x -> assume cvc5 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
+
+    let proof =
+      let abduct1 = SmtCommands.abduct_string env rt ro ra rf 
+            (get_abduct cvc5 (asprintf "%a" (Form.to_smt ~debug:false) fl)) in
+      let rec produce_abducts n =
+        (if n > 0 then
+          (SmtCommands.abduct_string env rt ro ra rf (get_abduct_next cvc5)) :: produce_abducts (n-1) 
+        else []) in
+      let abducts = List.rev (produce_abducts (i - 1)) in
+        CoqInterface.error
+        ("cvc5 returned SAT.\nThe solver cannot prove the goal, but one of the following hypotheses would make it provable:\n" ^
+          abduct1^"\n"^(String.concat "\n" abducts))
+    in
+
+    quit cvc5;
+    proof
 
 
-let call_cvc4 env rt ro ra rf root _ =
+let call_cvc4_abduct i env rt ro ra rf root lsmt =
   let open Smtlib2_solver in
   let fl = snd root in
 
@@ -354,20 +397,22 @@ let call_cvc4 env rt ro ra rf root _ =
       "cvc4";
       "--lang"; "smt2";
       "--proof";
-      "--no-simplification"; "--fewer-preprocessing-holes";
-      "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic" |] in
+      "--simplification=none"; "--fewer-preprocessing-holes";
+      "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic"; "--dag-thresh=0" |] in
 
   set_option cvc4 "print-success" true;
   set_option cvc4 "produce-assignments" true;
   set_option cvc4 "produce-proofs" true;
   set_logic cvc4 (string_logic ro fl);
 
+  (* Declare sorts *)
   List.iter (fun (i,t) ->
     let s = "Tindex_"^(string_of_int i) in
     SmtMaps.add_btype s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
   ) (SmtBtype.to_list rt);
-  
+
+  (* Declare functions and variables *)
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
     SmtMaps.add_fun s op;
@@ -378,6 +423,55 @@ let call_cvc4 env rt ro ra rf root _ =
     declare_fun cvc4 s args ret
   ) (Op.to_list ro);
 
+  (* Assert hypotheses and negation of goal *)
+  List.iter (fun x -> assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
+  assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) fl);
+
+  let proof =
+    match check_sat cvc4 with
+    | Unsat -> CoqInterface.error "CVC4 returned UNSAT, try the smt tactic instead."
+    | Sat -> call_abduce i env rt ro ra rf root lsmt
+  in
+
+  quit cvc4;
+  proof
+
+let call_cvc4 _ env rt ro ra rf root lsmt =
+  let open Smtlib2_solver in
+  let fl = snd root in
+
+  let cvc4 = create [|
+      "cvc4";
+      "--lang"; "smt2";
+      "--proof";
+      "--simplification=none"; "--fewer-preprocessing-holes";
+      "--no-bv-eq"; "--no-bv-ineq"; "--no-bv-algebraic" |] in
+
+  set_option cvc4 "print-success" true;
+  set_option cvc4 "produce-assignments" true;
+  set_option cvc4 "produce-proofs" true;
+  set_logic cvc4 (string_logic ro fl);
+
+  (* Declare sorts *)
+  List.iter (fun (i,t) ->
+    let s = "Tindex_"^(string_of_int i) in
+    SmtMaps.add_btype s (SmtBtype.Tindex t);
+    declare_sort cvc4 s 0;
+  ) (SmtBtype.to_list rt);
+  
+  (* Declare functions and variables *)
+  List.iter (fun (i,cod,dom,op) ->
+    let s = "op_"^(string_of_int i) in
+    SmtMaps.add_fun s op;
+    let args =
+      Array.fold_right
+        (fun t acc -> asprintf "%a" SmtBtype.to_smt t :: acc) cod [] in
+    let ret = asprintf "%a" SmtBtype.to_smt dom in
+    declare_fun cvc4 s args ret
+  ) (Op.to_list ro);
+
+  (* Assert hypotheses and negation of goal *)
+  List.iter (fun x -> assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
   assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) fl);
 
   let proof =
@@ -395,7 +489,6 @@ let call_cvc4 env rt ro ra rf root _ =
       CoqInterface.error
         ("CVC4 returned sat. Here is the model:\n\n" ^
          SmtCommands.model_string env rt ro ra rf smodel)
-        (* (asprintf "CVC4 returned sat. Here is the model:\n%a" SExpr.print smodel) *)
   in
 
   quit cvc4;
@@ -438,7 +531,7 @@ let get_model_from_file filename =
   | _ -> CoqInterface.error "CVC4 returned SAT but no model"
 
 
-let call_cvc4_file env rt ro ra rf root =
+let call_cvc4_file _ env rt ro ra rf root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
   export outchan rt ro fl;
@@ -448,14 +541,14 @@ let call_cvc4_file env rt ro ra rf root =
 
   (* let cvc4_cmd = *)
   (*   "cvc4 --proof --dump-proof -m --dump-model \ *)
-  (*    --no-simplification --fewer-preprocessing-holes \ *)
+  (*    --simplification=none --fewer-preprocessing-holes \ *)
   (*    --no-bv-eq --no-bv-ineq --no-bv-algebraic " *)
   (*   ^ filename ^ " > " ^ prooffilename in *)
   (* CVC4 crashes when asking for both models and proofs *)
   
   let cvc4_cmd =
     "cvc4 --proof --dump-proof \
-     --no-simplification --fewer-preprocessing-holes \
+     --simplification=none --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " > " ^ prooffilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
@@ -486,7 +579,16 @@ let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
-let tactic_gen vm_cast =
+let tactic_gen _ vm_cast =
+  (* Transform the tuple of lemmas given by the user into a list *)
+  let lcpl =
+    let lcpl = EConstr.Unsafe.to_constr lcpl in
+    let lcpl = CoqTerms.option_of_constr_option lcpl in
+    match lcpl with
+      | Some lcpl -> CoqTerms.list_of_constr_tuple lcpl
+      | None -> []
+  in
+  (* Core tactic *)
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
@@ -494,9 +596,31 @@ let tactic_gen vm_cast =
   let rf = Tosmtcoq.rf in
   let ra' = Tosmtcoq.ra in
   let rf' = Tosmtcoq.rf in
-  SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+  SmtCommands.tactic call_cvc4 0 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
   (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
    *    the same ra and rf twice to have everything reifed *\)
    * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
-let tactic () = tactic_gen vm_cast_true
-let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)
+
+let tactic_gen_abduct i vm_cast lcpl lcepl =
+  (* Transform the tuple of lemmas given by the user into a list *)
+  let lcpl =
+    let lcpl = EConstr.Unsafe.to_constr lcpl in
+    let lcpl = CoqTerms.option_of_constr_option lcpl in
+    match lcpl with
+      | Some lcpl -> CoqTerms.list_of_constr_tuple lcpl
+      | None -> []
+  in
+
+  (* Core tactic *)
+  clear_all ();
+  let rt = SmtBtype.create () in
+  let ro = Op.create () in
+  let ra = Tosmtcoq.ra in
+  let rf = Tosmtcoq.rf in
+  let ra' = Tosmtcoq.ra in
+  let rf' = Tosmtcoq.rf in
+  SmtCommands.tactic call_cvc4_abduct i cvc4_logic rt ro ra rf ra' rf' vm_cast lcpl lcepl
+
+let tactic () = tactic_gen 0 vm_cast_true
+let tactic_no_check () = tactic_gen 0 (fun _ -> vm_cast_true_no_check)
+let tactic_abduct i = tactic_gen_abduct i vm_cast_true

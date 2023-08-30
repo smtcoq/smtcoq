@@ -21,6 +21,7 @@ val checker_debug : string -> string -> 'a
 val theorem : CoqInterface.id -> string -> string -> unit
 val checker : string -> string -> unit
 val call_cvc4_file :
+  int ->
   Environ.env ->
   SmtBtype.reify_tbl ->
   SmtAtom.Op.reify_tbl ->
