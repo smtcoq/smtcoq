@@ -31,3 +31,4 @@ val call_cvc4_file :
   int * SmtAtom.Form.t SmtCertif.clause
 val tactic : unit -> CoqInterface.tactic
 val tactic_no_check : unit -> CoqInterface.tactic
+val tactic_abduct : int -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
