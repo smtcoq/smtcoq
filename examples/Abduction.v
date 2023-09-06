@@ -31,6 +31,17 @@ Local Open Scope int63_scope.
 
 (* Abduction examples *)
 Local Open Scope Z_scope.
+Goal forall
+    (x y: Z)
+    (f: Z -> Z),
+    (* x = y + 1 -> *) f y = f (x - 1).
+Proof.
+  Fail smt. Fail abduce 1.
+  (* The command has indeed failed with message:
+     cvc5 returned SAT.
+     The solver cannot prove the goal, but one of the following hypotheses would make it provable:
+     x - 1 = y *)
+Admitted.
 
 (* #1 From paper *)
 Goal forall (x y z : Z), 0 <= y ->  0 <= x + y + z.
