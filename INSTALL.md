@@ -199,6 +199,8 @@ To use SMTCoq, we recommend installing the following two SMT solvers:
 
 - [veriT](https://verit.loria.fr)
 
+- [cvc5](https://cvc5.github.io/) for abduction
+
 SMTCoq also supports the following SAT solver for propositional reasoning:
 
 - [ZChaff](http://www.princeton.edu/~chaff/zchaff.html)
@@ -264,6 +266,15 @@ make
 This will produce an executable called `veriT` that you should add to
 your path. If you encounter problems to compile it, please report an
 issue.
+
+
+### cvc5
+
+Use version 1.0.7 that is available [here](https://github.com/cvc5/cvc5/releases/tag/cvc5-1.0.7) 
+either as a Linux, Windows, or MacOS binary, or from the sources.
+
+Whatever solution you choose, a binary called `cvc4` must be present in
+your PATH to use it through SMTCoq.
 
 
 ### ZChaff

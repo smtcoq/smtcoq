@@ -35,6 +35,10 @@ The SMTCoq checker can also be extracted to OCaml and then used
 independently from Coq.
 --->
 
+With cvc5, SMTCoq provides the ability to ask the solver for facts that 
+would entail otherwise failing goals. It does this via cvc5's capability 
+for abductive reasoning.
+
 We now give more details for each solver.
 
 <!--- Extraction is probably broken
@@ -250,6 +254,48 @@ possibility to solve these (usually simpler) subgoals.
 A more efficient version of this tactic, called `smt_no_check`,
 performs only the check at `Qed`. (Thus it is safe, but a proof may fail
 at `Qed` even if everything went through during proof elaboration.)
+
+
+## cvc5
+
+Compile and install `cvc5` as explained in the installation
+instructions. In the following, we consider that the command `cvc5` is
+in your `PATH` environment variable.
+
+
+### Asking cvc5 for abducts that entail the goal
+When an external solver finds that a goal doesn't hold (via one of the 
+previous tactics, say) the `abduce` tactic can be used to ask
+cvc5 for *abducts* - facts that when provided to the solver, 
+would allow it to prove the goal.
+
+Within the proof of a goal of type
+```coq
+forall l, b1 = b2
+```
+`abduce n` asks cvc5 for `n` abducts, each of which will
+independently entail the goal. A successful invocation of
+`abduce` will result in a Coq failure with a failure message
+that begins with:
+```coq
+The solver cannot prove the goal, but one of the following hypotheses would 
+make it provable:
+```
+and is followed by `n` abducts, each in its own line. 
+
+A subsequent call to an external solver with one of the abducts in the scope 
+of the proof results in a goal provable by the solver. To bring an abduct into 
+scope, the user can then either locally assert and prove it, or pass a theorem 
+representing the abduct as a lemma to the external solver.
+
+The theories that are currently supported by this tactic are `QF_UF`
+(theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
+(integer difference logic), `QF_BV` (theory of fixed-size bit vectors),
+`QF_A` (theory of arrays), and their combinations. However, the abduce tactic 
+can be used more generally on any quantifier-free theory (on a goal that has
+the shape specified above). Any symbols that are not supported (specified
+in one of the supported theories) will be treated as uninterpreted by
+the SMT solver.
 
 
 ## Conversion tactics
