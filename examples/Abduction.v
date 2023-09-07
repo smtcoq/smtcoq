@@ -164,3 +164,44 @@ Proof.
      a && c *)
   intros. assert (a && c). {admit. } smt. 
 Admitted.
+
+Section BV.
+
+Import BVList.BITVECTOR_LIST.
+Local Open Scope bv_scope.
+
+(* From crux examples *)
+
+  Goal forall (x y z : bitvector 4), bv_sltP y #b|0|0|0|0| -> 
+    bv_sltP (bv_add x (bv_add y z)) #b|0|0|0|0|.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y : bitvector 4), bv_add x y = x.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y : bitvector 4), bv_add x y = #b|0|0|0|0|.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y : bitvector 4), 
+    bv_eq x #b|0|0|0|1| = true ->
+ (* bv_eq y #b|0|0|0|1| = true -> *)
+    bv_and x y = #b|0|0|0|1|.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x : bitvector 4), bv_ultP x #b|1|0|0|0| ->
+    bv_ultP (bv_add x #b|0|0|0|1|) #b|1|0|0|0|.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y : bitvector 4), bv_ultP (bv_add x #b|0|0|0|1|) x.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y : bitvector 4), bv_mult x y = x.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y : bitvector 4), bv_mult x y = #b|0|0|0|0|.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+  Goal forall (x y z : bitvector 4), bv_ultP x y -> bv_ultP x z.
+  Proof. Fail smt. Fail Timeout 20 (time abduce 3). Admitted.
+
+End BV.
