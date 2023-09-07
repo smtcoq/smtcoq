@@ -867,9 +867,9 @@ let op_to_coq_string op = match op with
 
 let coq_bv_string s =
   let rec aux acc = function
-    | true :: r -> aux (acc ^ "|1") r
-    | false :: r -> aux (acc ^ "|0") r
-    | [] -> "#b" ^ acc ^ "|"
+    | true :: r -> aux ("1|"^ acc) r
+    | false :: r -> aux ("0|" ^ acc) r
+    | [] -> "#b" ^ "|" ^ acc
   in
   if String.length s < 3 ||
      not (s.[0] = '#' && s.[1] = 'b') then failwith "not bv";
