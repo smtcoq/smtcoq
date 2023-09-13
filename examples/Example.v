@@ -248,9 +248,8 @@ Proof.
 Qed.
 
 
-(** SMTCoq also provides conversion tactics, to inject various integer
-    types into the type Z supported by SMTCoq. They can be called before
-    the standard SMTCoq tactics. **)
+SMTCoq supports various integer types. This process is extensible,
+    one can get inspiration from file [src/preproc/Database_trakt.v].
 
 Local Open Scope positive_scope.
 
@@ -259,7 +258,6 @@ Goal forall (f : positive -> positive) (x y : positive),
         ((f (x + 3)) <=? (f y))
   = true.
 Proof.
-  pos_convert.
   verit.
 Qed.
 
@@ -268,7 +266,6 @@ Goal forall (f : positive -> positive) (x y : positive),
         ((3 <? y) && ((f (x + 3)) <=? (f y)))
   = true.
 Proof.
-  pos_convert.
   verit.
 Qed.
 
@@ -281,7 +278,6 @@ Goal forall (f : N -> N) (x y : N),
           ((f (x + 3)) <=? (f y))
     = true.
 Proof.
-  N_convert.
   verit.
 Qed.
 
@@ -290,7 +286,6 @@ Goal forall (f : N -> N) (x y : N),
           ((2 <? y) && ((f (x + 3)) <=? (f y)))
     = true.
 Proof.
-  N_convert.
   verit.
 Qed.
 
@@ -304,7 +299,6 @@ Goal forall (f : nat -> nat) (x y : nat),
           ((f (x + 3)) <=? (f y))
     = true.
 Proof.
-  nat_convert.
   verit.
 Qed.
 
@@ -313,7 +307,6 @@ Goal forall (f : nat -> nat) (x y : nat),
           ((2 <? y) && ((f (x + 3)) <=? (f y)))
     = true.
 Proof.
-  nat_convert.
   verit.
 Qed.
 
@@ -325,9 +318,6 @@ Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat),
     (implb (Nat.eqb y 7)
       (implb (f 3%positive 7%nat =? 12)%N
         (f x y =? 12)%N)) = true.
-  pos_convert.
-  nat_convert.
-  N_convert.
   verit.
 Qed.
 
