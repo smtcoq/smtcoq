@@ -165,28 +165,25 @@ Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
 
 Tactic Notation "verit" constr(global) :=
   let tac :=
-  ltac2:(global |- intros;
-                   unfold is_true in *;
-                   let Hsglob := pose_hyps global (@None unit) in
-                   get_hyps_cont_ltac1
-  (ltac1:(global local |- let Hs :=
-    lazymatch local with
-    | Some ?local' => pose_hyps local' global
-    | None => constr:(global)
-    end
+  ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(h local |-
+  let Hsglob := pose_hyps h (@None unit) in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
   in
   preprocess1 Hs;
-  [ .. | let Hs' := intros_names in
-         preprocess2 Hs';
-         verit_bool_base_auto Hs';
-         QInst.vauto
-  ]) Hsglob)) in tac global.
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    verit_bool_base_auto Hs';
+    QInst.vauto
+  ]) h)) in tac global.
 
 Tactic Notation "verit"           :=
-  ltac2:(intros;
-         unfold is_true in *;
-         get_hyps_cont_ltac1
-  (ltac1:(local |-
+  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
   let Hs :=
       lazymatch local with
       | Some ?local' => pose_hyps local' (@None unit)
@@ -194,23 +191,22 @@ Tactic Notation "verit"           :=
       end
   in
   preprocess1 Hs;
-  [ .. | let Hs' := intros_names in
-         preprocess2 Hs';
-         verit_bool_base_auto Hs';
-         QInst.vauto
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    verit_bool_base_auto Hs';
+    QInst.vauto
   ])).
 
 Tactic Notation "verit_no_check" constr(global) :=
   let tac :=
-  ltac2:(global |- intros;
-                   unfold is_true in *;
-                   let Hsglob := pose_hyps global (@None unit) in
-                   get_hyps_cont_ltac1
-  (ltac1:(Hsglob local |- let Hs :=
-    lazymatch local with
-    | Some ?local' => pose_hyps local' Hsglob
-    | None => constr:(Hsglob)
-    end
+  ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1 (ltac1:(h local |-
+  let Hsglob := pose_hyps h (@None unit) in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
   in
   preprocess1 Hs;
   [ .. |
@@ -218,12 +214,10 @@ Tactic Notation "verit_no_check" constr(global) :=
     preprocess2 Hs';
     verit_bool_no_check_base_auto Hs';
     QInst.vauto
-  ]) Hsglob)) in tac global.
+  ]) h)) in tac global.
 
 Tactic Notation "verit_no_check"           :=
-  ltac2:(intros;
-         unfold is_true in *;
-         get_hyps_cont_ltac1 ltac1:(local |-
+  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
   let Hs :=
       lazymatch local with
       | Some ?local' => pose_hyps local' (@None unit)
@@ -240,16 +234,14 @@ Tactic Notation "verit_no_check"           :=
 
 Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
   let tac :=
-  ltac2:(global timeout |-
-           intros;
-           unfold is_true in *;
-           let Hsglob := pose_hyps global (@None unit) in
-           get_hyps_cont_ltac1
-  (ltac1:(Hsglob timeout local |- let Hs :=
-    lazymatch local with
-    | Some ?local' => pose_hyps local' Hsglob
-    | None => constr:(Hsglob)
-    end
+  ltac2:(h timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(h timeout local |-
+  let Hsglob := pose_hyps h (@None unit) in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
   in
   preprocess1 Hs;
   [ .. |
@@ -257,14 +249,11 @@ Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
     preprocess2 Hs';
     verit_bool_base_auto_timeout Hs' timeout;
     QInst.vauto
-  ]) Hsglob timeout)) in tac global timeout.
+  ]) h timeout)) in tac global timeout.
 
 Tactic Notation "verit_timeout"           int_or_var(timeout) :=
   let tac :=
-  ltac2:(timeout |-
-           intros;
-           unfold is_true in *;
-           get_hyps_cont_ltac1
+  ltac2:(timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
   (ltac1:(timeout local |-
   let Hs :=
       lazymatch local with
@@ -282,16 +271,14 @@ Tactic Notation "verit_timeout"           int_or_var(timeout) :=
 
 Tactic Notation "verit_no_check_timeout" constr(global) int_or_var(timeout) :=
   let tac :=
-  ltac2:(global timeout |-
-           intros;
-           unfold is_true in *;
-           let Hsglob := pose_hyps global (@None unit) in
-           get_hyps_cont_ltac1
-  (ltac1:(Hsglob timeout local |- let Hs :=
-    lazymatch local with
-    | Some ?local' => pose_hyps local' Hsglob
-    | None => constr:(Hsglob)
-    end
+  ltac2:(h timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(h timeout local |-
+  let Hsglob := pose_hyps h (@None unit) in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
   in
   preprocess1 Hs;
   [ .. |
@@ -299,14 +286,11 @@ Tactic Notation "verit_no_check_timeout" constr(global) int_or_var(timeout) :=
     preprocess2 Hs';
     verit_bool_no_check_base_auto_timeout Hs' timeout;
     QInst.vauto
-  ]) Hsglob timeout)) in tac global timeout.
+  ]) h timeout)) in tac global timeout.
 
-Tactic Notation "verit_no_check_timeout"                int_or_var(timeout) :=
+Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
   let tac :=
-  ltac2:(timeout |-
-           intros;
-           unfold is_true in *;
-           get_hyps_cont_ltac1
+  ltac2:(timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
   (ltac1:(timeout local |-
   let Hs :=
       lazymatch local with
