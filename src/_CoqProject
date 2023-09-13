@@ -28,6 +28,7 @@ META.coq-smtcoq
 -I lia
 -I smtlib2
 -I trace
+-I preproc
 -I verit
 -I zchaff
 -I PArray
@@ -139,11 +140,12 @@ spl/Syntactic.v
 spl/Arithmetic.v
 spl/Operators.v
 
-Conversion_tactics.v
+preproc/Database_trakt.v
+preproc/Conversion.v
+
 Misc.v
 SMTCoq.v
 ReflectFacts.v
-PropToBool.v
 QInst.v
 Tactics.v
 SMT_terms.v

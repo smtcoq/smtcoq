@@ -1065,8 +1065,8 @@ Section Input_switched2.
 End Input_switched2.
 
 
-(** Examples of using the conversion tactics **)
-
+(** Examples of using the conversion tactics: TODO with trakt **)
+(*
 Local Open Scope positive_scope.
 
 Goal forall (f : positive -> positive) (x y : positive),
@@ -1156,7 +1156,7 @@ Qed.
 (* Issue 10
    https://github.com/smtcoq/smtcoq/issues/10
 *)
-
+*)
 Goal forall (x : positive), Zpos x <=? Zpos x.
 Proof using.
   verit.
