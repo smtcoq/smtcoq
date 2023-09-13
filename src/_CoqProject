@@ -1,6 +1,6 @@
 ########################################################################
 ##   This file is intended to developers: please do not use it        ##
-## directly, rather use the "configure.sh" script.                    ##
+## directly                                                           ##
 ########################################################################
 
 
@@ -94,21 +94,26 @@ verit/verit.mli
 verit/veritSyntax.ml
 verit/veritSyntax.mli
 
-lfsc/shashcons.mli
 lfsc/shashcons.ml
-lfsc/hstring.mli
+lfsc/shashcons.mli
 lfsc/hstring.ml
+lfsc/hstring.mli
 lfsc/lfscParser.ml
 lfsc/lfscParser.mli
 lfsc/type.ml
+lfsc/type.mli
 lfsc/ast.ml
 lfsc/ast.mli
+lfsc/translator_sig.ml
 lfsc/translator_sig.mli
 lfsc/builtin.ml
+lfsc/builtin.mli
 lfsc/tosmtcoq.ml
 lfsc/tosmtcoq.mli
 lfsc/converter.ml
+lfsc/converter.mli
 lfsc/lfsc.ml
+lfsc/lfsc.mli
 lfsc/lfscLexer.ml
 
 zchaff/cnfParser.ml

@@ -1,0 +1,30 @@
+name: Reusable workflow for compilation, tests, installation and examples, from sources
+
+on:
+  workflow_call:
+    inputs:
+      image-version:
+        required: true
+        type: string
+
+jobs:
+  from-sources:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # don't stop jobs if one fails
+    steps:
+      - uses: actions/checkout@v3
+      - uses: coq-community/docker-coq-action@v1
+        with:
+          custom_image: smtcoq/smtcoq:latest-${{ inputs.image-version }}
+          custom_script: |
+            sudo chown -R coq:coq .
+            cd src
+            make
+            make test
+            make install
+            make clean
+            cd ../examples
+            coqc Example.v
+            cd ..
+            sudo chown -R 1001:116 .
