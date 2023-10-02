@@ -251,7 +251,7 @@ Qed.
 (* Examples of the abduce tactic (requires cvc5 in your PATH environment
    variable) *)
 
-(* Consider a previous example with one of the implicative 
+(* Consider a previous example with one of the implicative
    hypotheses commented out *)
 Goal forall
     (x y: Z)
@@ -263,14 +263,14 @@ Proof.
    cvc5 returned SAT.
    The solver cannot prove the goal, but one of the following hypotheses would make it provable:
    x - 1 = y *)
-Admitted.
+Abort.
 
 (* SMTCoq currently doesn't support non-linear arithmetic *)
 Goal forall (x y : Z),
   x = y + 1 -> x * x = (y + 1) * x.
-Proof. Fail smt. Admitted.
+Proof. Fail smt. Abort.
 
-(* However, it can try to prove these goals by considering 
+(* However, it can try to prove these goals by considering
    multiplication to be an uninterpreted function *)
 Definition mul' := Z.mul.
 Notation "x *' y" := (mul' x y) (at level 1).
@@ -284,7 +284,7 @@ Proof. smt. Qed.
 Goal forall (x y z: Z),
     x = y + 1 -> y *' z = z *' (x - 1).
 Proof. Fail smt.
-(* Now, we can ask for abducts that would help close the 
+(* Now, we can ask for abducts that would help close the
    specification gap *)
    Fail abduce 3.
 (* The command has indeed failed with message:
@@ -293,7 +293,7 @@ Proof. Fail smt.
    z = y
    x - 1 = z
    (mul' y z) = (mul' z y) *)
-   intros. assert ((mul' y z) = (mul' z y)). 
+   intros. assert ((mul' y z) = (mul' z y)).
    { apply Z.mul_comm. } smt.
 Qed.
 
