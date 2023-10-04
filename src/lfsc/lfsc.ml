@@ -579,15 +579,15 @@ let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
-  let tactic_gen vm_cast =
-    clear_all ();
-    let rt = SmtBtype.create () in
-    let ro = Op.create () in
-    let ra = Tosmtcoq.ra in
-    let rf = Tosmtcoq.rf in
-    let ra' = Tosmtcoq.ra in
-    let rf' = Tosmtcoq.rf in
-    SmtCommands.tactic 0 call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
+let tactic_gen vm_cast =
+  clear_all ();
+  let rt = SmtBtype.create () in
+  let ro = Op.create () in
+  let ra = Tosmtcoq.ra in
+  let rf = Tosmtcoq.rf in
+  let ra' = Tosmtcoq.ra in
+  let rf' = Tosmtcoq.rf in
+  SmtCommands.tactic 0 call_cvc4 cvc4_logic rt ro ra rf ra' rf' vm_cast [] []
     (* (\* Currently, quantifiers are not handled by the cvc4 tactic: we pass
      *    the same ra and rf twice to have everything reifed *\)
      * SmtCommands.tactic call_cvc4 cvc4_logic rt ro ra rf ra rf vm_cast [] [] *)
