@@ -256,11 +256,12 @@ performs only the check at `Qed`. (Thus it is safe, but a proof may fail
 at `Qed` even if everything went through during proof elaboration.)
 
 
-## cvc5
+## Abduction
 
-Compile and install `cvc5` as explained in the installation
-instructions. In the following, we consider that the command `cvc5` is
-in your `PATH` environment variable.
+Using abduction requires to compile and install both `cvc4` and `cvc5`
+as explained in the installation instructions. In the following, we
+consider that the commands `cvc4` and `cvc5` are in your `PATH`
+environment variable.
 
 
 ### Asking cvc5 for abducts that entail the goal
