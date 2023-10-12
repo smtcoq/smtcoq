@@ -306,8 +306,8 @@ Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
     QInst.vauto
   ]) timeout)) in tac timeout.
 
-Ltac cvc4            := trakt Z bool; [ .. | cvc4_bool ].
-Ltac cvc4_no_check   := trakt Z bool; [ .. | cvc4_bool_no_check ].
+Ltac cvc4            := first [trakt Z bool | trakt bool]; [ .. | cvc4_bool ].
+Ltac cvc4_no_check   := first [trakt Z bool | trakt bool]; [ .. | cvc4_bool_no_check ].
 
 Tactic Notation "smt" constr(h) := intros; try verit h; cvc4; try verit h.
 Tactic Notation "smt"           := intros; try verit  ; cvc4; try verit.
