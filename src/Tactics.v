@@ -160,8 +160,8 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
 
 (** Tactics in Prop **)
 
-Ltac zchaff          := trakt Z bool; Tactics.zchaff_bool.
-Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
+Ltac zchaff          := trakt bool; Tactics.zchaff_bool.
+Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check.
 
 Tactic Notation "verit" constr(global) :=
   let tac :=
