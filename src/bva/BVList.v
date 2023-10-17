@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith Psatz Uint63 Nnat ZArith.
+Require Import List Bool NArith Psatz Uint63 Nnat ZArith PeanoNat.
 Require Import Misc.
 Require Import ProofIrrelevance.
 Import ListNotations.
@@ -2376,7 +2376,7 @@ Qed.
     intros. unfold bv_zextn, zextend, size in *.
     rewrite <- N2Nat.id. apply f_equal. 
     specialize (@length_extend a (nat_of_N i) false). intros.
-    rewrite H0. rewrite plus_distr. rewrite plus_comm.
+    rewrite H0. rewrite plus_distr. rewrite Nat.add_comm.
     apply f_equal.
     apply (f_equal (N.to_nat)) in H.
     now rewrite Nat2N.id in H.
@@ -2393,7 +2393,7 @@ Qed.
     lia.
     intros.
     specialize (@length_extend a (nat_of_N i) b). intros.
-    subst. rewrite plus_distr. rewrite plus_comm.
+    subst. rewrite plus_distr. rewrite Nat.add_comm.
     rewrite Nat2N.id.
     now rewrite <- H1.
   Qed.

@@ -131,7 +131,7 @@ Section CheckAtom.
       unfold apply_unop; destruct (t_interp t_i t_func t_atom .[ i]) as [A v]; 
       destruct (Typ.cast A Typ.Tpositive) as [k| ]; auto.
 
-      intros n m n1 m2. simpl. unfold is_true. rewrite !andb_true_iff, beq_nat_true_iff, N.eqb_eq. intros [[-> ->] H]. rewrite (check_hatom_correct _ _ H); auto.
+      intros n m n1 m2. simpl. unfold is_true. rewrite !andb_true_iff, Nat.eqb_eq, N.eqb_eq. intros [[-> ->] H]. rewrite (check_hatom_correct _ _ H); auto.
       intros n m. simpl. unfold is_true. rewrite andb_true_iff, N.eqb_eq. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
       intros n m. simpl. unfold is_true. rewrite andb_true_iff, N.eqb_eq. intros [-> H]. rewrite (check_hatom_correct _ _ H); auto.
       (* bv_extr *)
