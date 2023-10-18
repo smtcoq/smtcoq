@@ -9,6 +9,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+exception DoNothing
 
 val parse_certif :
   CoqInterface.id ->

@@ -17,6 +17,7 @@ open SmtAtom
 open SmtTrace
 open SmtCertif
 
+exception DoNothing
 
 let certif_ops = CoqTerms.ceuf_checker_certif_ops
 let cCertif = CoqTerms.ceuf_checker_Certif
@@ -764,38 +765,40 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
        end
       | _ -> failwith "unexpected form of root"
   in
+  try (
+    let (body_cast, body_nocast, cuts) =
+      if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||
+          (CoqInterface.eq_constr b (Lazy.force cfalse))) then (
+        let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+        let nl = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+        let lsmt = Form.flatten rf nl :: lsmt in
+        let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
+        build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+      ) else (
+        let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
+        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
+        let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
+        let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
+        let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
+        let nl = Form.neg l in
+        let lsmt = Form.flatten rf nl :: lsmt in
+        let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
+        build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
+          (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) ) in
 
-  let (body_cast, body_nocast, cuts) =
-    if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||
-        (CoqInterface.eq_constr b (Lazy.force cfalse))) then (
-      let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
-      let nl = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
-      let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
-      build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
-    ) else (
-      let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
-      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
-      let l2 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf b in
-      let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
-      let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
-      let nl = Form.neg l in
-      let lsmt = Form.flatten rf nl :: lsmt in
-      let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
-      build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-        (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) ) in
+    let cuts = (SmtBtype.get_cuts rt) @ cuts in
 
-      let cuts = (SmtBtype.get_cuts rt) @ cuts in
-
-  List.fold_right (fun (eqn, eqt) tac ->
-      CoqInterface.tclTHENLAST
-        (CoqInterface.assert_before (CoqInterface.name_of_id eqn) eqt)
-        tac
-    ) cuts
-    (CoqInterface.tclTHEN
-       (CoqInterface.set_evars_tac body_nocast)
-       (CoqInterface.vm_cast_no_check body_cast))
+    List.fold_right (fun (eqn, eqt) tac ->
+        CoqInterface.tclTHENLAST
+          (CoqInterface.assert_before (CoqInterface.name_of_id eqn) eqt)
+          tac
+      ) cuts
+      (CoqInterface.tclTHEN
+         (CoqInterface.set_evars_tac body_nocast)
+         (CoqInterface.vm_cast_no_check body_cast))) 
+  with
+  | DoNothing -> CoqInterface.tclIDTAC
 
 
 let tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl =

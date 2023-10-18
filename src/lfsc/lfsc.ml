@@ -429,7 +429,7 @@ let call_cvc4_abduct i env rt ro ra rf root lsmt =
 
   let proof =
     match check_sat cvc4 with
-    | Unsat -> CoqInterface.error "CVC4 returned UNSAT, try the smt tactic instead."
+    | Unsat -> raise SmtCommands.DoNothing
     | Sat -> call_abduce i env rt ro ra rf root lsmt
   in
 
