@@ -381,7 +381,7 @@ let call_abduce i env rt ro ra rf root lsmt =
         else []) in
       let abducts = List.rev (produce_abducts (i - 1)) in
         CoqInterface.error
-        ("cvc5 returned SAT.\nThe solver cannot prove the goal, but one of the following hypotheses would make it provable:\n" ^
+        ("cvc5 returned SAT.\nThe solver cannot prove the goal, but one of the following hypotheses (printed in Prop, but the corresponding Boolean versions also apply) would make it provable:\n" ^
           abduct1^"\n"^(String.concat "\n" abducts))
     in
 
