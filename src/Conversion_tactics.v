@@ -408,7 +408,6 @@ Module N_convert_mod := convert N_convert_type.
 Ltac N_convert := N_convert_mod.convert.
 
 (* Instanciation for the type [nat] *)
-Require Import NPeano.
 Module nat_convert_type <: convert_type.
 
 Definition T : Type := nat.

@@ -542,7 +542,7 @@ Section certif.
       destruct (Atom.reflect_eqb h a);subst.
       intros Heq1;inversion Heq1;clear Heq1;subst;lia.
       intros Heq1;apply IHlvm in Heq1;trivial.
-      apply lt_trans with (1:= Heq1);lia.
+      apply Nat.lt_trans with (1:= Heq1);lia.
     Qed.
 
     Lemma build_pexpr_atom_aux_correct_z :
@@ -603,7 +603,7 @@ Section certif.
        assert (W2:=nat_of_P_pos (Pos.pred pvm)).
        lia.
        rewrite Plt_lt.
-       apply lt_trans with (1:= W1);lia.
+       apply Nat.lt_trans with (1:= W1);lia.
      rewrite H3;simpl;apply IHlvm;trivial.
      intros _ Heq;inversion Heq;clear Heq;subst;unfold wf_vmap;
        simpl;intros (Hwf1, Hwf2);repeat split;simpl.
@@ -725,9 +725,9 @@ Transparent interp_aux.
      assert (W:= IH' _ _ Hlt2 H0 (refl_equal _) H1);clear IH'.
      decompose [and] W;clear W.
      destruct H5;repeat split;trivial.
-     apply le_trans with (1:= H3);trivial.
+     apply Nat.le_trans with (1:= H3);trivial.
      intros p Hlt;rewrite H2, H7;trivial.
-     apply lt_le_trans with (1:=Hlt);trivial.
+     apply Nat.lt_le_trans with (1:=Hlt);trivial.
      simpl;rewrite H9, andb_true_r.
      apply (bounded_pexpr_le (fst vm0));auto with arith.
      simpl;rewrite H6, H11;simpl.
@@ -744,9 +744,9 @@ Transparent interp_aux.
      assert (W:= IH' _ _ Hlt2 H0 (refl_equal _) H1);clear IH'.
      decompose [and] W;clear W.
      destruct H5;repeat split;trivial.
-     apply le_trans with (1:= H3);trivial.
+     apply Nat.le_trans with (1:= H3);trivial.
      intros p Hlt;rewrite H2, H7;trivial.
-     apply lt_le_trans with (1:=Hlt);trivial.
+     apply Nat.lt_le_trans with (1:=Hlt);trivial.
      simpl;rewrite H9, andb_true_r.
      apply (bounded_pexpr_le (fst vm0));auto with arith.
      simpl;rewrite H6, H11;simpl.
@@ -763,9 +763,9 @@ Transparent interp_aux.
      assert (W:= IH' _ _ Hlt2 H0 (refl_equal _) H1);clear IH'.
      decompose [and] W;clear W.
      destruct H5;repeat split;trivial.
-     apply le_trans with (1:= H3);trivial.
+     apply Nat.le_trans with (1:= H3);trivial.
      intros p Hlt;rewrite H2, H7;trivial.
-     apply lt_le_trans with (1:=Hlt);trivial.
+     apply Nat.lt_le_trans with (1:=Hlt);trivial.
      simpl;rewrite H9, andb_true_r.
      apply (bounded_pexpr_le (fst vm0));auto with arith.
      simpl;rewrite H6, H11;simpl.
@@ -829,9 +829,9 @@ Transparent interp_aux.
      assert (W:= IH' _ _ H0 (refl_equal _) H1);clear IH'.
      decompose [and] W;clear W.
      destruct H5;repeat split;trivial.
-     apply le_trans with (1:= H3);trivial.
+     apply Nat.le_trans with (1:= H3);trivial.
      intros p Hlt;rewrite H2, H7;trivial.
-     apply lt_le_trans with (1:=Hlt);trivial.
+     apply Nat.lt_le_trans with (1:=Hlt);trivial.
      simpl;rewrite H9, andb_true_r.
      apply (bounded_pexpr_le (fst vm0));auto with arith.
      simpl;rewrite H6, H11;simpl.
@@ -849,9 +849,9 @@ Transparent interp_aux.
      assert (W:= IH' _ _ H0 (refl_equal _) H1);clear IH'.
      decompose [and] W;clear W.
      destruct H5;repeat split;trivial.
-     apply le_trans with (1:= H3);trivial.
+     apply Nat.le_trans with (1:= H3);trivial.
      intros p Hlt;rewrite H2, H7;trivial.
-     apply lt_le_trans with (1:=Hlt);trivial.
+     apply Nat.lt_le_trans with (1:=Hlt);trivial.
      simpl;rewrite H9, andb_true_r.
      apply (bounded_pexpr_le (fst vm0));auto with arith.
      simpl;rewrite H6, H11;simpl.
@@ -869,9 +869,9 @@ Transparent interp_aux.
      assert (W:= IH' _ _ H0 (refl_equal _) H1);clear IH'.
      decompose [and] W;clear W.
      destruct H5;repeat split;trivial.
-     apply le_trans with (1:= H3);trivial.
+     apply Nat.le_trans with (1:= H3);trivial.
      intros p Hlt;rewrite H2, H7;trivial.
-     apply lt_le_trans with (1:=Hlt);trivial.
+     apply Nat.lt_le_trans with (1:=Hlt);trivial.
      simpl;rewrite H9, andb_true_r.
      apply (bounded_pexpr_le (fst vm0));auto with arith.
      simpl;rewrite H6, H11;simpl.
@@ -1001,10 +1001,10 @@ Transparent build_z_atom.
       assert (W1:= build_pexpr_correct _ _ _ _ H1 Heq2 H).
       decompose [and] W1;clear W1.
       split;trivial.
-      split;[ apply le_trans with (1:= H4);trivial | ].
+      split;[ apply Nat.le_trans with (1:= H4);trivial | ].
       split.
        intros p Hlt;rewrite H0, H8;trivial.
-       apply lt_le_trans with (1:= Hlt);trivial.
+       apply Nat.lt_le_trans with (1:= Hlt);trivial.
       split.
        unfold bounded_formula;simpl;rewrite H10, andb_true_r.
        apply (bounded_pexpr_le (fst vm0));auto with arith.
@@ -1386,10 +1386,10 @@ Transparent build_z_atom.
       assert (W:= IHcl _ _ _ Heq2 H);decompose [and] W;clear W.
       split;trivial.
       split.
-       apply le_trans with (1:= H1);trivial.
+       apply Nat.le_trans with (1:= H1);trivial.
       split.
         intros p Hlt;rewrite H0, H5;trivial.
-        apply lt_le_trans with (1:= Hlt);trivial.
+        apply Nat.lt_le_trans with (1:= Hlt);trivial.
       split.
        simpl;rewrite H7, andb_true_r.
        apply bounded_bformula_le with (2:= H2);trivial.
