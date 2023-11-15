@@ -87,6 +87,7 @@ val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
 
 (* Tactics *)
 type tactic = unit Proofview.tactic
+val tclIDTAC : tactic
 val tclTHEN : tactic -> tactic -> tactic
 val tclTHENLAST : tactic -> tactic -> tactic
 val assert_before : name -> types -> tactic
