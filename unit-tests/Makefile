@@ -11,9 +11,9 @@ VIOFLAG?=-quick
 COQC?=$(COQBIN)coqc
 
 
-all: zchaff verit lfsc
+all: zchaff verit lfsc abduce
 vernac: zchaffv veritv
-tactics: zchafft veritt lfsc
+tactics: zchafft veritt lfsc abduce
 
 zchaff: zchaffv zchafft
 zchaffv: $(ZCHAFFLOG) Tests_zchaff_vernac.vo
@@ -24,6 +24,8 @@ veritv: $(VERITLOG) Tests_verit_vernac.vo
 veritt: Tests_verit_tactics.vo
 
 lfsc: Tests_lfsc_tactics.vo
+
+abduce: Tests_abduce_tactic.vo
 
 logs: $(OBJ)
 
@@ -44,8 +46,8 @@ logs: $(OBJ)
 	$(COQC) $(VIOFLAG) $(COQDEBUG) $(COQFLAGS) $*
 
 
-parallel: Tests_zchaff_tactics.vio Tests_verit_tactics.vio Tests_lfsc_tactics.vio
-	coqc -schedule-vio-checking 3 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics
+parallel: Tests_zchaff_tactics.vio Tests_verit_tactics.vio Tests_lfsc_tactics.vio Tests_abduce_tactic.vio
+	coqc -schedule-vio-checking 3 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics Tests_abduce_tactic
 
 
 clean: cleanvo
