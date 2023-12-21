@@ -120,7 +120,7 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Micromega *)
-module Micromega_plugin_Micromega = Micromega_plugin.Micromega
+module Micromega_plugin_Micromega = Micromega_core_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 
 let micromega_dump_proof_term p =
