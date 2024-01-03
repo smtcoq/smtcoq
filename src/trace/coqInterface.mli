@@ -80,7 +80,7 @@ val mkTrace :
 
 
 (* Micromega *)
-module Micromega_plugin_Micromega = Micromega_plugin.Micromega
+module Micromega_plugin_Micromega = Micromega_core_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 val micromega_dump_proof_term : Micromega_plugin_Micromega.zArithProof -> constr
 
