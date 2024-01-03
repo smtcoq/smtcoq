@@ -346,7 +346,7 @@ Qed.
 
 Local Close Scope N_scope.
 
-Require Import NPeano.
+Require Import PeanoNat.
 Local Open Scope nat_scope.
 
 Goal forall (f : nat -> nat) (x y : nat),
