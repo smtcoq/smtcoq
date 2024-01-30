@@ -9,6 +9,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
+exception DoNothing
 
 val parse_certif :
   CoqInterface.id ->
@@ -42,7 +43,7 @@ val checker :
   unit
 
 val tactic :
-  (Environ.env ->
+  int -> (int -> Environ.env ->
    SmtBtype.reify_tbl ->
    SmtAtom.Op.reify_tbl ->
    SmtAtom.Atom.reify_tbl ->
@@ -61,6 +62,8 @@ val tactic :
   CoqInterface.constr_expr list -> CoqInterface.tactic
 
 val model_string : Environ.env -> SmtBtype.reify_tbl -> 'a -> 'b -> 'c -> SExpr.t -> string
+
+val abduct_string : Environ.env -> SmtBtype.reify_tbl -> 'a -> 'b -> 'c -> SExpr.t -> string
 
 (* For extraction *)
 val compute_roots : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause -> int list
