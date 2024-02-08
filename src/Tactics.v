@@ -155,156 +155,138 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
   let tac :=
   ltac2:(timeout |- get_hyps_cont_ltac1 (ltac1:(timeout hs |- verit_bool_no_check_base_auto_timeout hs timeout; vauto) timeout))
   in tac timeout.
-
-
+  
 
 (** Tactics in Prop **)
 
 Ltac zchaff          := trakt Z bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
 
-Tactic Notation "verit" constr(global) :=
+Tactic Notation "verit" uconstr_list_sep(global, ",") :=
   let tac :=
-  ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
+  ltac2:(h |- intros; unfold is_true in *;
+  let l := Option.get (Ltac1.to_list h) in
+  let l' := List.map (fun x => Option.get (Ltac1.to_constr x)) l in
+  let hs := pose_hyps l' in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
+    ltac1:(let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
     verit_bool_base_auto Hs';
-    QInst.vauto
-  ]) h)) in tac global.
+    QInst.vauto)
+  ]) in tac global.
 
-Tactic Notation "verit"           :=
-  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
+Tactic Notation "verit" :=
+  ltac2:(intros; unfold is_true in *;
+  let hs := Control.hyps () in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
+    ltac1:(let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
     verit_bool_base_auto Hs';
-    QInst.vauto
-  ])).
+    QInst.vauto)
+  ]).
 
-Tactic Notation "verit_no_check" constr(global) :=
+Tactic Notation "verit_no_check" uconstr_list_sep(global, ",") :=
   let tac :=
-  ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1 (ltac1:(h local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
+  ltac2:(h |- intros; unfold is_true in *;
+  let l := Option.get (Ltac1.to_list h) in
+  let l' := List.map (fun x => Option.get (Ltac1.to_constr x)) l in
+  let hs := pose_hyps l' in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
+    ltac1:(let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
     verit_bool_no_check_base_auto Hs';
-    QInst.vauto
-  ]) h)) in tac global.
+    QInst.vauto)
+  ]) in tac global.
 
-Tactic Notation "verit_no_check"           :=
-  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
+Tactic Notation "verit_no_check" :=
+  ltac2:(intros; unfold is_true in *;
+  let hs := Control.hyps () in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
+    ltac1:(let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
     verit_bool_no_check_base_auto Hs';
-    QInst.vauto
-  ])).
+    QInst.vauto)
+  ]).
 
-Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
+Tactic Notation "verit_timeout" uconstr_list_sep(global, ",") int_or_var(timeout) :=
   let tac :=
-  ltac2:(h timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h timeout local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
+  ltac2:(h n |- intros; unfold is_true in *;
+  let l := Option.get (Ltac1.to_list h) in
+  let l' := List.map (fun x => Option.get (Ltac1.to_constr x)) l in
+  let hs := pose_hyps l' in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) h timeout)) in tac global timeout.
+    ltac1:(n |- let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
+    verit_bool_base_auto_timeout Hs' n;
+    QInst.vauto) n
+  ]) in tac global timeout.
 
-Tactic Notation "verit_timeout"           int_or_var(timeout) :=
-  let tac :=
-  ltac2:(timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(timeout local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
+Tactic Notation "verit_timeout"  int_or_var(timeout) :=
+  let tac := 
+  ltac2:(n |- intros; unfold is_true in *;
+  let hs := Control.hyps () in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) timeout)) in tac timeout.
+    ltac1:(n |- let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
+    verit_bool_base_auto_timeout Hs' n;
+    QInst.vauto) n
+  ]) in tac timeout.
 
-Tactic Notation "verit_no_check_timeout" constr(global) int_or_var(timeout) :=
+Tactic Notation "verit_no_check_timeout" uconstr_list_sep(global, ",") int_or_var(timeout) :=
   let tac :=
-  ltac2:(h timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h timeout local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
+  ltac2:(h n |- intros; unfold is_true in *;
+  let l := Option.get (Ltac1.to_list h) in
+  let l' := List.map (fun x => Option.get (Ltac1.to_constr x)) l in
+  let hs := pose_hyps l' in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_no_check_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) h timeout)) in tac global timeout.
+    ltac1:(n |- let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
+    verit_bool_no_check_base_auto_timeout Hs' n;
+    QInst.vauto) n
+  ]) in tac global timeout.
 
-Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
-  let tac :=
-  ltac2:(timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(timeout local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
+Tactic Notation "verit_no_check_timeout"  int_or_var(timeout) :=
+  let tac := 
+  ltac2:(n |- intros; unfold is_true in *;
+  let hs := Control.hyps () in
+  preprocess1 (Some hs) >
   [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_no_check_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) timeout)) in tac timeout.
+    ltac1:(n |- let Hs' := intros_names in
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Option.get (Ltac1.to_list hs') in
+    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
+      preprocess2 (Some hs''')) in tac' Hs';
+    verit_bool_no_check_base_auto_timeout Hs' n;
+    QInst.vauto) n
+  ]) in tac timeout.
 
 Ltac cvc4            := trakt Z bool; [ .. | cvc4_bool ].
 Ltac cvc4_no_check   := trakt Z bool; [ .. | cvc4_bool_no_check ].

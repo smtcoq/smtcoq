@@ -35,29 +35,35 @@ Ltac2 get_hyps_prop () :=
 
 (* Assert global and local hypotheses (local: to avoid problems with Section variables) *)
 
-Ltac2 duplicate_hypotheses () : ident list :=
+Ltac2 duplicate_hypotheses () : (ident * 'a option * constr) list :=
   let hs := Control.hyps () in
   let rec aux hs acc :=
     match hs with
       | (id, _, _) :: hs' =>
           let fresh_id := in_goal id in
           let t := hyp id in
-          assert ($fresh_id := $t) ; aux hs' (fresh_id::acc)
+          assert ($fresh_id := $t) ; 
+          let new := hyp fresh_id in 
+          let new_ty := type new in
+          aux hs' ((fresh_id, None, new_ty)::acc)
       | _ => acc
     end 
   in aux hs [].
 
-Ltac2 assert_list (hs : constr list) :=
+Ltac2 assert_list (hs : constr list) : (ident * 'a option * constr) list :=
   let rec aux hs acc :=
     match hs with
       | h :: hs' =>
           let fresh_id := in_goal @H in
-          assert ($fresh_id := $h) ; aux hs' (fresh_id::acc)
+          assert ($fresh_id := $h) ; 
+          let new := hyp fresh_id in 
+          let new_ty := type new in
+          aux hs' ((fresh_id, None, new_ty)::acc)
       | _ => acc
     end 
   in aux hs [].
 
-Ltac2 pose_hyps hs := 
+Ltac2 pose_hyps hs : (ident * 'a option * constr) list := 
   let hs1 := duplicate_hypotheses () in
   let hs2 := assert_list hs in
   List.append hs1 hs2.
@@ -65,8 +71,8 @@ Ltac2 pose_hyps hs :=
 (* Goal True -> False -> True -> nat -> Type.
 intros.
 let ids := pose_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] 
-in List.iter (fun x => Message.print (Message.of_ident x)) ids. *)
-(* Abort. *)
+in List.iter (fun (x, _, _) => Message.print (Message.of_ident x)) ids.
+Abort. *)
 
 (* List of interpreted types *)
 
