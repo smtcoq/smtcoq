@@ -132,12 +132,13 @@ Ltac2 add_compdecs () :=
 
 (* Collect CompDec in local hypotheses *)
 
-Ltac2 collect_compdecs () :=
+Ltac2 collect_compdecs (hs' : ident list) :=
   let hs := hyps () in
   List.filter 
-    ( fun (_, _, ty) => 
+    ( fun (id, _, ty) => 
         match! ty with
-          | SMT_classes.CompDec ?t  => neg (is_interpreted_type t)
+          | SMT_classes.CompDec ?t  => 
+              and (neg (is_interpreted_type t)) (neg (List.mem Ident.equal id hs'))
           | _ => false
         end) hs.
 
@@ -320,7 +321,11 @@ Ltac2 preprocess1 hs :=
    add_compdecs () >
     [ .. |
     remove_compdec_hyps_option hs;
-    let cpds := collect_compdecs () in
+    let hs' := match hs with
+      | None => []
+      | Some l => List.map (fun (x, _, _) => x) l
+    end in
+    let cpds := collect_compdecs hs' in
     let rels := generate_rels cpds in
     trakt1 rels (Option.map (List.map (fun (id, _, _) => id)) hs)].
 

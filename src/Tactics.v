@@ -92,8 +92,10 @@ End Test.  *)
 
 (** Tactics in bool *)
 
-Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exact _).
-Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
+Tactic Notation "verit_bool_base_auto" constr(h) := 
+  verit_bool_base h; try (exact _).
+Tactic Notation "verit_bool_no_check_base_auto" constr(h) := 
+  verit_bool_no_check_base h; try (exact _).
 
 Tactic Notation "verit_bool" constr(h) :=
   let tac :=
@@ -117,13 +119,16 @@ Tactic Notation "verit_bool_no_check" constr(h) :=
   vauto) h)) in tac h.
 
 Tactic Notation "verit_bool_no_check" :=
-  ltac2:(get_hyps_cont_ltac1 ltac1:(hs |- verit_bool_no_check_base_auto hs; vauto)).
+  ltac2:(get_hyps_cont_ltac1 
+    ltac1:(hs |- verit_bool_no_check_base_auto hs; vauto)).
 
 
 (** Tactics in bool with timeout **)
 
-Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; try (exact _).
-Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; try (exact _).
+Tactic Notation "verit_bool_base_auto_timeout" 
+  constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; try (exact _).
+Tactic Notation "verit_bool_no_check_base_auto_timeout" 
+  constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; try (exact _).
 
 Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
   let tac :=
@@ -137,7 +142,9 @@ Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
 
 Tactic Notation "verit_bool_timeout" int_or_var(timeout) :=
   let tac :=
-  ltac2:(timeout |- get_hyps_cont_ltac1 (ltac1:(timeout hs |- verit_bool_base_auto_timeout hs timeout; vauto) timeout))
+    ltac2:(timeout |- 
+      get_hyps_cont_ltac1 (ltac1:(timeout hs |- 
+        verit_bool_base_auto_timeout hs timeout; vauto) timeout))
   in tac timeout.
 
 Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
@@ -180,7 +187,7 @@ Tactic Notation "verit" constr(global) :=
       preprocess2 hs''') in tac' Hs';
     verit_bool_base_auto Hs';
     QInst.vauto)
-  ])) in tac global ; auto .
+  ])) in tac global ; try (exact _).
 
 Tactic Notation "verit" :=
   ltac2:(Control.enter (fun () => (intros; unfold is_true in *;
@@ -331,9 +338,38 @@ Tactic Notation "smt_no_check"           :=
 
 Set Default Proof Mode "Classic".
 
-Goal forall (i j:int),
-    ~ ((i = j) /\ (~ (i = j))).
-Proof using. verit. Qed.
+Section EqualityOnUninterpretedType1.
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
+
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof.  ltac2:(Control.enter (fun () => (intros; unfold is_true in *;
+  let hs := pose_hyps [] in ()))). ltac2:(add_compdecs ()).
+  ltac2:(remove_compdec_hyps_option (Some [(@A0, None, Constr.type (Control.hyp @A0)); 
+(@HA0, None, Constr.type (Control.hyp @HA0)); (@f0, None, Constr.type (Control.hyp @f0)); (@a0, None, Constr.type (Control.hyp @a0)); 
+(@b0, None, Constr.type (Control.hyp @b0)); (@H0, None, Constr.type (Control.hyp @H0))])).
+    ltac2:(let cpds := collect_compdecs [@A0; @HA0] in
+    let rels := generate_rels cpds in List.iter (fun (x, _, _) => Message.print (Message.of_ident x)) cpds ;
+    trakt1 rels (Option.map (List.map (fun (id, _, _) => id)) (Some [(@A0, None, Constr.type (Control.hyp @A0)); 
+(@HA0, None, Constr.type (Control.hyp @HA0)); (@f0, None, Constr.type (Control.hyp @f0)); (@a0, None, Constr.type (Control.hyp @a0)); 
+(@b0, None, Constr.type (Control.hyp @b0)); (@H0, None, Constr.type (Control.hyp @H0))]))).
+
+
+  preprocess1 (Some hs) >
+  [ .. |
+    ltac1:(let Hs' := intros_names in 
+    let tac' := ltac2:(hs' |- 
+    let hs'' := Ltac1.to_list hs' in
+    let hs''' := 
+    match hs'' with
+      | None => None 
+      | Some l => Some (List.map (fun x => Option.get (Ltac1.to_ident x)) l)
+    end in 
+      preprocess2 hs''') in tac' Hs';
+    verit_bool_base_auto Hs';
+    QInst.vauto)
+  ]))) ; try (exact _). Qed.
+End EqualityOnUninterpretedType1.
 
 (* 
    Local Variables:
