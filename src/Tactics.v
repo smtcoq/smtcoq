@@ -102,8 +102,7 @@ Tactic Notation "verit_bool" constr(h) :=
   match hs with
   | Some ?hs => verit_bool_base_auto (Some (h, hs))
   | None => verit_bool_base_auto (Some h)
-  end;
-  vauto) h)) in tac h.
+  end) h)) in tac h ; vauto.
 
 Tactic Notation "verit_bool" :=
   ltac2:(get_hyps_cont_ltac1 ltac1:(hs |- verit_bool_base_auto hs; vauto)).
@@ -123,8 +122,8 @@ Tactic Notation "verit_bool_no_check" :=
 
 (** Tactics in bool with timeout **)
 
-Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; auto with typeclass_instances.
-Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
+Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; try (exact _).
+Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; try (exact _).
 
 Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
   let tac :=
@@ -181,7 +180,7 @@ Tactic Notation "verit" constr(global) :=
       preprocess2 hs''') in tac' Hs';
     verit_bool_base_auto Hs';
     QInst.vauto)
-  ])) in tac global.
+  ])) in tac global ; auto .
 
 Tactic Notation "verit" :=
   ltac2:(Control.enter (fun () => (intros; unfold is_true in *;
@@ -199,7 +198,7 @@ Tactic Notation "verit" :=
       preprocess2 hs''') in tac' Hs';
     verit_bool_base_auto Hs';
     QInst.vauto)
-  ]))).
+  ]))) ; try (exact _).
 
 Tactic Notation "verit_no_check" constr(global) :=
   let tac :=
@@ -220,7 +219,7 @@ Tactic Notation "verit_no_check" constr(global) :=
       preprocess2 hs''') in tac' Hs';
     verit_bool_no_check_base_auto Hs';
     QInst.vauto)
-  ])) in tac global.
+  ])) in tac global ; try (exact _).
 
 Tactic Notation "verit_no_check" :=
   ltac2:(Control.enter (fun () => (intros; unfold is_true in *;
@@ -329,6 +328,12 @@ Tactic Notation "smt_no_check" constr(h) :=
   intros; try verit_no_check h; cvc4_no_check; try verit_no_check h.
 Tactic Notation "smt_no_check"           :=
   intros; try verit_no_check  ; cvc4_no_check; try verit_no_check.
+
+Set Default Proof Mode "Classic".
+
+Goal forall (i j:int),
+    ~ ((i = j) /\ (~ (i = j))).
+Proof using. verit. Qed.
 
 (* 
    Local Variables:

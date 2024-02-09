@@ -195,9 +195,8 @@ Ltac2 rec trakt_rels rels :=
   match rels with
     | [] => ltac1:(trakt Z bool)
     | _ :: _ => 
-      printf "tutu";
-      let res := Ltac1.of_constr (list_to_tuple rels) in printf "titi" ;
-      ltac1:(res |- idtac res ; trakt Z bool with rel res) res
+      let res := Ltac1.of_constr (list_to_tuple rels) in
+      ltac1:(res |- trakt Z bool with rel res) res
   end.
 
  
@@ -297,7 +296,7 @@ Ltac remove_compdec_hyp H :=
     | _ =>
       let c := fresh "c" in
       assert (c : SMT_classes.CompDec A);
-      [ try (exact _)
+      [ try (exact _) 
       | let H1 := fresh in
         assert (H1 := H c); clear H; assert (H := H1); clear H1;
         remove_compdec_hyp H ]
