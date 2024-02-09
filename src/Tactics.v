@@ -162,7 +162,16 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
 Ltac zchaff          := trakt Z bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt Z bool; Tactics.zchaff_bool_no_check.
 
-Tactic Notation "verit" uconstr_list_sep(global, ",") :=
+
+Ltac2 preprocess1 hs := 
+   add_compdecs () >
+    [ .. |
+    remove_compdec_hyps_option hs;
+    let cpds := collect_compdecs () in
+    let rels := generate_rels cpds in
+    Control.enter (fun () => trakt1 rels (Option.map (List.map (fun (id, _, _) => id)) hs))].
+
+Tactic Notation "verit" constr(global) :=
   let tac :=
   ltac2:(h |- intros; unfold is_true in *;
   let l := Option.get (Ltac1.to_list h) in
@@ -172,28 +181,36 @@ Tactic Notation "verit" uconstr_list_sep(global, ",") :=
   [ .. |
     ltac1:(let Hs' := intros_names in
     let tac' := ltac2:(hs' |- 
-    let hs'' := Option.get (Ltac1.to_list hs') in
-    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
-      preprocess2 (Some hs''')) in tac' Hs';
+    let hs'' := Ltac1.to_list hs' in
+    let hs''' := 
+    match hs'' with
+      | None => None 
+      | Some l => Some (List.map (fun x => Option.get (Ltac1.to_ident x)) l)
+    end in
+      preprocess2 hs''') in tac' Hs';
     verit_bool_base_auto Hs';
     QInst.vauto)
   ]) in tac global.
 
 Tactic Notation "verit" :=
   ltac2:(intros; unfold is_true in *;
-  let hs := Control.hyps () in
+  let hs := pose_hyps [] in 
   preprocess1 (Some hs) >
   [ .. |
-    ltac1:(let Hs' := intros_names in
+    ltac1:(let Hs' := intros_names in 
     let tac' := ltac2:(hs' |- 
-    let hs'' := Option.get (Ltac1.to_list hs') in
-    let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
-      preprocess2 (Some hs''')) in tac' Hs';
+    let hs'' := Ltac1.to_list hs' in
+    let hs''' := 
+    match hs'' with
+      | None => None 
+      | Some l => Some (List.map (fun x => Option.get (Ltac1.to_ident x)) l)
+    end in 
+      preprocess2 hs''') in tac' Hs';
     verit_bool_base_auto Hs';
     QInst.vauto)
   ]).
 
-Tactic Notation "verit_no_check" uconstr_list_sep(global, ",") :=
+Tactic Notation "verit_no_check" constr(global) :=
   let tac :=
   ltac2:(h |- intros; unfold is_true in *;
   let l := Option.get (Ltac1.to_list h) in
@@ -202,10 +219,11 @@ Tactic Notation "verit_no_check" uconstr_list_sep(global, ",") :=
   preprocess1 (Some hs) >
   [ .. |
     ltac1:(let Hs' := intros_names in
-    let tac' := ltac2:(hs' |- 
+    let tac' := ltac2:(hs' |-
+    Control.enter (fun () =>
     let hs'' := Option.get (Ltac1.to_list hs') in
     let hs''' := List.map (fun x => Option.get (Ltac1.to_ident x)) hs'' in
-      preprocess2 (Some hs''')) in tac' Hs';
+      preprocess2 (Some hs'''))) in tac' Hs';
     verit_bool_no_check_base_auto Hs';
     QInst.vauto)
   ]) in tac global.
@@ -298,6 +316,10 @@ Tactic Notation "smt_no_check" constr(h) :=
 Tactic Notation "smt_no_check"           :=
   intros; try verit_no_check  ; cvc4_no_check; try verit_no_check.
 
+Lemma fun_const2goals :
+  forall f (g : Z -> Z -> bool),
+    (forall x, g (f x) 2%Z) -> (g (f 3) 2 /\ g (f 3) 2)%Z.
+Proof using. ltac1:(intros; split; verit). Qed.
 
 (* 
    Local Variables:

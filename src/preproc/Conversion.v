@@ -66,12 +66,12 @@ Ltac2 assert_list (hs : constr list) : (ident * 'a option * constr) list :=
 Ltac2 pose_hyps hs : (ident * 'a option * constr) list := 
   let hs1 := duplicate_hypotheses () in
   let hs2 := assert_list hs in
-  List.append hs1 hs2.
+  List.append (List.rev hs1) (List.rev hs2).
 
-(* Goal True -> False -> True -> nat -> Type.
+(* Goal forall (f g : nat -> bool), f = g -> False -> True -> nat -> Type.
 intros.
 let ids := pose_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] 
-in List.iter (fun (x, _, _) => Message.print (Message.of_ident x)) ids.
+in List.iter (fun (x, _, _) => Message.print (Message.of_ident x)) ids. 
 Abort. *)
 
 (* List of interpreted types *)
