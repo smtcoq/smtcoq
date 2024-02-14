@@ -130,6 +130,7 @@ let micromega_dump_proof_term p =
 
 (* Tactics *)
 type tactic = unit Proofview.tactic
+let tclIDTAC = Tacticals.tclIDTAC
 let tclTHEN = Tacticals.tclTHEN
 let tclTHENLAST = Tacticals.tclTHENLAST
 let assert_before n c = Tactics.assert_before n (EConstr.of_constr c)
