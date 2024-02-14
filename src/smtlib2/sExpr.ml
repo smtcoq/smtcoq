@@ -18,3 +18,9 @@ let rec print fmt = function
     Format.fprintf fmt "(@[<hov 2>";
     List.iter (Format.fprintf fmt "%a " print) l;
     Format.fprintf fmt "@])"
+
+let rec to_string = function
+| Atom s -> s
+| List l -> let l' = List.map to_string l in
+            let l'' = String.concat " " l' in
+            "("^l''^")"

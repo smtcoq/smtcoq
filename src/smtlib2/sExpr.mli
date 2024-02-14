@@ -14,3 +14,5 @@
 type t = Atom of string | List of t list
 
 val print : Format.formatter -> t -> unit
+
+val to_string : t -> string
