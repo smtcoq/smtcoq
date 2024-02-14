@@ -248,8 +248,8 @@ Proof.
 Qed.
 
 
-SMTCoq supports various integer types. This process is extensible,
-    one can get inspiration from file [src/preproc/Database_trakt.v].
+(* SMTCoq supports various integer types. This process is extensible, *)
+(*     one can get inspiration from file [src/preproc/Database_trakt.v]. *)
 
 Local Open Scope positive_scope.
 
