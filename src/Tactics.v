@@ -200,15 +200,20 @@ Tactic Notation "verit"           :=
 
   Tactic Notation "abduce" int_or_var(i) :=
   let tac :=
-  ltac2:(i |- intros ; get_hyps_cont_ltac1
-  (ltac1:(i hs |-
-  add_compdecs hs;
-  [ .. | prop2bool;
-         lazymatch hs with
-         | Some ?hs => prop2bool_hyps hs
-         | None => idtac
-         end;
-         [ .. | cvc5_bool_abduct i hs; vauto ]
+  ltac2:(i |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(i local |-
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' (@None unit)
+      | None => constr:(@None unit)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    cvc5_bool_abduct i Hs';
+    QInst.vauto
   ]) i)) in tac i.
 
 Tactic Notation "verit_no_check" constr(global) :=
