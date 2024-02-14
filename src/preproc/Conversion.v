@@ -228,8 +228,8 @@ Ltac generate_rels compdecs :=
 
 Ltac trakt_rels rels :=
   lazymatch rels with
-  | Some ?rels' => trakt Z bool with rel rels'
-  | None => trakt Z bool
+  | Some ?rels' => first [trakt Z bool with rel rels' | trakt bool with rel rels']
+  | None => first [trakt Z bool | trakt bool]
   end.
 
 Ltac revert_and_trakt Hs rels :=

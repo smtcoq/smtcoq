@@ -124,6 +124,13 @@ Proof.
   destruct a; destruct b; destruct c; intuition.
 Qed.
 
+Lemma eqb_or_split2 a b c:
+  Bool.eqb c (a || b) = true -> c || negb a || negb b = true.
+Proof.
+  intro H.
+  destruct a; destruct b; destruct c; intuition.
+Qed.
+
 (** verit silently transforms an <implb a (b && c)> into a <or (not a)
     b> or into a <or (not a) c> when instantiating such a quantified
     theorem. *)
@@ -188,6 +195,7 @@ Ltac vauto :=
                | [ |- (negb ?A || ?B || ?C) = true ] =>
                  first [ eapply impl2_split; apply_sym H
                        | eapply eqb_or_split; apply_sym H
+                       | eapply eqb_or_split2; apply_sym H
                        | eapply impl_split2; apply_sym H
                        | eapply impl_split211; apply_sym H
                        | eapply impl_split212; apply_sym H
