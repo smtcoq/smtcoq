@@ -198,24 +198,6 @@ Tactic Notation "verit"           :=
     QInst.vauto
   ])).
 
-  Tactic Notation "abduce" int_or_var(i) :=
-  let tac :=
-  ltac2:(i |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(i local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    cvc5_bool_abduct i Hs';
-    QInst.vauto
-  ]) i)) in tac i.
-
 Tactic Notation "verit_no_check" constr(global) :=
   let tac :=
   ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1 (ltac1:(h local |-
@@ -370,6 +352,24 @@ Tactic Notation "smt_no_check" constr(h) :=
   try verit_no_check h; cvc4_no_check; try verit_no_check h.
 Tactic Notation "smt_no_check"           :=
   try verit_no_check  ; cvc4_no_check; try verit_no_check.
+
+Tactic Notation "abduce" int_or_var(i) :=
+  let tac :=
+  ltac2:(i |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(i local |-
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' (@None unit)
+      | None => constr:(@None unit)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    cvc5_bool_abduct i Hs';
+    QInst.vauto
+  ]) i)) in tac i.
 
 
 (* 
