@@ -94,7 +94,8 @@ Ltac2 rec add_compdecs_term (u : constr) :=
     | context c [@Logic.eq ?t _ _] => 
       let u' := Pattern.instantiate c 'True in 
       match is_interpreted_type t with
-        | true => add_compdecs_term u'
+        | true =>   let fresh_id := in_goal ident:(p) in
+                    assert ($fresh_id: SMT_classes.CompDec $t) > [ try (exact _) | add_compdecs_term u']
         | false =>
             let hs := hyps () in
             let rec aux hs :=
@@ -125,7 +126,7 @@ Ltac2 add_compdecs () :=
      17%positive = 42%positive /\ (5,6) = (6,7). 
  Proof. 
   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros.
-   add_compdecs ().
+   add_compdecs (). Focus 30.
    Show 3.
  Abort. *)
 
@@ -138,7 +139,7 @@ Ltac2 collect_compdecs (hs' : ident list) :=
     ( fun (id, _, ty) => 
         match! ty with
           | SMT_classes.CompDec ?t  => 
-              and (neg (is_interpreted_type t)) (neg (List.mem Ident.equal id hs'))
+              and (neg (List.mem Ident.equal id hs')) (neg (equal t 'bool))
           | _ => false
         end) hs.
 

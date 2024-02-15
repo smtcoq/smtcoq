@@ -552,7 +552,7 @@ Proof using. verit. Qed.
 
 Lemma taut1 :
   forall f, f 2 = 0 -> f 2 = 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut2_bool :
   forall f, 0 =? f 2 -> 0 =? f 2.
