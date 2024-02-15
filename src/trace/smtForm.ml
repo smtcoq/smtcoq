@@ -386,7 +386,7 @@ module Make (Atom:ATOM) =
       let get_cst c =
         try SmtMisc.ConstrHashtbl.find op_tbl c with Not_found -> CCunknown in
       let rec mk_hform h =
-        let c, args = CoqInterface.decompose_app h in
+        let c, args = CoqInterface.decompose_app_list h in
         match get_cst c with
           | CCtrue  -> get reify (Fapp(Ftrue,empty_args))
           | CCfalse -> get reify (Fapp(Ffalse,empty_args))
@@ -427,7 +427,7 @@ module Make (Atom:ATOM) =
       and mk_fnot i args =
         match args with
           | [t] ->
-             let c,args = CoqInterface.decompose_app t in
+             let c,args = CoqInterface.decompose_app_list t in
              if CoqInterface.eq_constr c (Lazy.force cnegb) then
                mk_fnot (i+1) args
              else
@@ -442,7 +442,7 @@ module Make (Atom:ATOM) =
         match args with
           | [t1;t2] ->
              let l2 = mk_hform t2 in
-             let c, args = CoqInterface.decompose_app t1 in
+             let c, args = CoqInterface.decompose_app_list t1 in
              if CoqInterface.eq_constr c (Lazy.force candb) then
                mk_fand (l2::acc) args
              else
@@ -454,7 +454,7 @@ module Make (Atom:ATOM) =
         match args with
           | [t1;t2] ->
              let l2 = mk_hform t2 in
-             let c, args = CoqInterface.decompose_app t1 in
+             let c, args = CoqInterface.decompose_app_list t1 in
              if CoqInterface.eq_constr c (Lazy.force corb) then
                mk_for (l2::acc) args
              else

@@ -34,7 +34,7 @@ val isRel : constr -> bool
 val destRel : constr -> int
 val lift : int -> constr -> constr
 val mkApp : constr * constr array -> constr
-val decompose_app : constr -> constr * constr list
+val decompose_app_list : constr -> constr * constr list
 val mkLambda : name * types * constr -> constr
 val mkProd : name * types * types -> types
 val mkLetIn : name * constr * types * constr -> constr
@@ -100,7 +100,9 @@ val set_evars_tac : constr -> tactic
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
 val anomaly : string -> 'a
-val warning : string -> string -> unit
+
+val smtcoq_cat : CWarnings.category
+
 val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
 val ppconstr_lsimpleconstr : Constrexpr.entry_relative_level
@@ -108,5 +110,5 @@ val constrextern_extern_constr : constr -> constr_expr
 val get_rel_dec_name : (constr, types) Context.Rel.Declaration.pt -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
 
-val vm_conv : Reduction.conv_pb -> types Reduction.kernel_conversion_function
+val vm_conv : Conversion.conv_pb -> types Conversion.kernel_conversion_function
 val cbv_vm : Environ.env -> constr -> types -> constr

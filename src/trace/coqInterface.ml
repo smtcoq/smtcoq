@@ -37,7 +37,7 @@ let isRel = Constr.isRel
 let destRel = Constr.destRel
 let lift = Vars.lift
 let mkApp = Constr.mkApp
-let decompose_app = Constr.decompose_app
+let decompose_app_list = Constr.decompose_app_list
 let mkLambda (n, t, c) = Constr.mkLambda (Context.make_annot n Sorts.Relevant, t, c)
 let mkProd (n, t, c) = Constr.mkProd (Context.make_annot n Sorts.Relevant, t, c)
 let mkLetIn (n, c1, t, c2) = Constr.mkLetIn (Context.make_annot n Sorts.Relevant, c1, t, c2)
@@ -156,7 +156,8 @@ let set_evars_tac noc =
 type constr_expr = Constrexpr.constr_expr
 let error s = CErrors.user_err (Pp.str s)
 let anomaly s = CErrors.anomaly (Pp.str s)
-let warning n s = CWarnings.create ~name:n ~category:"SMTCoq plugin" Pp.str s
+
+let smtcoq_cat = CWarnings.create_category ~name:"SMTCoq" ()
 
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r

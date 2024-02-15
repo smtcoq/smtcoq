@@ -241,7 +241,7 @@ let rec compdec_btype reify = function
   | Tindex i ->
      (match i.hval with
         | CompDec compdec ->
-           let c, args = CoqInterface.decompose_app compdec in
+           let c, args = CoqInterface.decompose_app_list compdec in
            if CoqInterface.eq_constr c (Lazy.force cTyp_compdec) then
              match args with
                | [_; tic] -> tic
@@ -264,7 +264,7 @@ let declare_and_compdec reify t ty =
 
 let rec of_coq reify known_logic t =
   try
-    let c, args = CoqInterface.decompose_app t in
+    let c, args = CoqInterface.decompose_app_list t in
     if CoqInterface.eq_constr c (Lazy.force cbool) ||
          CoqInterface.eq_constr c (Lazy.force cTbool) then Tbool
     else if CoqInterface.eq_constr c (Lazy.force cZ) ||

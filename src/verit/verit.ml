@@ -177,6 +177,15 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
+let verit_warning = CWarnings.create ~name:"verit-warning" ~category:CoqInterface.smtcoq_cat
+    Pp.(fun w -> str "veriT outputted the warning:" ++ spc() ++ str w)
+
+let verit_non_zero_exit =
+  CWarnings.create ~name:"verit-non-zero-exit-code" ~category:CoqInterface.smtcoq_cat
+    Pp.(fun (command,code) ->
+        str "Verit.call_verit: command" ++ spc() ++ str command ++ spc() ++
+        str "exited with code" ++ spc () ++ int code)
+
 let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
@@ -206,9 +215,9 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
         if l = "warning : proof_done: status is still open" then
           raise Unknown
         else if l = "Invalid memory reference" then
-          CoqInterface.warning "verit-warning" ("veriT outputted the warning: " ^ l)
+          verit_warning l
         else if n >= 7 && String.sub l 0 7 = "warning" then
-          CoqInterface.warning "verit-warning" ("veriT outputted the warning: " ^ (String.sub l 7 (n-7)))
+          verit_warning (String.sub l 7 (n-7))
         else if n >= 8 && String.sub l 0 8 = "error : " then
           CoqInterface.error ("veriT failed with the error: " ^ (String.sub l 8 (n-8)))
         else
@@ -217,7 +226,7 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
     with End_of_file -> () in
   if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; let _ = CoqInterface.anomaly "veriT timed out" in ());
   try
-    if exit_code <> 0 then CoqInterface.warning "verit-non-zero-exit-code" ("Verit.call_verit: command " ^ command ^ " exited with code " ^ string_of_int exit_code);
+    if exit_code <> 0 then verit_non_zero_exit (command,exit_code);
     raise_warnings_errors ();
     let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
     close_in win; Sys.remove wname; res
