@@ -13,11 +13,11 @@ install: [
 depends: [
   "ocaml" {>= "4.07.1" & < "5~" }
   "num"
-  "coq" {>= "8.17~" & < "8.18~"}
+  "coq" {>= "8.18~" & < "8.19~"}
   "coq-trakt"
 ]
 pin-depends: [
-  [ "coq-trakt.1.2" "git+https://github.com/ecranceMERCE/trakt.git#1.2" ]
+  [ "coq-trakt.1.2c" "git+https://github.com/ecranceMERCE/trakt.git#1.2c" ]
 ]
 tags: [
   "category:Computer Science/Decision Procedures and Certified Algorithms/Decision procedures"
@@ -42,5 +42,5 @@ description: """
 - a certified checker for proof witnesses coming from the SAT solver ZChaff and the SMT solvers veriT and CVC4. This checker increases the confidence in these tools by checking their answers a posteriori and allows to import new theroems proved by these solvers in Coq;
 - decision procedures through new tactics that discharge some Coq goals to ZChaff, veriT, CVC4, and their combination"""
 url {
-  src: "git+https://github.com/smtcoq/smtcoq.git#with-trakt-coq-8.17"
+  src: "git+https://github.com/smtcoq/smtcoq.git#with-trakt-coq-8.18"
 }
