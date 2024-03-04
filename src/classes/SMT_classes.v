@@ -149,10 +149,10 @@ Class Inhabited T := {
 
 Class CompDec T := {
   ty := T;                      (* This is redundant for performance reasons *)
-  Eqb :> EqbType ty;             (* This is redundant since implied by Comp, but it actually allows us to choose a specific equality function *)
-  Ordered :> OrdType ty;
-  Comp :> @Comparable ty Ordered;
-  Inh :> Inhabited ty
+  Eqb :: EqbType ty;             (* This is redundant since implied by Comp, but it actually allows us to choose a specific equality function *)
+  Ordered :: OrdType ty;
+  Comp :: @Comparable ty Ordered;
+  Inh :: Inhabited ty
 }.
 
 
