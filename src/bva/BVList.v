@@ -2287,55 +2287,41 @@ Qed.
  *)
 
   (** list extension *)
-  Fixpoint extend (x: list bool) (i: nat) (b: bool) {struct i}: list bool :=
-    match i with
-      | O => x
-      | S i' =>  b :: extend x i' b
-    end.
+
+  Definition extend (x: list bool) (i: nat) (b: bool) : list bool := x ++ repeat b i.
 
   Definition zextend (x: list bool) (i: nat): list bool :=
     extend x i false.
 
+  Definition get_msb (x: list bool): bool :=
+    last x false.
+
   Definition sextend (x: list bool) (i: nat): list bool :=
-    match x with
-      | []       => mk_list_false i
-      | xb :: x' => extend x i xb
-    end.
+    extend x i (get_msb x).
 
   Lemma extend_size_zero: forall i b, (length (extend [] i b)) = i.
   Proof.
-    intros.
-    induction i as [ | xi IHi].
-    - now simpl.
-    - simpl. now rewrite IHi.
+    intros. unfold extend. rewrite app_length.
+    simpl. apply repeat_length.
   Qed.
 
   Lemma extend_size_one: forall i a b, length (extend [a] i b) = S i.
-  Proof. intros.
-         induction i.
-         - now simpl.
-         - simpl. now rewrite IHi.
+  Proof. intros. simpl. rewrite repeat_length. auto.
   Qed.
 
   Lemma length_extend: forall a i b, length (extend a i b) = ((length a) + i)%nat.
-  Proof. intro a.
-         induction a.
-         - intros. simpl. now rewrite extend_size_zero.
-         - intros.
-           induction i.
-           + intros. simpl. lia.
-           + intros. simpl. apply f_equal.
-             rewrite IHi. simpl. lia.
-   Qed.
+  Proof. unfold extend. intros.
+         rewrite app_length, repeat_length. reflexivity.
+  Qed.
 
   Lemma zextend_size_zero: forall i, (length (zextend [] i)) = i.
   Proof.
-    intros. unfold zextend. apply extend_size_zero. 
+    intros. unfold zextend. apply extend_size_zero.
   Qed.
 
   Lemma zextend_size_one: forall i a, length (zextend [a] i) = S i.
   Proof.
-    intros. unfold zextend. apply extend_size_one. 
+    intros. unfold zextend. apply extend_size_one.
   Qed.
 
   Lemma length_zextend: forall a i, length (zextend a i) = ((length a) + i)%nat.
@@ -2345,19 +2331,17 @@ Qed.
 
   Lemma sextend_size_zero: forall i, (length (sextend [] i)) = i.
   Proof.
-    intros. unfold sextend. now rewrite length_mk_list_false.
+    intros. unfold sextend. apply extend_size_zero.
   Qed.
 
   Lemma sextend_size_one: forall i a, length (sextend [a] i) = S i.
   Proof.
-    intros. unfold sextend. apply extend_size_one. 
+    intros. unfold sextend. apply extend_size_one.
   Qed.
 
   Lemma length_sextend: forall a i, length (sextend a i) = ((length a) + i)%nat.
   Proof.
-     intros. unfold sextend.
-     case_eq a. intros. rewrite length_mk_list_false. easy.
-     intros. apply length_extend.
+     intros. unfold sextend. apply length_extend.
   Qed.
 
   (** bit-vector extension *)
@@ -2387,15 +2371,7 @@ Qed.
   Proof.
     intros. unfold bv_sextn, sextend, size in *.
     rewrite <- N2Nat.id. apply f_equal.
-    case_eq a.
-    intros. rewrite length_mk_list_false.
-    rewrite H0 in H. simpl in H. rewrite <- H.
-    lia.
-    intros.
-    specialize (@length_extend a (nat_of_N i) b). intros.
-    subst. rewrite plus_distr. rewrite plus_comm.
-    rewrite Nat2N.id.
-    now rewrite <- H1.
+    rewrite length_extend. lia.
   Qed.
 
   (** shift left *)
