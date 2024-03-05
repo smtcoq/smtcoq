@@ -481,29 +481,43 @@ Section Fold_left2.
             + simpl. apply IHxs, H1. exact H.
   Qed.
 
-Fixpoint mk_list_true_acc (t: nat) (acc: list bool) : list bool :=
-  match t with
-    | O    => acc
-    | S t' => mk_list_true_acc t' (true::acc)
-  end.
 
-Fixpoint mk_list_true (t: nat) : list bool :=
-  match t with
-    | O    => []
-    | S t' => true::(mk_list_true t')
-  end.
+Section mk_list_bool.
 
-Fixpoint mk_list_false_acc (t: nat) (acc: list bool) : list bool :=
-  match t with
-    | O    => acc
-    | S t' => mk_list_false_acc t' (false::acc)
-  end.
+  Variable b : bool.
 
-Fixpoint mk_list_false (t: nat) : list bool :=
-  match t with
-    | O    => []
-    | S t' => false::(mk_list_false t')
-  end.
+  Fixpoint mk_list_bool_acc (t:nat) (acc:list bool) : list bool :=
+    match t with
+    | O => acc
+    | S t' => mk_list_bool_acc t' (b::acc)
+    end.
+
+  Definition mk_list_bool (t:nat) :=
+    mk_list_bool_acc t nil.
+
+  Lemma length_mk_list_bool_acc :
+    forall t acc, length (mk_list_bool_acc t acc) = (t + length acc)%nat.
+  Proof.
+    induction t as [ |t IHt]; simpl; intro acc.
+    - reflexivity.
+    - rewrite IHt. simpl. lia.
+  Qed.
+
+  Lemma length_mk_list_bool t : length (mk_list_bool t) = t.
+  Proof.
+    unfold mk_list_bool. rewrite length_mk_list_bool_acc. simpl. lia.
+  Qed.
+
+End mk_list_bool.
+
+Definition mk_list_true := mk_list_bool true.
+Definition mk_list_false := mk_list_bool false.
+
+Lemma length_mk_list_true: forall n, length (mk_list_true n) = n.
+Proof. now apply length_mk_list_bool. Qed.
+
+Lemma length_mk_list_false: forall n, length (mk_list_false n) = n.
+Proof. now apply length_mk_list_bool. Qed.
 
 Definition zeros (n : N) : bitvector := mk_list_false (N.to_nat n).
 
@@ -702,13 +716,6 @@ Definition bv_mult (a b : bitvector) : bitvector :=
 
 (* Theorems *)
 
-Lemma length_mk_list_false: forall n, length (mk_list_false n) = n.
-Proof. intro n.
-       induction n as [ | n' IHn].
-       - simpl. auto.
-       - simpl. apply f_equal. exact IHn.
-Qed.
-
 Definition _of_bits (a:list bool) (s: N) := 
 if (N.of_nat (length a) =? s)%N then a else zeros s.
 
@@ -718,13 +725,6 @@ Proof. unfold of_bits, size. unfold _of_bits.
        intros. now rewrite N.eqb_eq in H.
        intros. unfold zeros. rewrite length_mk_list_false.
        now rewrite N2Nat.id.
-Qed.
-
-Lemma length_mk_list_true: forall n, length (mk_list_true n) = n.
-Proof. intro n.
-       induction n as [ | n' IHn].
-       - simpl. auto.
-       - simpl. apply f_equal. exact IHn.
 Qed.
 
 Lemma zeros_size (n : N) : size (zeros n) = n.
