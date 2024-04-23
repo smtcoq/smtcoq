@@ -103,11 +103,11 @@ val anomaly : string -> 'a
 
 val smtcoq_cat : CWarnings.category
 
-val destruct_rel_decl : (constr, types) Context.Rel.Declaration.pt -> name * types
+val destruct_rel_decl : Constr.rel_declaration -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
 val ppconstr_lsimpleconstr : Constrexpr.entry_relative_level
 val constrextern_extern_constr : constr -> constr_expr
-val get_rel_dec_name : (constr, types) Context.Rel.Declaration.pt -> name
+val get_rel_dec_name : Constr.rel_declaration -> name
 val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
 
 val vm_conv : Conversion.conv_pb -> types Conversion.kernel_conversion_function
