@@ -322,17 +322,28 @@ let pp_funsym fmt (f:funsym) =
   let (n, _, _) = f in
   Format.fprintf fmt "%s" n
 
-let rec pp_term fmt = function
-  | TFun(f, l) ->
+let rec pp_expr fmt = function
+  | EFun (f, l) ->
      let pp fmt l =
        if List.compare_length_with l 0 = 0 then
          ()
        else
-         Smt_utils.pp_list pp_term ", " "(" ")" fmt l
+         Smt_utils.pp_list pp_expr ", " "(" ")" fmt l
      in
      Format.fprintf fmt "%a%a" pp_funsym f pp l
-
-let rec pp_form fmt = function
-  | FTerm t -> pp_term fmt t
-  | FFalse -> Format.fprintf fmt "⊥"
-  | FNeg f -> Format.fprintf fmt "(¬%a)" pp_form f
+  | EFalse -> Format.fprintf fmt "false"
+  | ENeg f -> Format.fprintf fmt "(not %a)" pp_expr f
+  | EEq (a, b) -> Format.fprintf fmt "(= %a %a)" pp_expr a pp_expr b
+  | EDistinct l ->
+     let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
+     Format.fprintf fmt "(distinct %a)" pp l
+  | EInt i -> Format.fprintf fmt "%d" i
+  | EBigInt i -> Format.fprintf fmt "%s" (Big_int.string_of_big_int i)
+  | EAdd (a, b) -> Format.fprintf fmt "(+ %a %a)" pp_expr a pp_expr b
+  | EOpp a -> Format.fprintf fmt "(- %a)" pp_expr a
+  | EMinus (a, b) -> Format.fprintf fmt "(- %a %a)" pp_expr a pp_expr b
+  | EMult (a, b) -> Format.fprintf fmt "(* %a %a)" pp_expr a pp_expr b
+  | ELt (a, b) -> Format.fprintf fmt "(< %a %a)" pp_expr a pp_expr b
+  | ELe (a, b) -> Format.fprintf fmt "(<= %a %a)" pp_expr a pp_expr b
+  | EGt (a, b) -> Format.fprintf fmt "(> %a %a)" pp_expr a pp_expr b
+  | EGe (a, b) -> Format.fprintf fmt "(>= %a %a)" pp_expr a pp_expr b

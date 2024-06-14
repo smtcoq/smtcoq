@@ -19,7 +19,7 @@ let test00 =
   let smt =
     let sorts = [] in
     let funs = [] in
-    let ass = [|Api.FFalse|] in
+    let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.CResolution [("t1", Api.CFalse); ("t2", Api.CFalse)]) in
@@ -29,7 +29,7 @@ let test01 =
   let smt =
     let sorts = [] in
     let funs = [] in
-    let ass = [|Api.FFalse|] in
+    let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
   let proof = ("t1", Api.CFalse) in
@@ -42,7 +42,7 @@ let test02 =
   let smt =
     let sorts = [] in
     let funs = [] in
-    let ass = [|Api.FFalse|] in
+    let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.CResolution [("t1", Api.CAssert 0); ("t2", Api.CFalse)]) in
@@ -52,7 +52,7 @@ let test03 =
   let smt =
     let sorts = [] in
     let funs = [] in
-    let ass = [|Api.FFalse|] in
+    let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.CResolution [("t1", Api.CFalse); ("t2", Api.CAssert 0)]) in
@@ -66,8 +66,8 @@ let test04 =
     let sorts = [] in
     let fa = ("a", [], "Bool") in
     let funs = [fa] in
-    let a = Api.FTerm (Api.TFun (fa, [])) in
-    let ass = [|a; Api.FNeg a|] in
+    let a = Api.EFun (fa, []) in
+    let ass = [|a; Api.ENeg a|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.CResolution [("t1", Api.CAssert 0); ("t2", Api.CAssert 1)]) in
@@ -78,8 +78,8 @@ let test05 =
     let sorts = [] in
     let fa = ("a", [], "Bool") in
     let funs = [fa] in
-    let a = Api.FTerm (Api.TFun (fa, [])) in
-    let ass = [|a; Api.FNeg a|] in
+    let a = Api.EFun (fa, []) in
+    let ass = [|a; Api.ENeg a|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.CResolution [("t1", Api.CAssert 1); ("t2", Api.CAssert 0)]) in

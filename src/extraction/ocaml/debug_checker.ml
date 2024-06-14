@@ -13,10 +13,10 @@
 open Smtcoq_plugin
 
 
-type clause = Api.form list
+type clause = Api.expr list
 
 let pp_clause fmt (cl:clause) =
-  Smt_utils.pp_list Api.pp_form " " "(" ")" fmt cl
+  Smt_utils.pp_list Api.pp_expr " " "(" ")" fmt cl
 
 
 exception Check of string
@@ -32,16 +32,16 @@ let rec resolve cl r =
     | [] -> raise (Check "could not find resolvant")
     | t::q ->
        (match t with
-          | Api.FNeg f ->
+          | Api.ENeg f ->
              if List.mem f r then
                q@(List.filter (fun l -> f <> l) r)
-             else if List.mem (Api.FNeg t) r then
-               q@(List.filter (fun l -> (Api.FNeg t) <> l) r)
+             else if List.mem (Api.ENeg t) r then
+               q@(List.filter (fun l -> (Api.ENeg t) <> l) r)
              else
                t::(resolve q r)
           | _ ->
-             if List.mem (Api.FNeg t) r then
-               q@(List.filter (fun l -> (Api.FNeg t) <> l) r)
+             if List.mem (Api.ENeg t) r then
+               q@(List.filter (fun l -> (Api.ENeg t) <> l) r)
              else
                t::(resolve q r)
        )
@@ -53,7 +53,7 @@ let rec debug_checker_rec fmt smt proof =
     let cl =
       match n with
         | Api.CAssert i -> [get_assert smt i]
-        | Api.CFalse -> [Api.FNeg Api.FFalse]
+        | Api.CFalse -> [Api.ENeg Api.EFalse]
         | Api.CResolution l ->
            (let l' = List.map (debug_checker_rec fmt smt) l in
             match l' with

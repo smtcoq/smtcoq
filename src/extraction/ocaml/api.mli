@@ -19,15 +19,39 @@ type funsym = string * sort list * sort
 
 
 (** SMT-LIB2 terms and formulas **)
-(*** Terms ***)
-type term =
-  | TFun of funsym * term list
+type expr =
+  (* Variables and applied functions and predicates *)
+  | EFun of funsym * expr list
 
-(*** Formulas ***)
-type form =
-  | FTerm of term
-  | FFalse
-  | FNeg of form
+  (* False *)
+  | EFalse
+  (* Negation *)
+  | ENeg of expr
+
+  (* Equality *)
+  | EEq of expr * expr
+  (* Distinct *)
+  | EDistinct of expr list
+
+  (* Integer constants *)
+  | EInt of int
+  | EBigInt of Big_int.big_int
+  (* Addition *)
+  | EAdd of expr * expr
+  (* Unary substraction *)
+  | EOpp of expr
+  (* Binary substraction *)
+  | EMinus of expr * expr
+  (* Multiplication *)
+  | EMult of expr * expr
+  (* Less than *)
+  | ELt of expr * expr
+  (* Less or equal *)
+  | ELe of expr * expr
+  (* Greater than *)
+  | EGt of expr * expr
+  (* Greater or equal *)
+  | EGe of expr * expr
 
 
 (** SMT-LIB2 commands **)
@@ -38,7 +62,7 @@ type sorts = sort list
 type funsyms = funsym list
 
 (*** Assertions ***)
-type assertions = form array
+type assertions = expr array
 
 (*** Commands ***)
 type smtlib2 = sorts * funsyms * assertions
@@ -59,5 +83,4 @@ val checker : smtlib2 -> certif -> bool
 (** Pretty-printers **)
 val pp_sort : Format.formatter -> sort -> unit
 val pp_funsym : Format.formatter -> funsym -> unit
-val pp_term : Format.formatter -> term -> unit
-val pp_form : Format.formatter -> form -> unit
+val pp_expr : Format.formatter -> expr -> unit
