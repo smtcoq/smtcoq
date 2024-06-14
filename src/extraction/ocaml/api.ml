@@ -23,125 +23,155 @@ type funsym = string * sort list * sort
 
 type expr =
   (* Variables and applied functions and predicates *)
-  | EFun of funsym * term list
+  | EFun of funsym * expr list
 
   (* False *)
   | EFalse
   (* Negation *)
-  | ENeg of form
+  | ENeg of expr
 
   (* Equality *)
-  | EEq of term * term
+  | EEq of expr * expr
   (* Distinct *)
-  | EDistinct of term list
+  | EDistinct of expr list
 
   (* Integer constants *)
   | EInt of int
   | EBigInt of Big_int.big_int
   (* Addition *)
-  | EAdd of term * term
+  | EAdd of expr * expr
   (* Unary substraction *)
-  | EOpp of term
+  | EOpp of expr
   (* Binary substraction *)
-  | EMinus of term * term
+  | EMinus of expr * expr
   (* Multiplication *)
-  | EMult of term * term
+  | EMult of expr * expr
   (* Less than *)
-  | ELt of term * term
+  | ELt of expr * expr
   (* Less or equal *)
-  | ELe of term * term
+  | ELe of expr * expr
   (* Greater than *)
-  | EGt of term * term
+  | EGt of expr * expr
   (* Greater or equal *)
-  | EGe of term * term
+  | EGe of expr * expr
 
 
 (* From smtlib2/smtlib2_genConstr.ml [make_root_*] *)
 exception Ill_typed of expr
 
+type atom_form = | Atom of SmtAtom.Atom.t | Form of SmtAtom.Form.t
+
 let rec make_expr ra rf e =
   match e with
-  | TFun ((f, _, _), l) ->
+  | EFun ((f, _, _), l) ->
      let op = SmtMaps.get_fun f in
      let l' = List.map (
-                  fun t -> match make_expr t with
-                             | SmtAtom.Atom h -> h
-                             | SmtAtom.Form _ -> raise (Ill_typed t)
+                  fun t -> match make_expr ra rf t with
+                             | Atom h -> h
+                             | Form _ -> raise (Ill_typed e)
                 ) l
      in
-     SmtAtom.Atom (SmtAtom.Atom.get ra (Aapp (op, Array.of_list l')))
-  | TInt i -> SmtAtom.Atom (SmtAtom.Atom.hatom_Z_of_int ra i)
-  | TBigInt i -> SmtAtom.Atom (SmtAtom.Atom.hatom_Z_of_bigint ra i)
-  | TAdd (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_plus ra a' b')
-        | _, _ -> raise (Ill_typed e)
+     Atom (SmtAtom.Atom.get ra (Aapp (op, Array.of_list l')))
+  | EFalse -> Form (SmtAtom.Form.get rf SmtAtom.Form.pform_false)
+  | ENeg f ->
+     (match make_expr ra rf f with
+        | Atom _ -> raise (Ill_typed e)
+        | Form f' -> Form (SmtAtom.Form.neg f')
      )
-  | TOpp a ->
-     (match make_expr ra rf a with
-        | SmtAtom.Atom a' -> SmtAtom.Atom (SmtAtom.Atom.mk_opp ra a')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TMinus (a, b) ->
+  | EEq (a, b) ->
      (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_minus ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TMult (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_mult ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TLt (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_lt ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TLe (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_le ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TGt (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_gt ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TGe (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' -> SmtAtom.Atom (SmtAtom.Atom.mk_ge ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
-  | TEq (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | SmtAtom.Atom a', SmtAtom.Atom b' ->
+        | Atom a', Atom b' ->
            let ta = SmtAtom.Atom.type_of a' in
            let tb = SmtAtom.Atom.type_of b' in
            if (ta <> tb) then
              raise (Ill_typed e)
            else if (ta <> Tbool) then
-             SmtAtom.Atom (SmtAtom.Atom.mk_eq_sym ra ta a' b')
+             Atom (SmtAtom.Atom.mk_eq_sym ra ta a' b')
            else
-             SmtAtom.Form (SmtAtom.Form.get rf (Fapp (Fiff, [|Fatom a'; Fatom b'|])))
-        | TODO
+             let a2 = SmtAtom.Form.get rf (SmtForm.Fatom a') in
+             let b2 = SmtAtom.Form.get rf (SmtForm.Fatom b') in
+             Form (SmtAtom.Form.get rf (Fapp (Fiff, [|a2; b2|])))
+        | Atom a', Form b' ->
+           let ta = SmtAtom.Atom.type_of a' in
+           if (ta <> Tbool) then
+             raise (Ill_typed e)
+           else
+             let a2 = SmtAtom.Form.get rf (SmtForm.Fatom a') in
+             Form (SmtAtom.Form.get rf (Fapp (Fiff, [|a2; b'|])))
+        | Form a', Atom b' ->
+           let tb = SmtAtom.Atom.type_of b' in
+           if (tb <> Tbool) then
+             raise (Ill_typed e)
+           else
+             let b2 = SmtAtom.Form.get rf (SmtForm.Fatom b') in
+             Form (SmtAtom.Form.get rf (Fapp (Fiff, [|a'; b2|])))
+        | Form a', Form b' ->
+           Form (SmtAtom.Form.get rf (Fapp (Fiff, [|a'; b'|])))
      )
-  | TDistinct of term list
+  | EDistinct l ->
+     let make_h h =
+       match make_expr ra rf h with
+         | Atom h' -> h'
+         | _ -> raise (Ill_typed e)
+     in
+     let a = Array.make (List.length l) (make_h (List.hd l)) in
+     let i = ref (-1) in
+     List.iter (fun h ->
+         incr i;
+         a.(!i) <- make_h h) l;
+     Atom (SmtAtom.Atom.mk_distinct ra (SmtAtom.Atom.type_of a.(0)) a)
+  | EInt i -> Atom (SmtAtom.Atom.hatom_Z_of_int ra i)
+  | EBigInt i -> Atom (SmtAtom.Atom.hatom_Z_of_bigint ra i)
+  | EAdd (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_plus ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
+  | EOpp a ->
+     (match make_expr ra rf a with
+        | Atom a' -> Atom (SmtAtom.Atom.mk_opp ra a')
+        | _ -> raise (Ill_typed e)
+     )
+  | EMinus (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_minus ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
+  | EMult (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_mult ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
+  | ELt (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_lt ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
+  | ELe (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_le ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
+  | EGt (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_gt ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
+  | EGe (a, b) ->
+     (match make_expr ra rf a, make_expr ra rf b with
+        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_ge ra a' b')
+        | _, _ -> raise (Ill_typed e)
+     )
 
-
-(*** Formulas ***)
-type form =
-  | FTerm of term
-  | FFalse
-  | FNeg of form
-
-(* From smtlib2_genConstr.ml *)
-let make_form ra rf f =
-  let rec make_form = function
-    | FTerm t -> SmtAtom.Form.get rf (Fatom (make_term ra rf t))
-    | FFalse -> SmtAtom.Form.get rf SmtAtom.Form.pform_false
-    | FNeg f -> SmtAtom.Form.neg (make_form f)
-  in
-  make_form f
+let make_form ra rf e =
+  match make_expr ra rf e with
+    | Form f -> f
+    | Atom a ->
+       let ta = SmtAtom.Atom.type_of a in
+       if (ta <> Tbool) then
+         raise (Ill_typed e)
+       else
+         SmtAtom.Form.get rf (SmtForm.Fatom a)
 
 
 (** SMT-LIB2 commands **)
@@ -168,7 +198,7 @@ let declare_funsyms (fl:funsyms) =
 
 
 (*** Assertions ***)
-type assertions = form array
+type assertions = expr array
 
 let assertions_tbl = Hashtbl.create 17
 
