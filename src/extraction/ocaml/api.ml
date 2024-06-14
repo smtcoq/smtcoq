@@ -56,6 +56,43 @@ type expr =
   | EGe of expr * expr
 
 
+(** Pretty_printers **)
+
+let pp_sort fmt (s:sort) = Format.fprintf fmt "%s" s
+
+let pp_funsym fmt (f:funsym) =
+  let (n, _, _) = f in
+  Format.fprintf fmt "%s" n
+
+let rec pp_expr fmt = function
+  | EFun (f, l) ->
+     let pp fmt l =
+       if List.compare_length_with l 0 = 0 then
+         ()
+       else
+         Smt_utils.pp_list pp_expr ", " "(" ")" fmt l
+     in
+     Format.fprintf fmt "%a%a" pp_funsym f pp l
+  | EFalse -> Format.fprintf fmt "false"
+  | ENeg f -> Format.fprintf fmt "(not %a)" pp_expr f
+  | EEq (a, b) -> Format.fprintf fmt "(= %a %a)" pp_expr a pp_expr b
+  | EDistinct l ->
+     let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
+     Format.fprintf fmt "(distinct %a)" pp l
+  | EInt i -> Format.fprintf fmt "%d" i
+  | EBigInt i -> Format.fprintf fmt "%s" (Big_int.string_of_big_int i)
+  | EAdd (a, b) -> Format.fprintf fmt "(+ %a %a)" pp_expr a pp_expr b
+  | EOpp a -> Format.fprintf fmt "(- %a)" pp_expr a
+  | EMinus (a, b) -> Format.fprintf fmt "(- %a %a)" pp_expr a pp_expr b
+  | EMult (a, b) -> Format.fprintf fmt "(* %a %a)" pp_expr a pp_expr b
+  | ELt (a, b) -> Format.fprintf fmt "(< %a %a)" pp_expr a pp_expr b
+  | ELe (a, b) -> Format.fprintf fmt "(<= %a %a)" pp_expr a pp_expr b
+  | EGt (a, b) -> Format.fprintf fmt "(> %a %a)" pp_expr a pp_expr b
+  | EGe (a, b) -> Format.fprintf fmt "(>= %a %a)" pp_expr a pp_expr b
+
+
+(** Processing expressions **)
+
 (* From smtlib2/smtlib2_genConstr.ml [make_root_*] *)
 exception Ill_typed of expr
 
@@ -164,14 +201,19 @@ let rec make_expr ra rf e =
      )
 
 let make_form ra rf e =
-  match make_expr ra rf e with
-    | Form f -> f
-    | Atom a ->
-       let ta = SmtAtom.Atom.type_of a in
-       if (ta <> Tbool) then
-         raise (Ill_typed e)
-       else
-         SmtAtom.Form.get rf (SmtForm.Fatom a)
+  try
+    (match make_expr ra rf e with
+       | Form f -> f
+       | Atom a ->
+          let ta = SmtAtom.Atom.type_of a in
+          if (ta <> Tbool) then
+            raise (Ill_typed e)
+          else
+            SmtAtom.Form.get rf (SmtForm.Fatom a)
+    )
+    with Ill_typed e ->
+      let s = Format.asprintf "Expression %a is ill-typed" pp_expr e in
+      failwith s
 
 
 (** SMT-LIB2 commands **)
@@ -312,38 +354,3 @@ let checker (smt:smtlib2) (proof:certif) : bool =
  **)
 
 let _ = Callback.register "checker" checker
-
-
-(** Pretty_printers **)
-
-let pp_sort fmt (s:sort) = Format.fprintf fmt "%s" s
-
-let pp_funsym fmt (f:funsym) =
-  let (n, _, _) = f in
-  Format.fprintf fmt "%s" n
-
-let rec pp_expr fmt = function
-  | EFun (f, l) ->
-     let pp fmt l =
-       if List.compare_length_with l 0 = 0 then
-         ()
-       else
-         Smt_utils.pp_list pp_expr ", " "(" ")" fmt l
-     in
-     Format.fprintf fmt "%a%a" pp_funsym f pp l
-  | EFalse -> Format.fprintf fmt "false"
-  | ENeg f -> Format.fprintf fmt "(not %a)" pp_expr f
-  | EEq (a, b) -> Format.fprintf fmt "(= %a %a)" pp_expr a pp_expr b
-  | EDistinct l ->
-     let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
-     Format.fprintf fmt "(distinct %a)" pp l
-  | EInt i -> Format.fprintf fmt "%d" i
-  | EBigInt i -> Format.fprintf fmt "%s" (Big_int.string_of_big_int i)
-  | EAdd (a, b) -> Format.fprintf fmt "(+ %a %a)" pp_expr a pp_expr b
-  | EOpp a -> Format.fprintf fmt "(- %a)" pp_expr a
-  | EMinus (a, b) -> Format.fprintf fmt "(- %a %a)" pp_expr a pp_expr b
-  | EMult (a, b) -> Format.fprintf fmt "(* %a %a)" pp_expr a pp_expr b
-  | ELt (a, b) -> Format.fprintf fmt "(< %a %a)" pp_expr a pp_expr b
-  | ELe (a, b) -> Format.fprintf fmt "(<= %a %a)" pp_expr a pp_expr b
-  | EGt (a, b) -> Format.fprintf fmt "(> %a %a)" pp_expr a pp_expr b
-  | EGe (a, b) -> Format.fprintf fmt "(>= %a %a)" pp_expr a pp_expr b
