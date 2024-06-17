@@ -26,7 +26,7 @@ int test00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -42,7 +42,7 @@ void testd00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -57,7 +57,7 @@ void testd00() {
 int test00b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF r[2] = {cfalse("t1"), cfalse("t2")};
@@ -70,7 +70,7 @@ int test00b() {
 void testd00b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF r[2] = {cfalse("t1"), cfalse("t2")};
@@ -84,7 +84,7 @@ int test01() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -98,7 +98,7 @@ int test01() {
 int test01b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF proof = cfalse("t1");
@@ -111,7 +111,7 @@ void testd01() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -125,7 +125,7 @@ void testd01() {
 void testd01b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF proof = cfalse("t1");
@@ -140,7 +140,7 @@ int test02() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -156,7 +156,7 @@ void testd02() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -171,7 +171,7 @@ void testd02() {
 int test02b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF r[2] = {cassert("t1", 0), cfalse("t2")};
@@ -184,7 +184,7 @@ int test02b() {
 void testd02b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF r[2] = {cassert("t1", 0), cfalse("t2")};
@@ -198,7 +198,7 @@ int test03() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -214,7 +214,7 @@ void testd03() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
-  FORM ff = ffalse();
+  EXPR ff = efalse();
   ASSERTIONS a = assertions(1, &ff);
   SMTLIB2 smt = smtlib2(s, f, a);
 
@@ -229,7 +229,7 @@ void testd03() {
 int test03b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF r[2] = {cfalse("t1"), cassert("t2", 0)};
@@ -242,7 +242,7 @@ int test03b() {
 void testd03b() {
   // SMT-LIB2 problem
   start_smt2();
-  assertf(ffalse());
+  assertf(efalse());
 
   // Proof
   CERTIF r[2] = {cfalse("t1"), cassert("t2", 0)};
@@ -260,8 +260,8 @@ int test04() {
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
-  FORM a = fterm(tfun(fa, NULL));
-  FORM as[2] = {a, fneg(a)};
+  EXPR a = efun(fa, NULL);
+  EXPR as[2] = {a, eneg(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -278,8 +278,8 @@ void testd04() {
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
-  FORM a = fterm(tfun(fa, NULL));
-  FORM as[2] = {a, fneg(a)};
+  EXPR a = efun(fa, NULL);
+  EXPR as[2] = {a, eneg(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -296,9 +296,9 @@ int test04b() {
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   declare_fun(fa);
-  FORM a = fterm(tfun(fa, NULL));
+  EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(fneg(a));
+  assertf(eneg(a));
 
   // Proof
   CERTIF r[2] = {cassert("t1", 0), cassert("t2", 1)};
@@ -313,9 +313,9 @@ void testd04b() {
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   declare_fun(fa);
-  FORM a = fterm(tfun(fa, NULL));
+  EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(fneg(a));
+  assertf(eneg(a));
 
   // Proof
   CERTIF r[2] = {cassert("t1", 0), cassert("t2", 1)};
@@ -330,8 +330,8 @@ int test05() {
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
-  FORM a = fterm(tfun(fa, NULL));
-  FORM as[2] = {a, fneg(a)};
+  EXPR a = efun(fa, NULL);
+  EXPR as[2] = {a, eneg(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -348,8 +348,8 @@ void testd05() {
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
-  FORM a = fterm(tfun(fa, NULL));
-  FORM as[2] = {a, fneg(a)};
+  EXPR a = efun(fa, NULL);
+  EXPR as[2] = {a, eneg(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -366,9 +366,9 @@ int test05b() {
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   declare_fun(fa);
-  FORM a = fterm(tfun(fa, NULL));
+  EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(fneg(a));
+  assertf(eneg(a));
 
   // Proof
   CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
@@ -383,9 +383,9 @@ void testd05b() {
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   declare_fun(fa);
-  FORM a = fterm(tfun(fa, NULL));
+  EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(fneg(a));
+  assertf(eneg(a));
 
   // Proof
   CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};

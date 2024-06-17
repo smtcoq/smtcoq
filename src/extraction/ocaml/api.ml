@@ -342,16 +342,16 @@ let checker_exn (smt:smtlib2) (proof:certif) : bool =
   Smt_utils.checker ra rf roots max_id confl
 
 let checker_string smt proof =
-  try (checker_exn smt proof, None)
+  try (checker_exn smt proof, "")
   with Ill_typed e ->
     let s = Format.asprintf "Expression %a is ill-typed" pp_expr e in
-    (false, Some s)
+    (false, s)
 
 let checker smt proof =
   let (b, s) = checker_string smt proof in
-  match s with
-    | Some s' -> failwith s'
-    | None -> b
+  if String.length s = 0 then
+    b
+  else failwith s
 
 
 (** Callback from C to OCaml

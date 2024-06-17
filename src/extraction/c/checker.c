@@ -75,48 +75,149 @@ FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain) {
 }
 
 
-/** Terms of first-order logic **/
+/** Terms and formulas of first-order logic **/
 
-#define TFUN 0
+#define EFALSE 0
 
-/* Variables and applied function symbols */
-TERM tfun(FUNSYM fun, const TERM* args) {
-  value res = caml_alloc(2, TFUN);
+#define EFUN 0
+#define ENEG 1
+#define EEQ 2
+#define EDISTINCT 3
+#define EINT 4
+#define EADD 6
+#define EOPP 7
+#define EMINUS 8
+#define EMULT 9
+#define ELT 10
+#define ELE 11
+#define EGT 12
+#define EGE 13
+
+/* Variables and applied functions and predicates */
+EXPR efun(FUNSYM fun, const EXPR* args) {
+  value res = caml_alloc(2, EFUN);
   Store_field(res, 0, fun.fval);
   value a = value_list(fun.arity, args);
   Store_field(res, 1, a);
   return res;
 }
 
-
-/** Formulas of first order logic **/
-
-#define FFALSE 0
-
-#define FTERM 0
-#define FNEG 1
-
-/* Terms */
-FORM fterm(TERM term) {
-  CAMLparam1(term);
-  CAMLlocal1(res);
-  res = caml_alloc(1, FTERM);
-  Store_field(res, 0, term);
-  CAMLreturn(res);
-}
-
 /* ⊥ */
-FORM ffalse() {
-  value res = Val_int(0);
+EXPR efalse() {
+  value res = Val_int(EFALSE);
   return res;
 }
 
 /* ¬ */
-FORM fneg(FORM form) {
-  CAMLparam1(form);
+EXPR eneg(EXPR a) {
+  CAMLparam1(a);
   CAMLlocal1(res);
-  res = caml_alloc(1, FNEG);
-  Store_field(res, 0, form);
+  res = caml_alloc(1, ENEG);
+  Store_field(res, 0, a);
+  CAMLreturn(res);
+}
+
+/* = */
+EXPR eeq(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EEQ);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* distinct */
+EXPR edistinct(size_t nb, const EXPR* d) {
+  value res = caml_alloc(1, EDISTINCT);
+  value a = value_list(nb, d);
+  Store_field(res, 0, a);
+  return res;
+}
+
+/* Integer constants */
+EXPR eint(int i) {
+  value res = caml_alloc(1, EINT);
+  Store_field(res, 0, Val_int(i));
+  return res;
+}
+
+/* + */
+EXPR eadd(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EADD);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* Unary - */
+EXPR eopp(EXPR a) {
+  CAMLparam1(a);
+  CAMLlocal1(res);
+  res = caml_alloc(1, EOPP);
+  Store_field(res, 0, a);
+  CAMLreturn(res);
+}
+
+/* Binary - */
+EXPR eminus(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EMINUS);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* * */
+EXPR emult(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EMULT);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* < */
+EXPR elt(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, ELT);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* <= */
+EXPR ele(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, ELE);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* > */
+EXPR egt(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EGT);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* >= */
+EXPR ege(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EGE);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
   CAMLreturn(res);
 }
 
@@ -163,6 +264,7 @@ CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses) {
 
 int checker(SMTLIB2 smt, CERTIF proof) {
   CAMLparam2(smt, proof);
+  CAMLlocal1(v);
 
   // Get the OCaml function
   static const value * checker_closure = NULL;
@@ -170,7 +272,16 @@ int checker(SMTLIB2 smt, CERTIF proof) {
     checker_closure = caml_named_value("checker");
 
   // Call the OCaml function
-  CAMLreturnT(int, Bool_val(caml_callback2(*checker_closure, smt, proof)));
+  v = caml_callback2(*checker_closure, smt, proof);
+  int b = Bool_val(Field(v, 0));
+  char* s = strdup(String_val(Field(v, 1)));
+
+  if (strlen(s) == 0) {
+    CAMLreturnT(int, b);
+  } else {
+    printf("%s\n", s);
+    exit(1);
+  }
 }
 
 
@@ -203,7 +314,7 @@ FUNSYMS funsyms(size_t nb, FUNSYM* data) {
   return value_list(nb, d);
 }
 
-ASSERTIONS assertions(size_t nb, FORM* data) {
+ASSERTIONS assertions(size_t nb, EXPR* data) {
   return value_array(nb, data);
 }
 
@@ -229,7 +340,7 @@ typedef struct ICOMMANDS_t {
   FUNSYM* funsyms;
   size_t nb_asserts;
   size_t log2_nb_asserts;
-  FORM* asserts;
+  EXPR* asserts;
 } ICOMMANDS;
 
 ICOMMANDS icommands;
@@ -281,15 +392,15 @@ void declare_fun(FUNSYM f) {
   icommands.nb_funsyms++;
 }
 
-void assertf(FORM f) {
+void assertf(EXPR f) {
   CAMLparam1(f);
   if (icommands.nb_asserts == 0) {
-    icommands.asserts = (FORM*) malloc(sizeof(FORM));
+    icommands.asserts = (EXPR*) malloc(sizeof(EXPR));
     if (icommands.asserts) *icommands.asserts = f;
   } else if (icommands.nb_asserts == (1 << icommands.log2_nb_asserts)) {
     icommands.log2_nb_asserts++;
     size_t size = 1 << icommands.log2_nb_asserts;
-    icommands.asserts = realloc(icommands.asserts, size*sizeof(FORM));
+    icommands.asserts = realloc(icommands.asserts, size*sizeof(EXPR));
     if (icommands.asserts) *(icommands.asserts + icommands.nb_asserts) = f;
   } else {
     *(icommands.asserts + icommands.nb_asserts) = f;

@@ -28,22 +28,49 @@ SORT sort(char* s);
 FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain);
 
 
-/** Terms of first-order logic **/
+/** Terms and formulas of first-order logic **/
 
-/* Variables and applied function symbols */
-TERM tfun(FUNSYM fun, const TERM* args);
-
-
-/** Formulas of first order logic **/
-
-/* Terms */
-FORM fterm(TERM term);
+/* Variables and applied functions and predicates */
+EXPR efun(FUNSYM fun, const EXPR* args);
 
 /* ⊥ */
-FORM ffalse();
+EXPR efalse();
 
 /* ¬ */
-FORM fneg(FORM form);
+EXPR eneg(EXPR a);
+
+/* = */
+EXPR eeq(EXPR a, EXPR b);
+
+/* distinct */
+EXPR edistinct(size_t nb, const EXPR* d);
+
+/* Integer constants */
+EXPR eint(int i);
+
+/* + */
+EXPR eadd(EXPR a, EXPR b);
+
+/* Unary - */
+EXPR eopp(EXPR a);
+
+/* Binary - */
+EXPR eminus(EXPR a, EXPR b);
+
+/* * */
+EXPR emult(EXPR a, EXPR b);
+
+/* < */
+EXPR elt(EXPR a, EXPR b);
+
+/* <= */
+EXPR ele(EXPR a, EXPR b);
+
+/* > */
+EXPR egt(EXPR a, EXPR b);
+
+/* >= */
+EXPR ege(EXPR a, EXPR b);
 
 
 /** Certificates **/
@@ -66,7 +93,7 @@ CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses);
 void start_smt2();
 void declare_sort(SORT s);
 void declare_fun(FUNSYM f);
-void assertf(FORM f);
+void assertf(EXPR f);
 
 int check_proof(CERTIF proof);
 void debug_check_proof(CERTIF proof);
@@ -76,7 +103,7 @@ void debug_check_proof(CERTIF proof);
 
 SORTS sorts(size_t nb, SORT* data);
 FUNSYMS funsyms(size_t nb, FUNSYM* data);
-ASSERTIONS assertions(size_t nb, FORM* data);
+ASSERTIONS assertions(size_t nb, EXPR* data);
 SMTLIB2 smtlib2(SORTS s, FUNSYMS f, ASSERTIONS a);
 
 int checker(SMTLIB2 smt, CERTIF proof);

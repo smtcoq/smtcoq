@@ -29,14 +29,9 @@ typedef struct FUNSYM_t {
 } FUNSYM;
 
 
-/** Terms of first-order logic **/
+/** Terms and formulas of first-order logic **/
 
-typedef value TERM;
-
-
-/** Formulas of first order logic **/
-
-typedef value FORM;
+typedef value EXPR;
 
 
 /** SMT-LIB2 commands, functional **/
