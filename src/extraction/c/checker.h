@@ -33,11 +33,32 @@ FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain);
 /* Variables and applied functions and predicates */
 EXPR efun(FUNSYM fun, const EXPR* args);
 
-/* ⊥ */
+/* true */
+EXPR etrue();
+
+/* false */
 EXPR efalse();
 
-/* ¬ */
+/* not */
 EXPR eneg(EXPR a);
+
+/* N-ary and */
+EXPR eand(size_t nb, const EXPR* a);
+
+/* Binary and */
+EXPR eband(EXPR a, EXPR b);
+
+/* N-ary or */
+EXPR eor(size_t nb, const EXPR* a);
+
+/* Binary or */
+EXPR ebor(EXPR a, EXPR b);
+
+/* xor */
+EXPR exor(EXPR a, EXPR b);
+
+/* -> */
+EXPR eimp(EXPR a, EXPR b);
 
 /* = */
 EXPR eeq(EXPR a, EXPR b);

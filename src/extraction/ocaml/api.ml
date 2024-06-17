@@ -25,10 +25,24 @@ type expr =
   (* Variables and applied functions and predicates *)
   | EFun of funsym * expr list
 
+  (* True *)
+  | ETrue
   (* False *)
   | EFalse
   (* Negation *)
   | ENeg of expr
+  (* N-ary and *)
+  | EAnd of expr list
+  (* Binary and *)
+  | EBAnd of expr * expr
+  (* N-ary or *)
+  | EOr of expr list
+  (* Binary or *)
+  | EBor of expr * expr
+  (* Xor *)
+  | EXor of expr * expr
+  (* -> *)
+  | EImp of expr * expr
 
   (* Equality *)
   | EEq of expr * expr
@@ -73,8 +87,19 @@ let rec pp_expr fmt = function
          Smt_utils.pp_list pp_expr ", " "(" ")" fmt l
      in
      Format.fprintf fmt "%a%a" pp_funsym f pp l
+  | ETrue  -> Format.fprintf fmt "true"
   | EFalse -> Format.fprintf fmt "false"
   | ENeg f -> Format.fprintf fmt "(not %a)" pp_expr f
+  | EAnd l ->
+     let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
+     Format.fprintf fmt "(and %a)" pp l
+  | EBAnd (a, b) -> Format.fprintf fmt "(and %a %a)" pp_expr a pp_expr b
+  | EOr l ->
+     let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
+     Format.fprintf fmt "(or %a)" pp l
+  | EBor (a, b) -> Format.fprintf fmt "(or %a %a)" pp_expr a pp_expr b
+  | EXor (a, b) -> Format.fprintf fmt "(xor %a %a)" pp_expr a pp_expr b
+  | EImp (a, b) -> Format.fprintf fmt "(-> %a %a)" pp_expr a pp_expr b
   | EEq (a, b) -> Format.fprintf fmt "(= %a %a)" pp_expr a pp_expr b
   | EDistinct l ->
      let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
@@ -102,17 +127,47 @@ let rec make_expr ra rf e =
   match e with
   | EFun ((f, _, _), l) ->
      let op = SmtMaps.get_fun f in
-     let l' = List.map (
-                  fun t -> match make_expr ra rf t with
-                             | Atom h -> h
-                             | Form _ -> raise (Ill_typed e)
-                ) l
-     in
+     let l' = List.map (make_atom ra rf) l in
      Atom (SmtAtom.Atom.get ra (Aapp (op, Array.of_list l')))
+  | ETrue  -> Form (SmtAtom.Form.get rf SmtAtom.Form.pform_true)
   | EFalse -> Form (SmtAtom.Form.get rf SmtAtom.Form.pform_false)
   | ENeg f ->
      let f' = make_form ra rf f in
-     Form (SmtAtom.Form.neg f')
+     let nf = SmtAtom.Form.neg f' in
+     let r =
+       if SmtAtom.Form.is_neg nf then
+         nf
+       else
+         (match SmtAtom.Form.pform nf with
+            | Fapp (Fnot2 i, a) -> SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fnot2 (i+1), a))
+            | _ -> SmtAtom.Form.get rf (Fapp (Fnot2 1, [|nf|]))
+         )
+     in
+     Form r
+  | EAnd l ->
+     let l' = List.map (make_form ra rf) l in
+     let a = Array.of_list l' in
+     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fand, a)))
+  | EBAnd (a, b) ->
+     let a' = make_form ra rf a in
+     let b' = make_form ra rf b in
+     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fand, [|a'; b'|])))
+  | EOr l ->
+     let l' = List.map (make_form ra rf) l in
+     let a = Array.of_list l' in
+     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.For, a)))
+  | EBor (a, b) ->
+     let a' = make_form ra rf a in
+     let b' = make_form ra rf b in
+     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.For, [|a'; b'|])))
+  | EXor (a, b) ->
+     let a' = make_form ra rf a in
+     let b' = make_form ra rf b in
+     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fxor, [|a'; b'|])))
+  | EImp (a, b) ->
+     let a' = make_form ra rf a in
+     let b' = make_form ra rf b in
+     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fimp, [|a'; b'|])))
   | EEq (a, b) ->
      (match make_expr ra rf a, make_expr ra rf b with
         | Atom a', Atom b' ->
@@ -144,59 +199,51 @@ let rec make_expr ra rf e =
            Form (SmtAtom.Form.get rf (Fapp (Fiff, [|a'; b'|])))
      )
   | EDistinct l ->
-     let make_h h =
-       match make_expr ra rf h with
-         | Atom h' -> h'
-         | _ -> raise (Ill_typed e)
-     in
+     let make_h = make_atom ra rf in
      let a = Array.make (List.length l) (make_h (List.hd l)) in
-     let i = ref (-1) in
+     let i = ref 0 in
      List.iter (fun h ->
          incr i;
-         a.(!i) <- make_h h) l;
+         a.(!i) <- make_h h) (List.tl l);
      Atom (SmtAtom.Atom.mk_distinct ra (SmtAtom.Atom.type_of a.(0)) a)
   | EInt i -> Atom (SmtAtom.Atom.hatom_Z_of_int ra i)
   | EBigInt i -> Atom (SmtAtom.Atom.hatom_Z_of_bigint ra i)
   | EAdd (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_plus ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_plus ra a' b')
   | EOpp a ->
-     (match make_expr ra rf a with
-        | Atom a' -> Atom (SmtAtom.Atom.mk_opp ra a')
-        | _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     Atom (SmtAtom.Atom.mk_opp ra a')
   | EMinus (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_minus ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_minus ra a' b')
   | EMult (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_mult ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_mult ra a' b')
   | ELt (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_lt ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_lt ra a' b')
   | ELe (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_le ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_le ra a' b')
   | EGt (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_gt ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_gt ra a' b')
   | EGe (a, b) ->
-     (match make_expr ra rf a, make_expr ra rf b with
-        | Atom a', Atom b' -> Atom (SmtAtom.Atom.mk_ge ra a' b')
-        | _, _ -> raise (Ill_typed e)
-     )
+     let a' = make_atom ra rf a in
+     let b' = make_atom ra rf b in
+     Atom (SmtAtom.Atom.mk_ge ra a' b')
+
+and make_atom ra rf e =
+  match make_expr ra rf e with
+    | Atom a -> a
+    | Form _ -> raise (Ill_typed e)
 
 and make_form ra rf e =
   match make_expr ra rf e with

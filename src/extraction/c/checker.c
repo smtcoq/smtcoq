@@ -77,21 +77,28 @@ FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain) {
 
 /** Terms and formulas of first-order logic **/
 
-#define EFALSE 0
+#define ETRUE      0
+#define EFALSE     1
 
-#define EFUN 0
-#define ENEG 1
-#define EEQ 2
-#define EDISTINCT 3
-#define EINT 4
-#define EADD 6
-#define EOPP 7
-#define EMINUS 8
-#define EMULT 9
-#define ELT 10
-#define ELE 11
-#define EGT 12
-#define EGE 13
+#define EFUN       0
+#define ENEG       1
+#define EAND       2
+#define EBAND      3
+#define EOR        4
+#define EBOR       5
+#define EXOR       6
+#define EIMP       7
+#define EEQ        8
+#define EDISTINCT  9
+#define EINT      10
+#define EADD      12
+#define EOPP      13
+#define EMINUS    14
+#define EMULT     15
+#define ELT       16
+#define ELE       17
+#define EGT       18
+#define EGE       19
 
 /* Variables and applied functions and predicates */
 EXPR efun(FUNSYM fun, const EXPR* args) {
@@ -102,18 +109,80 @@ EXPR efun(FUNSYM fun, const EXPR* args) {
   return res;
 }
 
-/* ⊥ */
+/* true */
+EXPR etrue() {
+  value res = Val_int(ETRUE);
+  return res;
+}
+
+/* false */
 EXPR efalse() {
   value res = Val_int(EFALSE);
   return res;
 }
 
-/* ¬ */
+/* not */
 EXPR eneg(EXPR a) {
   CAMLparam1(a);
   CAMLlocal1(res);
   res = caml_alloc(1, ENEG);
   Store_field(res, 0, a);
+  CAMLreturn(res);
+}
+
+/* N-ary and */
+EXPR eand(size_t nb, const EXPR* a) {
+  value res = caml_alloc(1, EAND);
+  value r = value_list(nb, a);
+  Store_field(res, 0, r);
+  return res;
+}
+
+/* Binary and */
+EXPR eband(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EBAND);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* N-ary or */
+EXPR eor(size_t nb, const EXPR* a) {
+  value res = caml_alloc(1, EOR);
+  value r = value_list(nb, a);
+  Store_field(res, 0, r);
+  return res;
+}
+
+/* Binary or */
+EXPR ebor(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EBOR);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* xor */
+EXPR exor(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EXOR);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
+  CAMLreturn(res);
+}
+
+/* -> */
+EXPR eimp(EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(res);
+  res = caml_alloc(2, EIMP);
+  Store_field(res, 0, a);
+  Store_field(res, 1, b);
   CAMLreturn(res);
 }
 
