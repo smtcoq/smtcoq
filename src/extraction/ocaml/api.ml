@@ -344,7 +344,7 @@ let checker_exn (smt:smtlib2) (proof:certif) : bool =
 let checker_string smt proof =
   try (checker_exn smt proof, "")
   with Ill_typed e ->
-    let s = Format.asprintf "Expression %a is ill-typed" pp_expr e in
+    let s = Format.asprintf "Expression %a is ill-typed or is not of the expected type" pp_expr e in
     (false, s)
 
 let checker smt proof =

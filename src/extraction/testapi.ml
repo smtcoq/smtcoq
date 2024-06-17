@@ -86,6 +86,21 @@ let test05 =
   (smt, proof)
 
 
+(* Error when terms are ill-typed *)
+
+let test06 =
+  let smt =
+    let sorts = [] in
+    let fa = ("a", [], "Int") in
+    let funs = [fa] in
+    let a = Api.EFun (fa, []) in
+    let ass = [|a; Api.ENeg a|] in
+    (sorts, funs, ass)
+  in
+  let proof = ("t3", Api.CResolution [("t1", Api.CAssert 0); ("t2", Api.CAssert 1)]) in
+  (smt, proof)
+
+
 let _ =
   assert (let (smt, proof) = test00 in not (Api.checker smt proof));
   assert (let (smt, proof) = test01 in not (Api.checker smt proof));
@@ -105,4 +120,9 @@ let _ =
   Printf.printf "test04:\n";
   let (smt, proof) = test04 in Debug_checker.debug_checker_stdout smt proof;
   Printf.printf "test05:\n";
-  let (smt, proof) = test05 in Debug_checker.debug_checker_stdout smt proof
+  let (smt, proof) = test05 in Debug_checker.debug_checker_stdout smt proof;
+  Printf.printf "Now testing when terms are ill-typed:\n";
+  try
+    let (smt, proof) = test06 in let _ = Api.checker smt proof in ()
+  with
+    | Failure s -> Printf.printf"%s\n" s

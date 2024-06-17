@@ -396,6 +396,27 @@ void testd05b() {
 }
 
 
+/** Error when terms are ill-typed **/
+
+int test06() {
+  // SMT-LIB2 problem
+  SORTS s = sorts(0, NULL);
+  FUNSYM fa = funsym("a", 0, NULL, sort("Int"));
+  FUNSYMS f = funsyms(1, &fa);
+  EXPR a = efun(fa, NULL);
+  EXPR as[2] = {a, eneg(a)};
+  ASSERTIONS ass = assertions(2, as);
+  SMTLIB2 smt = smtlib2(s, f, ass);
+
+  // Proof
+  CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
+  CERTIF proof = cresolution("t3", 2, r);
+
+  // Proof checking
+  return checker(smt, proof);
+}
+
+
 /** Main program **/
 
 int main(int argc, char ** argv)
@@ -441,6 +462,8 @@ int main(int argc, char ** argv)
   testd05();
   printf("test05b:\n");
   testd05b();
+  printf("Now testing when terms are ill-typed (exits with error code 1):\n");
+  test06();
 
   return 0;
 }
