@@ -83,7 +83,9 @@ let dump_psatz e =
       | Mc.PsatzAdd(e1,e2) -> Smt_checker.PsatzAdd (dump_cone e1, dump_cone e2)
       | Mc.PsatzMulE(e1,e2) -> Smt_checker.PsatzMulE (dump_cone e1, dump_cone e2)
       | Mc.PsatzC p -> Smt_checker.PsatzC (dump_z p)
-      | Mc.PsatzZ -> Smt_checker.PsatzZ in
+      | Mc.PsatzZ -> Smt_checker.PsatzZ
+      | Mc.PsatzLet _ -> assert false
+  in
   dump_cone e
 
 
@@ -97,6 +99,7 @@ let rec dump_proof_term = function
     Smt_checker.EnumProof (dump_psatz c1, dump_psatz c2, dump_list dump_proof_term prfs)
   | CoqInterface.Micromega_plugin_Micromega.ExProof(p,prf) ->
     Smt_checker.ExProof (dump_positive p, dump_proof_term prf)
+  | CoqInterface.Micromega_plugin_Micromega.SplitProof _ -> assert false
 
 
 (* From trace/smtTrace.ml *)
