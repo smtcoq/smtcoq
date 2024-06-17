@@ -22,7 +22,7 @@
 
 /** Incorrect proofs **/
 
-int test00() {
+int testIF00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -38,7 +38,7 @@ int test00() {
   return checker(smt, proof);
 }
 
-void testd00() {
+void testIFD00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -54,7 +54,7 @@ void testd00() {
   debug_checker(smt, proof);
 }
 
-int test00b() {
+int testII00() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -67,7 +67,7 @@ int test00b() {
   return check_proof(proof);
 }
 
-void testd00b() {
+void testIID00() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -80,7 +80,7 @@ void testd00b() {
   debug_check_proof(proof);
 }
 
-int test01() {
+int testIF01() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -95,19 +95,7 @@ int test01() {
   return checker(smt, proof);
 }
 
-int test01b() {
-  // SMT-LIB2 problem
-  start_smt2();
-  assertf(efalse());
-
-  // Proof
-  CERTIF proof = cfalse("t1");
-
-  // Proof checking
-  return check_proof(proof);
-}
-
-void testd01() {
+void testIFD01() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -122,7 +110,19 @@ void testd01() {
   debug_checker(smt, proof);
 }
 
-void testd01b() {
+int testII01() {
+  // SMT-LIB2 problem
+  start_smt2();
+  assertf(efalse());
+
+  // Proof
+  CERTIF proof = cfalse("t1");
+
+  // Proof checking
+  return check_proof(proof);
+}
+
+void testIID01() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -136,7 +136,7 @@ void testd01b() {
 
 /** Proofs of unsatisfiability of ⊥ **/
 
-int test02() {
+int testCF00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -152,7 +152,7 @@ int test02() {
   return checker(smt, proof);
 }
 
-void testd02() {
+void testCFD00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -168,7 +168,7 @@ void testd02() {
   debug_checker(smt, proof);
 }
 
-int test02b() {
+int testCI00() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -181,7 +181,7 @@ int test02b() {
   return check_proof(proof);
 }
 
-void testd02b() {
+void testCID00() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -194,7 +194,7 @@ void testd02b() {
   debug_check_proof(proof);
 }
 
-int test03() {
+int testCF01() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -210,7 +210,7 @@ int test03() {
   return checker(smt, proof);
 }
 
-void testd03() {
+void testCFD01() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYMS f = funsyms(0, NULL);
@@ -226,7 +226,7 @@ void testd03() {
   debug_checker(smt, proof);
 }
 
-int test03b() {
+int testCI01() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -239,7 +239,7 @@ int test03b() {
   return check_proof(proof);
 }
 
-void testd03b() {
+void testCID01() {
   // SMT-LIB2 problem
   start_smt2();
   assertf(efalse());
@@ -255,7 +255,7 @@ void testd03b() {
 
 /** Proofs of unsatisfiability of `a ∧ ¬a` **/
 
-int test04() {
+int testCF02() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -273,7 +273,7 @@ int test04() {
   return checker(smt, proof);
 }
 
-void testd04() {
+void testCFD02() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -291,7 +291,7 @@ void testd04() {
   debug_checker(smt, proof);
 }
 
-int test04b() {
+int testCI02() {
   // SMT-LIB2 problem
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -308,7 +308,7 @@ int test04b() {
   return check_proof(proof);
 }
 
-void testd04b() {
+void testCID02() {
   // SMT-LIB2 problem
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -325,7 +325,7 @@ void testd04b() {
   debug_check_proof(proof);
 }
 
-int test05() {
+int testCF03() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -343,7 +343,7 @@ int test05() {
   return checker(smt, proof);
 }
 
-void testd05() {
+void testCFD03() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -361,7 +361,7 @@ void testd05() {
   debug_checker(smt, proof);
 }
 
-int test05b() {
+int testCI03() {
   // SMT-LIB2 problem
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -378,7 +378,7 @@ int test05b() {
   return check_proof(proof);
 }
 
-void testd05b() {
+void testCID03() {
   // SMT-LIB2 problem
   start_smt2();
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
@@ -398,7 +398,7 @@ void testd05b() {
 
 /** Error when terms are ill-typed **/
 
-int test06() {
+int testTF00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
   FUNSYM fa = funsym("a", 0, NULL, sort("Int"));
@@ -425,45 +425,45 @@ int main(int argc, char ** argv)
   caml_startup(argv);
 
   // Run tests
-  assert(!test00());
-  assert(!test00b());
-  assert(!test01());
-  assert(!test01b());
-  assert(test02());
-  assert(test02b());
-  assert(test03());
-  assert(test03b());
-  assert(test04());
-  assert(test04b());
-  assert(test05());
-  assert(test05b());
+  assert(!testIF00());
+  assert(!testII00());
+  assert(!testIF01());
+  assert(!testII01());
+  assert(testCF00());
+  assert(testCI00());
+  assert(testCF01());
+  assert(testCI01());
+  assert(testCF02());
+  assert(testCI02());
+  assert(testCF03());
+  assert(testCI03());
   printf("All tests suceeded\nNow testing the debugging checker:\n");
-  printf("test00:\n");
-  testd00();
-  printf("test00b:\n");
-  testd00b();
-  printf("test01:\n");
-  testd01();
-  printf("test01b:\n");
-  testd01b();
-  printf("test02:\n");
-  testd02();
-  printf("test02b:\n");
-  testd02b();
-  printf("test03:\n");
-  testd03();
-  printf("test03b:\n");
-  testd03b();
-  printf("test04:\n");
-  testd04();
-  printf("test04b:\n");
-  testd04b();
-  printf("test05:\n");
-  testd05();
-  printf("test05b:\n");
-  testd05b();
+  printf("testIFD00:\n");
+  testIFD00();
+  printf("testIID00:\n");
+  testIID00();
+  printf("testIFD01:\n");
+  testIFD01();
+  printf("testIID01:\n");
+  testIID01();
+  printf("testCFD00:\n");
+  testCFD00();
+  printf("testCID00:\n");
+  testCID00();
+  printf("testCFD01:\n");
+  testCFD01();
+  printf("testCID01:\n");
+  testCID01();
+  printf("testCFD02:\n");
+  testCFD02();
+  printf("testCID02:\n");
+  testCID02();
+  printf("testCFD03:\n");
+  testCFD03();
+  printf("testCID03:\n");
+  testCID03();
   printf("Now testing when terms are ill-typed (exits with error code 1):\n");
-  test06();
+  testTF00();
 
   return 0;
 }
