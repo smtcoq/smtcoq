@@ -111,10 +111,8 @@ let rec make_expr ra rf e =
      Atom (SmtAtom.Atom.get ra (Aapp (op, Array.of_list l')))
   | EFalse -> Form (SmtAtom.Form.get rf SmtAtom.Form.pform_false)
   | ENeg f ->
-     (match make_expr ra rf f with
-        | Atom _ -> raise (Ill_typed e)
-        | Form f' -> Form (SmtAtom.Form.neg f')
-     )
+     let f' = make_form ra rf f in
+     Form (SmtAtom.Form.neg f')
   | EEq (a, b) ->
      (match make_expr ra rf a, make_expr ra rf b with
         | Atom a', Atom b' ->
@@ -200,7 +198,7 @@ let rec make_expr ra rf e =
         | _, _ -> raise (Ill_typed e)
      )
 
-let make_form ra rf e =
+and make_form ra rf e =
   try
     (match make_expr ra rf e with
        | Form f -> f
