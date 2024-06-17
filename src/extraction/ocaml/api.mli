@@ -120,11 +120,14 @@ type node =
   (* 12. Proves the given clause in the theory of Linear Integer Arithmetic *)
   | Clia_generic of expr list
 
-  (* 23. Given a term t, proves the clause {(= t t)} *)
+  (* 23. Given a term t, proves the clause {(= t t)}
+         Applies only to terms.
+   *)
   | Ceq_reflexive of expr
 
   (* 24. Given the terms t1 ... tn,
          proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+         Applies only to terms.
    *)
   | Ceq_transitive of expr list
 
@@ -139,6 +142,13 @@ type node =
            {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
    *)
   | Ceq_congruent_pred of funsym * expr list * expr list
+
+  (* 26b. A small variant
+          Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
+          proves the clause
+            {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+   *)
+  | Ceq_congruent_pred_b of funsym * expr list * expr list
 
   (* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
          proves the clause {fk}

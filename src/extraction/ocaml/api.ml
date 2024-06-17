@@ -342,11 +342,14 @@ type node =
   (* 12. Proves the given clause in the theory of Linear Integer Arithmetic *)
   | Clia_generic of expr list
 
-  (* 23. Given a term t, proves the clause {(= t t)} *)
+  (* 23. Given a term t, proves the clause {(= t t)}
+         Applies only to terms.
+   *)
   | Ceq_reflexive of expr
 
   (* 24. Given the terms t1 ... tn,
          proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+         Applies only to terms.
    *)
   | Ceq_transitive of expr list
 
@@ -361,6 +364,13 @@ type node =
            {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
    *)
   | Ceq_congruent_pred of funsym * expr list * expr list
+
+  (* 26b. A small variant
+          Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
+          proves the clause
+            {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+   *)
+  | Ceq_congruent_pred_b of funsym * expr list * expr list
 
   (* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
          proves the clause {fk}
@@ -520,7 +530,7 @@ type 'hform rule_kind =
   | RRoot of int
 
 
-let process_certif =
+let process_certif ra rf =
   let add_clause id cl =
     VeritSyntax.add_clause id cl;
     if id > 1 then SmtTrace.link (VeritSyntax.get_clause (id-1)) cl
@@ -539,25 +549,70 @@ let process_certif =
   in
 
   (* Process the certificate *)
+  let other c = RKind (SmtCertif.Other c) in
+
   let rec process_certif c =
     let (_, c) = c in
     let kind = match c with
-        | Cweakening of certif * expr list
+        | Cweakening (c, l) ->
+           let c' = VeritSyntax.get_clause (process_certif c) in
+           let l' = List.map (make_form ra rf) l in
+           other (SmtCertif.Weaken (c', l'))
         | Cassume i -> RRoot (i+1)
-        | Ctrue
-        | Cfalse -> RKind(SmtCertif.Other SmtCertif.False)
+        | Ctrue -> other SmtCertif.True
+        | Cfalse -> other SmtCertif.False
         | Cresolution l ->
            (match List.map (fun cl -> VeritSyntax.get_clause (process_certif cl)) l with
               | cl1::cl2::q ->
                  let res = {SmtCertif.rc1 = cl1; SmtCertif.rc2 = cl2; SmtCertif.rtail = q} in
                  RKind (SmtCertif.Res res)
-              | _ -> failwith "Resolution should contain at least two clauses"
+              | _ -> failwith "resolution should contain at least two clauses"
            )
-        | Clia_generic of expr list
-        | Ceq_reflexive of expr
-        | Ceq_transitive of expr list
-        | Ceq_congruent of funsym * expr list * expr list
-        | Ceq_congruent_pred of funsym * expr list * expr list
+        | Clia_generic l ->
+           let cl = List.map (make_form ra rf) l in
+           let k = VeritSyntax.mlMicromega cl in
+           RKind k
+        | Ceq_reflexive t ->
+           let f = make_form ra rf (EEq (t, t)) in
+           other (SmtCertif.EqTr (f, []))
+        | Ceq_transitive l ->
+           (match l with
+              | a::b::q ->
+                 let last = ref b in
+                 let l' =
+                   List.fold_left (
+                       fun acc t ->
+                       let c = !last in
+                       last := t;
+                       (make_form ra rf (ENeg (EEq (c, t))))::acc
+                     ) [make_form ra rf (ENeg (EEq (a, b)))] q
+                 in
+                 let r = make_form ra rf (EEq (a, !last)) in
+                 other (SmtCertif.EqTr (r, l'))
+              | _ -> failwith "eq_transitive should contain at least two terms"
+           )
+        | Ceq_congruent (f, tl, ul) ->
+           let l = List.map2 (fun t u -> Some (make_form ra rf (ENeg (EEq (t, u))))) tl ul in
+           let t = make_atom ra rf (EFun (f, tl)) in
+           let u = make_atom ra rf (EFun (f, ul)) in
+           let r = make_form ra rf (EEq (u, r)) in
+           other (SmtCertif.EqCgr (r, l))
+        | Ceq_congruent_pred (p, tl, ul) ->
+           let t = make_form ra rf (EFun (p, tl)) in
+           let u = make_form ra rf (EFun (p, ul)) in
+           let c4  = ("dummy_eq_congruent_pred_1", Ceq_congruent_pred_b (p, tl, ul)) in
+           let c5  = ("dummy_eq_congruent_pred_2", Ceq_congruent_pred_b (p, ul, tl)) in
+           let c6  = ("dummy_eq_congruent_pred_3", Cequiv_neg2 (t, u)) in
+           let c7  = ("dummy_eq_congruent_pred_4", Cequiv_neg1 (t, u)) in
+           let c8  = ("dummy_eq_congruent_pred_5", Cresolution [c6; c5]) in
+           let c9  = ("dummy_eq_congruent_pred_6", Cresolution [c4; c8]) in
+           let c10 = ("dummy_eq_congruent_pred_7", Cresolution [c7; c8; c9]) in
+           process_certif c10
+        | Ceq_congruent_pred_b (p, tl, ul) ->
+           let l = List.map2 (fun t u -> Some (make_form ra rf (ENeg (EEq (t, u))))) tl ul in
+           let t = make_form ra rf (ENeg (EFun (p, tl))) in
+           let u = make_form ra rf (EFun (p, ul)) in
+           other (SmtCertif.EqCgrP (t, u, l))
         | Cand of certif * int
         | Cnot_or of certif * int
         | Cor of certif
