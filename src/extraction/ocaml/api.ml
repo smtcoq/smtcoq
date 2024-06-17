@@ -199,19 +199,14 @@ let rec make_expr ra rf e =
      )
 
 and make_form ra rf e =
-  try
-    (match make_expr ra rf e with
-       | Form f -> f
-       | Atom a ->
-          let ta = SmtAtom.Atom.type_of a in
-          if (ta <> Tbool) then
-            raise (Ill_typed e)
-          else
-            SmtAtom.Form.get rf (SmtForm.Fatom a)
-    )
-    with Ill_typed e ->
-      let s = Format.asprintf "Expression %a is ill-typed" pp_expr e in
-      failwith s
+  match make_expr ra rf e with
+    | Form f -> f
+    | Atom a ->
+       let ta = SmtAtom.Atom.type_of a in
+       if (ta <> Tbool) then
+         raise (Ill_typed e)
+       else
+         SmtAtom.Form.get rf (SmtForm.Fatom a)
 
 
 (** SMT-LIB2 commands **)
@@ -338,7 +333,7 @@ let clear_all () =
 
 
 (* From verit_checker.ml *)
-let checker (smt:smtlib2) (proof:certif) : bool =
+let checker_exn (smt:smtlib2) (proof:certif) : bool =
   clear_all ();
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
@@ -346,9 +341,21 @@ let checker (smt:smtlib2) (proof:certif) : bool =
   let (max_id, confl) = import_trace proof in
   Smt_utils.checker ra rf roots max_id confl
 
+let checker_string smt proof =
+  try (checker_exn smt proof, None)
+  with Ill_typed e ->
+    let s = Format.asprintf "Expression %a is ill-typed" pp_expr e in
+    (false, Some s)
+
+let checker smt proof =
+  let (b, s) = checker_string smt proof in
+  match s with
+    | Some s' -> failwith s'
+    | None -> b
+
 
 (** Callback from C to OCaml
     see https://ocaml.org/manual/4.09/intfc.html#sec426
  **)
 
-let _ = Callback.register "checker" checker
+let _ = Callback.register "checker" checker_string
