@@ -570,7 +570,7 @@ let process_certif ra rf =
            )
         | Clia_generic l ->
            let cl = List.map (make_form ra rf) l in
-           let k = VeritSyntax.mlMicromega cl in
+           let k = VeritSyntax.mkMicromega cl in
            RKind k
         | Ceq_reflexive t ->
            let f = make_form ra rf (EEq (t, t)) in
@@ -658,8 +658,8 @@ let process_certif ra rf =
 
 
 (* From verit.ml *)
-let import_trace (c:certif) =
-  let confl_num = process_certif c in
+let import_trace ra rf (c:certif) =
+  let confl_num = process_certif ra rf c in
   let cfirst = ref (VeritSyntax.get_clause 1) in
   let confl = ref (VeritSyntax.get_clause confl_num) in
   SmtTrace.select !confl;
@@ -680,7 +680,7 @@ let checker_exn (smt:smtlib2) (proof:certif) : bool =
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
   let roots = declare_smtlib2 ra rf smt in
-  let (max_id, confl) = import_trace proof in
+  let (max_id, confl) = import_trace ra rf proof in
   Smt_utils.checker ra rf roots max_id confl
 
 let checker_string smt proof =

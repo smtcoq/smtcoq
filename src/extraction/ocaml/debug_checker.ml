@@ -52,9 +52,9 @@ let rec debug_checker_rec fmt smt proof =
   try
     let cl =
       match n with
-        | Api.CAssert i -> [get_assert smt i]
-        | Api.CFalse -> [Api.ENeg Api.EFalse]
-        | Api.CResolution l ->
+        | Api.Cassume i -> [get_assert smt i]
+        | Api.Cfalse -> [Api.ENeg Api.EFalse]
+        | Api.Cresolution l ->
            (let l' = List.map (debug_checker_rec fmt smt) l in
             match l' with
               | [] -> raise (Check "empty resolution")

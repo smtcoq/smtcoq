@@ -22,7 +22,7 @@ let testI00 =
     let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
-  let proof = ("t3", Api.CResolution [("t1", Api.CFalse); ("t2", Api.CFalse)]) in
+  let proof = ("t3", Api.Cresolution [("t1", Api.Cfalse); ("t2", Api.Cfalse)]) in
   (smt, proof)
 
 let testI01 =
@@ -32,7 +32,7 @@ let testI01 =
     let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
-  let proof = ("t1", Api.CFalse) in
+  let proof = ("t1", Api.Cfalse) in
   (smt, proof)
 
 
@@ -45,7 +45,7 @@ let testC00 =
     let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
-  let proof = ("t3", Api.CResolution [("t1", Api.CAssert 0); ("t2", Api.CFalse)]) in
+  let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 0); ("t2", Api.Cfalse)]) in
   (smt, proof)
 
 let testC01 =
@@ -55,7 +55,7 @@ let testC01 =
     let ass = [|Api.EFalse|] in
     (sorts, funs, ass)
   in
-  let proof = ("t3", Api.CResolution [("t1", Api.CFalse); ("t2", Api.CAssert 0)]) in
+  let proof = ("t3", Api.Cresolution [("t1", Api.Cfalse); ("t2", Api.Cassume 0)]) in
   (smt, proof)
 
 
@@ -70,7 +70,7 @@ let testC02 =
     let ass = [|a; Api.ENeg a|] in
     (sorts, funs, ass)
   in
-  let proof = ("t3", Api.CResolution [("t1", Api.CAssert 0); ("t2", Api.CAssert 1)]) in
+  let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 0); ("t2", Api.Cassume 1)]) in
   (smt, proof)
 
 let testC03 =
@@ -82,7 +82,7 @@ let testC03 =
     let ass = [|a; Api.ENeg a|] in
     (sorts, funs, ass)
   in
-  let proof = ("t3", Api.CResolution [("t1", Api.CAssert 1); ("t2", Api.CAssert 0)]) in
+  let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 1); ("t2", Api.Cassume 0)]) in
   (smt, proof)
 
 
@@ -97,7 +97,7 @@ let testT00 =
     let ass = [|a; Api.ENeg a|] in
     (sorts, funs, ass)
   in
-  let proof = ("t3", Api.CResolution [("t1", Api.CAssert 0); ("t2", Api.CAssert 1)]) in
+  let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 0); ("t2", Api.Cassume 1)]) in
   (smt, proof)
 
 
