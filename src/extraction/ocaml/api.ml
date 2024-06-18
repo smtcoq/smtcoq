@@ -550,19 +550,26 @@ let process_certif ra rf =
 
   (* Process the certificate *)
   let other c = RKind (SmtCertif.Other c) in
+  let builddef h = other (SmtCertif.BuildDef h) in
+  let builddef2 h = other (SmtCertif.BuildDef2 h) in
+  let buildproj h i = other (SmtCertif.BuildProj (h, i)) in
+  let immbuilddef c = other (SmtCertif.ImmBuildDef c) in
+  let immbuilddef2 c = other (SmtCertif.ImmBuildDef2 c) in
+  let immbuildproj c i = other (SmtCertif.ImmBuildProj (c, i)) in
 
   let rec process_certif c =
     let (_, c) = c in
-    let kind = match c with
+    let kind =
+      match c with
         | Cweakening (c, l) ->
-           let c' = VeritSyntax.get_clause (process_certif c) in
+           let c' = pc c in
            let l' = List.map (make_form ra rf) l in
            other (SmtCertif.Weaken (c', l'))
         | Cassume i -> RRoot (i+1)
         | Ctrue -> other SmtCertif.True
         | Cfalse -> other SmtCertif.False
         | Cresolution l ->
-           (match List.map (fun cl -> VeritSyntax.get_clause (process_certif cl)) l with
+           (match List.map pc l with
               | cl1::cl2::q ->
                  let res = {SmtCertif.rc1 = cl1; SmtCertif.rc2 = cl2; SmtCertif.rtail = q} in
                  RKind (SmtCertif.Res res)
@@ -593,56 +600,65 @@ let process_certif ra rf =
            )
         | Ceq_congruent (f, tl, ul) ->
            let l = List.map2 (fun t u -> Some (make_form ra rf (ENeg (EEq (t, u))))) tl ul in
-           let t = make_atom ra rf (EFun (f, tl)) in
-           let u = make_atom ra rf (EFun (f, ul)) in
-           let r = make_form ra rf (EEq (u, r)) in
+           let t = EFun (f, tl) in
+           let u = EFun (f, ul) in
+           let r = make_form ra rf (EEq (t, u)) in
            other (SmtCertif.EqCgr (r, l))
         | Ceq_congruent_pred (p, tl, ul) ->
-           let t = make_form ra rf (EFun (p, tl)) in
-           let u = make_form ra rf (EFun (p, ul)) in
+           let t = EFun (p, tl) in
+           let u = EFun (p, ul) in
            let c4  = ("dummy_eq_congruent_pred_1", Ceq_congruent_pred_b (p, tl, ul)) in
            let c5  = ("dummy_eq_congruent_pred_2", Ceq_congruent_pred_b (p, ul, tl)) in
            let c6  = ("dummy_eq_congruent_pred_3", Cequiv_neg2 (t, u)) in
            let c7  = ("dummy_eq_congruent_pred_4", Cequiv_neg1 (t, u)) in
            let c8  = ("dummy_eq_congruent_pred_5", Cresolution [c6; c5]) in
            let c9  = ("dummy_eq_congruent_pred_6", Cresolution [c4; c8]) in
-           let c10 = ("dummy_eq_congruent_pred_7", Cresolution [c7; c8; c9]) in
-           process_certif c10
+           let c7' = pc c7 in
+           let c8' = pc c8 in
+           let c9' = pc c9 in
+           let res = {SmtCertif.rc1 = c7'; SmtCertif.rc2 = c8'; SmtCertif.rtail = [c9']} in
+           RKind (SmtCertif.Res res)
         | Ceq_congruent_pred_b (p, tl, ul) ->
            let l = List.map2 (fun t u -> Some (make_form ra rf (ENeg (EEq (t, u))))) tl ul in
            let t = make_form ra rf (ENeg (EFun (p, tl))) in
            let u = make_form ra rf (EFun (p, ul)) in
            other (SmtCertif.EqCgrP (t, u, l))
-        | Cand of certif * int
-        | Cnot_or of certif * int
-        | Cor of certif
-        | Cnot_and of certif
-        | Cxor1 of certif
-        | Cxor2 of certif
-        | Cnot_xor1 of certif
-        | Cnot_xor2 of certif
-        | Cimplies of certif
-        | Cnot_implies1 of certif
-        | Cnot_implies2 of certif
-        | Cequiv1 of certif
-        | Cequiv2 of certif
-        | Cnot_equiv1 of certif
-        | Cnot_equiv2 of certif
-        | Cand_pos of expr list * int
-        | Cand_neg of expr list
-        | Cor_pos of expr list
-        | Cor_neg of expr list * int
-        | Cxor_pos1 of expr * expr
-        | Cxor_pos2 of expr * expr
-        | Cxor_neg1 of expr * expr
-        | Cxor_neg2 of expr * expr
-        | Cimplies_pos of expr * expr
-        | Cimplies_neg1 of expr * expr
-        | Cimplies_neg2 of expr * expr
-        | Cequiv_pos1 of expr * expr
-        | Cequiv_pos2 of expr * expr
-        | Cequiv_neg1 of expr * expr
-        | Cequiv_neg2 of expr * expr
+
+        | Cand_neg l -> builddef (make_form ra rf (EAnd l))
+        | Cor_pos l -> builddef (make_form ra rf (ENeg (EOr l)))
+        | Cimplies_pos (a, b) -> builddef (make_form ra rf (ENeg (EImp (a, b))))
+        | Cxor_pos1 (a, b) -> builddef (make_form ra rf (ENeg (EXor (a, b))))
+        | Cxor_neg1 (a, b) -> builddef (make_form ra rf (EXor (a, b)))
+        | Cequiv_pos1 (a, b) -> builddef (make_form ra rf (ENeg (EEq (a, b))))
+        | Cequiv_neg1 (a, b) -> builddef (make_form ra rf (EEq (a, b)))
+
+        | Cxor_pos2 (a, b) -> builddef2 (make_form ra rf (ENeg (EXor (a, b))))
+        | Cxor_neg2 (a, b) -> builddef2 (make_form ra rf (EXor (a, b)))
+        | Cequiv_pos2 (a, b) -> builddef2 (make_form ra rf (ENeg (EEq (a, b))))
+        | Cequiv_neg2 (a, b) -> builddef2 (make_form ra rf (EEq (a, b)))
+
+        | Cor_neg (l, i) -> buildproj (make_form ra rf (EOr l)) i
+        | Cand_pos (l, i) -> buildproj (make_form ra rf (ENeg (EAnd l))) i
+        | Cimplies_neg1 (a, b) -> buildproj (make_form ra rf (EImp (a, b))) 1
+        | Cimplies_neg2 (a, b) -> buildproj (make_form ra rf (EImp (a, b))) 2
+
+        | Cnot_and c
+        | Cor c
+        | Cimplies c
+        | Cxor1 c
+        | Cnot_xor1 c
+        | Cequiv2 c
+        | Cnot_equiv2 c -> immbuilddef (pc c)
+
+        | Cxor2 c
+        | Cnot_xor2 c
+        | Cequiv1 c
+        | Cnot_equiv1 c -> immbuilddef2 (pc c)
+
+        | Cand (c, i)
+        | Cnot_or (c, i) -> immbuildproj (pc c) i
+        | Cnot_implies1 c -> immbuildproj (pc c) 1
+        | Cnot_implies2 c -> immbuildproj (pc c) 2
     in
     match kind with
       | RKind k ->
@@ -652,6 +668,9 @@ let process_certif ra rf =
          add_clause id cl;
          id
       | RRoot i -> i
+
+  and pc c =
+    VeritSyntax.get_clause (process_certif c)
   in
 
   fun c -> add_roots (); process_certif c
