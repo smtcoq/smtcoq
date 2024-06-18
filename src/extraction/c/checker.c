@@ -302,30 +302,495 @@ CERTIF certif(char* name, value node) {
   CAMLreturn(res);
 }
 
-#define CFALSE 0
+#define CTRUE                 0
+#define CFALSE                1
 
-#define CASSERT 0
-#define CRESOLUTION 1
+#define CWEAKENING            0
+#define CASSUME               1
+#define CRESOLUTION           2
+#define CLIA_GENERIC          3
+#define CEQ_REFLEXIVE         4
+#define CEQ_TRANSITIVE        5
+#define CEQ_CONGRUENT         6
+#define CEQ_CONGRUENT_PRED    7
+#define CEQ_CONGRUENT_PRED_B  8
+#define CAND                  9
+#define CNOT_OR              10
+#define COR                  11
+#define CNOT_AND             12
+#define CXOR1                13
+#define CXOR2                14
+#define CNOT_XOR1            15
+#define CNOT_XOR2            16
+#define CIMPLIES             17
+#define CNOT_IMPLIES1        18
+#define CNOT_IMPLIES2        19
+#define CEQUIV1              20
+#define CEQUIV2              21
+#define CNOT_EQUIV1          22
+#define CNOT_EQUIV2          23
+#define CAND_POS             24
+#define CAND_NEG             25
+#define COR_POS              26
+#define COR_NEG              27
+#define CXOR_POS1            28
+#define CXOR_POS2            29
+#define CXOR_NEG1            30
+#define CXOR_NEG2            31
+#define CIMPLIES_POS         32
+#define CIMPLIES_NEG1        33
+#define CIMPLIES_NEG2        34
+#define CEQUIV_POS1          35
+#define CEQUIV_POS2          36
+#define CEQUIV_NEG1          37
+#define CEQUIV_NEG2          38
 
-/* Refer to an assertion */
-CERTIF cassert(char* name, size_t num) {
-  value node = caml_alloc(1, CASSERT);
+
+/* 0. Given a proof of the clause {f1 ... fn} and formulas b1 ... bm,
+      proves the clause {f1 ... fn b1 ... bm}
+*/
+CERTIF cweakening(char* name, CERTIF c, size_t m, const EXPR* bs) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CWEAKENING);
+  Store_field(node, 0, c);
+  Store_field(node, 1, value_list(m, bs));
+  CAMLreturn(certif(name, node));
+}
+
+/* 1. Refer to an assertion by its index */
+CERTIF cassume(char* name, size_t num) {
+  value node = caml_alloc(1, CASSUME);
   Store_field(node, 0, Val_int(num));
   return certif(name, node);
 }
 
-/* Proof of the clause {(not false)} */
+/* 3. Proves the clause {(true)} */
+CERTIF ctrue(char* name) {
+  value node = Val_int(CTRUE);
+  return certif(name, node);
+}
+
+/* 4. Proves the clause {(not false)} */
 CERTIF cfalse(char* name) {
   value node = Val_int(CFALSE);
   return certif(name, node);
 }
 
-/* Resolution chain */
+/* 6 & 7. Resolution of two or more clauses */
 CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses) {
   value node = caml_alloc(1, CRESOLUTION);
-  value p = value_list(nb, premisses);
-  Store_field(node, 0, p);
+  Store_field(node, 0, value_list(nb, premisses));
   return certif(name, node);
+}
+
+/* 12. Proves the given clause in the theory of Linear Integer Arithmetic */
+CERTIF clia_generic(char* name, size_t nb, const EXPR* l) {
+  value node = caml_alloc(1, CLIA_GENERIC);
+  Store_field(node, 0, value_list(nb, l));
+  return certif(name, node);
+}
+
+/* 23. Given a term t, proves the clause {(= t t)}
+       Applies only to terms.
+*/
+CERTIF ceq_reflexive(char* name, EXPR t) {
+  CAMLparam1(t);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CEQ_REFLEXIVE);
+  Store_field(node, 0, t);
+  CAMLreturn(certif(name, node));
+}
+
+/* 24. Given the terms t1 ... tn,
+       proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+       Applies only to terms.
+*/
+CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts) {
+  value node = caml_alloc(1, CEQ_TRANSITIVE);
+  Store_field(node, 0, value_list(n, ts));
+  return certif(name, node);
+}
+
+/* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
+       proves the clause
+         {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
+*/
+CERTIF ceq_congruent(char* name, FUNSYM f, size_t n, const EXPR* ts, const EXPR* us) {
+  CAMLparam1(f);
+  CAMLlocal1(node);
+  node = caml_alloc(3, CEQ_CONGRUENT);
+  Store_field(node, 0, f);
+  Store_field(node, 1, value_list(n, ts));
+  Store_field(node, 2, value_list(n, us));
+  CAMLreturn(certif(name, node));
+}
+
+/* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
+       proves the clause
+         {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
+*/
+CERTIF ceq_congruent_pred(char* name, FUNSYM p, size_t n, const EXPR* ts, const EXPR* us) {
+  CAMLparam1(p);
+  CAMLlocal1(node);
+  node = caml_alloc(3, CEQ_CONGRUENT_PRED);
+  Store_field(node, 0, p);
+  Store_field(node, 1, value_list(n, ts));
+  Store_field(node, 2, value_list(n, us));
+  CAMLreturn(certif(name, node));
+}
+
+/* 26b. A small variant
+        Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
+        proves the clause
+          {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+*/
+CERTIF ceq_congruent_pred_b(char* name, FUNSYM p, size_t n, const EXPR* ts,
+                                                            const EXPR* us) {
+  CAMLparam1(p);
+  CAMLlocal1(node);
+  node = caml_alloc(3, CEQ_CONGRUENT_PRED_B);
+  Store_field(node, 0, p);
+  Store_field(node, 1, value_list(n, ts));
+  Store_field(node, 2, value_list(n, us));
+  CAMLreturn(certif(name, node));
+}
+
+/* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
+       proves the clause {fk}
+*/
+CERTIF cand(char* name, CERTIF c, int k) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CAND);
+  Store_field(node, 0, c);
+  Store_field(node, 1, Val_int(k));
+  CAMLreturn(certif(name, node));
+}
+
+/* 29. Given a proof of the clause {(not (or f1 ... fn))} and a non-negative integer k,
+       proves the clause {(not fk)}
+*/
+CERTIF cnot_or(char* name, CERTIF c, int k) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CNOT_OR);
+  Store_field(node, 0, c);
+  Store_field(node, 1, Val_int(k));
+  CAMLreturn(certif(name, node));
+}
+
+/* 30. Given a proof of the clause {(or f1 ... fn)},
+       proves the clause {f1 ... fn}
+*/
+CERTIF cor(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, COR);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 31. Given a proof of the clause {(not (and f1 ... fn))},
+       proves the clause {(not f1) ... (not fn)}
+*/
+CERTIF cnot_and(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_AND);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 32. Given a proof of the clause {(xor a b)},
+       proves the clause {a b}
+*/
+CERTIF cxor1(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CXOR1);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 33. Given a proof of the clause {(xor a b)},
+       proves the clause {(not a) (not b)}
+*/
+CERTIF cxor2(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CXOR2);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 34. Given a proof of the clause {(not (xor a b))},
+       proves the clause {a (not b)}
+*/
+CERTIF cnot_xor1(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_XOR1);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 35. Given a proof of the clause {(not (xor a b))},
+       proves the clause {(not a) b}
+*/
+CERTIF cnot_xor2(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_XOR2);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 36. Given a proof of the clause {(-> a b)},
+       proves the clause {(not a) b}
+*/
+CERTIF cimplies(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CIMPLIES);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 37. Given a proof of the clause {(not (-> a b))},
+       proves the clause {a}
+*/
+CERTIF cnot_implies1(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_IMPLIES1);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 38. Given a proof of the clause {(not (-> a b))},
+       proves the clause {(not b)}
+*/
+CERTIF cnot_implies2(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_IMPLIES2);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 39. Given a proof of the clause {(= a b)},
+       proves the clause {(not a) b}
+*/
+CERTIF cequiv1(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CEQUIV1);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 40. Given a proof of the clause {(= a b)},
+       proves the clause {a (not b)}
+*/
+CERTIF cequiv2(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CEQUIV2);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 41. Given a proof of the clause {(not (= a b))},
+       proves the clause {a b}
+*/
+CERTIF cnot_equiv1(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_EQUIV1);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 42. Given a proof of the clause {(not (= a b))},
+       proves the clause {(not a) (not b)}
+*/
+CERTIF cnot_equiv2(char* name, CERTIF c) {
+  CAMLparam1(c);
+  CAMLlocal1(node);
+  node = caml_alloc(1, CNOT_EQUIV2);
+  Store_field(node, 0, c);
+  CAMLreturn(certif(name, node));
+}
+
+/* 43. Given the formulas f1 ... fn and a non-negative integer k,
+       proves the clause {(not (and f1 ... fn)) fk}
+*/
+CERTIF cand_pos(char* name, size_t n, const EXPR* fs, int k) {
+  value node = caml_alloc(2, CAND_POS);
+  Store_field(node, 0, value_list(n, fs));
+  Store_field(node, 1, Val_int(k));
+  return certif(name, node);
+}
+
+/* 44. Given the formulas f1 ... fn,
+       proves the clause {(and f1 ... fn) (not f1) ... (not fn)}
+*/
+CERTIF cand_neg(char* name, size_t n, const EXPR* fs) {
+  value node = caml_alloc(1, CAND_NEG);
+  Store_field(node, 0, value_list(n, fs));
+  return certif(name, node);
+}
+
+/* 45. Given the formulas f1 ... fn,
+       proves the clause {(not (or f1 ... fn)) f1 ... fn}
+*/
+CERTIF cor_pos(char* name, size_t n, const EXPR* fs) {
+  value node = caml_alloc(1, COR_POS);
+  Store_field(node, 0, value_list(n, fs));
+  return certif(name, node);
+}
+
+/* 46. Given the formulas f1 ... fn and a non-negative integer k,
+       proves the clause {(or f1 ... fn) (not fk)}
+*/
+CERTIF cor_neg(char* name, size_t n, const EXPR* fs, int k) {
+  value node = caml_alloc(2, COR_NEG);
+  Store_field(node, 0, value_list(n, fs));
+  Store_field(node, 1, Val_int(k));
+  return certif(name, node);
+}
+
+/* 47. Given the formulas a and b,
+       proves the clause {(not (xor a b)) a b}
+*/
+CERTIF cxor_pos1(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CXOR_POS1);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 48. Given the formulas a and b,
+       proves the clause {(not (xor a b)) (not a) (not b)}
+*/
+CERTIF cxor_pos2(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CXOR_POS2);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 49. Given the formulas a and b,
+       proves the clause {(xor a b) a (not b)}
+*/
+CERTIF cxor_neg1(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CXOR_NEG1);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 50. Given the formulas a and b,
+       proves the clause {(xor a b) (not a) b}
+*/
+CERTIF cxor_neg2(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CXOR_NEG2);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 51. Given the formulas a and b,
+       proves the clause {(not (implies a b)) (not a) b}
+*/
+CERTIF cimplies_pos(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CIMPLIES_POS);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 52. Given the formulas a and b,
+       proves the clause {(implies a b) a}
+*/
+CERTIF cimplies_neg1(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CIMPLIES_NEG1);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 53. Given the formulas a and b,
+       proves the clause {(implies a b) (not b)}
+*/
+CERTIF cimplies_neg2(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CIMPLIES_NEG2);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 54. Given the formulas a and b,
+       proves the clause {(not (= a b)) a (not b)}
+*/
+CERTIF cequiv_pos1(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CEQUIV_POS1);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 55. Given the formulas a and b,
+       proves the clause {(not (= a b)) (not a) b}
+*/
+CERTIF cequiv_pos2(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CEQUIV_POS2);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 56. Given the formulas a and b,
+       proves the clause {(= a b) (not a) (not b)}
+*/
+CERTIF cequiv_neg1(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CEQUIV_NEG1);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
+}
+
+/* 57. Given the formulas a and b,
+       proves the clause {(= a b) a b}
+*/
+CERTIF cequiv_neg2(char* name, EXPR a, EXPR b) {
+  CAMLparam2(a, b);
+  CAMLlocal1(node);
+  node = caml_alloc(2, CEQUIV_NEG2);
+  Store_field(node, 0, a);
+  Store_field(node, 1, b);
+  CAMLreturn(certif(name, node));
 }
 
 

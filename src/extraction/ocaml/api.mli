@@ -82,7 +82,7 @@ type assertions = expr array
 type smtlib2 = sorts * funsyms * assertions
 
 
-(** Certificate
+(** Certificates
     It implements parts of the Alethe format as presented in
       https://verit.loria.fr/documentation/alethe-spec.pdf
     See in particular the description of the rules starting p.26

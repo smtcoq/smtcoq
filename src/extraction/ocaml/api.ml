@@ -304,7 +304,7 @@ let declare_smtlib2 ra rf (smt:smtlib2) =
   declare_assertions ra rf a
 
 
-(** Certificate
+(** Certificates
     It implements parts of the Alethe format as presented in
       https://verit.loria.fr/documentation/alethe-spec.pdf
     See in particular the description of the rules starting p.26
