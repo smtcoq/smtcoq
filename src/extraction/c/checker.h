@@ -149,22 +149,24 @@ CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts);
 /* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
        proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
+       n is given by the arity of f
 */
-CERTIF ceq_congruent(char* name, FUNSYM f, size_t n, const EXPR* ts, const EXPR* us);
+CERTIF ceq_congruent(char* name, FUNSYM f, const EXPR* ts, const EXPR* us);
 
 /* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
        proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
+       n is given by the arity of P
 */
-CERTIF ceq_congruent_pred(char* name, FUNSYM p, size_t n, const EXPR* ts, const EXPR* us);
+CERTIF ceq_congruent_pred(char* name, FUNSYM p, const EXPR* ts, const EXPR* us);
 
 /* 26b. A small variant
         Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
         proves the clause
           {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+       n is given by the arity of P
 */
-CERTIF ceq_congruent_pred_b(char* name, FUNSYM p, size_t n, const EXPR* ts,
-                                                            const EXPR* us);
+CERTIF ceq_congruent_pred_b(char* name, FUNSYM p, const EXPR* ts, const EXPR* us);
 
 /* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
        proves the clause {fk}

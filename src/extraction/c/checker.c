@@ -415,45 +415,41 @@ CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts) {
 /* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
        proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
+       n is given by the arity of f
 */
-CERTIF ceq_congruent(char* name, FUNSYM f, size_t n, const EXPR* ts, const EXPR* us) {
-  CAMLparam1(f);
-  CAMLlocal1(node);
-  node = caml_alloc(3, CEQ_CONGRUENT);
-  Store_field(node, 0, f);
-  Store_field(node, 1, value_list(n, ts));
-  Store_field(node, 2, value_list(n, us));
-  CAMLreturn(certif(name, node));
+CERTIF ceq_congruent(char* name, FUNSYM f, const EXPR* ts, const EXPR* us) {
+  value node = caml_alloc(3, CEQ_CONGRUENT);
+  Store_field(node, 0, f.fval);
+  Store_field(node, 1, value_list(f.arity, ts));
+  Store_field(node, 2, value_list(f.arity, us));
+  return certif(name, node);
 }
 
 /* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
        proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
+       n is given by the arity of P
 */
-CERTIF ceq_congruent_pred(char* name, FUNSYM p, size_t n, const EXPR* ts, const EXPR* us) {
-  CAMLparam1(p);
-  CAMLlocal1(node);
-  node = caml_alloc(3, CEQ_CONGRUENT_PRED);
-  Store_field(node, 0, p);
-  Store_field(node, 1, value_list(n, ts));
-  Store_field(node, 2, value_list(n, us));
-  CAMLreturn(certif(name, node));
+CERTIF ceq_congruent_pred(char* name, FUNSYM p, const EXPR* ts, const EXPR* us) {
+  value node = caml_alloc(3, CEQ_CONGRUENT_PRED);
+  Store_field(node, 0, p.fval);
+  Store_field(node, 1, value_list(p.arity, ts));
+  Store_field(node, 2, value_list(p.arity, us));
+  return certif(name, node);
 }
 
 /* 26b. A small variant
         Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
         proves the clause
           {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+       n is given by the arity of P
 */
-CERTIF ceq_congruent_pred_b(char* name, FUNSYM p, size_t n, const EXPR* ts,
-                                                            const EXPR* us) {
-  CAMLparam1(p);
-  CAMLlocal1(node);
-  node = caml_alloc(3, CEQ_CONGRUENT_PRED_B);
-  Store_field(node, 0, p);
-  Store_field(node, 1, value_list(n, ts));
-  Store_field(node, 2, value_list(n, us));
-  CAMLreturn(certif(name, node));
+CERTIF ceq_congruent_pred_b(char* name, FUNSYM p, const EXPR* ts, const EXPR* us) {
+  value node = caml_alloc(3, CEQ_CONGRUENT_PRED_B);
+  Store_field(node, 0, p.fval);
+  Store_field(node, 1, value_list(p.arity, ts));
+  Store_field(node, 2, value_list(p.arity, us));
+  return certif(name, node);
 }
 
 /* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,

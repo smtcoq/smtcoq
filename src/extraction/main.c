@@ -145,7 +145,7 @@ int testCF00() {
   SMTLIB2 smt = smtlib2(s, f, a);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cfalse("t2")};
+  CERTIF r[2] = {cassume("t1", 0), cfalse("t2")};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -161,7 +161,7 @@ void testCFD00() {
   SMTLIB2 smt = smtlib2(s, f, a);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cfalse("t2")};
+  CERTIF r[2] = {cassume("t1", 0), cfalse("t2")};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -174,7 +174,7 @@ int testCI00() {
   assertf(efalse());
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cfalse("t2")};
+  CERTIF r[2] = {cassume("t1", 0), cfalse("t2")};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -187,7 +187,7 @@ void testCID00() {
   assertf(efalse());
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cfalse("t2")};
+  CERTIF r[2] = {cassume("t1", 0), cfalse("t2")};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -203,7 +203,7 @@ int testCF01() {
   SMTLIB2 smt = smtlib2(s, f, a);
 
   // Proof
-  CERTIF r[2] = {cfalse("t1"), cassert("t2", 0)};
+  CERTIF r[2] = {cfalse("t1"), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -219,7 +219,7 @@ void testCFD01() {
   SMTLIB2 smt = smtlib2(s, f, a);
 
   // Proof
-  CERTIF r[2] = {cfalse("t1"), cassert("t2", 0)};
+  CERTIF r[2] = {cfalse("t1"), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -232,7 +232,7 @@ int testCI01() {
   assertf(efalse());
 
   // Proof
-  CERTIF r[2] = {cfalse("t1"), cassert("t2", 0)};
+  CERTIF r[2] = {cfalse("t1"), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -245,7 +245,7 @@ void testCID01() {
   assertf(efalse());
 
   // Proof
-  CERTIF r[2] = {cfalse("t1"), cassert("t2", 0)};
+  CERTIF r[2] = {cfalse("t1"), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -266,7 +266,7 @@ int testCF02() {
   SMTLIB2 smt = smtlib2(s, f, ass);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cassert("t2", 1)};
+  CERTIF r[2] = {cassume("t1", 0), cassume("t2", 1)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -284,7 +284,7 @@ void testCFD02() {
   SMTLIB2 smt = smtlib2(s, f, ass);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cassert("t2", 1)};
+  CERTIF r[2] = {cassume("t1", 0), cassume("t2", 1)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -301,7 +301,7 @@ int testCI02() {
   assertf(eneg(a));
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cassert("t2", 1)};
+  CERTIF r[2] = {cassume("t1", 0), cassume("t2", 1)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -318,7 +318,7 @@ void testCID02() {
   assertf(eneg(a));
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 0), cassert("t2", 1)};
+  CERTIF r[2] = {cassume("t1", 0), cassume("t2", 1)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -336,7 +336,7 @@ int testCF03() {
   SMTLIB2 smt = smtlib2(s, f, ass);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
+  CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -354,7 +354,7 @@ void testCFD03() {
   SMTLIB2 smt = smtlib2(s, f, ass);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
+  CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -371,7 +371,7 @@ int testCI03() {
   assertf(eneg(a));
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
+  CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -388,7 +388,7 @@ void testCID03() {
   assertf(eneg(a));
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
+  CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
@@ -409,7 +409,7 @@ int testTF00() {
   SMTLIB2 smt = smtlib2(s, f, ass);
 
   // Proof
-  CERTIF r[2] = {cassert("t1", 1), cassert("t2", 0)};
+  CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
   CERTIF proof = cresolution("t3", 2, r);
 
   // Proof checking
