@@ -157,16 +157,16 @@ let testT00 =
 
 
 let _ =
-  let ass  t = assert (let (smt, proof) = t in      Api.checker smt proof) in
-  let assn t = assert (let (smt, proof) = t in not (Api.checker smt proof)) in
-  assn testI00;
-  assn testI01;
-  ass testC00;
-  ass testC01;
-  ass testC02;
-  ass testC03;
-  (* ass testWeakening; *)
-  ass test_lia6;
+  let ass  t = let (smt, proof) = t in      Api.checker smt proof in
+  let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
+  assert(assn testI00);
+  assert(assn testI01);
+  assert(ass  testC00);
+  assert(ass  testC01);
+  assert(ass  testC02);
+  assert(ass  testC03);
+  (* assert(ass  testWeakening); *)
+  assert(ass  test_lia6);
   Printf.printf "All tests suceeded\n";
 
   (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
