@@ -268,16 +268,8 @@ let declare_funsyms (fl:funsyms) =
 (*** Assertions ***)
 type assertions = expr array
 
-let assertions_tbl = Hashtbl.create 17
-
 let declare_assertions ra rf (a:assertions) =
-  let cell = ref (-1) in
-  List.rev (Array.fold_left (fun acc t ->
-                incr cell;
-                let aa = make_form ra rf t in
-                Hashtbl.add assertions_tbl !cell aa;
-                aa::acc
-              ) [] a)
+  Array.map (make_form ra rf) a
 
 
 (*** Commands ***)
@@ -516,7 +508,7 @@ type 'hform rule_kind =
   | RRoot of int
 
 
-let process_certif ra rf =
+let process_certif rootsa ra rf =
   let add_clause id cl =
     VeritSyntax.add_clause id cl;
     if id > 1 then SmtTrace.link (VeritSyntax.get_clause (id-1)) cl
@@ -525,12 +517,12 @@ let process_certif ra rf =
 
   (* Add roots *)
   let add_roots () =
-    Hashtbl.iter (fun i a ->
+    Array.iteri (fun i a ->
         let id = i+1 in
         confl_num := id;
         let cl = SmtTrace.mkRootV [a] in
         add_clause id cl
-      ) assertions_tbl;
+      ) rootsa;
     if !confl_num < 1 then failwith "The SMT problem should have at least one assertion";
   in
 
@@ -663,8 +655,8 @@ let process_certif ra rf =
 
 
 (* From verit.ml *)
-let import_trace ra rf (c:certif) =
-  let confl_num = process_certif ra rf c in
+let import_trace rootsa ra rf (c:certif) =
+  let confl_num = process_certif rootsa ra rf c in
   let cfirst = ref (VeritSyntax.get_clause 1) in
   let confl = ref (VeritSyntax.get_clause confl_num) in
   SmtTrace.select !confl;
@@ -674,9 +666,7 @@ let import_trace ra rf (c:certif) =
 
 (** The API checker **)
 
-let clear_all () =
-  Smt_utils.clear_all ();
-  Hashtbl.clear assertions_tbl
+let clear_all () = Smt_utils.clear_all ()
 
 
 (* From verit_checker.ml *)
@@ -684,8 +674,9 @@ let checker_exn (smt:smtlib2) (proof:certif) : bool =
   clear_all ();
   let ra = VeritSyntax.ra in
   let rf = VeritSyntax.rf in
-  let roots = declare_smtlib2 ra rf smt in
-  let (max_id, confl) = import_trace ra rf proof in
+  let rootsa = declare_smtlib2 ra rf smt in
+  let roots = Array.to_list rootsa in
+  let (max_id, confl) = import_trace rootsa ra rf proof in
   Smt_utils.checker ra rf roots max_id confl
 
 let checker_string smt proof =
