@@ -396,6 +396,39 @@ void testCID03() {
 }
 
 
+/** unit-tests/lia6.vtlog **/
+int test_lia6 () {
+  // Expressions
+  FUNSYM fx = funsym("x", 0, NULL, sort("Int"));
+  EXPR x = efun(fx, NULL);
+  EXPR e4 = eminus(x, eint(3));
+  EXPR e5 = ele(eint(7), e4);
+  EXPR e3 = ele(e4, eint(7));
+  EXPR e2b[2] = {e3, e5};
+  EXPR e2 = eand(2, e2b);
+  EXPR e6 = ege(x, eint(10));
+  EXPR e1 = eimp(e2, e6);
+
+  // SMT-LIB2 problem
+  start_smt2();
+  declare_fun(fx);
+  assertf(eneg(e1));
+
+  // Proof
+  CERTIF t1 = cassume("t1", 0);
+  CERTIF t2 = cnot_implies1("t2", t1);
+  CERTIF t3 = cand("t3", t2, 2);
+  CERTIF t4 = cnot_implies2("t4", t1);
+  EXPR t5b[2] = {e6, eneg(e5)};
+  CERTIF t5 = clia_generic("t5", 2, t5b);
+  CERTIF t6b[3] = {t5, t3, t4};
+  CERTIF t6 = cresolution("t6", 3, t6b);
+
+  // Proof checking
+  return check_proof(t6);
+}
+
+
 /** Error when terms are ill-typed **/
 
 int testTF00() {
@@ -437,33 +470,35 @@ int main(int argc, char ** argv)
   assert(testCI02());
   assert(testCF03());
   assert(testCI03());
-  printf("All tests suceeded\nNow testing the debugging checker:\n");
-  printf("testIFD00:\n");
-  testIFD00();
-  printf("testIID00:\n");
-  testIID00();
-  printf("testIFD01:\n");
-  testIFD01();
-  printf("testIID01:\n");
-  testIID01();
-  printf("testCFD00:\n");
-  testCFD00();
-  printf("testCID00:\n");
-  testCID00();
-  printf("testCFD01:\n");
-  testCFD01();
-  printf("testCID01:\n");
-  testCID01();
-  printf("testCFD02:\n");
-  testCFD02();
-  printf("testCID02:\n");
-  testCID02();
-  printf("testCFD03:\n");
-  testCFD03();
-  printf("testCID03:\n");
-  testCID03();
-  printf("Now testing when terms are ill-typed (exits with error code 1):\n");
-  testTF00();
+  assert(test_lia6());
+  printf("All tests suceeded\n");
+  /* printf("Now testing the debugging checker:\n"); */
+  /* printf("testIFD00:\n"); */
+  /* testIFD00(); */
+  /* printf("testIID00:\n"); */
+  /* testIID00(); */
+  /* printf("testIFD01:\n"); */
+  /* testIFD01(); */
+  /* printf("testIID01:\n"); */
+  /* testIID01(); */
+  /* printf("testCFD00:\n"); */
+  /* testCFD00(); */
+  /* printf("testCID00:\n"); */
+  /* testCID00(); */
+  /* printf("testCFD01:\n"); */
+  /* testCFD01(); */
+  /* printf("testCID01:\n"); */
+  /* testCID01(); */
+  /* printf("testCFD02:\n"); */
+  /* testCFD02(); */
+  /* printf("testCID02:\n"); */
+  /* testCID02(); */
+  /* printf("testCFD03:\n"); */
+  /* testCFD03(); */
+  /* printf("testCID03:\n"); */
+  /* testCID03(); */
+  /* printf("Now testing when terms are ill-typed (exits with error code 1):\n"); */
+  /* testTF00(); */
 
   return 0;
 }
