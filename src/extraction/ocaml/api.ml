@@ -33,12 +33,8 @@ type expr =
   | ENeg of expr
   (* N-ary and *)
   | EAnd of expr list
-  (* Binary and *)
-  | EBAnd of expr * expr
   (* N-ary or *)
   | EOr of expr list
-  (* Binary or *)
-  | EBor of expr * expr
   (* Xor *)
   | EXor of expr * expr
   (* -> *)
@@ -93,13 +89,11 @@ let rec pp_expr fmt = function
   | EAnd l ->
      let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
      Format.fprintf fmt "(and %a)" pp l
-  | EBAnd (a, b) -> Format.fprintf fmt "(and %a %a)" pp_expr a pp_expr b
   | EOr l ->
      let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
      Format.fprintf fmt "(or %a)" pp l
-  | EBor (a, b) -> Format.fprintf fmt "(or %a %a)" pp_expr a pp_expr b
   | EXor (a, b) -> Format.fprintf fmt "(xor %a %a)" pp_expr a pp_expr b
-  | EImp (a, b) -> Format.fprintf fmt "(-> %a %a)" pp_expr a pp_expr b
+  | EImp (a, b) -> Format.fprintf fmt "(=> %a %a)" pp_expr a pp_expr b
   | EEq (a, b) -> Format.fprintf fmt "(= %a %a)" pp_expr a pp_expr b
   | EDistinct l ->
      let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
@@ -148,18 +142,10 @@ let rec make_expr ra rf e =
      let l' = List.map (make_form ra rf) l in
      let a = Array.of_list l' in
      Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fand, a)))
-  | EBAnd (a, b) ->
-     let a' = make_form ra rf a in
-     let b' = make_form ra rf b in
-     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.Fand, [|a'; b'|])))
   | EOr l ->
      let l' = List.map (make_form ra rf) l in
      let a = Array.of_list l' in
      Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.For, a)))
-  | EBor (a, b) ->
-     let a' = make_form ra rf a in
-     let b' = make_form ra rf b in
-     Form (SmtAtom.Form.get rf (SmtForm.Fapp (SmtForm.For, [|a'; b'|])))
   | EXor (a, b) ->
      let a' = make_form ra rf a in
      let b' = make_form ra rf b in

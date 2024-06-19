@@ -94,14 +94,13 @@ let test_lia6 =
   let e4 = Api.EMinus (x, Api.EInt 3) in
   let e5 = Api.ELe (Api.EInt 7, e4) in
   let e3 = Api.ELe (e4, EInt 7) in
-  let e2 = Api.EBAnd (e3, e5) in
+  let e2 = Api.EAnd [e3; e5] in
   let e6 = Api.EGe (x, Api.EInt 10) in
   let e1 = Api.EImp (e2, e6) in
   let smt =
     let sorts = [] in
     let funs = [fx] in
-    let f = Api.ENeg e1 in
-    let ass = [|f|] in
+    let ass = [|Api.ENeg e1|] in
     (sorts, funs, ass)
   in
   let proof =

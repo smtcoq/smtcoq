@@ -83,22 +83,20 @@ FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain) {
 #define EFUN       0
 #define ENEG       1
 #define EAND       2
-#define EBAND      3
-#define EOR        4
-#define EBOR       5
-#define EXOR       6
-#define EIMP       7
-#define EEQ        8
-#define EDISTINCT  9
-#define EINT      10
-#define EADD      12
-#define EOPP      13
-#define EMINUS    14
-#define EMULT     15
-#define ELT       16
-#define ELE       17
-#define EGT       18
-#define EGE       19
+#define EOR        3
+#define EXOR       4
+#define EIMP       5
+#define EEQ        6
+#define EDISTINCT  7
+#define EINT       8
+#define EADD      10
+#define EOPP      11
+#define EMINUS    12
+#define EMULT     13
+#define ELT       14
+#define ELE       15
+#define EGT       16
+#define EGE       17
 
 /* Variables and applied functions and predicates */
 EXPR efun(FUNSYM fun, const EXPR* args) {
@@ -138,32 +136,12 @@ EXPR eand(size_t nb, const EXPR* a) {
   return res;
 }
 
-/* Binary and */
-EXPR eband(EXPR a, EXPR b) {
-  CAMLparam2(a, b);
-  CAMLlocal1(res);
-  res = caml_alloc(2, EBAND);
-  Store_field(res, 0, a);
-  Store_field(res, 1, b);
-  CAMLreturn(res);
-}
-
 /* N-ary or */
 EXPR eor(size_t nb, const EXPR* a) {
   value res = caml_alloc(1, EOR);
   value r = value_list(nb, a);
   Store_field(res, 0, r);
   return res;
-}
-
-/* Binary or */
-EXPR ebor(EXPR a, EXPR b) {
-  CAMLparam2(a, b);
-  CAMLlocal1(res);
-  res = caml_alloc(2, EBOR);
-  Store_field(res, 0, a);
-  Store_field(res, 1, b);
-  CAMLreturn(res);
 }
 
 /* xor */

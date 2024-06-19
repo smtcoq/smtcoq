@@ -31,12 +31,8 @@ type expr =
   | ENeg of expr
   (* N-ary and *)
   | EAnd of expr list
-  (* Binary and *)
-  | EBAnd of expr * expr
   (* N-ary or *)
   | EOr of expr list
-  (* Binary or *)
-  | EBor of expr * expr
   (* Xor *)
   | EXor of expr * expr
   (* -> *)

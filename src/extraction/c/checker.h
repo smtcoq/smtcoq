@@ -45,14 +45,8 @@ EXPR eneg(EXPR a);
 /* N-ary and */
 EXPR eand(size_t nb, const EXPR* a);
 
-/* Binary and */
-EXPR eband(EXPR a, EXPR b);
-
 /* N-ary or */
 EXPR eor(size_t nb, const EXPR* a);
-
-/* Binary or */
-EXPR ebor(EXPR a, EXPR b);
 
 /* xor */
 EXPR exor(EXPR a, EXPR b);
