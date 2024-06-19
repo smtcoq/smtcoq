@@ -86,6 +86,8 @@ type smtlib2 = sorts * funsyms * assertions
     Numbers in comments indicate the number of the rule in the document,
     and we keep the names.
 
+    Note that the context is not supported.
+
     Note that the rule not_not is useless as SMTCoq reasons modulo
     double negation.
 

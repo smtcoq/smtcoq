@@ -85,8 +85,6 @@ let rec debug_checker_rec fmt smt proof =
         | Api.Ceq_reflexive e -> [Api.EEq (e, e)]
         | Api.Ceq_transitive l ->
            (match l with
-              | []
-              | [_] -> raise (Check "empty transitivity")
               | f::t::q ->
                  let last = ref t in
                  let r = List.fold_left (
@@ -96,6 +94,7 @@ let rec debug_checker_rec fmt smt proof =
                              x::acc
                            ) [Api.ENeg (Api.EEq (f, t))] q in
                  (Api.EEq (f, !last))::r
+              | _ -> raise (Check "eq_transitive should contain at least two terms")
            )
         | Api.Ceq_congruent (f, ts, us)
         | Api.Ceq_congruent_pred (f, ts, us) ->

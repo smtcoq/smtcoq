@@ -111,6 +111,82 @@ let testWeakening =
   in
   (smt, proof)
 
+let testTrue =
+  let smt =
+    let sorts = [] in
+    let funs = [] in
+    let ass = [|Api.ENeg Api.ETrue|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Ctrue) in
+    let t3 = ("t3", Api.Cresolution [t1; t2]) in
+    t3
+  in
+  (smt, proof)
+
+let testFalse =
+  let smt =
+    let sorts = [] in
+    let funs = [] in
+    let ass = [|Api.EFalse|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cfalse) in
+    let t3 = ("t3", Api.Cresolution [t1; t2]) in
+    t3
+  in
+  (smt, proof)
+
+let testEq_reflexive =
+  let u = "U" in
+  let fa = ("a", [], u) in
+  let a  = Api.EFun (fa, []) in
+  let aa = Api.EEq (a, a) in
+  let smt =
+    let sorts = [u] in
+    let funs = [fa] in
+    let ass = [|Api.ENeg aa|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Ceq_reflexive a) in
+    let t3 = ("t3", Api.Cresolution [t1; t2]) in
+    t3
+  in
+  (smt, proof)
+
+let testEq_transitive =
+  let u = "U" in
+  let fa = ("a", [], u) in
+  let fb = ("b", [], u) in
+  let fc = ("c", [], u) in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let c  = Api.EFun (fc, []) in
+  let ab = Api.EEq (a, b) in
+  let bc = Api.EEq (b, c) in
+  let ac = Api.EEq (a, c) in
+  let smt =
+    let sorts = [u] in
+    let funs = [fa; fb; fc] in
+    let ass = [|ab; bc; Api.ENeg ac|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Ceq_transitive [a; b; c]) in
+    let t5 = ("t5", Api.Cresolution [t4; t1; t2; t3]) in
+    t5
+  in
+  (smt, proof)
+
 
 (* unit-tests/lia6.vtlog *)
 
@@ -157,7 +233,8 @@ let testT00 =
 
 
 let _ =
-  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
+  let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
+  deb testEq_transitive;
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
@@ -168,6 +245,10 @@ let _ =
   assert(ass  testC02);
   assert(ass  testC03);
   assert(ass  testWeakening);
+  assert(ass  testTrue);
+  assert(ass  testFalse);
+  assert(ass  testEq_reflexive);
+  assert(ass  testEq_transitive);
   assert(ass  test_lia6);
   Printf.printf "All tests suceeded\n";
 

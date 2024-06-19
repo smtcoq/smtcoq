@@ -99,6 +99,8 @@ EXPR ege(EXPR a, EXPR b);
     The first parameter of each rule is a name given to the step, to be
     used with the debugging checker
 
+    Note that the context is not supported.
+
     Note that the rule not_not is useless as SMTCoq reasons modulo
     double negation.
 
