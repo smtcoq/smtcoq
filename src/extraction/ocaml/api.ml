@@ -538,10 +538,10 @@ let process_certif ra rf =
   let other c = RKind (SmtCertif.Other c) in
   let builddef h = other (SmtCertif.BuildDef h) in
   let builddef2 h = other (SmtCertif.BuildDef2 h) in
-  let buildproj h i = other (SmtCertif.BuildProj (h, i)) in
+  let buildproj h i = other (SmtCertif.BuildProj (h, i-1)) in
   let immbuilddef c = other (SmtCertif.ImmBuildDef c) in
   let immbuilddef2 c = other (SmtCertif.ImmBuildDef2 c) in
-  let immbuildproj c i = other (SmtCertif.ImmBuildProj (c, i)) in
+  let immbuildproj c i = other (SmtCertif.ImmBuildProj (c, i-1)) in
 
   let rec process_certif c =
     let (_, c) = c in
