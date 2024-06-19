@@ -86,6 +86,32 @@ let testC03 =
   (smt, proof)
 
 
+(* Unit tests *)
+
+let testWeakening =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let na = Api.ENeg a in
+  let nb = Api.ENeg b in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|a; na; nb|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cweakening (t1, [b])) in
+    let t5 = ("t5", Api.Cresolution [t4; t2; t3]) in
+    t5
+  in
+  (smt, proof)
+
+
 (* unit-tests/lia6.vtlog *)
 
 let test_lia6 =
@@ -131,27 +157,32 @@ let testT00 =
 
 
 let _ =
-  assert (let (smt, proof) = testI00 in not (Api.checker smt proof));
-  assert (let (smt, proof) = testI01 in not (Api.checker smt proof));
-  assert (let (smt, proof) = testC00 in Api.checker smt proof);
-  assert (let (smt, proof) = testC01 in Api.checker smt proof);
-  assert (let (smt, proof) = testC02 in Api.checker smt proof);
-  assert (let (smt, proof) = testC03 in Api.checker smt proof);
-  assert (let (smt, proof) = test_lia6 in Api.checker smt proof);
+  let ass  t = assert (let (smt, proof) = t in      Api.checker smt proof) in
+  let assn t = assert (let (smt, proof) = t in not (Api.checker smt proof)) in
+  assn testI00;
+  assn testI01;
+  ass testC00;
+  ass testC01;
+  ass testC02;
+  ass testC03;
+  (* ass testWeakening; *)
+  ass test_lia6;
   Printf.printf "All tests suceeded\n";
+
+  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
   (* Printf.printf "Now testing the debugging checker:\n"; *)
   (* Printf.printf "testI00:\n"; *)
-  (* let (smt, proof) = testI00 in Debug_checker.debug_checker_stdout smt proof; *)
+  (* deb testI00; *)
   (* Printf.printf "testI01:\n"; *)
-  (* let (smt, proof) = testI01 in Debug_checker.debug_checker_stdout smt proof; *)
+  (* deb testI01; *)
   (* Printf.printf "testC00:\n"; *)
-  (* let (smt, proof) = testC00 in Debug_checker.debug_checker_stdout smt proof; *)
+  (* deb testC00; *)
   (* Printf.printf "testC01:\n"; *)
-  (* let (smt, proof) = testC01 in Debug_checker.debug_checker_stdout smt proof; *)
+  (* deb testC01; *)
   (* Printf.printf "testC02:\n"; *)
-  (* let (smt, proof) = testC02 in Debug_checker.debug_checker_stdout smt proof; *)
+  (* deb testC02; *)
   (* Printf.printf "testC03:\n"; *)
-  (* let (smt, proof) = testC03 in Debug_checker.debug_checker_stdout smt proof; *)
+  (* deb testC03; *)
   (* Printf.printf "Now testing when terms are ill-typed:\n"; *)
   (* try *)
   (*   let (smt, proof) = testT00 in let _ = Api.checker smt proof in () *)
