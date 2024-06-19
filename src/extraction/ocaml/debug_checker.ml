@@ -46,6 +46,13 @@ let rec resolve cl r =
                t::(resolve q r)
        )
 
+let subclause c1 c2 =
+  List.for_all (fun e ->
+      e = Api.EFalse ||
+        e = Api.ENeg (Api.ETrue) ||
+        List.exists (fun e' -> e = e') c2
+    ) c1
+
 
 let cache = Hashtbl.create 17
 
@@ -59,7 +66,10 @@ let rec debug_checker_rec fmt smt proof =
       match n with
         | Api.Cweakening (c, l) ->
            let cl = debug_checker_rec fmt smt c in
-           List.fold_left (fun acc e -> e::acc) cl l
+           if subclause cl l then
+             l
+           else
+             raise (Check "invalid weakening")
         | Api.Cassume i -> [get_assert smt i]
         | Api.Ctrue -> [Api.ETrue]
         | Api.Cfalse -> [Api.ENeg Api.EFalse]

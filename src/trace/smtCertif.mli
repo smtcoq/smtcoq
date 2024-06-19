@@ -13,7 +13,10 @@
 type used = int
 type clause_id = int
 type 'hform rule =
-  (* Weakening *)
+  (* Weakening
+     The first argument is the initial clause, the second argument is
+     the final clause (in any order)
+   *)
   | Weaken of 'hform clause * 'hform list
      (*  * weaken          : {a_1 ... a_n} --> {a_1 ... a_n b_1 ... b_m} *)
 

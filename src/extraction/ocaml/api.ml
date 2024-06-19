@@ -300,8 +300,12 @@ let declare_smtlib2 ra rf (smt:smtlib2) =
     trivial by SMTCoq. It may be a cause of failure.
  **)
 type node =
-  (* 0. Given a proof of the clause {f1 ... fn} and formulas b1 ... bm,
+  (* 0. Given a proof of the clause {f1 ... fn}
+          and a possibly larger clause {f1 ... fn b1 ... bm},
         proves the clause {f1 ... fn b1 ... bm}
+        The order does not matter
+        The initial clause may contain the additional literals
+          `not false` and `true` as well
    *)
   | Cweakening of certif * expr list
 

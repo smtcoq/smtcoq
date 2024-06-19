@@ -105,7 +105,7 @@ let testWeakening =
     let t1 = ("t1", Api.Cassume 0) in
     let t2 = ("t2", Api.Cassume 1) in
     let t3 = ("t3", Api.Cassume 2) in
-    let t4 = ("t4", Api.Cweakening (t1, [b])) in
+    let t4 = ("t4", Api.Cweakening (t1, [a;b])) in
     let t5 = ("t5", Api.Cresolution [t4; t2; t3]) in
     t5
   in
@@ -157,6 +157,8 @@ let testT00 =
 
 
 let _ =
+  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
+
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
   assert(assn testI00);
@@ -165,11 +167,10 @@ let _ =
   assert(ass  testC01);
   assert(ass  testC02);
   assert(ass  testC03);
-  (* assert(ass  testWeakening); *)
+  assert(ass  testWeakening);
   assert(ass  test_lia6);
   Printf.printf "All tests suceeded\n";
 
-  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
   (* Printf.printf "Now testing the debugging checker:\n"; *)
   (* Printf.printf "testI00:\n"; *)
   (* deb testI00; *)
