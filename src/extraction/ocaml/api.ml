@@ -37,7 +37,7 @@ type expr =
   | EOr of expr list
   (* Xor *)
   | EXor of expr * expr
-  (* -> *)
+  (* => *)
   | EImp of expr * expr
 
   (* Equality *)
@@ -396,17 +396,17 @@ type node =
    *)
   | Cnot_xor2 of certif
 
-  (* 36. Given a proof of the clause {(-> a b)},
+  (* 36. Given a proof of the clause {(=> a b)},
          proves the clause {(not a) b}
    *)
   | Cimplies of certif
 
-  (* 37. Given a proof of the clause {(not (-> a b))},
+  (* 37. Given a proof of the clause {(not (=> a b))},
          proves the clause {a}
    *)
   | Cnot_implies1 of certif
 
-  (* 38. Given a proof of the clause {(not (-> a b))},
+  (* 38. Given a proof of the clause {(not (=> a b))},
          proves the clause {(not b)}
    *)
   | Cnot_implies2 of certif

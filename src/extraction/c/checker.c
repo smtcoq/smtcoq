@@ -154,7 +154,7 @@ EXPR exor(EXPR a, EXPR b) {
   CAMLreturn(res);
 }
 
-/* -> */
+/* => */
 EXPR eimp(EXPR a, EXPR b) {
   CAMLparam2(a, b);
   CAMLlocal1(res);
@@ -524,7 +524,7 @@ CERTIF cnot_xor2(char* name, CERTIF c) {
   CAMLreturn(certif(name, node));
 }
 
-/* 36. Given a proof of the clause {(-> a b)},
+/* 36. Given a proof of the clause {(=> a b)},
        proves the clause {(not a) b}
 */
 CERTIF cimplies(char* name, CERTIF c) {
@@ -535,7 +535,7 @@ CERTIF cimplies(char* name, CERTIF c) {
   CAMLreturn(certif(name, node));
 }
 
-/* 37. Given a proof of the clause {(not (-> a b))},
+/* 37. Given a proof of the clause {(not (=> a b))},
        proves the clause {a}
 */
 CERTIF cnot_implies1(char* name, CERTIF c) {
@@ -546,7 +546,7 @@ CERTIF cnot_implies1(char* name, CERTIF c) {
   CAMLreturn(certif(name, node));
 }
 
-/* 38. Given a proof of the clause {(not (-> a b))},
+/* 38. Given a proof of the clause {(not (=> a b))},
        proves the clause {(not b)}
 */
 CERTIF cnot_implies2(char* name, CERTIF c) {

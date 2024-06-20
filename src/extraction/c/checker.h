@@ -51,7 +51,7 @@ EXPR eor(size_t nb, const EXPR* a);
 /* xor */
 EXPR exor(EXPR a, EXPR b);
 
-/* -> */
+/* => */
 EXPR eimp(EXPR a, EXPR b);
 
 /* = */
@@ -208,17 +208,17 @@ CERTIF cnot_xor1(char* name, CERTIF c);
 */
 CERTIF cnot_xor2(char* name, CERTIF c);
 
-/* 36. Given a proof of the clause {(-> a b)},
+/* 36. Given a proof of the clause {(=> a b)},
        proves the clause {(not a) b}
 */
 CERTIF cimplies(char* name, CERTIF c);
 
-/* 37. Given a proof of the clause {(not (-> a b))},
+/* 37. Given a proof of the clause {(not (=> a b))},
        proves the clause {a}
 */
 CERTIF cnot_implies1(char* name, CERTIF c);
 
-/* 38. Given a proof of the clause {(not (-> a b))},
+/* 38. Given a proof of the clause {(not (=> a b))},
        proves the clause {(not b)}
 */
 CERTIF cnot_implies2(char* name, CERTIF c);
