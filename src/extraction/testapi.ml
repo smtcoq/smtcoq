@@ -513,6 +513,332 @@ let testNot_equiv2 =
   in
   (smt, proof)
 
+let testAnd_pos =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EAnd [a; b] in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; Api.ENeg a|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cand_pos ([a; b], 1)) in
+    let t4 = ("t4", Api.Cresolution [t3; t2; t1]) in
+    t4
+  in
+  (smt, proof)
+
+let testAnd_neg =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EAnd [a; b] in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; a; b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cand_neg [a; b]) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testOr_pos =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EOr [a; b] in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cor_pos [a; b]) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testOr_neg =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EOr [a; b] in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; a|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cor_neg ([a; b], 1)) in
+    let t4 = ("t4", Api.Cresolution [t3; t2; t1]) in
+    t4
+  in
+  (smt, proof)
+
+let testXor_pos1 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EXor (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cxor_pos1 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testXor_pos2 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EXor (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; a; b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cxor_pos2 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testXor_neg1 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EXor (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; Api.ENeg a; b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cxor_neg1 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testXor_neg2 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EXor (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cxor_neg2 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testImplies_pos =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EImp (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cimplies_pos (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testImplies_neg1 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EImp (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; Api.ENeg a|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cimplies_neg1 (a, b)) in
+    let t4 = ("t4", Api.Cresolution [t3; t2; t1]) in
+    t4
+  in
+  (smt, proof)
+
+let testImplies_neg2 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EImp (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cimplies_neg2 (a, b)) in
+    let t4 = ("t4", Api.Cresolution [t3; t2; t1]) in
+    t4
+  in
+  (smt, proof)
+
+let testEquiv_pos1 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EEq (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; Api.ENeg a; b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cequiv_pos1 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testEquiv_pos2 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EEq (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cequiv_pos2 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testEquiv_neg1 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EEq (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; a; b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cequiv_neg1 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
+let testEquiv_neg2 =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EEq (a, b) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|Api.ENeg ab; Api.ENeg a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cequiv_neg2 (a, b)) in
+    let t5 = ("t5", Api.Cresolution [t4; t3; t2; t1]) in
+    t5
+  in
+  (smt, proof)
+
 
 (* unit-tests/lia6.vtlog *)
 
@@ -560,7 +886,7 @@ let testT00 =
 
 let _ =
   let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
-  deb testNot_equiv2;
+  (* deb testEquiv_neg2; *)
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
@@ -590,6 +916,21 @@ let _ =
   assert(ass  testEquiv2);
   assert(ass  testNot_equiv1);
   assert(ass  testNot_equiv2);
+  assert(ass  testAnd_pos);
+  assert(ass  testAnd_neg);
+  assert(ass  testOr_pos);
+  assert(ass  testOr_neg);
+  assert(ass  testXor_pos1);
+  assert(ass  testXor_pos2);
+  assert(ass  testXor_neg1);
+  assert(ass  testXor_neg2);
+  assert(ass  testImplies_pos);
+  assert(ass  testImplies_neg1);
+  assert(ass  testImplies_neg2);
+  assert(ass  testEquiv_pos1);
+  assert(ass  testEquiv_pos2);
+  assert(ass  testEquiv_neg1);
+  assert(ass  testEquiv_neg2);
   assert(ass  test_lia6);
   Printf.printf "All tests suceeded\n";
 
