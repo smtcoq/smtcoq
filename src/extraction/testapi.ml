@@ -256,8 +256,7 @@ let testT00 =
 
 let _ =
   let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
-  (* deb testEq_transitive; *)
-  deb testOr;
+  deb testEq_transitive;
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
@@ -272,8 +271,8 @@ let _ =
   assert(ass  testFalse);
   assert(ass  testEq_reflexive);
   assert(ass  testEq_transitive);
-  (* assert(ass  testOr); *)
-  (* assert(ass  test_lia6); *)
+  assert(ass  testOr);
+  assert(ass  test_lia6);
   Printf.printf "All tests suceeded\n";
 
   (* Printf.printf "Now testing the debugging checker:\n"; *)

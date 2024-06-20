@@ -567,50 +567,20 @@ let process_certif rootsa ra rf =
            let f = make_form ra rf (EEq (t, t)) in
            other (SmtCertif.EqTr (f, []))
         | Ceq_transitive l ->
-           (* (match l with *)
-           (*    | a::b::q -> *)
-           (*       let last = ref b in *)
-           (*       let l' = *)
-           (*         List.fold_left ( *)
-           (*             fun acc t -> *)
-           (*             let c = !last in *)
-           (*             last := t; *)
-           (*             (make_form ra rf (ENeg (EEq (c, t))))::acc *)
-           (*           ) [make_form ra rf (ENeg (EEq (a, b)))] q *)
-           (*       in *)
-           (*       let l' = List.rev l' in *)
-           (*       let r = make_form ra rf (EEq (a, !last)) in *)
-           (*       other (SmtCertif.EqTr (r, l')) *)
-           (*    | _ -> failwith "eq_transitive should contain at least two terms" *)
-           (* ) *)
-           (* (match l with *)
-           (*    | f::q -> *)
-           (*       let get_last l = *)
-           (*         let rec get_last acc = function *)
-           (*           | [] -> failwith "eq_transitive should contain at least two terms" *)
-           (*           | [l] -> (l, acc) *)
-           (*           | t::q -> get_last (t::acc) q *)
-           (*         in *)
-           (*         let (l, r) = get_last [] l in *)
-           (*         (l, List.rev r) *)
-           (*       in *)
-           (*       let (l, q) = get_last q in *)
-           (*       let r = make_form ra rf (EEq (f, l)) in *)
-           (*       let q' = List.map (make_atom ra rf) q in *)
-           (*       other (SmtCertif.EqTr (r, q')) *)
-           (*    | _ -> failwith "eq_transitive should contain at least two terms" *)
-           (* ) *)
            (match l with
-              | f::t::q ->
-                 let last = ref t in
-                 let r = List.fold_left (
-                             fun acc e ->
-                             let x = make_form ra rf (ENeg (EEq (!last, e))) in
-                             last := e;
-                             x::acc
-                           ) [make_form ra rf (ENeg (EEq (f, t)))] q in
-                 let p = (make_form ra rf (EEq (f, !last)))::r in
-                 RKind (VeritSyntax.mkTrans p)
+              | a::b::q ->
+                 let last = ref b in
+                 let l' =
+                   List.fold_left (
+                       fun acc t ->
+                       let c = !last in
+                       last := t;
+                       (make_form ra rf (ENeg (EEq (c, t))))::acc
+                     ) [make_form ra rf (ENeg (EEq (a, b)))] q
+                 in
+                 let l' = List.rev l' in
+                 let r = make_form ra rf (EEq (a, !last)) in
+                 other (SmtCertif.EqTr (r, l'))
               | _ -> failwith "eq_transitive should contain at least two terms"
            )
         | Ceq_congruent (f, tl, ul) ->
