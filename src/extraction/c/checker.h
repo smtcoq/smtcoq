@@ -40,7 +40,7 @@ EXPR etrue();
 EXPR efalse();
 
 /* not */
-EXPR eneg(EXPR a);
+EXPR enot(EXPR a);
 
 /* N-ary and */
 EXPR eand(size_t nb, const EXPR* a);

@@ -30,7 +30,7 @@ type expr =
   (* False *)
   | EFalse
   (* Negation *)
-  | ENeg of expr
+  | ENot of expr
   (* N-ary and *)
   | EAnd of expr list
   (* N-ary or *)
@@ -85,7 +85,7 @@ let rec pp_expr fmt = function
      Format.fprintf fmt "%a%a" pp_funsym f pp l
   | ETrue  -> Format.fprintf fmt "true"
   | EFalse -> Format.fprintf fmt "false"
-  | ENeg f -> Format.fprintf fmt "(not %a)" pp_expr f
+  | ENot f -> Format.fprintf fmt "(not %a)" pp_expr f
   | EAnd l ->
      let pp fmt l = Smt_utils.pp_list pp_expr " " "" "" fmt l in
      Format.fprintf fmt "(and %a)" pp l
@@ -125,7 +125,7 @@ let rec make_expr ra rf e =
      Atom (SmtAtom.Atom.get ra (Aapp (op, Array.of_list l')))
   | ETrue  -> Form (SmtAtom.Form.get rf SmtAtom.Form.pform_true)
   | EFalse -> Form (SmtAtom.Form.get rf SmtAtom.Form.pform_false)
-  | ENeg f ->
+  | ENot f ->
      let f' = make_form ra rf f in
      let nf = SmtAtom.Form.neg f' in
      let r =
@@ -575,8 +575,8 @@ let process_certif rootsa ra rf =
                        fun acc t ->
                        let c = !last in
                        last := t;
-                       (make_form ra rf (ENeg (EEq (c, t))))::acc
-                     ) [make_form ra rf (ENeg (EEq (a, b)))] q
+                       (make_form ra rf (ENot (EEq (c, t))))::acc
+                     ) [make_form ra rf (ENot (EEq (a, b)))] q
                  in
                  let l' = List.rev l' in
                  let r = make_form ra rf (EEq (a, !last)) in
@@ -584,7 +584,7 @@ let process_certif rootsa ra rf =
               | _ -> failwith "eq_transitive should contain at least two terms"
            )
         | Ceq_congruent (f, tl, ul) ->
-           let l = List.map2 (fun t u -> Some (make_form ra rf (ENeg (EEq (t, u))))) tl ul in
+           let l = List.map2 (fun t u -> Some (make_form ra rf (ENot (EEq (t, u))))) tl ul in
            let t = EFun (f, tl) in
            let u = EFun (f, ul) in
            let r = make_form ra rf (EEq (t, u)) in
@@ -604,26 +604,26 @@ let process_certif rootsa ra rf =
            let res = {SmtCertif.rc1 = c7'; SmtCertif.rc2 = c8'; SmtCertif.rtail = [c9']} in
            RKind (SmtCertif.Res res)
         | Ceq_congruent_pred_b (p, tl, ul) ->
-           let l = List.map2 (fun t u -> Some (make_form ra rf (ENeg (EEq (t, u))))) tl ul in
-           let t = make_form ra rf (ENeg (EFun (p, tl))) in
+           let l = List.map2 (fun t u -> Some (make_form ra rf (ENot (EEq (t, u))))) tl ul in
+           let t = make_form ra rf (ENot (EFun (p, tl))) in
            let u = make_form ra rf (EFun (p, ul)) in
            other (SmtCertif.EqCgrP (t, u, l))
 
         | Cand_neg l -> builddef (make_form ra rf (EAnd l))
-        | Cor_pos l -> builddef (make_form ra rf (ENeg (EOr l)))
-        | Cimplies_pos (a, b) -> builddef (make_form ra rf (ENeg (EImp (a, b))))
-        | Cxor_pos1 (a, b) -> builddef (make_form ra rf (ENeg (EXor (a, b))))
+        | Cor_pos l -> builddef (make_form ra rf (ENot (EOr l)))
+        | Cimplies_pos (a, b) -> builddef (make_form ra rf (ENot (EImp (a, b))))
+        | Cxor_pos1 (a, b) -> builddef (make_form ra rf (ENot (EXor (a, b))))
         | Cxor_neg1 (a, b) -> builddef (make_form ra rf (EXor (a, b)))
-        | Cequiv_pos1 (a, b) -> builddef (make_form ra rf (ENeg (EEq (a, b))))
+        | Cequiv_pos1 (a, b) -> builddef (make_form ra rf (ENot (EEq (a, b))))
         | Cequiv_neg1 (a, b) -> builddef (make_form ra rf (EEq (a, b)))
 
-        | Cxor_pos2 (a, b) -> builddef2 (make_form ra rf (ENeg (EXor (a, b))))
+        | Cxor_pos2 (a, b) -> builddef2 (make_form ra rf (ENot (EXor (a, b))))
         | Cxor_neg2 (a, b) -> builddef2 (make_form ra rf (EXor (a, b)))
-        | Cequiv_pos2 (a, b) -> builddef2 (make_form ra rf (ENeg (EEq (a, b))))
+        | Cequiv_pos2 (a, b) -> builddef2 (make_form ra rf (ENot (EEq (a, b))))
         | Cequiv_neg2 (a, b) -> builddef2 (make_form ra rf (EEq (a, b)))
 
         | Cor_neg (l, i) -> buildproj (make_form ra rf (EOr l)) i
-        | Cand_pos (l, i) -> buildproj (make_form ra rf (ENeg (EAnd l))) i
+        | Cand_pos (l, i) -> buildproj (make_form ra rf (ENot (EAnd l))) i
         | Cimplies_neg1 (a, b) -> buildproj (make_form ra rf (EImp (a, b))) 1
         | Cimplies_neg2 (a, b) -> buildproj (make_form ra rf (EImp (a, b))) 2
 

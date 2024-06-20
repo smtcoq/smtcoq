@@ -32,16 +32,16 @@ let rec resolve cl r =
     | [] -> raise (Check "could not find resolvant")
     | t::q ->
        (match t with
-          | Api.ENeg f ->
+          | Api.ENot f ->
              if List.mem f r then
                q@(List.filter (fun l -> f <> l) r)
-             else if List.mem (Api.ENeg t) r then
-               q@(List.filter (fun l -> (Api.ENeg t) <> l) r)
+             else if List.mem (Api.ENot t) r then
+               q@(List.filter (fun l -> (Api.ENot t) <> l) r)
              else
                t::(resolve q r)
           | _ ->
-             if List.mem (Api.ENeg t) r then
-               q@(List.filter (fun l -> (Api.ENeg t) <> l) r)
+             if List.mem (Api.ENot t) r then
+               q@(List.filter (fun l -> (Api.ENot t) <> l) r)
              else
                t::(resolve q r)
        )
@@ -49,7 +49,7 @@ let rec resolve cl r =
 let subclause c1 c2 =
   List.for_all (fun e ->
       e = Api.EFalse ||
-        e = Api.ENeg (Api.ETrue) ||
+        e = Api.ENot (Api.ETrue) ||
         List.exists (fun e' -> e = e') c2
     ) c1
 
@@ -72,7 +72,7 @@ let rec debug_checker_rec fmt smt proof =
              raise (Check "invalid weakening")
         | Api.Cassume i -> [get_assert smt i]
         | Api.Ctrue -> [Api.ETrue]
-        | Api.Cfalse -> [Api.ENeg Api.EFalse]
+        | Api.Cfalse -> [Api.ENot Api.EFalse]
         | Api.Cresolution l ->
            (let l' = List.map (debug_checker_rec fmt smt) l in
             match l' with
@@ -89,20 +89,20 @@ let rec debug_checker_rec fmt smt proof =
                  let last = ref t in
                  let r = List.fold_left (
                              fun acc e ->
-                             let x = Api.ENeg (Api.EEq (!last, e)) in
+                             let x = Api.ENot (Api.EEq (!last, e)) in
                              last := e;
                              x::acc
-                           ) [Api.ENeg (Api.EEq (f, t))] q in
+                           ) [Api.ENot (Api.EEq (f, t))] q in
                  (Api.EEq (f, !last))::r
               | _ -> raise (Check "eq_transitive should contain at least two terms")
            )
         | Api.Ceq_congruent (f, ts, us)
         | Api.Ceq_congruent_pred (f, ts, us) ->
-           let r = List.map2 (fun t u -> Api.ENeg (Api.EEq (t, u))) ts us in
+           let r = List.map2 (fun t u -> Api.ENot (Api.EEq (t, u))) ts us in
            (Api.EEq (Api.EFun (f, ts), Api.EFun (f, us)))::r
         | Api.Ceq_congruent_pred_b (f, ts, us) ->
-           let r = List.map2 (fun t u -> Api.ENeg (Api.EEq (t, u))) ts us in
-           (Api.ENeg (Api.EFun (f, ts)))::(Api.EFun (f, ts))::r
+           let r = List.map2 (fun t u -> Api.ENot (Api.EEq (t, u))) ts us in
+           (Api.ENot (Api.EFun (f, ts)))::(Api.EFun (f, ts))::r
         | Api.Cand (c, k) ->
            (match debug_checker_rec fmt smt c with
               | [Api.EAnd l] ->  [List.nth l (k-1)]
@@ -110,7 +110,7 @@ let rec debug_checker_rec fmt smt proof =
            )
         | Api.Cnot_or (c, k) ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EOr l)] -> [Api.ENeg (List.nth l (k-1))]
+              | [Api.ENot (Api.EOr l)] -> [Api.ENot (List.nth l (k-1))]
               | _ -> raise (Check "Incorrect application of not_or")
            )
         | Api.Cor c ->
@@ -120,7 +120,7 @@ let rec debug_checker_rec fmt smt proof =
            )
         | Api.Cnot_and c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EAnd l)] -> List.map (fun e -> Api.ENeg e) l
+              | [Api.ENot (Api.EAnd l)] -> List.map (fun e -> Api.ENot e) l
               | _ -> raise (Check "Incorrect application of not_and")
            )
         | Api.Cxor1 c ->
@@ -130,70 +130,70 @@ let rec debug_checker_rec fmt smt proof =
            )
         | Api.Cxor2 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.EXor (a, b)] -> [Api.ENeg a; Api.ENeg b]
+              | [Api.EXor (a, b)] -> [Api.ENot a; Api.ENot b]
               | _ -> raise (Check "Incorrect application of xor2")
            )
         | Api.Cnot_xor1 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EXor (a, b))] -> [a; Api.ENeg b]
+              | [Api.ENot (Api.EXor (a, b))] -> [a; Api.ENot b]
               | _ -> raise (Check "Incorrect application of not_xor1")
            )
         | Api.Cnot_xor2 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EXor (a, b))] -> [Api.ENeg a; b]
+              | [Api.ENot (Api.EXor (a, b))] -> [Api.ENot a; b]
               | _ -> raise (Check "Incorrect application of not_xor2")
            )
         | Api.Cimplies c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.EImp (a, b)] -> [Api.ENeg a; b]
+              | [Api.EImp (a, b)] -> [Api.ENot a; b]
               | _ -> raise (Check "Incorrect application of implies")
            )
         | Api.Cnot_implies1 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EImp (a, b))] -> [a]
+              | [Api.ENot (Api.EImp (a, b))] -> [a]
               | _ -> raise (Check "Incorrect application of not_implies1")
            )
         | Api.Cnot_implies2 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EImp (a, b))] -> [Api.ENeg b]
+              | [Api.ENot (Api.EImp (a, b))] -> [Api.ENot b]
               | _ -> raise (Check "Incorrect application of not_implies2")
            )
         | Api.Cequiv1 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.EEq (a, b)] -> [Api.ENeg a; b]
+              | [Api.EEq (a, b)] -> [Api.ENot a; b]
               | _ -> raise (Check "Incorrect application of equiv1")
            )
         | Api.Cequiv2 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.EEq (a, b)] -> [a; Api.ENeg b]
+              | [Api.EEq (a, b)] -> [a; Api.ENot b]
               | _ -> raise (Check "Incorrect application of equiv2")
            )
         | Api.Cnot_equiv1 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EEq (a, b))] -> [a; b]
+              | [Api.ENot (Api.EEq (a, b))] -> [a; b]
               | _ -> raise (Check "Incorrect application of not_equiv1")
            )
         | Api.Cnot_equiv2 c ->
            (match debug_checker_rec fmt smt c with
-              | [Api.ENeg (Api.EEq (a, b))] -> [Api.ENeg a; Api.ENeg b]
+              | [Api.ENot (Api.EEq (a, b))] -> [Api.ENot a; Api.ENot b]
               | _ -> raise (Check "Incorrect application of not_equiv2")
            )
-        | Api.Cand_pos (l, k) -> [Api.ENeg (Api.EAnd l); List.nth l (k-1)]
+        | Api.Cand_pos (l, k) -> [Api.ENot (Api.EAnd l); List.nth l (k-1)]
         | Api.Cand_neg l ->
-           let r = List.map (fun f -> Api.ENeg f) l in
+           let r = List.map (fun f -> Api.ENot f) l in
            (Api.EAnd l)::r
-        | Api.Cor_pos l -> (Api.ENeg (Api.EOr l))::l
-        | Api.Cor_neg (l, k) -> [Api.EOr l; Api.ENeg (List.nth l (k-1))]
-        | Api.Cxor_pos1 (a, b) -> [Api.ENeg (Api.EXor (a, b)); a; b]
-        | Api.Cxor_pos2 (a, b) -> [Api.ENeg (Api.EXor (a, b)); Api.ENeg a; Api.ENeg b]
-        | Api.Cxor_neg1 (a, b) -> [Api.EXor (a, b); a; Api.ENeg b]
-        | Api.Cxor_neg2 (a, b) -> [Api.EXor (a, b); Api.ENeg a; b]
-        | Api.Cimplies_pos (a, b) -> [Api.ENeg (Api.EImp (a, b)); Api.ENeg a; b]
+        | Api.Cor_pos l -> (Api.ENot (Api.EOr l))::l
+        | Api.Cor_neg (l, k) -> [Api.EOr l; Api.ENot (List.nth l (k-1))]
+        | Api.Cxor_pos1 (a, b) -> [Api.ENot (Api.EXor (a, b)); a; b]
+        | Api.Cxor_pos2 (a, b) -> [Api.ENot (Api.EXor (a, b)); Api.ENot a; Api.ENot b]
+        | Api.Cxor_neg1 (a, b) -> [Api.EXor (a, b); a; Api.ENot b]
+        | Api.Cxor_neg2 (a, b) -> [Api.EXor (a, b); Api.ENot a; b]
+        | Api.Cimplies_pos (a, b) -> [Api.ENot (Api.EImp (a, b)); Api.ENot a; b]
         | Api.Cimplies_neg1 (a, b) -> [Api.EImp (a, b); a]
-        | Api.Cimplies_neg2 (a, b) -> [Api.EImp (a, b); Api.ENeg b]
-        | Api.Cequiv_pos1 (a, b) -> [Api.ENeg (Api.EEq (a, b)); a; Api.ENeg b]
-        | Api.Cequiv_pos2 (a, b) -> [Api.ENeg (Api.EEq (a, b)); Api.ENeg a; b]
-        | Api.Cequiv_neg1 (a, b) -> [Api.EEq (a, b); Api.ENeg a; Api.ENeg b]
+        | Api.Cimplies_neg2 (a, b) -> [Api.EImp (a, b); Api.ENot b]
+        | Api.Cequiv_pos1 (a, b) -> [Api.ENot (Api.EEq (a, b)); a; Api.ENot b]
+        | Api.Cequiv_pos2 (a, b) -> [Api.ENot (Api.EEq (a, b)); Api.ENot a; b]
+        | Api.Cequiv_neg1 (a, b) -> [Api.EEq (a, b); Api.ENot a; Api.ENot b]
         | Api.Cequiv_neg2 (a, b) -> [Api.EEq (a, b); a; b]
     in
     Format.fprintf fmt "Checking node %s: success, produces the clause %a\n"

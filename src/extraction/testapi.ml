@@ -67,7 +67,7 @@ let testC02 =
     let fa = ("a", [], "Bool") in
     let funs = [fa] in
     let a = Api.EFun (fa, []) in
-    let ass = [|a; Api.ENeg a|] in
+    let ass = [|a; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 0); ("t2", Api.Cassume 1)]) in
@@ -79,7 +79,7 @@ let testC03 =
     let fa = ("a", [], "Bool") in
     let funs = [fa] in
     let a = Api.EFun (fa, []) in
-    let ass = [|a; Api.ENeg a|] in
+    let ass = [|a; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 1); ("t2", Api.Cassume 0)]) in
@@ -93,8 +93,8 @@ let testWeakening =
   let fb = ("b", [], "Bool") in
   let a  = Api.EFun (fa, []) in
   let b  = Api.EFun (fb, []) in
-  let na = Api.ENeg a in
-  let nb = Api.ENeg b in
+  let na = Api.ENot a in
+  let nb = Api.ENot b in
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
@@ -115,7 +115,7 @@ let testTrue =
   let smt =
     let sorts = [] in
     let funs = [] in
-    let ass = [|Api.ENeg Api.ETrue|] in
+    let ass = [|Api.ENot Api.ETrue|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -149,7 +149,7 @@ let testEq_reflexive =
   let smt =
     let sorts = [u] in
     let funs = [fa] in
-    let ass = [|Api.ENeg aa|] in
+    let ass = [|Api.ENot aa|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -174,7 +174,7 @@ let testEq_transitive =
   let smt =
     let sorts = [u] in
     let funs = [fa; fb; fc] in
-    let ass = [|ab; bc; Api.ENeg ac|] in
+    let ass = [|ab; bc; Api.ENot ac|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -196,7 +196,7 @@ let testAnd =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a|] in
+    let ass = [|ab; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -217,7 +217,7 @@ let testNot_or =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a|] in
+    let ass = [|Api.ENot ab; a|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -238,7 +238,7 @@ let testOr =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    let ass = [|ab; Api.ENot a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -260,7 +260,7 @@ let testNot_and =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a; b|] in
+    let ass = [|Api.ENot ab; a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -282,7 +282,7 @@ let testXor1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    let ass = [|ab; Api.ENot a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -326,7 +326,7 @@ let testNot_xor1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; Api.ENeg a; b|] in
+    let ass = [|Api.ENot ab; Api.ENot a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -348,7 +348,7 @@ let testNot_xor2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a; Api.ENeg b|] in
+    let ass = [|Api.ENot ab; a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -370,7 +370,7 @@ let testImplies =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; a; Api.ENeg b|] in
+    let ass = [|ab; a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -392,7 +392,7 @@ let testNot_implies1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; Api.ENeg a|] in
+    let ass = [|Api.ENot ab; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -413,7 +413,7 @@ let testNot_implies2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; b|] in
+    let ass = [|Api.ENot ab; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -434,7 +434,7 @@ let testEquiv1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; a; Api.ENeg b|] in
+    let ass = [|ab; a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -456,7 +456,7 @@ let testEquiv2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a; b|] in
+    let ass = [|ab; Api.ENot a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -478,7 +478,7 @@ let testNot_equiv1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; Api.ENeg a; Api.ENeg b|] in
+    let ass = [|Api.ENot ab; Api.ENot a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -500,7 +500,7 @@ let testNot_equiv2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a; b|] in
+    let ass = [|Api.ENot ab; a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -522,7 +522,7 @@ let testAnd_pos =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a|] in
+    let ass = [|ab; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -543,7 +543,7 @@ let testAnd_neg =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a; b|] in
+    let ass = [|Api.ENot ab; a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -565,7 +565,7 @@ let testOr_pos =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    let ass = [|ab; Api.ENot a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -587,7 +587,7 @@ let testOr_neg =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a|] in
+    let ass = [|Api.ENot ab; a|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -608,7 +608,7 @@ let testXor_pos1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    let ass = [|ab; Api.ENot a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -652,7 +652,7 @@ let testXor_neg1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; Api.ENeg a; b|] in
+    let ass = [|Api.ENot ab; Api.ENot a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -674,7 +674,7 @@ let testXor_neg2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a; Api.ENeg b|] in
+    let ass = [|Api.ENot ab; a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -696,7 +696,7 @@ let testImplies_pos =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; a; Api.ENeg b|] in
+    let ass = [|ab; a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -718,7 +718,7 @@ let testImplies_neg1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; Api.ENeg a|] in
+    let ass = [|Api.ENot ab; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -739,7 +739,7 @@ let testImplies_neg2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; b|] in
+    let ass = [|Api.ENot ab; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -760,7 +760,7 @@ let testEquiv_pos1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; Api.ENeg a; b|] in
+    let ass = [|ab; Api.ENot a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -782,7 +782,7 @@ let testEquiv_pos2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|ab; a; Api.ENeg b|] in
+    let ass = [|ab; a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -804,7 +804,7 @@ let testEquiv_neg1 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; a; b|] in
+    let ass = [|Api.ENot ab; a; b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -826,7 +826,7 @@ let testEquiv_neg2 =
   let smt =
     let sorts = [] in
     let funs = [fa; fb] in
-    let ass = [|Api.ENeg ab; Api.ENeg a; Api.ENeg b|] in
+    let ass = [|Api.ENot ab; Api.ENot a; Api.ENot b|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -854,7 +854,7 @@ let test_lia6 =
   let smt =
     let sorts = [] in
     let funs = [fx] in
-    let ass = [|Api.ENeg e1|] in
+    let ass = [|Api.ENot e1|] in
     (sorts, funs, ass)
   in
   let proof =
@@ -862,7 +862,7 @@ let test_lia6 =
     let t2 = ("t2", Api.Cnot_implies1 t1) in
     let t3 = ("t3", Api.Cand (t2, 2)) in
     let t4 = ("t4", Api.Cnot_implies2 t1) in
-    let t5 = ("t5", Api.Clia_generic [e6; Api.ENeg e5]) in
+    let t5 = ("t5", Api.Clia_generic [e6; Api.ENot e5]) in
     let t6 = ("t6", Api.Cresolution [t5; t3; t4]) in
     t6
   in
@@ -877,7 +877,7 @@ let testT00 =
     let fa = ("a", [], "Int") in
     let funs = [fa] in
     let a = Api.EFun (fa, []) in
-    let ass = [|a; Api.ENeg a|] in
+    let ass = [|a; Api.ENot a|] in
     (sorts, funs, ass)
   in
   let proof = ("t3", Api.Cresolution [("t1", Api.Cassume 0); ("t2", Api.Cassume 1)]) in
@@ -885,7 +885,7 @@ let testT00 =
 
 
 let _ =
-  let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
+  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
   (* deb testEquiv_neg2; *)
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in

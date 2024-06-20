@@ -261,7 +261,7 @@ int testCF02() {
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
-  EXPR as[2] = {a, eneg(a)};
+  EXPR as[2] = {a, enot(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -279,7 +279,7 @@ void testCFD02() {
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
-  EXPR as[2] = {a, eneg(a)};
+  EXPR as[2] = {a, enot(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -298,7 +298,7 @@ int testCI02() {
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(eneg(a));
+  assertf(enot(a));
 
   // Proof
   CERTIF r[2] = {cassume("t1", 0), cassume("t2", 1)};
@@ -315,7 +315,7 @@ void testCID02() {
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(eneg(a));
+  assertf(enot(a));
 
   // Proof
   CERTIF r[2] = {cassume("t1", 0), cassume("t2", 1)};
@@ -331,7 +331,7 @@ int testCF03() {
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
-  EXPR as[2] = {a, eneg(a)};
+  EXPR as[2] = {a, enot(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -349,7 +349,7 @@ void testCFD03() {
   FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
-  EXPR as[2] = {a, eneg(a)};
+  EXPR as[2] = {a, enot(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 
@@ -368,7 +368,7 @@ int testCI03() {
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(eneg(a));
+  assertf(enot(a));
 
   // Proof
   CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
@@ -385,7 +385,7 @@ void testCID03() {
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
-  assertf(eneg(a));
+  assertf(enot(a));
 
   // Proof
   CERTIF r[2] = {cassume("t1", 1), cassume("t2", 0)};
@@ -412,14 +412,14 @@ int test_lia6 () {
   // SMT-LIB2 problem
   start_smt2();
   declare_fun(fx);
-  assertf(eneg(e1));
+  assertf(enot(e1));
 
   // Proof
   CERTIF t1 = cassume("t1", 0);
   CERTIF t2 = cnot_implies1("t2", t1);
   CERTIF t3 = cand("t3", t2, 2);
   CERTIF t4 = cnot_implies2("t4", t1);
-  EXPR t5b[2] = {e6, eneg(e5)};
+  EXPR t5b[2] = {e6, enot(e5)};
   CERTIF t5 = clia_generic("t5", 2, t5b);
   CERTIF t6b[3] = {t5, t3, t4};
   CERTIF t6 = cresolution("t6", 3, t6b);
@@ -437,7 +437,7 @@ int testTF00() {
   FUNSYM fa = funsym("a", 0, NULL, sort("Int"));
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
-  EXPR as[2] = {a, eneg(a)};
+  EXPR as[2] = {a, enot(a)};
   ASSERTIONS ass = assertions(2, as);
   SMTLIB2 smt = smtlib2(s, f, ass);
 

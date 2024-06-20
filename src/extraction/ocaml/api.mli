@@ -28,7 +28,7 @@ type expr =
   (* False *)
   | EFalse
   (* Negation *)
-  | ENeg of expr
+  | ENot of expr
   (* N-ary and *)
   | EAnd of expr list
   (* N-ary or *)

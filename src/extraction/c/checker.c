@@ -81,7 +81,7 @@ FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain) {
 #define EFALSE     1
 
 #define EFUN       0
-#define ENEG       1
+#define ENOT       1
 #define EAND       2
 #define EOR        3
 #define EXOR       4
@@ -120,10 +120,10 @@ EXPR efalse() {
 }
 
 /* not */
-EXPR eneg(EXPR a) {
+EXPR enot(EXPR a) {
   CAMLparam1(a);
   CAMLlocal1(res);
-  res = caml_alloc(1, ENEG);
+  res = caml_alloc(1, ENOT);
   Store_field(res, 0, a);
   CAMLreturn(res);
 }
