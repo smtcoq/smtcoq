@@ -325,8 +325,8 @@ let to_string r =
 
 
 
-(* To use <print_certif>, pass, as first and second argument, <Form.to_smt> and <Atom.to_string> *)
-let print_certif form_to_smt atom_to_string c where =
+(* To use <print_certif>, pass, as first argument, <Form.to_smt> *)
+let print_certif form_to_smt c where =
   let rec start c =
     match c.prev with
     | None -> c
@@ -345,7 +345,7 @@ let print_certif form_to_smt atom_to_string c where =
     Format.fprintf fmt "id:%i kind:%s pos:%s used:%i value:" id kind pos used;
     begin match !r.value with
     | None -> Format.fprintf fmt "None"
-    | Some l -> List.iter (fun f -> form_to_smt atom_to_string fmt f;
+    | Some l -> List.iter (fun f -> form_to_smt fmt f;
                                     Format.fprintf fmt " ") l end;
     Format.fprintf fmt "\n";
     match !r.next with

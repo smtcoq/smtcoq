@@ -260,7 +260,7 @@ let declare_funsyms (fl:funsyms) =
   List.iteri (fun i (s, arg, cod) ->
       let tyl = List.map (fun s -> Smtlib2_genConstr.sort_of_string s []) arg in
       let ty = Smtlib2_genConstr.sort_of_string cod [] in
-      let op = SmtAtom.dummy_indexed_op (SmtAtom.Index 0) (Array.of_list tyl) ty in
+      let op = SmtAtom.dummy_indexed_op (SmtAtom.Index i) (Array.of_list tyl) ty in
       SmtMaps.add_fun s op
     ) fl
 
@@ -696,9 +696,12 @@ let import_trace rootsa ra rf (c:certif) =
   let confl_num = process_certif rootsa ra rf c in
   let cfirst = ref (VeritSyntax.get_clause 1) in
   let confl = ref (VeritSyntax.get_clause confl_num) in
+  (* SmtCertif.print_certif SmtAtom.Form.to_smt !confl "/tmp/before.log"; *)
   SmtTrace.select !confl;
   SmtTrace.occur !confl;
-  (SmtTrace.alloc !cfirst, !confl)
+  let res = (SmtTrace.alloc !cfirst, !confl) in
+  (* SmtCertif.print_certif SmtAtom.Form.to_smt !confl "/tmp/after.log"; *)
+  res
 
 
 (** The API checker **)

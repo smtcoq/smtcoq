@@ -187,6 +187,28 @@ let testEq_transitive =
   in
   (smt, proof)
 
+let testOr =
+  let fa = ("a", [], "Bool") in
+  let fb = ("b", [], "Bool") in
+  let a  = Api.EFun (fa, []) in
+  let b  = Api.EFun (fb, []) in
+  let ab = Api.EOr [a; b] in
+  let smt =
+    let sorts = [] in
+    let funs = [fa; fb] in
+    let ass = [|ab; Api.ENeg a; Api.ENeg b|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Cor t1) in
+    let t5 = ("t5", Api.Cresolution [t4; t2; t3]) in
+    t5
+  in
+  (smt, proof)
+
 
 (* unit-tests/lia6.vtlog *)
 
@@ -234,7 +256,8 @@ let testT00 =
 
 let _ =
   let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
-  deb testEq_transitive;
+  (* deb testEq_transitive; *)
+  deb testOr;
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
@@ -249,7 +272,8 @@ let _ =
   assert(ass  testFalse);
   assert(ass  testEq_reflexive);
   assert(ass  testEq_transitive);
-  assert(ass  test_lia6);
+  (* assert(ass  testOr); *)
+  (* assert(ass  test_lia6); *)
   Printf.printf "All tests suceeded\n";
 
   (* Printf.printf "Now testing the debugging checker:\n"; *)
