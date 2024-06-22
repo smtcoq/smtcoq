@@ -61,4 +61,5 @@ val clear : unit -> unit
 
 (* For the API of the extracted checker *)
 val mkMicromega : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause_kind
-val mkCongr : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause_kind
+val mkCongr     : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause_kind
+val mkCongrPred : SmtAtom.Form.t list -> SmtAtom.Form.t SmtCertif.clause_kind
