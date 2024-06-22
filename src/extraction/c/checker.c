@@ -849,9 +849,9 @@ typedef struct ICOMMANDS_t {
 ICOMMANDS icommands;
 
 void reset_commands() {
-  free(icommands.sorts);
-  free(icommands.funsyms);
-  free(icommands.asserts);
+  /* free(icommands.sorts); */
+  /* free(icommands.funsyms); */
+  /* free(icommands.asserts); */
 }
 
 void start_smt2() {

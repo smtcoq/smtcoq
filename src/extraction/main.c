@@ -1094,7 +1094,7 @@ int testEquiv1() {
   FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
-  EXPR ab = eimp(a, b);
+  EXPR ab = eeq(a, b);
 
   // SMT-LIB2 problem
   start_smt2();
@@ -1122,7 +1122,7 @@ int testEquiv2() {
   FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
-  EXPR ab = eimp(a, b);
+  EXPR ab = eeq(a, b);
 
   // SMT-LIB2 problem
   start_smt2();
@@ -1150,7 +1150,7 @@ int testNot_equiv1() {
   FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
-  EXPR ab = eimp(a, b);
+  EXPR ab = eeq(a, b);
 
   // SMT-LIB2 problem
   start_smt2();
@@ -1178,7 +1178,7 @@ int testNot_equiv2() {
   FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
-  EXPR ab = eimp(a, b);
+  EXPR ab = eeq(a, b);
 
   // SMT-LIB2 problem
   start_smt2();
