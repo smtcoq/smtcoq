@@ -198,8 +198,8 @@ let testEq_congruent =
   let a2  = Api.EFun (fa2, []) in
   let b1  = Api.EFun (fb1, []) in
   let b2  = Api.EFun (fb2, []) in
-  let f1 = Api.EFun (f, [a1; b1]) in
-  let f2 = Api.EFun (f, [a2; b2]) in
+  let f1 = Api.EFun (f, [a1; a2]) in
+  let f2 = Api.EFun (f, [b1; b2]) in
   let ab1 = Api.EEq (a1, b1) in
   let ab2 = Api.EEq (a2, b2) in
   let f12 = Api.EEq (f1, f2) in
@@ -213,7 +213,7 @@ let testEq_congruent =
     let t1 = ("t1", Api.Cassume 0) in
     let t2 = ("t2", Api.Cassume 1) in
     let t3 = ("t3", Api.Cassume 2) in
-    let t4 = ("t4", Api.Ceq_congruent [a; b; c]) in
+    let t4 = ("t4", Api.Ceq_congruent (f, [a1; a2], [b1; b2])) in
     let t5 = ("t5", Api.Cresolution [t4; t1; t2; t3]) in
     t5
   in
@@ -917,8 +917,8 @@ let testT00 =
 
 
 let _ =
-  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
-  (* deb testEquiv_neg2; *)
+  let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
+  deb testEq_congruent;
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
@@ -933,6 +933,7 @@ let _ =
   assert(ass  testFalse);
   assert(ass  testEq_reflexive);
   assert(ass  testEq_transitive);
+  assert(ass  testEq_congruent);
   assert(ass  testAnd);
   assert(ass  testNot_or);
   assert(ass  testOr);
