@@ -337,22 +337,22 @@ type node =
 
   (* 25. Proves the clause
            {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
-         The tis and uis must be non-Boolean terms.
+         The tis and uis must be non-Boolean terms, and the codomain of f must not be Bool.
    *)
   | Ceq_congruent of expr list
 
-  (* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
-         proves the clause
+  (* 26. Proves the clause
            {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
+         The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
    *)
-  | Ceq_congruent_pred of funsym * expr list * expr list
+  | Ceq_congruent_pred of expr list
 
   (* 26b. A small variant
-          Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
-          proves the clause
+          Proves the clause
             {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+         The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
    *)
-  | Ceq_congruent_pred_b of funsym * expr list * expr list
+  | Ceq_congruent_pred_b of expr list
 
   (* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
          proves the clause {fk}
@@ -584,26 +584,23 @@ let process_certif rootsa ra rf =
         | Ceq_congruent l ->
            let l' = List.map (make_form ra rf) l in
            RKind (VeritSyntax.mkCongr l')
-        | Ceq_congruent_pred (p, tl, ul) ->
-           let t = EFun (p, tl) in
-           let u = EFun (p, ul) in
-           let c4  = ("dummy_eq_congruent_pred_1", Ceq_congruent_pred_b (p, tl, ul)) in
-           let c5  = ("dummy_eq_congruent_pred_2", Ceq_congruent_pred_b (p, ul, tl)) in
-           let c6  = ("dummy_eq_congruent_pred_3", Cequiv_neg2 (t, u)) in
-           let c7  = ("dummy_eq_congruent_pred_4", Cequiv_neg1 (t, u)) in
-           let c8  = ("dummy_eq_congruent_pred_5", Cresolution [c6; c5]) in
-           let c9  = ("dummy_eq_congruent_pred_6", Cresolution [c4; c8]) in
-           let c7' = pc c7 in
-           let c8' = pc c8 in
-           let c9' = pc c9 in
-           let res = {SmtCertif.rc1 = c7'; SmtCertif.rc2 = c8'; SmtCertif.rtail = [c9']} in
-           RKind (SmtCertif.Res res)
-        | Ceq_congruent_pred_b (p, tl, ul) ->
-           let l = List.map2 (fun t u -> Some (make_form ra rf (ENot (EEq (t, u))))) tl ul in
-           let t = make_form ra rf (ENot (EFun (p, tl))) in
-           let u = make_form ra rf (EFun (p, ul)) in
-           other (SmtCertif.EqCgrP (t, u, l))
-
+        | Ceq_congruent_pred _ (* (p, tl, ul) *) -> assert false
+           (* let t = EFun (p, tl) in *)
+           (* let u = EFun (p, ul) in *)
+           (* let c4  = ("dummy_eq_congruent_pred_1", Ceq_congruent_pred_b (p, tl, ul)) in *)
+           (* let c5  = ("dummy_eq_congruent_pred_2", Ceq_congruent_pred_b (p, ul, tl)) in *)
+           (* let c6  = ("dummy_eq_congruent_pred_3", Cequiv_neg2 (t, u)) in *)
+           (* let c7  = ("dummy_eq_congruent_pred_4", Cequiv_neg1 (t, u)) in *)
+           (* let c8  = ("dummy_eq_congruent_pred_5", Cresolution [c6; c5]) in *)
+           (* let c9  = ("dummy_eq_congruent_pred_6", Cresolution [c4; c8]) in *)
+           (* let c7' = pc c7 in *)
+           (* let c8' = pc c8 in *)
+           (* let c9' = pc c9 in *)
+           (* let res = {SmtCertif.rc1 = c7'; SmtCertif.rc2 = c8'; SmtCertif.rtail = [c9']} in *)
+           (* RKind (SmtCertif.Res res) *)
+        | Ceq_congruent_pred_b l ->
+           let l' = List.map (make_form ra rf) l in
+           RKind (VeritSyntax.mkCongrPred l')
         | Cand_neg l -> builddef (make_form ra rf (EAnd l))
         | Cor_pos l -> builddef (make_form ra rf (ENot (EOr l)))
         | Cimplies_pos (a, b) -> builddef (make_form ra rf (ENot (EImp (a, b))))

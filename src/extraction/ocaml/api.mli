@@ -135,22 +135,22 @@ type node =
 
   (* 25. Proves the clause
            {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
-         The tis and uis must be non-Boolean terms.
+         The tis and uis must be non-Boolean terms, and the codomain of f must not be Bool.
    *)
   | Ceq_congruent of expr list
 
-  (* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
-         proves the clause
+  (* 26. Proves the clause
            {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
+         The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
    *)
-  | Ceq_congruent_pred of funsym * expr list * expr list
+  | Ceq_congruent_pred of expr list
 
   (* 26b. A small variant
-          Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
-          proves the clause
+          Proves the clause
             {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
+         The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
    *)
-  | Ceq_congruent_pred_b of funsym * expr list * expr list
+  | Ceq_congruent_pred_b of expr list
 
   (* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
          proves the clause {fk}

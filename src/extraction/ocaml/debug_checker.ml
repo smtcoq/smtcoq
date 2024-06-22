@@ -136,12 +136,95 @@ let rec debug_checker_rec fmt smt proof =
                  raise (Check "eq_congruent: missing equality")
              ) ts us;
            p
-        | Api.Ceq_congruent_pred (f, ts, us) ->
-           let r = List.map2 (fun t u -> Api.ENot (Api.EEq (t, u))) ts us in
-           (Api.EEq (Api.EFun (f, ts), Api.EFun (f, us)))::r
-        | Api.Ceq_congruent_pred_b (f, ts, us) ->
-           let r = List.map2 (fun t u -> Api.ENot (Api.EEq (t, u))) ts us in
-           (Api.ENot (Api.EFun (f, ts)))::(Api.EFun (f, ts))::r
+        | Api.Ceq_congruent_pred p ->
+           let (concl, prem) = List.partition (function Api.ENot _ -> false | _ -> true) p in
+           let (a, b) =
+             match concl with
+               | [Api.EEq (a, b)] -> (a, b)
+               | [_] -> raise (Check "eq_congruent_pred: the conclusion is not an equality")
+               | [] -> raise (Check "eq_congruent_pred: no conclusion")
+               | _ -> raise (Check "eq_congruent_pred: multiple conclusions")
+           in
+           let (ts, us) =
+             match a, b with
+               | Api.EFun (f1, ts),   Api.EFun (f2, us) when f1 = f2 -> (ts, us)
+               | Api.ELt (t1, t2), Api.ELt (u1, u2)
+               | Api.ELe (t1, t2), Api.ELe (u1, u2)
+               | Api.EGt (t1, t2), Api.EGt (u1, u2)
+               | Api.EGe (t1, t2), Api.EGe (u1, u2) -> ([t1; t2], [u1; u2])
+               | Api.ETrue,    _ | _, Api.ETrue
+               | Api.EFalse,   _ | _, Api.EFalse
+               | Api.ENot _,   _ | _, Api.ENot _
+               | Api.EAnd _,   _ | _, Api.EAnd _
+               | Api.EOr _,    _ | _, Api.EOr _
+               | Api.EXor _,   _ | _, Api.EXor _
+               | Api.EImp _,   _ | _, Api.EImp _
+               | Api.EEq _,    _ | _, Api.EEq _
+               | Api.EAdd _,   _ | _, Api.EAdd _
+               | Api.EMinus _, _ | _, Api.EMinus _
+               | Api.EMult _,  _ | _, Api.EMult _
+               | Api.EOpp _,   _ | _, Api.EOpp _ ->
+                  raise (Check "eq_congruent_pred: applies only to non-Boolean sub-terms (work in progress)")
+               | _, _ -> raise (Check "eq_congruent_pred: not the same function symbol")
+           in
+           List.iter2 (fun t u ->
+               if not (List.exists (function
+                             Api.ENot (Api.EEq (a, b))
+                               when (a = t && b = u) || (a = u && b = t)
+                             -> true | _ -> false) prem
+                    )
+               then
+                 raise (Check "eq_congruent_pred: missing equality")
+             ) ts us;
+           p
+        | Api.Ceq_congruent_pred_b p ->
+           let (concl, prem) =
+             List.partition (function Api.ENot _ -> false | _ -> true) p
+           in
+           let (prem, prem_P) =
+             List.partition
+               (function Api.ENot (Api.EEq _) -> true | _ -> false) prem
+           in
+           let (a, b) =
+             match concl, prem_P with
+               | [a], [Api.ENot b] -> (b, a)
+               | [], [_] -> raise (Check "eq_congruent_pred_b: no conclusion")
+               | _, [_] -> raise (Check "eq_congruent_pred_b: multiple conclusions")
+               | _, [] -> raise (Check "eq_congruent_pred_b: no predicate premisse")
+               | _, _ -> raise (Check "eq_congruent_pred_b: multiple predicate premisses")
+           in
+           let (ts, us) =
+             match a, b with
+               | Api.EFun (f1, ts),   Api.EFun (f2, us) when f1 = f2 -> (ts, us)
+               | Api.ELt (t1, t2), Api.ELt (u1, u2)
+               | Api.ELe (t1, t2), Api.ELe (u1, u2)
+               | Api.EGt (t1, t2), Api.EGt (u1, u2)
+               | Api.EGe (t1, t2), Api.EGe (u1, u2) -> ([t1; t2], [u1; u2])
+               | Api.ETrue,    _ | _, Api.ETrue
+               | Api.EFalse,   _ | _, Api.EFalse
+               | Api.ENot _,   _ | _, Api.ENot _
+               | Api.EAnd _,   _ | _, Api.EAnd _
+               | Api.EOr _,    _ | _, Api.EOr _
+               | Api.EXor _,   _ | _, Api.EXor _
+               | Api.EImp _,   _ | _, Api.EImp _
+               | Api.EEq _,    _ | _, Api.EEq _
+               | Api.EAdd _,   _ | _, Api.EAdd _
+               | Api.EMinus _, _ | _, Api.EMinus _
+               | Api.EMult _,  _ | _, Api.EMult _
+               | Api.EOpp _,   _ | _, Api.EOpp _ ->
+                  raise (Check "eq_congruent_pred_b: applies only to non-Boolean sub-terms (work in progress)")
+               | _, _ -> raise (Check "eq_congruent_pred_b: not the same function symbol")
+           in
+           List.iter2 (fun t u ->
+               if not (List.exists (function
+                             Api.ENot (Api.EEq (a, b))
+                               when (a = t && b = u) || (a = u && b = t)
+                             -> true | _ -> false) prem
+                    )
+               then
+                 raise (Check "eq_congruent_pred_b: missing equality")
+             ) ts us;
+           p
         | Api.Cand (c, k) ->
            (match debug_checker_rec fmt smt c with
               | [Api.EAnd l] ->  [List.nth l (k-1)]
