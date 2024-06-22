@@ -148,24 +148,22 @@ CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts);
 
 /* 25. Proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
-       The tis and uis must be non-Boolean terms.
+       The tis and uis must be non-Boolean terms, and the codomain of f must not be Bool.
 */
 CERTIF ceq_congruent(char* name, size_t n, const EXPR* clause);
 
-/* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
-       proves the clause
+/* 26. Proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
-       n is given by the arity of P
+       The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
 */
-CERTIF ceq_congruent_pred(char* name, FUNSYM p, const EXPR* ts, const EXPR* us);
+CERTIF ceq_congruent_pred(char* name, size_t n, const EXPR* clause);
 
 /* 26b. A small variant
-        Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
-        proves the clause
+        Proves the clause
           {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
-       n is given by the arity of P
+       The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
 */
-CERTIF ceq_congruent_pred_b(char* name, FUNSYM p, const EXPR* ts, const EXPR* us);
+CERTIF ceq_congruent_pred_b(char* name, size_t n, const EXPR* clause);
 
 /* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
        proves the clause {fk}
