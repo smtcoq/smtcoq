@@ -374,7 +374,7 @@ CERTIF clia_generic(char* name, size_t nb, const EXPR* l) {
 }
 
 /* 23. Given a term t, proves the clause {(= t t)}
-       Applies only to terms.
+       Applies only to a non-Boolean term.
 */
 CERTIF ceq_reflexive(char* name, EXPR t) {
   CAMLparam1(t);
@@ -385,8 +385,8 @@ CERTIF ceq_reflexive(char* name, EXPR t) {
 }
 
 /* 24. Given the terms t1 ... tn,
-       proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
-       Applies only to terms.
+         proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+       The tis must be non-Boolean terms.
 */
 CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts) {
   value node = caml_alloc(1, CEQ_TRANSITIVE);
@@ -394,16 +394,13 @@ CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts) {
   return certif(name, node);
 }
 
-/* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
-       proves the clause
+/* 25. Proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
-       n is given by the arity of f
+       The tis and uis must be non-Boolean terms.
 */
-CERTIF ceq_congruent(char* name, FUNSYM f, const EXPR* ts, const EXPR* us) {
-  value node = caml_alloc(3, CEQ_CONGRUENT);
-  Store_field(node, 0, f.fval);
-  Store_field(node, 1, value_list(f.arity, ts));
-  Store_field(node, 2, value_list(f.arity, us));
+CERTIF ceq_congruent(char* name, size_t n, const EXPR* clause) {
+  value node = caml_alloc(1, CEQ_CONGRUENT);
+  Store_field(node, 0, value_list(n, clause));
   return certif(name, node);
 }
 

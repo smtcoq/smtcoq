@@ -77,10 +77,8 @@ let pp_funsym fmt (f:funsym) =
 let rec pp_expr fmt = function
   | EFun (f, l) ->
      let pp fmt l =
-       if List.compare_length_with l 0 = 0 then
-         ()
-       else
-         Smt_utils.pp_list pp_expr ", " "(" ")" fmt l
+       if not (List.compare_length_with l 0 = 0) then
+         Smt_utils.pp_list pp_expr "," "(" ")" fmt l
      in
      Format.fprintf fmt "%a%a" pp_funsym f pp l
   | ETrue  -> Format.fprintf fmt "true"
@@ -327,21 +325,21 @@ type node =
   | Clia_generic of expr list
 
   (* 23. Given a term t, proves the clause {(= t t)}
-         Applies only to terms.
+         Applies only to a non-Boolean term.
    *)
   | Ceq_reflexive of expr
 
   (* 24. Given the terms t1 ... tn,
-         proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
-         Applies only to terms.
+           proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+         The tis must be non-Boolean terms.
    *)
   | Ceq_transitive of expr list
 
-  (* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
-         proves the clause
+  (* 25. Proves the clause
            {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
+         The tis and uis must be non-Boolean terms.
    *)
-  | Ceq_congruent of funsym * expr list * expr list
+  | Ceq_congruent of expr list
 
   (* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
          proves the clause
@@ -583,12 +581,9 @@ let process_certif rootsa ra rf =
                  other (SmtCertif.EqTr (r, l'))
               | _ -> failwith "eq_transitive should contain at least two terms"
            )
-        | Ceq_congruent (f, tl, ul) ->
-           let l = List.map2 (fun t u -> Some (make_form ra rf (ENot (EEq (t, u))))) tl ul in
-           let t = EFun (f, tl) in
-           let u = EFun (f, ul) in
-           let r = make_form ra rf (EEq (t, u)) in
-           other (SmtCertif.EqCgr (r, l))
+        | Ceq_congruent l ->
+           let l' = List.map (make_form ra rf) l in
+           RKind (VeritSyntax.mkCongr l')
         | Ceq_congruent_pred (p, tl, ul) ->
            let t = EFun (p, tl) in
            let u = EFun (p, ul) in

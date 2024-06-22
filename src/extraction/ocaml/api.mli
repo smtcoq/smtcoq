@@ -123,21 +123,21 @@ type node =
   | Clia_generic of expr list
 
   (* 23. Given a term t, proves the clause {(= t t)}
-         Applies only to terms.
+         Applies only to a non-Boolean term.
    *)
   | Ceq_reflexive of expr
 
   (* 24. Given the terms t1 ... tn,
-         proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
-         Applies only to terms.
+           proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+         The tis must be non-Boolean terms.
    *)
   | Ceq_transitive of expr list
 
-  (* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
-         proves the clause
+  (* 25. Proves the clause
            {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
+         The tis and uis must be non-Boolean terms.
    *)
-  | Ceq_congruent of funsym * expr list * expr list
+  | Ceq_congruent of expr list
 
   (* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
          proves the clause

@@ -189,11 +189,11 @@ let testEq_transitive =
 
 let testEq_congruent =
   let u   = "U" in
-  let f   = ("f", ["Int"; "Bool"], u) in
+  let f   = ("f", ["Int"; u], u) in
   let fa1 = ("a1", [], "Int") in
-  let fa2 = ("a2", [], "Bool") in
+  let fa2 = ("a2", [], u) in
   let fb1 = ("b1", [], "Int") in
-  let fb2 = ("b2", [], "Bool") in
+  let fb2 = ("b2", [], u) in
   let a1  = Api.EFun (fa1, []) in
   let a2  = Api.EFun (fa2, []) in
   let b1  = Api.EFun (fb1, []) in
@@ -213,7 +213,7 @@ let testEq_congruent =
     let t1 = ("t1", Api.Cassume 0) in
     let t2 = ("t2", Api.Cassume 1) in
     let t3 = ("t3", Api.Cassume 2) in
-    let t4 = ("t4", Api.Ceq_congruent (f, [a1; a2], [b1; b2])) in
+    let t4 = ("t4", Api.Ceq_congruent [Api.ENot ab1; f12; Api.ENot ab2]) in
     let t5 = ("t5", Api.Cresolution [t4; t1; t2; t3]) in
     t5
   in

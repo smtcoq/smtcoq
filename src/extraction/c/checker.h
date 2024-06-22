@@ -136,22 +136,21 @@ CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses);
 CERTIF clia_generic(char* name, size_t nb, const EXPR* l);
 
 /* 23. Given a term t, proves the clause {(= t t)}
-       Applies only to terms.
+       Applies only to a non-Boolean term.
 */
 CERTIF ceq_reflexive(char* name, EXPR t);
 
 /* 24. Given the terms t1 ... tn,
-       proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
-       Applies only to terms.
+         proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
+       The tis must be non-Boolean terms.
 */
 CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts);
 
-/* 25. Given a function symbol f, the terms t1 ... tn, and the terms u1 ... un,
-       proves the clause
+/* 25. Proves the clause
          {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
-       n is given by the arity of f
+       The tis and uis must be non-Boolean terms.
 */
-CERTIF ceq_congruent(char* name, FUNSYM f, const EXPR* ts, const EXPR* us);
+CERTIF ceq_congruent(char* name, size_t n, const EXPR* clause);
 
 /* 26. Given a predicate symbol P, the terms t1 ... tn, and the terms u1 ... un,
        proves the clause
