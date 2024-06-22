@@ -584,20 +584,29 @@ let process_certif rootsa ra rf =
         | Ceq_congruent l ->
            let l' = List.map (make_form ra rf) l in
            RKind (VeritSyntax.mkCongr l')
-        | Ceq_congruent_pred _ (* (p, tl, ul) *) -> assert false
-           (* let t = EFun (p, tl) in *)
-           (* let u = EFun (p, ul) in *)
-           (* let c4  = ("dummy_eq_congruent_pred_1", Ceq_congruent_pred_b (p, tl, ul)) in *)
-           (* let c5  = ("dummy_eq_congruent_pred_2", Ceq_congruent_pred_b (p, ul, tl)) in *)
-           (* let c6  = ("dummy_eq_congruent_pred_3", Cequiv_neg2 (t, u)) in *)
-           (* let c7  = ("dummy_eq_congruent_pred_4", Cequiv_neg1 (t, u)) in *)
-           (* let c8  = ("dummy_eq_congruent_pred_5", Cresolution [c6; c5]) in *)
-           (* let c9  = ("dummy_eq_congruent_pred_6", Cresolution [c4; c8]) in *)
-           (* let c7' = pc c7 in *)
-           (* let c8' = pc c8 in *)
-           (* let c9' = pc c9 in *)
-           (* let res = {SmtCertif.rc1 = c7'; SmtCertif.rc2 = c8'; SmtCertif.rtail = [c9']} in *)
-           (* RKind (SmtCertif.Res res) *)
+        | Ceq_congruent_pred l ->
+           (let (concl, prem) = List.partition (function ENot _ -> false | _ -> true) l in
+            match concl with
+              | [EEq (pt, pu)] ->
+                 let c4  = ("dummy_eq_congruent_pred_1",
+                              Ceq_congruent_pred_b ((ENot pt)::pu::prem))
+                 in
+                 let c5  = ("dummy_eq_congruent_pred_2",
+                              Ceq_congruent_pred_b ((ENot pu)::pt::prem))
+                 in
+                 let c6  = ("dummy_eq_congruent_pred_3", Cequiv_neg2 (pt, pu)) in
+                 let c7  = ("dummy_eq_congruent_pred_4", Cequiv_neg1 (pt, pu)) in
+                 let c8  = ("dummy_eq_congruent_pred_5", Cresolution [c6; c5]) in
+                 let c9  = ("dummy_eq_congruent_pred_6", Cresolution [c4; c8]) in
+                 let c7' = pc c7 in
+                 let c8' = pc c8 in
+                 let c9' = pc c9 in
+                 let res =
+                   {SmtCertif.rc1 = c7'; SmtCertif.rc2 = c8'; SmtCertif.rtail = [c9']}
+                 in
+                 RKind (SmtCertif.Res res)
+              | _ -> failwith "invalid eq_congruent_pred"
+           )
         | Ceq_congruent_pred_b l ->
            let l' = List.map (make_form ra rf) l in
            RKind (VeritSyntax.mkCongrPred l')

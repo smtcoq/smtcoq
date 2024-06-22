@@ -281,6 +281,66 @@ let testEq_congruent_pred_b =
   in
   (smt, proof)
 
+let testEq_congruent_pred =
+  let u   = "U" in
+  let p   = ("p", ["Int"; u], "Bool") in
+  let fa1 = ("a1", [], "Int") in
+  let fa2 = ("a2", [], u) in
+  let fb1 = ("b1", [], "Int") in
+  let fb2 = ("b2", [], u) in
+  let a1  = Api.EFun (fa1, []) in
+  let a2  = Api.EFun (fa2, []) in
+  let b1  = Api.EFun (fb1, []) in
+  let b2  = Api.EFun (fb2, []) in
+  let p1 = Api.EFun (p, [a1; a2]) in
+  let p2 = Api.EFun (p, [b1; b2]) in
+  let ab1 = Api.EEq (a1, b1) in
+  let ab2 = Api.EEq (a2, b2) in
+  let smt =
+    let sorts = [u] in
+    let funs = [p; fa1; fa2; fb1; fb2] in
+    let ass = [|ab1; ab2; Api.ENot (Api.EEq (p1, p2))|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Ceq_congruent_pred [Api.ENot ab1; Api.ENot ab2; Api.EEq (p1, p2)]) in
+    let t5 = ("t5", Api.Cresolution [t4; t1; t2; t3]) in
+    t5
+  in
+  (smt, proof)
+
+let testEq_congruent_pred2 =
+  let fa1 = ("a1", [], "Int") in
+  let fa2 = ("a2", [], "Int") in
+  let fb1 = ("b1", [], "Int") in
+  let fb2 = ("b2", [], "Int") in
+  let a1  = Api.EFun (fa1, []) in
+  let a2  = Api.EFun (fa2, []) in
+  let b1  = Api.EFun (fb1, []) in
+  let b2  = Api.EFun (fb2, []) in
+  let p1 = Api.EGt (a1, a2) in
+  let p2 = Api.EGt (b1, b2) in
+  let ab1 = Api.EEq (a1, b1) in
+  let ab2 = Api.EEq (a2, b2) in
+  let smt =
+    let sorts = [] in
+    let funs = [fa1; fa2; fb1; fb2] in
+    let ass = [|ab1; ab2; Api.ENot (Api.EEq (p1, p2))|] in
+    (sorts, funs, ass)
+  in
+  let proof =
+    let t1 = ("t1", Api.Cassume 0) in
+    let t2 = ("t2", Api.Cassume 1) in
+    let t3 = ("t3", Api.Cassume 2) in
+    let t4 = ("t4", Api.Ceq_congruent_pred [Api.ENot ab1; Api.ENot ab2; Api.EEq (p1, p2)]) in
+    let t5 = ("t5", Api.Cresolution [t4; t1; t2; t3]) in
+    t5
+  in
+  (smt, proof)
+
 let testEq_congruent_pred_b2 =
   let fa1 = ("a1", [], "Int") in
   let fa2 = ("a2", [], "Int") in
@@ -1009,8 +1069,8 @@ let testT00 =
 
 
 let _ =
-  let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in
-  deb testEq_congruent_pred_b2;
+  (* let deb t = let (smt, proof) = t in Debug_checker.debug_checker_stdout smt proof in *)
+  (* deb testEq_congruent_pred2; *)
 
   let ass  t = let (smt, proof) = t in      Api.checker smt proof in
   let assn t = let (smt, proof) = t in not (Api.checker smt proof) in
@@ -1027,6 +1087,8 @@ let _ =
   assert(ass  testEq_transitive);
   assert(ass  testEq_congruent);
   assert(ass  testEq_congruent2);
+  assert(ass  testEq_congruent_pred);
+  assert(ass  testEq_congruent_pred2);
   assert(ass  testEq_congruent_pred_b);
   assert(ass  testEq_congruent_pred_b2);
   assert(ass  testAnd);
