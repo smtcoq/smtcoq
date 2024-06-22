@@ -102,23 +102,24 @@ let mkCongr p =
   |[c] ->
     let a,b = get_eq c in
     let prem_val = List.map (fun l -> (l,get_eq l)) prem in
-    (match Atom.atom a, Atom.atom b with
-     | Abop(aop,a1,a2), Abop(bop,b1,b2) when (aop = bop) ->
-        let a_args = [a1;a2] in
-        let b_args = [b1;b2] in
-        let cert = process_congr a_args b_args prem_val [] in
-        Other (EqCgr (c,cert))
-     | Auop (aop,a), Auop (bop,b) when (aop = bop) ->
-        let a_args = [a] in
-        let b_args = [b] in
-        let cert = process_congr a_args b_args prem_val [] in
-        Other (EqCgr (c,cert))
-     | Aapp (a_f,a_args), Aapp (b_f,b_args) ->
-        if indexed_op_index a_f = indexed_op_index b_f then
-          let cert = process_congr (Array.to_list a_args) (Array.to_list b_args) prem_val [] in
-          Other (EqCgr (c,cert))
-        else failwith "VeritSyntax.mkCongr: left function is different from right fucntion"
-     | _, _ -> failwith "VeritSyntax.mkCongr: atoms are not applications")
+    let (a_args, b_args) =
+      (match Atom.atom a, Atom.atom b with
+         | Auop (aop,a), Auop (bop,b) when (aop = bop) -> ([a], [b])
+         | Abop(aop,a1,a2), Abop(bop,b1,b2) when (aop = bop) ->
+            ([a1;a2], [b1;b2])
+         | Atop(aop,a1,a2,a3), Atop(bop,b1,b2,b3) when (aop = bop) ->
+            ([a1;a2;a3], [b1;b2;b3])
+         | Anop(aop,a), Anop(bop,b) when (aop = bop) ->
+            (Array.to_list a, Array.to_list b)
+         | Aapp (a_f,a_args), Aapp (b_f,b_args) ->
+            if indexed_op_index a_f = indexed_op_index b_f then
+              (Array.to_list a_args, Array.to_list b_args)
+            else
+              failwith "VeritSyntax.mkCongr: left function is different from right function"
+         | _, _ -> failwith "VeritSyntax.mkCongr: atoms are not applications of the same function")
+    in
+    let cert = process_congr a_args b_args prem_val [] in
+    Other (EqCgr (c,cert))
   |_ -> failwith "VeritSyntax.mkCongr: no conclusion or more than one conclusion in congruence"
 
 
