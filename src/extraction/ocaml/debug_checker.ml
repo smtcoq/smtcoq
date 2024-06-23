@@ -16,7 +16,7 @@ open Smtcoq_plugin
 type clause = Api.expr list
 
 let pp_clause fmt (cl:clause) =
-  Smt_utils.pp_list Api.pp_expr " " "(" ")" fmt cl
+  Smt_utils.pp_list Api.pp_expr " " "{" "}" fmt cl
 
 
 exception Check of string

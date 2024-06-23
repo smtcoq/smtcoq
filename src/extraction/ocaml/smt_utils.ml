@@ -473,7 +473,7 @@ let checker ra rf roots max_id confl =
 (** Pretty printers **)
 let rec pp_list_aux2 pp_elem delim fmt = function
 | [] -> ()
-| t::q -> Format.fprintf fmt "%s %a%a" delim pp_elem t (pp_list_aux2 pp_elem delim) q
+| t::q -> Format.fprintf fmt "%s%a%a" delim pp_elem t (pp_list_aux2 pp_elem delim) q
 
 let pp_list_aux pp_elem delim fmt = function
 | [] -> ()

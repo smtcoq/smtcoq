@@ -78,7 +78,7 @@ let rec pp_expr fmt = function
   | EFun (f, l) ->
      let pp fmt l =
        if not (List.compare_length_with l 0 = 0) then
-         Smt_utils.pp_list pp_expr "," "(" ")" fmt l
+         Smt_utils.pp_list pp_expr ", " "(" ")" fmt l
      in
      Format.fprintf fmt "%a%a" pp_funsym f pp l
   | ETrue  -> Format.fprintf fmt "true"
