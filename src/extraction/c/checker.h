@@ -22,6 +22,12 @@
 
 SORT sort(char* s);
 
+/* Booleans */
+SORT bool();
+
+/* Integers */
+SORT integer();
+
 
 /** Function symbols of first-order logic **/
 

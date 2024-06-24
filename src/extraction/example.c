@@ -32,7 +32,7 @@ int main(int argc, char ** argv)
 
   // `asymb` is a function symbol with name "a", empty domain (`0` and
   // `NULL`), and codomain in the sort `Bool`
-  FUNSYM asymb = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM asymb = funsym("a", 0, NULL, bool());
   declare_fun(asymb);
 
   // From this function symbol, we can define our expression `a ∧ ¬a`

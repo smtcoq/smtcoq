@@ -29,7 +29,7 @@ let get_assert (smt:Api.smtlib2) i =
 
 let rec resolve cl r =
   match cl with
-    | [] -> raise (Check "could not find resolvant")
+    | [] -> raise (Check "resolution: could not find resolvant")
     | t::q ->
        (match t with
           | Api.ENot f ->

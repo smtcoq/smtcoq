@@ -258,7 +258,7 @@ void testCID01() {
 int testCF02() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
   EXPR as[2] = {a, enot(a)};
@@ -276,7 +276,7 @@ int testCF02() {
 void testCFD02() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
   EXPR as[2] = {a, enot(a)};
@@ -294,7 +294,7 @@ void testCFD02() {
 int testCI02() {
   // SMT-LIB2 problem
   start_smt2();
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
@@ -311,7 +311,7 @@ int testCI02() {
 void testCID02() {
   // SMT-LIB2 problem
   start_smt2();
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
@@ -328,7 +328,7 @@ void testCID02() {
 int testCF03() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
   EXPR as[2] = {a, enot(a)};
@@ -346,7 +346,7 @@ int testCF03() {
 void testCFD03() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
   EXPR as[2] = {a, enot(a)};
@@ -364,7 +364,7 @@ void testCFD03() {
 int testCI03() {
   // SMT-LIB2 problem
   start_smt2();
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
@@ -381,7 +381,7 @@ int testCI03() {
 void testCID03() {
   // SMT-LIB2 problem
   start_smt2();
-  FUNSYM fa = funsym("a", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym("a", 0, NULL, bool());
   declare_fun(fa);
   EXPR a = efun(fa, NULL);
   assertf(a);
@@ -400,8 +400,8 @@ void testCID03() {
 
 int testWeakening() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a  = efun(fa, NULL);
   EXPR b  = efun(fb, NULL);
   EXPR na  = enot(a);
@@ -522,7 +522,7 @@ int testEq_transitive() {
 int testEq_congruent() {
   // Expressions
   SORT u = sort("U");
-  SORT i = sort("Int");
+  SORT i = integer();
   SORT fdom[2] = {i, u};
   FUNSYM f = funsym ("f", 2, fdom, u);
   FUNSYM fa1 = funsym ("a1", 0, NULL, i);
@@ -568,7 +568,7 @@ int testEq_congruent() {
 
 int testEq_congruent2() {
   // Expressions
-  SORT i = sort("Int");
+  SORT i = integer();
   FUNSYM fa1 = funsym ("a1", 0, NULL, i);
   FUNSYM fa2 = funsym ("a2", 0, NULL, i);
   FUNSYM fb1 = funsym ("b1", 0, NULL, i);
@@ -609,8 +609,8 @@ int testEq_congruent2() {
 int testEq_congruent_pred() {
   // Expressions
   SORT u = sort("U");
-  SORT i = sort("Int");
-  SORT b = sort("Bool");
+  SORT i = integer();
+  SORT b = bool();
   SORT pdom[2] = {i, u};
   FUNSYM p = funsym ("p", 2, pdom, b);
   FUNSYM fa1 = funsym ("a1", 0, NULL, i);
@@ -656,7 +656,7 @@ int testEq_congruent_pred() {
 
 int testEq_congruent_pred2() {
   // Expressions
-  SORT i = sort("Int");
+  SORT i = integer();
   FUNSYM fa1 = funsym ("a1", 0, NULL, i);
   FUNSYM fa2 = funsym ("a2", 0, NULL, i);
   FUNSYM fb1 = funsym ("b1", 0, NULL, i);
@@ -697,8 +697,8 @@ int testEq_congruent_pred2() {
 int testEq_congruent_pred_b() {
   // Expressions
   SORT u = sort("U");
-  SORT i = sort("Int");
-  SORT b = sort("Bool");
+  SORT i = integer();
+  SORT b = bool();
   SORT pdom[2] = {i, u};
   FUNSYM p = funsym ("p", 2, pdom, b);
   FUNSYM fa1 = funsym ("a1", 0, NULL, i);
@@ -745,7 +745,7 @@ int testEq_congruent_pred_b() {
 
 int testEq_congruent_pred_b2() {
   // Expressions
-  SORT i = sort("Int");
+  SORT i = integer();
   FUNSYM fa1 = funsym ("a1", 0, NULL, i);
   FUNSYM fa2 = funsym ("a2", 0, NULL, i);
   FUNSYM fb1 = funsym ("b1", 0, NULL, i);
@@ -786,8 +786,8 @@ int testEq_congruent_pred_b2() {
 
 int testAnd() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR abb[2] = {a, b};
@@ -813,8 +813,8 @@ int testAnd() {
 
 int testNot_or() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR abb[2] = {a, b};
@@ -840,8 +840,8 @@ int testNot_or() {
 
 int testOr() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR abb[2] = {a, b};
@@ -869,8 +869,8 @@ int testOr() {
 
 int testNot_and() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR abb[2] = {a, b};
@@ -898,8 +898,8 @@ int testNot_and() {
 
 int testXor1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -926,8 +926,8 @@ int testXor1() {
 
 int testXor2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -954,8 +954,8 @@ int testXor2() {
 
 int testNot_xor1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -982,8 +982,8 @@ int testNot_xor1() {
 
 int testNot_xor2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -1010,8 +1010,8 @@ int testNot_xor2() {
 
 int testImplies() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eimp(a, b);
@@ -1038,8 +1038,8 @@ int testImplies() {
 
 int testNot_implies1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eimp(a, b);
@@ -1064,8 +1064,8 @@ int testNot_implies1() {
 
 int testNot_implies2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eimp(a, b);
@@ -1090,8 +1090,8 @@ int testNot_implies2() {
 
 int testEquiv1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1118,8 +1118,8 @@ int testEquiv1() {
 
 int testEquiv2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1146,8 +1146,8 @@ int testEquiv2() {
 
 int testNot_equiv1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1174,8 +1174,8 @@ int testNot_equiv1() {
 
 int testNot_equiv2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1202,8 +1202,8 @@ int testNot_equiv2() {
 
 int testAnd_pos() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR aa[2] = {a, b};
@@ -1230,8 +1230,8 @@ int testAnd_pos() {
 
 int testAnd_neg() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR aa[2] = {a, b};
@@ -1260,8 +1260,8 @@ int testAnd_neg() {
 
 int testOr_pos() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR aa[2] = {a, b};
@@ -1290,8 +1290,8 @@ int testOr_pos() {
 
 int testOr_neg() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR aa[2] = {a, b};
@@ -1318,8 +1318,8 @@ int testOr_neg() {
 
 int testXor_pos1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -1346,8 +1346,8 @@ int testXor_pos1() {
 
 int testXor_pos2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -1374,8 +1374,8 @@ int testXor_pos2() {
 
 int testXor_neg1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -1402,8 +1402,8 @@ int testXor_neg1() {
 
 int testXor_neg2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = exor(a, b);
@@ -1430,8 +1430,8 @@ int testXor_neg2() {
 
 int testImplies_pos() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eimp(a, b);
@@ -1458,8 +1458,8 @@ int testImplies_pos() {
 
 int testImplies_neg1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eimp(a, b);
@@ -1484,8 +1484,8 @@ int testImplies_neg1() {
 
 int testImplies_neg2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eimp(a, b);
@@ -1510,8 +1510,8 @@ int testImplies_neg2() {
 
 int testEquiv_pos1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1538,8 +1538,8 @@ int testEquiv_pos1() {
 
 int testEquiv_pos2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1566,8 +1566,8 @@ int testEquiv_pos2() {
 
 int testEquiv_neg1() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1594,8 +1594,8 @@ int testEquiv_neg1() {
 
 int testEquiv_neg2() {
   // Expressions
-  FUNSYM fa = funsym ("a", 0, NULL, sort("Bool"));
-  FUNSYM fb = funsym ("b", 0, NULL, sort("Bool"));
+  FUNSYM fa = funsym ("a", 0, NULL, bool());
+  FUNSYM fb = funsym ("b", 0, NULL, bool());
   EXPR a = efun(fa, NULL);
   EXPR b = efun(fb, NULL);
   EXPR ab = eeq(a, b);
@@ -1624,7 +1624,7 @@ int testEquiv_neg2() {
 /** unit-tests/lia6.vtlog **/
 int test_lia6 () {
   // Expressions
-  FUNSYM fx = funsym("x", 0, NULL, sort("Int"));
+  FUNSYM fx = funsym("x", 0, NULL, integer());
   EXPR x = efun(fx, NULL);
   EXPR e4 = eminus(x, eint(3));
   EXPR e5 = ele(eint(7), e4);
@@ -1659,7 +1659,7 @@ int test_lia6 () {
 int testTF00() {
   // SMT-LIB2 problem
   SORTS s = sorts(0, NULL);
-  FUNSYM fa = funsym("a", 0, NULL, sort("Int"));
+  FUNSYM fa = funsym("a", 0, NULL, integer());
   FUNSYMS f = funsyms(1, &fa);
   EXPR a = efun(fa, NULL);
   EXPR as[2] = {a, enot(a)};

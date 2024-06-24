@@ -59,6 +59,16 @@ SORT sort(char* s) {
   return value_string(s);
 }
 
+/* Booleans */
+SORT bool() {
+  return sort("Bool");
+}
+
+/* Integers */
+SORT integer() {
+  return sort("Int");
+}
+
 
 /** Function symbols of first-order logic **/
 
