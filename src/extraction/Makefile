@@ -43,9 +43,11 @@ OCAMLFIND=ocamlfind
 OCAMLFINDLIB=-thread -package zarith,num,findlib $(foreach x,$(COQUNITS),-package coq-core.$(x))
 
 
+CLIB=c/libsmtcoqapi.a
+CH=c/types.h c/checker.h
 CPROG=cprog
 
-all: $(LIB) $(PROGRAM) $(CPROG)
+all: $(LIB) $(PROGRAM) $(CLIB) $(CPROG)
 
 %.cmi: %.mli
 	$(OCAMLFIND) $(OCAMLC) $(OCAMLFINDLIB) -c $(FLAGS) $(SMTLIB) $(CURLIB) $<
@@ -70,14 +72,24 @@ CMAIN=main.c
 	$(OCAMLOPT) -c $<
 	mv $(notdir $@) $@
 
-$(CPROG): $(LIB) ocaml/api.cmx $(OFILES)
+$(CLIB): $(LIB) ocaml/api.cmx $(OFILES)
 	$(OCAMLFIND) $(OCAMLOPT) $(FLAGS) $(OCAMLFINDLIB) $(SMTLIB) $(CURLIB) -output-obj -o $(MLOFILE) $(PROGRAMFLAGS) $(COQCMX) $(SMTCOQCMX) $(LIB)
-	cp `ocamlc -where`/libasmrun.a c/run.a && chmod +w c/run.a
-	ar r c/run.a $(MLOFILE) $(OFILES)
-	cc -o $(CPROG) -I `ocamlc -where` -L `ocamlc -where` -L `ocamlc -where`/../zarith -L `ocamlc -where`/../coq-core/perf -L `ocamlc -where`/../coq-core/vm $(CMAIN) c/run.a -lm -lunix -lthreads -lnums -lcamlstr -lzarith -lgmp -lcoqperf_stubs -lcoqrun_stubs
+	cp `ocamlc -where`/libasmrun.a $(CLIB) && chmod +w $(CLIB)
+	ar r $(CLIB) $(MLOFILE) $(OFILES)
+
+$(CPROG): $(CLIB)
+	cc -o $(CPROG) -I `ocamlc -where` -L `ocamlc -where` -L `ocamlc -where`/../zarith -L `ocamlc -where`/../coq-core/perf -L `ocamlc -where`/../coq-core/vm $(CMAIN) $(CLIB) -lm -lunix -lthreads -lnums -lcamlstr -lzarith -lgmp -lcoqperf_stubs -lcoqrun_stubs
 
 
-.PHONY: clean mrproper
+.PHONY: clean mrproper install
+
+
+install: $(CLIB)
+	mkdir -p `ocamlc -where`/../smtcoq
+	cp $(CH) $(CLIB) `ocamlc -where`/../smtcoq
+
+# To compile after make install:
+# cc -o cprog -I `ocamlc -where` -L `ocamlc -where` -L `ocamlc -where`/../zarith -L `ocamlc -where`/../coq-core/perf -L `ocamlc -where`/../coq-core/vm -L `ocamlc -where`/../smtcoq main.c -lsmtcoqapi -lm -lunix -lthreads -lnums -lcamlstr -lzarith -lgmp -lcoqperf_stubs -lcoqrun_stubs
 
 
 clean:

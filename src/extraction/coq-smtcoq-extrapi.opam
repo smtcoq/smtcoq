@@ -1,0 +1,47 @@
+opam-version: "2.0"
+maintainer: "Chantal Keller <ckeller@lmf.cnrs.fr>"
+homepage: "https://smtcoq.github.io/capi"
+dev-repo: "git+https://github.com/smtcoq/smtcoq.git"
+bug-reports: "https://github.com/smtcoq/smtcoq/issues"
+license: "CECILL-C"
+build: [
+  [cd ..]
+  [make "-j%{jobs}%"]
+  [cd extraction]
+  [make c/run.a]
+]
+install: [
+  [make "install"]
+]
+depends: [
+  "ocaml" {= "4.09.1" }
+  "num"
+  "coq" {>= "8.19~" & < "8.20~"}
+]
+tags: [ 
+  "category:Computer Science/Decision Procedures and Certified Algorithms/Decision procedures"
+  "category:Miscellaneous/Coq Extensions"
+  "keyword: SMT"
+  "keyword: SAT"
+  "keyword: automation"
+  "logpath:SMTCoq"
+]
+authors: [ 
+ "Michaël Armand"
+ "Valentin Blot"
+ "Amina Bousalem"
+ "Louise Dubois de Prisque"
+ "Burak Ekici"
+ "Quentin Garchery"
+ "Benjamin Grégoire"
+ "Chantal Keller"
+ "Alain Mebsout"
+ "Pierre Vial"
+ "Arjun Viswanathan"
+]
+synopsis: "A C API for the SMTCoq certified checker for SAT and SMT proof witnesses"
+description: """
+A C API for the SMTCoq certified checker for SAT and SMT proof witnesses"""
+url {
+  src: "git+https://github.com/smtcoq/smtcoq.git#extrapi-coq-8.19"
+}
