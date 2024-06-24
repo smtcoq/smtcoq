@@ -10,6 +10,18 @@
 /**************************************************************************/
 
 
+/**
+ * @file checker.h
+ * @author Chantal Keller
+ * @date 24 Jun 2024
+ * @brief C API for SMTCoq
+ *
+ * This documentation details all the functions to use the C API for
+ * SMTCoq
+ * @see https://smtcoq.github.io/capi
+ */
+
+
 #ifndef _CHECKER_H_
 #define _CHECKER_H_
 
@@ -18,74 +30,250 @@
 #include "types.h"
 
 
-/** Sorts of first-order logic **/
+/** @defgroup sort Defining sorts of first-order logic
+ *  Defining sorts of first-order logic.
+ *  @{
+ */
 
+/**
+ * @brief Defining a sort of first-order logic.
+ *
+ * This function defines a sort in first-order logic, either interpreted
+ * if @p s is @c "Bool" or @c "Int", or uninterpreted otherwise.
+ * @param s The name of the sort.
+ * @return The corresponding sort.
+ */
 SORT sort(char* s);
 
+/** @} */ // end of sort
 
-/** Function symbols of first-order logic **/
 
+/** @defgroup funsym Defining function and predicate symbols of first-order logic
+ *  Defining function and predicate symbols of first-order logic.
+ *  @{
+ */
+
+/**
+ * @brief Defining a function or predicate symbol of first-order logic.
+ *
+ * This function defines an uninterpreted function or predicate symbol.
+ * @param name The name of the symbol.
+ * @param arity The arity of the symbol.
+ * @param domain The (possibly empty) pointer to the list of the sorts
+ * corresponding to the domain of the symbol.
+ * @param codomain The sort corresponding to the codomain of the symbol.
+ * @return The corresponding function or predicate symbol.
+ */
 FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain);
 
+/** @} */ // end of funsym
 
-/** Terms and formulas of first-order logic **/
 
-/* Variables and applied functions and predicates */
+/** @defgroup expr Defining terms and formulas of first-order logic
+ *  Defining terms and formulas of first-order logic.
+ *  @{
+ */
+
+/**
+ * @brief Variables and applied functions and predicates.
+ *
+ * This function applies an uninterpreted function or predicate symbol
+ * to 0 or more arguments.
+ * @param fun The function or predicate symbol
+ * @param args The (possibly empty) pointer to the list of arguments. It
+ * should be of the same length as the arity of the function or
+ * predicate symbol.
+ * @return The corresponding expression.
+ */
 EXPR efun(FUNSYM fun, const EXPR* args);
 
-/* true */
+/**
+ * @brief The @c true expression.
+ *
+ * This function create the @c true Boolean expression.
+ * @return The corresponding expression.
+ */
 EXPR etrue();
 
-/* false */
+/**
+ * @brief The @c false expression.
+ *
+ * This function create the @c false Boolean expression.
+ * @return The corresponding expression.
+ */
 EXPR efalse();
 
-/* not */
+/**
+ * @brief Negation.
+ *
+ * This function negates the Boolean expression @p a.
+ * @param a The expression to negate
+ * @return The corresponding expression.
+ */
 EXPR enot(EXPR a);
 
-/* N-ary and */
+/**
+ * @brief N-ary conjunction
+ *
+ * This function creates the conjunction of the @p nb Boolean
+ * expressions in @p a.
+ * @param nb The number of expressions.
+ * @param a A pointer to the list of expressions.
+ * @return The corresponding expression.
+ */
 EXPR eand(size_t nb, const EXPR* a);
 
-/* N-ary or */
+/**
+ * @brief N-ary disjunction
+ *
+ * This function creates the disjunction of the @p nb Boolean
+ * expressions in @p a.
+ * @param nb The number of expressions.
+ * @param a A pointer to the list of expressions.
+ * @return The corresponding expression.
+ */
 EXPR eor(size_t nb, const EXPR* a);
 
-/* xor */
+/**
+ * @brief Xor
+ *
+ * This function creates the exclusive or of the two Boolean expressions
+ * @p a and @p b.
+ * @param a The left-hand side of the exclusive or.
+ * @param b The right-hand side of the exclusive or.
+ * @return The corresponding expression.
+ */
 EXPR exor(EXPR a, EXPR b);
 
-/* => */
+/**
+ * @brief Implication
+ *
+ * This function creates the implication of the two Boolean expressions
+ * @p a and @p b.
+ * @param a The left-hand side of the implication.
+ * @param b The right-hand side of the implication.
+ * @return The corresponding expression.
+ */
 EXPR eimp(EXPR a, EXPR b);
 
-/* = */
+/**
+ * @brief Equality
+ *
+ * This function creates the implication of the two expressions (of any
+ * type) @p a and @p b.
+ * @param a The left-hand side of the equality.
+ * @param b The right-hand side of the equality.
+ * @return The corresponding expression.
+ */
 EXPR eeq(EXPR a, EXPR b);
 
-/* distinct */
+/**
+ * @brief Distinct
+ *
+ * This function expresses the fact that all the elements in @p d are
+ * pairwise distinct.
+ * @param nb The number of expressions.
+ * @param d A pointer to the list of expressions.
+ * @return The corresponding expression.
+ */
 EXPR edistinct(size_t nb, const EXPR* d);
 
-/* Integer constants */
+/**
+ * @brief Integer constants
+ *
+ * This function injects an integer constant into expressions.
+ * @param i The constant.
+ * @return The corresponding expression.
+ */
 EXPR eint(int i);
 
-/* + */
+/**
+ * @brief Addition
+ *
+ * This function creates the addition of the two integer expressions @p
+ * a and @p b.
+ * @param a The left-hand side of the addition.
+ * @param b The right-hand side of the addition.
+ * @return The corresponding expression.
+ */
 EXPR eadd(EXPR a, EXPR b);
 
-/* Unary - */
+/**
+ * @brief Unary minus
+ *
+ * This function creates the opposite of the integer expression @p a.
+ * @param a The expression that we take the opposite of.
+ * @return The corresponding expression.
+ */
 EXPR eopp(EXPR a);
 
-/* Binary - */
+/**
+ * @brief Binary subtraction
+ *
+ * This function creates the subtraction of the two integer expressions
+ * @p a and @p b.
+ * @param a The left-hand side of the subtraction.
+ * @param b The right-hand side of the subtraction.
+ * @return The corresponding expression.
+ */
 EXPR eminus(EXPR a, EXPR b);
 
-/* * */
+/**
+ * @brief Binary multiplication
+ *
+ * This function creates the multiplication of the two integer
+ * expressions @p a and @p b.
+ * @param a The left-hand side of the multiplication.
+ * @param b The right-hand side of the multiplication.
+ * @return The corresponding expression.
+ */
 EXPR emult(EXPR a, EXPR b);
 
-/* < */
+/**
+ * @brief Less than
+ *
+ * This function creates the comparison that the integer expressions @p
+ * a is stricly smaller than the integer expression @p b.
+ * @param a The left-hand side of less than.
+ * @param b The right-hand side of less than.
+ * @return The corresponding expression.
+ */
 EXPR elt(EXPR a, EXPR b);
 
-/* <= */
+/**
+ * @brief Less or equal
+ *
+ * This function creates the comparison that the integer expressions @p
+ * a is smaller or equal than the integer expression @p b.
+ * @param a The left-hand side of less or equal.
+ * @param b The right-hand side of less or equal.
+ * @return The corresponding expression.
+ */
 EXPR ele(EXPR a, EXPR b);
 
-/* > */
+/**
+ * @brief Greater than
+ *
+ * This function creates the comparison that the integer expressions @p
+ * a is stricly greater than the integer expression @p b.
+ * @param a The left-hand side of greater than.
+ * @param b The right-hand side of greater than.
+ * @return The corresponding expression.
+ */
 EXPR egt(EXPR a, EXPR b);
 
-/* >= */
+/**
+ * @brief Greater or equal
+ *
+ * This function creates the comparison that the integer expressions @p
+ * a is greater or equal than the integer expression @p b.
+ * @param a The left-hand side of greater or equal.
+ * @param b The right-hand side of greater or equal.
+ * @return The corresponding expression.
+ */
 EXPR ege(EXPR a, EXPR b);
+
+/** @} */ // end of expr
 
 
 /** Certificates
