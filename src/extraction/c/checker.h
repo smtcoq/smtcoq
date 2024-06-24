@@ -276,36 +276,51 @@ EXPR ege(EXPR a, EXPR b);
 /** @} */ // end of expr
 
 
-/** Certificates
-    It implements parts of the Alethe format as presented in
-      https://verit.loria.fr/documentation/alethe-spec.pdf
-    See in particular the description of the rules starting p.26
-
-    Numbers in comments indicate the number of the rule in the document,
-    and we keep the names.
-
-    The first parameter of each rule is a name given to the step, to be
-    used with the debugging checker
-
-    Note that the context is not supported.
-
-    Note that the rule not_not is useless as SMTCoq reasons modulo
-    double negation.
-
-    It implements an additional rule: weakening.
-
-    Warning: make sure not to produce clauses containing both a formula
-    and its negation (even modulo double negation), as it is considered
-    trivial by SMTCoq. It may be a cause of failure.
+/** @defgroup certif Defining proof certificates of unsatisfiability
+ *
+ *  Our certificate format implements parts of the Alethe format.
+ *  @see https://verit.loria.fr/documentation/alethe-spec.pdf
+ *  @see See in particular the description of the rules starting p.26.
+ *
+ *  Some missing aspects are:
+ *  - the context is not supported
+ *  - some rules are not supported
+ *
+ *  Some additional aspects are:
+ *  - the rule @c not_not is useless as SMTCoq reasons module double
+ *    negation
+ *  - it implements an additional rule: weakening.
+ *
+ *  Each rule has the same name as in the document (with an additional
+ *  @c c at the beginning), and the documentation refers to the number
+ *  of the rule in the document.
+ *
+ *  The first parameter of each rule is a name given to the step, to be
+ *  used with the debugging checker. All names must be unique.
+ *
+ *  @warning Make sure not to produce clauses containing both a formula
+ *  and its negation (even modulo double negation), as it is considered
+ *  trivial by SMTCoq. It may be a cause of failure.
+ *  @{
 **/
 
-/* 0. Given a proof of the clause {f1 ... fn}
-        and a possibly larger clause {f1 ... fn b1 ... bm},
-      proves the clause {f1 ... fn b1 ... bm}
-      The order does not matter
-      The initial clause may contain the additional literals
-        `not false` and `true` as well
-*/
+/**
+ * @brief Weakening
+ *
+ * Given a proof of the clause <tt>{f1 ... fn}</tt>
+ * and a possibly larger clause <tt>{f1 ... fn b[n+1] ... bm}</tt>,
+ * proves the clause <tt>{f1 ... fn b[n+1] ... bm}</tt>
+ *
+ * The order does not matter.
+ * The initial clause may contain the additional literals <tt>not false</tt>
+ * and @c true as well.
+ * @param name The unique name given to the proof step.
+ * @param c The proof of @c {f1 ... fn}.
+ * @param m The number of literals in the final clause
+ * <tt>{f1 ... fn b[n+1] ... bm}</tt>.
+ * @param bs A pointer to the list of literals in the final clause.
+ * @return The corresponding certificate.
+ */
 CERTIF cweakening(char* name, CERTIF c, size_t m, const EXPR* bs);
 
 /* 1. Refer to an assertion by its index */
@@ -502,6 +517,8 @@ CERTIF cequiv_neg1(char* name, EXPR a, EXPR b);
        proves the clause {(= a b) a b}
 */
 CERTIF cequiv_neg2(char* name, EXPR a, EXPR b);
+
+/** @} */ // end of certif
 
 
 /** SMT-LIB2 commands and proof checker, imperative **/
