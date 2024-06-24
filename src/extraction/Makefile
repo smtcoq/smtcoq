@@ -81,7 +81,13 @@ $(CPROG): $(CLIB)
 	cc -o $(CPROG) -I `ocamlc -where` -L `ocamlc -where` -L `ocamlc -where`/../zarith -L `ocamlc -where`/../coq-core/perf -L `ocamlc -where`/../coq-core/vm $(CMAIN) $(CLIB) -lm -lunix -lthreads -lnums -lcamlstr -lzarith -lgmp -lcoqperf_stubs -lcoqrun_stubs
 
 
-.PHONY: clean mrproper install
+.PHONY: clean mrproper install smtcoq
+
+
+smtcoq:
+	cd ..
+	make
+	cd extraction
 
 
 install: $(CLIB)
