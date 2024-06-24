@@ -338,7 +338,7 @@ CERTIF cassume(char* name, size_t num);
 /**
  * @brief @c true rule (number 3 in Alethe)
  *
- * Proves the clause <tt>{(true)}.</tt>
+ * Proves the clause <tt>{true}.</tt>
  *
  * @param name The unique name given to the proof step.
  * @return The corresponding certificate.
@@ -455,69 +455,167 @@ CERTIF ceq_congruent_pred(char* name, size_t n, const EXPR* clause);
  */
 CERTIF ceq_congruent_pred_b(char* name, size_t n, const EXPR* clause);
 
-/* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,
-       proves the clause {fk}
-*/
+/**
+ * @brief @c and rule (number 28 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(and f1 ... fn)}</tt> and a
+ * non-negative integer @c k, proves the clause <tt>{fk}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(and f1 ... fn)}</tt>.
+ * @param k An integer between @c 1 and @c n.
+ * @return The corresponding certificate.
+ */
 CERTIF cand(char* name, CERTIF c, int k);
 
-/* 29. Given a proof of the clause {(not (or f1 ... fn))} and a non-negative integer k,
-       proves the clause {(not fk)}
-*/
+/**
+ * @brief @c not_or rule (number 29 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(not (or f1 ... fn))}</tt> and a
+ * non-negative integer @c k, proves the clause <tt>{(not fk)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (or f1 ... fn))}</tt>.
+ * @param k An integer between @c 1 and @c n.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_or(char* name, CERTIF c, int k);
 
-/* 30. Given a proof of the clause {(or f1 ... fn)},
-       proves the clause {f1 ... fn}
-*/
+/**
+ * @brief @c or rule (number 30 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(or f1 ... fn)}</tt>,
+ * proves the clause <tt>{f1 ... fn}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(or f1 ... fn)}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cor(char* name, CERTIF c);
 
-/* 31. Given a proof of the clause {(not (and f1 ... fn))},
-       proves the clause {(not f1) ... (not fn)}
-*/
+/**
+ * @brief @c not_and rule (number 31 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(not (and f1 ... fn))}</tt>,
+ * proves the clause <tt>{(not f1) ... (not fn)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (and f1 ... fn))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_and(char* name, CERTIF c);
 
-/* 32. Given a proof of the clause {(xor a b)},
-       proves the clause {a b}
-*/
+/**
+ * @brief @c xor1 rule (number 32 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(xor a b)}</tt>,
+ * proves the clause <tt>{a b}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(xor a b)}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cxor1(char* name, CERTIF c);
 
-/* 33. Given a proof of the clause {(xor a b)},
-       proves the clause {(not a) (not b)}
-*/
+/**
+ * @brief @c xor2 rule (number 33 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(xor a b)}</tt>,
+ * proves the clause <tt>{(not a) (not b)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(xor a b)}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cxor2(char* name, CERTIF c);
 
-/* 34. Given a proof of the clause {(not (xor a b))},
-       proves the clause {a (not b)}
-*/
+/**
+ * @brief @c not_xor1 rule (number 34 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(not (xor a b))}</tt>,
+ * proves the clause <tt>{a (not b)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (xor a b))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_xor1(char* name, CERTIF c);
 
-/* 35. Given a proof of the clause {(not (xor a b))},
-       proves the clause {(not a) b}
-*/
+/**
+ * @brief @c not_xor2 rule (number 35 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(not (xor a b))}</tt>,
+ * proves the clause <tt>{(not a) b}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (xor a b))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_xor2(char* name, CERTIF c);
 
-/* 36. Given a proof of the clause {(=> a b)},
-       proves the clause {(not a) b}
-*/
+/**
+ * @brief @c implies rule (number 36 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(=> a b)}</tt>,
+ * proves the clause <tt>{(not a) b}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(=> a b)}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cimplies(char* name, CERTIF c);
 
-/* 37. Given a proof of the clause {(not (=> a b))},
-       proves the clause {a}
-*/
+/**
+ * @brief @c not_implies1 rule (number 37 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(not (=> a b))}</tt>,
+ * proves the clause <tt>{a}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (=> a b))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_implies1(char* name, CERTIF c);
 
-/* 38. Given a proof of the clause {(not (=> a b))},
-       proves the clause {(not b)}
-*/
+/**
+ * @brief @c not_implies2 rule (number 38 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(not (=> a b))}</tt>,
+ * proves the clause <tt>{(not b)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (=> a b))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_implies2(char* name, CERTIF c);
 
-/* 39. Given a proof of the clause {(= a b)},
-       proves the clause {(not a) b}
-*/
+/**
+ * @brief @c equiv1 rule (number 39 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(= a b)}</tt>,
+ * proves the clause <tt>{(not a) b}</tt>.
+ *
+ * @warning @c a and @c b must be Boolean expressions
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(= a b)}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cequiv1(char* name, CERTIF c);
 
-/* 40. Given a proof of the clause {(= a b)},
-       proves the clause {a (not b)}
-*/
+
+/**
+ * @brief @c equiv2 rule (number 39 in Alethe)
+ *
+ * Given a proof of the clause <tt>{(= a b)}</tt>,
+ * proves the clause <tt>{a (not b)}</tt>.
+ *
+ * @warning @c a and @c b must be Boolean expressions
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(= a b)}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cequiv2(char* name, CERTIF c);
 
 /* 41. Given a proof of the clause {(not (= a b))},
