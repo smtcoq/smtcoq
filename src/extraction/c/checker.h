@@ -30,9 +30,10 @@
 #include "types.h"
 
 
-/** @defgroup sort Defining sorts of first-order logic
- *  Defining sorts of first-order logic.
- *  @{
+/**
+ * @defgroup sort Defining sorts of first-order logic
+ * Defining sorts of first-order logic.
+ * @{
  */
 
 /**
@@ -48,9 +49,10 @@ SORT sort(char* s);
 /** @} */ // end of sort
 
 
-/** @defgroup funsym Defining function and predicate symbols of first-order logic
- *  Defining function and predicate symbols of first-order logic.
- *  @{
+/**
+ * @defgroup funsym Defining function and predicate symbols of first-order logic
+ * Defining function and predicate symbols of first-order logic.
+ * @{
  */
 
 /**
@@ -69,9 +71,10 @@ FUNSYM funsym(char* name, size_t arity, const SORT* domain, SORT codomain);
 /** @} */ // end of funsym
 
 
-/** @defgroup expr Defining terms and formulas of first-order logic
- *  Defining terms and formulas of first-order logic.
- *  @{
+/**
+ * @defgroup expr Defining terms and formulas of first-order logic
+ * Defining terms and formulas of first-order logic.
+ * @{
  */
 
 /**
@@ -113,7 +116,7 @@ EXPR efalse();
 EXPR enot(EXPR a);
 
 /**
- * @brief N-ary conjunction
+ * @brief N-ary conjunction.
  *
  * This function creates the conjunction of the @p nb Boolean
  * expressions in @p a.
@@ -124,7 +127,7 @@ EXPR enot(EXPR a);
 EXPR eand(size_t nb, const EXPR* a);
 
 /**
- * @brief N-ary disjunction
+ * @brief N-ary disjunction.
  *
  * This function creates the disjunction of the @p nb Boolean
  * expressions in @p a.
@@ -135,40 +138,40 @@ EXPR eand(size_t nb, const EXPR* a);
 EXPR eor(size_t nb, const EXPR* a);
 
 /**
- * @brief Xor
+ * @brief Xor.
  *
  * This function creates the exclusive or of the two Boolean expressions
  * @p a and @p b.
- * @param a The left-hand side of the exclusive or.
- * @param b The right-hand side of the exclusive or.
+ * @param a The left-hand side formula of the exclusive or.
+ * @param b The right-hand side formula of the exclusive or.
  * @return The corresponding expression.
  */
 EXPR exor(EXPR a, EXPR b);
 
 /**
- * @brief Implication
+ * @brief Implication.
  *
  * This function creates the implication of the two Boolean expressions
  * @p a and @p b.
- * @param a The left-hand side of the implication.
- * @param b The right-hand side of the implication.
+ * @param a The left-hand side formula of the implication.
+ * @param b The right-hand side formula of the implication.
  * @return The corresponding expression.
  */
 EXPR eimp(EXPR a, EXPR b);
 
 /**
- * @brief Equality
+ * @brief Equality.
  *
  * This function creates the implication of the two expressions (of any
  * type) @p a and @p b.
- * @param a The left-hand side of the equality.
- * @param b The right-hand side of the equality.
+ * @param a The left-hand side formula of the equality.
+ * @param b The right-hand side formula of the equality.
  * @return The corresponding expression.
  */
 EXPR eeq(EXPR a, EXPR b);
 
 /**
- * @brief Distinct
+ * @brief Distinct.
  *
  * This function expresses the fact that all the elements in @p d are
  * pairwise distinct.
@@ -179,7 +182,7 @@ EXPR eeq(EXPR a, EXPR b);
 EXPR edistinct(size_t nb, const EXPR* d);
 
 /**
- * @brief Integer constants
+ * @brief Integer constants.
  *
  * This function injects an integer constant into expressions.
  * @param i The constant.
@@ -188,18 +191,18 @@ EXPR edistinct(size_t nb, const EXPR* d);
 EXPR eint(int i);
 
 /**
- * @brief Addition
+ * @brief Addition.
  *
  * This function creates the addition of the two integer expressions @p
  * a and @p b.
- * @param a The left-hand side of the addition.
- * @param b The right-hand side of the addition.
+ * @param a The left-hand side operand of the addition.
+ * @param b The right-hand side operand of the addition.
  * @return The corresponding expression.
  */
 EXPR eadd(EXPR a, EXPR b);
 
 /**
- * @brief Unary minus
+ * @brief Unary minus.
  *
  * This function creates the opposite of the integer expression @p a.
  * @param a The expression that we take the opposite of.
@@ -208,67 +211,67 @@ EXPR eadd(EXPR a, EXPR b);
 EXPR eopp(EXPR a);
 
 /**
- * @brief Binary subtraction
+ * @brief Binary subtraction.
  *
  * This function creates the subtraction of the two integer expressions
  * @p a and @p b.
- * @param a The left-hand side of the subtraction.
- * @param b The right-hand side of the subtraction.
+ * @param a The left-hand side operand of the subtraction.
+ * @param b The right-hand side operand of the subtraction.
  * @return The corresponding expression.
  */
 EXPR eminus(EXPR a, EXPR b);
 
 /**
- * @brief Binary multiplication
+ * @brief Binary multiplication.
  *
  * This function creates the multiplication of the two integer
  * expressions @p a and @p b.
- * @param a The left-hand side of the multiplication.
- * @param b The right-hand side of the multiplication.
+ * @param a The left-hand side operand of the multiplication.
+ * @param b The right-hand side operand of the multiplication.
  * @return The corresponding expression.
  */
 EXPR emult(EXPR a, EXPR b);
 
 /**
- * @brief Less than
+ * @brief Less than.
  *
  * This function creates the comparison that the integer expressions @p
  * a is stricly smaller than the integer expression @p b.
- * @param a The left-hand side of less than.
- * @param b The right-hand side of less than.
+ * @param a The left-hand side operand of less than.
+ * @param b The right-hand side operand of less than.
  * @return The corresponding expression.
  */
 EXPR elt(EXPR a, EXPR b);
 
 /**
- * @brief Less or equal
+ * @brief Less or equal.
  *
  * This function creates the comparison that the integer expressions @p
  * a is smaller or equal than the integer expression @p b.
- * @param a The left-hand side of less or equal.
- * @param b The right-hand side of less or equal.
+ * @param a The left-hand side operand of less or equal.
+ * @param b The right-hand side operand of less or equal.
  * @return The corresponding expression.
  */
 EXPR ele(EXPR a, EXPR b);
 
 /**
- * @brief Greater than
+ * @brief Greater than.
  *
  * This function creates the comparison that the integer expressions @p
  * a is stricly greater than the integer expression @p b.
- * @param a The left-hand side of greater than.
- * @param b The right-hand side of greater than.
+ * @param a The left-hand side operand of greater than.
+ * @param b The right-hand side operand of greater than.
  * @return The corresponding expression.
  */
 EXPR egt(EXPR a, EXPR b);
 
 /**
- * @brief Greater or equal
+ * @brief Greater or equal.
  *
  * This function creates the comparison that the integer expressions @p
  * a is greater or equal than the integer expression @p b.
- * @param a The left-hand side of greater or equal.
- * @param b The right-hand side of greater or equal.
+ * @param a The left-hand side operand of greater or equal.
+ * @param b The right-hand side operand of greater or equal.
  * @return The corresponding expression.
  */
 EXPR ege(EXPR a, EXPR b);
@@ -276,36 +279,37 @@ EXPR ege(EXPR a, EXPR b);
 /** @} */ // end of expr
 
 
-/** @defgroup certif Defining proof certificates of unsatisfiability
+/**
+ * @defgroup certif Defining proof certificates of unsatisfiability
  *
- *  Our certificate format implements parts of the Alethe format.
- *  @see https://verit.loria.fr/documentation/alethe-spec.pdf
- *  @see See in particular the description of the rules starting p.26.
+ * Our certificate format implements parts of the Alethe format.
+ * @see https://verit.loria.fr/documentation/alethe-spec.pdf
+ * @see See in particular the description of the rules starting p.26.
  *
- *  Some missing aspects are:
- *  - the context is not supported
- *  - some rules are not supported
+ * Some missing aspects are:
+ * - the context is not supported
+ * - some rules are not supported
  *
- *  Some additional aspects are:
- *  - the rule @c not_not is useless as SMTCoq reasons module double
- *    negation
- *  - it implements an additional rule: weakening.
+ * Some additional aspects are:
+ * - the rule @c not_not is useless as SMTCoq reasons module double
+ *   negation
+ * - it implements an additional rule: weakening.
  *
- *  Each rule has the same name as in the document (with an additional
- *  @c c at the beginning), and the documentation refers to the number
- *  of the rule in the document.
+ * Each rule has the same name as in the document (with an additional
+ * @c c at the beginning), and the documentation refers to the number
+ * of the rule in the document.
  *
- *  The first parameter of each rule is a name given to the step, to be
- *  used with the debugging checker. All names must be unique.
+ * The first parameter of each rule is a name given to the step, to be
+ * used with the debugging checker. All names must be unique.
  *
- *  @warning Make sure not to produce clauses containing both a formula
- *  and its negation (even modulo double negation), as it is considered
- *  trivial by SMTCoq. It may be a cause of failure.
- *  @{
+ * @warning Make sure not to produce clauses containing both a formula
+ * and its negation (even modulo double negation), as it is considered
+ * trivial by SMTCoq. It may be a cause of failure.
+ * @{
 **/
 
 /**
- * @brief @c weakening rule (additional)
+ * @brief @c weakening rule (additional).
  *
  * Given a proof of the clause <tt>{f1 ... fn}</tt>
  * and a possibly larger clause <tt>{f1 ... fn b[n+1] ... bm}</tt>,
@@ -324,7 +328,7 @@ EXPR ege(EXPR a, EXPR b);
 CERTIF cweakening(char* name, CERTIF c, size_t m, const EXPR* bs);
 
 /**
- * @brief @c assume rule (number 1 in Alethe)
+ * @brief @c assume rule (number 1 in Alethe).
  *
  * Refer to an assertion by its index, in the order they were given.
  *
@@ -336,9 +340,9 @@ CERTIF cweakening(char* name, CERTIF c, size_t m, const EXPR* bs);
 CERTIF cassume(char* name, size_t num);
 
 /**
- * @brief @c true rule (number 3 in Alethe)
+ * @brief @c true rule (number 3 in Alethe).
  *
- * Proves the clause <tt>{true}.</tt>
+ * Proves the tautological clause <tt>{true}.</tt>
  *
  * @param name The unique name given to the proof step.
  * @return The corresponding certificate.
@@ -346,9 +350,9 @@ CERTIF cassume(char* name, size_t num);
 CERTIF ctrue(char* name);
 
 /**
- * @brief @c false rule (number 4 in Alethe)
+ * @brief @c false rule (number 4 in Alethe).
  *
- * Proves the clause <tt>{(not false)}.</tt>
+ * Proves the tautological clause <tt>{(not false)}.</tt>
  *
  * @param name The unique name given to the proof step.
  * @return The corresponding certificate.
@@ -356,7 +360,7 @@ CERTIF ctrue(char* name);
 CERTIF cfalse(char* name);
 
 /**
- * @brief @c th_resolution and @c resolution rules (number 6 and 7 in Alethe)
+ * @brief @c th_resolution and @c resolution rules (number 6 and 7 in Alethe).
  *
  * Resolution of two or more clauses.
  *
@@ -368,7 +372,7 @@ CERTIF cfalse(char* name);
 CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses);
 
 /**
- * @brief @c lia_generic rule (number 12 in Alethe)
+ * @brief @c lia_generic rule (number 12 in Alethe).
  *
  * Proves the given clause in the theory of linear integer arithmetic.
  *
@@ -380,9 +384,9 @@ CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses);
 CERTIF clia_generic(char* name, size_t nb, const EXPR* l);
 
 /**
- * @brief @c eq_reflexive rule (number 23 in Alethe)
+ * @brief @c eq_reflexive rule (number 23 in Alethe).
  *
- * Given a term @c t, proves the clause <tt>{(= t t)}</tt>.
+ * Given a term @c t, proves the tautological clause <tt>{(= t t)}</tt>.
  *
  * @warning Applies only to a non-Boolean term.
  *
@@ -393,10 +397,11 @@ CERTIF clia_generic(char* name, size_t nb, const EXPR* l);
 CERTIF ceq_reflexive(char* name, EXPR t);
 
 /**
- * @brief @c eq_transitive rule (number 24 in Alethe)
+ * @brief @c eq_transitive rule (number 24 in Alethe).
  *
  * Given the terms <tt>t1 ... tn</tt>,
- * proves the clause <tt>{(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}</tt>
+ * proves the tautological clause
+ * <tt>{(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}</tt>
  *
  * @warning The @c tis must be non-Boolean terms.
  *
@@ -408,9 +413,9 @@ CERTIF ceq_reflexive(char* name, EXPR t);
 CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts);
 
 /**
- * @brief @c eq_congruent rule (number 25 in Alethe)
+ * @brief @c eq_congruent rule (number 25 in Alethe).
  *
- * Proves the clause
+ * Proves the tautological clause
  * <tt>{(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}</tt>
  *
  * @warning The @c tis and @c uis must be non-Boolean terms, and the
@@ -424,9 +429,9 @@ CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts);
 CERTIF ceq_congruent(char* name, size_t n, const EXPR* clause);
 
 /**
- * @brief @c eq_congruent_pred rule (number 26 in Alethe)
+ * @brief @c eq_congruent_pred rule (number 26 in Alethe).
  *
- * Proves the clause
+ * Proves the tautological clause
  * <tt>{(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}</tt>
  *
  * @warning The @c tis and @c uis must be non-Boolean terms, and the
@@ -440,9 +445,9 @@ CERTIF ceq_congruent(char* name, size_t n, const EXPR* clause);
 CERTIF ceq_congruent_pred(char* name, size_t n, const EXPR* clause);
 
 /**
- * @brief @c eq_congruent_pred_b rule (a small variant of the previous one)
+ * @brief @c eq_congruent_pred_b rule (a small variant of the previous one).
  *
- * Proves the clause
+ * Proves the tautological clause
  * <tt>{(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}</tt>
  *
  * @warning The @c tis and @c uis must be non-Boolean terms, and the
@@ -456,10 +461,10 @@ CERTIF ceq_congruent_pred(char* name, size_t n, const EXPR* clause);
 CERTIF ceq_congruent_pred_b(char* name, size_t n, const EXPR* clause);
 
 /**
- * @brief @c and rule (number 28 in Alethe)
+ * @brief @c and rule (number 28 in Alethe).
  *
  * Given a proof of the clause <tt>{(and f1 ... fn)}</tt> and a
- * non-negative integer @c k, proves the clause <tt>{fk}</tt>.
+ * non-negative integer @p k, proves the clause <tt>{fk}</tt>.
  *
  * @param name The unique name given to the proof step.
  * @param c The proof of <tt>{(and f1 ... fn)}</tt>.
@@ -469,10 +474,10 @@ CERTIF ceq_congruent_pred_b(char* name, size_t n, const EXPR* clause);
 CERTIF cand(char* name, CERTIF c, int k);
 
 /**
- * @brief @c not_or rule (number 29 in Alethe)
+ * @brief @c not_or rule (number 29 in Alethe).
  *
  * Given a proof of the clause <tt>{(not (or f1 ... fn))}</tt> and a
- * non-negative integer @c k, proves the clause <tt>{(not fk)}</tt>.
+ * non-negative integer @p k, proves the clause <tt>{(not fk)}</tt>.
  *
  * @param name The unique name given to the proof step.
  * @param c The proof of <tt>{(not (or f1 ... fn))}</tt>.
@@ -482,7 +487,7 @@ CERTIF cand(char* name, CERTIF c, int k);
 CERTIF cnot_or(char* name, CERTIF c, int k);
 
 /**
- * @brief @c or rule (number 30 in Alethe)
+ * @brief @c or rule (number 30 in Alethe).
  *
  * Given a proof of the clause <tt>{(or f1 ... fn)}</tt>,
  * proves the clause <tt>{f1 ... fn}</tt>.
@@ -494,7 +499,7 @@ CERTIF cnot_or(char* name, CERTIF c, int k);
 CERTIF cor(char* name, CERTIF c);
 
 /**
- * @brief @c not_and rule (number 31 in Alethe)
+ * @brief @c not_and rule (number 31 in Alethe).
  *
  * Given a proof of the clause <tt>{(not (and f1 ... fn))}</tt>,
  * proves the clause <tt>{(not f1) ... (not fn)}</tt>.
@@ -506,7 +511,7 @@ CERTIF cor(char* name, CERTIF c);
 CERTIF cnot_and(char* name, CERTIF c);
 
 /**
- * @brief @c xor1 rule (number 32 in Alethe)
+ * @brief @c xor1 rule (number 32 in Alethe).
  *
  * Given a proof of the clause <tt>{(xor a b)}</tt>,
  * proves the clause <tt>{a b}</tt>.
@@ -518,7 +523,7 @@ CERTIF cnot_and(char* name, CERTIF c);
 CERTIF cxor1(char* name, CERTIF c);
 
 /**
- * @brief @c xor2 rule (number 33 in Alethe)
+ * @brief @c xor2 rule (number 33 in Alethe).
  *
  * Given a proof of the clause <tt>{(xor a b)}</tt>,
  * proves the clause <tt>{(not a) (not b)}</tt>.
@@ -530,7 +535,7 @@ CERTIF cxor1(char* name, CERTIF c);
 CERTIF cxor2(char* name, CERTIF c);
 
 /**
- * @brief @c not_xor1 rule (number 34 in Alethe)
+ * @brief @c not_xor1 rule (number 34 in Alethe).
  *
  * Given a proof of the clause <tt>{(not (xor a b))}</tt>,
  * proves the clause <tt>{a (not b)}</tt>.
@@ -542,7 +547,7 @@ CERTIF cxor2(char* name, CERTIF c);
 CERTIF cnot_xor1(char* name, CERTIF c);
 
 /**
- * @brief @c not_xor2 rule (number 35 in Alethe)
+ * @brief @c not_xor2 rule (number 35 in Alethe).
  *
  * Given a proof of the clause <tt>{(not (xor a b))}</tt>,
  * proves the clause <tt>{(not a) b}</tt>.
@@ -554,7 +559,7 @@ CERTIF cnot_xor1(char* name, CERTIF c);
 CERTIF cnot_xor2(char* name, CERTIF c);
 
 /**
- * @brief @c implies rule (number 36 in Alethe)
+ * @brief @c implies rule (number 36 in Alethe).
  *
  * Given a proof of the clause <tt>{(=> a b)}</tt>,
  * proves the clause <tt>{(not a) b}</tt>.
@@ -566,7 +571,7 @@ CERTIF cnot_xor2(char* name, CERTIF c);
 CERTIF cimplies(char* name, CERTIF c);
 
 /**
- * @brief @c not_implies1 rule (number 37 in Alethe)
+ * @brief @c not_implies1 rule (number 37 in Alethe).
  *
  * Given a proof of the clause <tt>{(not (=> a b))}</tt>,
  * proves the clause <tt>{a}</tt>.
@@ -578,7 +583,7 @@ CERTIF cimplies(char* name, CERTIF c);
 CERTIF cnot_implies1(char* name, CERTIF c);
 
 /**
- * @brief @c not_implies2 rule (number 38 in Alethe)
+ * @brief @c not_implies2 rule (number 38 in Alethe).
  *
  * Given a proof of the clause <tt>{(not (=> a b))}</tt>,
  * proves the clause <tt>{(not b)}</tt>.
@@ -590,7 +595,7 @@ CERTIF cnot_implies1(char* name, CERTIF c);
 CERTIF cnot_implies2(char* name, CERTIF c);
 
 /**
- * @brief @c equiv1 rule (number 39 in Alethe)
+ * @brief @c equiv1 rule (number 39 in Alethe).
  *
  * Given a proof of the clause <tt>{(= a b)}</tt>,
  * proves the clause <tt>{(not a) b}</tt>.
@@ -605,7 +610,7 @@ CERTIF cequiv1(char* name, CERTIF c);
 
 
 /**
- * @brief @c equiv2 rule (number 39 in Alethe)
+ * @brief @c equiv2 rule (number 40 in Alethe).
  *
  * Given a proof of the clause <tt>{(= a b)}</tt>,
  * proves the clause <tt>{a (not b)}</tt>.
@@ -618,114 +623,396 @@ CERTIF cequiv1(char* name, CERTIF c);
  */
 CERTIF cequiv2(char* name, CERTIF c);
 
-/* 41. Given a proof of the clause {(not (= a b))},
-       proves the clause {a b}
-*/
+/**
+ * @brief @c not_equiv1 rule (number 41 in Alethe).
+ *
+ * Given a proof of the clause <tt>{(not (= a b))}</tt>,
+ * proves the clause <tt>{a b}</tt>.
+ *
+ * @warning @c a and @c b must be Boolean expressions
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (= a b))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_equiv1(char* name, CERTIF c);
 
-/* 42. Given a proof of the clause {(not (= a b))},
-       proves the clause {(not a) (not b)}
-*/
+/**
+ * @brief @c not_equiv2 rule (number 42 in Alethe).
+ *
+ * Given a proof of the clause <tt>{(not (= a b))}</tt>,
+ * proves the clause <tt>{(not a) (not b)}</tt>.
+ *
+ * @warning @c a and @c b must be Boolean expressions
+ *
+ * @param name The unique name given to the proof step.
+ * @param c The proof of <tt>{(not (= a b))}</tt>.
+ * @return The corresponding certificate.
+ */
 CERTIF cnot_equiv2(char* name, CERTIF c);
 
-/* 43. Given the formulas f1 ... fn and a non-negative integer k,
-       proves the clause {(not (and f1 ... fn)) fk}
-*/
+/**
+ * @brief @c and_pos rule (number 43 in Alethe).
+ *
+ * Given the formulas <tt>f1 ... fn</tt> and a non-negative integer
+ * @p k, proves the tautological clause <tt>{(not (and f1 ... fn)) fk}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of formulas in the resulting conjunction.
+ * @param fs A pointer to the list of formulas.
+ * @param k An integer between @c 1 and @c n.
+ * @return The corresponding certificate.
+ */
 CERTIF cand_pos(char* name, size_t n, const EXPR* fs, int k);
 
-/* 44. Given the formulas f1 ... fn,
-       proves the clause {(and f1 ... fn) (not f1) ... (not fn)}
-*/
+/**
+ * @brief @c and_neg rule (number 44 in Alethe).
+ *
+ * Given the formulas <tt>f1 ... fn</tt>, proves the tautological clause
+ * <tt>{(and f1 ... fn) (not f1) ... (not fn)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of formulas in the resulting conjunction.
+ * @param fs A pointer to the list of formulas.
+ * @return The corresponding certificate.
+ */
 CERTIF cand_neg(char* name, size_t n, const EXPR* fs);
 
-/* 45. Given the formulas f1 ... fn,
-       proves the clause {(not (or f1 ... fn)) f1 ... fn}
-*/
+/**
+ * @brief @c or_pos rule (number 45 in Alethe).
+ *
+ * Given the formulas <tt>f1 ... fn</tt>, proves the tautological clause
+ * <tt>{(not (or f1 ... fn)) f1 ... fn}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of formulas in the resulting disjunction.
+ * @param fs A pointer to the list of formulas.
+ * @return The corresponding certificate.
+ */
 CERTIF cor_pos(char* name, size_t n, const EXPR* fs);
 
-/* 46. Given the formulas f1 ... fn and a non-negative integer k,
-       proves the clause {(or f1 ... fn) (not fk)}
-*/
+/**
+ * @brief @c or_neg rule (number 46 in Alethe).
+ *
+ * Given the formulas <tt>f1 ... fn</tt> and a non-negative integer
+ * @p k, proves the tautological clause <tt>{(or f1 ... fn) (not fk)}</tt>.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of formulas in the resulting disjunction.
+ * @param fs A pointer to the list of formulas.
+ * @param k An integer between @c 1 and @c n.
+ * @return The corresponding certificate.
+ */
 CERTIF cor_neg(char* name, size_t n, const EXPR* fs, int k);
 
-/* 47. Given the formulas a and b,
-       proves the clause {(not (xor a b)) a b}
-*/
+/**
+ * @brief @c xor_pos1 rule (number 47 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(not (xor a b)) a b}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the exclusive or.
+ * @param b The right-hand side formula of the exclusive or.
+ * @return The corresponding certificate.
+ */
 CERTIF cxor_pos1(char* name, EXPR a, EXPR b);
 
-/* 48. Given the formulas a and b,
-       proves the clause {(not (xor a b)) (not a) (not b)}
-*/
+/**
+ * @brief @c xor_pos2 rule (number 48 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(not (xor a b)) (not a) (not b)}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the exclusive or.
+ * @param b The right-hand side formula of the exclusive or.
+ * @return The corresponding certificate.
+ */
 CERTIF cxor_pos2(char* name, EXPR a, EXPR b);
 
-/* 49. Given the formulas a and b,
-       proves the clause {(xor a b) a (not b)}
-*/
+/**
+ * @brief @c xor_neg1 rule (number 49 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(xor a b) a (not b)}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the exclusive or.
+ * @param b The right-hand side formula of the exclusive or.
+ * @return The corresponding certificate.
+ */
 CERTIF cxor_neg1(char* name, EXPR a, EXPR b);
 
-/* 50. Given the formulas a and b,
-       proves the clause {(xor a b) (not a) b}
-*/
+/**
+ * @brief @c xor_neg2 rule (number 50 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(xor a b) (not a) b}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the exclusive or.
+ * @param b The right-hand side formula of the exclusive or.
+ * @return The corresponding certificate.
+ */
 CERTIF cxor_neg2(char* name, EXPR a, EXPR b);
 
-/* 51. Given the formulas a and b,
-       proves the clause {(not (implies a b)) (not a) b}
-*/
+/**
+ * @brief @c implies_pos rule (number 51 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(not (implies a b)) (not a) b}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the implication.
+ * @param b The right-hand side formula of the implication.
+ * @return The corresponding certificate.
+ */
 CERTIF cimplies_pos(char* name, EXPR a, EXPR b);
 
-/* 52. Given the formulas a and b,
-       proves the clause {(implies a b) a}
-*/
+/**
+ * @brief @c implies_neg1 rule (number 52 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(implies a b) a}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the implication.
+ * @param b The right-hand side formula of the implication.
+ * @return The corresponding certificate.
+ */
 CERTIF cimplies_neg1(char* name, EXPR a, EXPR b);
 
-/* 53. Given the formulas a and b,
-       proves the clause {(implies a b) (not b)}
-*/
+/**
+ * @brief @c implies_neg2 rule (number 53 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(implies a b) (not b)}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the implication.
+ * @param b The right-hand side formula of the implication.
+ * @return The corresponding certificate.
+ */
 CERTIF cimplies_neg2(char* name, EXPR a, EXPR b);
 
-/* 54. Given the formulas a and b,
-       proves the clause {(not (= a b)) a (not b)}
-*/
+/**
+ * @brief @c equiv_pos1 rule (number 54 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(not (= a b)) a (not b)}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the equality.
+ * @param b The right-hand side formula of the equality.
+ * @return The corresponding certificate.
+ */
 CERTIF cequiv_pos1(char* name, EXPR a, EXPR b);
 
-/* 55. Given the formulas a and b,
-       proves the clause {(not (= a b)) (not a) b}
-*/
+/**
+ * @brief @c equiv_pos2 rule (number 55 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(not (= a b)) (not a) b}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the equality.
+ * @param b The right-hand side formula of the equality.
+ * @return The corresponding certificate.
+ */
 CERTIF cequiv_pos2(char* name, EXPR a, EXPR b);
 
-/* 56. Given the formulas a and b,
-       proves the clause {(= a b) (not a) (not b)}
-*/
+/**
+ * @brief @c equiv_neg1 rule (number 56 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(= a b) (not a) (not b)}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the equality.
+ * @param b The right-hand side formula of the equality.
+ * @return The corresponding certificate.
+ */
 CERTIF cequiv_neg1(char* name, EXPR a, EXPR b);
 
-/* 57. Given the formulas a and b,
-       proves the clause {(= a b) a b}
-*/
+/**
+ * @brief @c equiv_neg2 rule (number 57 in Alethe).
+ *
+ * Given the formulas @p a and @p b, proves the tautological clause
+ * <tt>{(= a b) a b}</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @param a The left-hand side formula of the equality.
+ * @param b The right-hand side formula of the equality.
+ * @return The corresponding certificate.
+ */
 CERTIF cequiv_neg2(char* name, EXPR a, EXPR b);
 
 /** @} */ // end of certif
 
 
-/** SMT-LIB2 commands and proof checker, imperative **/
+/**
+ * @defgroup smtlib2imp SMT-LIB2 commands and proof checker, imperative style
+ *
+ * The imperative style directly correspond to SMT-LIB2 commands. A
+ * proof starts with <tt>start_smt2()</tt>, then sorts, function and
+ * predicate symbols, and assertions are declared. Finally, the proof is
+ * checked, using either the certified checker @c check_proof or the
+ * uncertified checker for debugging @c debug_check_proof.
+ *
+ * @{
+ */
 
+/**
+ * @brief @c Starting a proof.
+ *
+ * This function starts the imperative proof mode.
+ */
 void start_smt2();
+
+/**
+ * @brief @c Declaring a sort.
+ *
+ * This function declares the uninterpreted sort @p s.
+ *
+ * @warning The sorts <tt>sort("Bool")</tt> and <tt>sort("Int")</tt> are
+ * interpreted and should not be declared.
+ *
+ * @param s The uninterpreted sort to declare.
+ */
 void declare_sort(SORT s);
+
+/**
+ * @brief @c Declaring a function or predicate symbol.
+ *
+ * This function declares the uninterpreted function or predicate symbol @p f.
+ *
+ * @param f The uninterpreted function or predicate symbol to declare.
+ */
 void declare_fun(FUNSYM f);
+
+/**
+ * @brief @c Asserting a formula.
+ *
+ * This function asserts the formula @p f.
+ *
+ * @param f The formula that is asserted.
+ */
 void assertf(EXPR f);
 
+/**
+ * @brief @c Checking a certificate with the certified checker.
+ *
+ * This function calls the certified checker on the problem that was
+ * input in the imperative style.
+ *
+ * @param proof The certificate.
+ * @return Any non-zero number means that the certificate is valid.
+ */
 int check_proof(CERTIF proof);
+
+/**
+ * @brief @c Checking a certificate with the uncertified debugging checker.
+ *
+ * This function calls the uncertified debugging checker on the problem
+ * that was input in the imperative style. Step by step proof checking
+ * is printed in the standard output.
+ *
+ * @param proof The certificate.
+ */
 void debug_check_proof(CERTIF proof);
 
+/** @} */ // end of smtlib2imp
 
-/** SMT-LIB2 commands and proof checker, functional **/
 
+/**
+ * @defgroup smtlib2fun SMT-LIB2 commands and proof checker, functional style
+ *
+ * The functional style calls the checker on lists of sorts, symbols and
+ * assertions declarations, as well as the certificate. The proof can be
+ * checked using either the certified checker @c checker or the
+ * uncertified checker for debugging @c debug_checker.
+ *
+ * @{
+ */
+
+/**
+ * @brief @c Listing the uninterpreted sorts.
+ *
+ * This function lists the uninterpreted sorts.
+ *
+ * @warning The sorts <tt>sort("Bool")</tt> and <tt>sort("Int")</tt> are
+ * interpreted and should not appear in the list.
+ *
+ * @param nb The number of uninterpreted sorts to declare.
+ * @param data A pointer to the uninterpreted sorts to declare.
+ * @return The list of uninterpreted sorts.
+ */
 SORTS sorts(size_t nb, SORT* data);
+
+/**
+ * @brief @c Listing the uninterpreted function and predicate symbols.
+ *
+ * This function lists the uninterpreted function and predicate symbols.
+ *
+ * @param nb The number of uninterpreted function and predicate symbols
+ * to declare.
+ * @param data A pointer to the uninterpreted function and predicate
+ * symbols to declare.
+ * @return The list of uninterpreted function and predicate symbols.
+ */
 FUNSYMS funsyms(size_t nb, FUNSYM* data);
+
+/**
+ * @brief @c Listing the assertions.
+ *
+ * This function lists the assertions, whose conjunction will be checked
+ * for unsatisfiability.
+ *
+ * @param nb The number of assertions.
+ * @param data A pointer to the assertions.
+ * @return The list of assertions.
+ */
 ASSERTIONS assertions(size_t nb, EXPR* data);
+
+/**
+ * @brief @c Representing an SMT-LIB2 problem.
+ *
+ * This function groups together the lists of sorts, symbols and
+ * assertions.
+ *
+ * @param s The list of uninterpreted sorts.
+ * @param f The list of uninterpreted function and predicate symbols.
+ * @param a The list of assertions.
+ * @return The SMT-LIB2 problem.
+ */
 SMTLIB2 smtlib2(SORTS s, FUNSYMS f, ASSERTIONS a);
 
+/**
+ * @brief @c Checking a certificate with the certified checker.
+ *
+ * This function calls the certified checker on the problem and the
+ * certificate.
+ *
+ * @param smt The SMT-LIB2 problem.
+ * @param proof The certificate.
+ * @return Any non-zero number means that the certificate is valid.
+ */
 int checker(SMTLIB2 smt, CERTIF proof);
+
+/**
+ * @brief @c Checking a certificate with the uncertified debugging checker.
+ *
+ * This function calls the uncertified debugging checker on the problem
+ * and the certificate. Step by step proof checking is printed in the
+ * standard output.
+ *
+ * @param smt The SMT-LIB2 problem.
+ * @param proof The certificate.
+ */
 void debug_checker(SMTLIB2 smt, CERTIF proof);
+
+/** @} */ // end of smtlib2fun
 
 
 #endif
