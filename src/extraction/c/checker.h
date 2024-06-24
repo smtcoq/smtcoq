@@ -305,7 +305,7 @@ EXPR ege(EXPR a, EXPR b);
 **/
 
 /**
- * @brief Weakening
+ * @brief @c weakening rule (additional)
  *
  * Given a proof of the clause <tt>{f1 ... fn}</tt>
  * and a possibly larger clause <tt>{f1 ... fn b[n+1] ... bm}</tt>,
@@ -323,49 +323,136 @@ EXPR ege(EXPR a, EXPR b);
  */
 CERTIF cweakening(char* name, CERTIF c, size_t m, const EXPR* bs);
 
-/* 1. Refer to an assertion by its index */
+/**
+ * @brief @c assume rule (number 1 in Alethe)
+ *
+ * Refer to an assertion by its index, in the order they were given.
+ *
+ * The first assertion has index 0.
+ * @param name The unique name given to the proof step.
+ * @param num The index of the assertion.
+ * @return The corresponding certificate.
+ */
 CERTIF cassume(char* name, size_t num);
 
-/* 3. Proves the clause; {(true)} */
+/**
+ * @brief @c true rule (number 3 in Alethe)
+ *
+ * Proves the clause <tt>{(true)}.</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @return The corresponding certificate.
+ */
 CERTIF ctrue(char* name);
 
-/* 4. Proves the clause {(not false)} */
+/**
+ * @brief @c false rule (number 4 in Alethe)
+ *
+ * Proves the clause <tt>{(not false)}.</tt>
+ *
+ * @param name The unique name given to the proof step.
+ * @return The corresponding certificate.
+ */
 CERTIF cfalse(char* name);
 
-/* 6 & 7. Resolution of two or more clauses */
+/**
+ * @brief @c th_resolution and @c resolution rules (number 6 and 7 in Alethe)
+ *
+ * Resolution of two or more clauses.
+ *
+ * @param name The unique name given to the proof step.
+ * @param nb The number of clauses to be resolved.
+ * @param premisses The proof of the clauses to be resolved.
+ * @return The corresponding certificate.
+ */
 CERTIF cresolution(char* name, size_t nb, const CERTIF* premisses);
 
-/* 12. Proves the given clause in the theory of Linear Integer Arithmetic */
+/**
+ * @brief @c lia_generic rule (number 12 in Alethe)
+ *
+ * Proves the given clause in the theory of linear integer arithmetic.
+ *
+ * @param name The unique name given to the proof step.
+ * @param nb The number of literals in the clause.
+ * @param l A pointer to the literals of the clause.
+ * @return The corresponding certificate.
+ */
 CERTIF clia_generic(char* name, size_t nb, const EXPR* l);
 
-/* 23. Given a term t, proves the clause {(= t t)}
-       Applies only to a non-Boolean term.
-*/
+/**
+ * @brief @c eq_reflexive rule (number 23 in Alethe)
+ *
+ * Given a term @c t, proves the clause <tt>{(= t t)}</tt>.
+ *
+ * @warning Applies only to a non-Boolean term.
+ *
+ * @param name The unique name given to the proof step.
+ * @param t The term.
+ * @return The corresponding certificate.
+ */
 CERTIF ceq_reflexive(char* name, EXPR t);
 
-/* 24. Given the terms t1 ... tn,
-         proves the clause {(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}
-       The tis must be non-Boolean terms.
-*/
+/**
+ * @brief @c eq_transitive rule (number 24 in Alethe)
+ *
+ * Given the terms <tt>t1 ... tn</tt>,
+ * proves the clause <tt>{(not (= t1 t2)) ... (not (= t{n-1} tn)) (= t1 tn)}</tt>
+ *
+ * @warning The @c tis must be non-Boolean terms.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of terms.
+ * @param ts A pointer to the list of terms.
+ * @return The corresponding certificate.
+ */
 CERTIF ceq_transitive(char* name, size_t n, const EXPR* ts);
 
-/* 25. Proves the clause
-         {(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}
-       The tis and uis must be non-Boolean terms, and the codomain of f must not be Bool.
-*/
+/**
+ * @brief @c eq_congruent rule (number 25 in Alethe)
+ *
+ * Proves the clause
+ * <tt>{(not (= t1 u1)) ... (not (= tn un)) (= f(t1, ..., tn) f(u1, ..., un))}</tt>
+ *
+ * @warning The @c tis and @c uis must be non-Boolean terms, and the
+ * codomain of @c f must not be @c Bool.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of literals in the final clause.
+ * @param clause A pointer to the list of literals in the final clause.
+ * @return The corresponding certificate.
+ */
 CERTIF ceq_congruent(char* name, size_t n, const EXPR* clause);
 
-/* 26. Proves the clause
-         {(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}
-       The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
-*/
+/**
+ * @brief @c eq_congruent_pred rule (number 26 in Alethe)
+ *
+ * Proves the clause
+ * <tt>{(not (= t1 u1)) ... (not (= tn un)) (= P(t1, ..., tn) P(u1, ..., un))}</tt>
+ *
+ * @warning The @c tis and @c uis must be non-Boolean terms, and the
+ * codomain of @c P must be @c Bool.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of literals in the final clause.
+ * @param clause A pointer to the list of literals in the final clause.
+ * @return The corresponding certificate.
+ */
 CERTIF ceq_congruent_pred(char* name, size_t n, const EXPR* clause);
 
-/* 26b. A small variant
-        Proves the clause
-          {(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}
-       The tis and uis must be non-Boolean terms, and the codomain of P must be Bool.
-*/
+/**
+ * @brief @c eq_congruent_pred_b rule (a small variant of the previous one)
+ *
+ * Proves the clause
+ * <tt>{(not (= t1 u1)) ... (not (= tn un)) (not P(t1, ..., tn)) P(u1, ..., un)}</tt>
+ *
+ * @warning The @c tis and @c uis must be non-Boolean terms, and the
+ * codomain of @c P must be @c Bool.
+ *
+ * @param name The unique name given to the proof step.
+ * @param n The number of literals in the final clause.
+ * @param clause A pointer to the list of literals in the final clause.
+ * @return The corresponding certificate.
+ */
 CERTIF ceq_congruent_pred_b(char* name, size_t n, const EXPR* clause);
 
 /* 28. Given a proof of the clause {(and f1 ... fn)} and a non-negative integer k,

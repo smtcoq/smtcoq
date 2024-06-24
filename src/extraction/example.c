@@ -52,7 +52,7 @@ int main(int argc, char ** argv)
   //   <https://verit.loria.fr/documentation/alethe-spec.pdf>
   // All the possible steps take as a first argument a name, that can be
   // useful for debugging (more explanations later)
-  // First, let's get back our assumption, which is labeled `0` as it is
+  // First, let's get back our assertion, which is labeled `0` as it is
   // the first (and only) one we declared
   CERTIF step1 = cassume("step1", 0);   // Proves the clause `a ∧ ¬a`
 
