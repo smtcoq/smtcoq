@@ -5,10 +5,10 @@ dev-repo: "git+https://github.com/smtcoq/smtcoq.git"
 bug-reports: "https://github.com/smtcoq/smtcoq/issues"
 license: "CECILL-C"
 build: [
-  [cd ..]
+  [cd ".."]
   [make "-j%{jobs}%"]
-  [cd extraction]
-  [make c/run.a]
+  [cd "extraction"]
+  [make "c/run.a"]
 ]
 install: [
   [make "install"]
