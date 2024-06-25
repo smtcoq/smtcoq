@@ -62,7 +62,7 @@ int main(int argc, char ** argv)
 
   // Finally, we can resolve these two clauses to obtain the empty
   // clause, which witnesses that our assertion was unsatisfiable
-  CERTIF clauses[2] = {step2, step3};   // Proves the empty clause
+  CERTIF clauses[2] = {step2, step3};
   CERTIF step4 = cresolution("step4", 2, clauses);   // Proves the empty clause
 
   // Let's us now call the certified checker, which should return `true`
