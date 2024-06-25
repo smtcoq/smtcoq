@@ -5,7 +5,6 @@ dev-repo: "git+https://github.com/smtcoq/smtcoq.git"
 bug-reports: "https://github.com/smtcoq/smtcoq/issues"
 license: "CECILL-C"
 build: [
-  [make "-j%{jobs}% all"]
   [make "extrapi"]
 ]
 install: [
