@@ -27,21 +27,55 @@ let get_assert (smt:Api.smtlib2) i =
   try a.(i) with Invalid_argument _ -> raise (Check "unknown assertion")
 
 
+let rec eq_expr e1 e2 =
+  match e1, e2 with
+    | Api.EEq (a1, b1), Api.EEq (a2, b2) ->
+       ((eq_expr a1 a2) && (eq_expr b1 b2)) ||
+         ((eq_expr a1 b2) && (eq_expr b1 a2))
+    | Api.EFun (f1, l1), Api.EFun (f2, l2) ->
+       (f1 = f2) && (List.for_all2 eq_expr l1 l2)
+    | Api.ETrue, Api.ETrue
+    | Api.EFalse, Api.EFalse -> true
+    | Api.EOpp a, Api.EOpp b
+    | Api.ENot a, Api.ENot b -> eq_expr a b
+    | Api.EDistinct l1, Api.EDistinct l2
+    | Api.EAnd l1, Api.EAnd l2
+    | Api.EOr l1, Api.EOr l2 -> List.for_all2 eq_expr l1 l2
+    | Api.EAdd (a1, b1), Api.EAdd (a2, b2)
+    | Api.EMinus (a1, b1), Api.EMinus (a2, b2)
+    | Api.EMult (a1, b1), Api.EMult (a2, b2)
+    | Api.ELt (a1, b1), Api.ELt (a2, b2)
+    | Api.ELe (a1, b1), Api.ELe (a2, b2)
+    | Api.EGt (a1, b1), Api.EGt (a2, b2)
+    | Api.EGe (a1, b1), Api.EGe (a2, b2)
+    | Api.EXor (a1, b1), Api.EXor (a2, b2)
+    | Api.EImp (a1, b1), Api.EImp (a2, b2) -> (eq_expr a1 a2) && (eq_expr b1 b2)
+    | Api.EInt a, Api.EInt b -> a = b
+    | Api.EBigInt a, Api.EBigInt b -> a = b
+    | _, _ -> false
+
+let mem e l = List.exists (eq_expr e) l
+
+let rec remove_dups = function
+  | [] -> []
+  | t::q -> if mem t q then remove_dups q else t::(remove_dups q)
+
+
 let rec resolve cl r =
   match cl with
     | [] -> raise (Check "resolution: could not find resolvant")
     | t::q ->
        (match t with
           | Api.ENot f ->
-             if List.mem f r then
-               q@(List.filter (fun l -> f <> l) r)
-             else if List.mem (Api.ENot t) r then
-               q@(List.filter (fun l -> (Api.ENot t) <> l) r)
+             if mem f r then
+               q@(List.filter (fun l -> not (eq_expr f l)) r)
+             else if mem (Api.ENot t) r then
+               q@(List.filter (fun l -> not (eq_expr (Api.ENot t) l)) r)
              else
                t::(resolve q r)
           | _ ->
-             if List.mem (Api.ENot t) r then
-               q@(List.filter (fun l -> (Api.ENot t) <> l) r)
+             if mem (Api.ENot t) r then
+               q@(List.filter (fun l -> not (eq_expr (Api.ENot t) l)) r)
              else
                t::(resolve q r)
        )
@@ -77,7 +111,7 @@ let rec debug_checker_rec fmt smt proof =
            (let l' = List.map (debug_checker_rec fmt smt) l in
             match l' with
               | [] -> raise (Check "resolution: empty")
-              | t::q -> List.fold_left (fun cl r -> resolve cl r) t q
+              | t::q -> List.fold_left (fun cl r -> remove_dups(resolve cl r)) t q
            )
         | Api.Clia_generic l ->
            Format.fprintf fmt "Warning: LIA is not checked in the debugging checker\n";
@@ -318,6 +352,7 @@ let rec debug_checker_rec fmt smt proof =
         | Api.Cequiv_neg1 (a, b) -> [Api.EEq (a, b); Api.ENot a; Api.ENot b]
         | Api.Cequiv_neg2 (a, b) -> [Api.EEq (a, b); a; b]
     in
+    let cl = remove_dups cl in
     Format.fprintf fmt "Checking node %s: success, produces the clause %a\n"
       name pp_clause cl;
     Hashtbl.add cache name cl;
