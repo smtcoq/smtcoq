@@ -6459,7 +6459,7 @@ Proof. intros. revert a b res k.
 
        assert ([] = map (interp_carry) []). { now simpl. }
 
-       induction k' as [ | xk' xsk' IHk' ].
+       induction k' as [ | xk' xsk' ].
        - intros.
          case a. simpl. rewrite H; apply prop_mult_step_k_h.
          intros. simpl. rewrite H. rewrite prop_mult_step_k_h. simpl. now rewrite map_nth.

@@ -108,7 +108,7 @@ Section Relations_nat.
   Proof.
   intros n m. destruct (n =? m) eqn:E.
   rewrite Nat.eqb_eq in E. rewrite eq_Zeqb_embedding in E. symmetry. assumption.
-  apply beq_nat_false in E. rewrite eq_Zeqb_embedding in E. destruct (Z.of_nat n =? Z.of_nat m)%Z.
+  apply Nat.eqb_neq in E. rewrite eq_Zeqb_embedding in E. destruct (Z.of_nat n =? Z.of_nat m)%Z.
   now elim E. reflexivity. Qed.
 
   (* Less or equal *)

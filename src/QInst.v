@@ -78,7 +78,7 @@ Lemma impl_or_split_right a b c:
   implb (a || b) c = true -> negb b || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with core bool.
 Qed.
 
 Lemma impl_or_split_left a b c:
@@ -93,7 +93,7 @@ Lemma eqb_sym_or_split_right a b c:
   Bool.eqb c (a || b) = true -> negb b || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with bool.
 Qed.
 
 Lemma eqb_sym_or_split_left a b c:
@@ -107,7 +107,7 @@ Lemma eqb_or_split_right a b c:
   Bool.eqb (a || b) c = true -> negb b || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with bool.
 Qed.
 
 Lemma eqb_or_split_left a b c:
@@ -138,7 +138,7 @@ Lemma impl_and_split_right a b c:
   implb a (b && c) = true -> negb a || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with zarith.
 Qed.
 
 Lemma impl_and_split_left a b c:

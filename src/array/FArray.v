@@ -218,6 +218,7 @@ Module Raw.
   Qed.
 
   Hint Resolve InA_eqke_eqk : smtcoq_array.
+  Hint Resolve eqke_equiv : smtcoq_array.
 
   Lemma In_alt : forall k l, In k l <-> exists e, InA eqk (k,e) l.
   Proof.
@@ -232,7 +233,7 @@ Module Raw.
 
   Lemma MapsTo_eq : forall l x y e, eq x y -> MapsTo x e l -> MapsTo y e l.
   Proof.
-  intros; unfold MapsTo in *; apply InA_eqA with (x,e); eauto with *.
+  intros; unfold MapsTo in *; apply InA_eqA with (x,e); eauto with smtcoq_array.
   Qed.
 
   Lemma In_eq : forall l x y, eq x y -> In x l -> In y l.
@@ -844,7 +845,7 @@ Module Raw.
   Proof.
     intros m Hm m' Hm' cmp; generalize Hm Hm'; clear Hm Hm'.
     revert m'; induction m as [ |[x e] l IHl]; intros [ |[x' e'] l']; simpl; subst;auto with smtcoq_array; unfold Equivb;
-      intuition; try discriminate; subst;
+      intuition auto with bool; try discriminate; subst;
         try match goal with H: compare _ _ = _ |- _ => clear H end.
     - inversion H0.
     - revert H; case_eq (compare x x'); intros _x _ H; try inversion H.
@@ -1170,14 +1171,14 @@ Section FArray.
   Proof.
     intros (l,Hl,Hd); induction l as [ |a l IHl].
     - intros (l',Hl',Hd'); unfold eq; simpl.
-      destruct l'; unfold equal; simpl; intuition.
+      destruct l'; unfold equal; simpl; intuition auto with bool.
     - intros (l',Hl',Hd'); unfold eq.
       destruct l' as [ |p l'].
-      + destruct a; unfold equal; simpl; intuition.
+      + destruct a; unfold equal; simpl; intuition auto with bool.
       + destruct a as (x,e).
         destruct p as (x',e').
         unfold equal; simpl.
-        destruct (compare x x') as [Hlt|Heq|Hlt]; simpl; [intuition| |intuition].
+        destruct (compare x x') as [Hlt|Heq|Hlt]; simpl; [intuition auto with bool| |intuition auto with bool].
         split.
         * intros [H0 H1].
           unfold cmp, compare2eqb at 1.

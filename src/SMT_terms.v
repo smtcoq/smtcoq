@@ -865,13 +865,13 @@ Module Atom.
     intros [ | | | | | s1 n1 | s1 | s1 | s1 | s1 | s1 ] [ | | | | |s2 n2 | s2 | s2 | s2 | s2 | s2 ];simpl; try constructor;trivial; try discriminate.
     - apply iff_reflect. case_eq (Nat.eqb n1 n2).
       + case_eq ((s1 =? s2)%N).
-        * rewrite N.eqb_eq, beq_nat_true_iff.
+        * rewrite N.eqb_eq, Nat.eqb_eq.
           intros -> ->. split; reflexivity.
-        * rewrite N.eqb_neq, beq_nat_true_iff.
+        * rewrite N.eqb_neq, Nat.eqb_eq.
           intros H1 ->; split; try discriminate.
           intro H. inversion H. elim H1. auto.
       + split; auto.
-        * rewrite beq_nat_false_iff in H. intros. contradict H0.
+        * rewrite Nat.eqb_neq in H. intros. contradict H0.
           intro H'. apply H. inversion H'. reflexivity.
         *  intros. contradict H0. easy.
     - apply iff_reflect. rewrite N.eqb_eq. split; intro H.
@@ -1746,7 +1746,7 @@ Qed.
         rewrite Hb. intros.
         exists (@BITVECTOR_LIST.bv_sextn n n0 y); auto. rewrite Typ.cast_refl; auto.
   (* Binary operators *)
-        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s6 | s7 | s8 | s9 | s10 | n m | ti te | ti te];
+        destruct op as [ | | | | | | | A |s1|s2| s3 | s4 | s6 | s7 | s8 | s9 | s10 | n | ti te | ti te];
           [ intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
             intros [ ti' te' | i | | | |s ] |
