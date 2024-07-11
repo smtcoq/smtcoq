@@ -89,7 +89,7 @@ let cache_lemmas lems =
 
 let declare_lemmas : CoqInterface.constr_expr list -> Libobject.obj =
   let open Libobject in
-  let obj : (CoqInterface.constr_expr list, CoqInterface.constr_expr list) object_declaration =
+  let obj =
     {
       (default_object "LEMMAS") with
       cache_function = cache_lemmas;
