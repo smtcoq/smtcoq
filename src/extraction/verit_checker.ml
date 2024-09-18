@@ -20,19 +20,20 @@ let error_quant = "The current version of the extracted checker does not support
 module Mc = CoqInterface.Micromega_plugin_Certificate.Mc
 
 
-let mkInt = Uint63.of_int
+let mkInt = Utils.mkInt
 
-(* From trace/coqTerms.ml *)
-let mkArray a =
-  let l = (Array.length a) - 1 in
-  snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' =
-                          if i = l then
-                            acc
-                          else
-                            Smt_checker.set acc (mkInt i) c in
-                        (i+1,acc')
-                       ) (0, Smt_checker.make (mkInt l) a.(l)) a)
+(* [mkArray] requires a polymorphic type to be used to create arrays of
+   different elements inside the same function.
+   This can be done using record boxing, see
+     https://ocaml.org/manual/5.2/polymorphism.html#s:higher-rank-poly
+ *)
+type mkArrayRec = { ma : 'a. 'a array -> 'a Smt_checker.array }
+let mkArrayBox = { ma = fun a -> Utils.mkArray Smt_checker.make Smt_checker.set a }
+let mkArray = mkArrayBox.ma
+
+let mkTrace =
+  let cons = fun (x, xs) -> Smt_checker.Cons (x, xs) in
+  Utils.mkTrace Smt_checker.Nil cons
 
 
 (* Generate a list *)
@@ -96,20 +97,6 @@ let rec dump_proof_term = function
     Smt_checker.EnumProof (dump_psatz c1, dump_psatz c2, dump_list dump_proof_term prfs)
   | CoqInterface.Micromega_plugin_Micromega.ExProof(p,prf) ->
     Smt_checker.ExProof (dump_positive p, dump_proof_term prf)
-
-
-(* From trace/coqInterface.ml *)
-(* WARNING: side effect on r! *)
-let mkTrace step_to_coq next size def_step r =
-  let rec mkTrace s =
-    if s = size then
-      Smt_checker.Nil
-    else (
-      r := next !r;
-      let st = step_to_coq !r in
-      Smt_checker.Cons (st, mkTrace (s+1))
-    ) in
-  (mkTrace 0, def_step)
 
 
 (* From trace/smtTrace.ml *)

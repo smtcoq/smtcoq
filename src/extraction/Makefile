@@ -21,8 +21,8 @@ SMTLIB=-I ..
 COQCMX=unix.cmxa threads.cmxa nums.cmxa str.cmxa zarith.cmxa dynlink.cmxa findlib.cmxa findlib_dynload.cmxa clib.cmxa config.cmxa boot.cmxa lib.cmxa coqworkmgrapi.cmxa gramlib.cmxa kernel.cmxa library.cmxa engine.cmxa pretyping.cmxa interp.cmxa proofs.cmxa parsing.cmxa printing.cmxa tactics.cmxa vernac.cmxa sysinit.cmxa stm.cmxa toplevel.cmxa ltac_plugin.cmxa micromega_plugin.cmxa coqrun.cmxa
 SMTCOQCMX=smtcoq_plugin.cmx
 
-MLIFILES=sat_checker.mli zchaff_checker.mli smt_checker.mli verit_checker.mli
-MLFILES=sat_checker.ml zchaff_checker.ml smt_checker.ml verit_checker.ml
+MLIFILES=utils.mli sat_checker.mli zchaff_checker.mli smt_checker.mli verit_checker.mli
+MLFILES=utils.ml sat_checker.ml zchaff_checker.ml smt_checker.ml verit_checker.ml
 CMI=$(MLIFILES:%.mli=%.cmi)
 CMX=$(MLFILES:%.ml=%.cmx)
 
