@@ -1,0 +1,9 @@
+name: Manually runnable workflow
+
+on: workflow_dispatch
+
+jobs:
+  from-sources:
+    uses: ./.github/workflows/from-sources.yml
+    with:
+      image-version: ${{ github.ref_name }}

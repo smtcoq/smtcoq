@@ -821,11 +821,8 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
 
 
   (** Checker for unsigned bitvector extension *)
-  Fixpoint extend_lit (x: list _lit) (i: nat) (b: _lit) {struct i}: list _lit :=
-    match i with
-      | O => x
-      | S i' =>  b :: extend_lit x i' b
-    end.
+  Definition extend_lit (x: list _lit) (i: nat) (b: _lit): list _lit :=
+    x ++ repeat b i.
 
   Definition zextend_lit (x: list _lit) (i: nat): list _lit :=
     extend_lit x i Lit._false.
@@ -870,11 +867,11 @@ Fixpoint check_symopp (bs1 bs2 bsres : list _lit) (bvop: binop)  :=
       | S t' => Lit._false :: (mk_list_lit_false t')
     end.
 
+  Definition get_msb_lit (x: list _lit) : _lit :=
+    last x Lit._false.
+
   Definition sextend_lit (x: list _lit) (i: nat): list _lit :=
-    match x with
-      | []       => mk_list_lit_false i
-      | xb :: x' => extend_lit x i xb
-    end.
+    extend_lit x i (get_msb_lit x).
 
    Definition check_sextend (bs bsres: list _lit) (i: N) : bool :=
      if (forallb2 eq_carry_lit (lit_to_carry (sextend_lit bs (nat_of_N i))) bsres)
@@ -7371,50 +7368,33 @@ Qed.
 
 Lemma zextend_interp_zero: forall a, RAWBITVECTOR_LIST.zextend (map (Lit.interp rho) a) O =
 (map (Lit.interp rho) (zextend_lit a 0)).
-Proof. now simpl. Qed.
+Proof.
+  unfold RAWBITVECTOR_LIST.zextend, RAWBITVECTOR_LIST.extend.
+  unfold zextend_lit, extend_lit. intros. rewrite map_app. reflexivity.
+Qed.
 
 Lemma zextend_interp_empty: forall i, RAWBITVECTOR_LIST.zextend (map (Lit.interp rho) []) i =
 map (Lit.interp rho) (zextend_lit [] i).
-Proof. simpl. intro i.
-       induction i.
-       - intros. now simpl.
-       - intros. simpl.
-         unfold RAWBITVECTOR_LIST.zextend in *.
-         simpl. rewrite IHi.
-         assert (Lit.interp rho Lit._false = false).
-           { specialize (Lit.interp_false rho wf_rho). intros.
-              rewrite <- not_true_iff_false.
-              unfold not in *.
-              intros. now apply H. }
-        now rewrite H.
+Proof. simpl.
+       unfold RAWBITVECTOR_LIST.zextend, RAWBITVECTOR_LIST.extend.
+       unfold zextend_lit, extend_lit. simpl. intros. rewrite map_repeat.
+       f_equal. symmetry.
+       specialize (Lit.interp_false rho wf_rho). intros.
+       rewrite <- not_true_iff_false.
+       unfold not in *.
+       intros. now apply H.
  Qed.
 
 Lemma zextend_interp_all: forall a i, RAWBITVECTOR_LIST.zextend (map (Lit.interp rho) a) i =
 map (Lit.interp rho) (zextend_lit a i).
-Proof. intro a.
-       induction a as [ | xa xsa IHa].
-       - intros. simpl.
-         induction i.
-         + intros. now simpl.
-         + intros. unfold RAWBITVECTOR_LIST.zextend in *.
-           simpl. rewrite IHi.
-           assert (Lit.interp rho Lit._false = false).
-           { specialize (Lit.interp_false rho wf_rho). intros.
-              rewrite <- not_true_iff_false.
-              unfold not in *.
-              intros. now apply H. }
-           now rewrite H.
-        - intros. 
-          induction i.
-          + now simpl.
-          + unfold RAWBITVECTOR_LIST.zextend, zextend_lit in *.
-            simpl in *. rewrite <- IHi.
-           assert (Lit.interp rho Lit._false = false).
-           { specialize (Lit.interp_false rho wf_rho). intros.
-              rewrite <- not_true_iff_false.
-              unfold not in *.
-              intros. now apply H. }
-           now rewrite H.
+Proof. unfold RAWBITVECTOR_LIST.zextend, RAWBITVECTOR_LIST.extend.
+       unfold zextend_lit, extend_lit. intros. rewrite map_app. f_equal.
+       rewrite map_repeat. f_equal.
+       symmetry.
+       specialize (Lit.interp_false rho wf_rho). intros.
+       rewrite <- not_true_iff_false.
+       unfold not in *.
+       intros. now apply H.
 Qed.
 
 Lemma zextend_interp_main: forall bs1 bsres (n i: N),
@@ -7422,43 +7402,21 @@ Lemma zextend_interp_main: forall bs1 bsres (n i: N),
                            @RAWBITVECTOR_LIST.bv_zextn n i
                              (map (Lit.interp rho) bs1) = map (Lit.interp rho) bsres.
 Proof. intro bs1.
-       induction bs1 as [ | xbs1 xsbs1 IHbs1].
-       - intros. simpl.
-         unfold check_zextend in H. simpl in H.
-         case_eq (forallb2 eq_carry_lit
-          (lit_to_carry (zextend_lit [] (N.to_nat i))) bsres).
-         intros.
-         apply prop_eq_carry_lit2 in H0.
-         rewrite prop_interp_carry3 in H0.
-         simpl in H0.
-         unfold RAWBITVECTOR_LIST.bv_zextn.
-         now rewrite zextend_interp_empty.
-         intros. rewrite H0 in H. now contradict H0.
-       - intros. unfold RAWBITVECTOR_LIST.bv_zextn, check_zextend in H.
-         case_eq (
-          forallb2 eq_carry_lit
-          (lit_to_carry
-             (zextend_lit (xbs1 :: xsbs1) (N.to_nat i)))
-          bsres); intros.
-         apply prop_eq_carry_lit2 in H0.
-         rewrite prop_interp_carry3 in H0.
-         simpl in H0. simpl.
-
-         unfold RAWBITVECTOR_LIST.bv_zextn in *.
-         case_eq (N.to_nat i). intros. rewrite H1 in H0.
-         now simpl in *.
-         intros. rewrite H1 in H0.
-         rewrite <- H0.
-         rewrite <- zextend_interp_all.
-         simpl.
-         assert (Lit.interp rho Lit._false = false).
-         { specialize (Lit.interp_false rho wf_rho). intros.
-            rewrite <- not_true_iff_false.
-            unfold not in *.
-            intros. now apply H2. }
-         reflexivity.
-
-         rewrite H0 in H. now contradict H.
+       intros.
+       unfold check_zextend in H.
+       destruct (forallb2 eq_carry_lit
+                   (lit_to_carry (zextend_lit bs1 (N.to_nat i))) bsres) eqn:?. 2: congruence.
+       apply prop_eq_carry_lit2 in Heqb.
+       rewrite prop_interp_carry3 in Heqb.
+       unfold RAWBITVECTOR_LIST.bv_zextn, RAWBITVECTOR_LIST.zextend, RAWBITVECTOR_LIST.extend.
+       rewrite <- Heqb.
+       unfold zextend_lit, extend_lit.
+       rewrite map_app. f_equal. rewrite map_repeat. f_equal.
+       symmetry.
+       specialize (Lit.interp_false rho wf_rho). intros.
+       rewrite <- not_true_iff_false.
+       unfold not in *.
+       intros. now apply H0.
 Qed.
 
 Lemma valid_check_bbZextend pos lres : C.valid rho (check_bbZextend pos lres).
@@ -7618,52 +7576,42 @@ Qed.
 Lemma sextend_interp_zero: forall a, RAWBITVECTOR_LIST.sextend (map (Lit.interp rho) a) O =
 (map (Lit.interp rho) (sextend_lit a 0)).
 Proof. intros.
-       unfold RAWBITVECTOR_LIST.sextend.
-       case_eq a; intros; now simpl.
+       unfold RAWBITVECTOR_LIST.sextend, RAWBITVECTOR_LIST.extend.
+       unfold sextend_lit, extend_lit.
+       rewrite map_app. f_equal.
 Qed.
 
 Lemma sextend_interp_empty: forall i, RAWBITVECTOR_LIST.sextend (map (Lit.interp rho) []) i =
 map (Lit.interp rho) (sextend_lit [] i).
-Proof. simpl. intro i.
-       induction i.
-       - intros. now simpl.
-       - intros. simpl.
-         unfold RAWBITVECTOR_LIST.sextend in *.
-         simpl. rewrite IHi.
-         assert (Lit.interp rho Lit._false = false).
-           { specialize (Lit.interp_false rho wf_rho). intros.
-              rewrite <- not_true_iff_false.
-              unfold not in *.
-              intros. now apply H. }
-        now rewrite H.
+Proof. simpl. intros.
+       unfold RAWBITVECTOR_LIST.sextend, RAWBITVECTOR_LIST.extend.
+       unfold sextend_lit, extend_lit. simpl. rewrite map_repeat. f_equal.
+       unfold RAWBITVECTOR_LIST.get_msb, get_msb_lit. simpl.
+       symmetry.
+       specialize (Lit.interp_false rho wf_rho). intros.
+       rewrite <- not_true_iff_false.
+       unfold not in *.
+       intros. now apply H.
  Qed.
 
 Lemma sextend_interp_all: forall a i, RAWBITVECTOR_LIST.sextend (map (Lit.interp rho) a) i =
 map (Lit.interp rho) (sextend_lit a i).
-Proof. intro a.
-       induction a as [ | xa xsa IHa].
-       - intros. simpl.
-         induction i.
-         + intros. now simpl.
-         + intros. unfold RAWBITVECTOR_LIST.sextend in *.
-           simpl. rewrite IHi.
-           assert (Lit.interp rho Lit._false = false).
-           { specialize (Lit.interp_false rho wf_rho). intros.
-              rewrite <- not_true_iff_false.
-              unfold not in *.
-              intros. now apply H. }
-           now rewrite H.
-        - intros. 
-          induction i.
-          + now simpl.
-          + unfold RAWBITVECTOR_LIST.sextend, zextend_lit in *.
-            simpl in *. rewrite <- IHi.
-           assert (Lit.interp rho Lit._false = false).
-           { specialize (Lit.interp_false rho wf_rho). intros.
-              rewrite <- not_true_iff_false.
-              unfold not in *.
-              intros. now apply H. }
-           reflexivity.
+Proof. intros.
+       unfold RAWBITVECTOR_LIST.sextend, RAWBITVECTOR_LIST.extend.
+       unfold sextend_lit, extend_lit.
+       rewrite map_app. f_equal.
+       rewrite map_repeat. f_equal.
+       unfold RAWBITVECTOR_LIST.get_msb, get_msb_lit.
+       rewrite <- (rev_involutive a).
+       generalize (rev a).
+       destruct l; simpl; intros; eauto.
+       - symmetry.
+         specialize (Lit.interp_false rho wf_rho). intros.
+         rewrite <- not_true_iff_false.
+         unfold not in *.
+         intros. now apply H.
+       - rewrite map_app. simpl.
+         rewrite ! last_last. auto.
 Qed.
 
 Lemma sextend_interp_main: forall bs1 bsres (n i: N),
@@ -7671,40 +7619,27 @@ Lemma sextend_interp_main: forall bs1 bsres (n i: N),
                            @RAWBITVECTOR_LIST.bv_sextn n i
                              (map (Lit.interp rho) bs1) = map (Lit.interp rho) bsres.
 Proof. intro bs1.
-       induction bs1 as [ | xbs1 xsbs1 IHbs1].
-       - intros. simpl.
-         unfold check_zextend in H. simpl in H.
-         case_eq (forallb2 eq_carry_lit
-          (lit_to_carry (sextend_lit [] (N.to_nat i))) bsres).
-         intros.
-         apply prop_eq_carry_lit2 in H0.
-         rewrite prop_interp_carry3 in H0.
-         simpl in H0.
-         unfold RAWBITVECTOR_LIST.bv_sextn.
-         now rewrite sextend_interp_empty.
-         intros. 
-         unfold check_sextend in H.
-         rewrite H0 in H. now contradict H0.
-       - intros. unfold RAWBITVECTOR_LIST.bv_sextn, check_sextend in H.
-         case_eq (
-          forallb2 eq_carry_lit
-          (lit_to_carry
-             (sextend_lit (xbs1 :: xsbs1) (N.to_nat i)))
-          bsres); intros.
-         apply prop_eq_carry_lit2 in H0.
-         rewrite prop_interp_carry3 in H0.
-         simpl in H0.
-
-         unfold RAWBITVECTOR_LIST.bv_sextn in *.
-         case_eq (N.to_nat i). intros. rewrite H1 in H0.
-         now simpl in *.
-         intros. rewrite H1 in H0.
-         rewrite <- H0.
-         
-         rewrite sextend_interp_all.
-         now simpl.
-
-         rewrite H0 in H. now contradict H.
+       intros.
+       unfold check_sextend in H.
+       destruct (forallb2 eq_carry_lit
+                   (lit_to_carry (sextend_lit bs1 (N.to_nat i))) bsres) eqn:?. 2: congruence.
+       apply prop_eq_carry_lit2 in Heqb.
+       rewrite prop_interp_carry3 in Heqb.
+       unfold RAWBITVECTOR_LIST.bv_sextn, RAWBITVECTOR_LIST.sextend, RAWBITVECTOR_LIST.extend.
+       rewrite <- Heqb.
+       unfold sextend_lit, extend_lit.
+       rewrite map_app. f_equal. rewrite map_repeat. f_equal.
+       unfold RAWBITVECTOR_LIST.get_msb. unfold get_msb_lit.
+       rewrite <- (rev_involutive bs1).
+       generalize (rev bs1).
+       destruct l; simpl; intros; eauto.
+       - symmetry.
+         specialize (Lit.interp_false rho wf_rho). intros.
+         rewrite <- not_true_iff_false.
+         unfold not in *.
+         intros. now apply H0.
+       - rewrite map_app. simpl.
+         rewrite ! last_last. auto.
 Qed.
 
 Lemma valid_check_bbSextend pos lres : C.valid rho (check_bbSextend pos lres).
