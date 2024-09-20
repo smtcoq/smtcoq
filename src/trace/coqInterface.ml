@@ -75,11 +75,11 @@ let empty_named_universes_entry =
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind:Decls.Definitional Constr.mkSet empty_named_universes_entry [] Glob_term.Explicit (CAst.make t) in
+  let _ = ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind:Decls.Definitional ~univs:empty_named_universes_entry ~impargs:[] ~impl:Glob_term.Explicit ~name:t Constr.mkSet in
   Constr.mkVar t
 
 let declare_new_variable v constr_t =
-  let _ = ComAssumption.declare_variable Vernacexpr.NoCoercion ~kind:Decls.Definitional constr_t empty_named_universes_entry [] Glob_term.Explicit (CAst.make v) in
+  let _ = ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind:Decls.Definitional ~univs:empty_named_universes_entry ~impargs:[] ~impl:Glob_term.Explicit ~name:v constr_t in
   Constr.mkVar v
 
 let declare_constant n c =
@@ -120,7 +120,7 @@ let mkTrace step_to_coq next _ clist cnil ccons cpair size step def_step r =
 
 
 (* Micromega *)
-module Micromega_plugin_Micromega = Micromega_plugin.Micromega
+module Micromega_plugin_Micromega = Micromega_core_plugin.Micromega
 module Micromega_plugin_Certificate = Micromega_plugin.Certificate
 
 let micromega_dump_proof_term p =

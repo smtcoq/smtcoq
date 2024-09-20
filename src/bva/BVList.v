@@ -2371,6 +2371,7 @@ Qed.
   Proof.
     intros. unfold bv_sextn, sextend, size in *.
     rewrite <- N2Nat.id. apply f_equal.
+
     rewrite length_extend. lia.
   Qed.
 
