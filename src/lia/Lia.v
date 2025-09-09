@@ -115,7 +115,7 @@ Section certif.
         | Some z => (vm, PEc z)
         | None =>
           let (vm,p) := find_var vm h in
-          (vm,PEX p)
+          (vm,@PEX _ p)
         end
       end.
 
@@ -492,7 +492,7 @@ Section certif.
 
     Fixpoint bounded_pexpr (p:positive) (pe:PExpr Z) :=
       match pe with
-      | PEc _ => true
+      | PEO | PEI | PEc _ => true
       | @PEX _ x => Zlt_bool (Zpos x) (Zpos p)
       | PEadd pe1 pe2
       | PEsub pe1 pe2
@@ -552,7 +552,7 @@ Section certif.
        check_atom h Typ.TZ ->
        match build_z_atom h with
        | Some z => (vm, PEc z)
-       | None => let (vm0, p) := find_var vm h in (vm0, PEX p)
+       | None => let (vm0, p) := find_var vm h in (vm0, @PEX _ p)
        end = (vm', pe) ->
        wf_vmap vm ->
        wf_vmap vm' /\
