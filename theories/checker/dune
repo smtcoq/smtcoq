@@ -3,6 +3,7 @@
  (package rocq-smtcoq)
  (name SMTCoq.checker)
  (theories
+  micromega_plugin  ; we need micromega_plugin because dune doesn't handle transitive dependencies
   Stdlib
   SMTCoq.utils
   SMTCoq.checker.small_checker.array
