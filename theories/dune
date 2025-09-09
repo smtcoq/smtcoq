@@ -9,6 +9,7 @@
  (generate_project_file)
  (package rocq-smtcoq)
  (theories
+  micromega_plugin  ; we need micromega_plugin because dune doesn't handle transitive dependencies
   Stdlib
   Trakt
   SMTCoq.structures

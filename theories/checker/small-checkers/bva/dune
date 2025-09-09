@@ -2,4 +2,4 @@
  (generate_project_file)
  (package rocq-smtcoq)
  (name SMTCoq.checker.small_checker.bva)
- (theories Stdlib SMTCoq.utils SMTCoq.structures SMTCoq.checker.fol))
+ (theories micromega_plugin Stdlib SMTCoq.utils SMTCoq.structures SMTCoq.checker.fol))  ; we need micromega_plugin because dune doesn't handle transitive dependencies
