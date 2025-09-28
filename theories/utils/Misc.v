@@ -1656,7 +1656,7 @@ Arguments forallb2 {A B} f l1 l2.
 (* Misc lemmas *)
 
 Lemma neg_eq_true_eq_false b : b = false <-> b <> true.
-Proof. destruct b; intuition auto with *. Qed.
+Proof. destruct b; intuition; auto with *. Qed.
 
 Lemma is_true_iff e :  e = true <-> is_true e.
 Proof. now unfold is_true. Qed.
