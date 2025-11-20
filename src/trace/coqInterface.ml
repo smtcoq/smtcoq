@@ -169,7 +169,7 @@ let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
 
 let constrextern_extern_constr c =
   let env = Global.env () in
-  Constrextern.extern_constr ~inctx:false env (Evd.from_env env) (EConstr.of_constr c)
+  Constrextern.extern_constr ~flags:(PrintingFlags.current()) ~inctx:false env (Evd.from_env env) (EConstr.of_constr c)
 
 let get_rel_dec_name = function
   | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) ->
