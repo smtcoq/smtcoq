@@ -55,7 +55,7 @@ let mkUConst : Constr.t -> Declare.proof_entry = fun c ->
     ~opaque:false
     ~inline:false
     ~types:(EConstr.Unsafe.to_constr ty) (* Cannot contain evars since it comes from a Constr.t *)
-    ~univs:(Evd.univ_entry ~poly:false evd)
+    ~univs:(Evd.univ_entry ~poly:PolyFlags.default evd)
     c
 
 let mkTConst c noc ty =
@@ -66,12 +66,12 @@ let mkTConst c noc ty =
     ~opaque:false
     ~inline:false
     ~types:ty
-    ~univs:(Evd.univ_entry ~poly:false evd)
+    ~univs:(Evd.univ_entry ~poly:PolyFlags.default evd)
     c
 
 (* TODO: when switching to econstr, may have universe constraints *)
 let empty_named_universes_entry =
-  UState.univ_entry ~poly:false UState.empty
+  UState.univ_entry ~poly:PolyFlags.default UState.empty
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
