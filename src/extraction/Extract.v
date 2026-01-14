@@ -10,10 +10,8 @@
 (**************************************************************************)
 
 
-Add Rec LoadPath "." as SMTCoq.
-
 Require Import ExtrOCamlInt63.
-Require Import SMTCoq.
+From SMTCoq Require Import SMTCoq.
 
 Set Extraction AccessOpaque.
 

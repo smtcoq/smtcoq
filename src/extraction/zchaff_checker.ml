@@ -13,19 +13,20 @@
 open Smtcoq_plugin
 
 
-let mkInt = Uint63.of_int
+let mkInt = Utils.mkInt
 
-(* From trace/coqTerms.ml *)
-let mkArray a =
-  let l = (Array.length a) - 1 in
-  snd (Array.fold_left (fun (i,acc) c ->
-                        let acc' =
-                          if i = l then
-                            acc
-                          else
-                            Sat_checker.set acc (mkInt i) c in
-                        (i+1,acc')
-                       ) (0, Sat_checker.make (mkInt l) a.(l)) a)
+(* [mkArray] requires a polymorphic type to be used to create arrays of
+   different elements inside the same function.
+   This can be done using record boxing, see
+     https://ocaml.org/manual/5.2/polymorphism.html#s:higher-rank-poly
+ *)
+type mkArrayRec = { ma : 'a. 'a array -> 'a Sat_checker.array }
+let mkArrayBox = { ma = fun a -> Utils.mkArray Sat_checker.make Sat_checker.set a }
+let mkArray = mkArrayBox.ma
+
+let mkTrace =
+  let cons = fun (x, xs) -> Sat_checker.Cons (x, xs) in
+  Utils.mkTrace Sat_checker.Nil cons
 
 
 (* From zchaff/zchaff.ml *)
@@ -50,20 +51,6 @@ let make_roots first last =
   roots.(!r.id) <- mkArray croot;
 
   mkArray roots
-
-
-(* From trace/coqInterface.ml *)
-(* WARNING: side effect on r! *)
-let mkTrace step_to_coq next size def_step r =
-  let rec mkTrace s =
-    if s = size then
-      Sat_checker.Nil
-    else (
-      r := next !r;
-      let st = step_to_coq !r in
-      Sat_checker.Cons (st, mkTrace (s+1))
-    ) in
-  (mkTrace 0, def_step)
 
 
 (* From trace/smtTrace.ml *)

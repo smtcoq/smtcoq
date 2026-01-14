@@ -298,49 +298,38 @@ Proof. Fail smt.
 Qed.
 
 
-(** SMTCoq also provides conversion tactics, to inject various integer
-    types into the type Z supported by SMTCoq. They can be called before
-    the standard SMTCoq tactics. **)
+(* SMTCoq supports various integer types. This process is extensible, *)
+(*     one can get inspiration from file [src/preproc/Database_trakt.v]. *)
 
-Local Open Scope positive_scope.
+(* Local Open Scope positive_scope. *)
 
-Goal forall (f : positive -> positive) (x y : positive),
-  implb ((x + 3) =? y)
-        ((f (x + 3)) <=? (f y))
-  = true.
-Proof.
-  pos_convert.
-  verit.
-Qed.
+(* Goal forall (f : positive -> positive) (x y : positive), *)
+(*     (x + 3) = y -> (f (x + 3) <=? f y). *)
+(* Proof. *)
+(*   verit. *)
+(* Qed. *)
 
-Goal forall (f : positive -> positive) (x y : positive),
-  implb ((x + 3) =? y)
-        ((3 <? y) && ((f (x + 3)) <=? (f y)))
-  = true.
-Proof.
-  pos_convert.
-  verit.
-Qed.
+(* Goal forall (f : positive -> positive) (x y : positive), *)
+(*   implb ((x + 3) =? y) *)
+(*         ((3 <? y) && ((f (x + 3)) <=? (f y))) *)
+(*   = true. *)
+(* Proof. *)
+(*   verit. *)
+(* Qed. *)
 
-Local Close Scope positive_scope.
+(* Local Close Scope positive_scope. *)
 
 Local Open Scope N_scope.
 
 Goal forall (f : N -> N) (x y : N),
-    implb ((x + 3) =? y)
-          ((f (x + 3)) <=? (f y))
-    = true.
+    (x + 3) = y -> f (x + 3) <=? f y.
 Proof.
-  N_convert.
   verit.
 Qed.
 
 Goal forall (f : N -> N) (x y : N),
-    implb ((x + 3) =? y)
-          ((2 <? y) && ((f (x + 3)) <=? (f y)))
-    = true.
+    (x + 3) = y -> (2 <? y) /\ (f (x + 3) <= f y).
 Proof.
-  N_convert.
   verit.
 Qed.
 
@@ -350,36 +339,27 @@ Require Import PeanoNat.
 Local Open Scope nat_scope.
 
 Goal forall (f : nat -> nat) (x y : nat),
-    implb (Nat.eqb (x + 3) y)
-          ((f (x + 3)) <=? (f y))
-    = true.
+    (x + 3) = y -> f (x + 3) <= f y.
 Proof.
-  nat_convert.
   verit.
 Qed.
 
 Goal forall (f : nat -> nat) (x y : nat),
-    implb (Nat.eqb (x + 3) y)
-          ((2 <? y) && ((f (x + 3)) <=? (f y)))
-    = true.
+    (x + 3) = y -> (2 < y) /\ (f (x + 3) <= f y).
 Proof.
-  nat_convert.
   verit.
 Qed.
 
 Local Close Scope nat_scope.
 
-(* An example with all 3 types and a binary function *)
-Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat),
-  implb (x =? 3)%positive
-    (implb (Nat.eqb y 7)
-      (implb (f 3%positive 7%nat =? 12)%N
-        (f x y =? 12)%N)) = true.
-  pos_convert.
-  nat_convert.
-  N_convert.
-  verit.
-Qed.
+(* (* An example with all 3 types and a binary function *) *)
+(* Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat), *)
+(*   implb (x =? 3)%positive *)
+(*     (implb (Nat.eqb y 7) *)
+(*       (implb (f 3%positive 7%nat =? 12)%N *)
+(*         (f x y =? 12)%N)) = true. *)
+(*   verit. *)
+(* Qed. *)
 
 Open Scope Z_scope.
 

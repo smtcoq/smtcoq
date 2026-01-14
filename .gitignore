@@ -73,3 +73,6 @@ src/extraction/smtcoq
 # proof certificates
 *.vtlog
 *.zlog
+
+# Emacs temporary files
+*~

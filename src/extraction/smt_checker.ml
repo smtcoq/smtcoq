@@ -52,12 +52,17 @@ let rec app l m =
   | Nil -> m
   | Cons (a, l1) -> Cons (a, (app l1 m))
 
-(** val compOpp : int -> int **)
+type comparison =
+| Eq
+| Lt
+| Gt
+
+(** val compOpp : comparison -> comparison **)
 
 let compOpp = function
-| 0 -> 0
-| (-1) -> 1
-| 1 -> (-1)
+| Eq -> Eq
+| Lt -> Gt
+| Gt -> Lt
 
 type sumbool =
 | Left
@@ -65,6 +70,7 @@ type sumbool =
 
 module Coq__1 = struct
  (** val add : nat -> nat -> nat **)
+
  let rec add n0 m =
    match n0 with
    | O -> m
@@ -275,34 +281,34 @@ module Coq_Pos =
   | XO p2 -> S (size_nat p2)
   | XH -> S O
 
-  (** val compare_cont : int -> positive -> positive -> int **)
+  (** val compare_cont : comparison -> positive -> positive -> comparison **)
 
   let rec compare_cont r x y =
     match x with
     | XI p ->
       (match y with
        | XI q -> compare_cont r p q
-       | XO q -> compare_cont 1 p q
-       | XH -> 1)
+       | XO q -> compare_cont Gt p q
+       | XH -> Gt)
     | XO p ->
       (match y with
-       | XI q -> compare_cont (-1) p q
+       | XI q -> compare_cont Lt p q
        | XO q -> compare_cont r p q
-       | XH -> 1)
+       | XH -> Gt)
     | XH -> (match y with
              | XH -> r
-             | _ -> (-1))
+             | _ -> Lt)
 
-  (** val compare : positive -> positive -> int **)
+  (** val compare : positive -> positive -> comparison **)
 
   let compare =
-    compare_cont 0
+    compare_cont Eq
 
   (** val max : positive -> positive -> positive **)
 
   let max p p' =
     match compare p p' with
-    | 1 -> p
+    | Gt -> p
     | _ -> p'
 
   (** val eqb : positive -> positive -> bool **)
@@ -323,7 +329,7 @@ module Coq_Pos =
 
   let leb x y =
     match compare x y with
-    | 1 -> false
+    | Gt -> false
     | _ -> true
 
   (** val gcdn : nat -> positive -> positive -> positive **)
@@ -337,9 +343,9 @@ module Coq_Pos =
          (match b with
           | XI b' ->
             (match compare a' b' with
-             | 0 -> a
-             | (-1) -> gcdn n1 (sub b' a') a
-             | 1 -> gcdn n1 (sub a' b') b)
+             | Eq -> a
+             | Lt -> gcdn n1 (sub b' a') a
+             | Gt -> gcdn n1 (sub a' b') b)
           | XO b0 -> gcdn n1 a b0
           | XH -> XH)
        | XO a0 ->
@@ -412,15 +418,15 @@ module N =
           | Coq_Pos.IsPos p -> Npos p
           | _ -> N0))
 
-  (** val compare : n -> n -> int **)
+  (** val compare : n -> n -> comparison **)
 
   let compare n0 m =
     match n0 with
     | N0 -> (match m with
-             | N0 -> 0
-             | Npos _ -> (-1))
+             | N0 -> Eq
+             | Npos _ -> Lt)
     | Npos n' -> (match m with
-                  | N0 -> 1
+                  | N0 -> Gt
                   | Npos m' -> Coq_Pos.compare n' m')
 
   (** val eqb : n -> n -> bool **)
@@ -438,14 +444,14 @@ module N =
 
   let leb x y =
     match compare x y with
-    | 1 -> false
+    | Gt -> false
     | _ -> true
 
   (** val ltb : n -> n -> bool **)
 
   let ltb x y =
     match compare x y with
-    | (-1) -> true
+    | Lt -> true
     | _ -> false
 
   (** val to_nat : n -> nat **)
@@ -548,41 +554,41 @@ module Z =
        | Zpos y' -> Zneg (Coq_Pos.mul x' y')
        | Zneg y' -> Zpos (Coq_Pos.mul x' y'))
 
-  (** val compare : z -> z -> int **)
+  (** val compare : z -> z -> comparison **)
 
   let compare x y =
     match x with
     | Z0 -> (match y with
-             | Z0 -> 0
-             | Zpos _ -> (-1)
-             | Zneg _ -> 1)
+             | Z0 -> Eq
+             | Zpos _ -> Lt
+             | Zneg _ -> Gt)
     | Zpos x' -> (match y with
                   | Zpos y' -> Coq_Pos.compare x' y'
-                  | _ -> 1)
+                  | _ -> Gt)
     | Zneg x' ->
       (match y with
        | Zneg y' -> compOpp (Coq_Pos.compare x' y')
-       | _ -> (-1))
+       | _ -> Lt)
 
   (** val leb : z -> z -> bool **)
 
   let leb x y =
     match compare x y with
-    | 1 -> false
+    | Gt -> false
     | _ -> true
 
   (** val ltb : z -> z -> bool **)
 
   let ltb x y =
     match compare x y with
-    | (-1) -> true
+    | Lt -> true
     | _ -> false
 
   (** val gtb : z -> z -> bool **)
 
   let gtb x y =
     match compare x y with
-    | 1 -> true
+    | Gt -> true
     | _ -> false
 
   (** val eqb : z -> z -> bool **)
@@ -603,7 +609,7 @@ module Z =
 
   let max n0 m =
     match compare n0 m with
-    | (-1) -> m
+    | Lt -> m
     | _ -> n0
 
   (** val abs : z -> z **)
@@ -643,7 +649,7 @@ module Z =
     | Z0 -> (Z0, Z0)
     | Zpos a' ->
       (match b with
-       | Z0 -> (Z0, Z0)
+       | Z0 -> (Z0, a)
        | Zpos _ -> pos_div_eucl a' b
        | Zneg b' ->
          let (q, r) = pos_div_eucl a' (Zpos b') in
@@ -652,7 +658,7 @@ module Z =
           | _ -> ((opp (add q (Zpos XH))), (add b r))))
     | Zneg a' ->
       (match b with
-       | Z0 -> (Z0, Z0)
+       | Z0 -> (Z0, a)
        | Zpos _ ->
          let (q, r) = pos_div_eucl a' b in
          (match r with
@@ -688,12 +694,12 @@ module Z =
     | Z0 -> (match y with
              | Z0 -> Left
              | _ -> Right)
-    | Zpos x0 -> (match y with
-                  | Zpos p2 -> Coq_Pos.eq_dec x0 p2
-                  | _ -> Right)
-    | Zneg x0 -> (match y with
-                  | Zneg p2 -> Coq_Pos.eq_dec x0 p2
-                  | _ -> Right)
+    | Zpos p -> (match y with
+                 | Zpos p2 -> Coq_Pos.eq_dec p p2
+                 | _ -> Right)
+    | Zneg p -> (match y with
+                 | Zneg p2 -> Coq_Pos.eq_dec p p2
+                 | _ -> Right)
  end
 
 (** val nth : nat -> 'a1 list -> 'a1 -> 'a1 **)
@@ -774,7 +780,7 @@ let rec firstn n0 l =
 
 let zeq_bool x y =
   match Z.compare x y with
-  | 0 -> true
+  | Eq -> true
   | _ -> false
 
 type 'c pExpr =
@@ -812,14 +818,14 @@ let rec peq ceqb p p' =
     (match p' with
      | Pinj (j', q') ->
        (match Coq_Pos.compare j j' with
-        | 0 -> peq ceqb q q'
+        | Eq -> peq ceqb q q'
         | _ -> false)
      | _ -> false)
   | PX (p2, i, q) ->
     (match p' with
      | PX (p'0, i', q') ->
        (match Coq_Pos.compare i i' with
-        | 0 -> if peq ceqb p2 p'0 then peq ceqb q q' else false
+        | Eq -> if peq ceqb p2 p'0 then peq ceqb q q' else false
         | _ -> false)
      | _ -> false)
 
@@ -1461,6 +1467,7 @@ let opAdd o o' =
      | x -> Some x)
 
 type 'c psatz =
+| PsatzLet of 'c psatz * 'c psatz
 | PsatzIn of nat
 | PsatzSquare of 'c polC
 | PsatzMulC of 'c polC * 'c psatz
@@ -1520,6 +1527,10 @@ let nformula_plus_nformula cO cplus ceqb f1 f2 =
     nFormula option **)
 
 let rec eval_Psatz cO cI cplus ctimes ceqb cleb l = function
+| PsatzLet (p2, p3) ->
+  (match eval_Psatz cO cI cplus ctimes ceqb cleb l p2 with
+   | Some f -> eval_Psatz cO cI cplus ctimes ceqb cleb (Cons (f, l)) p3
+   | None -> None)
 | PsatzIn n0 -> Some (nth n0 l ((Pc cO), Equal))
 | PsatzSquare e0 -> Some ((psquare cO cI cplus ctimes ceqb e0), NonStrict)
 | PsatzMulC (re, e0) ->
@@ -1582,12 +1593,22 @@ let psub0 =
 let padd0 =
   padd
 
+(** val popp0 : ('a1 -> 'a1) -> 'a1 pol -> 'a1 pol **)
+
+let popp0 =
+  popp
+
 type zWitness = z psatz
 
 (** val psub1 : z pol -> z pol -> z pol **)
 
 let psub1 =
   psub0 Z0 Z.add Z.sub Z.opp zeq_bool
+
+(** val popp1 : z pol -> z pol **)
+
+let popp1 =
+  popp0 Z.opp
 
 (** val padd1 : z pol -> z pol -> z pol **)
 
@@ -1677,6 +1698,7 @@ type zArithProof =
 | DoneProof
 | RatProof of zWitness * zArithProof
 | CutProof of zWitness * zArithProof
+| SplitProof of z polC * zArithProof * zArithProof
 | EnumProof of zWitness * zWitness * zArithProof list
 | ExProof of positive * zArithProof
 
@@ -1790,6 +1812,16 @@ let rec zChecker l = function
       | Some cp -> zChecker (Cons ((nformula_of_cutting_plane cp), l)) pf0
       | None -> true)
    | None -> false)
+| SplitProof (p, pf1, pf2) ->
+  (match genCuttingPlane (p, NonStrict) with
+   | Some cp1 ->
+     (match genCuttingPlane ((popp1 p), NonStrict) with
+      | Some cp2 ->
+        if zChecker (Cons ((nformula_of_cutting_plane cp1), l)) pf1
+        then zChecker (Cons ((nformula_of_cutting_plane cp2), l)) pf2
+        else false
+      | None -> false)
+   | None -> false)
 | EnumProof (w1, w2, pf0) ->
   (match eval_Psatz0 l w1 with
    | Some f1 ->
@@ -1836,14 +1868,6 @@ let zTautoChecker f w =
   tauto_checker zunsat zdeduce normalise negate (fun cl ->
     zChecker (map fst cl)) f w
 
-(** val size : nat **)
-
-let size =
-  S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-    (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-    (S (S (S (S (S (S (S (S (S (S (S (S (S (S
-    O))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
-
 (** val lsl0 : Uint63.t -> Uint63.t -> Uint63.t **)
 
 let lsl0 = Uint63.l_sl
@@ -1880,6 +1904,18 @@ let ltb0 = Uint63.lt
 
 let leb0 = Uint63.le
 
+(** val compare0 : Uint63.t -> Uint63.t -> comparison **)
+
+let compare0 = (fun x y -> let c = Uint63.compare x y in if c = 0 then Eq else if c < 0 then Lt else Gt)
+
+(** val size : nat **)
+
+let size =
+  S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+    (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+    (S (S (S (S (S (S (S (S (S (S (S (S (S (S
+    O))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+
 (** val digits : Uint63.t **)
 
 let digits =
@@ -1899,10 +1935,6 @@ let is_even i =
 
 let bit i n0 =
   negb (is_zero (lsl0 (lsr0 i n0) (sub0 digits (Uint63.of_int (1)))))
-
-(** val compare0 : Uint63.t -> Uint63.t -> int **)
-
-let compare0 = Uint63.compare
 
 type 'x compare1 =
 | LT
@@ -1991,83 +2023,6 @@ module Raw =
      | EQ0 -> true
      | GT -> mem k l)
 
-  type 'elt coq_R_mem =
-  | R_mem_0 of 'elt t
-  | R_mem_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_mem_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_mem_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_mem
-
-  (** val coq_R_mem_rect :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1 t ->
-      bool -> 'a1 coq_R_mem -> 'a2 **)
-
-  let rec coq_R_mem_rect k f f0 f1 f2 _ _ = function
-  | R_mem_0 s -> f s __
-  | R_mem_1 (s, k', _x, l) -> f0 s k' _x l __ __ __
-  | R_mem_2 (s, k', _x, l) -> f1 s k' _x l __ __ __
-  | R_mem_3 (s, k', _x, l, _res, r0) ->
-    f2 s k' _x l __ __ __ _res r0 (coq_R_mem_rect k f f0 f1 f2 l _res r0)
-
-  (** val coq_R_mem_rec :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1 t ->
-      bool -> 'a1 coq_R_mem -> 'a2 **)
-
-  let rec coq_R_mem_rec k f f0 f1 f2 _ _ = function
-  | R_mem_0 s -> f s __
-  | R_mem_1 (s, k', _x, l) -> f0 s k' _x l __ __ __
-  | R_mem_2 (s, k', _x, l) -> f1 s k' _x l __ __ __
-  | R_mem_3 (s, k', _x, l, _res, r0) ->
-    f2 s k' _x l __ __ __ _res r0 (coq_R_mem_rec k f f0 f1 f2 l _res r0)
-
-  (** val mem_rect :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let rec mem_rect k f2 f1 f0 f s =
-    let f3 = f2 s in
-    let f4 = f1 s in
-    let f5 = f0 s in
-    let f6 = f s in
-    (match s with
-     | Nil -> f3 __
-     | Cons (p, l) ->
-       let (t0, e) = p in
-       let f7 = f6 t0 e l __ in
-       let f8 = fun _ _ -> let hrec = mem_rect k f2 f1 f0 f l in f7 __ __ hrec
-       in
-       let f9 = f5 t0 e l __ in
-       let f10 = f4 t0 e l __ in
-       (match X.compare k t0 with
-        | LT -> f10 __ __
-        | EQ0 -> f9 __ __
-        | GT -> f8 __ __))
-
-  (** val mem_rec :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let mem_rec =
-    mem_rect
-
-  (** val coq_R_mem_correct : key -> 'a1 t -> bool -> 'a1 coq_R_mem **)
-
-  let coq_R_mem_correct k s _res =
-    Obj.magic mem_rect k (fun y _ _ _ -> R_mem_0 y)
-      (fun y y0 y1 y2 _ _ _ _ _ -> R_mem_1 (y, y0, y1, y2))
-      (fun y y0 y1 y2 _ _ _ _ _ -> R_mem_2 (y, y0, y1, y2))
-      (fun y y0 y1 y2 _ _ _ y6 _ _ -> R_mem_3 (y, y0, y1, y2, (mem k y2),
-      (y6 (mem k y2) __))) s _res __
-
   (** val find : key -> 'a1 t -> 'a1 option **)
 
   let rec find k = function
@@ -2078,86 +2033,6 @@ module Raw =
      | LT -> None
      | EQ0 -> Some x
      | GT -> find k s')
-
-  type 'elt coq_R_find =
-  | R_find_0 of 'elt t
-  | R_find_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_find_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_find_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt option
-     * 'elt coq_R_find
-
-  (** val coq_R_find_rect :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2) -> 'a1
-      t -> 'a1 option -> 'a1 coq_R_find -> 'a2 **)
-
-  let rec coq_R_find_rect k f f0 f1 f2 _ _ = function
-  | R_find_0 s -> f s __
-  | R_find_1 (s, k', x, s') -> f0 s k' x s' __ __ __
-  | R_find_2 (s, k', x, s') -> f1 s k' x s' __ __ __
-  | R_find_3 (s, k', x, s', _res, r0) ->
-    f2 s k' x s' __ __ __ _res r0 (coq_R_find_rect k f f0 f1 f2 s' _res r0)
-
-  (** val coq_R_find_rec :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2) -> 'a1
-      t -> 'a1 option -> 'a1 coq_R_find -> 'a2 **)
-
-  let rec coq_R_find_rec k f f0 f1 f2 _ _ = function
-  | R_find_0 s -> f s __
-  | R_find_1 (s, k', x, s') -> f0 s k' x s' __ __ __
-  | R_find_2 (s, k', x, s') -> f1 s k' x s' __ __ __
-  | R_find_3 (s, k', x, s', _res, r0) ->
-    f2 s k' x s' __ __ __ _res r0 (coq_R_find_rec k f f0 f1 f2 s' _res r0)
-
-  (** val find_rect :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let rec find_rect k f2 f1 f0 f s =
-    let f3 = f2 s in
-    let f4 = f1 s in
-    let f5 = f0 s in
-    let f6 = f s in
-    (match s with
-     | Nil -> f3 __
-     | Cons (p, l) ->
-       let (t0, e) = p in
-       let f7 = f6 t0 e l __ in
-       let f8 = fun _ _ ->
-         let hrec = find_rect k f2 f1 f0 f l in f7 __ __ hrec
-       in
-       let f9 = f5 t0 e l __ in
-       let f10 = f4 t0 e l __ in
-       (match X.compare k t0 with
-        | LT -> f10 __ __
-        | EQ0 -> f9 __ __
-        | GT -> f8 __ __))
-
-  (** val find_rec :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let find_rec =
-    find_rect
-
-  (** val coq_R_find_correct :
-      key -> 'a1 t -> 'a1 option -> 'a1 coq_R_find **)
-
-  let coq_R_find_correct k s _res =
-    Obj.magic find_rect k (fun y _ _ _ -> R_find_0 y)
-      (fun y y0 y1 y2 _ _ _ _ _ -> R_find_1 (y, y0, y1, y2))
-      (fun y y0 y1 y2 _ _ _ _ _ -> R_find_2 (y, y0, y1, y2))
-      (fun y y0 y1 y2 _ _ _ y6 _ _ -> R_find_3 (y, y0, y1, y2, (find k y2),
-      (y6 (find k y2) __))) s _res __
 
   (** val add : key -> 'a1 -> 'a1 t -> 'a1 t **)
 
@@ -2170,85 +2045,6 @@ module Raw =
      | EQ0 -> Cons ((k, x), l)
      | GT -> Cons ((k', y), (add k x l)))
 
-  type 'elt coq_R_add =
-  | R_add_0 of 'elt t
-  | R_add_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_add_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_add_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-     * 'elt coq_R_add
-
-  (** val coq_R_add_rect :
-      key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2 ->
-      'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2 **)
-
-  let rec coq_R_add_rect k x f f0 f1 f2 _ _ = function
-  | R_add_0 s -> f s __
-  | R_add_1 (s, k', y, l) -> f0 s k' y l __ __ __
-  | R_add_2 (s, k', y, l) -> f1 s k' y l __ __ __
-  | R_add_3 (s, k', y, l, _res, r0) ->
-    f2 s k' y l __ __ __ _res r0 (coq_R_add_rect k x f f0 f1 f2 l _res r0)
-
-  (** val coq_R_add_rec :
-      key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2 ->
-      'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2 **)
-
-  let rec coq_R_add_rec k x f f0 f1 f2 _ _ = function
-  | R_add_0 s -> f s __
-  | R_add_1 (s, k', y, l) -> f0 s k' y l __ __ __
-  | R_add_2 (s, k', y, l) -> f1 s k' y l __ __ __
-  | R_add_3 (s, k', y, l, _res, r0) ->
-    f2 s k' y l __ __ __ _res r0 (coq_R_add_rec k x f f0 f1 f2 l _res r0)
-
-  (** val add_rect :
-      key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let rec add_rect k x f2 f1 f0 f s =
-    let f3 = f2 s in
-    let f4 = f1 s in
-    let f5 = f0 s in
-    let f6 = f s in
-    (match s with
-     | Nil -> f3 __
-     | Cons (p, l) ->
-       let (t0, e) = p in
-       let f7 = f6 t0 e l __ in
-       let f8 = fun _ _ ->
-         let hrec = add_rect k x f2 f1 f0 f l in f7 __ __ hrec
-       in
-       let f9 = f5 t0 e l __ in
-       let f10 = f4 t0 e l __ in
-       (match X.compare k t0 with
-        | LT -> f10 __ __
-        | EQ0 -> f9 __ __
-        | GT -> f8 __ __))
-
-  (** val add_rec :
-      key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let add_rec =
-    add_rect
-
-  (** val coq_R_add_correct :
-      key -> 'a1 -> 'a1 t -> 'a1 t -> 'a1 coq_R_add **)
-
-  let coq_R_add_correct k x s _res =
-    add_rect k x (fun y _ _ _ -> R_add_0 y) (fun y y0 y1 y2 _ _ _ _ _ ->
-      R_add_1 (y, y0, y1, y2)) (fun y y0 y1 y2 _ _ _ _ _ -> R_add_2 (y, y0,
-      y1, y2)) (fun y y0 y1 y2 _ _ _ y6 _ _ -> R_add_3 (y, y0, y1, y2,
-      (add k x y2), (y6 (add k x y2) __))) s _res __
-
   (** val remove : key -> 'a1 t -> 'a1 t **)
 
   let rec remove k s = match s with
@@ -2259,85 +2055,6 @@ module Raw =
      | LT -> s
      | EQ0 -> l
      | GT -> Cons ((k', x), (remove k l)))
-
-  type 'elt coq_R_remove =
-  | R_remove_0 of 'elt t
-  | R_remove_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_remove_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_remove_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-     * 'elt coq_R_remove
-
-  (** val coq_R_remove_rect :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) -> 'a1 t
-      -> 'a1 t -> 'a1 coq_R_remove -> 'a2 **)
-
-  let rec coq_R_remove_rect k f f0 f1 f2 _ _ = function
-  | R_remove_0 s -> f s __
-  | R_remove_1 (s, k', x, l) -> f0 s k' x l __ __ __
-  | R_remove_2 (s, k', x, l) -> f1 s k' x l __ __ __
-  | R_remove_3 (s, k', x, l, _res, r0) ->
-    f2 s k' x l __ __ __ _res r0 (coq_R_remove_rect k f f0 f1 f2 l _res r0)
-
-  (** val coq_R_remove_rec :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) -> 'a1 t
-      -> 'a1 t -> 'a1 coq_R_remove -> 'a2 **)
-
-  let rec coq_R_remove_rec k f f0 f1 f2 _ _ = function
-  | R_remove_0 s -> f s __
-  | R_remove_1 (s, k', x, l) -> f0 s k' x l __ __ __
-  | R_remove_2 (s, k', x, l) -> f1 s k' x l __ __ __
-  | R_remove_3 (s, k', x, l, _res, r0) ->
-    f2 s k' x l __ __ __ _res r0 (coq_R_remove_rec k f f0 f1 f2 l _res r0)
-
-  (** val remove_rect :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let rec remove_rect k f2 f1 f0 f s =
-    let f3 = f2 s in
-    let f4 = f1 s in
-    let f5 = f0 s in
-    let f6 = f s in
-    (match s with
-     | Nil -> f3 __
-     | Cons (p, l) ->
-       let (t0, e) = p in
-       let f7 = f6 t0 e l __ in
-       let f8 = fun _ _ ->
-         let hrec = remove_rect k f2 f1 f0 f l in f7 __ __ hrec
-       in
-       let f9 = f5 t0 e l __ in
-       let f10 = f4 t0 e l __ in
-       (match X.compare k t0 with
-        | LT -> f10 __ __
-        | EQ0 -> f9 __ __
-        | GT -> f8 __ __))
-
-  (** val remove_rec :
-      key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2 **)
-
-  let remove_rec =
-    remove_rect
-
-  (** val coq_R_remove_correct : key -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove **)
-
-  let coq_R_remove_correct k s _res =
-    Obj.magic remove_rect k (fun y _ _ _ -> R_remove_0 y)
-      (fun y y0 y1 y2 _ _ _ _ _ -> R_remove_1 (y, y0, y1, y2))
-      (fun y y0 y1 y2 _ _ _ _ _ -> R_remove_2 (y, y0, y1, y2))
-      (fun y y0 y1 y2 _ _ _ y6 _ _ -> R_remove_3 (y, y0, y1, y2,
-      (remove k y2), (y6 (remove k y2) __))) s _res __
 
   (** val elements : 'a1 t -> 'a1 t **)
 
@@ -2350,67 +2067,6 @@ module Raw =
     match m with
     | Nil -> acc
     | Cons (p, m') -> let (k, e) = p in fold f m' (f k e acc)
-
-  type ('elt, 'a) coq_R_fold =
-  | R_fold_0 of 'elt t * 'a
-  | R_fold_1 of 'elt t * 'a * X.t * 'elt * (X.t * 'elt) list * 'a
-     * ('elt, 'a) coq_R_fold
-
-  (** val coq_R_fold_rect :
-      (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-      'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-      coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-      coq_R_fold -> 'a3 **)
-
-  let rec coq_R_fold_rect f f0 f1 _ _ _ = function
-  | R_fold_0 (m, acc) -> f0 m acc __
-  | R_fold_1 (m, acc, k, e, m', _res, r0) ->
-    f1 m acc k e m' __ _res r0
-      (coq_R_fold_rect f f0 f1 m' (f k e acc) _res r0)
-
-  (** val coq_R_fold_rec :
-      (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-      'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-      coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-      coq_R_fold -> 'a3 **)
-
-  let rec coq_R_fold_rec f f0 f1 _ _ _ = function
-  | R_fold_0 (m, acc) -> f0 m acc __
-  | R_fold_1 (m, acc, k, e, m', _res, r0) ->
-    f1 m acc k e m' __ _res r0 (coq_R_fold_rec f f0 f1 m' (f k e acc) _res r0)
-
-  (** val fold_rect :
-      (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-      'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) -> 'a1 t ->
-      'a2 -> 'a3 **)
-
-  let rec fold_rect f1 f0 f m acc =
-    let f2 = f0 m acc in
-    let f3 = f m acc in
-    (match m with
-     | Nil -> f2 __
-     | Cons (p, l) ->
-       let (t0, e) = p in
-       let f4 = f3 t0 e l __ in
-       let hrec = fold_rect f1 f0 f l (f1 t0 e acc) in f4 hrec)
-
-  (** val fold_rec :
-      (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-      'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) -> 'a1 t ->
-      'a2 -> 'a3 **)
-
-  let fold_rec =
-    fold_rect
-
-  (** val coq_R_fold_correct :
-      (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-      coq_R_fold **)
-
-  let coq_R_fold_correct f m acc _res =
-    fold_rect f (fun y y0 _ _ _ -> R_fold_0 (y, y0))
-      (fun y y0 y1 y2 y3 _ y5 _ _ -> R_fold_1 (y, y0, y1, y2, y3,
-      (fold f y3 (f y1 y2 y0)), (y5 (fold f y3 (f y1 y2 y0)) __))) m acc _res
-      __
 
   (** val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool **)
 
@@ -2428,110 +2084,6 @@ module Raw =
          (match X.compare x x' with
           | EQ0 -> if cmp e e' then equal cmp l l' else false
           | _ -> false))
-
-  type 'elt coq_R_equal =
-  | R_equal_0 of 'elt t * 'elt t
-  | R_equal_1 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * X.t
-     * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_equal
-  | R_equal_2 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * X.t
-     * 'elt * (X.t * 'elt) list * X.t compare1
-  | R_equal_3 of 'elt t * 'elt t * 'elt t * 'elt t
-
-  (** val coq_R_equal_rect :
-      ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-      -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal -> 'a2 ->
-      'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t
-      -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) ->
-      ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t ->
-      'a1 t -> bool -> 'a1 coq_R_equal -> 'a2 **)
-
-  let rec coq_R_equal_rect cmp f f0 f1 f2 _ _ _ = function
-  | R_equal_0 (m, m') -> f m m' __ __
-  | R_equal_1 (m, m', x, e, l, x', e', l', _res, r0) ->
-    f0 m m' x e l __ x' e' l' __ __ __ _res r0
-      (coq_R_equal_rect cmp f f0 f1 f2 l l' _res r0)
-  | R_equal_2 (m, m', x, e, l, x', e', l', _x) ->
-    f1 m m' x e l __ x' e' l' __ _x __ __
-  | R_equal_3 (m, m', _x, _x0) -> f2 m m' _x __ _x0 __ __
-
-  (** val coq_R_equal_rec :
-      ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-      -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal -> 'a2 ->
-      'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t
-      -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) ->
-      ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t ->
-      'a1 t -> bool -> 'a1 coq_R_equal -> 'a2 **)
-
-  let rec coq_R_equal_rec cmp f f0 f1 f2 _ _ _ = function
-  | R_equal_0 (m, m') -> f m m' __ __
-  | R_equal_1 (m, m', x, e, l, x', e', l', _res, r0) ->
-    f0 m m' x e l __ x' e' l' __ __ __ _res r0
-      (coq_R_equal_rec cmp f f0 f1 f2 l l' _res r0)
-  | R_equal_2 (m, m', x, e, l, x', e', l', _x) ->
-    f1 m m' x e l __ x' e' l' __ _x __ __
-  | R_equal_3 (m, m', _x, _x0) -> f2 m m' _x __ _x0 __ __
-
-  (** val equal_rect :
-      ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-      -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t ->
-      X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t
-      -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2 **)
-
-  let rec equal_rect cmp f2 f1 f0 f m m' =
-    let f3 = f2 m m' in
-    let f4 = f1 m m' in
-    let f5 = f0 m m' in
-    let f6 = f m m' in
-    let f7 = f6 m __ in
-    let f8 = f7 m' __ in
-    (match m with
-     | Nil ->
-       let f9 = f3 __ in (match m' with
-                          | Nil -> f9 __
-                          | Cons (_, _) -> f8 __)
-     | Cons (p, l) ->
-       let (t0, e) = p in
-       let f9 = f5 t0 e l __ in
-       let f10 = f4 t0 e l __ in
-       (match m' with
-        | Nil -> f8 __
-        | Cons (p2, l0) ->
-          let (t1, e0) = p2 in
-          let f11 = f9 t1 e0 l0 __ in
-          let f12 = let _x = X.compare t0 t1 in f11 _x __ in
-          let f13 = f10 t1 e0 l0 __ in
-          let f14 = fun _ _ ->
-            let hrec = equal_rect cmp f2 f1 f0 f l l0 in f13 __ __ hrec
-          in
-          (match X.compare t0 t1 with
-           | EQ0 -> f14 __ __
-           | _ -> f12 __)))
-
-  (** val equal_rec :
-      ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-      -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-      (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t ->
-      X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 -> (X.t * 'a1) list
-      -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t
-      -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2 **)
-
-  let equal_rec =
-    equal_rect
-
-  (** val coq_R_equal_correct :
-      ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal **)
-
-  let coq_R_equal_correct cmp m m' _res =
-    equal_rect cmp (fun y y0 _ _ _ _ -> R_equal_0 (y, y0))
-      (fun y y0 y1 y2 y3 _ y5 y6 y7 _ _ _ y11 _ _ -> R_equal_1 (y, y0, y1,
-      y2, y3, y5, y6, y7, (equal cmp y3 y7), (y11 (equal cmp y3 y7) __)))
-      (fun y y0 y1 y2 y3 _ y5 y6 y7 _ y9 _ _ _ _ -> R_equal_2 (y, y0, y1, y2,
-      y3, y5, y6, y7, y9)) (fun y y0 y1 _ y3 _ _ _ _ -> R_equal_3 (y, y0, y1,
-      y3)) m m' _res __
 
   (** val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t **)
 
@@ -3238,21 +2790,21 @@ module Coq_Raw =
         tree -> key -> 'a1 -> 'a1 tree -> 'a1 tree -> 'a1 coq_R_bal -> 'a2 **)
 
     let coq_R_bal_rect f f0 f1 f2 f3 f4 f5 f6 f7 _ _ _ _ _ = function
-    | R_bal_0 (x, x0, x1, x2) -> f x x0 x1 x2 __ __ __
-    | R_bal_1 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f0 x x0 x1 x2 __ __ x3 x4 x5 x6 x7 __ __ __
-    | R_bal_2 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f1 x x0 x1 x2 __ __ x3 x4 x5 x6 x7 __ __ __ __
-    | R_bal_3 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12) ->
-      f2 x x0 x1 x2 __ __ x3 x4 x5 x6 x7 __ __ __ x8 x9 x10 x11 x12 __
-    | R_bal_4 (x, x0, x1, x2) -> f3 x x0 x1 x2 __ __ __ __ __
-    | R_bal_5 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f4 x x0 x1 x2 __ __ __ __ x3 x4 x5 x6 x7 __ __ __
-    | R_bal_6 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f5 x x0 x1 x2 __ __ __ __ x3 x4 x5 x6 x7 __ __ __ __
-    | R_bal_7 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12) ->
-      f6 x x0 x1 x2 __ __ __ __ x3 x4 x5 x6 x7 __ __ __ x8 x9 x10 x11 x12 __
-    | R_bal_8 (x, x0, x1, x2) -> f7 x x0 x1 x2 __ __ __ __
+    | R_bal_0 (l, x, d, r) -> f l x d r __ __ __
+    | R_bal_1 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f0 l x d r __ __ x0 x1 x2 x3 x4 __ __ __
+    | R_bal_2 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f1 l x d r __ __ x0 x1 x2 x3 x4 __ __ __ __
+    | R_bal_3 (l, x, d, r, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) ->
+      f2 l x d r __ __ x0 x1 x2 x3 x4 __ __ __ x5 x6 x7 x8 x9 __
+    | R_bal_4 (l, x, d, r) -> f3 l x d r __ __ __ __ __
+    | R_bal_5 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f4 l x d r __ __ __ __ x0 x1 x2 x3 x4 __ __ __
+    | R_bal_6 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f5 l x d r __ __ __ __ x0 x1 x2 x3 x4 __ __ __ __
+    | R_bal_7 (l, x, d, r, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) ->
+      f6 l x d r __ __ __ __ x0 x1 x2 x3 x4 __ __ __ x5 x6 x7 x8 x9 __
+    | R_bal_8 (l, x, d, r) -> f7 l x d r __ __ __ __
 
     (** val coq_R_bal_rec :
         ('a1 tree -> key -> 'a1 -> 'a1 tree -> __ -> __ -> __ -> 'a2) -> ('a1
@@ -3274,21 +2826,21 @@ module Coq_Raw =
         tree -> key -> 'a1 -> 'a1 tree -> 'a1 tree -> 'a1 coq_R_bal -> 'a2 **)
 
     let coq_R_bal_rec f f0 f1 f2 f3 f4 f5 f6 f7 _ _ _ _ _ = function
-    | R_bal_0 (x, x0, x1, x2) -> f x x0 x1 x2 __ __ __
-    | R_bal_1 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f0 x x0 x1 x2 __ __ x3 x4 x5 x6 x7 __ __ __
-    | R_bal_2 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f1 x x0 x1 x2 __ __ x3 x4 x5 x6 x7 __ __ __ __
-    | R_bal_3 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12) ->
-      f2 x x0 x1 x2 __ __ x3 x4 x5 x6 x7 __ __ __ x8 x9 x10 x11 x12 __
-    | R_bal_4 (x, x0, x1, x2) -> f3 x x0 x1 x2 __ __ __ __ __
-    | R_bal_5 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f4 x x0 x1 x2 __ __ __ __ x3 x4 x5 x6 x7 __ __ __
-    | R_bal_6 (x, x0, x1, x2, x3, x4, x5, x6, x7) ->
-      f5 x x0 x1 x2 __ __ __ __ x3 x4 x5 x6 x7 __ __ __ __
-    | R_bal_7 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12) ->
-      f6 x x0 x1 x2 __ __ __ __ x3 x4 x5 x6 x7 __ __ __ x8 x9 x10 x11 x12 __
-    | R_bal_8 (x, x0, x1, x2) -> f7 x x0 x1 x2 __ __ __ __
+    | R_bal_0 (l, x, d, r) -> f l x d r __ __ __
+    | R_bal_1 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f0 l x d r __ __ x0 x1 x2 x3 x4 __ __ __
+    | R_bal_2 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f1 l x d r __ __ x0 x1 x2 x3 x4 __ __ __ __
+    | R_bal_3 (l, x, d, r, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) ->
+      f2 l x d r __ __ x0 x1 x2 x3 x4 __ __ __ x5 x6 x7 x8 x9 __
+    | R_bal_4 (l, x, d, r) -> f3 l x d r __ __ __ __ __
+    | R_bal_5 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f4 l x d r __ __ __ __ x0 x1 x2 x3 x4 __ __ __
+    | R_bal_6 (l, x, d, r, x0, x1, x2, x3, x4) ->
+      f5 l x d r __ __ __ __ x0 x1 x2 x3 x4 __ __ __ __
+    | R_bal_7 (l, x, d, r, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9) ->
+      f6 l x d r __ __ __ __ x0 x1 x2 x3 x4 __ __ __ x5 x6 x7 x8 x9 __
+    | R_bal_8 (l, x, d, r) -> f7 l x d r __ __ __ __
 
     type 'elt coq_R_add =
     | R_add_0 of 'elt tree
@@ -3350,9 +2902,9 @@ module Coq_Raw =
         tree -> ('a1 tree * (key * 'a1)) -> 'a1 coq_R_remove_min -> 'a2 **)
 
     let rec coq_R_remove_min_rect f f0 _ _ _ _ _ = function
-    | R_remove_min_0 (l, x, d, r0) -> f l x d r0 __
-    | R_remove_min_1 (l, x, d, r0, ll, lx, ld, lr, _x, _res, r1, l', m) ->
-      f0 l x d r0 ll lx ld lr _x __ _res r1
+    | R_remove_min_0 (l, x, d, r) -> f l x d r __
+    | R_remove_min_1 (l, x, d, r, ll, lx, ld, lr, _x, _res, r1, l', m) ->
+      f0 l x d r ll lx ld lr _x __ _res r1
         (coq_R_remove_min_rect f f0 ll lx ld lr _res r1) l' m __
 
     (** val coq_R_remove_min_rec :
@@ -3363,9 +2915,9 @@ module Coq_Raw =
         tree -> ('a1 tree * (key * 'a1)) -> 'a1 coq_R_remove_min -> 'a2 **)
 
     let rec coq_R_remove_min_rec f f0 _ _ _ _ _ = function
-    | R_remove_min_0 (l, x, d, r0) -> f l x d r0 __
-    | R_remove_min_1 (l, x, d, r0, ll, lx, ld, lr, _x, _res, r1, l', m) ->
-      f0 l x d r0 ll lx ld lr _x __ _res r1
+    | R_remove_min_0 (l, x, d, r) -> f l x d r __
+    | R_remove_min_1 (l, x, d, r, ll, lx, ld, lr, _x, _res, r1, l', m) ->
+      f0 l x d r ll lx ld lr _x __ _res r1
         (coq_R_remove_min_rec f f0 ll lx ld lr _res r1) l' m __
 
     type 'elt coq_R_merge =
@@ -3385,11 +2937,12 @@ module Coq_Raw =
         -> 'a1 tree -> 'a1 coq_R_merge -> 'a2 **)
 
     let coq_R_merge_rect f f0 f1 _ _ _ = function
-    | R_merge_0 (x, x0) -> f x x0 __
-    | R_merge_1 (x, x0, x1, x2, x3, x4, x5) -> f0 x x0 x1 x2 x3 x4 x5 __ __
-    | R_merge_2 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12,
-                 x13, x14) ->
-      f1 x x0 x1 x2 x3 x4 x5 __ x6 x7 x8 x9 x10 __ x11 x12 __ x13 x14 __
+    | R_merge_0 (s1, s2) -> f s1 s2 __
+    | R_merge_1 (s1, s2, _x, _x0, _x1, _x2, _x3) ->
+      f0 s1 s2 _x _x0 _x1 _x2 _x3 __ __
+    | R_merge_2 (s1, s2, _x, _x0, _x1, _x2, _x3, l2, x2, d2, r2, _x4, s2', p,
+                 x, d) ->
+      f1 s1 s2 _x _x0 _x1 _x2 _x3 __ l2 x2 d2 r2 _x4 __ s2' p __ x d __
 
     (** val coq_R_merge_rec :
         ('a1 tree -> 'a1 tree -> __ -> 'a2) -> ('a1 tree -> 'a1 tree -> 'a1
@@ -3400,11 +2953,12 @@ module Coq_Raw =
         -> 'a1 tree -> 'a1 coq_R_merge -> 'a2 **)
 
     let coq_R_merge_rec f f0 f1 _ _ _ = function
-    | R_merge_0 (x, x0) -> f x x0 __
-    | R_merge_1 (x, x0, x1, x2, x3, x4, x5) -> f0 x x0 x1 x2 x3 x4 x5 __ __
-    | R_merge_2 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12,
-                 x13, x14) ->
-      f1 x x0 x1 x2 x3 x4 x5 __ x6 x7 x8 x9 x10 __ x11 x12 __ x13 x14 __
+    | R_merge_0 (s1, s2) -> f s1 s2 __
+    | R_merge_1 (s1, s2, _x, _x0, _x1, _x2, _x3) ->
+      f0 s1 s2 _x _x0 _x1 _x2 _x3 __ __
+    | R_merge_2 (s1, s2, _x, _x0, _x1, _x2, _x3, l2, x2, d2, r2, _x4, s2', p,
+                 x, d) ->
+      f1 s1 s2 _x _x0 _x1 _x2 _x3 __ l2 x2 d2 r2 _x4 __ s2' p __ x d __
 
     type 'elt coq_R_remove =
     | R_remove_0 of 'elt tree
@@ -3467,10 +3021,11 @@ module Coq_Raw =
         coq_R_concat -> 'a2 **)
 
     let coq_R_concat_rect f f0 f1 _ _ _ = function
-    | R_concat_0 (x, x0) -> f x x0 __
-    | R_concat_1 (x, x0, x1, x2, x3, x4, x5) -> f0 x x0 x1 x2 x3 x4 x5 __ __
-    | R_concat_2 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12) ->
-      f1 x x0 x1 x2 x3 x4 x5 __ x6 x7 x8 x9 x10 __ x11 x12 __
+    | R_concat_0 (m1, m2) -> f m1 m2 __
+    | R_concat_1 (m1, m2, _x, _x0, _x1, _x2, _x3) ->
+      f0 m1 m2 _x _x0 _x1 _x2 _x3 __ __
+    | R_concat_2 (m1, m2, _x, _x0, _x1, _x2, _x3, l2, x2, d2, r2, _x4, m2', xd) ->
+      f1 m1 m2 _x _x0 _x1 _x2 _x3 __ l2 x2 d2 r2 _x4 __ m2' xd __
 
     (** val coq_R_concat_rec :
         ('a1 tree -> 'a1 tree -> __ -> 'a2) -> ('a1 tree -> 'a1 tree -> 'a1
@@ -3481,10 +3036,11 @@ module Coq_Raw =
         coq_R_concat -> 'a2 **)
 
     let coq_R_concat_rec f f0 f1 _ _ _ = function
-    | R_concat_0 (x, x0) -> f x x0 __
-    | R_concat_1 (x, x0, x1, x2, x3, x4, x5) -> f0 x x0 x1 x2 x3 x4 x5 __ __
-    | R_concat_2 (x, x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12) ->
-      f1 x x0 x1 x2 x3 x4 x5 __ x6 x7 x8 x9 x10 __ x11 x12 __
+    | R_concat_0 (m1, m2) -> f m1 m2 __
+    | R_concat_1 (m1, m2, _x, _x0, _x1, _x2, _x3) ->
+      f0 m1 m2 _x _x0 _x1 _x2 _x3 __ __
+    | R_concat_2 (m1, m2, _x, _x0, _x1, _x2, _x3, l2, x2, d2, r2, _x4, m2', xd) ->
+      f1 m1 m2 _x _x0 _x1 _x2 _x3 __ l2 x2 d2 r2 _x4 __ m2' xd __
 
     type 'elt coq_R_split =
     | R_split_0 of 'elt tree
@@ -3702,64 +3258,64 @@ module IntMake =
 
   (** val is_empty : 'a1 t -> bool **)
 
-  let is_empty m =
-    Raw.is_empty (this m)
+  let is_empty =
+    Raw.is_empty
 
   (** val add : key -> 'a1 -> 'a1 t -> 'a1 t **)
 
-  let add x e m =
-    Raw.add x e (this m)
+  let add =
+    Raw.add
 
   (** val remove : key -> 'a1 t -> 'a1 t **)
 
-  let remove x m =
-    Raw.remove x (this m)
+  let remove =
+    Raw.remove
 
   (** val mem : key -> 'a1 t -> bool **)
 
-  let mem x m =
-    Raw.mem x (this m)
+  let mem =
+    Raw.mem
 
   (** val find : key -> 'a1 t -> 'a1 option **)
 
-  let find x m =
-    Raw.find x (this m)
+  let find =
+    Raw.find
 
   (** val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t **)
 
-  let map f m =
-    Raw.map f (this m)
+  let map =
+    Raw.map
 
   (** val mapi : (key -> 'a1 -> 'a2) -> 'a1 t -> 'a2 t **)
 
-  let mapi f m =
-    Raw.mapi f (this m)
+  let mapi =
+    Raw.mapi
 
   (** val map2 :
       ('a1 option -> 'a2 option -> 'a3 option) -> 'a1 t -> 'a2 t -> 'a3 t **)
 
-  let map2 f m m' =
-    Raw.map2 f (this m) (this m')
+  let map2 =
+    Raw.map2
 
   (** val elements : 'a1 t -> (key * 'a1) list **)
 
-  let elements m =
-    Raw.elements (this m)
+  let elements =
+    Raw.elements
 
   (** val cardinal : 'a1 t -> nat **)
 
-  let cardinal m =
-    Raw.cardinal (this m)
+  let cardinal =
+    Raw.cardinal
 
   (** val fold : (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 **)
 
-  let fold f m i =
-    Raw.fold f (this m) i
+  let fold =
+    Raw.fold
 
   (** val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool **)
 
-  let equal cmp m m' =
-    Raw.equal cmp (this m) (this m')
+  let equal =
+    Raw.equal
  end
 
 module Make =
@@ -3792,6 +3348,7 @@ let make l d =
 
 module Coq__2 = struct
  (** val get : 'a1 array -> Uint63.t -> 'a1 **)
+
  let get t0 i =
    let (td, l) = t0 in
    let (t1, d) = td in
@@ -4000,9 +3557,9 @@ module C =
   | Nil -> Cons (l1, c1)
   | Cons (l2, c2') ->
     (match compare0 l1 l2 with
-     | 0 -> Cons (l1, (or0 c1 c2'))
-     | (-1) -> Cons (l1, (or0 c1 c2))
-     | 1 -> Cons (l2, (or_aux or0 l1 c1 c2')))
+     | Eq -> Cons (l1, (or0 c1 c2'))
+     | Lt -> Cons (l1, (or0 c1 c2))
+     | Gt -> Cons (l2, (or_aux or0 l1 c1 c2')))
 
   (** val coq_or : t -> t -> t **)
 
@@ -4014,9 +3571,9 @@ module C =
        | Nil -> c1
        | Cons (l2, c2') ->
          (match compare0 l1 l2 with
-          | 0 -> Cons (l1, (coq_or c3 c2'))
-          | (-1) -> Cons (l1, (coq_or c3 c2))
-          | 1 -> Cons (l2, (or_aux coq_or l1 c3 c2'))))
+          | Eq -> Cons (l1, (coq_or c3 c2'))
+          | Lt -> Cons (l1, (coq_or c3 c2))
+          | Gt -> Cons (l2, (or_aux coq_or l1 c3 c2'))))
 
   (** val resolve_aux : (t -> t -> t) -> Uint63.t -> t -> t -> t **)
 
@@ -4024,12 +3581,12 @@ module C =
   | Nil -> _true
   | Cons (l2, c2') ->
     (match compare0 l1 l2 with
-     | 0 -> Cons (l1, (resolve0 c1 c2'))
-     | (-1) ->
+     | Eq -> Cons (l1, (resolve0 c1 c2'))
+     | Lt ->
        if eqb0 (lxor0 l1 l2) (Uint63.of_int (1))
        then coq_or c1 c2'
        else Cons (l1, (resolve0 c1 c2))
-     | 1 ->
+     | Gt ->
        if eqb0 (lxor0 l1 l2) (Uint63.of_int (1))
        then coq_or c1 c2'
        else Cons (l2, (resolve_aux resolve0 l1 c1 c2')))
@@ -4044,12 +3601,12 @@ module C =
        | Nil -> _true
        | Cons (l2, c2') ->
          (match compare0 l1 l2 with
-          | 0 -> Cons (l1, (resolve c3 c2'))
-          | (-1) ->
+          | Eq -> Cons (l1, (resolve c3 c2'))
+          | Lt ->
             if eqb0 (lxor0 l1 l2) (Uint63.of_int (1))
             then coq_or c3 c2'
             else Cons (l1, (resolve c3 c2))
-          | 1 ->
+          | Gt ->
             if eqb0 (lxor0 l1 l2) (Uint63.of_int (1))
             then coq_or c3 c2'
             else Cons (l2, (resolve_aux resolve l1 c3 c2'))))
@@ -4080,9 +3637,9 @@ module S =
   | Nil -> Cons (l1, Nil)
   | Cons (l2, c') ->
     (match compare0 l1 l2 with
-     | 0 -> c
-     | (-1) -> Cons (l1, c)
-     | 1 -> Cons (l2, (insert_no_simpl l1 c')))
+     | Eq -> c
+     | Lt -> Cons (l1, c)
+     | Gt -> Cons (l2, (insert_no_simpl l1 c')))
 
   (** val insert_keep : Uint63.t -> Uint63.t list -> Uint63.t list **)
 
@@ -4090,7 +3647,7 @@ module S =
   | Nil -> Cons (l1, Nil)
   | Cons (l2, c') ->
     (match compare0 l1 l2 with
-     | 1 -> Cons (l2, (insert_keep l1 c'))
+     | Gt -> Cons (l2, (insert_keep l1 c'))
      | _ -> Cons (l1, c))
 
   (** val sort : Uint63.t list -> Uint63.t list **)

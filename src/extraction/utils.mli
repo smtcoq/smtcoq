@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2026                                          *)
+(*     Copyright (C) 2011 - 2022                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,9 +10,6 @@
 (**************************************************************************)
 
 
-From Stdlib Require Export Uint63 List.
-Require Export SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances.
-Require Export Tactics.
-Export Atom Form Sat_Checker Cnf_Checker Euf_Checker.
-From Trakt Require Export Trakt.
-Require Export Database_trakt Conversion.
+val mkInt : int -> Uint63.t
+val mkArray : (Uint63.t -> 'a -> 'b) -> ('b -> Uint63.t -> 'a -> 'b) -> 'a array -> 'b
+val mkTrace : 'a -> ('b * 'a -> 'a) -> ('c -> 'b) -> ('c -> 'c) -> int -> 'd -> 'c ref -> 'a * 'd

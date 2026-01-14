@@ -8,6 +8,9 @@ on:
       - coq-8.15
       - coq-8.16
       - coq-8.17
+      - coq-8.18
+      - coq-8.19
+      - coq-8.20
 
 jobs:
   from-sources:

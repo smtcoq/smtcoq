@@ -11,12 +11,16 @@ install: [
   [make "install"]
 ]
 depends: [
-  "ocaml" {>= "4.14" }
-  "num"
+  "ocaml" {>= "4.13.1" & < "5~" }
+ "num"
   "rocq-core" {>= "9.0" & < "9.2~"}
   "rocq-stdlib" {>= "9.0" & < "9.2~"}
+  "coq-trakt"
 ]
-tags: [ 
+pin-depends: [
+  [ "coq-trakt.1.2c" "git+https://github.com/ecranceMERCE/trakt.git#1.2c" ]
+]
+tags: [
   "category:Computer Science/Decision Procedures and Certified Algorithms/Decision procedures"
   "category:Miscellaneous/Coq Extensions"
   "keyword: SMT"
@@ -39,5 +43,5 @@ description: """
 - a certified checker for proof witnesses coming from the SAT solver ZChaff and the SMT solvers veriT and CVC4. This checker increases the confidence in these tools by checking their answers a posteriori and allows to import new theroems proved by these solvers in Rocq;
 - decision procedures through new tactics that discharge some Rocq goals to ZChaff, veriT, CVC4, and their combination"""
 url {
-  src: "git+https://github.com/smtcoq/smtcoq.git#rocq-9.0v1"
+  src: "git+https://github.com/smtcoq/smtcoq.git#with-trakt-rocq-9.0v1"
 }

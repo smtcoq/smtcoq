@@ -28,7 +28,12 @@ val length : 'a1 list -> nat
 
 val app : 'a1 list -> 'a1 list -> 'a1 list
 
-val compOpp : int -> int
+type comparison =
+| Eq
+| Lt
+| Gt
+
+val compOpp : comparison -> comparison
 
 type sumbool =
 | Left
@@ -112,9 +117,9 @@ module Coq_Pos :
 
   val size_nat : positive -> nat
 
-  val compare_cont : int -> positive -> positive -> int
+  val compare_cont : comparison -> positive -> positive -> comparison
 
-  val compare : positive -> positive -> int
+  val compare : positive -> positive -> comparison
 
   val max : positive -> positive -> positive
 
@@ -141,7 +146,7 @@ module N :
 
   val sub : n -> n -> n
 
-  val compare : n -> n -> int
+  val compare : n -> n -> comparison
 
   val eqb : n -> n -> bool
 
@@ -172,7 +177,7 @@ module Z :
 
   val mul : z -> z -> z
 
-  val compare : z -> z -> int
+  val compare : z -> z -> comparison
 
   val leb : z -> z -> bool
 
@@ -435,6 +440,7 @@ val opMult : op1 -> op1 -> op1 option
 val opAdd : op1 -> op1 -> op1 option
 
 type 'c psatz =
+| PsatzLet of 'c psatz * 'c psatz
 | PsatzIn of nat
 | PsatzSquare of 'c polC
 | PsatzMulC of 'c polC * 'c psatz
@@ -490,9 +496,13 @@ val padd0 :
   'a1 -> ('a1 -> 'a1 -> 'a1) -> ('a1 -> 'a1 -> bool) -> 'a1 pol -> 'a1 pol ->
   'a1 pol
 
+val popp0 : ('a1 -> 'a1) -> 'a1 pol -> 'a1 pol
+
 type zWitness = z psatz
 
 val psub1 : z pol -> z pol -> z pol
+
+val popp1 : z pol -> z pol
 
 val padd1 : z pol -> z pol -> z pol
 
@@ -520,6 +530,7 @@ type zArithProof =
 | DoneProof
 | RatProof of zWitness * zArithProof
 | CutProof of zWitness * zArithProof
+| SplitProof of z polC * zArithProof * zArithProof
 | EnumProof of zWitness * zWitness * zArithProof list
 | ExProof of positive * zArithProof
 
@@ -553,8 +564,6 @@ val zChecker : z nFormula list -> zArithProof -> bool
 
 val zTautoChecker : z formula bFormula -> zArithProof list -> bool
 
-val size : nat
-
 val lsl0 : Uint63.t -> Uint63.t -> Uint63.t
 
 val lsr0 : Uint63.t -> Uint63.t -> Uint63.t
@@ -573,6 +582,10 @@ val ltb0 : Uint63.t -> Uint63.t -> bool
 
 val leb0 : Uint63.t -> Uint63.t -> bool
 
+val compare0 : Uint63.t -> Uint63.t -> comparison
+
+val size : nat
+
 val digits : Uint63.t
 
 val is_zero : Uint63.t -> bool
@@ -580,8 +593,6 @@ val is_zero : Uint63.t -> bool
 val is_even : Uint63.t -> bool
 
 val bit : Uint63.t -> Uint63.t -> bool
-
-val compare0 : Uint63.t -> Uint63.t -> int
 
 type 'x compare1 =
 | LT
@@ -706,231 +717,17 @@ module Raw :
 
   val mem : key -> 'a1 t -> bool
 
-  type 'elt coq_R_mem =
-  | R_mem_0 of 'elt t
-  | R_mem_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_mem_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_mem_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_mem
-
-  val coq_R_mem_rect :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1 t -> bool ->
-    'a1 coq_R_mem -> 'a2
-
-  val coq_R_mem_rec :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1 t -> bool ->
-    'a1 coq_R_mem -> 'a2
-
-  val mem_rect :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val mem_rec :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val coq_R_mem_correct : key -> 'a1 t -> bool -> 'a1 coq_R_mem
-
   val find : key -> 'a1 t -> 'a1 option
-
-  type 'elt coq_R_find =
-  | R_find_0 of 'elt t
-  | R_find_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_find_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_find_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt option
-     * 'elt coq_R_find
-
-  val coq_R_find_rect :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2) -> 'a1 t ->
-    'a1 option -> 'a1 coq_R_find -> 'a2
-
-  val coq_R_find_rec :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2) -> 'a1 t ->
-    'a1 option -> 'a1 coq_R_find -> 'a2
-
-  val find_rect :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val find_rec :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val coq_R_find_correct : key -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
 
   val add : key -> 'a1 -> 'a1 t -> 'a1 t
 
-  type 'elt coq_R_add =
-  | R_add_0 of 'elt t
-  | R_add_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_add_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_add_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-     * 'elt coq_R_add
-
-  val coq_R_add_rect :
-    key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2 -> 'a2) -> 'a1 t
-    -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-  val coq_R_add_rec :
-    key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2 -> 'a2) -> 'a1 t
-    -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-  val add_rect :
-    key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val add_rec :
-    key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-    list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val coq_R_add_correct : key -> 'a1 -> 'a1 t -> 'a1 t -> 'a1 coq_R_add
-
   val remove : key -> 'a1 t -> 'a1 t
-
-  type 'elt coq_R_remove =
-  | R_remove_0 of 'elt t
-  | R_remove_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_remove_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-  | R_remove_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-     * 'elt coq_R_remove
-
-  val coq_R_remove_rect :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t
-    -> 'a1 coq_R_remove -> 'a2
-
-  val coq_R_remove_rec :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t
-    -> 'a1 coq_R_remove -> 'a2
-
-  val remove_rect :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val remove_rec :
-    key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list
-    -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __
-    -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-  val coq_R_remove_correct : key -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove
 
   val elements : 'a1 t -> 'a1 t
 
   val fold : (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2
 
-  type ('elt, 'a) coq_R_fold =
-  | R_fold_0 of 'elt t * 'a
-  | R_fold_1 of 'elt t * 'a * X.t * 'elt * (X.t * 'elt) list * 'a
-     * ('elt, 'a) coq_R_fold
-
-  val coq_R_fold_rect :
-    (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-    'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-    coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2) coq_R_fold
-    -> 'a3
-
-  val coq_R_fold_rec :
-    (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-    'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-    coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2) coq_R_fold
-    -> 'a3
-
-  val fold_rect :
-    (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-    'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) -> 'a1 t ->
-    'a2 -> 'a3
-
-  val fold_rec :
-    (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t ->
-    'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) -> 'a1 t ->
-    'a2 -> 'a3
-
-  val coq_R_fold_correct :
-    (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2) coq_R_fold
-
   val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool
-
-  type 'elt coq_R_equal =
-  | R_equal_0 of 'elt t * 'elt t
-  | R_equal_1 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * X.t
-     * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_equal
-  | R_equal_2 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * X.t
-     * 'elt * (X.t * 'elt) list * X.t compare1
-  | R_equal_3 of 'elt t * 'elt t * 'elt t * 'elt t
-
-  val coq_R_equal_rect :
-    ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t ->
-    'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-    (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal -> 'a2 ->
-    'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t ->
-    'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1
-    t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t
-    -> bool -> 'a1 coq_R_equal -> 'a2
-
-  val coq_R_equal_rec :
-    ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t ->
-    'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-    (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal -> 'a2 ->
-    'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t ->
-    'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1
-    t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t
-    -> bool -> 'a1 coq_R_equal -> 'a2
-
-  val equal_rect :
-    ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t ->
-    'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-    (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t ->
-    X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __
-    -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2
-
-  val equal_rec :
-    ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t ->
-    'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-    (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t ->
-    X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 -> (X.t * 'a1) list ->
-    __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __
-    -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2
-
-  val coq_R_equal_correct :
-    ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal
 
   val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t
 
@@ -1250,233 +1047,17 @@ module Coq_Raw :
 
       val mem : key -> 'a1 t -> bool
 
-      type 'elt coq_R_mem =
-      | R_mem_0 of 'elt t
-      | R_mem_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_mem_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_mem_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * bool
-         * 'elt coq_R_mem
-
-      val coq_R_mem_rect :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1
-        t -> bool -> 'a1 coq_R_mem -> 'a2
-
-      val coq_R_mem_rec :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1
-        t -> bool -> 'a1 coq_R_mem -> 'a2
-
-      val mem_rect :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val mem_rec :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val coq_R_mem_correct : key -> 'a1 t -> bool -> 'a1 coq_R_mem
-
       val find : key -> 'a1 t -> 'a1 option
-
-      type 'elt coq_R_find =
-      | R_find_0 of 'elt t
-      | R_find_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_find_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_find_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt option
-         * 'elt coq_R_find
-
-      val coq_R_find_rect :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2)
-        -> 'a1 t -> 'a1 option -> 'a1 coq_R_find -> 'a2
-
-      val coq_R_find_rec :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2)
-        -> 'a1 t -> 'a1 option -> 'a1 coq_R_find -> 'a2
-
-      val find_rect :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val find_rec :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val coq_R_find_correct : key -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
 
       val add : key -> 'a1 -> 'a1 t -> 'a1 t
 
-      type 'elt coq_R_add =
-      | R_add_0 of 'elt t
-      | R_add_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_add_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_add_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-         * 'elt coq_R_add
-
-      val coq_R_add_rect :
-        key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2
-        -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-      val coq_R_add_rec :
-        key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2
-        -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-      val add_rect :
-        key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val add_rec :
-        key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val coq_R_add_correct : key -> 'a1 -> 'a1 t -> 'a1 t -> 'a1 coq_R_add
-
       val remove : key -> 'a1 t -> 'a1 t
-
-      type 'elt coq_R_remove =
-      | R_remove_0 of 'elt t
-      | R_remove_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_remove_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-      | R_remove_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-         * 'elt coq_R_remove
-
-      val coq_R_remove_rect :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) ->
-        'a1 t -> 'a1 t -> 'a1 coq_R_remove -> 'a2
-
-      val coq_R_remove_rec :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) ->
-        'a1 t -> 'a1 t -> 'a1 coq_R_remove -> 'a2
-
-      val remove_rect :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val remove_rec :
-        key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-      val coq_R_remove_correct : key -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove
 
       val elements : 'a1 t -> 'a1 t
 
       val fold : (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2
 
-      type ('elt, 'a) coq_R_fold =
-      | R_fold_0 of 'elt t * 'a
-      | R_fold_1 of 'elt t * 'a * X.t * 'elt * (X.t * 'elt) list * 'a
-         * ('elt, 'a) coq_R_fold
-
-      val coq_R_fold_rect :
-        (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-        -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-        coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-        coq_R_fold -> 'a3
-
-      val coq_R_fold_rec :
-        (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-        -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-        coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-        coq_R_fold -> 'a3
-
-      val fold_rect :
-        (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-        -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) -> 'a1
-        t -> 'a2 -> 'a3
-
-      val fold_rec :
-        (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-        -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) -> 'a1
-        t -> 'a2 -> 'a3
-
-      val coq_R_fold_correct :
-        (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-        coq_R_fold
-
       val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool
-
-      type 'elt coq_R_equal =
-      | R_equal_0 of 'elt t * 'elt t
-      | R_equal_1 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * 
-         X.t * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_equal
-      | R_equal_2 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * 
-         X.t * 'elt * (X.t * 'elt) list * X.t compare1
-      | R_equal_3 of 'elt t * 'elt t * 'elt t * 'elt t
-
-      val coq_R_equal_rect :
-        ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-        -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal -> 'a2
-        -> 'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ ->
-        X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ ->
-        'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2)
-        -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-      val coq_R_equal_rec :
-        ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-        -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal -> 'a2
-        -> 'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ ->
-        X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ ->
-        'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2)
-        -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-      val equal_rect :
-        ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-        -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t
-        -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t ->
-        'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2
-
-      val equal_rec :
-        ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1 t
-        -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-        (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t
-        -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 -> (X.t * 'a1)
-        list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t ->
-        'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2
-
-      val coq_R_equal_correct :
-        ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal
 
       val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t
 
@@ -2062,239 +1643,17 @@ module IntMake :
 
         val mem : key -> 'a1 t -> bool
 
-        type 'elt coq_R_mem =
-        | R_mem_0 of 'elt t
-        | R_mem_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_mem_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_mem_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * bool
-           * 'elt coq_R_mem
-
-        val coq_R_mem_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem ->
-          'a2 -> 'a2) -> 'a1 t -> bool -> 'a1 coq_R_mem -> 'a2
-
-        val coq_R_mem_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem ->
-          'a2 -> 'a2) -> 'a1 t -> bool -> 'a1 coq_R_mem -> 'a2
-
-        val mem_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val mem_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_mem_correct : key -> 'a1 t -> bool -> 'a1 coq_R_mem
-
         val find : key -> 'a1 t -> 'a1 option
-
-        type 'elt coq_R_find =
-        | R_find_0 of 'elt t
-        | R_find_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_find_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_find_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt option
-           * 'elt coq_R_find
-
-        val coq_R_find_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 option -> 'a1
-          coq_R_find -> 'a2 -> 'a2) -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
-          -> 'a2
-
-        val coq_R_find_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 option -> 'a1
-          coq_R_find -> 'a2 -> 'a2) -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
-          -> 'a2
-
-        val find_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val find_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_find_correct : key -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
 
         val add : key -> 'a1 -> 'a1 t -> 'a1 t
 
-        type 'elt coq_R_add =
-        | R_add_0 of 'elt t
-        | R_add_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_add_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_add_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-           * 'elt coq_R_add
-
-        val coq_R_add_rect :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-        val coq_R_add_rec :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-        val add_rect :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t
-          -> 'a2
-
-        val add_rec :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t
-          -> 'a2
-
-        val coq_R_add_correct : key -> 'a1 -> 'a1 t -> 'a1 t -> 'a1 coq_R_add
-
         val remove : key -> 'a1 t -> 'a1 t
-
-        type 'elt coq_R_remove =
-        | R_remove_0 of 'elt t
-        | R_remove_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_remove_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_remove_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-           * 'elt coq_R_remove
-
-        val coq_R_remove_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove -> 'a2
-
-        val coq_R_remove_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove -> 'a2
-
-        val remove_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val remove_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_remove_correct : key -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove
 
         val elements : 'a1 t -> 'a1 t
 
         val fold : (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2
 
-        type ('elt, 'a) coq_R_fold =
-        | R_fold_0 of 'elt t * 'a
-        | R_fold_1 of 'elt t * 'a * X.t * 'elt * (X.t * 'elt) list * 
-           'a * ('elt, 'a) coq_R_fold
-
-        val coq_R_fold_rect :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3
-
-        val coq_R_fold_rec :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3
-
-        val fold_rect :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) ->
-          'a1 t -> 'a2 -> 'a3
-
-        val fold_rec :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) ->
-          'a1 t -> 'a2 -> 'a3
-
-        val coq_R_fold_correct :
-          (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold
-
         val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool
-
-        type 'elt coq_R_equal =
-        | R_equal_0 of 'elt t * 'elt t
-        | R_equal_1 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * 
-           X.t * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_equal
-        | R_equal_2 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * 
-           X.t * 'elt * (X.t * 'elt) list * X.t compare1
-        | R_equal_3 of 'elt t * 'elt t * 'elt t * 'elt t
-
-        val coq_R_equal_rect :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal ->
-          'a2 -> 'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-          __ -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ ->
-          __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __
-          -> 'a2) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-        val coq_R_equal_rec :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal ->
-          'a2 -> 'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-          __ -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ ->
-          __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __
-          -> 'a2) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-        val equal_rect :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1
-          t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t ->
-          'a1 t -> 'a2
-
-        val equal_rec :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1
-          t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t ->
-          'a1 t -> 'a2
-
-        val coq_R_equal_correct :
-          ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal
 
         val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t
 
@@ -2924,239 +2283,17 @@ module Make :
 
         val mem : key -> 'a1 t -> bool
 
-        type 'elt coq_R_mem =
-        | R_mem_0 of 'elt t
-        | R_mem_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_mem_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_mem_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * bool
-           * 'elt coq_R_mem
-
-        val coq_R_mem_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem ->
-          'a2 -> 'a2) -> 'a1 t -> bool -> 'a1 coq_R_mem -> 'a2
-
-        val coq_R_mem_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_mem ->
-          'a2 -> 'a2) -> 'a1 t -> bool -> 'a1 coq_R_mem -> 'a2
-
-        val mem_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val mem_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_mem_correct : key -> 'a1 t -> bool -> 'a1 coq_R_mem
-
         val find : key -> 'a1 t -> 'a1 option
-
-        type 'elt coq_R_find =
-        | R_find_0 of 'elt t
-        | R_find_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_find_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_find_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt option
-           * 'elt coq_R_find
-
-        val coq_R_find_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 option -> 'a1
-          coq_R_find -> 'a2 -> 'a2) -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
-          -> 'a2
-
-        val coq_R_find_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 option -> 'a1
-          coq_R_find -> 'a2 -> 'a2) -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
-          -> 'a2
-
-        val find_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val find_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_find_correct : key -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
 
         val add : key -> 'a1 -> 'a1 t -> 'a1 t
 
-        type 'elt coq_R_add =
-        | R_add_0 of 'elt t
-        | R_add_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_add_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_add_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-           * 'elt coq_R_add
-
-        val coq_R_add_rect :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-        val coq_R_add_rec :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_add
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_add -> 'a2
-
-        val add_rect :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t
-          -> 'a2
-
-        val add_rec :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t ->
-          'a1 -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t
-          -> 'a2
-
-        val coq_R_add_correct : key -> 'a1 -> 'a1 t -> 'a1 t -> 'a1 coq_R_add
-
         val remove : key -> 'a1 t -> 'a1 t
-
-        type 'elt coq_R_remove =
-        | R_remove_0 of 'elt t
-        | R_remove_1 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_remove_2 of 'elt t * X.t * 'elt * (X.t * 'elt) list
-        | R_remove_3 of 'elt t * X.t * 'elt * (X.t * 'elt) list * 'elt t
-           * 'elt coq_R_remove
-
-        val coq_R_remove_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove -> 'a2
-
-        val coq_R_remove_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a1 t -> 'a1 coq_R_remove
-          -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove -> 'a2
-
-        val remove_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val remove_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 -> (X.t * 'a1)
-          list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t -> X.t -> 'a1
-          -> (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_remove_correct : key -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove
 
         val elements : 'a1 t -> 'a1 t
 
         val fold : (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2
 
-        type ('elt, 'a) coq_R_fold =
-        | R_fold_0 of 'elt t * 'a
-        | R_fold_1 of 'elt t * 'a * X.t * 'elt * (X.t * 'elt) list * 
-           'a * ('elt, 'a) coq_R_fold
-
-        val coq_R_fold_rect :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3
-
-        val coq_R_fold_rec :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold -> 'a3
-
-        val fold_rect :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) ->
-          'a1 t -> 'a2 -> 'a3
-
-        val fold_rec :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> 'a3 -> 'a3) ->
-          'a1 t -> 'a2 -> 'a3
-
-        val coq_R_fold_correct :
-          (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold
-
         val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool
-
-        type 'elt coq_R_equal =
-        | R_equal_0 of 'elt t * 'elt t
-        | R_equal_1 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * 
-           X.t * 'elt * (X.t * 'elt) list * bool * 'elt coq_R_equal
-        | R_equal_2 of 'elt t * 'elt t * X.t * 'elt * (X.t * 'elt) list * 
-           X.t * 'elt * (X.t * 'elt) list * X.t compare1
-        | R_equal_3 of 'elt t * 'elt t * 'elt t * 'elt t
-
-        val coq_R_equal_rect :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal ->
-          'a2 -> 'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-          __ -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ ->
-          __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __
-          -> 'a2) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-        val coq_R_equal_rec :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> bool -> 'a1 coq_R_equal ->
-          'a2 -> 'a2) -> ('a1 t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list ->
-          __ -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t compare1 -> __ ->
-          __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __
-          -> 'a2) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-        val equal_rect :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1
-          t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t ->
-          'a1 t -> 'a2
-
-        val equal_rec :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> __ -> __ -> 'a2 -> 'a2) -> ('a1 t -> 'a1
-          t -> X.t -> 'a1 -> (X.t * 'a1) list -> __ -> X.t -> 'a1 ->
-          (X.t * 'a1) list -> __ -> X.t compare1 -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t ->
-          'a1 t -> 'a2
-
-        val coq_R_equal_correct :
-          ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal
 
         val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t
 
@@ -3807,255 +2944,17 @@ module Map :
 
         val mem : key -> 'a1 t -> bool
 
-        type 'elt coq_R_mem =
-        | R_mem_0 of 'elt t
-        | R_mem_1 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_mem_2 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_mem_3 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list * 
-           bool * 'elt coq_R_mem
-
-        val coq_R_mem_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1 t -> bool ->
-          'a1 coq_R_mem -> 'a2
-
-        val coq_R_mem_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> bool -> 'a1 coq_R_mem -> 'a2 -> 'a2) -> 'a1 t -> bool ->
-          'a1 coq_R_mem -> 'a2
-
-        val mem_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val mem_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_mem_correct : key -> 'a1 t -> bool -> 'a1 coq_R_mem
-
         val find : key -> 'a1 t -> 'a1 option
-
-        type 'elt coq_R_find =
-        | R_find_0 of 'elt t
-        | R_find_1 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_find_2 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_find_3 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-           * 'elt option * 'elt coq_R_find
-
-        val coq_R_find_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2) -> 'a1 t ->
-          'a1 option -> 'a1 coq_R_find -> 'a2
-
-        val coq_R_find_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a1 option -> 'a1 coq_R_find -> 'a2 -> 'a2) -> 'a1 t ->
-          'a1 option -> 'a1 coq_R_find -> 'a2
-
-        val find_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val find_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_find_correct : key -> 'a1 t -> 'a1 option -> 'a1 coq_R_find
 
         val add : key -> 'a1 -> 'a1 t -> 'a1 t
 
-        type 'elt coq_R_add =
-        | R_add_0 of 'elt t
-        | R_add_1 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_add_2 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_add_3 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-           * 'elt t * 'elt coq_R_add
-
-        val coq_R_add_rect :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t ->
-          'a1 coq_R_add -> 'a2
-
-        val coq_R_add_rec :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a1 t -> 'a1 coq_R_add -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t ->
-          'a1 coq_R_add -> 'a2
-
-        val add_rect :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val add_rec :
-          key -> 'a1 -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_add_correct : key -> 'a1 -> 'a1 t -> 'a1 t -> 'a1 coq_R_add
-
         val remove : key -> 'a1 t -> 'a1 t
-
-        type 'elt coq_R_remove =
-        | R_remove_0 of 'elt t
-        | R_remove_1 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_remove_2 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-        | R_remove_3 of 'elt t * Uint63.t * 'elt * (Uint63.t * 'elt) list
-           * 'elt t * 'elt coq_R_remove
-
-        val coq_R_remove_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t
-          -> 'a1 coq_R_remove -> 'a2
-
-        val coq_R_remove_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a1 t -> 'a1 coq_R_remove -> 'a2 -> 'a2) -> 'a1 t -> 'a1 t
-          -> 'a1 coq_R_remove -> 'a2
-
-        val remove_rect :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val remove_rec :
-          key -> ('a1 t -> __ -> 'a2) -> ('a1 t -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2) -> ('a1 t ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2)
-          -> ('a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __
-          -> __ -> 'a2 -> 'a2) -> 'a1 t -> 'a2
-
-        val coq_R_remove_correct : key -> 'a1 t -> 'a1 t -> 'a1 coq_R_remove
 
         val elements : 'a1 t -> 'a1 t
 
         val fold : (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2
 
-        type ('elt, 'a) coq_R_fold =
-        | R_fold_0 of 'elt t * 'a
-        | R_fold_1 of 'elt t * 'a * Uint63.t * 'elt * (Uint63.t * 'elt) list
-           * 'a * ('elt, 'a) coq_R_fold
-
-        val coq_R_fold_rect :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> 'a2 ->
-          ('a1, 'a2) coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 ->
-          ('a1, 'a2) coq_R_fold -> 'a3
-
-        val coq_R_fold_rec :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> 'a2 ->
-          ('a1, 'a2) coq_R_fold -> 'a3 -> 'a3) -> 'a1 t -> 'a2 -> 'a2 ->
-          ('a1, 'a2) coq_R_fold -> 'a3
-
-        val fold_rect :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> 'a3 ->
-          'a3) -> 'a1 t -> 'a2 -> 'a3
-
-        val fold_rec :
-          (key -> 'a1 -> 'a2 -> 'a2) -> ('a1 t -> 'a2 -> __ -> 'a3) -> ('a1 t
-          -> 'a2 -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> 'a3 ->
-          'a3) -> 'a1 t -> 'a2 -> 'a3
-
-        val coq_R_fold_correct :
-          (key -> 'a1 -> 'a2 -> 'a2) -> 'a1 t -> 'a2 -> 'a2 -> ('a1, 'a2)
-          coq_R_fold
-
         val equal : ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool
-
-        type 'elt coq_R_equal =
-        | R_equal_0 of 'elt t * 'elt t
-        | R_equal_1 of 'elt t * 'elt t * Uint63.t * 'elt
-           * (Uint63.t * 'elt) list * Uint63.t * 'elt
-           * (Uint63.t * 'elt) list * bool * 'elt coq_R_equal
-        | R_equal_2 of 'elt t * 'elt t * Uint63.t * 'elt
-           * (Uint63.t * 'elt) list * Uint63.t * 'elt
-           * (Uint63.t * 'elt) list * Uint63.t compare1
-        | R_equal_3 of 'elt t * 'elt t * 'elt t * 'elt t
-
-        val coq_R_equal_rect :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> bool
-          -> 'a1 coq_R_equal -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t -> Uint63.t ->
-          'a1 -> (Uint63.t * 'a1) list -> __ -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> Uint63.t compare1 -> __ -> __ ->
-          'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2)
-          -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-        val coq_R_equal_rec :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> bool
-          -> 'a1 coq_R_equal -> 'a2 -> 'a2) -> ('a1 t -> 'a1 t -> Uint63.t ->
-          'a1 -> (Uint63.t * 'a1) list -> __ -> Uint63.t -> 'a1 ->
-          (Uint63.t * 'a1) list -> __ -> Uint63.t compare1 -> __ -> __ ->
-          'a2) -> ('a1 t -> 'a1 t -> 'a1 t -> __ -> 'a1 t -> __ -> __ -> 'a2)
-          -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal -> 'a2
-
-        val equal_rect :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2
-          -> 'a2) -> ('a1 t -> 'a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1)
-          list -> __ -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ ->
-          Uint63.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t
-          -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2
-
-        val equal_rec :
-          ('a1 -> 'a1 -> bool) -> ('a1 t -> 'a1 t -> __ -> __ -> 'a2) -> ('a1
-          t -> 'a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ ->
-          Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ -> __ -> __ -> 'a2
-          -> 'a2) -> ('a1 t -> 'a1 t -> Uint63.t -> 'a1 -> (Uint63.t * 'a1)
-          list -> __ -> Uint63.t -> 'a1 -> (Uint63.t * 'a1) list -> __ ->
-          Uint63.t compare1 -> __ -> __ -> 'a2) -> ('a1 t -> 'a1 t -> 'a1 t
-          -> __ -> 'a1 t -> __ -> __ -> 'a2) -> 'a1 t -> 'a1 t -> 'a2
-
-        val coq_R_equal_correct :
-          ('a1 -> 'a1 -> bool) -> 'a1 t -> 'a1 t -> bool -> 'a1 coq_R_equal
 
         val map : ('a1 -> 'a2) -> 'a1 t -> 'a2 t
 

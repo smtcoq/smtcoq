@@ -303,6 +303,39 @@ Section Positive.
 End Positive.
 
 
+Section N.
+
+  Global Instance N_ord : OrdType N.
+  Proof.
+    exists N_as_OT.lt.
+    exact N_as_OT.lt_trans.
+    exact N_as_OT.lt_not_eq.
+  Defined.
+
+  Global Instance N_comp: Comparable N.
+  Proof.
+    constructor.
+    apply N_as_OT.compare.
+  Defined.
+
+  Global Instance N_eqbtype : EqbType N :=
+    {| eqb := N.eqb; eqb_spec := N.eqb_eq |}.
+
+  Global Instance N_dec : DecType N := EqbToDecType.
+
+  Global Instance N_inh : Inhabited N := {| default_value := 0%N |}.
+
+  Global Instance N_compdec : CompDec N := {|
+    Eqb := N_eqbtype;
+    Ordered := N_ord;
+    Comp := N_comp;
+    Inh := N_inh
+  |}.
+
+
+End N.
+
+
 Section BV.
 
   Import BITVECTOR_LIST.
@@ -754,5 +787,6 @@ Register unit_typ_compdec as SMTCoq.classes.SMT_classes_instances.unit_typ_compd
 Register bool_compdec as SMTCoq.classes.SMT_classes_instances.bool_compdec.
 Register Z_compdec as SMTCoq.classes.SMT_classes_instances.Z_compdec.
 Register Positive_compdec as SMTCoq.classes.SMT_classes_instances.Positive_compdec.
+Register N_compdec as SMTCoq.classes.SMT_classes_instances.N_compdec.
 Register BV_compdec as SMTCoq.classes.SMT_classes_instances.BV_compdec.
 Register FArray_compdec as SMTCoq.classes.SMT_classes_instances.FArray_compdec.
