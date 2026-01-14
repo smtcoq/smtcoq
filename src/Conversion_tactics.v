@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -19,7 +19,7 @@
 
 
 
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 
 (* This module represents the structure to be injected into Z *)
 Module Type convert_type.

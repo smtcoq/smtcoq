@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -11,8 +11,8 @@
 
 
 Require Import PropToBool.
-Require Import Uint63 List PArray Bool ZArith.
-Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances QInst.
+From Stdlib Require Import Uint63 List Bool ZArith.
+Require Import PArray SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances QInst.
 From Ltac2 Require Import Ltac2.
 
 Declare ML Module "coq-smtcoq.smtcoq".
@@ -24,7 +24,7 @@ Ltac2 rec hyps_printer (h : (ident * constr option * constr) list)
 match h with
 | [] => ()
 | x :: xs => match x with
-            | (id, opt, cstr) => 
+            | (id, _, cstr) => 
 let () := Message.print (Message.concat (Message.of_ident id)
                                         (Message.concat (Message.of_string " : ")
                                                         (Message.of_constr cstr))) 
@@ -38,7 +38,7 @@ end.
 Ltac2 get_hyps_aux () :=
 let h := Control.hyps () in
 List.filter (fun x => match x with
-                    | (id, opt, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
+                    | (_, _, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
                     end) h.
 
 Ltac2 get_hyps_ltac2 () :=
@@ -47,13 +47,13 @@ match hs with
 | [] => '(@None nat)
 | x :: xs => 
     match x with
-    | (id, opt, c) => 
+    | (id, _, _) => 
     let h := Control.hyp id in
     let rec tac_aux xs acc :=
       match xs with
       | y :: ys => 
         match y with
-        | (id', opt', c') => 
+        | (id', _, _) => 
         let h1 := Control.hyp id' in let res := tac_aux ys acc in '($h1, $res)
         end
       | [] => acc

@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
-Require Import Uint63.
+From Stdlib Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
+From Stdlib Require Import Uint63.
 Require Import State BVList FArray.
 Require Export SMT_classes.
 
@@ -356,7 +356,7 @@ Section BV.
     rewrite N.eqb_refl in *.
 
     apply RAWBITVECTOR_LIST.nlt_be_neq_gt.
-    rewrite !List.rev_length.
+    rewrite !List.length_rev.
     apply (f_equal (N.to_nat)) in wf0.
     apply (f_equal (N.to_nat)) in wf1.
     rewrite Nnat.Nat2N.id in wf0, wf1.

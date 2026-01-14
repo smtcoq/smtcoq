@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -30,7 +30,7 @@ type types = Constr.types
 let eq_constr = Constr.equal
 let hash_constr = Constr.hash
 let mkProp = Constr.mkProp
-let mkConst = Constr.mkConst
+let mkConst = Constr.UnsafeMonomorphic.mkConst
 let mkVar = Constr.mkVar
 let mkRel = Constr.mkRel
 let isRel = Constr.isRel

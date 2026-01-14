@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import State SMT_terms.
-Require Import List Bool PArray Uint63.
+Require Import PArray State SMT_terms.
+From Stdlib Require Import List Bool Uint63.
 
 Local Open Scope list_scope.
 Local Open Scope bool_scope.

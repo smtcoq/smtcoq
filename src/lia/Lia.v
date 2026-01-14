@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,10 +10,10 @@
 (**************************************************************************)
 
 
-Require Import Bool List Uint63 Ring63 PArray ZArith.
-Require Import Misc State SMT_terms Euf.
+From Stdlib Require Import Bool List Uint63 Ring63 ZArith.
+Require Import PArray Misc State SMT_terms Euf.
 
-Require Import RingMicromega ZMicromega Coq.micromega.Tauto Psatz.
+From Stdlib Require Import RingMicromega ZMicromega micromega.Tauto Psatz.
 
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.
@@ -491,7 +491,7 @@ Section certif.
     Fixpoint bounded_pexpr (p:positive) (pe:PExpr Z) :=
       match pe with
       | PEc _ => true
-      | @PEX _ x => Zlt_bool (Zpos x) (Zpos p)
+      | @PEX _ x => Z.ltb (Zpos x) (Zpos p)
       | PEadd pe1 pe2
       | PEsub pe1 pe2
       | PEmul pe1 pe2 => bounded_pexpr p pe1 && bounded_pexpr p pe2
@@ -1014,8 +1014,8 @@ Transparent build_z_atom.
       symmetry;apply Zlt_is_lt_bool.
       rewrite Zle_is_le_bool;tauto.
       rewrite Zge_iff_le.
-        unfold Zge_bool;rewrite <- Zcompare_antisym.
-        rewrite Zle_is_le_bool;unfold Zle_bool.
+        unfold Z.geb;rewrite <- Zcompare_antisym.
+        rewrite Zle_is_le_bool;unfold Z.leb.
         destruct
           (Zeval_expr (interp_vmap vm') pe2 ?= Zeval_expr (interp_vmap vm') pe1)%Z;
           simpl;tauto.
@@ -1249,13 +1249,13 @@ Transparent build_z_atom.
       intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
       split.
       case (Lit.is_pos a); case (Lit.is_pos b); simpl; rewrite H11; rewrite (bounded_bformula_le _ _ H9 _ H6); auto with smtcoq_core.
-      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto with smtcoq_core; try discriminate; simpl; intuition.
+      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto with smtcoq_core; try discriminate; simpl; intuition auto with *.
       (* Fiff *)
       simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
       intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
       split.
       case (Lit.is_pos a); case (Lit.is_pos b); simpl; rewrite H11; rewrite (bounded_bformula_le _ _ H9 _ H6); auto with smtcoq_core.
-      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto with smtcoq_core; try discriminate; simpl; intuition.
+      simpl; rewrite (interp_bformula_le _ _ H10 _ H6) in H7; case_eq (Lit.is_pos a); intro Ha; case_eq (Lit.is_pos b); intro Hb; unfold Lit.interp; rewrite Ha, Hb; simpl; rewrite <- H12; rewrite <- H7; (case (Var.interp rho (Lit.blit a)); case (Var.interp rho (Lit.blit b))); split; auto with smtcoq_core; try discriminate; simpl; intuition auto with *.
       (* Fite *)
       simpl; case_eq (build_var vm (Lit.blit a)); try discriminate; intros [vm1 f1] Heq1; case_eq (build_var vm1 (Lit.blit b)); try discriminate; intros [vm2 f2] Heq2; case_eq (build_var vm2 (Lit.blit c)); try discriminate; intros [vm3 f3] Heq3 H1 H2; inversion H1; subst vm'; subst bf; destruct (Hbv _ _ _ _ Heq1 H2) as [H3 [H4 [H5 [H6 H7]]]]; destruct (Hbv _ _ _ _ Heq2 H3) as [H8 [H9 [H10 [H11 H12]]]]; destruct (Hbv _ _ _ _ Heq3 H8) as [H13 [H14 [H15 [H16 H17]]]]; split; auto with smtcoq_core; split; [eauto with smtcoq_core arith| ]; split.
       intros p H18; rewrite H5; auto with smtcoq_core; rewrite H10; eauto with smtcoq_core arith.
@@ -1468,7 +1468,7 @@ Transparent build_z_atom.
            negb (Lit.is_pos l) ->
            rho (Lit.blit l) =
            Atom.interp_bool t_i
-           (Atom.apply_binop t_i Typ.TZ Typ.TZ Typ.Tbool Zle_bool
+           (Atom.apply_binop t_i Typ.TZ Typ.TZ Typ.Tbool Z.leb
              (hinterp a) (hinterp b)) ->
            Typ.eqb (get_type t_i t_func t_atom a) Typ.TZ -> Typ.eqb (get_type t_i t_func t_atom b) Typ.TZ ->
            C.interp rho (f a b)) ->

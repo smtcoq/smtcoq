@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -15,9 +15,9 @@
 
 Declare Scope array_scope.
 
-Require Export Uint63 Psatz.
-Require FMapAVL.
-Require Import ZArith.
+From Stdlib Require Export Uint63 Psatz.
+From Stdlib Require FMapAVL.
+From Stdlib Require Import ZArith.
 
 Local Open Scope uint63_scope.
 
@@ -112,7 +112,7 @@ Local Open Scope array_scope.
 Definition max_length := max_int.
 
 (** Axioms *)
-Require FSets.FMapFacts.
+From Stdlib Require FSets.FMapFacts.
 Module P := FSets.FMapFacts.WProperties_fun IntOrderedType Map.
 
 Lemma get_outofbound : forall A (t:array A) i, (i <? length t) = false -> t.[i] = default t.

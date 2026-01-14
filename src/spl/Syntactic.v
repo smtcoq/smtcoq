@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -11,8 +11,8 @@
 
 
 (*** Spl -- a small checker for simplifications ***)
-Require Import List PArray Bool Uint63 ZMicromega ZArith.
-Require Import Misc State SMT_terms BVList.
+From Stdlib Require Import List Bool Uint63 ZMicromega ZArith.
+Require Import PArray Misc State SMT_terms BVList.
 Require Lia.
 
 Local Open Scope array_scope.
@@ -214,9 +214,9 @@ Section CheckAtom.
     end.
 
   (* TODO : move this *)
-  Lemma Zge_is_ge_bool : forall x y, (x >= y)%Z <-> (Zge_bool x y = true).
+  Lemma Zge_is_ge_bool : forall x y, (x >= y)%Z <-> (Z.geb x y = true).
   Proof.
-    intros x y;assert (W:=Zge_cases x y);destruct (Zge_bool x y).
+    intros x y;assert (W:=Zge_cases x y);destruct (Z.geb x y).
     split;auto.
     split;[intros;auto with zarith | discriminate].
   Qed.

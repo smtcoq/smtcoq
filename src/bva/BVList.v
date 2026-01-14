@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,9 +10,9 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith Psatz Uint63 Nnat ZArith PeanoNat.
+From Stdlib Require Import List Bool NArith Psatz Uint63 Nnat ZArith PeanoNat.
 Require Import Misc.
-Require Import ProofIrrelevance.
+From Stdlib Require Import ProofIrrelevance.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.
@@ -814,7 +814,7 @@ Qed.
 Lemma bv_concat_size n m a b : size a = n -> size b = m -> size (bv_concat a b) = (n + m)%N.
 Proof.
   unfold bv_concat, size. intros H0 H1.
-  rewrite app_length, Nat2N.inj_add, H0, H1; now rewrite N.add_comm.
+  rewrite length_app, Nat2N.inj_add, H0, H1; now rewrite N.add_comm.
 Qed.
 
 (*list bitwise AND properties*)
@@ -883,13 +883,13 @@ Proof. intros i. induction i as [ | IHi]; simpl; reflexivity. Qed.
 
 Lemma mk_list_true_equiv: forall t acc, mk_list_true_acc t acc = (List.rev (mk_list_true t)) ++ acc.
 Proof. induction t as [ |t IHt]; auto; intro acc; simpl; rewrite IHt.
-       rewrite app_assoc_reverse.
+       rewrite <- app_assoc.
        apply f_equal. simpl. reflexivity.
 Qed.
 
 Lemma mk_list_false_equiv: forall t acc, mk_list_false_acc t acc = (List.rev (mk_list_false t)) ++ acc.
 Proof. induction t as [ |t IHt]; auto; intro acc; simpl; rewrite IHt. 
-       rewrite app_assoc_reverse.
+       rewrite <- app_assoc.
        apply f_equal. simpl. reflexivity.
 Qed.
 
@@ -1543,8 +1543,8 @@ Lemma bv_neg_size: forall n a, (size a) = n -> size (bv_neg a) = n.
 Proof. intros n a H. unfold bv_neg.
        unfold size, bits in *. unfold twos_complement.
        specialize (@add_list_carry_length_eq  (map negb a) (mk_list_false (length a)) true).
-       intros. rewrite <- H0. now rewrite map_length.
-       rewrite map_length.
+       intros. rewrite <- H0. now rewrite length_map.
+       rewrite length_map.
        now rewrite length_mk_list_false.
 Qed.
 
@@ -2017,7 +2017,7 @@ Lemma nlt_neq_gt: forall x y,
 Proof. intros.
   unfold ult_list in *.
   apply nlt_be_neq_gt.
-  now rewrite !rev_length.
+  now rewrite !length_rev.
   easy. 
   now apply rev_neq in H1.
 Qed.

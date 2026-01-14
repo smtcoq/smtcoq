@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -16,7 +16,7 @@ open SmtMisc
 type coqTerm = CoqInterface.constr lazy_t
 
 let gc prefix constant =
-  lazy (UnivGen.constr_of_monomorphic_global (Global.env ()) (Coqlib.lib_ref (prefix ^ "." ^ constant)))
+  lazy (UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref (prefix ^ "." ^ constant)))
 
 
 (* Int63 *)

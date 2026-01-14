@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import
-        Bool ZArith BVList Logic.
+From Stdlib Require Import Bool ZArith Logic.
+Require Import BVList.
 
 Local Coercion is_true : bool >-> Sortclass.
 

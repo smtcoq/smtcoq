@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool Uint63 PArray.
-Require Import Misc State SMT_terms.
+From Stdlib Require Import Bool Uint63.
+Require Import PArray Misc State SMT_terms.
 Require Import Syntactic Arithmetic Operators Assumptions.
 Require Import Cnf Euf Lia BVList Bva_checker Array_checker.
 

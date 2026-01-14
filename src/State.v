@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,7 +10,8 @@
 (**************************************************************************)
 
 
-Require Import List Bool Uint63 Psatz Ring63 PArray Misc Ring.
+From Stdlib Require Import List Bool Uint63 Psatz Ring63 Ring.
+Require Import PArray Misc.
 
 (* Require Import AxiomesInt. *)
 

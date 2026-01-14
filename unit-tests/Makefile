@@ -4,11 +4,11 @@ ZCHAFFLOG=$(ZCHAFFSRC:.cnf=.zlog)
 VERITLOG=$(VERITSRC:.smt2=.vtlog)
 OBJ=$(ZCHAFFLOG) $(VERITLOG)
 
-COQLIBS?= -R ../src SMTCoq
+ROCQLIBS?= -R ../src SMTCoq
 OPT?=
-COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
+ROCQFLAGS?=-q $(OPT) $(ROCQLIBS) $(OTHERFLAGS) $(ROCQ_XML)
 VIOFLAG?=-quick
-COQC?=$(COQBIN)coqc -I ../src
+ROCQC?=rocq compile -I ../src
 
 
 all: zchaff verit lfsc abduce
@@ -39,15 +39,15 @@ logs: $(OBJ)
 
 
 %.vo %.glob: %.v
-	$(COQC) $(COQDEBUG) $(COQFLAGS) $*
+	$(ROCQC) $(ROCQDEBUG) $(ROCQFLAGS) $<
 
 
 %.vio: %.v logs
-	$(COQC) $(VIOFLAG) $(COQDEBUG) $(COQFLAGS) $*
+	$(ROCQC) $(VIOFLAG) $(ROCQDEBUG) $(ROCQFLAGS) $<
 
 
 parallel: Tests_zchaff_tactics.vio Tests_verit_tactics.vio Tests_lfsc_tactics.vio Tests_abduce_tactic.vio
-	coqc -schedule-vio-checking 3 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics Tests_abduce_tactic
+	rocq compile -schedule-vio-checking 3 Tests_zchaff_tactics Tests_verit_tactics Tests_lfsc_tactics Tests_abduce_tactic
 
 
 clean: cleanvo

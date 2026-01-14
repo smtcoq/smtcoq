@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import PArray List Bool ZArith Psatz.
-Require Import Misc State SMT_terms BVList.
+From Stdlib Require Import List Bool ZArith Psatz.
+Require Import PArray Misc State SMT_terms BVList.
 
 Import Form.
 

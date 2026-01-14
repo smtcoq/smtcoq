@@ -11,7 +11,7 @@
 
 
 Require Import SMTCoq.
-Require Import Bool PArray Uint63 List ZArith Logic.
+From Stdlib Require Import Bool PArray Uint63 List ZArith Logic.
 
 Local Open Scope Z_scope.
 

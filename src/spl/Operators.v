@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -12,8 +12,8 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-Require Import List PArray Bool Uint63 ZMicromega.
-Require Import Misc State SMT_terms.
+From Stdlib Require Import List Bool Uint63 ZMicromega.
+Require Import PArray Misc State SMT_terms.
 
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.

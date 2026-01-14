@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,10 +10,11 @@
 (**************************************************************************)
 
 
-Require Import Bool Uint63 Psatz PArray BinNat BinPos ZArith SMT_classes_instances.
+From Stdlib Require Import Bool Uint63 Psatz BinNat BinPos ZArith.
+Require Import PArray SMT_classes_instances.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
-Require List .
+From Stdlib Require List.
 Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.
@@ -247,7 +248,7 @@ Module Form.
 End Form.
 
 
-Require OrderedTypeEx.
+From Stdlib Require OrderedTypeEx.
 
 
 Module Typ.
@@ -1479,10 +1480,10 @@ Qed.
          | BO_Zplus => apply_binop Typ.TZ Typ.TZ Typ.TZ Zplus
          | BO_Zminus => apply_binop Typ.TZ Typ.TZ Typ.TZ Zminus
          | BO_Zmult => apply_binop Typ.TZ Typ.TZ Typ.TZ Zmult
-         | BO_Zlt => apply_binop Typ.TZ Typ.TZ Typ.Tbool Zlt_bool
-         | BO_Zle => apply_binop Typ.TZ Typ.TZ Typ.Tbool Zle_bool
-         | BO_Zge => apply_binop Typ.TZ Typ.TZ Typ.Tbool Zge_bool
-         | BO_Zgt => apply_binop Typ.TZ Typ.TZ Typ.Tbool Zgt_bool
+         | BO_Zlt => apply_binop Typ.TZ Typ.TZ Typ.Tbool Z.ltb
+         | BO_Zle => apply_binop Typ.TZ Typ.TZ Typ.Tbool Z.leb
+         | BO_Zge => apply_binop Typ.TZ Typ.TZ Typ.Tbool Z.geb
+         | BO_Zgt => apply_binop Typ.TZ Typ.TZ Typ.Tbool Z.gtb
          | BO_eq t => apply_binop t t Typ.Tbool (Typ.i_eqb t_i t)
          | BO_BVand s =>
            apply_binop (Typ.TBV s) (Typ.TBV s) (Typ.TBV s) (@BITVECTOR_LIST.bv_and s)

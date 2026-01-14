@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool List Uint63 PArray Psatz ZArith.
-Require Import Misc State SMT_terms FArray SMT_classes.
+From Stdlib Require Import Bool List Uint63 Psatz ZArith.
+Require Import PArray Misc State SMT_terms FArray SMT_classes.
 
 Import Form.
 Import Atom.

@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool ZArith.
+From Stdlib Require Import Bool ZArith.
 Require Import State SMT_classes.
 
 
@@ -78,7 +78,7 @@ Lemma impl_or_split_right a b c:
   implb (a || b) c = true -> negb b || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with *.
 Qed.
 
 Lemma impl_or_split_left a b c:
@@ -93,7 +93,7 @@ Lemma eqb_sym_or_split_right a b c:
   Bool.eqb c (a || b) = true -> negb b || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with *.
 Qed.
 
 Lemma eqb_sym_or_split_left a b c:
@@ -107,7 +107,7 @@ Lemma eqb_or_split_right a b c:
   Bool.eqb (a || b) c = true -> negb b || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with *.
 Qed.
 
 Lemma eqb_or_split_left a b c:
@@ -131,7 +131,7 @@ Lemma impl_and_split_right a b c:
   implb a (b && c) = true -> negb a || c = true.
 Proof.
   intro H.
-  destruct a; destruct c; intuition.
+  destruct a; destruct c; intuition auto with *.
 Qed.
 
 Lemma impl_and_split_left a b c:
