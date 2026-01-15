@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -23,7 +23,7 @@ Trakt Add Relation 2 (@eq bool) (Bool.eqb) (eqbool_Booleqb_embedding).
 
 (* Boolean relations for Z *)
 
-From Coq Require Import ZArith.
+From Stdlib Require Import ZArith.
 
 
 Lemma eqZ_Zeqb_embedding: forall n m : Z, n = m <-> (Z.eqb n m) = true.
@@ -197,7 +197,7 @@ Trakt Add Relation 2 (gt) (Z.gtb) (gt_Zgtb_embedding).
 
 (* Embedding for positive *)
 
-Require Import PArith.
+From Stdlib Require Import PArith.
 
 Section Relations_positive.
 

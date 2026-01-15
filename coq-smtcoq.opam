@@ -18,7 +18,7 @@ depends: [
   "coq-trakt"
 ]
 pin-depends: [
-  [ "coq-trakt.1.2c" "git+https://github.com/ecranceMERCE/trakt.git#1.2c" ]
+  [ "coq-trakt.dev" "git+https://github.com/ecranceMERCE/trakt.git" ]
 ]
 tags: [
   "category:Computer Science/Decision Procedures and Certified Algorithms/Decision procedures"

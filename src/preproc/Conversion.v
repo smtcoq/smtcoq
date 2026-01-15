@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -12,7 +12,7 @@
 
 From Trakt Require Import Trakt.
 Require Import Database_trakt.
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 
 Require SMT_classes BVList FArray.
 
