@@ -29,7 +29,8 @@ cleanall::
 
 CAMLLEX = $(CAMLBIN)ocamllex
 CAMLYACC = $(CAMLBIN)ocamlyacc
-CAMLPKGS += -package rocq-runtime.plugins.micromega
+# OCaml 5.x compatibility: num package provides Big_int module
+CAMLPKGS += -package num -package rocq-runtime.plugins.micromega
 
 merlin-hook::
 	$(HIDE)echo 'PKG num' >> .merlin
