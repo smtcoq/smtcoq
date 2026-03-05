@@ -92,8 +92,8 @@ End Test.  *)
 
 (** Tactics in bool *)
 
-Tactic Notation "verit_bool_base_auto" constr(h) := verit_bool_base h; try (exact _).
-Tactic Notation "verit_bool_no_check_base_auto" constr(h) := verit_bool_no_check_base h; try (exact _).
+Ltac verit_bool_base_auto h := verit_bool_base h; try (exact _).
+Ltac verit_bool_no_check_base_auto h := verit_bool_no_check_base h; try (exact _).
 
 Tactic Notation "verit_bool" constr(h) :=
   let tac :=
@@ -125,6 +125,10 @@ Tactic Notation "verit_bool_no_check" :=
 
 Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; auto with typeclass_instances.
 Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
+(* Ltac verit_bool_base_auto_timeout h timeout := *)
+(*   verit_bool_base_timeout h timeout; auto with typeclass_instances. *)
+(* Ltac verit_bool_no_check_base_auto_timeout h timeout := *)
+(*   verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances. *)
 
 Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
   let tac :=
@@ -163,74 +167,50 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
 Ltac zchaff          := trakt bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check.
 
+Ltac verit_tac global veritbool veritboolto to :=
+  let tac :=
+  ltac2:(h veritbool veritboolto to |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(h veritbool veritboolto to local |-
+  let Hsglob :=
+    match h with
+    | Some ?h' => pose_hyps h' (@None unit)
+    | None => constr:(@None unit)
+    end
+  in
+  let Hs :=
+      lazymatch local with
+      | Some ?local' => pose_hyps local' Hsglob
+      | None => constr:(Hsglob)
+      end
+  in
+  preprocess1 Hs;
+  [ .. |
+    let Hs' := intros_names in
+    preprocess2 Hs';
+    match to with
+      | Some ?t => veritboolto Hs' t
+      | None => veritbool Hs'
+    end;
+    QInst.vauto
+  ]) h veritbool veritboolto to))
+  in
+  tac global veritbool veritboolto to.
+
+
 Tactic Notation "verit" constr(global) :=
-  let tac :=
-  ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_base_auto Hs';
-    QInst.vauto
-  ]) h)) in tac global.
-
-Tactic Notation "verit"           :=
-  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_base_auto Hs';
-    QInst.vauto
-  ])).
-
+  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto (@None unit).
+Tactic Notation "verit"                :=
+  verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto (@None unit).
 Tactic Notation "verit_no_check" constr(global) :=
-  let tac :=
-  ltac2:(h |- intros; unfold is_true in *; get_hyps_cont_ltac1 (ltac1:(h local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_no_check_base_auto Hs';
-    QInst.vauto
-  ]) h)) in tac global.
-
-Tactic Notation "verit_no_check"           :=
-  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_no_check_base_auto Hs';
-    QInst.vauto
-  ])).
+  verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit).
+Tactic Notation "verit_no_check"                :=
+  verit_tac (@None unit) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit).
+(* Tactic Notation "verit_timeout" constr(global) constr(timeout) := *)
+(*   verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout). *)
+(* Tactic Notation "verit_timeout"                constr(timeout) := *)
+(*   verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout). *)
+(* Tactic Notation "verit_no_check_timeout" constr(global) constr(timeout) := *)
+(*   verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto_timeout (Some timeout). *)
 
 Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
   let tac :=
