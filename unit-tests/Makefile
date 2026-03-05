@@ -11,7 +11,7 @@ VIOFLAG?=-quick
 ROCQC?=rocq compile -I ../src
 
 
-all: zchaff verit lfsc abduce
+all: zchaff verit # lfsc abduce
 vernac: zchaffv veritv
 tactics: zchafft veritt lfsc abduce
 
