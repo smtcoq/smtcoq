@@ -12,13 +12,13 @@ install: [
 ]
 depends: [
   "ocaml" {>= "4.13.1" & < "5~" }
- "num"
+  "num"
   "rocq-core" {>= "9.0" & < "9.2~"}
   "rocq-stdlib" {>= "9.0" & < "9.2~"}
   "coq-trakt"
 ]
 pin-depends: [
-  [ "coq-trakt.dev" "git+https://github.com/ecranceMERCE/trakt.git" ]
+  [ "coq-trakt.dev" "git@github.com:rocq-trakt/trakt.git" ]
 ]
 tags: [
   "category:Computer Science/Decision Procedures and Certified Algorithms/Decision procedures"
