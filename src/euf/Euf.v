@@ -10,7 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool List Uint63 PArray.
+From Stdlib Require Import Bool List Uint63.
+Require Import PArray.
 Require Import State SMT_terms.
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.

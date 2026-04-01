@@ -11,9 +11,11 @@
 
 
 (*** Spl -- a small checker for simplifications ***)
-Require Import List PArray Bool Uint63 ZMicromega ZArith.
+From Stdlib Require Import List.
+Require Import PArray.
+From Stdlib Require Import Bool Uint63 ZMicromega ZArith.
 Require Import Misc State SMT_terms BVList.
-Require Lia.
+From Stdlib Require Lia.
 
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.

@@ -10,9 +10,9 @@
 (**************************************************************************)
 
 
-Require Import List Bool NArith Psatz Uint63 Nnat ZArith PeanoNat.
+From Stdlib Require Import List Bool NArith Psatz Uint63 Nnat ZArith PeanoNat.
 Require Import Misc.
-Require Import ProofIrrelevance.
+From Stdlib Require Import ProofIrrelevance.
 Import ListNotations.
 Local Open Scope list_scope.
 Local Open Scope N_scope.

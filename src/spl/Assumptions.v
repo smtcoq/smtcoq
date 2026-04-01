@@ -11,7 +11,9 @@
 
 
 Require Import State SMT_terms.
-Require Import List Bool PArray Uint63.
+From Stdlib Require Import List Bool.
+Require Import PArray.
+From Stdlib Require Import Uint63.
 
 Local Open Scope list_scope.
 Local Open Scope bool_scope.

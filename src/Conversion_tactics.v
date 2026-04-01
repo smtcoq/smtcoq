@@ -19,7 +19,7 @@
 
 
 
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 
 (* This module represents the structure to be injected into Z *)
 Module Type convert_type.

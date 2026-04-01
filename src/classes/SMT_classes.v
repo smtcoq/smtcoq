@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool OrderedType.
+From Stdlib Require Import Bool OrderedType.
 
 (** This file defines a number of typeclasses which are useful to build the
     terms of SMT (in particular arrays indexed by instances of these

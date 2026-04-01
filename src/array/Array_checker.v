@@ -10,7 +10,9 @@
 (**************************************************************************)
 
 
-Require Import Bool List Uint63 PArray Psatz ZArith.
+From Stdlib Require Import Bool List Uint63.
+Require Import PArray.
+From Stdlib Require Import Psatz ZArith.
 Require Import Misc State SMT_terms FArray SMT_classes.
 
 Import Form.
