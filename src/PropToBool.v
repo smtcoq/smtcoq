@@ -10,9 +10,10 @@
 (**************************************************************************)
 
 
-Require Import
-        Bool ZArith BVList Logic BVList FArray
-        SMT_classes SMT_classes_instances ReflectFacts.
+From Stdlib Require Import Bool ZArith.
+Require Import BVList.
+From Stdlib Require Import Logic.
+Require Import BVList FArray SMT_classes SMT_classes_instances ReflectFacts.
 Import BVList.BITVECTOR_LIST.
 
 

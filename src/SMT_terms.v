@@ -10,10 +10,13 @@
 (**************************************************************************)
 
 
-Require Import Bool Uint63 Psatz PArray BinNat BinPos ZArith SMT_classes_instances.
+From Stdlib Require Import Bool Uint63 Psatz.
+Require Import PArray.
+From Stdlib Require Import BinNat BinPos ZArith.
+Require Import SMT_classes_instances.
 Require Import Misc State BVList. (* FArray Equalities DecidableTypeEx. *)
 Require FArray.
-Require List .
+From Stdlib Require List .
 Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.
@@ -247,7 +250,7 @@ Module Form.
 End Form.
 
 
-Require OrderedTypeEx.
+From Stdlib Require OrderedTypeEx.
 
 
 Module Typ.

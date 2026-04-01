@@ -10,10 +10,12 @@
 (**************************************************************************)
 
 
-Require Import Bool List Uint63 Ring63 PArray ZArith.
+From Stdlib Require Import Bool List Uint63 Ring63.
+Require Import PArray.
+From Stdlib Require Import ZArith.
 Require Import Misc State SMT_terms Euf.
 
-Require Import RingMicromega ZMicromega Coq.micromega.Tauto Psatz.
+From Stdlib Require Import RingMicromega ZMicromega micromega.Tauto Psatz.
 
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.

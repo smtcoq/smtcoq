@@ -10,8 +10,9 @@
 (**************************************************************************)
 
 
-Require Import Bool OrderedType SMT_classes.
-Require Import ProofIrrelevance.
+From Stdlib Require Import Bool OrderedType.
+Require Import SMT_classes.
+From Stdlib Require Import ProofIrrelevance.
 
 
 (** This file formalizes functional arrays with extensionality as specified in

@@ -10,7 +10,9 @@
 (**************************************************************************)
 
 
-Require Import Bool List PArray Uint63 Ring63 ZArith Psatz.
+From Stdlib Require Import Bool List.
+Require Import PArray.
+From Stdlib Require Import Uint63 Ring63 ZArith Psatz.
 Local Open Scope uint63_scope.
 Local Open Scope array_scope.
 
@@ -1667,20 +1669,20 @@ Register Uint63.eqb as num.int63.eqb.
 Register PArray.array as array.array.type.
 Register PArray.make as array.array.make.
 Register PArray.set as array.array.set.
-Register Coq.Init.Datatypes.is_true as core.is_true.is_true.
-Register Coq.PArith.BinPosDef.Pos.eqb as num.pos.eqb.
-Register Coq.NArith.BinNat.N.of_nat as num.N.of_nat.
-Register Coq.ZArith.BinInt.Z.ltb as num.Z.ltb.
-Register Coq.ZArith.BinInt.Z.leb as num.Z.leb.
-Register Coq.ZArith.BinInt.Z.gtb as num.Z.gtb.
-Register Coq.ZArith.BinInt.Z.geb as num.Z.geb.
-Register Coq.ZArith.BinInt.Z.eqb as num.Z.eqb.
-Register Coq.Init.Datatypes.implb as core.bool.implb.
-Register Coq.Bool.Bool.eqb as core.bool.eqb.
-Register Coq.Bool.Bool.ifb as core.bool.ifb.
-Register Coq.Bool.Bool.reflect as core.bool.reflect.
-Register Coq.Init.Datatypes.length as core.list.length.
-Register Coq.micromega.ZMicromega.ZArithProof as micromega.ZMicromega.ZArithProof.
+Register Corelib.Init.Datatypes.is_true as core.is_true.is_true.
+Register Stdlib.PArith.BinPosDef.Pos.eqb as num.pos.eqb.
+Register Stdlib.NArith.BinNat.N.of_nat as num.N.of_nat.
+Register Stdlib.ZArith.BinInt.Z.ltb as num.Z.ltb.
+Register Stdlib.ZArith.BinInt.Z.leb as num.Z.leb.
+Register Stdlib.ZArith.BinInt.Z.gtb as num.Z.gtb.
+Register Stdlib.ZArith.BinInt.Z.geb as num.Z.geb.
+Register Stdlib.ZArith.BinInt.Z.eqb as num.Z.eqb.
+Register Corelib.Init.Datatypes.implb as core.bool.implb.
+Register Stdlib.Bool.Bool.eqb as core.bool.eqb.
+Register Stdlib.Bool.Bool.ifb as core.bool.ifb.
+Register Stdlib.Bool.Bool.reflect as core.bool.reflect.
+Register Corelib.Init.Datatypes.length as core.list.length.
+Register Stdlib.micromega.ZMicromega.ZArithProof as micromega.ZMicromega.ZArithProof.
 
 
 (* 

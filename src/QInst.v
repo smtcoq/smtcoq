@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-Require Import Bool ZArith.
+From Stdlib Require Import Bool ZArith.
 Require Import State SMT_classes.
 
 

@@ -12,7 +12,9 @@
 
 (*** Spl -- a small checker for simplifications ***)
 
-Require Import List PArray Bool Uint63 ZMicromega.
+From Stdlib Require Import List.
+Require Import PArray.
+From Stdlib Require Import Bool Uint63 ZMicromega.
 Require Import Misc State SMT_terms.
 Require Lia.
 

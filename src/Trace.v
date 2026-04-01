@@ -10,7 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool Uint63 PArray.
+From Stdlib Require Import Bool Uint63.
+Require Import PArray.
 Require Import Misc State SMT_terms.
 Require Import Syntactic Arithmetic Operators Assumptions.
 Require Import Cnf Euf Lia BVList Bva_checker Array_checker.

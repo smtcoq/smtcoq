@@ -10,8 +10,9 @@
 (**************************************************************************)
 
 
-Require Import
-        Bool ZArith BVList Logic.
+From Stdlib Require Import Bool ZArith.
+Require Import BVList.
+From Stdlib Require Import Logic.
 
 Local Coercion is_true : bool >-> Sortclass.
 

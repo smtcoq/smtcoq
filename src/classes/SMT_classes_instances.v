@@ -10,8 +10,8 @@
 (**************************************************************************)
 
 
-Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
-Require Import Uint63.
+From Stdlib Require Import Bool OrderedType BinPos ZArith OrderedTypeEx.
+From Stdlib Require Import Uint63.
 Require Import State BVList FArray.
 Require Export SMT_classes.
 

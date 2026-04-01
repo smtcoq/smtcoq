@@ -11,7 +11,9 @@
 
 
 Require Import PropToBool.
-Require Import Uint63 List PArray Bool ZArith.
+From Stdlib Require Import Uint63 List.
+Require Import PArray.
+From Stdlib Require Import Bool ZArith.
 Require Import SMTCoq.State SMTCoq.SMT_terms SMTCoq.Trace SMT_classes_instances QInst.
 From Ltac2 Require Import Ltac2.
 

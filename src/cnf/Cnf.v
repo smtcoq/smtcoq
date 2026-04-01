@@ -10,7 +10,8 @@
 (**************************************************************************)
 
 
-Require Import PArray List Bool ZArith Psatz.
+Require Import PArray.
+From Stdlib Require Import List Bool ZArith Psatz.
 Require Import Misc State SMT_terms BVList.
 
 Import Form.

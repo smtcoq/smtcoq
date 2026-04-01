@@ -10,7 +10,9 @@
 (**************************************************************************)
 
 
-Require Import List Bool Uint63 Psatz Ring63 PArray Misc Ring.
+From Stdlib Require Import List Bool Uint63 Psatz Ring63.
+Require Import PArray Misc.
+From Stdlib Require Import Ring.
 
 (* Require Import AxiomesInt. *)
 

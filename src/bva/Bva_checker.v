@@ -12,12 +12,14 @@
 
 (** A small checker for bit-vectors bit-blasting *)
 
-Require Import Uint63 PArray SMT_classes ZArith.
+From Stdlib Require Import Uint63.
+Require Import PArray SMT_classes.
+From Stdlib Require Import ZArith.
 
-Require Import Misc State SMT_terms BVList Psatz.
-Require Import Bool List BoolEq NZParity Nnat.
-Require Import BinPos BinNat Pnat Init.Peano.
-Require Import ProofIrrelevance.
+Require Import Misc State SMT_terms BVList.
+From Stdlib Require Import Psatz Bool List BoolEq NZParity Nnat.
+From Stdlib Require Import BinPos BinNat Pnat Init.Peano.
+From Stdlib Require Import ProofIrrelevance.
 
 Require FArray.
 
