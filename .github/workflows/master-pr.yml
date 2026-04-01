@@ -9,6 +9,6 @@ on:
 jobs:
   from-sources:
     if: ${{ github.event.action != 'labeled' || (github.event.action == 'labeled' && github.event.label.name == 'workflow') }}
-    uses: ./.github/workflows/from-sources.yml
+    uses: ./.github/workflows/from-sources-rocq.yml
     with:
       image-version: ${{ github.base_ref }}
