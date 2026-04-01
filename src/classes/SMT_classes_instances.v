@@ -15,6 +15,18 @@ From Stdlib Require Import Uint63.
 Require Import State BVList FArray.
 Require Export SMT_classes.
 
+Section StrictOrder.
+
+  Global Instance StrictOrder_to_OrdType {T : Type} {R : relation T}:
+    StrictOrder R -> OrdType T.
+  Proof.
+    split with R.
+    - apply StrictOrder_Transitive.
+    - intros ? y ? ->.
+      now apply StrictOrder_Irreflexive with y.
+  Defined.
+
+End StrictOrder.
 
 Section Unit.
   Let eqb : unit -> unit -> bool := fun _ _ => true.
