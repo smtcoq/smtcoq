@@ -157,6 +157,15 @@ type constr_expr = Constrexpr.constr_expr
 let error s = CErrors.user_err (Pp.str s)
 let anomaly s = CErrors.anomaly (Pp.str s)
 
+let { Goptions.get = print_solver_status } =
+  Goptions.declare_bool_option_and_ref
+    ~key:["SMTCoq"; "Print"; "Solver"; "Status"]
+    ~value:false
+    ()
+
+let msg_solver_status s =
+  if print_solver_status () then Feedback.msg_info (Pp.str s)
+
 let smtcoq_cat = CWarnings.create_category ~name:"SMTCoq" ()
 
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,

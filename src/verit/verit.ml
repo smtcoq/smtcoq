@@ -199,11 +199,11 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
       | Some i -> "timeout "^(string_of_int i)^" "^command
       | None -> command
   in
-  Format.eprintf "%s@." command;
+  CoqInterface.msg_solver_status command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  Format.eprintf "Verit = %.5f@." (t1-.t0);
+  CoqInterface.msg_solver_status (Printf.sprintf "Verit = %.5f" (t1 -. t0));
 
   let win = open_in wname in
 
@@ -260,4 +260,3 @@ let tactic_gen vm_cast timeout lcpl lcepl =
   SmtCommands.tactic 0 (call_verit timeout) verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)
-

@@ -93,7 +93,7 @@ let read_check_result s =
 
 
 let send_command s cmd read =
-  eprintf "%s@." cmd;
+  CoqInterface.msg_solver_status cmd;
   (* let err_p1 = Unix.((fstat s.stderr).st_size) in *)
   try
     let in_ch = Unix.out_channel_of_descr s.stdin in
@@ -175,5 +175,4 @@ let quit s =
     send_command s "(exit)" read_success;
   with Unix.Unix_error _ -> ();
   kill s
-
 
