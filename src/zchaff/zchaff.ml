@@ -322,11 +322,11 @@ let call_zchaff nvars root =
   let reloc, last = export outchan nvars root in
   close_out outchan;
   let command = "zchaff " ^ filename ^ " > " ^ resfilename in
-  Format.eprintf "%s@." command;
+  CoqInterface.msg_solver_status command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  Format.eprintf "Zchaff = %.5f@." (t1-.t0);
+  CoqInterface.msg_solver_status (Printf.sprintf "Zchaff = %.5f" (t1 -. t0));
   if exit_code <> 0 then
     failwith ("Zchaff.call_zchaff: command " ^ command ^
 	        " exited with code " ^ (string_of_int exit_code));

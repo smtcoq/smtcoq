@@ -17,6 +17,8 @@ DECLARE PLUGIN "coq-smtcoq.smtcoq"
 open Stdarg
 open Ltac_plugin
 
+let _ = CoqInterface.print_solver_status ()
+
 }
 
 VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY

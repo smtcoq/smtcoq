@@ -100,6 +100,8 @@ val set_evars_tac : constr -> tactic
 type constr_expr = Constrexpr.constr_expr
 val error : string -> 'a
 val anomaly : string -> 'a
+val print_solver_status : unit -> bool
+val msg_solver_status : string -> unit
 
 val smtcoq_cat : CWarnings.category
 
