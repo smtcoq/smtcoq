@@ -319,17 +319,23 @@ let export out_channel nvars first =
 let call_zchaff nvars root =
   let (filename, outchan) = Filename.open_temp_file "zchaff_coq" ".cnf" in
   let resfilename = (Filename.chop_extension filename)^".zlog" in
+  let errfilename, errchan = Filename.open_temp_file "stderr_zchaff" ".log" in
+  close_out errchan;
   let reloc, last = export outchan nvars root in
   close_out outchan;
-  let command = "zchaff " ^ filename ^ " > " ^ resfilename in
+  let command = "zchaff " ^ filename ^ " > " ^ resfilename ^ " 2> " ^ errfilename in
   CoqInterface.msg_solver_status command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
+  SolverStatus.msg_file errfilename;
+  Sys.remove errfilename;
+
   CoqInterface.msg_solver_status (Printf.sprintf "Zchaff = %.5f" (t1 -. t0));
-  if exit_code <> 0 then
+  if exit_code <> 0 then begin
     failwith ("Zchaff.call_zchaff: command " ^ command ^
-	        " exited with code " ^ (string_of_int exit_code));
+                " exited with code " ^ (string_of_int exit_code))
+  end;
   let logfilename = (Filename.chop_extension filename) ^ ".log" in
   let command2 = "mv resolve_trace "^logfilename in
   let exit_code2 = Sys.command command2 in

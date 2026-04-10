@@ -193,7 +193,9 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   let logfilename = Filename.chop_extension filename ^ ".vtlog" in
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
   close_out woc;
-  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " 2> " ^ wname in
+  let oname, ooc = Filename.open_temp_file "stdout_verit" ".log" in
+  close_out ooc;
+  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " > " ^ oname ^ " 2> " ^ wname in
   let command = 
     match timeout with
       | Some i -> "timeout "^(string_of_int i)^" "^command
@@ -203,6 +205,7 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
+  SolverStatus.msg_file oname;
   CoqInterface.msg_solver_status (Printf.sprintf "Verit = %.5f" (t1 -. t0));
 
   let win = open_in wname in
@@ -224,13 +227,13 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
           CoqInterface.error ("veriT failed with the error: " ^ l)
       done
     with End_of_file -> () in
-  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; let _ = CoqInterface.anomaly "veriT timed out" in ());
+  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; Sys.remove oname; let _ = CoqInterface.anomaly "veriT timed out" in ());
   try
     if exit_code <> 0 then verit_non_zero_exit (command,exit_code);
     raise_warnings_errors ();
     let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
-    close_in win; Sys.remove wname; res
-  with x -> close_in win; Sys.remove wname;
+    close_in win; Sys.remove wname; Sys.remove oname; res
+  with x -> close_in win; Sys.remove wname; Sys.remove oname;
             match x with
             | Unknown -> CoqInterface.error "veriT returns 'unknown'"
             | VeritSyntax.Sat -> CoqInterface.error "veriT found a counter-example"
