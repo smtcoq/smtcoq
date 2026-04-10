@@ -59,6 +59,7 @@ trace/smtMisc.ml
 trace/smtMisc.mli
 trace/smtTrace.ml
 trace/smtTrace.mli
+trace/solverStatus.ml
 trace/coqInterface.ml
 trace/coqInterface.mli
 

@@ -78,7 +78,7 @@ let lfsc_parse_one lb =
   let t1 = Sys.time () in
   printf " Done [%.3f s]@." (t1 -. t0);
   r
-  
+
 
 let import_trace first parse lexbuf =
   Printexc.record_backtrace true;
@@ -251,7 +251,7 @@ let checker fsmt fproof =
 (*   (\* Just for printing *\) *)
 
 (*   open Atom *)
-  
+
 (*   let distrib x l = List.map (fun y -> (x,y)) l *)
 
 (*   let rec cross acc l = match l with *)
@@ -260,7 +260,7 @@ let checker fsmt fproof =
 (*       cross (List.rev_append (distrib x r) acc) r *)
 
 (*   let cross = cross [] *)
-  
+
 (*   let rec compute_int = function *)
 (*     | Acop c -> *)
 (*       (match c with *)
@@ -314,7 +314,7 @@ let checker fsmt fproof =
 (*       | BO_Zge -> ">=" *)
 (*       | BO_Zgt -> ">" *)
 (*       | BO_eq _ -> "=" *)
-  
+
 (*   and to_smt_bop fmt op h1 h2 = *)
 (*     match op with *)
 (*     | BO_Zlt -> fprintf fmt "(not (>= %a %a)" to_smt h1 to_smt h2 *)
@@ -373,11 +373,11 @@ let call_abduce i env rt ro ra rf root lsmt =
     List.iter (fun x -> assume cvc5 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
 
     let proof =
-      let abduct1 = SmtCommands.abduct_string env rt ro ra rf 
+      let abduct1 = SmtCommands.abduct_string env rt ro ra rf
             (get_abduct cvc5 (asprintf "%a" (Form.to_smt ~debug:false) fl)) in
       let rec produce_abducts n =
         (if n > 0 then
-          (SmtCommands.abduct_string env rt ro ra rf (get_abduct_next cvc5)) :: produce_abducts (n-1) 
+          (SmtCommands.abduct_string env rt ro ra rf (get_abduct_next cvc5)) :: produce_abducts (n-1)
         else []) in
       let abducts = List.rev (produce_abducts (i - 1)) in
         CoqInterface.error
@@ -458,7 +458,7 @@ let call_cvc4 _ env rt ro ra rf root lsmt =
     SmtMaps.add_btype s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
   ) (SmtBtype.to_list rt);
-  
+
   (* Declare functions and variables *)
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
@@ -530,7 +530,6 @@ let get_model_from_file filename =
   | [SExpr.Atom "sat"; m] -> m
   | _ -> CoqInterface.error "CVC4 returned SAT but no model"
 
-
 let call_cvc4_file _ env rt ro ra rf root =
   let fl = snd root in
   let (filename, outchan) = Filename.open_temp_file "cvc4_coq" ".smt2" in
@@ -538,6 +537,8 @@ let call_cvc4_file _ env rt ro ra rf root =
   close_out outchan;
   let bf = Filename.chop_extension filename in
   let prooffilename = bf ^ ".lfsc" in
+  let errfilename, errchan = Filename.open_temp_file "stderr_cvc4" ".log" in
+  close_out errchan;
 
   (* let cvc4_cmd = *)
   (*   "cvc4 --proof --dump-proof -m --dump-model \ *)
@@ -545,22 +546,25 @@ let call_cvc4_file _ env rt ro ra rf root =
   (*    --no-bv-eq --no-bv-ineq --no-bv-algebraic " *)
   (*   ^ filename ^ " > " ^ prooffilename in *)
   (* CVC4 crashes when asking for both models and proofs *)
-  
+
   let cvc4_cmd =
     "cvc4 --proof --dump-proof \
      --simplification=none --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
-    ^ filename ^ " > " ^ prooffilename in
+    ^ filename ^ " > " ^ prooffilename ^ " 2> " ^ errfilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
   CoqInterface.msg_solver_status cvc4_cmd;
   let t0 = Sys.time () in
   let exit_code = Sys.command cvc4_cmd in
-  
+  SolverStatus.msg_file errfilename;
+  Sys.remove errfilename;
+
   let t1 = Sys.time () in
   CoqInterface.msg_solver_status (Printf.sprintf "CVC4 = %.5f" (t1 -. t0));
 
-  if exit_code <> 0 then
+  if exit_code <> 0 then begin
     CoqInterface.error ("CVC4 crashed: return code "^string_of_int exit_code);
+  end;
 
   (* ignore (Sys.command clean_cmd); *)
 
@@ -575,7 +579,7 @@ let call_cvc4_file _ env rt ro ra rf root =
        SmtCommands.model_string env rt ro ra rf smodel)
 
 
-let cvc4_logic = 
+let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
