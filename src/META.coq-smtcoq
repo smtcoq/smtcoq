@@ -2,7 +2,7 @@ package "smtcoq" (
   directory = "."
   version = "dev+8.17"
   description = "A Coq plugin that checks proof witnesses coming from external SAT and SMT solvers"
-  requires = "coq-core.plugins.ltac num coq-core.plugins.micromega"
+  requires = "rocq-runtime.plugins.ltac num rocq-runtime.plugins.micromega"
   archive(byte) = "smtcoq_plugin.cma"
   archive(native) = "smtcoq_plugin.cmxa"
   plugin(byte) = "smtcoq_plugin.cma"
