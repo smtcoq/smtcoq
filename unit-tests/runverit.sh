@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 count=1
 i=$1
