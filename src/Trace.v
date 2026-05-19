@@ -20,7 +20,9 @@ Local Open Scope uint63_scope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-Set Vm Optimize.
+
+(* NOTE: Set Vm Optimize. *)
+
 Section trace.
 
   (* We are given a certificate, a checker for it (that modifies a
