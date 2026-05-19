@@ -20,7 +20,7 @@ Local Open Scope array_scope.
 
 Coercion is_true : bool >-> Sortclass.
 
-Set Vm Optimize.
+(* NOTE: Set Vm Optimize. *)
 
 Notation var := int (only parsing).
 
