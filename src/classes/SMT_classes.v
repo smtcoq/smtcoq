@@ -91,83 +91,25 @@ Section EqbTypeProp.
 End EqbTypeProp.
 
 
-(** Class of types with a partial order *)
-Class OrdType T := {
-  lt: T -> T -> Prop;
-  lt_trans : forall x y z : T, lt x y -> lt y z -> lt x z;
-  lt_not_eq : forall x y : T, lt x y -> x <> y
-}.
-
-#[export] Hint Resolve lt_not_eq lt_trans : typeclass_ordtype.
-
-
-Global Instance StrictOrder_OrdType T `(OrdType T) :
-  StrictOrder (lt : T -> T -> Prop).
-Proof.
-  split.
-  unfold Irreflexive, Reflexive, complement.
-  intros. apply lt_not_eq in H0; auto.
-  unfold Transitive. intros x y z. apply lt_trans.
-Qed.
-
-(** Augment class of partial order with a compare function to obtain a total
-    order *)
-Class Comparable T {ot:OrdType T} := {
-  compare : forall x y : T, Compare lt eq x y
-}.
-
-
-(* A Comparable type is also an EqbType *)
-Section Comparable2EqbType.
-  Generalizable Variable T.
-  Context `{OTT : OrdType T}.
-  Context `{CT : Comparable T}.
-
-  Definition compare2eqb (x y:T) : bool :=
-    match compare x y with
-    | EQ _ => true
-    | _ => false
-    end.
-
-  Lemma compare2eqb_spec x y : compare2eqb x y = true <-> x = y.
-  Proof.
-    unfold compare2eqb.
-    case_eq (compare x y); simpl; intros e He; split; try discriminate;
-      try (intros ->; elim (lt_not_eq _ _ e (eq_refl _))); auto.
-  Qed.
-
-  Instance Comparable2EqbType : EqbType T := Build_EqbType _ _ compare2eqb_spec.
-End Comparable2EqbType.
-
-
 (** Class of inhabited types *)
 Class Inhabited T := {
   default_value : T
 }.
 
-(** * CompDec: Merging all previous classes *)
+(** * CompDec: EqbType with inhabitant *)
 
 Class CompDec T := {
   ty := T;                      (* This is redundant for performance reasons *)
-  Eqb :: EqbType ty;             (* This is redundant since implied by Comp, but it actually allows us to choose a specific equality function *)
-  Ordered :: OrdType ty;
-  Comp :: @Comparable ty Ordered;
+  Eqb :: EqbType ty;
   Inh :: Inhabited ty
 }.
 
 
 Global Instance eqbtype_of_compdec {t} `{c: CompDec t} : (EqbType t) :=
-  let (_, eqb, _, _, _) := c in eqb.
-
-Global Instance ord_of_compdec {t} `{c: CompDec t} : (OrdType t) :=
-  let (_, _, ord, _, _) := c in ord.
+  let (_, eqb, _) := c in eqb.
 
 Global Instance inh_of_compdec {t} `{c: CompDec t} : (Inhabited t) :=
-  let (_, _, _, _, inh) := c in inh.
-
-Global Instance comp_of_compdec {t} `{c: CompDec t} : @Comparable t (ord_of_compdec (t:=t)).
-  destruct c; trivial.
-Defined.
+  let (_, _, inh) := c in inh.
 
 
 Definition type_compdec {ty:Type} (cd : CompDec ty) := ty.
@@ -198,18 +140,10 @@ Section CompDec_from.
   Variable eqb' : T -> T -> bool.
   Variable eqb'_spec : forall x y, eqb' x y = true <-> x = y.
 
-  Variable lt' : T -> T -> Prop.
-  Hypothesis lt'_trans : forall x y z : T, lt' x y -> lt' y z -> lt' x z.
-  Hypothesis lt'_neq : forall x y : T, lt' x y -> x <> y.
-
-  Variable compare': forall x y : T, Compare lt' eq x y.
-
   Variable d : T.
 
   Program Instance CompDec_from : (CompDec T) := {|
     Eqb := {| eqb := eqb'; eqb_spec := eqb'_spec |};
-    Ordered := {| lt := lt'; lt_trans := lt'_trans |};
-    Comp := {| compare := compare' |};
     Inh := {| default_value := d |}
   |}.
 
