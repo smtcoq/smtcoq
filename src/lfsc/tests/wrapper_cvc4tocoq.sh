@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 set -e
 OUTPUT_FOLDER=/home/burak/Desktop/smtcoq/src/lfsc/tests/results/
 CVC4TOCOQ_HOME=/home/burak/Desktop/smtcoq/src/lfsc/tests/
