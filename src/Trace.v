@@ -362,7 +362,7 @@ Inductive step :=
   | BBShr (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | RowEq (pos:int) (res: _lit)
   | RowNeq (pos:int) (cl: C.t)
-  | Ext (pos:int) (res: _lit)
+  (* | Ext (pos:int) (res: _lit) *)
   (* Offer the possibility to discharge parts of the proof to (manual) Coq proofs.
      This breaks extraction, which is what the extractable version of
      the checker is now in a separate module. *)
@@ -415,7 +415,7 @@ Inductive step :=
       | BBShr pos orig1 orig2 res => S.set_clause s pos (check_bbShr t_atom t_form s orig1 orig2 res)
       | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
       | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
-      | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
+      (* | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res) *)
       | @Hole pos prem_id prem concl _ => S.set_clause s pos (check_hole s prem_id prem concl)
       | @ForallInst pos lemma _ concl  _ => S.set_clause s pos concl
     end.
@@ -432,13 +432,21 @@ Inductive step :=
     set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
     intros rho H1 H2 H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1)
     as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as
-    [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
+    [Ha1 Ha2].
+    intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
     |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
     |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res
     |pos orig1 orig2 res|pos orig1 orig2 res
     |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res
     |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res
-    |pos res |pos prem_id prem concl p|pos lemma plemma concl p]; simpl; try apply S.valid_set_clause; auto with smtcoq_core.
+    |pos prem_id prem concl p|pos lemma plemma concl p]; simpl; try apply S.valid_set_clause; auto with smtcoq_core.
+    (* intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid *)
+    (* |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l *)
+    (* |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res *)
+    (* |pos orig1 orig2 res|pos orig1 orig2 res *)
+    (* |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res *)
+    (* |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res *)
+    (* |pos res |pos prem_id prem concl p|pos lemma plemma concl p]; simpl; try apply S.valid_set_clause; auto with smtcoq_core. *)
     - apply S.valid_set_resolve; auto with smtcoq_core.
     - apply S.valid_set_weaken; auto with smtcoq_core.
     - apply valid_check_flatten; auto with smtcoq_core; intros h1 h2 H.
@@ -478,7 +486,7 @@ Inductive step :=
     - apply valid_check_bbShr; auto with smtcoq_core.
     - apply valid_check_roweq; auto with smtcoq_core.
     - apply valid_check_rowneq; auto with smtcoq_core.
-    - apply valid_check_ext; auto with smtcoq_core.
+    (* - apply valid_check_ext; auto with smtcoq_core. *)
     - apply valid_check_hole; auto with smtcoq_core.
     - apply valid_check_forall_inst with lemma; auto with smtcoq_core.
   Qed.
@@ -581,7 +589,7 @@ Inductive step :=
       | BBShr pos _ _ _
       | RowEq pos _
       | RowNeq pos _
-      | Ext pos _
+      (* | Ext pos _ *)
       | @Hole pos _ _ _ _
       | @ForallInst pos _ _ _ _ => pos
     end.
@@ -681,7 +689,7 @@ Inductive step :=
     | BBShr _ _ _ _ => Name_BBShr
     | RowEq _ _ => Name_RowEq
     | RowNeq _ _ => Name_RowNeq
-    | Ext _ _ => Name_Ext
+    (* | Ext _ _ => Name_Ext *)
     | @Hole _ _ _ _ _ => Name_Hole
     | @ForallInst _ _ _ _ _ => Name_ForallInst
     end.
@@ -874,7 +882,7 @@ Register Euf_Checker.BBShl as SMTCoq.Trace.Euf_Checker.BBShl.
 Register Euf_Checker.BBShr as SMTCoq.Trace.Euf_Checker.BBShr.
 Register Euf_Checker.RowEq as SMTCoq.Trace.Euf_Checker.RowEq.
 Register Euf_Checker.RowNeq as SMTCoq.Trace.Euf_Checker.RowNeq.
-Register Euf_Checker.Ext as SMTCoq.Trace.Euf_Checker.Ext.
+(* Register Euf_Checker.Ext as SMTCoq.Trace.Euf_Checker.Ext. *)
 Register Euf_Checker.Hole as SMTCoq.Trace.Euf_Checker.Hole.
 Register Euf_Checker.ForallInst as SMTCoq.Trace.Euf_Checker.ForallInst.
 
@@ -929,7 +937,7 @@ Module Checker_Ext.
   | BBShr (pos:int) (orig1 orig2:clause_id) (res:_lit)
   | RowEq (pos:int) (res: _lit)
   | RowNeq (pos:int) (cl: C.t)
-  | Ext (pos:int) (res: _lit)
+  (* | Ext (pos:int) (res: _lit) *)
   .
 
   Local Open Scope list_scope.
@@ -975,7 +983,7 @@ Module Checker_Ext.
       | BBShr pos orig1 orig2 res => S.set_clause s pos (check_bbShr t_atom t_form s orig1 orig2 res)
       | RowEq pos res => S.set_clause s pos (check_roweq t_form t_atom res)
       | RowNeq pos cl => S.set_clause s pos (check_rowneq t_form t_atom cl)
-      | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res)
+      (* | Ext pos res => S.set_clause s pos (check_ext t_form t_atom res) *)
     end.
 
   (* Opaque S.set_weaken. *)
@@ -991,13 +999,20 @@ Module Checker_Ext.
     set (empty_bv := (fun (a:Atom.atom) s => BITVECTOR_LIST.zeros s)).
     intros H1 H2 t_i t_func rho H10 s Hs. destruct (Form.check_form_correct (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) _ H1)
     as [[Ht1 Ht2] Ht3]. destruct (Atom.check_atom_correct _ H2) as
-    [Ha1 Ha2]. intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
+    [Ha1 Ha2].
+    intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid
     |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l
     |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res
     |pos orig1 orig2 res|pos orig1 orig2 res
     |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res
-    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res
-    |pos res]; simpl; try apply S.valid_set_clause; auto with smtcoq_core.
+    |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res]; simpl; try apply S.valid_set_clause; auto with smtcoq_core.
+    (* intros [pos res|pos cid c|pos cid lf|pos|pos|pos l|pos l|pos l i|pos cid *)
+    (* |pos cid|pos cid i|pos l fl|pos l fl|pos l1 l2 fl|pos cl c|pos l|pos orig res l *)
+    (* |pos orig res|pos res|pos res|pos orig1 orig2 res|pos orig res|pos orig res *)
+    (* |pos orig1 orig2 res|pos orig1 orig2 res *)
+    (* |pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res|pos orig1 orig2 res *)
+    (* |pos cl |pos orig res |pos orig res |pos orig res | pos orig1 orig2 res | pos orig1 orig2 res |pos res|pos res *)
+    (* |pos res]; simpl; try apply S.valid_set_clause; auto with smtcoq_core. *)
     - apply S.valid_set_resolve; auto with smtcoq_core.
     - apply S.valid_set_weaken; auto with smtcoq_core.
     - apply valid_check_flatten; auto with smtcoq_core; intros h1 h2 H.
@@ -1037,7 +1052,7 @@ Module Checker_Ext.
     - apply valid_check_bbShr; auto with smtcoq_core.
     - apply valid_check_roweq; auto with smtcoq_core.
     - apply valid_check_rowneq; auto with smtcoq_core.
-    - apply valid_check_ext; auto with smtcoq_core.
+    (* - apply valid_check_ext; auto with smtcoq_core. *)
   Qed.
 
   Definition checker s t := _checker_ (step_checker) s t.

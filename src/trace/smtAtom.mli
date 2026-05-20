@@ -52,7 +52,7 @@ type bop =
    | BO_BVshl of int
    | BO_BVshr of int
    | BO_select of btype * btype
-   | BO_diffarray of btype * btype
+   (* | BO_diffarray of btype * btype *)
 
 type top =
    | TO_store of btype * btype
@@ -188,7 +188,7 @@ module Atom :
       val mk_bvshl : reify_tbl -> ?declare:bool -> int -> t -> t -> t
       val mk_bvshr : reify_tbl -> ?declare:bool -> int -> t -> t -> t
       val mk_select : reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t
-      val mk_diffarray : reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t
+      (* val mk_diffarray : reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t *)
       val mk_store :
         reify_tbl -> ?declare:bool -> btype -> btype -> t -> t -> t -> t
 

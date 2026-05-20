@@ -163,8 +163,9 @@ let array_gc = gc array_prefix
 let cfarray = array_gc "farray"
 let cselect = array_gc "select"
 let cstore = array_gc "store"
-let cdiff = array_gc "diff"
-let cequalarray = array_gc "equal"
+(* let cdiff = array_gc "diff" *)
+let cequalarray = array_gc "eqb_farray"
+(* let cequalarray = array_gc "equal" *)
 
 (* SMTCoq terms *)
 let state_prefix = "SMTCoq.State"
@@ -233,7 +234,7 @@ let cBO_BVconcat = terms_gc "Atom.BO_BVconcat"
 let cBO_BVshl = terms_gc "Atom.BO_BVshl"
 let cBO_BVshr = terms_gc "Atom.BO_BVshr"
 let cBO_select = terms_gc "Atom.BO_select"
-let cBO_diffarray = terms_gc "Atom.BO_diffarray"
+(* let cBO_diffarray = terms_gc "Atom.BO_diffarray" *)
 
 let cTO_store = terms_gc "Atom.TO_store"
 

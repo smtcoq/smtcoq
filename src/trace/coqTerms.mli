@@ -126,7 +126,7 @@ val cbv_shr : coqTerm
 val cfarray : coqTerm
 val cselect : coqTerm
 val cstore : coqTerm
-val cdiff : coqTerm
+(* val cdiff : coqTerm *)
 val cequalarray : coqTerm
 
 (* SMTCoq terms *)
@@ -189,7 +189,7 @@ val cBO_BVconcat : coqTerm
 val cBO_BVshl : coqTerm
 val cBO_BVshr : coqTerm
 val cBO_select : coqTerm
-val cBO_diffarray : coqTerm
+(* val cBO_diffarray : coqTerm *)
 
 val cTO_store : coqTerm
 

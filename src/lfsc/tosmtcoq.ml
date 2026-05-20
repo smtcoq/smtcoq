@@ -436,10 +436,10 @@ and uncurry acc t = match app_name t, acc with
     (match Atom.type_of h1 with
      | TFArray (ti,te) -> Form.Atom (Atom.mk_store ra ti te h1 h2 h3)
      | _ -> assert false)
-  | Some (n, [_; _]) , [h1; h2] when n == H.diff ->
-    (match Atom.type_of h1 with
-     | TFArray (ti,te) -> Form.Atom (Atom.mk_diffarray ra ti te h1 h2)
-     | _ -> assert false)
+  (* | Some (n, [_; _]) , [h1; h2] when n == H.diff -> *)
+  (*   (match Atom.type_of h1 with *)
+  (*    | TFArray (ti,te) -> Form.Atom (Atom.mk_diffarray ra ti te h1 h2) *)
+  (*    | _ -> assert false) *)
   | None, _ ->
     (match name t with
      | Some n ->

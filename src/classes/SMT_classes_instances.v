@@ -283,6 +283,8 @@ Section option.
 End option.
 
 
+From Stdlib Require Import ProofIrrelevance. (* TODO: remove *)
+
 Section FArray.
 
   Generalizable Variables key elt.
@@ -292,12 +294,17 @@ Section FArray.
   Instance key_dec : DecType key := EqbToDecType.
   Instance elt_dec : DecType elt := EqbToDecType.
 
+  (* Since EqbType requires a decidable equality that reflects Leibniz
+     equality, we define one for the moment - this is of course weaker
+     than using [equal].
+
+     TODO: Modify EqbType such that it requires a decidable equivalence
+     relation *)
+
   Definition eqb_farray (a1 a2:farray key elt) : bool :=
     let (l1, _, _) := a1 in
     let (l2, _, _) := a2 in
     eqb_list l1 l2.
-
-  From Stdlib Require Import ProofIrrelevance. (* TODO: remove *)
 
   Lemma eqb_farray_spec : forall a1 a2, eqb_farray a1 a2 = true <-> a1 = a2.
   Proof.
@@ -335,3 +342,5 @@ Register Positive_compdec as SMTCoq.classes.SMT_classes_instances.Positive_compd
 Register N_compdec as SMTCoq.classes.SMT_classes_instances.N_compdec.
 Register BV_compdec as SMTCoq.classes.SMT_classes_instances.BV_compdec.
 Register FArray_compdec as SMTCoq.classes.SMT_classes_instances.FArray_compdec.
+
+Register eqb_farray as SMTCoq.array.FArray.eqb_farray.

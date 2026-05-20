@@ -72,7 +72,7 @@ type bop =
    | BO_BVshl of int
    | BO_BVshr of int
    | BO_select of SmtBtype.btype * SmtBtype.btype
-   | BO_diffarray of SmtBtype.btype * SmtBtype.btype
+   (* | BO_diffarray of SmtBtype.btype * SmtBtype.btype *)
 
 
 type top =
@@ -169,7 +169,7 @@ module Op =
     let eq_tbl = HashBtype.create 17
     let select_tbl = HashBtypePair.create 17
     let store_tbl = HashBtypePair.create 17
-    let diffarray_tbl = HashBtypePair.create 17
+    (* let diffarray_tbl = HashBtypePair.create 17 *)
 
     let eq_to_coq t =
       try HashBtype.find eq_tbl t
@@ -192,12 +192,12 @@ module Op =
         HashBtypePair.add store_tbl (ti, te) op;
         op
 
-    let diffarray_to_coq ti te =
-      try HashBtypePair.find diffarray_tbl (ti, te)
-      with Not_found ->
-        let op = mklApp cBO_diffarray [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in
-        HashBtypePair.add diffarray_tbl (ti, te) op;
-        op
+    (* let diffarray_to_coq ti te = *)
+    (*   try HashBtypePair.find diffarray_tbl (ti, te) *)
+    (*   with Not_found -> *)
+    (*     let op = mklApp cBO_diffarray [|SmtBtype.to_coq ti; SmtBtype.to_coq te|] in *)
+    (*     HashBtypePair.add diffarray_tbl (ti, te) op; *)
+    (*     op *)
 
     let b_to_coq = function
       | BO_Zplus -> Lazy.force cBO_Zplus
@@ -219,7 +219,7 @@ module Op =
       | BO_BVshl s -> mklApp cBO_BVshl [|mkN s|]
       | BO_BVshr s -> mklApp cBO_BVshr [|mkN s|]
       | BO_select (ti, te) -> select_to_coq ti te
-      | BO_diffarray (ti, te) -> diffarray_to_coq ti te
+      (* | BO_diffarray (ti, te) -> diffarray_to_coq ti te *)
 
     let b_type_of = function
       | BO_Zplus | BO_Zminus | BO_Zmult -> SmtBtype.TZ
@@ -229,7 +229,7 @@ module Op =
       | BO_BVshl s | BO_BVshr s -> SmtBtype.TBV s
       | BO_BVconcat (s1, s2) -> SmtBtype.TBV (s1 + s2)
       | BO_select (_, te) -> te
-      | BO_diffarray (ti, _) -> ti
+      (* | BO_diffarray (ti, _) -> ti *)
 
     let b_type_args = function
       | BO_Zplus | BO_Zminus | BO_Zmult
@@ -240,7 +240,7 @@ module Op =
         (SmtBtype.TBV s,SmtBtype.TBV s)
       | BO_BVconcat (s1, s2) -> (SmtBtype.TBV s1, SmtBtype.TBV s2)
       | BO_select (ti, te) -> (SmtBtype.TFArray (ti, te), ti)
-      | BO_diffarray (ti, te) -> (SmtBtype.TFArray (ti, te), SmtBtype.TFArray (ti, te))
+      (* | BO_diffarray (ti, te) -> (SmtBtype.TFArray (ti, te), SmtBtype.TFArray (ti, te)) *)
 
 
     (* let interp_ieq t_i t =
@@ -271,12 +271,12 @@ module Op =
           SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
           SmtBtype.inh_interp t_i te|]
 
-    let interp_diff t_i ti te =
-      mklApp cdiff
-        [|SmtBtype.interp t_i ti; SmtBtype.interp t_i te;
-          SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti;
-          SmtBtype.dec_interp t_i te; SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te;
-          SmtBtype.inh_interp t_i ti; SmtBtype.inh_interp t_i te |]
+    (* let interp_diff t_i ti te = *)
+    (*   mklApp cdiff *)
+    (*     [|SmtBtype.interp t_i ti; SmtBtype.interp t_i te; *)
+    (*       SmtBtype.dec_interp t_i ti; SmtBtype.ord_interp t_i ti; SmtBtype.comp_interp t_i ti; *)
+    (*       SmtBtype.dec_interp t_i te; SmtBtype.ord_interp t_i te; SmtBtype.comp_interp t_i te; *)
+    (*       SmtBtype.inh_interp t_i ti; SmtBtype.inh_interp t_i te |] *)
 
 
     let interp_store t_i ti te =
@@ -319,7 +319,7 @@ module Op =
       | BO_BVshl s -> mklApp cbv_shl [|mkN s|]
       | BO_BVshr s -> mklApp cbv_shr [|mkN s|]
       | BO_select (ti, te) -> interp_select t_i ti te
-      | BO_diffarray (ti, te) -> interp_diff t_i ti te
+      (* | BO_diffarray (ti, te) -> interp_diff t_i ti te *)
 
     let t_to_coq = function
       | TO_store (ti, te) -> store_to_coq ti te
@@ -447,7 +447,8 @@ module Op =
         | BO_BVshl n1, BO_BVshl n2 -> n1 == n2
         | BO_BVshr n1, BO_BVshr n2 -> n1 == n2
         | BO_select (ti1, te1), BO_select (ti2, te2)
-        | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) ->
+        (* | BO_diffarray (ti1, te1), BO_diffarray (ti2, te2) *)
+          ->
            HashedBtypePair.equal (ti1, te1) (ti2, te2)
         | _ -> op1 == op2
 
@@ -471,7 +472,7 @@ module Op =
       | BO_BVshl s -> s lxor 17
       | BO_BVshr s -> s lxor 18
       | BO_select (ti, te) -> ((HashedBtypePair.hash (ti, te)) lsl 6) lxor 19
-      | BO_diffarray (ti, te) -> ((HashedBtypePair.hash (ti, te)) lsl 6) lxor 20
+      (* | BO_diffarray (ti, te) -> ((HashedBtypePair.hash (ti, te)) lsl 6) lxor 20 *)
 
     let t_equal op1 op2 =
       match op1,op2 with
@@ -523,7 +524,8 @@ module Op =
       | BO_BVshr _
       | BO_BVconcat _ -> SL.singleton LBitvectors
       | BO_select (ti, te)
-      | BO_diffarray (ti, te) ->
+      (* | BO_diffarray (ti, te) *)
+        ->
         SL.add LArrays (SL.union (SmtBtype.logic ti) (SmtBtype.logic te))
 
 
@@ -787,7 +789,7 @@ module Atom =
             | BO_BVshl _ -> "bvshl"
             | BO_BVshr _ -> "bvlshr"
             | BO_select _ -> "select"
-            | BO_diffarray _ -> "diff" (* should not be used in goals *)
+            (* | BO_diffarray _ -> "diff" (\* should not be used in goals *\) *)
         in
         Format.fprintf fmt "(%s %a %a)" s to_smt h1 to_smt h2
 
@@ -982,7 +984,7 @@ module Atom =
       | CCeqbA                  (* Equality on arrays *)
       | CCeqbU                  (* Equality on uninterpreted types *)
       | CCselect
-      | CCdiff
+      (* | CCdiff *)
       | CCstore
       | CCunknown
       | CCunknown_deps of int
@@ -1022,7 +1024,7 @@ module Atom =
       | CCBVshl
       | CCBVshr -> SL.singleton LBitvectors
 
-      | CCselect | CCdiff | CCstore -> SL.singleton LArrays
+      | CCselect (* | CCdiff *) | CCstore -> SL.singleton LArrays
 
       | CCeqb -> SL.empty
 
@@ -1055,7 +1057,7 @@ module Atom =
       | CCBVextr -> 3
 
       | CCselect -> 5
-      | CCdiff -> 10
+      (* | CCdiff -> 10 *)
       | CCstore -> 8
 
       | _ -> 0
@@ -1076,7 +1078,7 @@ module Atom =
           cbv_ult, CCBVult; cbv_slt, CCBVslt; cbv_concat, CCBVconcat;
           cbv_shl, CCBVshl; cbv_shr, CCBVshr;
           ceqb,CCeqb; ceqbP,CCeqbP; ceqbZ, CCeqbZ; cbv_eq, CCeqbBV; ceqb_of_compdec, CCeqbU;
-          cselect, CCselect; cdiff, CCdiff;
+          cselect, CCselect; (* cdiff, CCdiff; *)
           cstore, CCstore;
           cequalarray, CCeqbA;
         ];
@@ -1150,7 +1152,7 @@ module Atom =
         | CCeqbBV -> mk_bop_bveq args
         | CCeqbU -> mk_bop_ueq args
         | CCselect -> mk_bop_select args
-        | CCdiff -> mk_bop_diff args
+        (* | CCdiff -> mk_bop_diff args *)
         | CCstore -> mk_top_store args
 	| CCunknown -> mk_unknown c args (CoqInterface.retyping_get_type_of env sigma h)
         | CCunknown_deps gobble ->
@@ -1312,12 +1314,12 @@ module Atom =
           mk_bop (BO_select (ti', te')) [a; i]
         | _ -> assert false
 
-      and mk_bop_diff = function
-        | [ti;te;_;_;_;_;_;_;_;_;a;b] ->
-          let ti' = SmtBtype.of_coq rt known_logic ti in
-          let te' = SmtBtype.of_coq rt known_logic te in
-          mk_bop (BO_diffarray (ti', te')) [a; b]
-        | _ -> assert false
+      (* and mk_bop_diff = function *)
+      (*   | [ti;te;_;_;_;_;_;_;_;_;a;b] -> *)
+      (*     let ti' = SmtBtype.of_coq rt known_logic ti in *)
+      (*     let te' = SmtBtype.of_coq rt known_logic te in *)
+      (*     mk_bop (BO_diffarray (ti', te')) [a; b] *)
+      (*   | _ -> assert false *)
 
       and mk_top_store = function
         | [ti;te;_;_;_;_;_;_;a;i;e] ->
@@ -1540,7 +1542,7 @@ module Atom =
     let mk_bvneg reify ?declare:(decl=true) s = mk_unop ~declare:decl (UO_BVneg s) reify
     let mk_bvconst reify bool_list = get reify (Acop (CO_BV bool_list))
     let mk_select reify ?declare:(decl=true) ti te = mk_binop ~declare:decl (BO_select (ti, te)) reify
-    let mk_diffarray reify ?declare:(decl=true) ti te = mk_binop ~declare:decl (BO_diffarray (ti, te)) reify
+    (* let mk_diffarray reify ?declare:(decl=true) ti te = mk_binop ~declare:decl (BO_diffarray (ti, te)) reify *)
     let mk_store reify ?declare:(decl=true) ti te = mk_terop ~declare:decl (TO_store (ti, te)) reify
     let mk_bvextr reify ?declare:(decl=true) ~i ~n ~s = mk_unop ~declare:decl (UO_BVextr (i, n, s)) reify
     let mk_bvzextn reify ?declare:(decl=true) ~s ~n = mk_unop ~declare:decl (UO_BVzextn (s, n)) reify
