@@ -250,4 +250,3 @@ let loc_of e = loc_commands e;;
  *     List.iter (Format.fprintf fmt " %a" print_sortedvar) sv;
  *     Format.fprintf fmt ") %a)" print_term t
  *   | TermExclimationPt (_, t, _) -> print_term fmt t *)
-
