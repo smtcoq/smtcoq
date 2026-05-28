@@ -1,0 +1,5 @@
+(rocq.theory
+ (generate_project_file)
+ (package rocq-smtcoq)
+ (name SMTCoq.checker.structures)
+ (theories Stdlib SMTCoq.utils SMTCoq.core SMTCoq.logics SMTCoq.checker.spl))

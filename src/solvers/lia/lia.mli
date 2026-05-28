@@ -10,12 +10,8 @@
 (**************************************************************************)
 
 
-From Stdlib Require Export Uint63 List.
-From Trakt Require Export Trakt.
+open Trace
 
-From SMTCoq.utils Require Export State.
-From SMTCoq.core Require Export Instances Terms.
-From SMTCoq.checker Require Export Checker.
-From SMTCoq.tactics Require Export Tactics DatabaseTrakt Conversion.
-
-Export Atom Form Sat_Checker Cnf_Checker Euf_Checker.
+val build_lia_certif :
+  SmtAtom.Form.t list ->
+  CoqInterface.Micromega_plugin_Certificate.Mc.zArithProof list option
