@@ -10,12 +10,27 @@
 (**************************************************************************)
 
 
-From Stdlib Require Export Uint63 List.
-From Trakt Require Export Trakt.
+open Trace
 
-From SMTCoq.utils Require Export State.
-From SMTCoq.core Require Export Instances Terms.
-From SMTCoq.checker Require Export Checker.
-From SMTCoq.tactics Require Export Tactics DatabaseTrakt Conversion.
-
-Export Atom Form Sat_Checker Cnf_Checker Euf_Checker.
+val parse_certif :
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id ->
+  CoqInterface.id -> CoqInterface.id -> string -> string -> unit
+val checker_debug : string -> string -> 'a
+val theorem : CoqInterface.id -> string -> string -> unit
+val checker : string -> string -> unit
+val call_cvc4_file :
+  int ->
+  Environ.env ->
+  SmtBtype.reify_tbl ->
+  SmtAtom.Op.reify_tbl ->
+  'a ->
+  'b ->
+  SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t ->
+  int * SmtAtom.Form.t SmtCertif.clause
+val tactic : unit -> CoqInterface.tactic
+val tactic_no_check : unit -> CoqInterface.tactic
+val tactic_abduct : int -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
