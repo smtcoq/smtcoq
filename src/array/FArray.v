@@ -637,7 +637,6 @@ Section FArray.
   Variable elt : Type.
   Variable key_dec : DecType key.
   Variable elt_dec : DecType elt.
-  Variable key_inh : Inhabited key. (* TODO: seems useless *)
   Variable elt_inh : Inhabited elt.
 
   Set Implicit Arguments.
