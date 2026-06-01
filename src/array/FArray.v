@@ -32,17 +32,17 @@ Module Raw.
 
   Variable key : Type.
   Variable elt : Type.
-  Variable key_dec : DecType key.
-  Variable elt_dec : DecType elt.
+  Variable key_dec : EqbType key.
+  Variable elt_dec : EqbType elt.
 
-  Definition eqb_key (x y : key) : bool := if eq_dec x y then true else false.
-  Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
+  Definition eqb_key (x y : key) : bool := eqb x y.
+  Definition eqb_elt (x y : elt) : bool := eqb x y.
 
   Lemma eqb_key_eq x y : eqb_key x y = true <-> x = y.
-  Proof. unfold eqb_key. case (eq_dec x y); split; easy. Qed.
+  Proof. now apply eqb_spec. Qed.
 
   Lemma eqb_elt_eq x y : eqb_elt x y = true <-> x = y.
-  Proof. unfold eqb_elt. case (eq_dec x y); split; easy. Qed.
+  Proof. now apply eqb_spec. Qed.
 
   Hint Immediate eqb_key_eq eqb_elt_eq : smtcoq_array.
 
@@ -55,16 +55,7 @@ Module Raw.
   Hint Unfold eqk eqke : smtcoq_array.
   Hint Extern 2 (eqke ?a ?b) => split : smtcoq_array.
 
-  Global Instance ke_dec : DecType (key * elt).
-  Proof.
-    split; auto.
-    intros; destruct x, y.
-    destruct (eq_dec k k0).
-    destruct (eq_dec e e0).
-    left; rewrite e1, e2; auto.
-    right; unfold not in *. intro; inversion H. exact (n H2).
-    right; unfold not in *. intro; inversion H. exact (n H1).
-  Qed.
+  Global Instance ke_dec : EqbType (key * elt) := prod_eqbtype.
 
   Definition MapsTo (k:key)(e:elt):= InA eqke (k,e).
   Definition In k m := exists e:elt, MapsTo k e m.
@@ -236,7 +227,7 @@ Module Raw.
   Fixpoint mem (k : key) (s : farray) {struct s} : bool :=
     match s with
     | nil => false
-    | (k',_) :: l => if eq_dec k k' then true else mem k l
+    | (k',_) :: l => if eqb_key k k' then true else mem k l
     end.
 
   Lemma mem_1 : forall m (Hm:NoDupA m) x, In x m -> mem x m = true.
@@ -244,17 +235,23 @@ Module Raw.
     intros m Hm x; generalize Hm; clear Hm.
     induction m; simpl; intros NoDup belong1.
     - inversion belong1. inversion H.
-    - destruct a; destruct eq_dec; [reflexivity|]; apply IHm.
+    - destruct a as [k e]. case_eq (eqb_key x k); intro Heq; [reflexivity|]; apply IHm.
       + inversion_clear NoDup; assumption.
-      + inversion_clear belong1; inversion_clear H; [elim n; apply H0|exists x0; auto].
+      + inversion_clear belong1; inversion_clear H.
+        * unfold eqke in H0. simpl in H0. destruct H0 as [H0 _]. subst x.
+          unfold eqb_key in Heq. rewrite eqb_refl in Heq. discriminate.
+        * exists x0; auto.
   Qed.
 
   Lemma mem_2 : forall m (Hm:NoDupA m) x, mem x m = true -> In x m.
   Proof.
     intros m Hm x; generalize Hm; clear Hm; unfold In,MapsTo.
     induction m; intros NoDup hyp; try discriminate; simpl in *.
-    destruct a, eq_dec.
-    + exists e; constructor; split; [assumption|reflexivity].
+    destruct a as [k e]. case_eq (eqb_key x k); intro Heq; rewrite Heq in hyp.
+    + clear hyp.
+      exists e; constructor.
+      unfold eqke. simpl. split; [ |reflexivity].
+      now apply eqb_spec.
     + destruct IHm as [e' He'].
     - inversion_clear NoDup; assumption.
     - assumption.
@@ -273,16 +270,18 @@ Module Raw.
   Fixpoint find (k:key) (s: farray) {struct s} : option elt :=
     match s with
     | nil => None
-    | (k',x)::s' => if eq_dec k k' then Some x else find k s'
+    | (k',x)::s' => if eqb_key k k' then Some x else find k s'
     end.
 
   Lemma find_2 : forall m x e, find x m = Some e -> MapsTo x e m.
   Proof.
     intros m x. unfold MapsTo.
-    induction m; simpl;intros e' eqfind; inversion eqfind; auto.
-    destruct a, eq_dec.
-    + constructor; split; simpl; congruence.
-    + constructor 2; apply IHm; assumption.
+    induction m; simpl;intros e' eqfind; inversion eqfind; auto. clear H0.
+    destruct a as [k e]. case_eq (eqb_key x k); intro Heq; rewrite Heq in eqfind.
+    - constructor. unfold eqke; simpl; split.
+      + now apply eqb_spec.
+      + now inversion eqfind.
+    - constructor 2; apply IHm; assumption.
   Qed.
 
   Lemma find_1 : forall m (Hm:NoDupA m) x e,
@@ -291,10 +290,11 @@ Module Raw.
     intros m; induction m as [|[a e]]; simpl; intros Hdup x e' Hm.
     - inversion Hm.
     - inversion_clear Hdup.
-      inversion_clear Hm; destruct eq_dec.
+      inversion_clear Hm; case_eq (eqb_key x a); intro Heq.
       + destruct H1; simpl in *; congruence.
-      + elim n; apply H1.
-      + elim H. apply InA_eqA with (x,e'); auto using eqk_equiv, InA_eqke_eqk.
+      + unfold eqb_key in Heq; rewrite eqb_spec_false in Heq; elim Heq; apply H1.
+      + unfold eqb_key in Heq. rewrite eqb_spec in Heq.
+        elim H. apply InA_eqA with (x,e'); auto using eqk_equiv, InA_eqke_eqk.
       + apply IHm; auto.
   Qed.
 
@@ -306,10 +306,12 @@ Module Raw.
     induction m; simpl; auto; destruct a; intros.
     inversion_clear Hm.
     rewrite (IHm H1 x x'); auto.
-    destruct (eq_dec x k) as [|Hneq]; destruct (eq_dec x' k) as [|?Hneq'];
-      trivial.
-    - elim Hneq'; apply eq_trans with x; auto.
-    - elim Hneq; apply eq_trans with x'; auto.
+    case_eq (eqb_key x k); intro Hneq; case_eq (eqb_key x' k); intro Hneq';
+      trivial; unfold eqb_key in Hneq, Hneq'.
+    - rewrite eqb_spec_false in Hneq'; rewrite eqb_spec in Hneq;
+        elim Hneq'; apply eq_trans with x; auto.
+    - rewrite eqb_spec_false in Hneq; rewrite eqb_spec in Hneq';
+        elim Hneq; apply eq_trans with x'; auto.
   Qed.
 
   (** * [add] *)
@@ -317,13 +319,13 @@ Module Raw.
   Fixpoint add (k : key) (x : elt) (s : farray) {struct s} : farray :=
     match s with
     | nil => (k,x) :: nil
-    | (k',y) :: l => if eq_dec k k' then (k,x)::l else (k',y)::add k x l
+    | (k',y) :: l => if eqb_key k k' then (k,x)::l else (k',y)::add k x l
     end.
 
   Lemma add_1 : forall m x y e, eq x y -> MapsTo y e (add x e m).
   Proof.
     induction m as [|[a m]]; intros x y e He; simpl in *; auto with smtcoq_array.
-    destruct eq_dec; [now auto with smtcoq_array|].
+    unfold eqb_key. case_eq (eqb x a); intro Heq; [now auto with smtcoq_array|].
     apply InA_cons_tl, IHm, He.
   Qed.
 
@@ -332,7 +334,9 @@ Module Raw.
   Proof.
     induction m as [|[a m]]; intros x y e e' H Hm; simpl in *.
     - inversion_clear Hm.
-    - inversion_clear Hm; destruct eq_dec.
+    - inversion_clear Hm;
+        unfold eqb_key; case_eq (eqb x a); intro Heq;
+        try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq.
       + elim H; apply eq_trans with a; [auto|apply eq_sym; apply H0].
       + apply InA_cons_hd; apply H0.
       + apply InA_cons_tl; assumption.
@@ -346,7 +350,9 @@ Module Raw.
     - exfalso; inversion_clear Hm.
       + elim H; apply eq_sym; apply H0.
       + inversion_clear H0.
-    - simpl in Hm; destruct eq_dec.
+    - simpl in Hm.
+      unfold eqb_key in Hm; case_eq (eqb x a); intro Heq; rewrite Heq in Hm;
+        try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq.
       + apply InA_cons_tl; apply InA_cons in Hm; destruct Hm; [|now auto].
         elim H; apply eq_sym; apply H0.
       + apply InA_cons in Hm; destruct Hm.
@@ -360,7 +366,9 @@ Module Raw.
     induction m as [|[a m]]; intros x y e e' H Hm; simpl in *.
     - inversion_clear Hm; [|now auto].
       compute in H0; elim H; auto.
-    - destruct eq_dec; simpl in *.
+    - unfold eqb_key in Hm; case_eq (eqb x a); intro Heq; rewrite Heq in Hm;
+        try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq;
+        simpl in *.
       + apply InA_cons in Hm; destruct Hm; [elim H; apply eq_sym; apply H0|].
         apply InA_cons_tl; auto.
       + apply InA_cons in Hm; destruct Hm; [apply InA_cons_hd; auto|].
@@ -373,7 +381,10 @@ Module Raw.
     - simpl; constructor; auto; red; inversion 1.
     - intros.
       destruct a as (x',e').
-      simpl; case (eq_dec x x'); inversion_clear Hm; auto.
+      simpl.
+      unfold eqb_key; case_eq (eqb x x'); intro Heq;
+        try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq;
+        inversion_clear Hm; auto.
       + constructor; auto.
         contradict H.
         apply InA_eqA with (x,e); auto using eqk_equiv.
@@ -413,7 +424,7 @@ Module Raw.
   Fixpoint remove (k : key) (s : farray) {struct s} : farray :=
     match s with
     | nil => nil
-    | (k',x) :: l => if eq_dec k k' then l else (k',x) :: remove k l
+    | (k',x) :: l => if eqb_key k k' then l else (k',x) :: remove k l
     end.
 
   Lemma remove_1 : forall m (Hm:NoDupA m) x y, eq x y -> ~ In y (remove x m).
@@ -423,7 +434,8 @@ Module Raw.
     - inversion 1; inversion H1.
 
     - inversion_clear Hm.
-      destruct eq_dec.
+      unfold eqb_key; case_eq (eqb x a); intro n;
+        try rewrite eqb_spec in n; try rewrite eqb_spec_false in n.
       + intros [e' ?]; elim H0.
         apply InA_eqA with (y, e').
         * exact eqk_equiv.
@@ -441,12 +453,16 @@ Module Raw.
   Proof.
     induction m as [|[a m]]; intros Hm x y e H He; simpl in *.
     + inversion_clear He.
-    + apply InA_cons in He; destruct He, eq_dec.
+    + apply InA_cons in He; destruct He;
+        unfold eqb_key; case_eq (eqb x a); intro Heq;
+        try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq.
     - elim H; apply eq_trans with a; [auto|]; apply eq_sym; apply H0.
     - inversion_clear Hm; apply InA_cons_hd; assumption.
     - apply H0.
     - inversion_clear Hm.
-      apply InA_cons; destruct (eq_dec y a).
+      apply InA_cons.
+      case_eq (eqb y a); intro Heq2;
+        try rewrite eqb_spec in Heq2; try rewrite eqb_spec_false in Heq2.
       * elim H1; apply InA_eqA with (y, e); [exact eqk_equiv|assumption|]; apply InA_eqke_eqk; auto.
       * right; apply IHm; auto.
   Qed.
@@ -455,7 +471,8 @@ Module Raw.
       MapsTo y e (remove x m) -> MapsTo y e m.
   Proof.
     induction m as [|[a m]]; intros Hm x y e H; unfold MapsTo; simpl in *; auto.
-    destruct eq_dec.
+    unfold eqb_key in H; case_eq (eqb x a); intro Heq; rewrite Heq in H;
+      try rewrite eb_spec in Heq; try rewrite eqb_spec_false in Heq.
     - apply InA_cons_tl; apply H.
     - inversion_clear Hm; apply InA_cons in H; destruct H; [apply InA_cons_hd; auto|].
       apply InA_cons_tl; apply IHm with x; auto.
@@ -466,7 +483,8 @@ Module Raw.
   Proof.
     induction m as [|[a m]]; intros Hm x y e H; unfold MapsTo; simpl in *.
     - inversion_clear H.
-    - destruct eq_dec.
+    - unfold eqb_key in H; case_eq (eqb x a); intro Heq; rewrite Heq in H;
+      try rewrite eb_spec in Heq; try rewrite eqb_spec_false in Heq.
       + apply InA_cons_tl; auto.
       + apply InA_cons in H; destruct H; [apply InA_cons_hd; auto|].
         inversion_clear Hm; apply InA_cons_tl; apply IHm with x; auto.
@@ -479,7 +497,10 @@ Module Raw.
     - intros.
       inversion_clear Hm.
       destruct a as (x',e').
-      simpl; case (eq_dec x x'); auto.
+      simpl.
+      unfold eqb_key; case_eq (eqb x x'); intro Heq;
+        try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq;
+        auto.
       constructor; auto.
       contradict H; apply remove_3' with x; auto.
   Qed.
@@ -635,8 +656,8 @@ Section FArray.
 
   Variable key : Type.
   Variable elt : Type.
-  Variable key_dec : DecType key.
-  Variable elt_dec : DecType elt.
+  Variable key_dec : EqbType key.
+  Variable elt_dec : EqbType elt.
   Variable elt_inh : Inhabited elt.
 
   Set Implicit Arguments.
@@ -657,10 +678,10 @@ Section FArray.
 
 
   (** Boolean comparison over elements *)
-  Definition cmp (x y:elt) := if eq_dec x y then true else false.
+  Definition cmp (x y:elt) := eqb x y.
 
   Lemma cmp_refl : forall e, cmp e e = true.
-  Proof. intro e. unfold cmp. now case (eq_dec e e). Qed.
+  Proof. apply eqb_refl. Qed.
 
 
   Lemma remove_nodefault : forall l (Hd:NoDefault l) (Hs:NoDupA (@Raw.eqk _ _) l) x ,
@@ -701,7 +722,8 @@ Section FArray.
     - unfold NoDefault; intros k.
       assert (H0: e <> default_value).
       { intro H1. subst e. rewrite cmp_refl in H. discriminate. }
-      destruct (eq_dec k x) as [e0|n].
+      case_eq (eqb k x);
+        [intro e0; rewrite eqb_spec in e0|intro n; rewrite eqb_spec_false in n].
       + symmetry in e0.
         apply (Raw.add_1 key_dec l e) in e0.
         unfold not; intro.
@@ -772,8 +794,7 @@ Section FArray.
     unfold MapsTo. simpl.
     case_eq (cmp e default_value); intro H1; auto.
     - elim H. unfold cmp in H1.
-      case_eq (eq_dec e default_value); auto.
-      intros H2 H3. rewrite H3 in H1. discriminate.
+      now rewrite eqb_spec in H1.
     - apply Raw.add_1; auto.
   Qed.
 
@@ -1007,8 +1028,11 @@ Section FArray.
   Proof.
     induction m as [ |[k v] m IHm]; try reflexivity.
     intros H1. inversion H1 as [ |x l H2 H3 H]; subst; clear H1.
-    intro x. simpl. case (eq_dec x k); try discriminate.
-    intros H4 H5. now rewrite <- (IHm H3 x H5).
+    intro x. simpl.
+    change (Raw.eqb_key key_dec x k) with (eqb x k).
+    case_eq (eqb x k); intro Heq; try discriminate.
+    rewrite eqb_spec_false in Heq.
+    intro H5. now rewrite <- (IHm H3 x H5).
   Qed.
 
 
@@ -1104,8 +1128,8 @@ Section FArray.
   Lemma Equiv_Equivb : forall m m', Equiv m m' <-> Equivb m m'.
   Proof.
     unfold Equiv, Equivb, Raw.Equivb, cmp; intuition; specialize (H1 k e e' H H2).
-    - subst. now case (eq_dec e' e').
-    - now revert H1; case (eq_dec e e'); try discriminate.
+    - subst. apply eqb_refl.
+    - now apply eqb_spec.
   Qed.
 
   (* (** Composition of the last two results: relation between [Equal] *)
@@ -1134,12 +1158,10 @@ Section FArray.
     unfold select, store.
     case_eq (cmp v default_value); intro H; auto.
     - unfold cmp in H.
-      case (eq_dec v default_value) as [->| ]; [clear H|discriminate H].
+      rewrite eqb_spec in H. subst v.
       rewrite add_eq_d; auto.
-    - assert (H0: v <> default_value).
-      { unfold cmp in H.
-        case (eq_dec v default_value) as [->|H1]; [discriminate H|auto]. }
-      rewrite (add_eq_o a (eq_refl _) H0). auto.
+    - unfold cmp in H. rewrite eqb_spec_false in H.
+      rewrite (add_eq_o a (eq_refl _) H). auto.
   Qed.
 
   Lemma read_over_write : forall a i v, select (store a i v) i = v.

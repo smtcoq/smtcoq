@@ -17,41 +17,11 @@ From Stdlib Require Import Bool OrderedType.
     classes). *)
 
 
-(** Boolean equality to decidable equality *)
-Definition eqb_to_eq_dec :
-  forall T (eqb : T -> T -> bool) (eqb_spec : forall x y, eqb x y = true <-> x = y) (x y : T),
-    { x = y } + { x <> y }.
-  intros.
-  case_eq (eqb x y); intro.
-  left. apply eqb_spec; auto.
-  right. red. intro. apply eqb_spec in H0. rewrite H in H0. now contradict H0.
-  Defined.
-
-
 (** Types with a Boolean equality that reflects Leibniz equality *)
 Class EqbType T := {
  eqb : T -> T -> bool;
  eqb_spec : forall x y, eqb x y = true <-> x = y
 }.
-
-
-(** Types with a decidable equality *)
-Class DecType T := {
- eq_dec : forall x y : T, { x = y } + { x <> y }
-}.
-
-
-(** Types equipped with Boolean equality are decidable *)
-Section EqbToDecType.
-  Generalizable Variable T.
-  Context `{ET : EqbType T}.
-
-  Instance EqbToDecType : DecType T.
-  Proof.
-    destruct ET as [eqb0 Heqb0]. split.
-    apply (eqb_to_eq_dec _ eqb0); auto.
-  Defined.
-End EqbToDecType.
 
 
 (** Basic properties on types with Boolean equality *)
@@ -160,3 +130,117 @@ Register te_carrier as SMTCoq.classes.SMT_classes.te_carrier.
 Register te_compdec as SMTCoq.classes.SMT_classes.te_compdec.
 Register eqb_of_compdec as SMTCoq.classes.SMT_classes.eqb_of_compdec.
 Register CompDec as SMTCoq.classes.SMT_classes.CompDec.
+
+
+(* Compatibility of CompDec with standard type constructions *)
+
+Section list.
+
+  Generalizable Variable A.
+  Context `{HA : CompDec A}.
+
+
+  Fixpoint eqb_list (xs ys:list A) : bool :=
+    match xs, ys with
+    | nil, nil => true
+    | x::xs, y::ys => eqb x y && eqb_list xs ys
+    | _, _ => false
+    end.
+
+
+  Lemma eqb_list_spec xs : forall ys, eqb_list xs ys = true <-> xs = ys.
+  Proof.
+    induction xs as [ |x xs IHxs]; intros [ |y ys]; split; simpl; intro H; auto; try discriminate.
+    - rewrite andb_true_iff in H. destruct H as [H1 H2].
+      rewrite eqb_spec in H1; subst.
+      now rewrite (IHxs ys) in H2; subst.
+    - injection H. intros -> ->. rewrite andb_true_iff; split.
+      + now rewrite eqb_spec.
+      + now rewrite IHxs.
+  Qed.
+
+  Global Instance list_eqbtype : EqbType (list A) :=
+    {| eqb := eqb_list;
+       eqb_spec := eqb_list_spec |}.
+
+  Global Instance list_inh : Inhabited (list A) := Build_Inhabited _ nil.
+
+  Global Instance list_compdec : CompDec (list A) := {|
+    Eqb := list_eqbtype;
+    Inh := list_inh
+  |}.
+
+End list.
+
+
+Section prod_EqbType.
+
+  Generalizable Variables A B.
+  Context `{HA : EqbType A} `{HB : EqbType B}.
+
+  Definition eqb_prod (x y:A * B) : bool :=
+    let (xa, xb) := x in
+    let (ya, yb) := y in
+    eqb xa ya && eqb xb yb.
+
+  Lemma eqb_prod_spec : forall x y, eqb_prod x y = true <-> x = y.
+  Proof.
+    intros [xa xb] [ya yb]; simpl; split; rewrite andb_true_iff.
+    - rewrite !eqb_spec. now intros [-> ->].
+    - intro H. rewrite !eqb_spec. now inversion H.
+  Qed.
+
+  Global Instance prod_eqbtype : EqbType (prod A B) :=
+    {| eqb := eqb_prod;
+       eqb_spec := eqb_prod_spec |}.
+
+End prod_EqbType.
+
+
+Section prod.
+
+  Generalizable Variables A B.
+  Context `{HA : CompDec A} `{HB : CompDec B}.
+
+  Global Instance prod_inh : Inhabited (prod A B) :=
+    Build_Inhabited _ (default_value, default_value).
+
+  Global Instance prod_compdec : CompDec (prod A B) := {|
+    Eqb := prod_eqbtype;
+    Inh := prod_inh
+  |}.
+
+End prod.
+
+
+Section option.
+
+  Generalizable Variable A.
+  Context `{HA : CompDec A}.
+
+  Definition eqb_option (x y:option A) : bool :=
+    match x, y with
+    | Some a, Some b => eqb a b
+    | None, None => true
+    | _, _ => false
+    end.
+
+  Lemma eqb_option_spec : forall x y, eqb_option x y = true <-> x = y.
+  Proof.
+    intros [a| ] [b| ]; simpl; split; try discriminate; try reflexivity; rewrite eqb_spec.
+    - now intros ->.
+    - intro H; now inversion H.
+  Qed.
+
+  Global Instance option_eqbtype : EqbType (option A) :=
+    {| eqb := eqb_option;
+       eqb_spec := eqb_option_spec |}.
+
+  Global Instance option_inh : Inhabited (option A) := Build_Inhabited _ None.
+
+  Global Instance option_compdec : CompDec (option A) := {|
+    Eqb := option_eqbtype;
+    Inh := option_inh
+  |}.
+
+End option.

@@ -307,8 +307,8 @@ Module Typ.
       (interp (snd t)) (fst t).
 
 
-    Global Instance dec_interp (t:type) : DecType (interp t) :=
-      (@EqbToDecType _ (@eqbtype_of_compdec (interp t) (interp_compdec t))).
+    Global Instance dec_interp (t:type) : EqbType (interp t) :=
+      @eqbtype_of_compdec (interp t) (interp_compdec t).
 
     Global Instance inh_interp (t:type) : Inhabited (interp t) :=
       @inh_of_compdec (interp t) (interp_compdec t).
@@ -1522,7 +1522,7 @@ Qed.
            let cte := projT2 ite in
            let tti := type_compdec cti in
            let tte := type_compdec cte in
-           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store tti tte (@EqbToDecType _ (@eqbtype_of_compdec tti cti)) (@EqbToDecType _ (@eqbtype_of_compdec tte cte)) (@inh_of_compdec tte cte))
+           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store tti tte (@eqbtype_of_compdec tti cti) (@eqbtype_of_compdec tte cte) (@inh_of_compdec tte cte))
          end.
 
       Fixpoint compute_interp ty acc l :=

@@ -41,8 +41,6 @@ Section Bool.
   Global Instance bool_eqbtype : EqbType bool :=
     {| eqb := Bool.eqb; eqb_spec := eqb_true_iff |}.
 
-  Global Instance bool_dec : DecType bool := EqbToDecType.
-
   Global Instance bool_inh : Inhabited bool := {| default_value := false|}.
 
   Global Instance bool_compdec : CompDec bool := {|
@@ -57,8 +55,6 @@ Section Z.
 
   Global Instance Z_eqbtype : EqbType Z :=
     {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
-
-  Global Instance Z_dec : DecType Z := @EqbToDecType _ Z_eqbtype.
 
   Global Instance Z_inh : Inhabited Z := {| default_value := 0%Z |}.
 
@@ -93,8 +89,6 @@ Section Nat.
   Global Instance Nat_eqbtype : EqbType nat :=
     {| eqb := Nat.eqb; eqb_spec := Nat.eqb_eq |}.
 
-  Global Instance Nat_dec : DecType nat := EqbToDecType.
-
   Global Instance Nat_inh : Inhabited nat := {| default_value := O%nat |}.
 
   Global Instance Nat_compdec : CompDec nat := {|
@@ -110,8 +104,6 @@ Section Positive.
   Global Instance Positive_eqbtype : EqbType positive :=
     {| eqb := Pos.eqb; eqb_spec := Pos.eqb_eq |}.
 
-  Global Instance Positive_dec : DecType positive := EqbToDecType.
-
   Global Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
 
   Global Instance Positive_compdec : CompDec positive := {|
@@ -126,8 +118,6 @@ Section N.
 
   Global Instance N_eqbtype : EqbType N :=
     {| eqb := N.eqb; eqb_spec := N.eqb_eq |}.
-
-  Global Instance N_dec : DecType N := EqbToDecType.
 
   Global Instance N_inh : Inhabited N := {| default_value := 0%N |}.
 
@@ -147,8 +137,6 @@ Section BV.
     {| eqb := @bv_eq n;
        eqb_spec := @bv_eq_reflect n |}.
 
-  Global Instance BV_dec n : DecType (bitvector n) := EqbToDecType.
-
   Global Instance BV_inh n : Inhabited (bitvector n) :=
     {| default_value := zeros n |}.
 
@@ -167,8 +155,6 @@ Section Uint63.
   Global Instance int63_eqbtype : EqbType int :=
     {| eqb := Uint63.eqb; eqb_spec := Uint63.eqb_spec |}.
 
-  Global Instance int63_dec : DecType int := EqbToDecType.
-
   Global Instance int63_inh : Inhabited int := {| default_value := 0 |}.
 
   Global Instance int63_compdec : CompDec int := {|
@@ -179,110 +165,6 @@ Section Uint63.
 End Uint63.
 
 
-Section list.
-
-  Generalizable Variable A.
-  Context `{HA : CompDec A}.
-
-
-  Fixpoint eqb_list (xs ys:list A) : bool :=
-    match xs, ys with
-    | nil, nil => true
-    | x::xs, y::ys => eqb x y && eqb_list xs ys
-    | _, _ => false
-    end.
-
-
-  Lemma eqb_list_spec xs : forall ys, eqb_list xs ys = true <-> xs = ys.
-  Proof.
-    induction xs as [ |x xs IHxs]; intros [ |y ys]; split; simpl; intro H; auto; try discriminate.
-    - rewrite andb_true_iff in H. destruct H as [H1 H2].
-      rewrite eqb_spec in H1; subst.
-      now rewrite (IHxs ys) in H2; subst.
-    - injection H. intros -> ->. rewrite andb_true_iff; split.
-      + now rewrite eqb_spec.
-      + now rewrite IHxs.
-  Qed.
-
-  Global Instance list_eqbtype : EqbType (list A) :=
-    {| eqb := eqb_list;
-       eqb_spec := eqb_list_spec |}.
-
-  Global Instance list_inh : Inhabited (list A) := Build_Inhabited _ nil.
-
-  Global Instance list_compdec : CompDec (list A) := {|
-    Eqb := list_eqbtype;
-    Inh := list_inh
-  |}.
-
-End list.
-
-
-Section prod.
-
-  Generalizable Variables A B.
-  Context `{HA : CompDec A} `{HB : CompDec B}.
-
-  Definition eqb_prod (x y:A * B) : bool :=
-    let (xa, xb) := x in
-    let (ya, yb) := y in
-    eqb xa ya && eqb xb yb.
-
-  Lemma eqb_prod_spec : forall x y, eqb_prod x y = true <-> x = y.
-  Proof.
-    intros [xa xb] [ya yb]; simpl; split; rewrite andb_true_iff.
-    - rewrite !eqb_spec. now intros [-> ->].
-    - intro H. rewrite !eqb_spec. now inversion H.
-  Qed.
-
-  Global Instance prod_eqbtype : EqbType (prod A B) :=
-    {| eqb := eqb_prod;
-       eqb_spec := eqb_prod_spec |}.
-
-  Global Instance prod_inh : Inhabited (prod A B) :=
-    Build_Inhabited _ (default_value, default_value).
-
-  Global Instance prod_compdec : CompDec (prod A B) := {|
-    Eqb := prod_eqbtype;
-    Inh := prod_inh
-  |}.
-
-End prod.
-
-
-Section option.
-
-  Generalizable Variable A.
-  Context `{HA : CompDec A}.
-
-  Definition eqb_option (x y:option A) : bool :=
-    match x, y with
-    | Some a, Some b => eqb a b
-    | None, None => true
-    | _, _ => false
-    end.
-
-  Lemma eqb_option_spec : forall x y, eqb_option x y = true <-> x = y.
-  Proof.
-    intros [a| ] [b| ]; simpl; split; try discriminate; try reflexivity; rewrite eqb_spec.
-    - now intros ->.
-    - intro H; now inversion H.
-  Qed.
-
-  Global Instance option_eqbtype : EqbType (option A) :=
-    {| eqb := eqb_option;
-       eqb_spec := eqb_option_spec |}.
-
-  Global Instance option_inh : Inhabited (option A) := Build_Inhabited _ None.
-
-  Global Instance option_compdec : CompDec (option A) := {|
-    Eqb := option_eqbtype;
-    Inh := option_inh
-  |}.
-
-End option.
-
-
 From Stdlib Require Import ProofIrrelevance. (* TODO: remove *)
 
 Section FArray.
@@ -290,9 +172,6 @@ Section FArray.
   Generalizable Variables key elt.
   Context `{Hk : CompDec key}.
   Context `{He : CompDec elt}.
-
-  Instance key_dec : DecType key := EqbToDecType.
-  Instance elt_dec : DecType elt := EqbToDecType.
 
   (* Since EqbType requires a decidable equality that reflects Leibniz
      equality, we define one for the moment - this is of course weaker
@@ -318,8 +197,6 @@ Section FArray.
   Global Instance FArray_eqbtype : EqbType (farray key elt) :=
     {| eqb := eqb_farray;
        eqb_spec := eqb_farray_spec |}.
-
-  Global Instance FArray_dec : DecType (farray key elt) := EqbToDecType.
 
   Global Instance FArray_inh : Inhabited (farray key elt) :=
     {| default_value := @FArray.empty key elt _ |}.

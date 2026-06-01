@@ -401,8 +401,8 @@ Section certif.
         intros. specialize (H20 Htia2).
         rewrite <- H20.
         apply Typ.i_eqb_spec.
-        apply (read_over_write (elt_dec:=(@EqbToDecType _ (@Eqb _
-                   (projT2 (Typ.interp_compdec_aux t_i _)))))).
+        apply (read_over_write (elt_dec:=(@Eqb _
+                   (projT2 (Typ.interp_compdec_aux t_i _))))).
     Qed.
 
 
