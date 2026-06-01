@@ -382,7 +382,7 @@ Section certif.
         intros.
         specialize (Atom.Bval_inj2 t_i (Typ.TFArray t0 t)
           (@store _ _
-                  (Typ.dec_interp t_i t0)
+                  (Typ.eqb_interp t_i t0)
                _ _ _ (Typ.comp_interp t_i t) _
                v_val2 v_val3 v_val4) v_val0).
         intros. specialize (H18 H6).
@@ -400,8 +400,8 @@ Section certif.
         intros. specialize (H20 Htia2).
         rewrite <- H20.
         apply Typ.i_eqb_spec.
-        apply (read_over_write (elt_dec:=(@EqbToDecType _ (@Eqb _
-                   (projT2 (Typ.interp_compdec_aux t_i _)))))).
+        apply (read_over_write (elt_dec:=(@Eqb _
+                   (projT2 (Typ.interp_compdec_aux t_i _))))).
     Qed.
 
 
@@ -682,7 +682,7 @@ Section certif.
           rewrite H25a, H25b, H10. intros.
           specialize (Atom.Bval_inj2 t_i (Typ.TFArray t1 t2)
             (@store _ _
-                    (Typ.dec_interp t_i t1)
+                    (Typ.eqb_interp t_i t1)
                    _ _ _ (Typ.comp_interp t_i t2) _
                    v_vale1 v_vale2 v_vale3) (v_vald1')).
           intro H25. specialize (H25 Htid1').
@@ -839,7 +839,7 @@ Section certif.
           rewrite H25a, H25b, H10. intros.
           specialize (Atom.Bval_inj2 t_i (Typ.TFArray t1 t2)
             (@store _ _
-                   (Typ.dec_interp t_i t1)
+                   (Typ.eqb_interp t_i t1)
                    _ _ _ (Typ.comp_interp t_i t2) _
                    v_vale1 v_vale2 v_vale3) (v_valc1')).
           intro H25. specialize (H25 Htic1').
@@ -1173,8 +1173,8 @@ Section certif.
     rewrite !Typ.cast_refl. intros.
 
     specialize (Atom.Bval_inj2 t_i t0 (@diff _ _
-       (Typ.dec_interp t_i t0)
-       _ _ (Typ.dec_interp t_i v_typec2') _ (Typ.comp_interp t_i v_typec2') (Typ.inh_interp t_i t0) _
+       (Typ.eqb_interp t_i t0)
+       _ _ (Typ.eqb_interp t_i v_typec2') _ (Typ.comp_interp t_i v_typec2') (Typ.inh_interp t_i t0) _
        v_valf1 v_valf2) (v_vald2')).
     intros. specialize (H28 Htid2').
 
@@ -1222,12 +1222,6 @@ Section certif.
     specialize (Atom.Bval_inj2 t_i v_typed2' v_vald2 (@diff
              _
              _
-             (@EqbToDecType
-                (@type_compdec
-                   (@projT1 Type (fun ty : Type => CompDec ty)
-                      (Typ.interp_compdec_aux t_i v_typed2'))
-                   (@projT2 Type (fun ty : Type => CompDec ty)
-                      (Typ.interp_compdec_aux t_i v_typed2')))
                 (@eqbtype_of_compdec
                    (@type_compdec
                       (@projT1 Type (fun ty : Type => CompDec ty)
@@ -1235,7 +1229,7 @@ Section certif.
                       (@projT2 Type (fun ty : Type => CompDec ty)
                          (Typ.interp_compdec_aux t_i v_typed2')))
                    (@projT2 Type (fun ty : Type => CompDec ty)
-                      (Typ.interp_compdec_aux t_i v_typed2'))))
+                      (Typ.interp_compdec_aux t_i v_typed2')))
              (@ord_of_compdec
                 (@type_compdec
                    (@projT1 Type (fun ty : Type => CompDec ty)
@@ -1252,12 +1246,6 @@ Section certif.
                       (Typ.interp_compdec_aux t_i v_typed2')))
                 (@projT2 Type (fun ty : Type => CompDec ty)
                    (Typ.interp_compdec_aux t_i v_typed2')))
-             (@EqbToDecType
-                (@type_compdec
-                   (@projT1 Type (fun ty : Type => CompDec ty)
-                      (Typ.interp_compdec_aux t_i v_typec1'))
-                   (@projT2 Type (fun ty : Type => CompDec ty)
-                      (Typ.interp_compdec_aux t_i v_typec1')))
                 (@eqbtype_of_compdec
                    (@type_compdec
                       (@projT1 Type (fun ty : Type => CompDec ty)
@@ -1265,7 +1253,7 @@ Section certif.
                       (@projT2 Type (fun ty : Type => CompDec ty)
                          (Typ.interp_compdec_aux t_i v_typec1')))
                    (@projT2 Type (fun ty : Type => CompDec ty)
-                      (Typ.interp_compdec_aux t_i v_typec1'))))
+                      (Typ.interp_compdec_aux t_i v_typec1')))
              (@ord_of_compdec
                 (@type_compdec
                    (@projT1 Type (fun ty : Type => CompDec ty)

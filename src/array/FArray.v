@@ -30,20 +30,20 @@ Module Raw.
 
   Variable key : Type.
   Variable elt : Type.
-  Variable key_dec : DecType key.
+  Variable key_dec : EqbType key.
   Variable key_ord : OrdType key.
   Variable key_comp : Comparable key.
-  Variable elt_dec : DecType elt.
+  Variable elt_dec : EqbType elt.
   Variable elt_ord : OrdType elt.
 
-  Definition eqb_key (x y : key) : bool := if eq_dec x y then true else false.
-  Definition eqb_elt (x y : elt) : bool := if eq_dec x y then true else false.
+  Definition eqb_key (x y : key) : bool := eqb x y.
+  Definition eqb_elt (x y : elt) : bool := eqb x y.
 
   Lemma eqb_key_eq x y : eqb_key x y = true <-> x = y.
-  Proof. unfold eqb_key. case (eq_dec x y); split; easy. Qed.
+  Proof. apply eqb_spec. Qed.
 
   Lemma eqb_elt_eq x y : eqb_elt x y = true <-> x = y.
-  Proof. unfold eqb_elt. case (eq_dec x y); split; easy. Qed.
+  Proof. apply eqb_spec. Qed.
 
   Hint Immediate eqb_key_eq eqb_elt_eq : smtcoq_array.
 
@@ -64,16 +64,7 @@ Module Raw.
   Global Instance lt_elt_strorder : StrictOrder (lt : elt -> elt -> Prop).
   Proof. apply StrictOrder_OrdType. Qed.
 
-  Global Instance ke_dec : DecType (key * elt).
-  Proof.
-    split; auto.
-    intros; destruct x, y.
-    destruct (eq_dec k k0).
-    destruct (eq_dec e e0).
-    left; rewrite e1, e2; auto.
-    right; unfold not in *. intro; inversion H. exact (n H2).
-    right; unfold not in *. intro; inversion H. exact (n H1).
-  Qed.
+  Global Instance ke_dec : EqbType (key * elt) := prod_eqbtype.
 
   Global Instance ke_ord: OrdType (key * elt).
   Proof.
@@ -645,20 +636,21 @@ Module Raw.
     unfold MapsTo in H3.
     apply InA_eqke_eqk in H3.
     unfold In.
-    destruct (eq_dec k' y).
-    exists x0.
-    apply InA_cons_hd.
-    split; simpl; auto with smtcoq_array.
-    inversion H3.
-    unfold eqk in H4. simpl in H4; subst. now contradict n.
-    assert ((exists e : elt, MapsTo y e (remove x l)) -> (exists e : elt, MapsTo y e ((k', x0) :: remove x l))).
-    intros.
-    destruct H6. exists x2.
-    apply InA_cons_tl. auto with smtcoq_array.
-    apply H6.
-    apply IHf; auto with smtcoq_array.
-    apply In_alt.
-    exists x1. auto with smtcoq_array.
+    case_eq (eqb k' y); intro n;
+      try rewrite eqb_spec in n; try rewrite eqb_spec_false in n.
+    - exists x0.
+      apply InA_cons_hd.
+      split; simpl; auto with smtcoq_array.
+    - inversion H3.
+      unfold eqk in H4. simpl in H4; subst. now contradict n.
+      assert ((exists e : elt, MapsTo y e (remove x l)) -> (exists e : elt, MapsTo y e ((k', x0) :: remove x l))).
+      intros.
+      destruct H6. exists x2.
+      apply InA_cons_tl. auto with smtcoq_array.
+      apply H6.
+      apply IHf; auto with smtcoq_array.
+      apply In_alt.
+      exists x1. auto with smtcoq_array.
   Qed.
 
   Lemma remove_4 : forall m (Hm:Sort m) x y,
@@ -826,7 +818,10 @@ Module Raw.
         subst.
         inversion_clear Hm'.
         now elim (Sort_Inf_NotIn H5 H6).
-        apply H1 with k; destruct (eq_dec x' k); auto with smtcoq_array.
+        apply H1 with k;
+          case_eq (eqb x' k); intro Heq;
+          try rewrite eqb_spec in Heq; try rewrite eqb_spec_false in Heq;
+          auto with smtcoq_array.
       + destruct (H0 x').
         assert (In x' ((x,e)::l)).
         apply H3; auto with smtcoq_array.
@@ -921,10 +916,10 @@ Section FArray.
 
   Variable key : Type.
   Variable elt : Type.
-  Variable key_dec : DecType key.
+  Variable key_dec : EqbType key.
   Variable key_ord : OrdType key.
   Variable key_comp : Comparable key.
-  Variable elt_dec : DecType elt.
+  Variable elt_dec : EqbType elt.
   Variable elt_ord : OrdType elt.
   Variable elt_comp : Comparable elt.
   Variable key_inh :  Inhabited key.
@@ -992,7 +987,8 @@ Section FArray.
     - unfold NoDefault; intros k.
       assert (H0: e <> default_value).
       { intro H1. subst e. rewrite cmp_refl in H. discriminate. }
-      destruct (eq_dec k x) as [e0|n].
+      case_eq (eqb k x);
+        [intro e0; rewrite eqb_spec in e0|intro n; rewrite eqb_spec_false in n].
       + symmetry in e0.
         apply (Raw.add_1 key_comp l e) in e0.
         unfold not; intro.
@@ -1433,7 +1429,8 @@ Section FArray.
       + unfold Raw.Equivb.
         split.
         * { intros k.
-            destruct (eq_dec x k) as [e|n].
+            case_eq (eqb x k);
+              [intro e; rewrite eqb_spec in e|intro n; rewrite eqb_spec_false in n].
             - subst.
               split.
               + intro. contradiction.
@@ -1442,7 +1439,8 @@ Section FArray.
             - apply Raw.remove_4; auto.
           }
         * { intros k e e' H0 H1.
-            destruct (eq_dec x k) as [e0|n].
+            case_eq (eqb x k);
+              [intro e0; rewrite eqb_spec in e0|intro n; rewrite eqb_spec_false in n].
             - assert (H2:exists e, InA (Raw.eqk (elt:=elt)) (k, e) (Raw.remove key_comp x m)).
               { exists e'. apply Raw.InA_eqke_eqk; auto. }
               rewrite <- Raw.In_alt in H2; auto.
@@ -1699,14 +1697,14 @@ Section FArray.
       simpl. assert (H2:=H1 xe). inversion H2 as [ |b l H0 H]; subst.
       case_eq (compare i xk); auto.
       - intros e He. subst i. now elim (lt_not_eq _ _ H0).
-      - intros l _. simpl in H0. unfold Raw.ltk in H0. simpl in H0.
+      - intros l _. simpl in H0. unfold Raw.ltk in H0.
         now elim (lt_not_eq _ _ (lt_trans _ _ _ H0 l)).
     Qed.
 
     Lemma HdRelElt (xk:key) (ye:elt) ys : HdRel lt (xk, ye) ys -> forall ye', HdRel lt (xk, ye') ys.
     Proof.
-      induction ys as [ |[yk yee] ys IHys]; auto.
-      simpl. intros H ye'. inversion H as [ |b l H1 H0]; subst.
+      destruct ys as [ |[yk yee] ys]; auto.
+      simpl. intros H ye'. inversion H as [ |b l H1 H0]; subst; clear H.
       now constructor.
     Qed.
 
@@ -1725,11 +1723,12 @@ Section FArray.
                  a <> b -> {i : key | select a i <> select b i}).
       {
         clear a b. intros x y.
-        case_eq (list_eq_dec (@eq_dec _ (Raw.ke_dec key_dec elt_dec)) x y).
-        - intros e He. subst x. intros xS yS xD yD a b. subst a b.
+        case_eq (eqb x y);
+          [intro e; rewrite eqb_spec in e|intro n; rewrite eqb_spec_false in n].
+        - subst x. intros xS yS xD yD a b. subst a b.
           rewrite (proof_irrelevance _ xS yS),  (proof_irrelevance _ xD yD).
           intro H. elim H. reflexivity.
-        - intros n _ xS yS xD yD a b _. subst a b.
+        - intros xS yS xD yD a b _. subst a b.
           revert x y n xS yS xD yD.
           {
             induction x as [ |[xk xe] xs IHxs]; intros [ |[yk ye] ys].
@@ -1747,8 +1746,10 @@ Section FArray.
                 destruct (Hcomp xk) as [e ->]. rewrite Hl.
                 unfold NoDefault in xD. intro H1; subst xe.
                 apply (xD xk). unfold Raw.MapsTo. constructor. apply Raw.eqke_refl.
-              + intros e _. subst xk. case_eq (eq_dec xe ye).
-                * intros e _. subst ye. assert (H1:xs <> ys)
+              + intros e _. subst xk.
+                case_eq (eqb xe ye);
+                [intro e; rewrite eqb_spec in e|intro n; rewrite eqb_spec_false in n].
+                * subst ye. assert (H1:xs <> ys)
                     by (intro H1; rewrite H1 in H; now apply H).
                   assert (xsS : Sorted (Raw.ltk key_ord) xs) by now inversion xS.
                   assert (ysS : Sorted (Raw.ltk key_ord) ys) by now inversion yS.
@@ -1784,7 +1785,7 @@ Section FArray.
                         apply (HdRelElt H4).
                     - intros l Hl. exists i. unfold select, find. simpl. now rewrite Hl.
                   }
-                * intros n Hn. exists yk. unfold select, find. simpl.
+                * exists yk. unfold select, find. simpl.
                   now destruct (Hcomp yk) as [e ->].
               + intros l Hl. exists yk. unfold select, find. simpl.
                 destruct (Hcomp yk) as [e ->].

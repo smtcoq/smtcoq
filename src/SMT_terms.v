@@ -308,8 +308,8 @@ Module Typ.
       (interp (snd t)) (fst t).
 
 
-    Global Instance dec_interp (t:type) : DecType (interp t) :=
-      (@EqbToDecType _ (@eqbtype_of_compdec (interp t) (interp_compdec t))).
+    Global Instance eqb_interp (t:type) : EqbType (interp t) :=
+      (@eqbtype_of_compdec (interp t) (interp_compdec t)).
 
     Global Instance ord_interp (t:type) : OrdType (interp t) :=
       @ord_of_compdec (interp t) (interp_compdec t).
@@ -1513,7 +1513,7 @@ Qed.
            let cte := projT2 ite in
            let tti := type_compdec cti in
            let tte := type_compdec cte in
-           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (@FArray.diff tti tte (@EqbToDecType _ (@eqbtype_of_compdec tti cti)) (@ord_of_compdec tti cti) (@comp_of_compdec tti cti) (@EqbToDecType _ (@eqbtype_of_compdec tte cte)) (@ord_of_compdec tte cte) (@comp_of_compdec tte cte) (@inh_of_compdec tti cti) (@inh_of_compdec tte cte))
+           apply_binop (Typ.TFArray ti te) (Typ.TFArray ti te) ti (@FArray.diff tti tte (@eqbtype_of_compdec tti cti) (@ord_of_compdec tti cti) (@comp_of_compdec tti cti) (@eqbtype_of_compdec tte cte) (@ord_of_compdec tte cte) (@comp_of_compdec tte cte) (@inh_of_compdec tti cti) (@inh_of_compdec tte cte))
          end.
 
       Definition interp_top o :=
@@ -1525,7 +1525,7 @@ Qed.
            let cte := projT2 ite in
            let tti := type_compdec cti in
            let tte := type_compdec cte in
-           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store tti tte (@EqbToDecType _ (@eqbtype_of_compdec tti cti)) (@ord_of_compdec tti cti) (@comp_of_compdec tti cti) (@ord_of_compdec tte cte) (@comp_of_compdec tte cte) (@inh_of_compdec tte cte))
+           apply_terop (Typ.TFArray ti te) ti te (Typ.TFArray ti te) (@FArray.store tti tte (@eqbtype_of_compdec tti cti) (@ord_of_compdec tti cti) (@comp_of_compdec tti cti) (@ord_of_compdec tte cte) (@comp_of_compdec tte cte) (@inh_of_compdec tte cte))
          end.
 
       Fixpoint compute_interp ty acc l :=
@@ -1960,9 +1960,9 @@ Qed.
         rewrite !Typ.cast_refl.
         intros.
         exists ((@FArray.diff (Typ.interp t_i t') (Typ.interp t_i te)
-             (Typ.dec_interp t_i t')
+             (Typ.eqb_interp t_i t')
              (Typ.ord_interp t_i t')
-             (Typ.comp_interp t_i t') (Typ.dec_interp t_i te) (Typ.ord_interp t_i te)
+             (Typ.comp_interp t_i t') (Typ.eqb_interp t_i te) (Typ.ord_interp t_i te)
              (Typ.comp_interp t_i te) (Typ.inh_interp t_i t') (Typ.inh_interp t_i te) x1 x2)); auto.
 
         (* Ternary operatores *)
@@ -1984,7 +1984,7 @@ Qed.
         intros.
         rewrite !Typ.cast_refl.
         intros.
-        exists (@FArray.store (Typ.interp t_i ti') (Typ.interp t_i te') (Typ.dec_interp t_i ti') (Typ.ord_interp t_i ti') (Typ.comp_interp t_i ti') (Typ.ord_interp t_i te') (Typ.comp_interp t_i te') (Typ.inh_interp t_i te') x1 x2 x3); auto.
+        exists (@FArray.store (Typ.interp t_i ti') (Typ.interp t_i te') (Typ.eqb_interp t_i ti') (Typ.ord_interp t_i ti') (Typ.comp_interp t_i ti') (Typ.ord_interp t_i te') (Typ.comp_interp t_i te') (Typ.inh_interp t_i te') x1 x2 x3); auto.
 
         (* N-ary operators *)
         destruct op as [A]; simpl; intros [ | | | | | ]; try discriminate; simpl; intros _; case (compute_interp A nil ha).
@@ -2465,7 +2465,7 @@ Qed.
           simpl; try (exists true; auto); intro k1;
             case (Typ.cast (v_type Typ.type interp_t (a .[ h2])) (Typ.TFArray ti te)) as [k2| ];
             simpl; try (exists true; reflexivity).
-        exists ((@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te) (Typ.dec_interp t_i ti) (Typ.ord_interp t_i ti) (Typ.comp_interp t_i ti) (Typ.dec_interp t_i te) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y))); auto.
+        exists ((@FArray.diff (Typ.interp t_i ti) (Typ.interp t_i te) (Typ.eqb_interp t_i ti) (Typ.ord_interp t_i ti) (Typ.comp_interp t_i ti) (Typ.eqb_interp t_i te) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te) (Typ.inh_interp t_i ti) (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y))); auto.
 
         (* Ternary operators *)
         intros [ti te] h1 h2 h3; simpl; rewrite !andb_true_iff; intros [[H1 H2] H3];
@@ -2479,7 +2479,7 @@ Qed.
             case (Typ.cast (v_type Typ.type interp_t (a .[ h3])) te) as [k3| ];
             simpl; try (exists true; reflexivity).
          exists (@FArray.store (Typ.interp t_i ti) (Typ.interp t_i te)
-             (Typ.dec_interp t_i ti)
+             (Typ.eqb_interp t_i ti)
              (Typ.ord_interp t_i ti)
              (Typ.comp_interp t_i ti) (Typ.ord_interp t_i te) (Typ.comp_interp t_i te)
              (Typ.inh_interp t_i te) (k1 (Typ.interp t_i) x) (k2 (Typ.interp t_i) y)
@@ -2618,7 +2618,7 @@ Register Typ.Tbool as SMTCoq.SMT_terms.Typ.Tbool.
 Register Typ.Tpositive as SMTCoq.SMT_terms.Typ.Tpositive.
 Register Typ.TBV as SMTCoq.SMT_terms.Typ.TBV.
 Register Typ.interp as SMTCoq.SMT_terms.Typ.interp.
-Register Typ.dec_interp as SMTCoq.SMT_terms.Typ.dec_interp.
+Register Typ.eqb_interp as SMTCoq.SMT_terms.Typ.dec_interp.
 Register Typ.ord_interp as SMTCoq.SMT_terms.Typ.ord_interp.
 Register Typ.comp_interp as SMTCoq.SMT_terms.Typ.comp_interp.
 Register Typ.inh_interp as SMTCoq.SMT_terms.Typ.inh_interp.

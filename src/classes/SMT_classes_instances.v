@@ -99,8 +99,6 @@ Section Bool.
   Global Instance bool_eqbtype : EqbType bool :=
     {| eqb := Bool.eqb; eqb_spec := eqb_true_iff |}.
 
-  Global Instance bool_dec : DecType bool := EqbToDecType.
-
   Global Instance bool_inh : Inhabited bool := {| default_value := false|}.
 
   Global Instance bool_compdec : CompDec bool := {|
@@ -137,8 +135,6 @@ Section Z.
 
   Global Instance Z_eqbtype : EqbType Z :=
     {| eqb := Z.eqb; eqb_spec := Z.eqb_eq |}.
-
-  Global Instance Z_dec : DecType Z := @EqbToDecType _ Z_eqbtype.
 
 
   Global Instance Z_inh : Inhabited Z := {| default_value := 0%Z |}.
@@ -266,8 +262,6 @@ Section Nat.
   Global Instance Nat_eqbtype : EqbType nat :=
     {| eqb := Nat.eqb; eqb_spec := Nat.eqb_eq |}.
 
-  Global Instance Nat_dec : DecType nat := EqbToDecType.
-
 
   Global Instance Nat_inh : Inhabited nat := {| default_value := O%nat |}.
 
@@ -300,8 +294,6 @@ Section Positive.
   Global Instance Positive_eqbtype : EqbType positive :=
     {| eqb := Pos.eqb; eqb_spec := Pos.eqb_eq |}.
 
-  Global Instance Positive_dec : DecType positive := EqbToDecType.
-
   Global Instance Positive_inh : Inhabited positive := {| default_value := 1%positive |}.
 
   Global Instance Positive_compdec : CompDec positive := {|
@@ -332,8 +324,6 @@ Section N.
 
   Global Instance N_eqbtype : EqbType N :=
     {| eqb := N.eqb; eqb_spec := N.eqb_eq |}.
-
-  Global Instance N_dec : DecType N := EqbToDecType.
 
   Global Instance N_inh : Inhabited N := {| default_value := 0%N |}.
 
@@ -414,8 +404,6 @@ Section BV.
     {| eqb := @bv_eq n;
        eqb_spec := @bv_eq_reflect n |}.
 
-  Global Instance BV_dec n : DecType (bitvector n) := EqbToDecType.
-
   Global Instance BV_inh n : Inhabited (bitvector n) :=
     {| default_value := zeros n |}.
 
@@ -484,15 +472,6 @@ Section FArray.
     apply FArray.equal_eq.
     intros. subst. apply eq_equal. apply eqfarray_refl.
   Defined.
-
-  Global Instance FArray_dec key elt
-           `{key_ord: OrdType key}
-           `{elt_ord: OrdType elt}
-           `{elt_eqbtype: EqbType elt}
-           `{key_comp: @Comparable key key_ord}
-           `{elt_comp: @Comparable elt elt_ord}
-           `{elt_inh: Inhabited elt}
-    : DecType (farray key elt) := EqbToDecType.
 
   Global Instance FArray_inh key elt
            `{key_ord: OrdType key}
@@ -570,8 +549,6 @@ Section Uint63.
   Global Instance int63_eqbtype : EqbType int :=
     {| eqb := Uint63.eqb; eqb_spec := Uint63.eqb_spec |}.
 
-  Global Instance int63_dec : DecType int := EqbToDecType.
-
 
   Global Instance int63_inh : Inhabited int := {| default_value := 0 |}.
 
@@ -583,215 +560,6 @@ Section Uint63.
   |}.
 
 End Uint63.
-
-
-Section option.
-
-  Generalizable Variable A.
-  Context `{HA : CompDec A}.
-
-
-  Definition option_lt (x y : option A) : Prop :=
-    match x, y with
-    | Some a, Some b => lt a b
-    | Some _, None => True
-    | None, Some _ => False
-    | None, None => False
-    end.
-
-
-  Lemma option_lt_trans : forall (x y z : option A),
-      option_lt x y -> option_lt y z -> option_lt x z.
-  Proof.
-    intros [a| ] [b| ] [c| ]; simpl; auto.
-    - apply lt_trans.
-    - intros _ [].
-  Qed.
-
-
-  Lemma option_lt_not_eq : forall (x y : option A), option_lt x y -> x <> y.
-  Proof.
-    intros [a| ] [b| ]; simpl; auto.
-    - intros H1 H2. inversion H2 as [H3]. revert H3. now apply lt_not_eq.
-    - discriminate.
-  Qed.
-
-
-  Global Instance option_ord : OrdType (option A) :=
-    Build_OrdType _ _ option_lt_trans option_lt_not_eq.
-
-
-  Definition option_compare : forall (x y : option A), Compare option_lt Logic.eq x y.
-  Proof.
-    intros [a| ] [b| ]; simpl.
-    - case_eq (compare a b); intros l H.
-      + now apply LT.
-      + apply EQ. now subst b.
-      + now apply GT.
-    - now apply LT.
-    - now apply GT.
-    - now apply EQ.
-  Defined.
-
-  Global Instance option_comp : Comparable (option A) := Build_Comparable _ _ option_compare.
-
-  Global Instance option_eqbtype : EqbType (option A) := Comparable2EqbType.
-
-
-  Global Instance option_inh : Inhabited (option A) := Build_Inhabited _ None.
-
-
-  Global Instance option_compdec : CompDec (option A) := {|
-    Ordered := option_ord;
-    Comp := option_comp;
-    Inh := option_inh
-  |}.
-
-End option.
-
-
-Section list.
-
-  Generalizable Variable A.
-  Context `{HA : CompDec A}.
-
-
-  Fixpoint list_lt (xs ys : list A) : Prop :=
-    match xs, ys with
-    | nil, nil => False
-    | nil, _::_ => True
-    | _::_, nil => False
-    | x::xs, y::ys => (lt x y) \/ (eqb x y /\ list_lt xs ys)
-    end.
-
-
-  Definition list_compare : forall (x y : list A), Compare list_lt Logic.eq x y.
-  Proof.
-    induction x as [ |x xs IHxs]; intros [ |y ys]; simpl.
-    - now apply EQ.
-    - now apply LT.
-    - now apply GT.
-    - case_eq (compare x y); intros l H.
-      + apply LT. simpl. now left.
-      + case_eq (IHxs ys); intros l1 H1.
-        * apply LT. simpl. right. split; auto. now apply eqb_spec.
-        * apply EQ. now rewrite l, l1.
-        * apply GT. simpl. right. split; auto. now apply eqb_spec.
-      + apply GT. simpl. now left.
-  Defined.
-
-
-  Lemma list_lt_trans : forall (x y z : list A),
-      list_lt x y -> list_lt y z -> list_lt x z.
-  Proof.
-    induction x as [ |x xs IHxs]; intros [ |y ys] [ |z zs]; simpl; auto.
-    - inversion 1.
-    - intros [H1|[H1a H1b]] [H2|[H2a H2b]].
-      + left; eapply lt_trans; eauto.
-      + left. unfold is_true in H2a. rewrite eqb_spec in H2a. now subst z.
-      + left. unfold is_true in H1a. rewrite eqb_spec in H1a. now subst y.
-      + right. split.
-        * unfold is_true in H1a. rewrite eqb_spec in H1a. now subst y.
-        * eapply IHxs; eauto.
-  Qed.
-
-
-  Lemma list_lt_not_eq : forall (x y : list A), list_lt x y -> x <> y.
-  Proof.
-    induction x as [ |x xs IHxs]; intros [ |y ys]; simpl; auto.
-    - discriminate.
-    - intros [H1|[H1 H2]]; intros H; inversion H; subst.
-      + now apply (lt_not_eq _ _ H1).
-      + now apply (IHxs _ H2).
-  Qed.
-
-
-  Global Instance list_ord : OrdType (list A) :=
-    Build_OrdType _ _ list_lt_trans list_lt_not_eq.
-
-
-  Global Instance list_comp : Comparable (list A) := Build_Comparable _ _ list_compare.
-
-  Global Instance list_eqbtype : EqbType (list A) := Comparable2EqbType.
-
-
-  Global Instance list_inh : Inhabited (list A) := Build_Inhabited _ nil.
-
-
-  Global Instance list_compdec : CompDec (list A) := {|
-    Ordered := list_ord;
-    Comp := list_comp;
-    Inh := list_inh
-  |}.
-
-End list.
-
-
-Section prod.
-
-  Generalizable Variables A B.
-  Context `{HA : CompDec A} `{HB : CompDec B}.
-
-
-  Definition prod_lt (x y:A*B) : Prop :=
-    let (a1, b1) := x in
-    let (a2, b2) := y in
-    (lt a1 a2) \/ ((a1 = a2) /\ (lt b1 b2)).
-
-
-  Definition prod_compare : forall (x y:A*B), Compare prod_lt Logic.eq x y.
-  Proof.
-    intros [a1 b1] [a2 b2].
-    case_eq (compare a1 a2); intros l H.
-    - apply LT. simpl. now left.
-    - case_eq (compare b1 b2); intros l1 H1.
-      + apply LT. simpl. now right.
-      + apply EQ. now subst.
-      + apply GT. simpl. now right.
-    - apply GT. simpl. now left.
-  Defined.
-
-
-  Lemma prod_lt_trans : forall (x y z:A*B),
-      prod_lt x y -> prod_lt y z -> prod_lt x z.
-  Proof.
-    intros [a1 b1] [a2 b2] [a3 b3]; simpl.
-    intros [H1|[H1 H4]] [H2|[H2 H3]].
-    - left. eapply lt_trans; eauto.
-    - subst a3. now left.
-    - subst a2. now left.
-    - subst a2 a3. right. split; auto. eapply lt_trans; eauto.
-  Qed.
-
-
-  Lemma prod_lt_not_eq : forall (x y:A*B), prod_lt x y -> x <> y.
-  Proof.
-    intros [a1 b1] [a2 b2]; simpl.
-    intros [H1|[_ H1]] H3; inversion H3 as [[H4 H5]]; clear H3; subst a2 b2;
-      now apply (lt_not_eq _ _ H1).
-  Qed.
-
-
-  Global Instance prod_ord : OrdType (prod A B) :=
-    Build_OrdType _ _ prod_lt_trans prod_lt_not_eq.
-
-
-  Global Instance prod_comp : Comparable (prod A B) := Build_Comparable _ _ prod_compare.
-
-  Global Instance prod_eqbtype : EqbType (prod A B) := Comparable2EqbType.
-
-
-  Global Instance prod_inh : Inhabited (prod A B) :=
-    Build_Inhabited _ (default_value, default_value).
-
-
-  Global Instance prod_compdec : CompDec (prod A B) := {|
-    Ordered := prod_ord;
-    Comp := prod_comp;
-    Inh := prod_inh
-  |}.
-
-End prod.
 
 
 (* Register constants for OCaml access *)
