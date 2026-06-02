@@ -375,8 +375,9 @@ Ltac remove_compdec_hyps_option Hs :=
 
 (* Perform all the preprocessing *)
 
-Ltac preprocess1 Hs :=
-  add_compdecs;
+Ltac preprocess1 addc Hs :=
+  addc;
+  (* add_compdecs; *)
   [ .. |
     remove_compdec_hyps_option Hs;
     let cpds := collect_compdecs in

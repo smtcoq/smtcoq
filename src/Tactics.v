@@ -167,10 +167,10 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
 Ltac zchaff          := trakt bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check.
 
-Ltac verit_tac global veritbool veritboolto to :=
+Ltac verit_tac global veritbool veritboolto to addc :=
   let tac :=
-  ltac2:(h veritbool veritboolto to |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h veritbool veritboolto to local |-
+  ltac2:(h veritbool veritboolto to addc |- intros; unfold is_true in *; get_hyps_cont_ltac1
+  (ltac1:(h veritbool veritboolto to addc local |-
   let Hsglob :=
     match h with
     | Some ?h' => pose_hyps h' (@None unit)
@@ -183,7 +183,7 @@ Ltac verit_tac global veritbool veritboolto to :=
       | None => constr:(Hsglob)
       end
   in
-  preprocess1 Hs;
+  preprocess1 addc Hs;
   [ .. |
     let Hs' := intros_names in
     preprocess2 Hs';
@@ -192,25 +192,33 @@ Ltac verit_tac global veritbool veritboolto to :=
       | None => veritbool Hs'
     end;
     QInst.vauto
-  ]) h veritbool veritboolto to))
+  ]) h veritbool veritboolto to addc))
   in
-  tac global veritbool veritboolto to.
+  tac global veritbool veritboolto to addc.
 
 
 Tactic Notation "verit" constr(global) :=
-  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto (@None unit).
+  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto (@None unit) add_compdecs.
 Tactic Notation "verit"                :=
-  verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto (@None unit).
+  verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto (@None unit) add_compdecs.
 Tactic Notation "verit_no_check" constr(global) :=
-  verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit).
+  verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit) add_compdecs.
 Tactic Notation "verit_no_check"                :=
-  verit_tac (@None unit) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit).
+  verit_tac (@None unit) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit) add_compdecs.
+Tactic Notation "verit_dont_add_compdec" constr(global) :=
+  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto (@None unit) idtac.
+Tactic Notation "verit_dont_add_compdec"                :=
+  verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto (@None unit) idtac.
+Tactic Notation "verit_no_check_dont_add_compdec" constr(global) :=
+  verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit) idtac.
+Tactic Notation "verit_no_check_dont_add_compdec"                :=
+  verit_tac (@None unit) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit) add_compdecs idtac.
 (* Tactic Notation "verit_timeout" constr(global) constr(timeout) := *)
-(*   verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout). *)
+(*   verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout) add_compdecs. *)
 (* Tactic Notation "verit_timeout"                constr(timeout) := *)
-(*   verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout). *)
+(*   verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout) add_compdecs. *)
 (* Tactic Notation "verit_no_check_timeout" constr(global) constr(timeout) := *)
-(*   verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto_timeout (Some timeout). *)
+(*   verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto_timeout (Some timeout) add_compdecs. *)
 
 Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
   let tac :=
@@ -223,7 +231,7 @@ Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
       | None => constr:(Hsglob)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     let Hs' := intros_names in
     preprocess2 Hs';
@@ -241,7 +249,7 @@ Tactic Notation "verit_timeout"           int_or_var(timeout) :=
       | None => constr:(@None unit)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     let Hs' := intros_names in
     preprocess2 Hs';
@@ -260,7 +268,7 @@ Tactic Notation "verit_no_check_timeout" constr(global) int_or_var(timeout) :=
       | None => constr:(Hsglob)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     let Hs' := intros_names in
     preprocess2 Hs';
@@ -278,7 +286,7 @@ Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
       | None => constr:(@None unit)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     let Hs' := intros_names in
     preprocess2 Hs';
@@ -306,7 +314,7 @@ Tactic Notation "cvc4"          :=
       | None => constr:(@None unit)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     prop2boolImp;
     cvc4_bool
@@ -320,7 +328,7 @@ Tactic Notation "cvc4_no_check" :=
       | None => constr:(@None unit)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     prop2boolImp;
     cvc4_bool_no_check
@@ -343,7 +351,7 @@ Tactic Notation "abduce" int_or_var(i) :=
       | None => constr:(@None unit)
       end
   in
-  preprocess1 Hs;
+  preprocess1 add_compdecs Hs;
   [ .. |
     let Hs' := intros_names in
     preprocess2 Hs';
