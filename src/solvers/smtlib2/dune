@@ -1,7 +1,0 @@
-(library
- (name smtlib2)
- (public_name rocq-smtcoq.smtlib2))
-
-(ocamllex smtlib2_lex)
-
-(ocamlyacc smtlib2_parse)

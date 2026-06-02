@@ -1,8 +1,0 @@
-(library
- (name verit)
- (public_name rocq-smtcoq.verit)
- (libraries lia trace))
-
-(ocamllex lexer)
-
-(ocamlyacc parser)

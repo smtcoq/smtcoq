@@ -1,0 +1,4 @@
+(library
+ (name zchaff)
+ (public_name rocq-smtcoq.zchaff)
+ (libraries common))

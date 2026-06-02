@@ -1,4 +1,0 @@
-(library
- (name lia)
- (public_name rocq-smtcoq.lia)
- (libraries rocq-runtime.plugins.micromega trace))
