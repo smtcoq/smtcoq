@@ -1,7 +1,0 @@
-(library
- (name smtcoq)
- (public_name rocq-smtcoq.smtcoq)
- (libraries lfsc rocq-runtime.plugins.ltac trace verit zchaff))
-
-(rocq.pp
- (modules g_smtcoq))

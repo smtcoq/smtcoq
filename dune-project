@@ -26,6 +26,7 @@
  "Vincent Lafeychine <vincent.lafeychine@proton.me>")
 
 (package
+ ; Main project
  (name rocq-smtcoq)
  (synopsis
   "A Rocq plugin that checks proof witnesses coming from external SAT and SMT solvers")
@@ -45,3 +46,12 @@
    (>= 2.5.2))
   (rocq-core
    (>= 9.0.0))))
+
+(package
+ ; 3rd-party library
+ (name alt-ergo))
+
+(package
+ ; Standalone LFSC to SMTCoq translator
+ (name lfsctosmtcoq)
+ (allow_empty))

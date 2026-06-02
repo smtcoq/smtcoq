@@ -1,16 +1,7 @@
-(rocq.theory
- (generate_project_file)
- (package rocq-smtcoq)
- (name SMTCoq)
- (theories
-  Stdlib
-  elpi
-  elpi_elpi
-  Trakt
-  Ltac2
-  SMTCoq.utils
-  SMTCoq.core
-  SMTCoq.checker)
- (plugins rocq-smtcoq.smtcoq)
- (flags
-  (:standard -I ../_build/install/default/lib)))
+(library
+ (name smtcoq)
+ (public_name rocq-smtcoq.smtcoq)
+ (libraries lfsc rocq-runtime.plugins.ltac common verit zchaff))
+
+(rocq.pp
+ (modules g_smtcoq))
