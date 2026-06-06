@@ -34,3 +34,9 @@ val call_cvc4_file :
 val tactic : unit -> CoqInterface.tactic
 val tactic_no_check : unit -> CoqInterface.tactic
 val tactic_abduct : int -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+
+module Ast : module type of Ast
+module Converter : module type of Converter
+module Lexer : module type of Lexer
+module Parser : module type of Parser
+module VeritPrinter : module type of VeritPrinter

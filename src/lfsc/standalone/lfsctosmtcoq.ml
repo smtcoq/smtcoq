@@ -10,10 +10,7 @@
 (**************************************************************************)
 
 
-open Ast
-open Builtin
 open Format
-open VeritPrinter
 
 let _ = Printexc.record_backtrace true
 
@@ -47,14 +44,12 @@ let _ =
 
 
 
-module C = Converter.Make (VeritPrinter)
+module C = Lfsc.Converter.Make (Lfsc.VeritPrinter)
 
 
 (* Hard coded signatures *)
 let signatures =
-  let sigdir =
-    try Sys.getenv "LFSCSIGS"
-    with Not_found -> Sys.getcwd () ^ "/src/solvers/lfsc/signatures" in
+  let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
   ["sat.plf";
    "smt.plf";
    "th_base.plf";
@@ -71,14 +66,14 @@ let process_signatures () =
     List.iter (fun f ->
         let chan = open_in f in
         let lexbuf = Lexing.from_channel chan in
-        LfscParser.ignore_commands LfscLexer.main lexbuf;
+        Lfsc.Parser.ignore_commands Lfsc.Lexer.main lexbuf;
         close_in chan
       ) signatures
   with
-  | Ast.TypingError (t1, t2) ->
+  | Lfsc.Ast.TypingError (t1, t2) ->
     eprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
-      Ast.print_term t1
-      Ast.print_term t2
+      Lfsc.Ast.print_term t1
+      Lfsc.Ast.print_term t2
 
 
 (** Translate to veriT proof format and print pretty LFSC proof with colors *)
@@ -93,23 +88,23 @@ let pretty_to_verit () =
   let buf = Lexing.from_channel chan in
 
   try
-    let proof = LfscParser.proof LfscLexer.main buf in
+    let proof = Lfsc.Parser.proof Lfsc.Lexer.main buf in
 
-    printf "LFSC proof:\n\n%a\n\n@." print_proof proof;
+    printf "LFSC proof:\n\n%a\n\n@." Lfsc.Ast.print_proof proof;
 
     printf "Verit proof:\n@.";
     
     match List.rev proof with
     | Check p :: _ ->
-      flatten_term p;
+      Lfsc.Ast.flatten_term p;
       C.convert_pt p |> ignore
     | _ -> eprintf "No proof@."; exit 1
     
 
-  with Ast.TypingError (t1, t2) ->
+  with Lfsc.Ast.TypingError (t1, t2) ->
     eprintf "@[<hov>Typing error: expected %a, got %a@]@."
-      Ast.print_term t1
-      Ast.print_term t2
+      Lfsc.Ast.print_term t1
+      Lfsc.Ast.print_term t2
 
 
 (** Translate to veriT proof format *)
@@ -126,7 +121,7 @@ let to_verit () =
   eprintf "Type-checking LFSC proof.@.";
   try
 
-    match LfscParser.last_command LfscLexer.main buf with
+    match Lfsc.Parser.last_command Lfsc.Lexer.main buf with
     | Some (Check p) ->
       (* eprintf "Flattening pointer structures...@."; *)
       (* flatten_term p; *)
@@ -135,17 +130,16 @@ let to_verit () =
     | _ -> eprintf "No proof@."; exit 1
 
   with
-  | Ast.TypingError (t1, t2) as e ->
+  | Lfsc.Ast.TypingError (t1, t2) as e ->
     let backtrace = Printexc.get_backtrace () in
     eprintf "Fatal error: %s@." (Printexc.to_string e);
     eprintf "Backtrace:@\n%s@." backtrace;
 
     eprintf "@[<hov>Typing error: expected %a, got %a@]@."
-      Ast.print_term t1
-      Ast.print_term t2
-  | Ast.CVC4Sat ->
+      Lfsc.Ast.print_term t1
+      Lfsc.Ast.print_term t2
+  | Lfsc.Ast.CVC4Sat ->
     eprintf "CVC4 returned SAT@."; exit 1
-
 
 
 let _ = to_verit ()
