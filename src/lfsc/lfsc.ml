@@ -30,9 +30,7 @@ exception No_proof
 
 (* Hard coded signatures *)
 let signatures =
-  let sigdir =
-    try Sys.getenv "LFSCSIGS"
-    with Not_found -> Sys.getcwd () ^ "/src/solvers/lfsc/signatures" in
+  let sigdir = try Sys.getenv "LFSCSIGS" with Not_found -> Sys.getcwd () in
   ["sat.plf";
    "smt.plf";
    "th_base.plf";
@@ -621,3 +619,10 @@ let tactic_gen_abduct i vm_cast lcpl lcepl =
 let tactic () = tactic_gen vm_cast_true
 let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)
 let tactic_abduct i = tactic_gen_abduct i vm_cast_true
+
+module Ast = Ast
+module Builtin = Builtin
+module VeritPrinter = VeritPrinter
+module Converter = Converter
+module Parser = Parser
+module Lexer = Lexer

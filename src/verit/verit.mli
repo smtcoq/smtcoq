@@ -12,7 +12,7 @@
 
 open Common
 
-module Syntax = Syntax
+module Syntax : module type of Syntax
 
 val parse_certif :
   CoqInterface.id ->
