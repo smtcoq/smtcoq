@@ -1,4 +1,4 @@
-;; (set-logic QF_SAT)
+(set-logic QF_SAT)
 
 (declare-fun a () Bool)
 (declare-fun b () Bool)

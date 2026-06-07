@@ -3,8 +3,6 @@
  (public_name rocq-smtcoq.lfsc)
  (libraries common verit))
 
-(copy_files# ./signatures/*.plf)
-
 (ocamllex lexer)
 
 (ocamlyacc parser)
