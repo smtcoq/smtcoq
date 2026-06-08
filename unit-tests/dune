@@ -1,16 +1,11 @@
-(rocq.theory
- (name SMTCoq.tests.standalone)
- (theories Stdlib SMTCoq)
- (plugins rocq-smtcoq.smtcoq)
- (modules generated))
-
 (env
  (_
   (env-vars
    (LFSCSIGS "../../src/lfsc/signatures"))))
 
 (rule
- (target generated.v)
+ (target dune.inc)
+ (mode promote)
  (deps
   generate_dune_rules.sh
   (glob_files *.smt2))
@@ -18,3 +13,5 @@
   (with-stdout-to
    %{target}
    (run ./generate_dune_rules.sh %{deps}))))
+
+(include dune.inc)
