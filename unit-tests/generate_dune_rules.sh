@@ -3,12 +3,12 @@
 set -e
 
 shift 1
-DEPS=$@
+DEPS=$*
 
 MODULES=""
 
 
-function cvc4() {
+function lfsc() {
     FILENAME=$1
 
     [[ "${FILENAME}" == hole4 ]] && return
@@ -48,18 +48,87 @@ EOF
 
     cat <<EOF
 (rule
- (target lfsc_${FILENAME}.v)
+ (target vernac_lfsc_${FILENAME}.v)
  (deps ${FILENAME}.smt2 ${FILENAME}.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd File.\n")))
 
 EOF
 
-    MODULES+=$'\n'"  lfsc_${FILENAME}"
+    MODULES+=$'\n'"  vernac_lfsc_${FILENAME}"
 }
 
+
+function verit() {
+    FILENAME=$1
+
+    [[ "${FILENAME}" == bv1 ]] && return
+    [[ "${FILENAME}" == bv2 ]] && return
+    [[ "${FILENAME}" == ex1 ]] && return
+    [[ "${FILENAME}" == sat10 ]] && return
+
+    cat <<EOF
+(rule
+ (target ${FILENAME}.vtlog)
+ (deps ${FILENAME}.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+EOF
+
+    cat <<EOF
+(rule
+ (target vernac_verit_${FILENAME}.v)
+ (deps ${FILENAME}.smt2 ${FILENAME}.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd File.\n")))
+
+EOF
+
+    MODULES+=$'\n'"  vernac_verit_${FILENAME}"
+}
+
+
+function zchaff() {
+    FILENAME=$1
+
+    cat <<EOF
+(rule
+ (target ${FILENAME}.zlog)
+ (deps run_zchaff.sh ${FILENAME}.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+EOF
+
+    cat <<EOF
+(rule
+ (target vernac_zchaff_${FILENAME}.v)
+ (deps ${FILENAME}.cnf ${FILENAME}.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\nEnd File.\n")))
+
+EOF
+
+    MODULES+=$'\n'"  vernac_zchaff_${FILENAME}"
+}
 
 
 cat <<EOF
@@ -70,9 +139,19 @@ EOF
 
 for FILE in ${DEPS}
 do
-    FILENAME="${FILE%.smt2}"
 
-    cvc4 "${FILENAME}"
+    case "${FILE}" in
+        *.cnf)
+            FILENAME="${FILE%.cnf}"
+            zchaff "${FILENAME}"
+            ;;
+        *.smt2)
+            FILENAME="${FILE%.smt2}"
+            lfsc "${FILENAME}"
+            verit "${FILENAME}"
+            ;;
+    esac
+
 done
 
 cat <<EOF
@@ -80,5 +159,5 @@ cat <<EOF
  (name SMTCoq.tests)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
- (modules ${MODULES}))
+ (modules${MODULES}))
 EOF

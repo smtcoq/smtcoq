@@ -2,6 +2,141 @@
 ; Once this file is modified, track it with git.
 
 (rule
+ (target cmu_bmc_barrel6.zlog)
+ (deps run_zchaff.sh cmu_bmc_barrel6.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_cmu_bmc_barrel6.v)
+ (deps cmu_bmc_barrel6.cnf cmu_bmc_barrel6.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/cmu_bmc_barrel6.cnf\" \"unit-tests/cmu_bmc_barrel6.zlog\".\nEnd File.\n")))
+
+(rule
+ (target hole4.zlog)
+ (deps run_zchaff.sh hole4.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_hole4.v)
+ (deps hole4.cnf hole4.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/hole4.cnf\" \"unit-tests/hole4.zlog\".\nEnd File.\n")))
+
+(rule
+ (target sat1.zlog)
+ (deps run_zchaff.sh sat1.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_sat1.v)
+ (deps sat1.cnf sat1.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat1.cnf\" \"unit-tests/sat1.zlog\".\nEnd File.\n")))
+
+(rule
+ (target sat2.zlog)
+ (deps run_zchaff.sh sat2.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_sat2.v)
+ (deps sat2.cnf sat2.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat2.cnf\" \"unit-tests/sat2.zlog\".\nEnd File.\n")))
+
+(rule
+ (target sat3.zlog)
+ (deps run_zchaff.sh sat3.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_sat3.v)
+ (deps sat3.cnf sat3.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat3.cnf\" \"unit-tests/sat3.zlog\".\nEnd File.\n")))
+
+(rule
+ (target sat5.zlog)
+ (deps run_zchaff.sh sat5.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_sat5.v)
+ (deps sat5.cnf sat5.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat5.cnf\" \"unit-tests/sat5.zlog\".\nEnd File.\n")))
+
+(rule
+ (target sat6.zlog)
+ (deps run_zchaff.sh sat6.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_sat6.v)
+ (deps sat6.cnf sat6.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat6.cnf\" \"unit-tests/sat6.zlog\".\nEnd File.\n")))
+
+(rule
+ (target sat7.zlog)
+ (deps run_zchaff.sh sat7.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_sat7.v)
+ (deps sat7.cnf sat7.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat7.cnf\" \"unit-tests/sat7.zlog\".\nEnd File.\n")))
+
+(rule
+ (target velev_sss_1_0_05.zlog)
+ (deps run_zchaff.sh velev_sss_1_0_05.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+(rule
+ (target vernac_zchaff_velev_sss_1_0_05.v)
+ (deps velev_sss_1_0_05.cnf velev_sss_1_0_05.zlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/velev_sss_1_0_05.cnf\" \"unit-tests/velev_sss_1_0_05.zlog\".\nEnd File.\n")))
+
+(rule
  (target bv1.lfsc)
  (deps bv1.smt2)
  (action
@@ -19,12 +154,12 @@
     %{deps}))))
 
 (rule
- (target lfsc_bv1.v)
+ (target vernac_lfsc_bv1.v)
  (deps bv1.smt2 bv1.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/bv1.smt2\" \"unit-tests/bv1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/bv1.smt2\" \"unit-tests/bv1.lfsc\".\nEnd File.\n")))
 
 (rule
  (target bv2.lfsc)
@@ -44,12 +179,12 @@
     %{deps}))))
 
 (rule
- (target lfsc_bv2.v)
+ (target vernac_lfsc_bv2.v)
  (deps bv2.smt2 bv2.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/bv2.smt2\" \"unit-tests/bv2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/bv2.smt2\" \"unit-tests/bv2.lfsc\".\nEnd File.\n")))
 
 (rule
  (target ex1.lfsc)
@@ -69,12 +204,36 @@
     %{deps}))))
 
 (rule
- (target lfsc_ex1.v)
+ (target vernac_lfsc_ex1.v)
  (deps ex1.smt2 ex1.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/ex1.smt2\" \"unit-tests/ex1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/ex1.smt2\" \"unit-tests/ex1.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target hole4.vtlog)
+ (deps hole4.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_hole4.v)
+ (deps hole4.smt2 hole4.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/hole4.smt2\" \"unit-tests/hole4.vtlog\".\nEnd File.\n")))
 
 (rule
  (target let1.lfsc)
@@ -94,12 +253,36 @@
     %{deps}))))
 
 (rule
- (target lfsc_let1.v)
+ (target vernac_lfsc_let1.v)
  (deps let1.smt2 let1.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target let1.vtlog)
+ (deps let1.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_let1.v)
+ (deps let1.smt2 let1.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.vtlog\".\nEnd File.\n")))
 
 (rule
  (target let2.lfsc)
@@ -119,12 +302,204 @@
     %{deps}))))
 
 (rule
- (target lfsc_let2.v)
+ (target vernac_lfsc_let2.v)
  (deps let2.smt2 let2.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target let2.vtlog)
+ (deps let2.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_let2.v)
+ (deps let2.smt2 let2.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia1.vtlog)
+ (deps lia1.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia1.v)
+ (deps lia1.smt2 lia1.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia1.smt2\" \"unit-tests/lia1.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia2.vtlog)
+ (deps lia2.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia2.v)
+ (deps lia2.smt2 lia2.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia2.smt2\" \"unit-tests/lia2.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia3.vtlog)
+ (deps lia3.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia3.v)
+ (deps lia3.smt2 lia3.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia3.smt2\" \"unit-tests/lia3.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia4.vtlog)
+ (deps lia4.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia4.v)
+ (deps lia4.smt2 lia4.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia4.smt2\" \"unit-tests/lia4.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia5.vtlog)
+ (deps lia5.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia5.v)
+ (deps lia5.smt2 lia5.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia5.smt2\" \"unit-tests/lia5.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia6.vtlog)
+ (deps lia6.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia6.v)
+ (deps lia6.smt2 lia6.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia6.smt2\" \"unit-tests/lia6.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target lia7.vtlog)
+ (deps lia7.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_lia7.v)
+ (deps lia7.smt2 lia7.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia7.smt2\" \"unit-tests/lia7.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat0.lfsc)
@@ -144,12 +519,36 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat0.v)
+ (target vernac_lfsc_sat0.v)
  (deps sat0.smt2 sat0.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat0.vtlog)
+ (deps sat0.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat0.v)
+ (deps sat0.smt2 sat0.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat1.lfsc)
@@ -169,12 +568,132 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat1.v)
+ (target vernac_lfsc_sat1.v)
  (deps sat1.smt2 sat1.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat1.vtlog)
+ (deps sat1.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat1.v)
+ (deps sat1.smt2 sat1.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat11.vtlog)
+ (deps sat11.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat11.v)
+ (deps sat11.smt2 sat11.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat11.smt2\" \"unit-tests/sat11.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat12.vtlog)
+ (deps sat12.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat12.v)
+ (deps sat12.smt2 sat12.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat12.smt2\" \"unit-tests/sat12.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat13.vtlog)
+ (deps sat13.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat13.v)
+ (deps sat13.smt2 sat13.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat13.smt2\" \"unit-tests/sat13.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat14.vtlog)
+ (deps sat14.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat14.v)
+ (deps sat14.smt2 sat14.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat14.smt2\" \"unit-tests/sat14.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat2.lfsc)
@@ -194,12 +713,36 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat2.v)
+ (target vernac_lfsc_sat2.v)
  (deps sat2.smt2 sat2.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat2.vtlog)
+ (deps sat2.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat2.v)
+ (deps sat2.smt2 sat2.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat3.lfsc)
@@ -219,12 +762,36 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat3.v)
+ (target vernac_lfsc_sat3.v)
  (deps sat3.smt2 sat3.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat3.vtlog)
+ (deps sat3.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat3.v)
+ (deps sat3.smt2 sat3.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat4.lfsc)
@@ -244,12 +811,60 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat4.v)
+ (target vernac_lfsc_sat4.v)
  (deps sat4.smt2 sat4.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat4.vtlog)
+ (deps sat4.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat4.v)
+ (deps sat4.smt2 sat4.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat5.vtlog)
+ (deps sat5.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat5.v)
+ (deps sat5.smt2 sat5.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat5.smt2\" \"unit-tests/sat5.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat6.lfsc)
@@ -269,12 +884,60 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat6.v)
+ (target vernac_lfsc_sat6.v)
  (deps sat6.smt2 sat6.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat6.vtlog)
+ (deps sat6.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat6.v)
+ (deps sat6.smt2 sat6.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat7.vtlog)
+ (deps sat7.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat7.v)
+ (deps sat7.smt2 sat7.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat7.smt2\" \"unit-tests/sat7.vtlog\".\nEnd File.\n")))
 
 (rule
  (target sat8.lfsc)
@@ -294,12 +957,84 @@
     %{deps}))))
 
 (rule
- (target lfsc_sat8.v)
+ (target vernac_lfsc_sat8.v)
  (deps sat8.smt2 sat8.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target sat8.vtlog)
+ (deps sat8.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat8.v)
+ (deps sat8.smt2 sat8.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target sat9.vtlog)
+ (deps sat9.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_sat9.v)
+ (deps sat9.smt2 sat9.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat9.smt2\" \"unit-tests/sat9.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target uf1.vtlog)
+ (deps uf1.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf1.v)
+ (deps uf1.smt2 uf1.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf1.smt2\" \"unit-tests/uf1.vtlog\".\nEnd File.\n")))
 
 (rule
  (target uf2.lfsc)
@@ -319,12 +1054,108 @@
     %{deps}))))
 
 (rule
- (target lfsc_uf2.v)
+ (target vernac_lfsc_uf2.v)
  (deps uf2.smt2 uf2.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target uf2.vtlog)
+ (deps uf2.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf2.v)
+ (deps uf2.smt2 uf2.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target uf3.vtlog)
+ (deps uf3.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf3.v)
+ (deps uf3.smt2 uf3.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf3.smt2\" \"unit-tests/uf3.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target uf4.vtlog)
+ (deps uf4.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf4.v)
+ (deps uf4.smt2 uf4.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf4.smt2\" \"unit-tests/uf4.vtlog\".\nEnd File.\n")))
+
+(rule
+ (target uf5.vtlog)
+ (deps uf5.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf5.v)
+ (deps uf5.smt2 uf5.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf5.smt2\" \"unit-tests/uf5.vtlog\".\nEnd File.\n")))
 
 (rule
  (target uf6.lfsc)
@@ -344,12 +1175,36 @@
     %{deps}))))
 
 (rule
- (target lfsc_uf6.v)
+ (target vernac_lfsc_uf6.v)
  (deps uf6.smt2 uf6.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target uf6.vtlog)
+ (deps uf6.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf6.v)
+ (deps uf6.smt2 uf6.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.vtlog\".\nEnd File.\n")))
 
 (rule
  (target uf7.lfsc)
@@ -369,30 +1224,94 @@
     %{deps}))))
 
 (rule
- (target lfsc_uf7.v)
+ (target vernac_lfsc_uf7.v)
  (deps uf7.smt2 uf7.lfsc)
  (action
   (write-file
    %{target}
-   "From Stdlib Require Import Bool List.\nFrom SMTCoq Require Import BVList FArray Tactics.\nSection File.\n  Lfsc_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.lfsc\".\nEnd File.\n")))
+
+(rule
+ (target uf7.vtlog)
+ (deps uf7.smt2)
+ (action
+  (ignore-stdout
+   (run
+    veriT
+    --proof-prune
+    --proof-merge
+    --proof-with-sharing
+    --cnf-definitional
+    --disable-ackermann
+    --input=smtlib2
+    --proof=%{target}
+    %{deps}))))
+
+(rule
+ (target vernac_verit_uf7.v)
+ (deps uf7.smt2 uf7.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\nEnd File.\n")))
 
 (rocq.theory
  (name SMTCoq.tests)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
- (modules 
-  lfsc_bv1
-  lfsc_bv2
-  lfsc_ex1
-  lfsc_let1
-  lfsc_let2
-  lfsc_sat0
-  lfsc_sat1
-  lfsc_sat2
-  lfsc_sat3
-  lfsc_sat4
-  lfsc_sat6
-  lfsc_sat8
-  lfsc_uf2
-  lfsc_uf6
-  lfsc_uf7))
+ (modules
+  vernac_zchaff_cmu_bmc_barrel6
+  vernac_zchaff_hole4
+  vernac_zchaff_sat1
+  vernac_zchaff_sat2
+  vernac_zchaff_sat3
+  vernac_zchaff_sat5
+  vernac_zchaff_sat6
+  vernac_zchaff_sat7
+  vernac_zchaff_velev_sss_1_0_05
+  vernac_lfsc_bv1
+  vernac_lfsc_bv2
+  vernac_lfsc_ex1
+  vernac_verit_hole4
+  vernac_lfsc_let1
+  vernac_verit_let1
+  vernac_lfsc_let2
+  vernac_verit_let2
+  vernac_verit_lia1
+  vernac_verit_lia2
+  vernac_verit_lia3
+  vernac_verit_lia4
+  vernac_verit_lia5
+  vernac_verit_lia6
+  vernac_verit_lia7
+  vernac_lfsc_sat0
+  vernac_verit_sat0
+  vernac_lfsc_sat1
+  vernac_verit_sat1
+  vernac_verit_sat11
+  vernac_verit_sat12
+  vernac_verit_sat13
+  vernac_verit_sat14
+  vernac_lfsc_sat2
+  vernac_verit_sat2
+  vernac_lfsc_sat3
+  vernac_verit_sat3
+  vernac_lfsc_sat4
+  vernac_verit_sat4
+  vernac_verit_sat5
+  vernac_lfsc_sat6
+  vernac_verit_sat6
+  vernac_verit_sat7
+  vernac_lfsc_sat8
+  vernac_verit_sat8
+  vernac_verit_sat9
+  vernac_verit_uf1
+  vernac_lfsc_uf2
+  vernac_verit_uf2
+  vernac_verit_uf3
+  vernac_verit_uf4
+  vernac_verit_uf5
+  vernac_lfsc_uf6
+  vernac_verit_uf6
+  vernac_lfsc_uf7
+  vernac_verit_uf7))
