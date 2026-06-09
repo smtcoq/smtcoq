@@ -8,6 +8,7 @@
  (mode promote)
  (deps
   generate_dune_rules.sh
+  (glob_files *.cnf)
   (glob_files *.smt2))
  (action
   (with-stdout-to
