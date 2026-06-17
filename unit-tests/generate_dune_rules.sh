@@ -6,6 +6,7 @@ shift 1
 DEPS=$*
 
 MODULES=""
+MODULES+=$'\n'"  abduce_tactics"
 MODULES+=$'\n'"  lfsc_tactics"
 MODULES+=$'\n'"  verit_tactics"
 MODULES+=$'\n'"  zchaff_tactics"
@@ -159,6 +160,11 @@ do
 done
 
 cat <<EOF
+(alias
+ (name runtest)
+ (deps
+  (alias_rec all)))
+
 (rocq.theory
  (name SMTCoq.tests)
  (generate_project_file)

@@ -1255,12 +1255,18 @@
    %{target}
    "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
+(alias
+ (name runtest)
+ (deps
+  (alias_rec all)))
+
 (rocq.theory
  (name SMTCoq.tests)
  (generate_project_file)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
  (modules
+  abduce_tactics
   lfsc_tactics
   verit_tactics
   zchaff_tactics
