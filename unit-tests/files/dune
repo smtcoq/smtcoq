@@ -1,0 +1,19 @@
+(alias
+ (name runtest)
+ (deps
+  (alias_rec all)))
+
+(rule
+ (target dune.inc)
+ (mode promote)
+ (deps
+  generate_dune_rules.sh
+  (glob_files *.cnf)
+  (glob_files *.smt2)
+  (glob_files *.vtlog))
+ (action
+  (with-stdout-to
+   %{target}
+   (run ./generate_dune_rules.sh %{deps}))))
+
+(include dune.inc)

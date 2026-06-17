@@ -6,10 +6,6 @@ shift 1
 DEPS=$*
 
 MODULES=""
-MODULES+=$'\n'"  abduce_tactics"
-MODULES+=$'\n'"  lfsc_tactics"
-MODULES+=$'\n'"  verit_tactics"
-MODULES+=$'\n'"  zchaff_tactics"
 
 function lfsc() {
     FILENAME=$1
@@ -39,7 +35,7 @@ function lfsc() {
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd Checker.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/files/${FILENAME}.smt2\" \"unit-tests/files/${FILENAME}.lfsc\".\nEnd Checker.\n")))
 
 EOF
 
@@ -80,7 +76,7 @@ function verit() {
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/files/${FILENAME}.smt2\" \"unit-tests/files/${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/files/${FILENAME}.smt2\" \"unit-tests/files/${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/files/${FILENAME}.smt2\" \"unit-tests/files/${FILENAME}.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 EOF
 
@@ -119,7 +115,7 @@ function zchaff() {
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/files/${FILENAME}.cnf\" \"unit-tests/files/${FILENAME}.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/files/${FILENAME}.cnf\" \"unit-tests/files/${FILENAME}.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/files/${FILENAME}.cnf\" \"unit-tests/files/${FILENAME}.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 EOF
 
@@ -146,11 +142,11 @@ do
 
     case "${FILE}" in
         *.cnf)
-            FILENAME="${FILE%.cnf}"
+            FILENAME="$(basename ${FILE%.cnf})"
             zchaff "${FILENAME}"
             ;;
         *.smt2)
-            FILENAME="${FILE%.smt2}"
+            FILENAME="$(basename ${FILE%.smt2})"
             lfsc "${FILENAME}"
             verit "${FILENAME}"
             ;;
@@ -165,7 +161,7 @@ cat <<EOF
   (alias_rec all)))
 
 (rocq.theory
- (name SMTCoq.tests)
+ (name SMTCoq.tests.generated)
  (generate_project_file)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
