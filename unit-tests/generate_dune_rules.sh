@@ -30,6 +30,19 @@ function lfsc() {
     [[ "${FILENAME}" == uf4 ]] && return
     [[ "${FILENAME}" == uf5 ]] && return
 
+    MODULES+=$'\n'"  lfsc_vernac_${FILENAME}"
+
+    cat <<EOF
+(rule
+ (target lfsc_vernac_${FILENAME}.v)
+ (deps ${FILENAME}.smt2 ${FILENAME}.lfsc)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd Checker.\n")))
+
+EOF
+
     cat <<EOF
 (rule
  (target ${FILENAME}.lfsc)
@@ -49,30 +62,29 @@ function lfsc() {
     %{deps}))))
 
 EOF
-
-    cat <<EOF
-(rule
- (target lfsc_vernac_${FILENAME}.v)
- (deps ${FILENAME}.smt2 ${FILENAME}.lfsc)
- (action
-  (write-file
-   %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd Checker.\n")))
-
-EOF
-
-    MODULES+=$'\n'"  lfsc_vernac_${FILENAME}"
 }
 
 
 function verit() {
     FILENAME=$1
 
-    [[ "${FILENAME}" =~ bv[0-9]* ]] && return
-
-    # TODO
     [[ "${FILENAME}" == ex1 ]] && return
     [[ "${FILENAME}" == sat10 ]] && return
+
+    MODULES+=$'\n'"  verit_vernac_${FILENAME}"
+
+    cat <<EOF
+(rule
+ (target verit_vernac_${FILENAME}.v)
+ (deps ${FILENAME}.smt2 ${FILENAME}.vtlog)
+ (action
+  (write-file
+   %{target}
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+
+EOF
+
+    [[ "${FILENAME}" =~ bv[0-9]* ]] && return
 
     cat <<EOF
 (rule
@@ -92,34 +104,13 @@ function verit() {
     %{deps}))))
 
 EOF
-
-    cat <<EOF
-(rule
- (target verit_vernac_${FILENAME}.v)
- (deps ${FILENAME}.smt2 ${FILENAME}.vtlog)
- (action
-  (write-file
-   %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
-
-EOF
-
-    MODULES+=$'\n'"  verit_vernac_${FILENAME}"
 }
 
 
 function zchaff() {
     FILENAME=$1
 
-    cat <<EOF
-(rule
- (target ${FILENAME}.zlog)
- (deps run_zchaff.sh ${FILENAME}.cnf)
- (action
-  (ignore-stdout
-   (run ./run_zchaff.sh %{deps} %{target}))))
-
-EOF
+    MODULES+=$'\n'"  zchaff_vernac_${FILENAME}"
 
     cat <<EOF
 (rule
@@ -132,7 +123,15 @@ EOF
 
 EOF
 
-    MODULES+=$'\n'"  zchaff_vernac_${FILENAME}"
+    cat <<EOF
+(rule
+ (target ${FILENAME}.zlog)
+ (deps run_zchaff.sh ${FILENAME}.cnf)
+ (action
+  (ignore-stdout
+   (run ./run_zchaff.sh %{deps} %{target}))))
+
+EOF
 }
 
 
