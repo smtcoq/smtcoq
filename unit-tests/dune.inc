@@ -9,12 +9,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_cmu_bmc_barrel6.v)
+ (target zchaff_vernac_cmu_bmc_barrel6.v)
  (deps cmu_bmc_barrel6.cnf cmu_bmc_barrel6.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/cmu_bmc_barrel6.cnf\" \"unit-tests/cmu_bmc_barrel6.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/cmu_bmc_barrel6.cnf\" \"unit-tests/cmu_bmc_barrel6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/cmu_bmc_barrel6.cnf\" \"unit-tests/cmu_bmc_barrel6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/cmu_bmc_barrel6.cnf\" \"unit-tests/cmu_bmc_barrel6.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target hole4.zlog)
@@ -24,12 +24,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_hole4.v)
+ (target zchaff_vernac_hole4.v)
  (deps hole4.cnf hole4.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/hole4.cnf\" \"unit-tests/hole4.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/hole4.cnf\" \"unit-tests/hole4.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/hole4.cnf\" \"unit-tests/hole4.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/hole4.cnf\" \"unit-tests/hole4.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target sat1.zlog)
@@ -39,12 +39,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_sat1.v)
+ (target zchaff_vernac_sat1.v)
  (deps sat1.cnf sat1.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat1.cnf\" \"unit-tests/sat1.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/sat1.cnf\" \"unit-tests/sat1.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/sat1.cnf\" \"unit-tests/sat1.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/sat1.cnf\" \"unit-tests/sat1.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target sat2.zlog)
@@ -54,12 +54,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_sat2.v)
+ (target zchaff_vernac_sat2.v)
  (deps sat2.cnf sat2.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat2.cnf\" \"unit-tests/sat2.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/sat2.cnf\" \"unit-tests/sat2.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/sat2.cnf\" \"unit-tests/sat2.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/sat2.cnf\" \"unit-tests/sat2.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target sat3.zlog)
@@ -69,12 +69,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_sat3.v)
+ (target zchaff_vernac_sat3.v)
  (deps sat3.cnf sat3.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat3.cnf\" \"unit-tests/sat3.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/sat3.cnf\" \"unit-tests/sat3.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/sat3.cnf\" \"unit-tests/sat3.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/sat3.cnf\" \"unit-tests/sat3.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target sat5.zlog)
@@ -84,12 +84,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_sat5.v)
+ (target zchaff_vernac_sat5.v)
  (deps sat5.cnf sat5.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat5.cnf\" \"unit-tests/sat5.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/sat5.cnf\" \"unit-tests/sat5.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/sat5.cnf\" \"unit-tests/sat5.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/sat5.cnf\" \"unit-tests/sat5.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target sat6.zlog)
@@ -99,12 +99,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_sat6.v)
+ (target zchaff_vernac_sat6.v)
  (deps sat6.cnf sat6.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat6.cnf\" \"unit-tests/sat6.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/sat6.cnf\" \"unit-tests/sat6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/sat6.cnf\" \"unit-tests/sat6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/sat6.cnf\" \"unit-tests/sat6.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target sat7.zlog)
@@ -114,12 +114,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_sat7.v)
+ (target zchaff_vernac_sat7.v)
  (deps sat7.cnf sat7.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/sat7.cnf\" \"unit-tests/sat7.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/sat7.cnf\" \"unit-tests/sat7.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/sat7.cnf\" \"unit-tests/sat7.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/sat7.cnf\" \"unit-tests/sat7.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target velev_sss_1_0_05.zlog)
@@ -129,12 +129,12 @@
    (run ./run_zchaff.sh %{deps} %{target}))))
 
 (rule
- (target vernac_zchaff_velev_sss_1_0_05.v)
+ (target zchaff_vernac_velev_sss_1_0_05.v)
  (deps velev_sss_1_0_05.cnf velev_sss_1_0_05.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/velev_sss_1_0_05.cnf\" \"unit-tests/velev_sss_1_0_05.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/velev_sss_1_0_05.cnf\" \"unit-tests/velev_sss_1_0_05.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/velev_sss_1_0_05.cnf\" \"unit-tests/velev_sss_1_0_05.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/velev_sss_1_0_05.cnf\" \"unit-tests/velev_sss_1_0_05.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 (rule
  (target bv1.lfsc)
@@ -154,12 +154,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_bv1.v)
+ (target lfsc_vernac_bv1.v)
  (deps bv1.smt2 bv1.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/bv1.smt2\" \"unit-tests/bv1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/bv1.smt2\" \"unit-tests/bv1.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target bv2.lfsc)
@@ -179,12 +179,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_bv2.v)
+ (target lfsc_vernac_bv2.v)
  (deps bv2.smt2 bv2.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/bv2.smt2\" \"unit-tests/bv2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/bv2.smt2\" \"unit-tests/bv2.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target ex1.lfsc)
@@ -204,12 +204,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_ex1.v)
+ (target lfsc_vernac_ex1.v)
  (deps ex1.smt2 ex1.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/ex1.smt2\" \"unit-tests/ex1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/ex1.smt2\" \"unit-tests/ex1.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target hole4.vtlog)
@@ -228,12 +228,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_hole4.v)
+ (target verit_vernac_hole4.v)
  (deps hole4.smt2 hole4.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/hole4.smt2\" \"unit-tests/hole4.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/hole4.smt2\" \"unit-tests/hole4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/hole4.smt2\" \"unit-tests/hole4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/hole4.smt2\" \"unit-tests/hole4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target let1.lfsc)
@@ -253,12 +253,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_let1.v)
+ (target lfsc_vernac_let1.v)
  (deps let1.smt2 let1.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target let1.vtlog)
@@ -277,12 +277,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_let1.v)
+ (target verit_vernac_let1.v)
  (deps let1.smt2 let1.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/let1.smt2\" \"unit-tests/let1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/let1.smt2\" \"unit-tests/let1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/let1.smt2\" \"unit-tests/let1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target let2.lfsc)
@@ -302,12 +302,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_let2.v)
+ (target lfsc_vernac_let2.v)
  (deps let2.smt2 let2.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target let2.vtlog)
@@ -326,12 +326,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_let2.v)
+ (target verit_vernac_let2.v)
  (deps let2.smt2 let2.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/let2.smt2\" \"unit-tests/let2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/let2.smt2\" \"unit-tests/let2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/let2.smt2\" \"unit-tests/let2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia1.vtlog)
@@ -350,12 +350,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia1.v)
+ (target verit_vernac_lia1.v)
  (deps lia1.smt2 lia1.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia1.smt2\" \"unit-tests/lia1.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia1.smt2\" \"unit-tests/lia1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia1.smt2\" \"unit-tests/lia1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia1.smt2\" \"unit-tests/lia1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia2.vtlog)
@@ -374,12 +374,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia2.v)
+ (target verit_vernac_lia2.v)
  (deps lia2.smt2 lia2.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia2.smt2\" \"unit-tests/lia2.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia2.smt2\" \"unit-tests/lia2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia2.smt2\" \"unit-tests/lia2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia2.smt2\" \"unit-tests/lia2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia3.vtlog)
@@ -398,12 +398,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia3.v)
+ (target verit_vernac_lia3.v)
  (deps lia3.smt2 lia3.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia3.smt2\" \"unit-tests/lia3.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia3.smt2\" \"unit-tests/lia3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia3.smt2\" \"unit-tests/lia3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia3.smt2\" \"unit-tests/lia3.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia4.vtlog)
@@ -422,12 +422,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia4.v)
+ (target verit_vernac_lia4.v)
  (deps lia4.smt2 lia4.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia4.smt2\" \"unit-tests/lia4.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia4.smt2\" \"unit-tests/lia4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia4.smt2\" \"unit-tests/lia4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia4.smt2\" \"unit-tests/lia4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia5.vtlog)
@@ -446,12 +446,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia5.v)
+ (target verit_vernac_lia5.v)
  (deps lia5.smt2 lia5.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia5.smt2\" \"unit-tests/lia5.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia5.smt2\" \"unit-tests/lia5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia5.smt2\" \"unit-tests/lia5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia5.smt2\" \"unit-tests/lia5.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia6.vtlog)
@@ -470,12 +470,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia6.v)
+ (target verit_vernac_lia6.v)
  (deps lia6.smt2 lia6.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia6.smt2\" \"unit-tests/lia6.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia6.smt2\" \"unit-tests/lia6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia6.smt2\" \"unit-tests/lia6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia6.smt2\" \"unit-tests/lia6.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target lia7.vtlog)
@@ -494,12 +494,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_lia7.v)
+ (target verit_vernac_lia7.v)
  (deps lia7.smt2 lia7.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia7.smt2\" \"unit-tests/lia7.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/lia7.smt2\" \"unit-tests/lia7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/lia7.smt2\" \"unit-tests/lia7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/lia7.smt2\" \"unit-tests/lia7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat0.lfsc)
@@ -519,12 +519,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat0.v)
+ (target lfsc_vernac_sat0.v)
  (deps sat0.smt2 sat0.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat0.vtlog)
@@ -543,12 +543,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat0.v)
+ (target verit_vernac_sat0.v)
  (deps sat0.smt2 sat0.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat0.smt2\" \"unit-tests/sat0.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat0.smt2\" \"unit-tests/sat0.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat0.smt2\" \"unit-tests/sat0.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat1.lfsc)
@@ -568,12 +568,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat1.v)
+ (target lfsc_vernac_sat1.v)
  (deps sat1.smt2 sat1.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat1.vtlog)
@@ -592,12 +592,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat1.v)
+ (target verit_vernac_sat1.v)
  (deps sat1.smt2 sat1.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat1.smt2\" \"unit-tests/sat1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat1.smt2\" \"unit-tests/sat1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat1.smt2\" \"unit-tests/sat1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat11.vtlog)
@@ -616,12 +616,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat11.v)
+ (target verit_vernac_sat11.v)
  (deps sat11.smt2 sat11.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat11.smt2\" \"unit-tests/sat11.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat11.smt2\" \"unit-tests/sat11.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat11.smt2\" \"unit-tests/sat11.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat11.smt2\" \"unit-tests/sat11.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat12.vtlog)
@@ -640,12 +640,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat12.v)
+ (target verit_vernac_sat12.v)
  (deps sat12.smt2 sat12.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat12.smt2\" \"unit-tests/sat12.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat12.smt2\" \"unit-tests/sat12.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat12.smt2\" \"unit-tests/sat12.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat12.smt2\" \"unit-tests/sat12.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat13.vtlog)
@@ -664,12 +664,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat13.v)
+ (target verit_vernac_sat13.v)
  (deps sat13.smt2 sat13.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat13.smt2\" \"unit-tests/sat13.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat13.smt2\" \"unit-tests/sat13.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat13.smt2\" \"unit-tests/sat13.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat13.smt2\" \"unit-tests/sat13.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat14.vtlog)
@@ -688,12 +688,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat14.v)
+ (target verit_vernac_sat14.v)
  (deps sat14.smt2 sat14.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat14.smt2\" \"unit-tests/sat14.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat14.smt2\" \"unit-tests/sat14.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat14.smt2\" \"unit-tests/sat14.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat14.smt2\" \"unit-tests/sat14.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat2.lfsc)
@@ -713,12 +713,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat2.v)
+ (target lfsc_vernac_sat2.v)
  (deps sat2.smt2 sat2.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat2.vtlog)
@@ -737,12 +737,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat2.v)
+ (target verit_vernac_sat2.v)
  (deps sat2.smt2 sat2.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat2.smt2\" \"unit-tests/sat2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat2.smt2\" \"unit-tests/sat2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat2.smt2\" \"unit-tests/sat2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat3.lfsc)
@@ -762,12 +762,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat3.v)
+ (target lfsc_vernac_sat3.v)
  (deps sat3.smt2 sat3.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat3.vtlog)
@@ -786,12 +786,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat3.v)
+ (target verit_vernac_sat3.v)
  (deps sat3.smt2 sat3.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat3.smt2\" \"unit-tests/sat3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat3.smt2\" \"unit-tests/sat3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat3.smt2\" \"unit-tests/sat3.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat4.lfsc)
@@ -811,12 +811,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat4.v)
+ (target lfsc_vernac_sat4.v)
  (deps sat4.smt2 sat4.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat4.vtlog)
@@ -835,12 +835,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat4.v)
+ (target verit_vernac_sat4.v)
  (deps sat4.smt2 sat4.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat4.smt2\" \"unit-tests/sat4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat4.smt2\" \"unit-tests/sat4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat4.smt2\" \"unit-tests/sat4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat5.vtlog)
@@ -859,12 +859,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat5.v)
+ (target verit_vernac_sat5.v)
  (deps sat5.smt2 sat5.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat5.smt2\" \"unit-tests/sat5.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat5.smt2\" \"unit-tests/sat5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat5.smt2\" \"unit-tests/sat5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat5.smt2\" \"unit-tests/sat5.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat6.lfsc)
@@ -884,12 +884,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat6.v)
+ (target lfsc_vernac_sat6.v)
  (deps sat6.smt2 sat6.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat6.vtlog)
@@ -908,12 +908,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat6.v)
+ (target verit_vernac_sat6.v)
  (deps sat6.smt2 sat6.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat6.smt2\" \"unit-tests/sat6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat6.smt2\" \"unit-tests/sat6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat6.smt2\" \"unit-tests/sat6.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat7.vtlog)
@@ -932,12 +932,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat7.v)
+ (target verit_vernac_sat7.v)
  (deps sat7.smt2 sat7.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat7.smt2\" \"unit-tests/sat7.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat7.smt2\" \"unit-tests/sat7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat7.smt2\" \"unit-tests/sat7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat7.smt2\" \"unit-tests/sat7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat8.lfsc)
@@ -957,12 +957,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_sat8.v)
+ (target lfsc_vernac_sat8.v)
  (deps sat8.smt2 sat8.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target sat8.vtlog)
@@ -981,12 +981,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat8.v)
+ (target verit_vernac_sat8.v)
  (deps sat8.smt2 sat8.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat8.smt2\" \"unit-tests/sat8.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat8.smt2\" \"unit-tests/sat8.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat8.smt2\" \"unit-tests/sat8.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target sat9.vtlog)
@@ -1005,12 +1005,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_sat9.v)
+ (target verit_vernac_sat9.v)
  (deps sat9.smt2 sat9.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat9.smt2\" \"unit-tests/sat9.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/sat9.smt2\" \"unit-tests/sat9.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/sat9.smt2\" \"unit-tests/sat9.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/sat9.smt2\" \"unit-tests/sat9.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf1.vtlog)
@@ -1029,12 +1029,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf1.v)
+ (target verit_vernac_uf1.v)
  (deps uf1.smt2 uf1.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf1.smt2\" \"unit-tests/uf1.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf1.smt2\" \"unit-tests/uf1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf1.smt2\" \"unit-tests/uf1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf1.smt2\" \"unit-tests/uf1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf2.lfsc)
@@ -1054,12 +1054,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_uf2.v)
+ (target lfsc_vernac_uf2.v)
  (deps uf2.smt2 uf2.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target uf2.vtlog)
@@ -1078,12 +1078,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf2.v)
+ (target verit_vernac_uf2.v)
  (deps uf2.smt2 uf2.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf2.smt2\" \"unit-tests/uf2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf2.smt2\" \"unit-tests/uf2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf2.smt2\" \"unit-tests/uf2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf3.vtlog)
@@ -1102,12 +1102,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf3.v)
+ (target verit_vernac_uf3.v)
  (deps uf3.smt2 uf3.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf3.smt2\" \"unit-tests/uf3.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf3.smt2\" \"unit-tests/uf3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf3.smt2\" \"unit-tests/uf3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf3.smt2\" \"unit-tests/uf3.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf4.vtlog)
@@ -1126,12 +1126,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf4.v)
+ (target verit_vernac_uf4.v)
  (deps uf4.smt2 uf4.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf4.smt2\" \"unit-tests/uf4.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf4.smt2\" \"unit-tests/uf4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf4.smt2\" \"unit-tests/uf4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf4.smt2\" \"unit-tests/uf4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf5.vtlog)
@@ -1150,12 +1150,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf5.v)
+ (target verit_vernac_uf5.v)
  (deps uf5.smt2 uf5.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf5.smt2\" \"unit-tests/uf5.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf5.smt2\" \"unit-tests/uf5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf5.smt2\" \"unit-tests/uf5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf5.smt2\" \"unit-tests/uf5.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf6.lfsc)
@@ -1175,12 +1175,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_uf6.v)
+ (target lfsc_vernac_uf6.v)
  (deps uf6.smt2 uf6.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target uf6.vtlog)
@@ -1199,12 +1199,12 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf6.v)
+ (target verit_vernac_uf6.v)
  (deps uf6.smt2 uf6.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf6.smt2\" \"unit-tests/uf6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf6.smt2\" \"unit-tests/uf6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf6.smt2\" \"unit-tests/uf6.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rule
  (target uf7.lfsc)
@@ -1224,12 +1224,12 @@
     %{deps}))))
 
 (rule
- (target vernac_lfsc_uf7.v)
+ (target lfsc_vernac_uf7.v)
  (deps uf7.smt2 uf7.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.lfsc\".\nEnd Checker.\n")))
 
 (rule
  (target uf7.vtlog)
@@ -1248,70 +1248,76 @@
     %{deps}))))
 
 (rule
- (target vernac_verit_uf7.v)
+ (target verit_vernac_uf7.v)
  (deps uf7.smt2 uf7.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/uf7.smt2\" \"unit-tests/uf7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 (rocq.theory
  (name SMTCoq.tests)
+ (generate_project_file)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
  (modules
-  vernac_zchaff_cmu_bmc_barrel6
-  vernac_zchaff_hole4
-  vernac_zchaff_sat1
-  vernac_zchaff_sat2
-  vernac_zchaff_sat3
-  vernac_zchaff_sat5
-  vernac_zchaff_sat6
-  vernac_zchaff_sat7
-  vernac_zchaff_velev_sss_1_0_05
-  vernac_lfsc_bv1
-  vernac_lfsc_bv2
-  vernac_lfsc_ex1
-  vernac_verit_hole4
-  vernac_lfsc_let1
-  vernac_verit_let1
-  vernac_lfsc_let2
-  vernac_verit_let2
-  vernac_verit_lia1
-  vernac_verit_lia2
-  vernac_verit_lia3
-  vernac_verit_lia4
-  vernac_verit_lia5
-  vernac_verit_lia6
-  vernac_verit_lia7
-  vernac_lfsc_sat0
-  vernac_verit_sat0
-  vernac_lfsc_sat1
-  vernac_verit_sat1
-  vernac_verit_sat11
-  vernac_verit_sat12
-  vernac_verit_sat13
-  vernac_verit_sat14
-  vernac_lfsc_sat2
-  vernac_verit_sat2
-  vernac_lfsc_sat3
-  vernac_verit_sat3
-  vernac_lfsc_sat4
-  vernac_verit_sat4
-  vernac_verit_sat5
-  vernac_lfsc_sat6
-  vernac_verit_sat6
-  vernac_verit_sat7
-  vernac_lfsc_sat8
-  vernac_verit_sat8
-  vernac_verit_sat9
-  vernac_verit_uf1
-  vernac_lfsc_uf2
-  vernac_verit_uf2
-  vernac_verit_uf3
-  vernac_verit_uf4
-  vernac_verit_uf5
-  vernac_lfsc_uf6
-  vernac_verit_uf6
-  vernac_lfsc_uf7
-  vernac_verit_uf7))
+  lfsc_tactics
+  verit_tactics
+  zchaff_tactics
+  zchaff_vernac_cmu_bmc_barrel6
+  zchaff_vernac_hole4
+  zchaff_vernac_sat1
+  zchaff_vernac_sat2
+  zchaff_vernac_sat3
+  zchaff_vernac_sat5
+  zchaff_vernac_sat6
+  zchaff_vernac_sat7
+  zchaff_vernac_velev_sss_1_0_05
+  lfsc_vernac_bv1
+  lfsc_vernac_bv2
+  lfsc_vernac_ex1
+  verit_vernac_hole4
+  lfsc_vernac_let1
+  verit_vernac_let1
+  lfsc_vernac_let2
+  verit_vernac_let2
+  verit_vernac_lia1
+  verit_vernac_lia2
+  verit_vernac_lia3
+  verit_vernac_lia4
+  verit_vernac_lia5
+  verit_vernac_lia6
+  verit_vernac_lia7
+  lfsc_vernac_sat0
+  verit_vernac_sat0
+  lfsc_vernac_sat1
+  verit_vernac_sat1
+  verit_vernac_sat11
+  verit_vernac_sat12
+  verit_vernac_sat13
+  verit_vernac_sat14
+  lfsc_vernac_sat2
+  verit_vernac_sat2
+  lfsc_vernac_sat3
+  verit_vernac_sat3
+  lfsc_vernac_sat4
+  verit_vernac_sat4
+  verit_vernac_sat5
+  lfsc_vernac_sat6
+  verit_vernac_sat6
+  verit_vernac_sat7
+  lfsc_vernac_sat8
+  verit_vernac_sat8
+  verit_vernac_sat9
+  verit_vernac_uf1
+  lfsc_vernac_uf2
+  verit_vernac_uf2
+  verit_vernac_uf3
+  verit_vernac_uf4
+  verit_vernac_uf5
+  lfsc_vernac_uf6
+  verit_vernac_uf6
+  lfsc_vernac_uf7
+  verit_vernac_uf7)
+ (flags
+  (:standard -I ../_build/install/default/lib)))

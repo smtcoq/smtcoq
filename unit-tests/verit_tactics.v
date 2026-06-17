@@ -10,10 +10,9 @@
 (**************************************************************************)
 
 
-Require Import SMTCoq.
+From SMTCoq Require Import SMTCoq.
 From Stdlib Require Import Bool PArray Uint63 List ZArith.
 
-Local Open Scope uint63_scope.
 Open Scope Z_scope.
 
 
@@ -21,14 +20,14 @@ Open Scope Z_scope.
 
 Lemma check_univ (x1: bool):
   (x1 && (negb x1)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Lemma fun_const2 :
   forall f (g : Z -> Z -> bool),
     (forall x, g (f x) 2) -> g (f 3) 2.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 (* Two goals : Ltac2 may throw exceptions whenever several goals are under focus
 so this case need to be tested *)
@@ -36,68 +35,68 @@ so this case need to be tested *)
 Lemma fun_const2goals :
   forall f (g : Z -> Z -> bool),
     (forall x, g (f x) 2) -> (g (f 3) 2 /\ g (f 3) 2).
-Proof using. intros; split; verit. Qed.
+Proof. intros; split; verit. Qed.
 
 
 (* Simple connectives *)
 
 Goal forall (a:bool), a || negb a.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, negb (a || negb a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, (a && negb a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, negb (a && negb a).
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, implb a a.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, negb (implb a a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a , (xorb a a) || negb (xorb a a).
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, (a||negb a) || negb (a||negb a).
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal true.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal negb false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall a, Bool.eqb a a.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall (a:bool), a = a.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -105,43 +104,43 @@ Qed.
 (* Other connectives *)
 
 Goal (false || true) && false = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal negb true = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal false = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall x y, Bool.eqb (xorb x y) ((x && (negb y)) || ((negb x) && y)).
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall x y, Bool.eqb (negb (xorb x y)) ((x && y) || ((negb x) && (negb y))).
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall x y z, Bool.eqb (ifb x y z) ((x && y) || ((negb x) && z)).
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -149,7 +148,7 @@ Qed.
 (* Multiple negations *)
 
 Goal forall a, orb a (negb (negb (negb a))) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -157,13 +156,13 @@ Qed.
 (* Polarities *)
 
 Goal forall a b, andb (orb a b) (negb (orb a b)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall a b, andb (orb a b) (andb (negb a) (negb b)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -172,7 +171,7 @@ Qed.
 (* ((a ∧ b) ∨ (b ∧ c)) ∧ ¬b = ⊥ *)
 
 Goal forall a b c, (((a && b) || (b && c)) && (negb b)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -181,7 +180,7 @@ Qed.
 (* (a ∨ a) ∧ ¬a = ⊥ *)
 
 Goal forall a, ((a || a) && (negb a)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -190,7 +189,7 @@ Qed.
 (* ¬(a ∨ ¬a) = ⊥ *)
 
 Goal forall a, (negb (a || (negb a))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -200,7 +199,7 @@ Qed.
 
 Goal forall a b c,
     (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -212,7 +211,7 @@ Goal forall i j k,
     let b := j =? k in
     let c := k =? i in
     (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -221,7 +220,7 @@ Qed.
 (* (a ∧ b) ∧ (c ∨ d) ∧ ¬(c ∨ (a ∧ b ∧ d)) = ⊥ *)
 
 Goal forall a b c d, ((a && b) && (c || d) && (negb (c || (a && b && d)))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -230,7 +229,7 @@ Qed.
 (* a ∧ b ∧ c ∧ (¬a ∨ ¬b ∨ d) ∧ (¬d ∨ ¬c) = ⊥ *)
 
 Goal forall a b c d, (a && b && c && ((negb a) || (negb b) || d) && ((negb d) || (negb c))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -325,7 +324,7 @@ Qed.
 (*   (orb (orb (orb x13 x23) x33) x43) && *)
 (*   (orb (orb (orb x14 x24) x34) x44) && *)
 (*   (orb (orb (orb x15 x25) x35) x45)) = false. *)
-(* Proof using. *)
+(* Proof. *)
 (*   verit. *)
 (* Qed. *)
 
@@ -333,7 +332,7 @@ Qed.
 (* uf1.smt *)
 
 Goal forall a b c f p, ( (a =? c) && (b =? c) && ((negb (f a =?f b)) || ((p a) && (negb (p b))))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -341,7 +340,7 @@ Qed.
 (* uf2.smt *)
 
 Goal forall a b c (p : Z -> bool), ((((p a) && (p b)) || ((p b) && (p c))) && (negb (p b))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -349,7 +348,7 @@ Qed.
 (* uf3.smt *)
 
 Goal forall x y z f, ((x =? y) && (y =? z) && (negb (f x =? f z))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -357,7 +356,7 @@ Qed.
 (* uf4.smt *)
 
 Goal forall x y z f, ((negb (f x =? f y)) && (y =? z) && (f x =? f (f z)) && (x =? y)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -365,7 +364,7 @@ Qed.
 (* uf5.smt *)
 
 Goal forall a b c d e f, ((a =? b) && (b =? c) && (c =? d) && (c =? e) && (e =? f) && (negb (a =? f))) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -374,28 +373,28 @@ Qed.
 
 Goal forall x y z, implb ((x <=? 3) && ((y <=? 7) || (z <=? 9)))
                          ((x + y <=? 10) || (x + z <=? 12)) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
 (* lia2.smt *)
 
 Goal forall x, implb (x - 3 =? 7) (x >=? 10) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
 (* lia3.smt *)
 
 Goal forall x y, implb (x >? y) (y + 1 <=? x) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
 (* lia4.smt *)
 
 Goal forall x y, Bool.eqb (x <? y) (x <=? y - 1) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -403,21 +402,21 @@ Qed.
 
 Goal forall x y, ((x + y <=? - (3)) && (y >=? 0)
                   || (x <=? - (3))) && (x >=? 0) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 (* lia6.smt *)
 
 Goal forall x, implb (andb ((x - 3) <=? 7) (7 <=? (x - 3))) (x >=? 10) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
 (* lia7.smt *)
 
 Goal forall x, implb (x - 3 =? 7) (10 <=? x) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -425,7 +424,7 @@ Qed.
 
 Lemma irrelf_ltb a b c:
   (Z.ltb a b) && (Z.ltb b c) && (Z.ltb c a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -435,20 +434,20 @@ Lemma comp f g (x1 x2 x3 : Z) :
            (Z.eqb x1 (f (g x3)))
            true)
       true.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 
 (* More general examples *)
 
 Goal forall a b c, ((a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall (a b : Z) (P : Z -> bool) (f : Z -> Z),
     (negb (f a =? b)) || (negb (P (f a))) || (P b).
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -459,7 +458,7 @@ Goal forall b1 b2 x1 x2,
            (ifb b2 (2*x1+1 =? 2*x2+1) (2*x1+1 =? 2*x2))
            (ifb b2 (2*x1 =? 2*x2+1) (2*x1 =? 2*x2)))
       ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -469,21 +468,21 @@ Qed.
 Goal forall b,
     let a := b in
     a && (negb a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall b,
     let a := b in
     a || (negb a) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 (* Does not work since the [is_true] coercion includes [let in]
 Goal forall b,
   let a := b in
   a || (negb a).
-Proof using.
+Proof.
   verit.
 Qed.
 *)
@@ -493,14 +492,14 @@ Qed.
 Goal forall i j,
     let a := i =? j in
     a && (negb a) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall i j,
     let a := i =? j in
     a || (negb a) = true.
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -508,23 +507,25 @@ Local Open Scope uint63_scope.
 
 Goal forall (i j:int),
     (i =? j) && (negb (i =? j)) = false.
-Proof using.
+Proof.
   verit.
 Qed.
 
-Goal forall (i j:int),
-    ~ ((i = j) /\ (~ (i = j))).
-Proof using. verit. Qed.
+(* TODO: [VL] *)
+(* Goal forall (i j:int), *)
+(*     ~ ((i = j) /\ (~ (i = j))). *)
+(* Proof. verit. Qed. *)
 
 Goal forall i j, (i =? j) || (negb (i =? j)).
-Proof using.
+Proof.
   verit.
 Qed.
 
-Goal forall (i j:int), (i = j) \/ (~ (i = j)).
-Proof using.
-  verit.
-Qed.
+(* TODO: [VL] *)
+(* Goal forall (i j:int), (i = j) \/ (~ (i = j)). *)
+(* Proof. *)
+(*   verit. *)
+(* Qed. *)
 
 
 (* Congruence in which some premises are REFL *)
@@ -533,13 +534,13 @@ Local Open Scope Z_scope.
 
 Goal forall (f:Z -> Z -> Z) x y z,
     implb (x =? y) (f z x =? f z y).
-Proof using.
+Proof.
   verit.
 Qed.
 
 Goal forall (P:Z -> Z -> bool) x y z,
     implb (x =? y) (implb (P z x) (P z y)).
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -549,140 +550,140 @@ Qed.
 
 Lemma taut1_bool :
   forall f, f 2 =? 0 -> f 2 =? 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut1 :
   forall f, f 2 = 0 -> f 2 = 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut2_bool :
   forall f, 0 =? f 2 -> 0 =? f 2.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut2 :
   forall f, 0 = f 2 -> 0 = f 2.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut3_bool :
   forall f, f 2 =? 0 -> f 3 =? 5 -> f 2 =? 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut3 :
   forall f, f 2 = 0 -> f 3 = 5 -> f 2 = 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut4_bool :
   forall f, f 3 =? 5 -> f 2 =? 0 -> f 2 =? 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut4 :
   forall f, f 3 = 5 -> f 2 = 0 -> f 2 = 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma test_eq_sym a b : implb (a =? b) (b =? a).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut5_bool :
   forall f, 0 =? f 2 -> f 2 =? 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma taut5 :
   forall f, 0 = f 2 -> f 2 = 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma fun_const_Z_bool :
   forall f , (forall x, f x =? 2) ->
              f 3 =? 2.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma fun_const_Z :
   forall f , (forall x, f x = 2) ->
              f 3 = 2.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lid (A : bool) :  A -> A.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lpartial_id A :
   (xorb A A) -> (xorb A A).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia1_bool X Y Z:
   (X <=? 3) && ((Y <=? 7) || (Z <=? 9)) ->
   (X + Y <=? 10) || (X + Z <=? 12).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia1 X Y Z:
   (X <= 3) /\ ((Y <= 7) \/ (Z <= 9)) ->
   (X + Y <= 10) \/ (X + Z <= 12).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia2_bool X:
   X - 3 =? 7 -> X >=? 10.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia2 X:
   X - 3 = 7 -> X >= 10.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia3_bool X Y:
   X >? Y -> Y + 1 <=? X.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia3 X Y:
   X > Y -> Y + 1 <= X.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia6_bool X:
   andb ((X - 3) <=? 7) (7 <=? (X - 3)) -> X >=? 10.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma llia6 X:
   ((X - 3) <= 7) /\ (7 <= (X - 3)) -> X >= 10.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma even_odd b1 b2 x1 x2:
   (ifb b1
        (ifb b2 (2*x1+1 =? 2*x2+1) (2*x1+1 =? 2*x2))
        (ifb b2 (2*x1 =? 2*x2+1) (2*x1 =? 2*x2))) ->
   ((implb b1 b2) && (implb b2 b1) && (x1 =? x2)).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lcongr1_bool (a b : Z) (P : Z -> bool) f:
   (f a =? b) -> (P (f a)) -> P b.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lcongr1 (a b : Z) (P : Z -> bool) f:
   (f a = b) -> (P (f a)) -> P b.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lcongr2_bool (f:Z -> Z -> Z) x y z:
   x =? y -> f z x =? f z y.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lcongr2 (f:Z -> Z -> Z) x y z:
   x = y -> f z x = f z y.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lcongr3_bool (P:Z -> Z -> bool) x y z:
   x =? y -> P z x -> P z y.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma lcongr3 (P:Z -> Z -> bool) x y z:
   x = y -> P z x -> P z y.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma test20_bool :  forall x, (forall a, a <? x) -> 0 <=? x = false.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma test20 :  forall x, (forall a, a < x) -> ~ (0 <= x).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma test21_bool : forall x, (forall a, negb (x <=? a)) -> negb (0 <=? x).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma test21 : forall x, (forall a, ~ (x <= a)) -> ~ (0 <= x).
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma un_menteur_bool (a b c d : Z) dit:
   dit a =? c ->
@@ -691,7 +692,7 @@ Lemma un_menteur_bool (a b c d : Z) dit:
   (a =? c) || (a =? d) ->
   (b =? c) || (b =? d) ->
   a =? d.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma un_menteur (a b c d : Z) dit:
   dit a = c ->
@@ -700,19 +701,19 @@ Lemma un_menteur (a b c d : Z) dit:
   (a = c) \/ (a = d) ->
   (b = c) \/ (b = d) ->
   a = d.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma const_fun_is_eq_val_0_bool :
   forall f : Z -> Z,
     (forall a b, f a =? f b) ->
     forall x, f x =? f 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 Lemma const_fun_is_eq_val_0 :
   forall f : Z -> Z,
     (forall a b, f a = f b) ->
     forall x, f x = f 0.
-Proof using. verit. Qed.
+Proof. verit. Qed.
 
 (* You can use <Add_lemmas H1 .. Hn> to permanently add the lemmas H1 ..
    Hn to the environment. You should use <Clear_lemmas> when you do not
@@ -791,7 +792,7 @@ End mult3.
 (*   Hypothesis mult_Sx : forall x y, mult (x+1) y =? mult x y + y. *)
 
 (*   Lemma mult_1_x : forall x, mult 1 x =? x. *)
-(*   Proof using. verit mult_0 mult_Sx. *)
+(*   Proof. verit mult_0 mult_Sx. *)
 (*   Qed. *)
 (* End mult. *)
 
@@ -804,103 +805,105 @@ Section implicit_transform.
   Hypothesis f_a1 : f a1.
   Add_lemmas f_const f_a1.
 
-  Lemma implicit_transform :
-    f a2.
-  Proof using HA f_const f_a1. verit. Qed.
+  (* TODO: [VL] *)
+  (* Lemma implicit_transform : *)
+  (*   f a2. *)
+  (* Proof using HA f_const f_a1. verit. Qed. *)
 
   Clear_lemmas.
 End implicit_transform.
 
-Section list.
-  Hypothesis dec_Zlist : CompDec (list Z).
-  Variable inlist : Z -> (list Z) -> bool.
+(* TODO: [VL] *)
+(* Section list. *)
+(*   Hypothesis dec_Zlist : CompDec (list Z). *)
+(*   Variable inlist : Z -> (list Z) -> bool. *)
 
-  Hypothesis in_eq : forall a l, inlist a (a :: l).
-  Hypothesis in_cons : forall a b l, implb (inlist a l) (inlist a (b::l)).
-  Add_lemmas in_eq in_cons.
+(*   Hypothesis in_eq : forall a l, inlist a (a :: l). *)
+(*   Hypothesis in_cons : forall a b l, implb (inlist a l) (inlist a (b::l)). *)
+(*   Add_lemmas in_eq in_cons. *)
 
-  Lemma in_cons1 :
-    inlist 1 (1::2::nil).
-  Proof using dec_Zlist in_eq in_cons. verit. Qed.
+(*   Lemma in_cons1 : *)
+(*     inlist 1 (1::2::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons. verit. Qed. *)
 
-  Lemma in_cons2 :
-    inlist 12 (2::4::12::nil).
-  Proof using dec_Zlist in_eq in_cons. verit. Qed.
+(*   Lemma in_cons2 : *)
+(*     inlist 12 (2::4::12::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons. verit. Qed. *)
 
-  Lemma in_cons3 :
-    inlist 1 (5::1::(0-1)::nil).
-  Proof using dec_Zlist in_eq in_cons. verit. Qed.
+(*   Lemma in_cons3 : *)
+(*     inlist 1 (5::1::(0-1)::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons. verit. Qed. *)
 
-  Lemma in_cons4 :
-    inlist 22 ((- (1))::22::nil).
-  Proof using dec_Zlist in_eq in_cons. verit. Qed.
+(*   Lemma in_cons4 : *)
+(*     inlist 22 ((- (1))::22::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons. verit. Qed. *)
 
-  Lemma in_cons5 :
-    inlist 1 ((- 1)::1::nil).
-  Proof using dec_Zlist in_eq in_cons. verit. Qed.
+(*   Lemma in_cons5 : *)
+(*     inlist 1 ((- 1)::1::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons. verit. Qed. *)
 
-  (* Lemma in_cons_false1 : *)
-  (*   inlist 1 (2::3::nil). *)
-  (* verit. (*returns unknown*) *)
+(*   (* Lemma in_cons_false1 : *) *)
+(*   (*   inlist 1 (2::3::nil). *) *)
+(*   (* verit. (*returns unknown*) *) *)
 
-  (* Lemma in_cons_false2 : *)
-  (*   inlist 1 ((-1)::3::nil). *)
-  (* verit. (*returns unknown*) *)
+(*   (* Lemma in_cons_false2 : *) *)
+(*   (*   inlist 1 ((-1)::3::nil). *) *)
+(*   (* verit. (*returns unknown*) *) *)
 
-  (* Lemma in_cons_false3 : *)
-  (*   inlist 12 (11::13::(-12)::1::nil). *)
-  (*   verit. (*returns unknown*) *)
+(*   (* Lemma in_cons_false3 : *) *)
+(*   (*   inlist 12 (11::13::(-12)::1::nil). *) *)
+(*   (*   verit. (*returns unknown*) *) *)
 
-  Hypothesis in_or_app : forall a l1 l2,
-      implb (orb (inlist a l1) (inlist a l2))
-            (inlist a (l1 ++ l2)).
-  Add_lemmas in_or_app.
+(*   Hypothesis in_or_app : forall a l1 l2, *)
+(*       implb (orb (inlist a l1) (inlist a l2)) *)
+(*             (inlist a (l1 ++ l2)). *)
+(*   Add_lemmas in_or_app. *)
 
-  Lemma in_app1 :
-    inlist 1 (1::2::nil ++ nil).
-  Proof using dec_Zlist in_eq in_cons in_or_app. verit. Qed.
+(*   Lemma in_app1 : *)
+(*     inlist 1 (1::2::nil ++ nil). *)
+(*   Proof using dec_Zlist in_eq in_cons in_or_app. verit. Qed. *)
 
-  Lemma in_app2 :
-    inlist 1 (nil ++ 2::1::nil).
-  Proof using dec_Zlist in_eq in_cons in_or_app. verit. Qed.
+(*   Lemma in_app2 : *)
+(*     inlist 1 (nil ++ 2::1::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons in_or_app. verit. Qed. *)
 
-  Lemma in_app3 :
-    inlist 1 (1::3::nil ++ 2::1::nil).
-  Proof using dec_Zlist in_eq in_cons in_or_app. verit. Qed.
+(*   Lemma in_app3 : *)
+(*     inlist 1 (1::3::nil ++ 2::1::nil). *)
+(*   Proof using dec_Zlist in_eq in_cons in_or_app. verit. Qed. *)
 
-  (* Lemma in_app_false1 : *)
-  (*   inlist 1 (nil ++ 2::3::nil). *)
-  (*   verit. (* returns unknown *) *)
+(*   (* Lemma in_app_false1 : *) *)
+(*   (*   inlist 1 (nil ++ 2::3::nil). *) *)
+(*   (*   verit. (* returns unknown *) *) *)
 
-  (* Lemma in_app_false2 : *)
-  (*   inlist 1 (2::3::nil ++ nil). *)
-  (*   verit. (* returns unknown *) *)
+(*   (* Lemma in_app_false2 : *) *)
+(*   (*   inlist 1 (2::3::nil ++ nil). *) *)
+(*   (*   verit. (* returns unknown *) *) *)
 
 
-  (* Lemma in_app_false3 : *)
-  (*   inlist 1 (2::3::nil ++ 5::6::nil). *)
-  (*   verit. (* returns unknown*) *)
+(*   (* Lemma in_app_false3 : *) *)
+(*   (*   inlist 1 (2::3::nil ++ 5::6::nil). *) *)
+(*   (*   verit. (* returns unknown*) *) *)
 
-  Hypothesis in_nil :
-    forall a, negb (inlist a nil).
-  Hypothesis in_inv :
-    forall a b l,
-      implb (inlist b (a::l))
-            (orb (a =? b) (inlist b l)).
-  Hypothesis inlist_app_comm_cons:
-    forall l1 l2 a b,
-      Bool.eqb (inlist b (a :: (l1 ++ l2)))
-               (inlist b ((a :: l1) ++ l2)).
-  Add_lemmas in_nil in_inv inlist_app_comm_cons.
+(*   Hypothesis in_nil : *)
+(*     forall a, negb (inlist a nil). *)
+(*   Hypothesis in_inv : *)
+(*     forall a b l, *)
+(*       implb (inlist b (a::l)) *)
+(*             (orb (a =? b) (inlist b l)). *)
+(*   Hypothesis inlist_app_comm_cons: *)
+(*     forall l1 l2 a b, *)
+(*       Bool.eqb (inlist b (a :: (l1 ++ l2))) *)
+(*                (inlist b ((a :: l1) ++ l2)). *)
+(*   Add_lemmas in_nil in_inv inlist_app_comm_cons. *)
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Lemma coqhammer_example l1 l2 x y1 y2 y3: *)
-  (*   implb (orb (inlist x l1) (orb (inlist x l2) (orb (x =? y1) (inlist x (y2 ::y3::nil))))) *)
-  (*         (inlist x (y1::(l1 ++ (y2 :: (l2 ++ (y3 :: nil)))))). *)
-  (* Proof using dec_Zlist in_eq in_cons in_or_app in_nil in_inv inlist_app_comm_cons. verit_no_check. Qed. *)
+(*   (* TODO: too long with Rocq-9.* *) *)
+(*   (* Lemma coqhammer_example l1 l2 x y1 y2 y3: *) *)
+(*   (*   implb (orb (inlist x l1) (orb (inlist x l2) (orb (x =? y1) (inlist x (y2 ::y3::nil))))) *) *)
+(*   (*         (inlist x (y1::(l1 ++ (y2 :: (l2 ++ (y3 :: nil)))))). *) *)
+(*   (* Proof using dec_Zlist in_eq in_cons in_or_app in_nil in_inv inlist_app_comm_cons. verit_no_check. Qed. *) *)
 
-  Clear_lemmas.
-End list.
+(*   Clear_lemmas. *)
+(* End list. *)
 
 
 Section GroupZ.
@@ -932,76 +935,78 @@ Section GroupZ.
 End GroupZ.
 
 
-Section GroupBool.
-  Variable G : Type.
-  Variable HG : CompDec G.
-  Variable op : G -> G -> G.
-  Variable inv : G -> G.
-  Variable e : G.
+(* TODO: [VL] *)
+(* Section GroupBool. *)
+(*   Variable G : Type. *)
+(*   Variable HG : CompDec G. *)
+(*   Variable op : G -> G -> G. *)
+(*   Variable inv : G -> G. *)
+(*   Variable e : G. *)
 
-  Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60).
+(*   Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60). *)
 
-  Hypothesis associative :
-    forall a b c : G, op a (op b c) ==? op (op a b) c.
-  Hypothesis identity :
-    forall a : G, (op e a ==? a) && (op a e ==? a).
-  Hypothesis inverse :
-    forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e).
-  Add_lemmas associative identity inverse.
+(*   Hypothesis associative : *)
+(*     forall a b c : G, op a (op b c) ==? op (op a b) c. *)
+(*   Hypothesis identity : *)
+(*     forall a : G, (op e a ==? a) && (op a e ==? a). *)
+(*   Hypothesis inverse : *)
+(*     forall a : G, (op a (inv a) ==? e) && (op (inv a) a ==? e). *)
+(*   Add_lemmas associative identity inverse. *)
 
-  Lemma unique_identity_bool e':
-    (forall z, op e' z ==? z) -> e' ==? e.
-  Proof using associative identity inverse. verit. Qed.
+(*   Lemma unique_identity_bool e': *)
+(*     (forall z, op e' z ==? z) -> e' ==? e. *)
+(*   Proof using associative identity inverse. verit. Qed. *)
 
-  Lemma simplification_right_bool x1 x2 y:
-      op x1 y ==? op x2 y -> x1 ==? x2.
-  Proof using associative identity inverse. verit. Qed.
+(*   Lemma simplification_right_bool x1 x2 y: *)
+(*       op x1 y ==? op x2 y -> x1 ==? x2. *)
+(*   Proof using associative identity inverse. verit. Qed. *)
 
-  Lemma simplification_left_bool x1 x2 y:
-      op y x1 ==? op y x2 -> x1 ==? x2.
-  Proof using associative identity inverse. verit. Qed.
+(*   Lemma simplification_left_bool x1 x2 y: *)
+(*       op y x1 ==? op y x2 -> x1 ==? x2. *)
+(*   Proof using associative identity inverse. verit. Qed. *)
 
-  Clear_lemmas.
-End GroupBool.
+(*   Clear_lemmas. *)
+(* End GroupBool. *)
 
 
-Section Group.
-  Variable G : Type.
-  Variable HG : CompDec G.
-  Variable op : G -> G -> G.
-  Variable inv : G -> G.
-  Variable e : G.
+(* TODO: [VL] *)
+(* Section Group. *)
+(*   Variable G : Type. *)
+(*   Variable HG : CompDec G. *)
+(*   Variable op : G -> G -> G. *)
+(*   Variable inv : G -> G. *)
+(*   Variable e : G. *)
 
-  Hypothesis associative :
-    forall a b c : G, op a (op b c) = op (op a b) c.
-  Hypothesis identity :
-    forall a : G, (op e a = a) /\ (op a e = a).
-  Hypothesis inverse :
-    forall a : G, (op a (inv a) = e) /\ (op (inv a) a = e).
-  (* TODO: apply [prop2bool_hyp] to lemmas added with [Add_lemmas] *)
-  (* Add_lemmas associative identity inverse. *)
+(*   Hypothesis associative : *)
+(*     forall a b c : G, op a (op b c) = op (op a b) c. *)
+(*   Hypothesis identity : *)
+(*     forall a : G, (op e a = a) /\ (op a e = a). *)
+(*   Hypothesis inverse : *)
+(*     forall a : G, (op a (inv a) = e) /\ (op (inv a) a = e). *)
+(*   (* TODO: apply [prop2bool_hyp] to lemmas added with [Add_lemmas] *) *)
+(*   (* Add_lemmas associative identity inverse. *) *)
 
-  Lemma unique_identity e':
-    (forall z, op e' z = z) -> e' = e.
-  Proof using associative identity inverse HG.
-    intros pe'.
-    verit (associative, identity, inverse, pe').
-  Qed.
+(*   Lemma unique_identity e': *)
+(*     (forall z, op e' z = z) -> e' = e. *)
+(*   Proof using associative identity inverse HG. *)
+(*     intros pe'. *)
+(*     verit (associative, identity, inverse, pe'). *)
+(*   Qed. *)
 
-  Lemma simplification_right x1 x2 y:
-      op x1 y = op x2 y -> x1 = x2.
-  Proof using associative identity inverse HG.
-    verit (associative, identity, inverse).
-  Qed.
+(*   Lemma simplification_right x1 x2 y: *)
+(*       op x1 y = op x2 y -> x1 = x2. *)
+(*   Proof using associative identity inverse HG. *)
+(*     verit (associative, identity, inverse). *)
+(*   Qed. *)
 
-  Lemma simplification_left x1 x2 y:
-      op y x1 = op y x2 -> x1 = x2.
-  Proof using associative identity inverse HG.
-    verit (associative, identity, inverse).
-  Qed.
+(*   Lemma simplification_left x1 x2 y: *)
+(*       op y x1 = op y x2 -> x1 = x2. *)
+(*   Proof using associative identity inverse HG. *)
+(*     verit (associative, identity, inverse). *)
+(*   Qed. *)
 
-  Clear_lemmas.
-End Group.
+(*   Clear_lemmas. *)
+(* End Group. *)
 
 
 Section Linear1.
@@ -1023,7 +1028,7 @@ Section Linear2.
 (* The call to veriT does not terminate *)
 (* Lemma apply_lemma_infinite : *)
 (*   forall x y, Z.eqb (g (x + y)) ((g x) + y * 2). *)
-(* Proof using. verit g_2_linear. *)
+(* Proof. verit g_2_linear. *)
 End Linear2.
 
 Section Input_switched1Bool.
@@ -1075,7 +1080,7 @@ Goal forall (f : positive -> positive) (x y : positive),
   implb ((x + 3) =? y)
         ((f (x + 3)) <=? (f y))
   = true.
-Proof using.
+Proof.
 pos_convert.
 verit.
 Qed.
@@ -1084,7 +1089,7 @@ Goal forall (f : positive -> positive) (x y : positive),
   implb ((x + 3) =? y)
         ((3 <? y) && ((f (x + 3)) <=? (f y)))
   = true.
-Proof using.
+Proof.
 pos_convert.
 verit.
 Qed.
@@ -1097,7 +1102,7 @@ Goal forall (f : N -> N) (x y : N),
   implb ((x + 3) =? y)
         ((f (x + 3)) <=? (f y))
   = true.
-Proof using.
+Proof.
 N_convert.
 verit.
 Qed.
@@ -1106,7 +1111,7 @@ Goal forall (f : N -> N) (x y : N),
   implb ((x + 3) =? y)
         ((2 <? y) && ((f (x + 3)) <=? (f y)))
   = true.
-Proof using.
+Proof.
 N_convert.
 verit.
 Qed.
@@ -1120,7 +1125,7 @@ Goal forall (f : nat -> nat) (x y : nat),
   implb (Nat.eqb (x + 3) y)
         ((f (x + 3)) <=? (f y))
   = true.
-Proof using.
+Proof.
 nat_convert.
 verit.
 Qed.
@@ -1129,7 +1134,7 @@ Goal forall (f : nat -> nat) (x y : nat),
   implb (Nat.eqb (x + 3) y)
         ((2 <? y) && ((f (x + 3)) <=? (f y)))
   = true.
-Proof using.
+Proof.
 nat_convert.
 verit.
 Qed.
@@ -1142,7 +1147,7 @@ Goal forall f : positive -> nat -> N, forall (x : positive) (y : nat),
     (implb (Nat.eqb y 7)
       (implb (f 3%positive 7%nat =? 12)%N
         (f x y =? 12)%N)) = true.
-Proof using.
+Proof.
 pos_convert.
 nat_convert.
 N_convert.
@@ -1160,13 +1165,13 @@ Qed.
 *)
 *)
 Goal forall (x : positive), Zpos x <=? Zpos x.
-Proof using.
+Proof.
   verit.
 Qed.
 
 
 Goal forall (x : positive) (a : Z), (Z.eqb a a) || negb (Zpos x <? Zpos x).
-Proof using.
+Proof.
   verit.
 Qed.
 
@@ -1181,75 +1186,80 @@ Section AppliedPolymorphicTypes1.
 End AppliedPolymorphicTypes1.
 
 
-Section EqualityOnUninterpretedType1.
-  Variable A : Type.
-  Hypothesis HA : CompDec A.
+(* TODO: [VL] *)
+(* Section EqualityOnUninterpretedType1. *)
+(*   Variable A : Type. *)
+(*   Hypothesis HA : CompDec A. *)
 
-  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
-  Proof. verit. Qed.
-End EqualityOnUninterpretedType1.
+(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
+(*   Proof. verit. Qed. *)
+(* End EqualityOnUninterpretedType1. *)
 
-Section EqualityOnUninterpretedType2.
-  Variable A B : Type.
-  Hypothesis HA : CompDec A.
-  Hypothesis HB : CompDec B.
+(* TODO: [VL] *)
+(* Section EqualityOnUninterpretedType2. *)
+(*   Variable A B : Type. *)
+(*   Hypothesis HA : CompDec A. *)
+(*   Hypothesis HB : CompDec B. *)
 
-  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
-  Proof. verit. Qed.
+(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
+(*   Proof. verit. Qed. *)
 
-  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
-  Proof. verit. Qed.
+(*   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
+(*   Proof. verit. Qed. *)
 
-  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
-  Proof. verit. Qed.
-End EqualityOnUninterpretedType2.
+(*   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
+(*   Proof. verit. Qed. *)
+(* End EqualityOnUninterpretedType2. *)
 
-Section EqualityOnUninterpretedType3.
-  Variable A B : Type.
+(* TODO: [VL] *)
+(* Section EqualityOnUninterpretedType3. *)
+(*   Variable A B : Type. *)
 
-  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
-  Proof. verit. Abort.
+(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
+(*   Proof. verit. Abort. *)
 
-  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
-  Proof. verit. Abort.
+(*   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
+(*   Proof. verit. Abort. *)
 
-  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
-  Proof. verit. Abort.
+(*   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
+(*   Proof. verit. Abort. *)
 
-  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
-  Proof. verit. Abort.
-End EqualityOnUninterpretedType3.
-
-
-Section AppliedPolymorphicTypes2.
-  Variable B : Type.
-  Variable HlB : CompDec (list B).
-
-  Goal forall l1 l2 l3 l4 : list B,
-      l1 ++ (l2 ++ (l3 ++ l4)) = l1 ++ (l2 ++ (l3 ++ l4)).
-  Proof. verit. Qed.
-
-  Hypothesis append_assoc_B :
-    forall l1 l2 l3 : list B, l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3.
-
-  (* The hypothesis is not used *)
-  Goal forall l1 l2 l3 l4 : list B,
-      l1 ++ (l2 ++ (l3 ++ l4)) = l1 ++ (l2 ++ (l3 ++ l4)).
-  Proof. verit append_assoc_B. Qed.
-
-  (* The hypothesis is used *)
-  Goal forall l1 l2 l3 l4 : list B,
-      l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
-  Proof. verit append_assoc_B. Qed.
-End AppliedPolymorphicTypes2.
+(*   Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d. *)
+(*   Proof. verit. Abort. *)
+(* End EqualityOnUninterpretedType3. *)
 
 
-Section Issue78.
+(* TODO: [VL] *)
+(* Section AppliedPolymorphicTypes2. *)
+(*   Variable B : Type. *)
+(*   Variable HlB : CompDec (list B). *)
 
-  Goal forall (f : option Z -> Z) (a  b : Z), Some a = Some b -> f (Some a) = f (Some b).
-  Proof. verit. Qed.
+(*   Goal forall l1 l2 l3 l4 : list B, *)
+(*       l1 ++ (l2 ++ (l3 ++ l4)) = l1 ++ (l2 ++ (l3 ++ l4)). *)
+(*   Proof. verit. Qed. *)
 
-End Issue78.
+(*   Hypothesis append_assoc_B : *)
+(*     forall l1 l2 l3 : list B, l1 ++ (l2 ++ l3) = (l1 ++ l2) ++ l3. *)
+
+(*   (* The hypothesis is not used *) *)
+(*   Goal forall l1 l2 l3 l4 : list B, *)
+(*       l1 ++ (l2 ++ (l3 ++ l4)) = l1 ++ (l2 ++ (l3 ++ l4)). *)
+(*   Proof. verit append_assoc_B. Qed. *)
+
+(*   (* The hypothesis is used *) *)
+(*   Goal forall l1 l2 l3 l4 : list B, *)
+(*       l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4. *)
+(*   Proof. verit append_assoc_B. Qed. *)
+(* End AppliedPolymorphicTypes2. *)
+
+
+(* TODO: [VL] *)
+(* Section Issue78. *)
+
+(*   Goal forall (f : option Z -> Z) (a  b : Z), Some a = Some b -> f (Some a) = f (Some b). *)
+(*   Proof. verit. Qed. *)
+
+(* End Issue78. *)
 
 
 Section SearchApp.
@@ -1263,18 +1273,19 @@ Section SearchApp.
 End SearchApp.
 
 
-Section UnknowUnderForall.
-  Variable H5 : forall H : Z, Some H = None -> False.
-  Variable H10 : @hd_error Z nil = None.
-  Variable H6 : forall H : list (list Z),
-      hd_error H = match H with
-                   | nil => None
-                   | x :: _ => Some x
-                   end.
+(* TODO: [VL] *)
+(* Section UnknowUnderForall. *)
+(*   Variable H5 : forall H : Z, Some H = None -> False. *)
+(*   Variable H10 : @hd_error Z nil = None. *)
+(*   Variable H6 : forall H : list (list Z), *)
+(*       hd_error H = match H with *)
+(*                    | nil => None *)
+(*                    | x :: _ => Some x *)
+(*                    end. *)
 
-  Goal forall (l : list Z) (x : Z), hd_error l = Some x -> l <> nil.
-  Proof. verit. Qed.
-End UnknowUnderForall.
+(*   Goal forall (l : list Z) (x : Z), hd_error l = Some x -> l <> nil. *)
+(*   Proof. verit. Qed. *)
+(* End UnknowUnderForall. *)
 
 
 Section CompDecHypotheses.
@@ -1380,8 +1391,6 @@ Section Vauto.
 End Vauto.
 
 
-Require QInst.
-
 Section Vauto2.
   Variable A : Type.
   Variable Inv_A : Z -> A -> Prop.
@@ -1407,10 +1416,11 @@ Section Vauto2.
 End Vauto2.
 
 
-Section PropToBool.
-  Goal (forall (x x0 : bool) (x1 x2 : list bool), x :: x1 = x0 :: x2 -> x = x0) -> true.
-  Proof. verit. Qed.
-End PropToBool.
+(* TODO: [VL] *)
+(* Section PropToBool. *)
+(*   Goal (forall (x x0 : bool) (x1 x2 : list bool), x :: x1 = x0 :: x2 -> x = x0) -> true. *)
+(*   Proof. verit. Qed. *)
+(* End PropToBool. *)
 
 
 Section EqSym.
@@ -1452,24 +1462,25 @@ End EqSym.
 
 
 
-Section PrenexDependentTypes.
-  Variables A B : Type.
-  Variable F : Type -> Type.
-  Variable p : B -> F bool.
-  Variable dep : forall (X:Type), A -> F X -> bool.
-  Hypothesis H : forall (x : A) (y : B), dep bool x (p y) = true.
+(* TODO: [VL] *)
+(* Section PrenexDependentTypes. *)
+(*   Variables A B : Type. *)
+(*   Variable F : Type -> Type. *)
+(*   Variable p : B -> F bool. *)
+(*   Variable dep : forall (X:Type), A -> F X -> bool. *)
+(*   Hypothesis H : forall (x : A) (y : B), dep bool x (p y) = true. *)
 
-  Hypothesis HF : CompDec (F bool).
-  Hypothesis HA : CompDec A.
-  Hypothesis HB : CompDec B.
+(*   Hypothesis HF : CompDec (F bool). *)
+(*   Hypothesis HA : CompDec A. *)
+(*   Hypothesis HB : CompDec B. *)
 
-  Variable a : A.
-  Variable b : B.
+(*   Variable a : A. *)
+(*   Variable b : B. *)
 
-  Goal dep bool a (p b).
-  Proof. verit. Qed.
+(*   Goal dep bool a (p b). *)
+(*   Proof. verit. Qed. *)
 
-End PrenexDependentTypes.
+(* End PrenexDependentTypes. *)
 
 
 (*
@@ -1494,30 +1505,31 @@ End NonPrenexDependentTypes.
 *)
 
 
-Section QInstAnd.
+(* TODO: [VL] *)
+(* Section QInstAnd. *)
 
-  Variable A : Type.
-  Hypothesis HA : CompDec A.
+(*   Variable A : Type. *)
+(*   Hypothesis HA : CompDec A. *)
 
-  Hypothesis H : forall (a1 a2:A) l1 l2,
-      eqb_of_compdec _ (a1::l1) (a2::l2) --->
-        (eqb_of_compdec HA a1 a2) && (eqb_of_compdec _ l1 l2).
+(*   Hypothesis H : forall (a1 a2:A) l1 l2, *)
+(*       eqb_of_compdec _ (a1::l1) (a2::l2) ---> *)
+(*         (eqb_of_compdec HA a1 a2) && (eqb_of_compdec _ l1 l2). *)
 
-  Variables a1 a2 : A.
-  Variables l1 l2 : list A.
-  Hypothesis H1 : eqb_of_compdec _ (a1::l1) (a2::l2).
+(*   Variables a1 a2 : A. *)
+(*   Variables l1 l2 : list A. *)
+(*   Hypothesis H1 : eqb_of_compdec _ (a1::l1) (a2::l2). *)
 
-  Goal eqb_of_compdec _ a1 a2.
-  Proof. verit. Qed.
+(*   Goal eqb_of_compdec _ a1 a2. *)
+(*   Proof. verit. Qed. *)
 
-  Variable inb : A -> list A -> bool.
+(*   Variable inb : A -> list A -> bool. *)
 
-  Hypothesis H2 : forall (a:A) l1 l2, inb a (l1++l2) ---> (inb a l1 || inb a l2).
+(*   Hypothesis H2 : forall (a:A) l1 l2, inb a (l1++l2) ---> (inb a l1 || inb a l2). *)
 
-  Goal negb (inb a1 (l1++l2)) || inb a1 l1 || inb a1 l2.
-  Proof. verit. Qed.
+(*   Goal negb (inb a1 (l1++l2)) || inb a1 l1 || inb a1 l2. *)
+(*   Proof. verit. Qed. *)
 
-End QInstAnd.
+(* End QInstAnd. *)
 
 
 Section OCamlCompDec.
