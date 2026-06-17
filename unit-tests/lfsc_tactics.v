@@ -23,71 +23,177 @@ Section BV.
   Import BVList.BITVECTOR_LIST.
   Local Open Scope bv_scope.
 
-  Goal forall (a b c: bitvector 4),
-                                 (c = (bv_and a b)) ->
-                                 ((bv_and (bv_and c a) b) = c).
-  Proof.
-    smt.
-  Qed.
-
-  Goal forall (bv1 bv2 bv3: bitvector 4),
-      bv1 = #b|0|0|0|0|  /\
-      bv2 = #b|1|0|0|0|  /\
-      bv3 = #b|1|1|0|0|  ->
-      bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
-  Proof.
-   smt.
-  Qed.
-
-
   Goal forall (a: bitvector 32), a = a.
-  Proof.
-    smt.
-  Qed.
+  Proof. smt. Qed.
+
+
+  Goal forall (a: bitvector 32), bv_eq a a.
+  Proof. smt. Qed.
+
+
+  Goal forall (a b: bitvector 32), a = b.
+  Proof. Fail smt. Abort.
+
 
   Goal forall (bv1 bv2: bitvector 4),
-       bv1 = bv2 <-> bv2 = bv1.
-  Proof.
-   smt.
-  Qed.
+    bv1 = bv2 <-> bv2 = bv1.
+  Proof. smt. Qed.
+
+  Goal forall (bv1 bv2: bitvector 4),
+    Bool.eqb (bv_eq bv1 bv2) (bv_eq bv2 bv1).
+  Proof. smt. Qed.
+
+
+  Goal forall (a b c: bitvector 4),
+    c = bv_and a b ->
+    bv_and (bv_and c a) b = c.
+  Proof. smt. Qed.
+
+  Goal forall (a b c: bitvector 4),
+    bv_eq c (bv_and a b) -->
+    bv_eq (bv_and (bv_and c a) b) c.
+  Proof. smt. Qed.
+
+
+  Goal forall (bv1 bv2 bv3: bitvector 4),
+    bv1 = #b|0|0|0|0| /\
+    bv2 = #b|1|0|0|0| /\
+    bv3 = #b|1|1|0|0| ->
+    bv_ultP bv1 bv2 /\ bv_ultP bv2 bv3.
+  Proof. smt. Qed.
+
+  Goal forall (bv1 bv2 bv3: bitvector 4),
+    bv_eq #b|0|0|0|0| bv1 &&
+    bv_eq #b|1|0|0|0| bv2 &&
+    bv_eq #b|1|1|0|0| bv3 ->
+    bv_ult bv1 bv2 /\ bv_ult bv2 bv3.
+  Proof. smt. Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+    bv1 = #b|0|0|0|0| /\
+    bv2 = #b|1|0|0|0| /\
+    bv3 = #b|1|1|0|0| /\
+    bv4 = #b|1|1|1|0| ->
+    bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 /\ bv_ultP bv3 bv4.
+  Proof. smt. Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+    bv_eq #b|0|0|0|0| bv1 &&
+    bv_eq #b|1|0|0|0| bv2 &&
+    bv_eq #b|1|1|0|0| bv3 &&
+    bv_eq #b|1|1|1|0| bv4 -->
+    bv_ult bv1 bv2 || bv_ult bv3 bv1 && bv_ult bv3 bv4.
+  Proof. smt. Qed.
+
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+    #b|0|0|0|0| = bv1 /\
+    #b|1|0|0|0| = bv2 /\
+    #b|1|1|0|0| = bv3 /\
+    #b|1|1|1|0| = bv4 ->
+    bv_ultP bv1 bv2 \/ bv_ultP bv3 bv1 -> bv_ultP bv1 bv3 ->
+    bv_ultP bv1 bv4 \/ bv_ultP bv4 bv1.
+  Proof. smt. Qed.
+
+  Goal forall (bv1 bv2 bv3 bv4: bitvector 4),
+    bv_eq #b|0|0|0|0| bv1 &&
+    bv_eq #b|1|0|0|0| bv2 &&
+    bv_eq #b|1|1|0|0| bv3 &&
+    bv_eq #b|1|1|1|0| bv4 -->
+    bv_ult bv1 bv2 || bv_ult bv3 bv1 --> bv_ult bv1 bv3 -->
+    bv_ult bv1 bv4 || bv_ult bv4 bv1.
+  Proof. smt. Qed.
+
+
+  (* TODO: [VL] Large runtest *)
+  (* Goal forall (a b: bitvector 8), *)
+  (*   #b|1|0|0|0|0|0|0|0| = a -> *)
+  (*   #b|1|0|0|0|0|0|0|0| = b -> (bv_mult a b) =  #b|0|0|0|0|0|0|0|0|. *)
+  (* Proof. smt. Qed. *)
 
 End BV.
 
 
 Section Arrays.
 
+  Import BVList.BITVECTOR_LIST.
   Import FArray.
+
+  Local Open Scope bv_scope.
   Local Open Scope farray_scope.
 
 
-  Goal forall (a:farray Z Z) i j, i = j -> a[i] = a[j].
-  Proof.
-    smt.
-  Qed.
+  (* Goal forall (a: farray Z Z), a = a. *)
+  (* Proof. smt. Qed. *)
 
-  (* TODO: Slowness + SAT *)
-  (* Goal forall (a b: farray Z Z) *)
-  (*        (v w x y: Z) *)
-  (*        (g: farray Z Z -> Z) *)
-  (*        (f: Z -> Z), *)
-  (*        (a[x <- v] = b) /\ a[y <- w] = b  -> *)
-  (*        (f x) = (f y) \/  (g a) = (g b). *)
-  (* Proof. *)
-  (*   smt. *)
-  (* Qed. *)
+  Goal forall (a: farray Z Z), equal a a.
+  Proof. smt. Qed.
 
-  (* TODO *)
+
+  (* Goal forall (a b: farray Z Z), a = b <-> b = a. *)
+  (* Proof. smt. Qed. *)
+
+  Goal forall (a b: farray Z Z), Bool.eqb (equal a b) (equal b a).
+  Proof. smt. Qed.
+
+
+  (* Goal forall (a b: farray (bitvector 8) (bitvector 8)), a = b <-> b = a. *)
+  (* Proof. smt. Qed. *)
+
+  Goal forall (a b: farray (bitvector 8) (bitvector 8)), Bool.eqb (equal a b) (equal b a).
+  Proof. smt. Qed.
+
+
+  Goal forall (a: farray Z Z) i j,
+    i = j -> a[i] = a[j].
+  Proof. smt. Qed.
+
+
   (* Goal forall (a b c d: farray Z Z), *)
-  (*     b[0%Z <- 4] = c  -> *)
-  (*     d = b[0%Z <- 4][1%Z <- 4]  -> *)
-  (*     a = d[1%Z <- b[1%Z]]  -> *)
-  (*     a = c. *)
-  (* Proof. *)
-  (*   smt. *)
-  (* Qed. *)
+  (*   b[0 <- 4] = c  -> *)
+  (*   d = b[0 <- 4][1 <- 4]  -> *)
+  (*   a = d[1 <- b[1]]  -> *)
+  (*   a = c. *)
+  (* Proof. smt. Qed. *)
+
+  (* Goal forall (a b c d: farray Z Z), *)
+  (*   equal b[0 <- 4] c --> *)
+  (*   equal d b[0 <- 4][1 <- 4] && *)
+  (*   equal a d[1 <- b[1]]  --> *)
+  (*   equal a c. *)
+  (* Proof. smt. Qed. *)
+
+
+  (* Goal forall (bv1 bv2 : bitvector 4) (a b c d : farray (bitvector 4) Z), *)
+  (*   bv1 = #b|0|0|0|0| -> *)
+  (*   bv2 = #b|1|0|0|0| -> *)
+  (*   c = b[bv1 <- 4] -> *)
+  (*   d = b[bv1 <- 4][bv2 <- 4] -> *)
+  (*   a = d[bv2 <- b[bv2]] -> *)
+  (*   a = c. *)
+  (* Proof. smt. Qed. *)
+
+  (* Goal forall (bv1 bv2 : bitvector 4) (a b c d : farray (bitvector 4) Z), *)
+  (*   bv_eq #b|0|0|0|0| bv1  --> *)
+  (*   bv_eq #b|1|0|0|0| bv2  --> *)
+  (*   equal c b[bv1 <- 4] --> *)
+  (*   equal d b[bv1 <- 4][bv2 <- 4] --> *)
+  (*   equal a d[bv2 <- b[bv2]] --> *)
+  (*   equal a c. *)
+  (* Proof. smt. Qed. *)
+
 
   Goal forall (a b: farray Z Z) i,
-      (select (store (store (store a i 3%Z) 1%Z (select (store b i 4) i)) 2%Z 2%Z) 1%Z) =  4.
+    a[i <- 3][1 <- b[i <- 4][i]][2 <- 2][1] = 4.
+  Proof.
+    smt.
+    rewrite read_over_other_write; [ | easy].
+    rewrite read_over_write.
+    rewrite read_over_write; auto.
+  Qed.
+
+  Goal forall (a b: farray Z Z) i,
+    Z.eqb (a[i <- 3][1 <- b[i <- 4][i]][2 <- 2][1]) 4.
   Proof.
     smt.
     rewrite read_over_other_write; try easy.
@@ -95,99 +201,162 @@ Section Arrays.
     rewrite read_over_same_write; try easy; try apply Z_compdec.
   Qed.
 
+
+  (* Goal forall (a b: farray Z Z) *)
+  (*   (v w x y: Z) *)
+  (*   (g: farray Z Z -> Z) *)
+  (*   (f: Z -> Z), *)
+  (*   (a[x <- v] = b) /\ a[y <- w] = b -> *)
+  (*   (f x) = (f y) \/ (g a) = (g b). *)
+  (* Proof. *)
+  (*   smt. *)
+  (* Qed. *)
+
+  (* Goal forall (a b: farray Z Z) *)
+  (*   (v w x y: Z) *)
+  (*   (g: farray Z Z -> Z) *)
+  (*   (f: Z -> Z), *)
+  (*   equal a[x <- v] b && equal a[y <- w] b --> *)
+  (*   Z.eqb (f x) (f y) || Z.eqb (g a) (g b). *)
+  (* Proof. smt. Qed. *)
+
 End Arrays.
 
 
 Section EUF.
 
-  Goal forall
-         (x y: Z)
-         (f: Z -> Z),
-         y = x -> (f x) = (f y).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (x y: Z) (f: Z -> Z),
+    y = x -> f x = f y.
+  Proof. smt. Qed.
 
-  Goal forall
-         (x y: Z)
-         (f: Z -> Z),
-         (f x) = (f y) -> (f y) = (f x).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (x y: Z) (f: Z -> Z),
+    Z.eqb y x --> Z.eqb (f x) (f y).
+  Proof. smt. Qed.
 
 
-  Goal forall
-         (x y: Z)
-         (f: Z -> Z),
-         x + 1 = (y + 1) -> (f y) = (f x).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (x y: Z) (f: Z -> Z),
+    f x = f y -> f y = f x.
+  Proof. smt. Qed.
+
+  Goal forall (x y: Z) (f: Z -> Z),
+    Z.eqb (f x) (f y) --> Z.eqb (f y) (f x).
+  Proof. smt. Qed.
 
 
-  Goal forall
-         (x y: Z)
-         (f: Z -> Z),
-         x = (y + 1) -> (f y) = (f (x - 1)).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (x y: Z) (f: Z -> Z),
+    x + 1 = y + 1 -> f y = f x.
+  Proof. smt. Qed.
 
-  Goal forall
-         (x y: Z)
-         (f: Z -> Z),
-         x = (y + 1) -> (f (y + 1)) = (f x).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (x y: Z) (f: Z -> Z),
+    Z.eqb (x + 1) (y + 1) --> Z.eqb (f y) (f x).
+  Proof. smt. Qed.
+
+
+  Goal forall (x y: Z) (f: Z -> Z),
+    x = y + 1 -> f y = f (x - 1).
+  Proof. smt. Qed.
+
+  Goal forall (x y: Z) (f: Z -> Z),
+    Z.eqb x (y + 1) --> Z.eqb (f y) (f (x - 1)).
+  Proof. smt. Qed.
+
+
+  Goal forall (x y: Z) (f: Z -> Z),
+    x = y + 1 -> f (y + 1) = f x.
+  Proof. smt. Qed.
+
+  Goal forall (x y: Z) (f: Z -> Z),
+    Z.eqb x (y + 1) -> Z.eqb (f (y + 1)) (f x).
+  Proof. smt. Qed.
+
+
+  Goal forall (f: Z -> Z -> Z) x y z,
+    x = y -> f z x = f z y.
+  Proof. smt. Qed.
+
+  Goal forall (f: Z -> Z -> Z) x y z,
+    Z.eqb x y --> Z.eqb (f z x) (f z y).
+  Proof. smt. Qed.
+
+
+  (* Goal forall (t: Type) (p: CompDec t) (x y: t),  *)
+  (*   x = y <-> x = y. *)
+  (* Proof. smt. Qed. *)
 
 End EUF.
 
 
 Section LIA.
 
+  Goal forall (a b: Z), a = a /\ b = b.
+  Proof. smt. Qed.
+
+  Goal forall (a b: Z), (Z.eqb a a) && (Z.eqb b b).
+  Proof. smt. Qed.
+
+
   Goal forall (a b: Z), a = b <-> b = a.
-  Proof.
-    smt.
-  Qed.
+  Proof. smt. Qed.
 
-  Goal forall (x y: Z), (x >= y) -> (y < x) \/ (x = y).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (a b: Z), Bool.eqb (Z.eqb a b) (Z.eqb b a).
+  Proof. smt. Qed.
 
 
-  Goal forall (f : Z -> Z) (a:Z), ((f a) > 1) ->  ((f a) + 1) >= 2 \/((f a) = 30) .
-  Proof.
-   smt.
-  Qed.
+  Goal forall (a b: Z), a < b -> a < b + 1.
+  Proof. smt. Qed.
 
-  Goal forall x: Z, (x = 0%Z) -> (8 >= 0).
-  Proof.
-    smt.
-   Qed.
+  Goal forall (a b: Z), (a <? b)%Z --> (a <? b + 1)%Z.
+  Proof. smt. Qed.
 
-  Goal forall x: Z, ~ (x < 0%Z) -> (8 >= 0).
-  Proof.
-    smt.
-  Qed.
 
-  Goal forall (a b: Z), a < b -> a < (b + 1).
-  Proof.
-    smt.
-  Qed.
+  Goal forall (x y: Z), x >= y -> y < x \/ x = y.
+  Proof. smt. Qed.
+
+  Goal forall (x y: Z), (x >=? y)%Z --> ((y <? x)%Z || (Z.eqb x y)).
+  Proof. smt. Qed.
+
+
+  Goal forall (f: Z -> Z) (a: Z),
+    f a > 1 -> (f a) + 1 >= 2 \/ (f a) = 30.
+  Proof. smt. Qed.
+
+  Goal forall (f: Z -> Z) (a: Z), (f a >? 1)%Z --> (((f a) + 1 >=? 2)%Z || (Z.eqb (f a) 30)).
+  Proof. smt. Qed.
+
+
+  Goal forall (x: Z), (x = 0) -> (8 >= 0).
+  Proof. smt. Qed.
+
+  Goal forall (x: Z), (Z.eqb x 0) --> (8 >=? 0)%Z.
+  Proof. smt. Qed.
+
+
+  Goal forall (x: Z), ~ (x < 0) -> (8 >= 0).
+  Proof. smt. Qed.
+
+  Goal forall (x: Z), negb (x <? 0)%Z --> (8 >=? 0)%Z.
+  Proof. smt. Qed.
+
+
+  Goal forall (a b: Z), a < b -> a < b + 1.
+  Proof. smt. Qed.
+
+  Goal forall (a b: Z), (a <? b)%Z --> (a <? b + 1)%Z.
+  Proof. smt. Qed.
+
 
   Goal forall (a b: Z), (a < b) -> (a + 2) < (b + 3).
-  Proof.
-    smt.
-  Qed.
+  Proof. smt. Qed.
+
+  Goal forall (a b: Z), (a <? b)%Z --> ((a + 2) <? (b + 3))%Z.
+  Proof. smt. Qed.
 
 
   Goal forall a b, a < b -> a < (b + 10).
-  Proof.
-    smt.
-  Qed.
+  Proof. smt. Qed.
+
+  Goal forall (a b: Z), (a <? b)%Z --> (a <? b + 10)%Z.
+  Proof. smt. Qed.
 
 End LIA.
 
@@ -196,7 +365,7 @@ Section PR.
 
   (* Simple connectors *)
 
-  Goal forall (a:bool), a || negb a.
+  Goal forall (a: bool), a || negb a.
   Proof.
     smt.
   Qed.
