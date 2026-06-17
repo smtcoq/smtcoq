@@ -6,11 +6,14 @@ shift 1
 DEPS=$*
 
 MODULES=""
-
+MODULES+=$'\n'"  lfsc_tactics"
+MODULES+=$'\n'"  verit_tactics"
+MODULES+=$'\n'"  zchaff_tactics"
 
 function lfsc() {
     FILENAME=$1
 
+    # TODO
     [[ "${FILENAME}" == hole4 ]] && return
     [[ "${FILENAME}" =~ lia[0-9]* ]] && return
     [[ "${FILENAME}" == sat5 ]] && return
@@ -48,24 +51,25 @@ EOF
 
     cat <<EOF
 (rule
- (target vernac_lfsc_${FILENAME}.v)
+ (target lfsc_vernac_${FILENAME}.v)
  (deps ${FILENAME}.smt2 ${FILENAME}.lfsc)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Lfsc_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.lfsc\".\nEnd Checker.\n")))
 
 EOF
 
-    MODULES+=$'\n'"  vernac_lfsc_${FILENAME}"
+    MODULES+=$'\n'"  lfsc_vernac_${FILENAME}"
 }
 
 
 function verit() {
     FILENAME=$1
 
-    [[ "${FILENAME}" == bv1 ]] && return
-    [[ "${FILENAME}" == bv2 ]] && return
+    [[ "${FILENAME}" =~ bv[0-9]* ]] && return
+
+    # TODO
     [[ "${FILENAME}" == ex1 ]] && return
     [[ "${FILENAME}" == sat10 ]] && return
 
@@ -90,16 +94,16 @@ EOF
 
     cat <<EOF
 (rule
- (target vernac_verit_${FILENAME}.v)
+ (target verit_vernac_${FILENAME}.v)
  (deps ${FILENAME}.smt2 ${FILENAME}.vtlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"unit-tests/${FILENAME}.smt2\" \"unit-tests/${FILENAME}.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
 
 EOF
 
-    MODULES+=$'\n'"  vernac_verit_${FILENAME}"
+    MODULES+=$'\n'"  verit_vernac_${FILENAME}"
 }
 
 
@@ -118,16 +122,16 @@ EOF
 
     cat <<EOF
 (rule
- (target vernac_zchaff_${FILENAME}.v)
+ (target zchaff_vernac_${FILENAME}.v)
  (deps ${FILENAME}.cnf ${FILENAME}.zlog)
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Zchaff_Checker \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\nEnd File.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"unit-tests/${FILENAME}.cnf\" \"unit-tests/${FILENAME}.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
 
 EOF
 
-    MODULES+=$'\n'"  vernac_zchaff_${FILENAME}"
+    MODULES+=$'\n'"  zchaff_vernac_${FILENAME}"
 }
 
 
@@ -157,7 +161,10 @@ done
 cat <<EOF
 (rocq.theory
  (name SMTCoq.tests)
+ (generate_project_file)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
- (modules${MODULES}))
+ (modules${MODULES})
+ (flags
+  (:standard -I ../_build/install/default/lib)))
 EOF
