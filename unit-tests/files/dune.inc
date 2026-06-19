@@ -1338,6 +1338,4 @@
   lfsc_vernac_uf6
   verit_vernac_uf6
   lfsc_vernac_uf7
-  verit_vernac_uf7)
- (flags
-  (:standard -I ../_build/install/default/lib)))
+  verit_vernac_uf7))

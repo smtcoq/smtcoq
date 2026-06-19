@@ -165,7 +165,5 @@ cat <<EOF
  (generate_project_file)
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
- (modules${MODULES})
- (flags
-  (:standard -I ../_build/install/default/lib)))
+ (modules${MODULES}))
 EOF
