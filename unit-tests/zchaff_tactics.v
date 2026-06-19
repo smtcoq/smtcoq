@@ -14,219 +14,138 @@ From SMTCoq Require Import SMTCoq.
 From Stdlib Require Import Bool ZArith.
 
 
-(* First a tactic, to test the universe computation in an empty
-   environment. *)
+(** First a tactic, to test the universe computation in an empty
+    environment. *)
 
 Lemma check_univ (x1: bool):
   (x1 && (negb x1)) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 
-(* zChaff tactic *)
+(** zChaff tactic *)
 
 Goal forall a, a || negb a.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, negb (a || negb a) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, negb (negb (a || negb a)).
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, (a && negb a) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, negb (a && negb a).
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, implb a a.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, negb (implb a a) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a , (xorb a a) || negb (xorb a a).
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, (a||negb a) || negb (a||negb a).
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal true.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal negb false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall a, Bool.eqb a a.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall (a:bool), a = a.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 
 (* sat2.smt *)
 (* ((a ∧ b) ∨ (b ∧ c)) ∧ ¬b = ⊥ *)
-
 Goal forall a b c, (((a && b) || (b && c)) && (negb b)) = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 (* sat3.smt *)
 (* (a ∨ a) ∧ ¬a = ⊥ *)
-
 Goal forall a, ((a || a) && (negb a)) = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 (* sat4.smt *)
 (* ¬(a ∨ ¬a) = ⊥ *)
-
 Goal forall a, (negb (a || (negb a))) = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 (* sat5.smt *)
 (* (a ∨ b ∨ c) ∧ (¬a ∨ ¬b ∨ ¬c) ∧ (¬a ∨ b) ∧ (¬b ∨ c) ∧ (¬c ∨ a) = ⊥ *)
-
 Goal forall a b c,
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 
 (* The same, but with a, b and c being concrete terms *)
-
 Goal forall i j k,
   ((i =? j) || (j =? k) || (k =? i)) && ((negb (i =? j)) || (negb (j =? k)) || (negb (k =? i))) && ((negb (i =? j)) || (j =? k)) && ((negb (j =? k)) || (k =? i)) && ((negb (k =? i)) || (i =? j)) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 Goal forall i j k,
   let a := i =? j in
   let b := j =? k in
   let c := k =? i in
   (a || b || c) && ((negb a) || (negb b) || (negb c)) && ((negb a) || b) && ((negb b) || c) && ((negb c) || a) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 
 (* sat6.smt *)
 (* (a ∧ b) ∧ (c ∨ d) ∧ ¬(c ∨ (a ∧ b ∧ d)) = ⊥ *)
-
 Goal forall a b c d, ((a && b) && (c || d) && (negb (c || (a && b && d)))) = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 (* sat7.smt *)
 (* a ∧ b ∧ c ∧ (¬a ∨ ¬b ∨ d) ∧ (¬d ∨ ¬c) = ⊥ *)
-
 Goal forall a b c d, (a && b && c && ((negb a) || (negb b) || d) && ((negb d) || (negb c))) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 
-(* Other connectives *)
+(** Other connectives *)
 
 Goal (false || true) && false = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 Goal negb true = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 Goal false = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 Goal forall x y, Bool.eqb (xorb x y) ((x && (negb y)) || ((negb x) && y)).
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 Goal forall x y, Bool.eqb (implb x y) ((x && y) || (negb x)).
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 Goal forall x y z, Bool.eqb (ifb x y z) ((x && y) || ((negb x) && z)).
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
-
-(* Multiple negations *)
+(** Multiple negations *)
 
 Goal forall a, orb a (negb (negb (negb a))) = true.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
 
-(* Polarities *)
+(** Polarities *)
 
 Goal forall a b, andb (orb a b) (negb (orb a b)) = false.
-Proof.
-  zchaff.
-Qed.
-
+Proof using. zchaff. Qed.
 
 Goal forall a b, andb (orb a b) (andb (negb a) (negb b)) = false.
-Proof.
-  zchaff.
-Qed.
+Proof using. zchaff. Qed.
 
-
-(* Pigeon hole: 4 holes, 5 pigeons. xij stands for "pidgeon i goes to
-   hole j". *)
+(** Pigeon hole: 4 holes, 5 pigeons. xij stands for "pidgeon i goes to
+    hole j". *)
 
 Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, (
   (orb (negb x11) (negb x21)) &&
@@ -315,7 +234,7 @@ Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 
   (orb (orb (orb x13 x23) x33) x43) &&
   (orb (orb (orb x14 x24) x34) x44) &&
   (orb (orb (orb x15 x25) x35) x45)) = false.
-Proof.
+Proof using.
   zchaff.
 Qed.
 
@@ -323,12 +242,12 @@ Qed.
 (* Counter examples *)
 
 Goal forall x, x && (negb x).
-Proof.
+Proof using.
   Fail zchaff.
 Abort.
 
 Goal forall x y, (implb (implb x y) (implb y x)).
-Proof.
+Proof using.
   Fail zchaff.
 Abort.
 
@@ -398,6 +317,4 @@ Goal forall x11 x12 x13 x14 x21 x22 x23 x24 x31 x32 x33 x34 x41 x42 x43 x44, (
   (orb (orb (orb x12 x22) x32) x42) &&
   (orb (orb (orb x13 x23) x33) x43) &&
   (orb (orb (orb x14 x24) x34) x44)) = false.
-Proof.
-  Fail zchaff.
-Abort.
+Proof using. Fail zchaff. Abort.
