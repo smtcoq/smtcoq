@@ -10,6 +10,8 @@
 (**************************************************************************)
 
 
+open Common
+
 type lex_buff = {
             buff       : bytes;
     mutable curr_char  : int;
@@ -26,8 +28,7 @@ let open_file s name =
     let buff_end = input in_channel buff 0 buff_length in
     { buff = buff; curr_char = 0; buff_end = buff_end; in_ch = in_channel }
   with _ ->
-    Printf.printf ("%s file %s does not exists.\n") s name;
-    exit 1
+    CoqInterface.error (Printf.sprintf "%s file %s does not exists." s name)
 
 let close lb =
   lb.buff_end <- 0;
