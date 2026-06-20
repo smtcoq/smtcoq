@@ -329,27 +329,41 @@ let call_zchaff nvars root =
   close_out errchan;
   let reloc, last = export outchan nvars root in
   close_out outchan;
+
+  let fl = Unix.openfile ".smtcoq_zchaff_lock" [Unix.O_CREAT; Unix.O_RDWR] 0o644 in
+  Unix.lockf fl Unix.F_LOCK 0;
+
   let command = "zchaff " ^ filename ^ " > " ^ resfilename ^ " 2> " ^ errfilename in
+
   CoqInterface.raise_debug "%s" command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
   SolverStatus.raise_debug_file_contents errfilename;
   Sys.remove errfilename;
-
   CoqInterface.raise_debug "Zchaff = %.5f" (t1 -. t0);
+
   if exit_code <> 0 then begin
+    Unix.lockf fl Unix.F_ULOCK 0;
+    Unix.close fl;
     CoqInterface.raise_error "Command %s exited with code %d" command exit_code
   end;
+
   let logfilename = (Filename.chop_extension filename) ^ ".log" in
-  let command2 = "mv resolve_trace "^logfilename in
-  let exit_code2 = Sys.command command2 in
-  if exit_code2 <> 0 then
+  let command = "mv resolve_trace "^logfilename in
+
+  let exit_code = Sys.command command in
+  if exit_code <> 0 then begin
+    Unix.lockf fl Unix.F_ULOCK 0;
+    Unix.close fl;
     CoqInterface.raise_debug
       "Command %s exited with code %d\nDid you forget to turn on Zchaff proof production?"
-      command2
-      exit_code2;
-  (* import_cnf_trace reloc logfilename root last  *)
+      command exit_code
+  end;
+
+  Unix.lockf fl Unix.F_ULOCK 0;
+  Unix.close fl;
+
   (reloc, resfilename, logfilename, last)
 
 
