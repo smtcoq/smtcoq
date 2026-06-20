@@ -15,7 +15,7 @@ let msg_file filename =
       let ic = open_in filename in
       (try
          while true do
-           CoqInterface.msg_solver_status (input_line ic)
+           CoqInterface.print_msg "%s" (input_line ic)
          done
        with End_of_file -> close_in ic)
     with Sys_error _ -> ()

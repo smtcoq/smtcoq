@@ -206,12 +206,12 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
       | Some i -> "timeout "^(string_of_int i)^" "^command
       | None -> command
   in
-  CoqInterface.msg_solver_status command;
+  CoqInterface.print_msg "%s" command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
   SolverStatus.msg_file oname;
-  CoqInterface.msg_solver_status (Printf.sprintf "Verit = %.5f" (t1 -. t0));
+  CoqInterface.print_msg "Verit = %.5f" (t1 -. t0);
 
   let win = open_in wname in
 

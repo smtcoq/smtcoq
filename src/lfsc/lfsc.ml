@@ -555,14 +555,14 @@ let call_cvc4_file _ env rt ro ra rf root =
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " > " ^ prooffilename ^ " 2> " ^ errfilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
-  CoqInterface.msg_solver_status cvc4_cmd;
+  CoqInterface.print_msg "%s" cvc4_cmd;
   let t0 = Sys.time () in
   let exit_code = Sys.command cvc4_cmd in
   SolverStatus.msg_file errfilename;
   Sys.remove errfilename;
 
   let t1 = Sys.time () in
-  CoqInterface.msg_solver_status (Printf.sprintf "CVC4 = %.5f" (t1 -. t0));
+  CoqInterface.print_msg "CVC4 = %.5f" (t1 -. t0);
 
   if exit_code <> 0 then begin
     CoqInterface.error ("CVC4 crashed: return code "^string_of_int exit_code);

@@ -20,8 +20,6 @@ open Common
 
 let _ = CoqInterface.print_solver_status ()
 
-let _ = CoqInterface.print_solver_status ()
-
 }
 
 VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY
