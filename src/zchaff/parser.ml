@@ -101,15 +101,17 @@ let parse_VAR_CONF reloc lb last =
     Hashtbl.add vartbl (Var x) vd;
     Hashtbl.add vartbl (Level lv) vd;
   done;
+
   (* Adding the resolution *)
   let rec build_res0 l =
     match l with
     | [] -> []
     | y :: l ->
       let yd =
-	try Hashtbl.find vartbl (Var y)
+        try Hashtbl.find vartbl (Var y)
         with Not_found ->
-	  Printf.printf "Var %i not found.\n" y;raise Not_found in
+          CoqInterface.raise_anomaly "Var %i not found.\n" y
+      in
       match yd.vclause with
       | Some cy -> cy :: build_res0 l
       | _ -> assert false in
@@ -119,22 +121,23 @@ let parse_VAR_CONF reloc lb last =
     | y :: l ->
       if x = y then build_res0 l
       else
-	let yd =
-	  try Hashtbl.find vartbl (Var y)
-	  with Not_found ->
-	    Printf.printf "Var %i not found.\n" y;raise Not_found in
-	match yd.vclause with
-	| Some cy -> cy :: build_res1 x l
-	| _ -> assert false in
+        let yd =
+          try Hashtbl.find vartbl (Var y)
+          with Not_found ->
+            CoqInterface.raise_anomaly "Var %i not found.\n" y in
+        match yd.vclause with
+        | Some cy -> cy :: build_res1 x l
+        | _ -> assert false in
+
   let last = ref last in
   for lv = 0 to !max_level do
     try
       let vd = Hashtbl.find vartbl (Level lv) in
       let c =
-	match build_res1 vd.var vd.ante_val with
-	| [] -> vd.ante
-	| c2::tl -> 
-	    last := alloc_res !last vd.ante c2 tl; !last in
+        match build_res1 vd.var vd.ante_val with
+        | [] -> vd.ante
+        | c2::tl ->
+            last := alloc_res !last vd.ante c2 tl; !last in
       vd.vclause <- Some c;
     with Not_found -> ()
   done;

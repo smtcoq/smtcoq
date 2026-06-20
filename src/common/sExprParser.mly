@@ -24,10 +24,9 @@
 
   let parse_failure what =
     let pos = symbol_start_pos () in
-    let msg =
-      Printf.sprintf "SExprParser: failed to parse line %d char %d: %s"
-        pos.pos_lnum (pos.pos_cnum - pos.pos_bol) what in
-    failwith msg
+    CoqInterface.raise_error
+      "SExprParser: failed to parse line %d char %d: %s"
+      pos.pos_lnum (pos.pos_cnum - pos.pos_bol) what
 %}
 
 %token <string> STRING

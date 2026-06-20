@@ -14,7 +14,6 @@
 (* This parser is adapted from Jane Street sexplib parser *)
 
   open Common
-  open Printf
   open Lexing
   open Parser
 
@@ -165,13 +164,11 @@ and scan_string buf start = parse
         let v = SmtMisc.dec_code c1 c2 c3 in
         if v > 255 then (
           let { pos_lnum; pos_bol; pos_cnum; pos_fname = _ } = lexeme_end_p lexbuf in
-          let msg =
-            sprintf
-              "Sexplib.Lexer.scan_string: \
-               illegal escape at line %d char %d: `\\%c%c%c'"
+            CoqInterface.raise_error
+              "Sexplib.Lexer.scan_string: illegal escape at line %d char %d: `\\%c%c%c'"
               pos_lnum (pos_cnum - pos_bol - 3)
-              c1 c2 c3 in
-          failwith msg);
+              c1 c2 c3
+        );
         Quoted_string_buffer.add_char buf (Char.chr v);
         Quoted_string_buffer.add_lexeme buf lexbuf;
         scan_string buf start lexbuf
@@ -207,12 +204,9 @@ and scan_string buf start = parse
       }
   | eof
       {
-        let msg =
-          sprintf
-            "Sexplib.Lexer.scan_string: unterminated string at line %d char %d"
-            start.pos_lnum (start.pos_cnum - start.pos_bol)
-        in
-        failwith msg
+        CoqInterface.raise_error
+          "Sexplib.Lexer.scan_string: unterminated string at line %d char %d"
+          start.pos_lnum (start.pos_cnum - start.pos_bol)
       }
 
 and scan_block_comment buf locs = parse
@@ -250,12 +244,9 @@ and scan_block_comment buf locs = parse
         match locs with
         | [] -> assert false
         | { pos_lnum; pos_bol; pos_cnum; pos_fname = _ } :: _ ->
-            let msg =
-              sprintf "Sexplib.Lexer.scan_block_comment: \
-                unterminated block comment at line %d char %d"
-                pos_lnum (pos_cnum - pos_bol)
-            in
-            failwith msg
+            CoqInterface.raise_error
+              "Sexplib.Lexer.scan_block_comment: unterminated block comment at line %d char %d"
+              pos_lnum (pos_cnum - pos_bol)
       }
 
 { (* RESUME FUNCTOR BODY CONTAINING GENERATED CODE *)

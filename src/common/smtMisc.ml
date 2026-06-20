@@ -97,12 +97,9 @@ let lexeme_len { Lexing.lex_start_pos; Lexing.lex_curr_pos; _ } = lex_curr_pos -
 
 let main_failure lexbuf msg =
   let { Lexing.pos_lnum; Lexing.pos_bol; Lexing.pos_cnum; Lexing.pos_fname = _ } = Lexing.lexeme_start_p lexbuf in
-  let msg =
-    Printf.sprintf
-      "Sexplib.Lexer.main: %s at line %d char %d"
-      msg pos_lnum (pos_cnum - pos_bol)
-  in
-  failwith msg
+  CoqInterface.raise_error
+    "Sexplib.Lexer.main: %s at line %d char %d"
+    msg pos_lnum (pos_cnum - pos_bol)
 
 
 (* Constr hashtables up to aliasing, casts, ... *)

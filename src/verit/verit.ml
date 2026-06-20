@@ -185,12 +185,6 @@ exception Unknown
 let verit_warning = CoqInterface.raise_warning ~name:"verit-warning"
     Pp.(fun w -> str "veriT outputted the warning:" ++ spc() ++ str w)
 
-let verit_non_zero_exit =
-  CoqInterface.raise_warning ~name:"verit-non-zero-exit-code"
-    Pp.(fun (command,code) ->
-        str "Verit.call_verit: command" ++ spc() ++ str command ++ spc() ++
-        str "exited with code" ++ spc () ++ int code)
-
 let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
   export outchan rt ro lsmt;
@@ -232,9 +226,11 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
           CoqInterface.raise_error "veriT failed with the error: %s" l
       done
     with End_of_file -> () in
-  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; Sys.remove oname; let _ = CoqInterface.raise_anomaly "veriT timed out" in ());
+
+  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; Sys.remove oname; CoqInterface.raise_error "veriT timed out");
+
   try
-    if exit_code <> 0 then verit_non_zero_exit (command,exit_code);
+    (if exit_code <> 0 then CoqInterface.raise_error "veriT exited with code %d" exit_code);
     raise_warnings_errors ();
     let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
     close_in win; Sys.remove wname; Sys.remove oname; res

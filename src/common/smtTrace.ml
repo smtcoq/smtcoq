@@ -91,7 +91,7 @@ let has_prev c =
 let prev c =
   match c.prev with
   | Some c1 -> c1
-  | None -> Printf.printf "prev %i\n" c.id;flush stdout;assert false
+  | None -> CoqInterface.raise_anomaly "prev %i\n" c.id
 
 let link c1 c2 =
   c1.next <- Some c2;
@@ -112,7 +112,7 @@ let insert_before c cprev =
 let get_res c s =
   match c.kind with
   | Res res -> res
-  | _ -> Printf.printf "get_res %s\n" s; assert false
+  | _ -> CoqInterface.raise_anomaly "get_res %s\n" s
 
 let get_other c s =
   match c.kind with

@@ -392,21 +392,20 @@ let rec term_smtcoq_old t =
       | Some (n, [a]) when n == H.uminus_Int ->
         Form.Atom (Atom.mk_opp ra (term_smtcoq_atom a))
       | Some (n, _) ->
-        Format.eprintf "\nTerm: %a\n@." print_term t;
-        failwith ("LFSC function symbol "^Hstring.view n^" not supported.")
+        CoqInterface.raise_error "LFSC function symbol %s not supported" (Hstring.view n)
       | _ -> assert false
     end
 
-  | Rat _ -> failwith ("LFSC rationals not supported")
-  | Type -> failwith ("LFSC Type not supported")
-  | Kind -> failwith ("LFSC Kind not supported")
-  | Mpz -> failwith ("LFSC mpz not supported")
-  | Mpq -> failwith ("LFSC mpq not supported")
-  | Pi _ -> failwith ("LFSC pi abstractions not supported")
-  | Lambda _ -> failwith ("LFSC lambda abstractions not supported")
-  | Hole _ -> failwith ("LFSC holes not supported")
-  | Ptr _ -> failwith ("LFSC Ptr not supported")
-  | SideCond _ -> failwith ("LFSC side conditions not supported")
+  | Rat _ -> CoqInterface.raise_error "LFSC rationals not supported"
+  | Type -> CoqInterface.raise_error "LFSC Type not supported"
+  | Kind -> CoqInterface.raise_error "LFSC Kind not supported"
+  | Mpz -> CoqInterface.raise_error "LFSC mpz not supported"
+  | Mpq -> CoqInterface.raise_error "LFSC mpq not supported"
+  | Pi _ -> CoqInterface.raise_error "LFSC pi abstractions not supported"
+  | Lambda _ -> CoqInterface.raise_error "LFSC lambda abstractions not supported"
+  | Hole _ -> CoqInterface.raise_error "LFSC holes not supported"
+  | Ptr _ -> CoqInterface.raise_error "LFSC Ptr not supported"
+  | SideCond _ -> CoqInterface.raise_error "LFSC side conditions not supported"
   | _ -> assert false
 
 
@@ -448,8 +447,7 @@ and uncurry acc t = match app_name t, acc with
        Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun (Hstring.view n), args)))
      | _ -> assert false)
   | _ ->
-    eprintf "uncurry fail: %a@." Ast.print_term t;
-    assert false
+    CoqInterface.raise_error "uncurry fail: %a@." Ast.print_term t
 
 (* Endianness dependant: LFSC big endian -> SMTCoq little endian *)
 and bblt_lits acc t = match name t with
@@ -519,7 +517,7 @@ let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
     if show_veritproof then
-      eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
+      CoqInterface.raise_debug "%d:(%s %a %a)@." id (string_of_rule rule)
         print_clause cl
         (fun fmt -> List.iter (fprintf fmt " %d")) args;
     Verit.Syntax.mk_clause (id, get_rule rule, cl, args)
@@ -538,7 +536,7 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     if show_veritproof then eprintf "%d:input  %a@." id print_clause cl;
+     if show_veritproof then CoqInterface.raise_debug "%d:input  %a@." id print_clause cl;
      Verit.Syntax.mk_clause (id, Verit.Syntax.Inpu, cl, []) |> ignore
    | OldCl _ -> ()
 
@@ -549,7 +547,7 @@ let mk_admit_preproc name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     if show_veritproof then eprintf "%d:hole  %a@." id print_clause cl;
+     if show_veritproof then CoqInterface.raise_debug "%d:hole  %a@." id print_clause cl;
      Verit.Syntax.mk_clause (id, Verit.Syntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 

@@ -112,9 +112,9 @@ let interp_conseq_uf t_i (prem, concl) =
   interp prem
 
 
-let print_assm ty =
-  Format.printf "WARNING: assuming the following hypothesis:\n%s\n@."
-    (string_coq_constr ty)
+let print_assm =
+  CoqInterface.raise_warning ~name:"SMTCoq-assuming-hypothesis"
+    Pp.(fun ty -> str "Assuming the following hypothesis:" ++ spc() ++ str (string_coq_constr ty))
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
@@ -305,9 +305,8 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
    mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
 
   let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
-  Format.eprintf "     = %s\n     : bool@."
-    (if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then
-        "true" else "false")
+  if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
+  else CoqInterface.raise_error "The checker has returned the value false."
 
 let count_used confl =
   let cpt = ref 0 in
@@ -661,7 +660,7 @@ let get_arguments concl =
   match args with
   | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
   | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
-  | _ -> failwith ("Verit.tactic: can only deal with equality over bool")
+  | _ -> CoqInterface.raise_error "Verit.tactic: can only deal with equality over bool"
 
 
 let make_proof i call_solver env rt ro ra_quant rf_quant l ls_smtc =
