@@ -339,16 +339,16 @@ let call_zchaff nvars root =
 
   CoqInterface.msg_solver_status (Printf.sprintf "Zchaff = %.5f" (t1 -. t0));
   if exit_code <> 0 then begin
-    failwith ("Zchaff.call_zchaff: command " ^ command ^
+    CoqInterface.error ("Command " ^ command ^
                 " exited with code " ^ (string_of_int exit_code))
   end;
   let logfilename = (Filename.chop_extension filename) ^ ".log" in
   let command2 = "mv resolve_trace "^logfilename in
   let exit_code2 = Sys.command command2 in
   if exit_code2 <> 0 then
-      failwith ("Zchaff.call_zchaff: command " ^ command2 ^
+    CoqInterface.error ("Command " ^ command2 ^
                   " exited with code " ^ (string_of_int exit_code2) ^
-        "\nDid you forget to turn on Zchaff proof production?" );
+        "\nDid you forget to turn on Zchaff proof production?");
   (* import_cnf_trace reloc logfilename root last  *)
   (reloc, resfilename, logfilename, last)
 
