@@ -8,4 +8,4 @@ OUTPUT=$3
 
   zchaff "${INPUT}"
   mv resolve_trace "${OUTPUT}"
-) 100>.lock
+) 100>.smtcoq_zchaff_lock
