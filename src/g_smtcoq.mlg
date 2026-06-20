@@ -18,8 +18,6 @@ open Stdarg
 open Ltac_plugin
 open Common
 
-let _ = CoqInterface.print_solver_status ()
-
 }
 
 VERNAC COMMAND EXTEND Vernac_zchaff CLASSIFIED AS QUERY

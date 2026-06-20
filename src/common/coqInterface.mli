@@ -96,14 +96,15 @@ val mk_tactic : (Environ.env -> Evd.evar_map -> constr -> tactic) -> tactic
 val set_evars_tac : constr -> tactic
 
 
+(** Rocq messages *)
+val raise_anomaly : ('a, Format.formatter, unit, 'b) format4 -> 'a
+val raise_error : ('a, Format.formatter, unit, 'b) format4 -> 'a
+val raise_warning : name:string -> ?default:CWarnings.status -> ('a -> Pp.t) -> ?loc:Loc.t -> 'a -> unit
+val raise_debug : ('a, Format.formatter, unit, unit) format4 -> 'a
+
+
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
-val error : string -> 'a
-val anomaly : string -> 'a
-val smtcoq_cat : CWarnings.category
-
-val print_solver_status : unit -> bool
-val print_msg : ('a, Format.formatter, unit, unit) format4 -> 'a
 
 val destruct_rel_decl : Constr.rel_declaration -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr

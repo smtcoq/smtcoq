@@ -274,7 +274,7 @@ let checker fdimacs ftrace =
 
   let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
-  else CoqInterface.error "The ZChaff checker has returned the value false."
+  else CoqInterface.raise_error "The ZChaff checker has returned the value false."
 
 
 
@@ -330,25 +330,25 @@ let call_zchaff nvars root =
   let reloc, last = export outchan nvars root in
   close_out outchan;
   let command = "zchaff " ^ filename ^ " > " ^ resfilename ^ " 2> " ^ errfilename in
-  CoqInterface.print_msg "%s" command;
+  CoqInterface.raise_debug "%s" command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  SolverStatus.msg_file errfilename;
+  SolverStatus.raise_debug_file_contents errfilename;
   Sys.remove errfilename;
 
-  CoqInterface.print_msg "Zchaff = %.5f" (t1 -. t0);
+  CoqInterface.raise_debug "Zchaff = %.5f" (t1 -. t0);
   if exit_code <> 0 then begin
-    CoqInterface.error ("Command " ^ command ^
-                " exited with code " ^ (string_of_int exit_code))
+    CoqInterface.raise_error "Command %s exited with code %d" command exit_code
   end;
   let logfilename = (Filename.chop_extension filename) ^ ".log" in
   let command2 = "mv resolve_trace "^logfilename in
   let exit_code2 = Sys.command command2 in
   if exit_code2 <> 0 then
-    CoqInterface.error ("Command " ^ command2 ^
-                  " exited with code " ^ (string_of_int exit_code2) ^
-        "\nDid you forget to turn on Zchaff proof production?");
+    CoqInterface.raise_debug
+      "Command %s exited with code %d\nDid you forget to turn on Zchaff proof production?"
+      command2
+      exit_code2;
   (* import_cnf_trace reloc logfilename root last  *)
   (reloc, resfilename, logfilename, last)
 
@@ -505,7 +505,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
   let (reloc, resfilename, logfilename, last) =
     call_zchaff (Form.nvars reify_form) root in
   (try check_unsat resfilename with
-    | Sat model -> CoqInterface.error (List.fold_left (fun acc i ->
+    | Sat model -> CoqInterface.raise_error "%s" (List.fold_left (fun acc i ->
       let index = if i > 0 then i-1 else -i-1 in
       let ispos = i > 0 in
       try (

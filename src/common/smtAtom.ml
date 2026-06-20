@@ -713,7 +713,11 @@ module Atom =
         to_smt_atom ~debug:debug (atom h)
 
       and to_smt_atom ?(debug=false) = function
-        | Acop (CO_BV bv) -> if List.length bv = 0 then CoqInterface.error "Empty bit-vectors are not valid in SMT" else Format.fprintf fmt "#b%a" bv_to_smt bv
+        | Acop (CO_BV bv) ->
+            if List.length bv = 0 then
+              CoqInterface.raise_error "Empty bit-vectors are not valid in SMT"
+            else
+              Format.fprintf fmt "#b%a" bv_to_smt bv
         | Acop _ as a -> to_smt_int fmt (compute_int a)
         | Auop (op,h) -> to_smt_uop op h
         | Abop (op,h1,h2) -> to_smt_bop op h1 h2

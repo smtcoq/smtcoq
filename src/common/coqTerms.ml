@@ -420,7 +420,7 @@ let vm_cast_true env t =
   with
   | Result.Ok () -> vm_cast_true_no_check t
   | Result.Error () ->
-    CoqInterface.error ("SMTCoq was not able to check the proof certificate.")
+    CoqInterface.raise_error "SMTCoq was not able to check the proof certificate."
 
 (* Compute a nat *)
 let rec mkNat = function

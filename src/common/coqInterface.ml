@@ -152,27 +152,34 @@ let set_evars_tac noc =
       Proofview.Unsafe.tclEVARS sigma)
 
 
+(** Rocq messages *)
+
+let warning_category =
+  CWarnings.create_category ~name:"SMTCoq" ()
+
+let debug_component =
+  CDebug.create_full ~name:"SMTCoq" ()
+
+
+let raise_anomaly fmt =
+  Format.kasprintf (fun s -> CErrors.anomaly ~label:"SMTCoq" (Pp.str s)) fmt
+
+let raise_error fmt =
+  Format.kasprintf (fun s -> CErrors.user_err (Pp.str s)) fmt
+
+let raise_warning ~name =
+  CWarnings.create ~category:warning_category ~name
+
+let raise_debug fmt =
+  let (flag, _) = debug_component in
+  Format.kasprintf (fun s -> if CDebug.get_flag flag then Feedback.msg_info (Pp.str s)) fmt
+
+
 (* Other differences between the two versions of Coq *)
 type constr_expr = Constrexpr.constr_expr
-let error s = CErrors.user_err (Pp.str s)
-let anomaly s = CErrors.anomaly (Pp.str s)
-
-let smtcoq_cat = CWarnings.create_category ~name:"SMTCoq" ()
 
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r
-
-
-(* Redirect SMTCoq's output to Rocq's message output *)
-let { Goptions.get = print_solver_status } =
-  Goptions.declare_bool_option_and_ref
-    ~key:["SMTCoq"; "Print"; "Solver"; "Status"]
-    ~value:false
-    ()
-
-let print_msg fmt =
-  Format.kasprintf (fun s -> if print_solver_status () then Feedback.msg_info (Pp.str s)) fmt
-
 
 (* Cannot contain evars since it comes from a Constr.t *)
 let interp_constr env sigma t = Constrintern.interp_constr env sigma t |> fst |> EConstr.Unsafe.to_constr
