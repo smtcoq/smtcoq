@@ -114,3 +114,5 @@ val retyping_get_type_of : Environ.env -> Evd.evar_map -> constr -> constr
 
 val vm_conv : Conversion.conv_pb -> types Conversion.kernel_conversion_function
 val cbv_vm : Environ.env -> constr -> types -> constr
+
+val resolve_file_path : string -> string

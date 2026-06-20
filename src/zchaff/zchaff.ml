@@ -191,6 +191,8 @@ let cCertif = CoqTerms.csat_checker_Certif
 
 let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
+  let fdimacs = CoqInterface.resolve_file_path fdimacs in
+  let ftrace = CoqInterface.resolve_file_path ftrace in
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
   let ce1 = CoqInterface.mkUConst d in
@@ -211,6 +213,8 @@ let cchecker = CoqTerms.csat_checker_checker
 
 let theorems interp name fdimacs ftrace =
   SmtTrace.clear ();
+  let fdimacs = CoqInterface.resolve_file_path fdimacs in
+  let ftrace = CoqInterface.resolve_file_path ftrace in
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
 
@@ -255,6 +259,8 @@ let theorem_abs =
 
 let checker fdimacs ftrace =
   SmtTrace.clear ();
+  let fdimacs = CoqInterface.resolve_file_path fdimacs in
+  let ftrace = CoqInterface.resolve_file_path ftrace in
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
 

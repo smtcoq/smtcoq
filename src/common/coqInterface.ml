@@ -192,3 +192,11 @@ let vm_conv = Vconv.vm_conv
 
 (* Cannot contain evars since it comes from a Constr.t *)
 let cbv_vm env c t = EConstr.Unsafe.to_constr (Vnorm.cbv_vm env Evd.empty (EConstr.of_constr c) (EConstr.of_constr t))
+
+let resolve_file_path path =
+  if Filename.is_relative path then
+    let dir = match Loadpath.get_load_paths () with
+      | [] -> Sys.getcwd ()
+      | p :: _ -> Loadpath.physical p
+    in Filename.concat dir path
+  else path

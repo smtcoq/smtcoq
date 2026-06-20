@@ -142,6 +142,8 @@ let clear_all () =
 
 let import_all fsmt fproof =
   clear_all ();
+  let fsmt = CoqInterface.resolve_file_path fsmt in
+  let fproof = CoqInterface.resolve_file_path fproof in
   let rt = SmtBtype.create () in
   let ro = Op.create () in
   let ra = Tosmtcoq.ra in
