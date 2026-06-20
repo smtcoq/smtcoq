@@ -385,8 +385,8 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 
   match CoqInterface.decompose_app_list res with
   | c, _ when CoqInterface.eq_constr c (Lazy.force cNone) ->
-    CoqInterface.error ("Debug checker is only meant to be used for certificates \
-                       that fail to be checked by SMTCoq.")
+    CoqInterface.raise_error
+      "Debug checker is only meant to be used for certificates that fail to be checked by SMTCoq."
   | c, [_; n] when CoqInterface.eq_constr c (Lazy.force cSome) ->
     (match CoqInterface.decompose_app_list n with
      | c, [_; _; cnb; cn] when CoqInterface.eq_constr c (Lazy.force cpair) ->
@@ -434,8 +434,7 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
          else string_coq_constr n
        in
        let nb = mk_nat cnb + List.length roots + (confl.id + 1 - count_used confl) in
-       CoqInterface.error ("Step number " ^ string_of_int nb ^
-                         " (" ^ name ^ ") of the certificate likely failed.")
+       CoqInterface.raise_error "Step number %d (%s) of the certificate likely failed." nb name
      | _ -> assert false
     )
   | _ -> assert false
@@ -681,7 +680,7 @@ let gen_rel_name =
   fun () -> incr num; "SMTCoqRelName"^(string_of_int !num)
 
 let warn_discarding_lemma =
-  CWarnings.create ~name:"SMTCoq-discarding-lemma" ~category:CoqInterface.smtcoq_cat
+  CoqInterface.raise_warning ~name:"SMTCoq-discarding-lemma"
     Pp.(fun clemma ->
         str "Discarding the following lemma (unsupported):" ++ spc() ++
         str (SmtMisc.string_coq_constr clemma))
@@ -983,7 +982,7 @@ let model_item env rt ro ra rf =
       * let outf = Format.formatter_of_out_channel out in
       * SExpr.print outf l; pp_print_flush outf ();
       * close_out out; *)
-     CoqInterface.error ("Could not reconstruct model")
+     CoqInterface.raise_error "Could not reconstruct model"
 
 
 (* Ignore the string "model" at the beginning of the Sexpr, 
@@ -994,7 +993,7 @@ let model env rt ro ra rf = function
   | List (Atom "model" :: l) | List l ->
      List.fold_left (fun acc m -> match model_item env rt ro ra rf m with Fun m -> m::acc | Sort -> acc) [] l
      |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
-  | _ -> CoqInterface.error ("No model")
+  | _ -> CoqInterface.raise_error "No model"
 
 
 (* Print model represented as an SExpr.t *)
@@ -1010,4 +1009,4 @@ let abduct_string env rt ro ra rf =
   function
   | List [Atom "define-fun"; Atom "A"; List []; _; expr] ->
       smt2_sexpr_to_coq_string env t_i ra rf expr
-  | _ -> CoqInterface.error ("Could not reconstruct abduct")
+  | _ -> CoqInterface.raise_error "Could not reconstruct abduct"

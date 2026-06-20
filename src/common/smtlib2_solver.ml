@@ -72,7 +72,7 @@ let read_response { lexbuf } =
 
 let error s sexp =
   kill s;
-  CoqInterface.error (asprintf "Solver error: %a." SExpr.print sexp)
+  CoqInterface.raise_error "Solver error: %a." SExpr.print sexp
 
 
 let read_success s = 
@@ -88,12 +88,12 @@ let read_check_result s =
   match SExprParser.sexp SExprLexer.main s.lexbuf with
   | SExpr.Atom "sat" -> Sat
   | SExpr.Atom "unsat" -> Unsat
-  | SExpr.Atom "unknown" -> CoqInterface.error ("Solver returned uknown.")
+  | SExpr.Atom "unknown" -> CoqInterface.raise_error "Solver returned unknown."
   | r -> error s r
 
 
 let send_command s cmd read =
-  CoqInterface.print_msg "%s" cmd;
+  CoqInterface.raise_debug "%s" cmd;
   (* let err_p1 = Unix.((fstat s.stderr).st_size) in *)
   try
     let in_ch = Unix.out_channel_of_descr s.stdin in

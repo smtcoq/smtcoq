@@ -9,13 +9,12 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let msg_file filename =
-  if CoqInterface.print_solver_status () then
-    try
-      let ic = open_in filename in
-      (try
-         while true do
-           CoqInterface.print_msg "%s" (input_line ic)
-         done
-       with End_of_file -> close_in ic)
-    with Sys_error _ -> ()
+let raise_debug_file_contents filename =
+  try
+    let ic = open_in filename in
+    (try
+       while true do
+         CoqInterface.raise_debug "%s" (input_line ic)
+       done
+     with End_of_file -> close_in ic)
+  with Sys_error _ -> ()

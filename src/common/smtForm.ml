@@ -401,7 +401,7 @@ module Make (Atom:ATOM) =
                    let l1 = mk_hform b1 in
                    let l2 = mk_hform b2 in
                    get reify (Fapp (Fimp, [|l1;l2|]))
-                | _ -> CoqInterface.error "SmtForm.Form.of_coq: wrong number of arguments for implb")
+                | _ -> CoqInterface.raise_error "SmtForm.Form.of_coq: wrong number of arguments for implb")
           | CCifb ->
              (* We should also be able to reify if then else *)
              begin match args with
@@ -410,7 +410,7 @@ module Make (Atom:ATOM) =
                   let l2 = mk_hform b2 in
                   let l3 = mk_hform b3 in
                   get reify (Fapp (Fite, [|l1;l2;l3|]))
-               | _ -> CoqInterface.error "SmtForm.Form.of_coq: wrong number of arguments for ifb"
+               | _ -> CoqInterface.raise_error "SmtForm.Form.of_coq: wrong number of arguments for ifb"
              end
           | _ ->
              let a = atom_of_coq h in
@@ -422,7 +422,7 @@ module Make (Atom:ATOM) =
              let l1 = mk_hform b1 in
              let l2 = mk_hform b2 in
              get reify (f [|l1; l2|])
-          | _ ->  CoqInterface.error "SmtForm.Form.of_coq: wrong number of arguments"
+          | _ ->  CoqInterface.raise_error "SmtForm.Form.of_coq: wrong number of arguments"
 
       and mk_fnot i args =
         match args with
@@ -436,7 +436,7 @@ module Make (Atom:ATOM) =
                let l = if r = 0 then l else neg l in
                if q = 0 then l
                else get reify (Fapp(Fnot2 q, [|l|]))
-          | _ -> CoqInterface.error "SmtForm.Form.mk_hform: wrong number of arguments for negb"
+           | _ -> CoqInterface.raise_error "SmtForm.Form.mk_hform: wrong number of arguments for negb"
 
       and mk_fand acc args =
         match args with
@@ -448,7 +448,7 @@ module Make (Atom:ATOM) =
              else
                let l1 = mk_hform t1 in
                get reify (Fapp(Fand, Array.of_list (l1::l2::acc)))
-          | _ -> CoqInterface.error "SmtForm.Form.mk_hform: wrong number of arguments for andb"
+           | _ -> CoqInterface.raise_error "SmtForm.Form.mk_hform: wrong number of arguments for andb"
 
       and mk_for acc args =
         match args with
@@ -460,7 +460,7 @@ module Make (Atom:ATOM) =
              else
                let l1 = mk_hform t1 in
                get reify (Fapp(For, Array.of_list (l1::l2::acc)))
-          | _ -> CoqInterface.error "SmtForm.Form.mk_hform: wrong number of arguments for orb" in
+           | _ -> CoqInterface.raise_error "SmtForm.Form.mk_hform: wrong number of arguments for orb" in
 
       mk_hform c
 

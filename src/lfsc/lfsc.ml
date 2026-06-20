@@ -11,13 +11,13 @@
 
 
 open Common
-open Format
 
 open SmtMisc
 open CoqTerms
 open SmtCertif
 open SmtTrace
 open SmtAtom
+open Format
 
 (******************************************************************************)
 (* Given a lfsc trace build the corresponding certif and theorem             *)
@@ -57,26 +57,26 @@ let process_signatures_once =
           ) signatures
       with
       | Ast.TypingError (t1, t2) ->
-        CoqInterface.error
-          (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+        CoqInterface.raise_error
+          "@[<hov>LFSC typing error: expected %a, got %a@]@."
              Ast.print_term t1
-             Ast.print_term t2)
+             Ast.print_term t2
 
 
 let lfsc_parse_last lb =
-  printf "Type-checking LFSC proof...@?";
+  CoqInterface.raise_debug "Type-checking LFSC proof...@?";
   let t0 = Sys.time () in
   let r = Parser.last_command Lexer.main lb in
   let t1 = Sys.time () in
-  printf " Done [%.3f s]@." (t1 -. t0);
+  CoqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
   r
 
 let lfsc_parse_one lb =
-  printf "Type-checking LFSC proof...@?";
+  CoqInterface.raise_debug "Type-checking LFSC proof...@?";
   let t0 = Sys.time () in
   let r = Parser.one_command Lexer.main lb in
   let t1 = Sys.time () in
-  printf " Done [%.3f s]@." (t1 -. t0);
+  CoqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
   r
 
 
@@ -116,10 +116,10 @@ let import_trace first parse lexbuf =
 
   with
   | Ast.TypingError (t1, t2) ->
-    CoqInterface.error
-      (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+    CoqInterface.raise_error
+      "@[<hov>LFSC typing error: expected %a, got %a@]@."
          Ast.print_term t1
-         Ast.print_term t2)
+         Ast.print_term t2
 
 
 
@@ -169,11 +169,11 @@ let theorem name fsmt fproof =
 (* Same but print runtime *)
 let checker fsmt fproof =
   let c = import_all fsmt fproof in
-  printf "Coq checker...@.";
+  CoqInterface.raise_debug "Coq checker...@.";
   let t0 = Sys.time () in
   let r = SmtCommands.checker c in
   let t1 = Sys.time () in
-  printf "Done (Coq) [%.3f s]@." (t1 -. t0);
+  CoqInterface.raise_debug "Done (Coq) [%.3f s]@." (t1 -. t0);
   r
 
 
@@ -382,9 +382,12 @@ let call_abduce i env rt ro ra rf root lsmt =
           (SmtCommands.abduct_string env rt ro ra rf (get_abduct_next cvc5)) :: produce_abducts (n-1)
         else []) in
       let abducts = List.rev (produce_abducts (i - 1)) in
-        CoqInterface.error
-        ("cvc5 returned SAT.\nThe solver cannot prove the goal, but one of the following hypotheses (printed in Prop, but the corresponding Boolean versions also apply) would make it provable:\n" ^
-          abduct1^"\n"^(String.concat "\n" abducts))
+        CoqInterface.raise_error
+          "%s\n%s\n%s\n%s\n"
+          "cvc5 returned SAT."
+          "The solver cannot prove the goal, but one of the following hypotheses (printed in Prop, but the corresponding Boolean versions also apply) would make it provable:"
+          abduct1
+          (String.concat "\n" abducts)
     in
 
     quit cvc5;
@@ -482,15 +485,15 @@ let call_cvc4 _ env rt ro ra rf root lsmt =
       begin
         try get_proof cvc4 (import_trace (Some root) lfsc_parse_one)
         with
-        | Ast.CVC4Sat -> CoqInterface.error "CVC4 returned SAT"
-        | No_proof -> CoqInterface.error "CVC4 did not generate a proof"
-        | Failure s -> CoqInterface.error ("Importing of proof failed: " ^ s)
+        | Ast.CVC4Sat -> CoqInterface.raise_error "CVC4 returned SAT"
+        | No_proof -> CoqInterface.raise_error "CVC4 did not generate a proof"
+        | Failure s -> CoqInterface.raise_error "Importing of proof failed: %s" s
       end
     | Sat ->
       let smodel = get_model cvc4 in
-      CoqInterface.error
-        ("CVC4 returned sat. Here is the model:\n\n" ^
-         SmtCommands.model_string env rt ro ra rf smodel)
+      CoqInterface.raise_error
+        "CVC4 returned sat. Here is the model:\n\n%s"
+        (SmtCommands.model_string env rt ro ra rf smodel)
   in
 
   quit cvc4;
@@ -530,7 +533,7 @@ let get_model_from_file filename =
   let lexbuf = Lexing.from_channel chan in
   match SExprParser.sexps SExprLexer.main lexbuf with
   | [SExpr.Atom "sat"; m] -> m
-  | _ -> CoqInterface.error "CVC4 returned SAT but no model"
+  | _ -> CoqInterface.raise_error "CVC4 returned SAT but no model"
 
 let call_cvc4_file _ env rt ro ra rf root =
   let fl = snd root in
@@ -555,30 +558,30 @@ let call_cvc4_file _ env rt ro ra rf root =
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
     ^ filename ^ " > " ^ prooffilename ^ " 2> " ^ errfilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
-  CoqInterface.print_msg "%s" cvc4_cmd;
+  CoqInterface.raise_debug "%s" cvc4_cmd;
   let t0 = Sys.time () in
   let exit_code = Sys.command cvc4_cmd in
-  SolverStatus.msg_file errfilename;
+  SolverStatus.raise_debug_file_contents errfilename;
   Sys.remove errfilename;
 
   let t1 = Sys.time () in
-  CoqInterface.print_msg "CVC4 = %.5f" (t1 -. t0);
+  CoqInterface.raise_debug "CVC4 = %.5f" (t1 -. t0);
 
   if exit_code <> 0 then begin
-    CoqInterface.error ("CVC4 crashed: return code "^string_of_int exit_code);
+    CoqInterface.raise_error "CVC4 crashed: return code %d" exit_code
   end;
 
   (* ignore (Sys.command clean_cmd); *)
 
   try import_trace_from_file (Some root) prooffilename
   with
-  | No_proof -> CoqInterface.error "CVC4 did not generate a proof"
-  | Failure s -> CoqInterface.error ("Importing of proof failed: " ^ s)
+  | No_proof -> CoqInterface.raise_error "CVC4 did not generate a proof"
+  | Failure s -> CoqInterface.raise_error "Importing of proof failed: %s" s
   | Ast.CVC4Sat ->
     let smodel = get_model_from_file prooffilename in
-    CoqInterface.error
-      ("CVC4 returned sat. Here is the model:\n\n" ^
-       SmtCommands.model_string env rt ro ra rf smodel)
+    CoqInterface.raise_error
+      "CVC4 returned sat. Here is the model:\n\n%s"
+      (SmtCommands.model_string env rt ro ra rf smodel)
 
 
 let cvc4_logic =

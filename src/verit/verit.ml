@@ -182,11 +182,11 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let verit_warning = CWarnings.create ~name:"verit-warning" ~category:CoqInterface.smtcoq_cat
+let verit_warning = CoqInterface.raise_warning ~name:"verit-warning"
     Pp.(fun w -> str "veriT outputted the warning:" ++ spc() ++ str w)
 
 let verit_non_zero_exit =
-  CWarnings.create ~name:"verit-non-zero-exit-code" ~category:CoqInterface.smtcoq_cat
+  CoqInterface.raise_warning ~name:"verit-non-zero-exit-code"
     Pp.(fun (command,code) ->
         str "Verit.call_verit: command" ++ spc() ++ str command ++ spc() ++
         str "exited with code" ++ spc () ++ int code)
@@ -206,12 +206,12 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
       | Some i -> "timeout "^(string_of_int i)^" "^command
       | None -> command
   in
-  CoqInterface.print_msg "%s" command;
+  CoqInterface.raise_debug "%s" command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  SolverStatus.msg_file oname;
-  CoqInterface.print_msg "Verit = %.5f" (t1 -. t0);
+  SolverStatus.raise_debug_file_contents oname;
+  CoqInterface.raise_debug "Verit = %.5f" (t1 -. t0);
 
   let win = open_in wname in
 
@@ -227,12 +227,12 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
         else if n >= 7 && String.sub l 0 7 = "warning" then
           verit_warning (String.sub l 7 (n-7))
         else if n >= 8 && String.sub l 0 8 = "error : " then
-          CoqInterface.error ("veriT failed with the error: " ^ (String.sub l 8 (n-8)))
+          CoqInterface.raise_error "veriT failed with the error: %s" (String.sub l 8 (n-8))
         else
-          CoqInterface.error ("veriT failed with the error: " ^ l)
+          CoqInterface.raise_error "veriT failed with the error: %s" l
       done
     with End_of_file -> () in
-  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; Sys.remove oname; let _ = CoqInterface.anomaly "veriT timed out" in ());
+  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; Sys.remove oname; let _ = CoqInterface.raise_anomaly "veriT timed out" in ());
   try
     if exit_code <> 0 then verit_non_zero_exit (command,exit_code);
     raise_warnings_errors ();
@@ -240,8 +240,8 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
     close_in win; Sys.remove wname; Sys.remove oname; res
   with x -> close_in win; Sys.remove wname; Sys.remove oname;
             match x with
-            | Unknown -> CoqInterface.error "veriT returns 'unknown'"
-            | Syntax.Sat -> CoqInterface.error "veriT found a counter-example"
+            | Unknown -> CoqInterface.raise_error "veriT returns 'unknown'"
+            | Syntax.Sat -> CoqInterface.raise_error "veriT found a counter-example"
             | _ -> raise x
 
 let verit_logic =
