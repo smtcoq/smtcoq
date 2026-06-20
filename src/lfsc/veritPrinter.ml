@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+open Common
 open Format
 open Ast
 open Builtin
@@ -300,8 +301,7 @@ and print_term fmt t =
           (fun fmt -> List.iter (fprintf fmt " %a" print_term)) l
 
       | None ->
-        eprintf "Could not translate term %a@." Ast.print_term t;
-        assert false
+        CoqInterface.raise_error "Could not translate term %a@." Ast.print_term t
 
 
 let print_term fmt t = print_term fmt t (* (get_real t) *)

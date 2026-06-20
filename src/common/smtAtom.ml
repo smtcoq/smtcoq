@@ -859,9 +859,9 @@ module Atom =
              positive, we have to add the injection back *)
           get reify (Auop(UO_Zpos, h))
         else (
-          Format.eprintf "Incorrect type: wanted %a, got %a@."
+          CoqInterface.raise_debug "Incorrect type: wanted %a, got %a@."
             SmtBtype.to_smt t SmtBtype.to_smt th;
-          failwith (Format.asprintf "Atom %a is not of the expected type" (to_smt ~debug:true) h)
+          CoqInterface.raise_anomaly "Atom %a is not of the expected type" (to_smt ~debug:true) h
         )
       in
 

@@ -431,7 +431,7 @@ let get_arguments concl =
   match args with
   | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
   | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
-  | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
+  | _ -> CoqInterface.raise_error "Zchaff.get_arguments: can only deal with equality over bool"
 
 
 (* Check that the result is Unsat, otherwise raise a model *)
