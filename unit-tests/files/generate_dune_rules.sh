@@ -76,7 +76,7 @@ function verit() {
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"${FILENAME}.smt2\" \"${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"${FILENAME}.smt2\" \"${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"${FILENAME}.smt2\" \"${FILENAME}.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"${FILENAME}.smt2\" \"${FILENAME}.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"${FILENAME}.smt2\" \"${FILENAME}.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"${FILENAME}.smt2\" \"${FILENAME}.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 EOF
 
@@ -115,7 +115,7 @@ function zchaff() {
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"${FILENAME}.cnf\" \"${FILENAME}.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"${FILENAME}.cnf\" \"${FILENAME}.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"${FILENAME}.cnf\" \"${FILENAME}.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"${FILENAME}.cnf\" \"${FILENAME}.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"${FILENAME}.cnf\" \"${FILENAME}.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"${FILENAME}.cnf\" \"${FILENAME}.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 EOF
 

@@ -7,7 +7,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target cmu_bmc_barrel6.zlog)
@@ -22,7 +22,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"hole4.cnf\" \"hole4.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"hole4.cnf\" \"hole4.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"hole4.cnf\" \"hole4.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"hole4.cnf\" \"hole4.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"hole4.cnf\" \"hole4.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"hole4.cnf\" \"hole4.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target hole4.zlog)
@@ -37,7 +37,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat1.cnf\" \"sat1.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat1.cnf\" \"sat1.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat1.cnf\" \"sat1.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat1.cnf\" \"sat1.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat1.cnf\" \"sat1.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat1.cnf\" \"sat1.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat1.zlog)
@@ -52,7 +52,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat2.cnf\" \"sat2.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat2.cnf\" \"sat2.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat2.cnf\" \"sat2.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat2.cnf\" \"sat2.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat2.cnf\" \"sat2.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat2.cnf\" \"sat2.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat2.zlog)
@@ -67,7 +67,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat3.cnf\" \"sat3.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat3.cnf\" \"sat3.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat3.cnf\" \"sat3.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat3.cnf\" \"sat3.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat3.cnf\" \"sat3.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat3.cnf\" \"sat3.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat3.zlog)
@@ -82,7 +82,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat5.cnf\" \"sat5.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat5.cnf\" \"sat5.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat5.cnf\" \"sat5.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat5.cnf\" \"sat5.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat5.cnf\" \"sat5.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat5.cnf\" \"sat5.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat5.zlog)
@@ -97,7 +97,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat6.cnf\" \"sat6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat6.cnf\" \"sat6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat6.cnf\" \"sat6.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat6.cnf\" \"sat6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat6.cnf\" \"sat6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat6.cnf\" \"sat6.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat6.zlog)
@@ -112,7 +112,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat7.cnf\" \"sat7.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat7.cnf\" \"sat7.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat7.cnf\" \"sat7.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"sat7.cnf\" \"sat7.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"sat7.cnf\" \"sat7.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"sat7.cnf\" \"sat7.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat7.zlog)
@@ -127,7 +127,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\n  Compute Sat_Checker.checker d t.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target velev_sss_1_0_05.zlog)
@@ -167,7 +167,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"bv1.smt2\" \"bv1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"bv1.smt2\" \"bv1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"bv1.smt2\" \"bv1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"bv1.smt2\" \"bv1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"bv1.smt2\" \"bv1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"bv1.smt2\" \"bv1.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lfsc_vernac_bv2.v)
@@ -200,7 +200,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"bv2.smt2\" \"bv2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"bv2.smt2\" \"bv2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"bv2.smt2\" \"bv2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"bv2.smt2\" \"bv2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"bv2.smt2\" \"bv2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"bv2.smt2\" \"bv2.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lfsc_vernac_ex1.v)
@@ -233,7 +233,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"hole4.smt2\" \"hole4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"hole4.smt2\" \"hole4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"hole4.smt2\" \"hole4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"hole4.smt2\" \"hole4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"hole4.smt2\" \"hole4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"hole4.smt2\" \"hole4.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target hole4.vtlog)
@@ -282,7 +282,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"let1.smt2\" \"let1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"let1.smt2\" \"let1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"let1.smt2\" \"let1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"let1.smt2\" \"let1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"let1.smt2\" \"let1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"let1.smt2\" \"let1.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target let1.vtlog)
@@ -331,7 +331,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"let2.smt2\" \"let2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"let2.smt2\" \"let2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"let2.smt2\" \"let2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"let2.smt2\" \"let2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"let2.smt2\" \"let2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"let2.smt2\" \"let2.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target let2.vtlog)
@@ -355,7 +355,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia1.smt2\" \"lia1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia1.smt2\" \"lia1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia1.smt2\" \"lia1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia1.smt2\" \"lia1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia1.smt2\" \"lia1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia1.smt2\" \"lia1.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia1.vtlog)
@@ -379,7 +379,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia2.smt2\" \"lia2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia2.smt2\" \"lia2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia2.smt2\" \"lia2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia2.smt2\" \"lia2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia2.smt2\" \"lia2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia2.smt2\" \"lia2.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia2.vtlog)
@@ -403,7 +403,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia3.smt2\" \"lia3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia3.smt2\" \"lia3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia3.smt2\" \"lia3.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia3.smt2\" \"lia3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia3.smt2\" \"lia3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia3.smt2\" \"lia3.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia3.vtlog)
@@ -427,7 +427,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia4.smt2\" \"lia4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia4.smt2\" \"lia4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia4.smt2\" \"lia4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia4.smt2\" \"lia4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia4.smt2\" \"lia4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia4.smt2\" \"lia4.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia4.vtlog)
@@ -451,7 +451,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia5.smt2\" \"lia5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia5.smt2\" \"lia5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia5.smt2\" \"lia5.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia5.smt2\" \"lia5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia5.smt2\" \"lia5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia5.smt2\" \"lia5.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia5.vtlog)
@@ -475,7 +475,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia6.smt2\" \"lia6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia6.smt2\" \"lia6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia6.smt2\" \"lia6.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia6.smt2\" \"lia6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia6.smt2\" \"lia6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia6.smt2\" \"lia6.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia6.vtlog)
@@ -499,7 +499,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia7.smt2\" \"lia7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia7.smt2\" \"lia7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia7.smt2\" \"lia7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"lia7.smt2\" \"lia7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"lia7.smt2\" \"lia7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"lia7.smt2\" \"lia7.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target lia7.vtlog)
@@ -548,7 +548,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat0.smt2\" \"sat0.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat0.smt2\" \"sat0.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat0.smt2\" \"sat0.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat0.smt2\" \"sat0.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat0.smt2\" \"sat0.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat0.smt2\" \"sat0.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat0.vtlog)
@@ -597,7 +597,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat1.smt2\" \"sat1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat1.smt2\" \"sat1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat1.smt2\" \"sat1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat1.smt2\" \"sat1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat1.smt2\" \"sat1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat1.smt2\" \"sat1.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat1.vtlog)
@@ -621,7 +621,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat11.smt2\" \"sat11.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat11.smt2\" \"sat11.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat11.smt2\" \"sat11.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat11.smt2\" \"sat11.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat11.smt2\" \"sat11.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat11.smt2\" \"sat11.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat11.vtlog)
@@ -645,7 +645,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat12.smt2\" \"sat12.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat12.smt2\" \"sat12.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat12.smt2\" \"sat12.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat12.smt2\" \"sat12.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat12.smt2\" \"sat12.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat12.smt2\" \"sat12.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat12.vtlog)
@@ -669,7 +669,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat13.smt2\" \"sat13.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat13.smt2\" \"sat13.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat13.smt2\" \"sat13.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat13.smt2\" \"sat13.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat13.smt2\" \"sat13.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat13.smt2\" \"sat13.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat13.vtlog)
@@ -693,7 +693,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat14.smt2\" \"sat14.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat14.smt2\" \"sat14.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat14.smt2\" \"sat14.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat14.smt2\" \"sat14.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat14.smt2\" \"sat14.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat14.smt2\" \"sat14.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat14.vtlog)
@@ -742,7 +742,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat2.smt2\" \"sat2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat2.smt2\" \"sat2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat2.smt2\" \"sat2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat2.smt2\" \"sat2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat2.smt2\" \"sat2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat2.smt2\" \"sat2.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat2.vtlog)
@@ -791,7 +791,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat3.smt2\" \"sat3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat3.smt2\" \"sat3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat3.smt2\" \"sat3.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat3.smt2\" \"sat3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat3.smt2\" \"sat3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat3.smt2\" \"sat3.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat3.vtlog)
@@ -840,7 +840,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat4.smt2\" \"sat4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat4.smt2\" \"sat4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat4.smt2\" \"sat4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat4.smt2\" \"sat4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat4.smt2\" \"sat4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat4.smt2\" \"sat4.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat4.vtlog)
@@ -864,7 +864,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat5.smt2\" \"sat5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat5.smt2\" \"sat5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat5.smt2\" \"sat5.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat5.smt2\" \"sat5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat5.smt2\" \"sat5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat5.smt2\" \"sat5.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat5.vtlog)
@@ -913,7 +913,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat6.smt2\" \"sat6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat6.smt2\" \"sat6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat6.smt2\" \"sat6.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat6.smt2\" \"sat6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat6.smt2\" \"sat6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat6.smt2\" \"sat6.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat6.vtlog)
@@ -937,7 +937,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat7.smt2\" \"sat7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat7.smt2\" \"sat7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat7.smt2\" \"sat7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat7.smt2\" \"sat7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat7.smt2\" \"sat7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat7.smt2\" \"sat7.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat7.vtlog)
@@ -986,7 +986,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat8.smt2\" \"sat8.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat8.smt2\" \"sat8.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat8.smt2\" \"sat8.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat8.smt2\" \"sat8.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat8.smt2\" \"sat8.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat8.smt2\" \"sat8.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat8.vtlog)
@@ -1010,7 +1010,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat9.smt2\" \"sat9.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat9.smt2\" \"sat9.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat9.smt2\" \"sat9.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"sat9.smt2\" \"sat9.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"sat9.smt2\" \"sat9.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"sat9.smt2\" \"sat9.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target sat9.vtlog)
@@ -1034,7 +1034,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf1.smt2\" \"uf1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf1.smt2\" \"uf1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf1.smt2\" \"uf1.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf1.smt2\" \"uf1.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf1.smt2\" \"uf1.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf1.smt2\" \"uf1.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf1.vtlog)
@@ -1083,7 +1083,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf2.smt2\" \"uf2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf2.smt2\" \"uf2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf2.smt2\" \"uf2.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf2.smt2\" \"uf2.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf2.smt2\" \"uf2.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf2.smt2\" \"uf2.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf2.vtlog)
@@ -1107,7 +1107,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf3.smt2\" \"uf3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf3.smt2\" \"uf3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf3.smt2\" \"uf3.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf3.smt2\" \"uf3.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf3.smt2\" \"uf3.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf3.smt2\" \"uf3.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf3.vtlog)
@@ -1131,7 +1131,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf4.smt2\" \"uf4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf4.smt2\" \"uf4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf4.smt2\" \"uf4.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf4.smt2\" \"uf4.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf4.smt2\" \"uf4.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf4.smt2\" \"uf4.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf4.vtlog)
@@ -1155,7 +1155,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf5.smt2\" \"uf5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf5.smt2\" \"uf5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf5.smt2\" \"uf5.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf5.smt2\" \"uf5.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf5.smt2\" \"uf5.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf5.smt2\" \"uf5.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf5.vtlog)
@@ -1204,7 +1204,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf6.smt2\" \"uf6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf6.smt2\" \"uf6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf6.smt2\" \"uf6.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf6.smt2\" \"uf6.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf6.smt2\" \"uf6.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf6.smt2\" \"uf6.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf6.vtlog)
@@ -1253,7 +1253,7 @@
  (action
   (write-file
    %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf7.smt2\" \"uf7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf7.smt2\" \"uf7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf7.smt2\" \"uf7.vtlog\".\n  Compute @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace.\nEnd Parse.\n")))
+   "From SMTCoq Require Import SMTCoq.\nSection File.\n  Verit_Checker \"uf7.smt2\" \"uf7.vtlog\".\nEnd File.\nSection Thm.\n  Verit_Theorem thm \"uf7.smt2\" \"uf7.vtlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_verit t_i t_func t_atom t_form root used_roots trace \"uf7.smt2\" \"uf7.vtlog\".\n  Goal @Euf_Checker.checker t_i t_func t_atom t_form root used_roots trace. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
 
 (rule
  (target uf7.vtlog)
