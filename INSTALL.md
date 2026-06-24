@@ -3,45 +3,44 @@
 ## What do you need?
 
 SMTCoq is designed to work on computers equipped with a POSIX (Unix or a
-clone) operating system. It is known to work under GNU/Linux (i386 and
-amd64) and Mac OS X.
+clone) operating system. It is known to work under GNU/Linux.
 
-The simplest way is to install it using opam. You can also install it
+Two simple ways to install SMTCoq are using opam or Nix. You can also install it
 from the sources.
 
-You will also need to [install the provers](#installation-of-the-provers)
-you want to use.
+If you are using opam or from the sources, you will also need to [install the
+provers](#installation-of-the-provers) you want to use.
 
 
-## Installation of version 2.0 via opam (recommended)
+## Installation of the latest version via opam (recommended)
 
 ### In an existing switch
 
-You need to have OCaml version >= 4.09 and Coq >= 8.11.
+You need to have OCaml version >= 4.14 and Rocq >= 9.0.
 
-Simply add the coq-extra-dev repo to opam:
+Simply add the rocq-released repo to opam:
 ```bash
-opam repo add coq-released https://coq.inria.fr/opam/released
+opam repo add rocq-released https://rocq-prover.org/opam/released
 ```
 and install SMTCoq:
 ```bash
-opam install coq-smtcoq
+opam install rocq-smtcoq
 ```
 
 ### In a new switch
 
 Create a switch:
 ```bash
-opam switch create ocaml-base-compiler.4.09.0
+opam switch create ocaml-base-compiler.4.14.2
 eval $(opam env)
 ```
-add the Coq repos to opam:
+add the Rocq repos to opam:
 ```bash
-opam repo add coq-released https://coq.inria.fr/opam/released
+opam repo add rocq-released https://rocq-prover.org/opam/released
 ```
 and install SMTCoq:
 ```bash
-opam install coq-smtcoq
+opam install rocq-smtcoq
 ```
 
 ### If you are new to opam
@@ -72,68 +71,50 @@ Then follow the instructions of the previous section.
 
 ### In an existing switch
 
-You need to have OCaml version >= 4.09 and Coq 8.13.
+You need to have OCaml version >= 4.14 and Rocq >= 9.0.
 
-Simply add the coq-extra-dev repo to opam:
+Simply add the rocq-extra-dev repo to opam:
 ```bash
-opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+opam repo add rocq-extra-dev https://rocq-prover.org/opam/extra-dev
 ```
 and install SMTCoq:
 ```bash
-opam install coq-smtcoq
+opam install rocq-smtcoq
 ```
 
 ### In a new switch
 
 Create a switch:
 ```bash
-opam switch create ocaml-base-compiler.4.09.0
+opam switch create ocaml-base-compiler.4.14.0
 eval $(opam env)
 ```
-add the Coq repos to opam:
+add the Rocq repos to opam:
 ```bash
-opam repo add coq-released https://coq.inria.fr/opam/released
-opam repo add coq-extra-dev https://coq.inria.fr/opam/extra-dev
+opam repo add rocq-released https://rocq-prover.org/opam/released
+opam repo add rocq-extra-dev https://rocq-prover.org/opam/extra-dev
 ```
 and install SMTCoq:
 ```bash
-opam install coq-smtcoq
+opam install rocq-smtcoq
 ```
 
-### If you are new to opam
 
-We recommended to install the required packages from
-[opam](https://opam.ocaml.org). Once you have installed opam on your system you
-should issue the following command:
+## Installation from Nix
 
-```bash
-opam init
-```
-
-which will initialize the opam installation and prompt for modifying the shell
-init file.
-
-Once opam is installed you should still issue
-
-```bash
-eval `opam config env`
-```
-
-(this is not necessary if you start another session in your shell).
-
-Then follow the instructions of the previous section.
+TODO: [VL]
 
 
 ## Installation from the sources, using opam (not recommended)
 
 ### Requirements
 
-You need to have OCaml version >= 4.11.1 and Coq version 8.13.*.
+You need to have OCaml version >= 4.14.2 and Rocq >= 9.0.
 
-> **Warning**: The version of Coq that you plan to use must have been compiled
+> **Warning**: The version of Rocq that you plan to use must have been compiled
 > with the same version of OCaml that you are going to use to compile
 > SMTCoq. In particular this means you want a version of Coq that was compiled
-> with OCaml version >= 4.11.1.
+> with OCaml version >= 4.14.2.
 
 ### Install opam
 
@@ -158,28 +139,27 @@ eval `opam config env`
 
 ### Install OCaml
 
-Now you can install an OCaml compiler (we recommend 4.11.1):
+Now you can install an OCaml compiler (we recommend 4.14.2):
 
 ```bash
-opam switch create ocaml-base-compiler.4.11.1
+opam switch create ocaml-base-compiler.4.14.2
 ```
 
 ### Install Coq
 
-After OCaml is installed, you can install Coq-8.13.2 through opam.
+After OCaml is installed, you can install Rocq through opam.
 
 ```bash
-opam install coq.8.13.2
+opam install rocq
 ```
 
-If you also want to install CoqIDE at the same time you can do
+If you also want to install RocqIDE at the same time you can do
 
 ```bash
-opam install coq.8.13.2 coqide.8.13.2
+opam install rocq rocqide
 ```
 
-but you might need to install some extra packages and libraries for your system
-(such as GTK2, gtksourceview2, etc.).
+but you might need to install some extra packages and libraries for your system.
 
 
 ### Install SMTCoq
@@ -187,21 +167,18 @@ but you might need to install some extra packages and libraries for your system
 Compile and install SMTCoq by using the following commands in the src directory.
 
 ```bash
-make
-make install
+dune build -p rocq-smtcoq
+dune install rocq-smtcoq
 ```
 
 ## Installation of the provers
 
 To use SMTCoq, we recommend installing the following two SMT solvers:
-
 - CVC4
-
-- [veriT](https://verit.loria.fr)
+- [veriT](https://usr.lmf.cnrs.fr/~ckeller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 
 SMTCoq also supports the following SAT solver for propositional reasoning:
-
-- [ZChaff](http://www.princeton.edu/~chaff/zchaff.html)
+- [ZChaff](https://www.princeton.edu/~chaff/zchaff.html)
 
 SMTCoq finally provides an abduction tactic using the
 [cvc5](https://cvc5.github.io) SMT solver.
@@ -239,24 +216,17 @@ export LFSCSIGS="$HOME/path/to/smtcoq/src/lfsc/tests/signatures/"
 
 If you installed SMTCoq via opam (recommended), the path to SMTCoq
 (to replace `path/to/smtcoq`) is
-`.opam/NAMEOFTHESWITCH/.opam-switch/sources/coq-smtcoq.dev+COQVERSION`
+`.opam/NAMEOFTHESWITCH/.opam-switch/sources/coq-smtcoq.dev+ROCQVERSION`
 where `NAMEOFTHESWITCH` must be replaced by the name of the opam switch
-(`ocaml-base-compiler.4.09.0` if you created a new switch following the
-instructions above) and `COQVERSION` must be replaced by the first two
-parts of the version of Coq (`8.11`, `8.12` or `8.13`).
-
-If you don't want SMTCoq to spit the translated proof in your proof environment
-window, add the following optional definition (in the same file).
-
-```bash
-export DONTSHOWVERIT="yes"
-```
+(`ocaml-base-compiler.4.14.2` if you created a new switch following the
+instructions above) and `ROCQVERSION` must be replaced by the first two
+parts of the version of Rocq (e.g `9.0`, `9.1`...).
 
 
 ### veriT
 
 Download this [snapshot of
-veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
+veriT](https://usr.lmf.cnrs.fr/~ckeller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 which is known compatible with SMTCoq, and is already in proof
 production mode. To compile it, unpack the archive and use the following
 commands:
@@ -282,10 +252,10 @@ your PATH to use it through SMTCoq.
 ### ZChaff
 
 ZChaff can be downloaded
-[here](http://www.princeton.edu/~chaff/zchaff.html). It is not actively
+[here](https://www.princeton.edu/~chaff/zchaff.html). It is not actively
 maintained, so you might encounter problems to compile it on modern
 platforms. [This
-patch](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/zchaff64.patch)
+patch](https://usr.lmf.cnrs.fr/~ckeller/Documents-recherche/Smtcoq/zchaff64.patch)
 might solve your problems (thanks to Sylvain Boulmé for it); if not,
 please report an issue.
 
@@ -293,42 +263,3 @@ To turn proof production on, you need to uncomment the line
 `// #define VERIFY_ON ` in `zchaff_solver.cpp`.
 
 The `zchaff` binary must be present in your PATH to use it through SMTCoq.
-
-
-## Setting up environment for SMTCoq
-### Using SMTCoq without installing
-
-If you want to use SMTCoq without adding it to your Coq installation, you can
-tell Coq where to find SMTCoq by adding the following line in the file
-`~/.config/coqrc`:
-
-```coq
-Add Rec LoadPath "~/path/to/smtcoq/src" as SMTCoq.
-```
-
-See [this
-documentation](https://coq.inria.fr/refman/practical-tools/coq-commands.html#by-resource-file)
-if it does not work.
-
-
-### Emacs and ProofGeneral
-
-If you use Emacs and ProofGeneral for Coq development, we recommend to use the
-package [exec-path-from-shell](https://github.com/purcell/exec-path-from-shell)
-(which can be installed with `M-x package-install exec-path-from-shell`) and to
-add the following in your `.emacs`:
-
-```elisp
-(exec-path-from-shell-initialize)
-```
-
-This will make emacs use the same environment as your shell. This is also
-particularly useful if you have installed Coq and OCaml from opam.
-
-
-### Warning about CoqIDE
-
-The latest versions of CoqIDE can now check Coq scripts in parallel. This
-feature is very useful but it seems SMTCoq doesn't work with it. This means
-that if you use any of the SMTCoq tactics or vernacular commands, we suggest to
-instruct CoqIDE to go through the script step-by-step.
