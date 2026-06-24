@@ -306,7 +306,7 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
 
   let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
-  else CoqInterface.raise_error "The checker has returned the value false."
+  else CoqInterface.raise_error "Certificate checking failure."
 
 let count_used confl =
   let cpt = ref 0 in
