@@ -530,7 +530,7 @@ Trakt Add Relation 2 (N.ge) (Z.geb) (Nge_Zgeb_embedding).
 Trakt Add Relation 2 (N.gt) (Z.gtb) (Ngt_Zgtb_embedding).
 
 
-(* This is about Z, but it fails if we put it upper in the file...?? *)
+(* Do not try to add this kind of conversion, which is internal to Z *)
 
 (* Lemma Zneg_Zopp_embedding_equality : forall (x : positive), Zneg x = Z.opp (Zpos x).
 Admitted.
