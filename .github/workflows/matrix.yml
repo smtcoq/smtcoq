@@ -1,0 +1,30 @@
+name: Build Trakt against supported released versions
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # Allow to purge the cache
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: nixbuild/nix-quick-install-action@v34
+
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/flake.lock', '**/*.nix') }}
+          gc-max-store-size: 10G
+          purge: true
+
+      - name: Build the current version in nixpkgs
+        run: nix build .#smtcoq --print-build-logs
