@@ -48,10 +48,6 @@
    (>= 9.0.0))))
 
 (package
- ; 3rd-party library
- (name alt-ergo))
-
-(package
  ; Standalone LFSC to SMTCoq translator
  (name lfsctosmtcoq)
  (allow_empty))

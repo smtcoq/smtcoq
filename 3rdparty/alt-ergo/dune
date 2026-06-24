@@ -1,6 +1,6 @@
 (library
  (name smtlib2)
- (public_name alt-ergo.smtlib2))
+ (public_name rocq-smtcoq.smtlib2))
 
 (ocamllex smtlib2_lex)
 
