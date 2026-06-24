@@ -274,7 +274,7 @@ let checker fdimacs ftrace =
 
   let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
   if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
-  else CoqInterface.raise_error "The ZChaff checker has returned the value false."
+  else CoqInterface.raise_error "Certificate checking failure."
 
 
 
