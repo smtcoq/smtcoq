@@ -2,10 +2,10 @@
 
 ## What do you need?
 
-SMTCoq is designed to work on computers equipped with a POSIX (Unix or a
-clone) operating system. It is known to work under GNU/Linux.
+SMTCoq is designed to work on computers equipped with a POSIX (Unix or a clone)
+operating system. It is known to work under GNU/Linux.
 
-Two simple ways to install SMTCoq are using opam or Nix. You can also install it
+A recommended way to install SMTCoq is by using opam. You can also install it
 from the sources.
 
 If you are using opam or from the sources, you will also need to [install the
@@ -27,6 +27,7 @@ and install SMTCoq:
 opam install rocq-smtcoq
 ```
 
+
 ### In a new switch
 
 Create a switch:
@@ -42,6 +43,7 @@ and install SMTCoq:
 ```bash
 opam install rocq-smtcoq
 ```
+
 
 ### If you are new to opam
 
@@ -98,11 +100,6 @@ and install SMTCoq:
 ```bash
 opam install rocq-smtcoq
 ```
-
-
-## Installation from Nix
-
-TODO: [VL]
 
 
 ## Installation from the sources, using opam (not recommended)
