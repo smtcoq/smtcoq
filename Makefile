@@ -1,7 +1,8 @@
 all:
-	dune build -p rocq-smtcoq
+	dune build theories/SMTCoq.vo
 
 install:
+	dune build -p rocq-smtcoq
 	dune install rocq-smtcoq
 
 test:
@@ -12,7 +13,8 @@ example:
 
 clean:
 	dune clean
-	rm -f rocq-smtcoq.install {theories,example,test}/_RocqProject
+	rm -f rocq-smtcoq.install
+	find . -name _RocqProject -delete
 
 .PHONY: all install test example clean
 .NOTPARALLEL:
