@@ -3,28 +3,24 @@
 This document describes the organization of the SMTCoq repository and locations
 of source code and modules.
 
-Sources are contained in the directory [src](../src) which can be found at
-top-level. The directories [examples](../examples) and
-[unit-tests](../unit-tests) contain respectively example files of usage for
-SMTCoq and regression tests for the different tactics and vernacular commands
-that the plugin provides.
+Sources are contained in the directories [src](src) and [theories](theories).
+The directories [examples](examples) and [unit-tests](unit-tests) contain
+respectively example files of usage for SMTCoq and regression tests for the
+different tactics and vernacular commands that the plugin provides.
 
-The rest of the document describes the organization of `src`.
+The rest of the document describes the organization of `src` and `theories`.
 
 
 ## Top-level architecture of SMTCoq
 
-SMTCoq sources are contained in this directory. A few Coq files can be found at
-top-level.
-
-### [SMTCoq.v](../src/SMTCoq.v)
+### [SMTCoq.v](theories/SMTCoq.v)
 
 This is the main SMTCoq entry point, it is meant to be imported by users that
-want to use SMTCoq in their Coq developments. It provides (exports) the other
+want to use SMTCoq in their Rocq developments. It provides (exports) the other
 SMTCoq modules as well as declares the OCaml plugin for adding the new
 vernacular commands and tactics.
 
-### [Trace.v](../src/Trace.v)
+### [MainChecker.v](theories/checker/MainChecker.v)
 
 This file defines the types of certificates and steps (atomic certificate
 pieces) as well as the *main checkers*.
@@ -61,7 +57,7 @@ certificate for `d`).
 
 
 
-### [State.v](../src/State.v)
+### [State.v](theories/checker/fol/State.v)
 
 This module is used to define representations for the global state of the
 checker. 
@@ -83,7 +79,7 @@ Variables, literals and clauses are defined respectively in modules `Var`,
 
 
 
-### [SMT_terms.v](../src/SMT_terms.v)
+### [Terms.v](theories/checker/fol/Terms.v)
 
 This Coq module defines reification types for formulas (`Form.form`), types
 (`Typ.type`) and atoms/terms (`Atom.atom`). Formulas are given an
@@ -128,7 +124,7 @@ Lemma t_interp_wf : forall i,
 
 
 
-### [Misc.v](../src/Misc.v)
+### [Misc.v](theories/utils/Misc.v)
 
 This module contains miscellaneous general lemmas that are used in several
 places throughout the development of SMTCoq.
@@ -136,37 +132,36 @@ places throughout the development of SMTCoq.
 
 
 
-### [spl](../src/spl)
+### [spl](theories/checker/small-checkers/spl)
 
 This directory contains everything related to simplifications of input
 formulas as well as the Coq machinery to handle step checkers that use
 assumptions (and generate sub-goals).
 
-- [Arithmetic.v](../src/spl/Arithmetic.v): Arithmetic simplifications
-- [Operators.v](../src/spl/Operators.v): Simplifications of SMT-LIB 2 operators
+- [Arithmetic.v](theories/checker/small-checkers/spl/Arithmetic.v): Arithmetic simplifications
+- [Operators.v](theories/checker/small-checkers/spl/Operators.v): Simplifications of SMT-LIB 2 operators
   (atomic disequalities and distinct operators)
-- [Syntactic.v](../src/spl/Syntactic.v): Flattening and normalization of
+- [Syntactic.v](theories/checker/small-checkers/spl/Syntactic.v): Flattening and normalization of
   propositional structures
-- [Assumptions.v](../src/spl/Assumptions.v): Small checker for assumptions
+- [Assumptions.v](theories/checker/small-checkers/spl/Assumptions.v): Small checker for assumptions
 
 
 
-### [extraction](../src/extraction)
+### [extraction](extraction)
 
 This is the extracted version of the SMTCoq checker, that can be run outside
 Coq. It still needs to be fixed for the new additions and extensions.
 
 
 
-### [classes](../src/classes)
-
+### TODO [CK]
 
 The definitions of interpretations of terms and types of SMTCoq requires some
 additional constraints that are encoded as Coq type-classes. This directory
 contains definitions and properties of these classes
-[SMT_classes.v](../src/classes/SMT_classes.v) as well as predefined useful
+[CompDec.v](theories/utils/CompDec.v) as well as predefined useful
 instances of these classes
-[SMT_classes_instances.v](../src/classes/SMT_classes_instances.v).
+[CompDecInstances.v](theories/structures/CompDecInstances.v).
 
 These classes are:
 
@@ -214,10 +209,10 @@ It states that the clause returned by `checker` is valid. In most cases for the
 small checkers, when they fail they return a trivially true clause (`C._true`).
 
 
-### [cnf](../src/cnf)
+### [CNF](theories/checker/small-checkers/cnf)
 
 Small checkers for CNF (conjunctive normal form) are defined in the module
-[Cnf.v](../src/cnf/Cnf.v). In essence they implement a Tseitin conversion.
+[CNF.v](theories/checker/small-checkers/cnf/CNF.v). In essence they implement a Tseitin conversion.
 
 For instance, the checker `check_BuildDef` returns a tautology in clausal form
 (the validity of the clause is not dependent on the validity of the state) and
@@ -225,11 +220,10 @@ the checker `check_ImmBuildDef` is a generic encoding of conversion rules that
 have a premise (which appears in the state).
 
 
-
-### [euf](../src/euf)
+### [EUF](theories/checker/small-checkers/euf)
 
 The checkers for EUF (equality over uninterpreted functions) are defined in the
-module [Euf.v](../src/euf/Euf.v).
+module [EUF.v](theories/checker/small-checkers/euf/EUF.v).
 
 The first one checks application of the rule of transitivity. `check_trans`
 takes as argument the result of the rule application as well as list of
@@ -241,21 +235,18 @@ checker for congruence can check rule applications with a number of equalities
 corresponding to the arity of the function.
 
 
-### [lia](../src/lia)
+### [LIA](theories/checker/small-checkers/lia)
 
 Checking linear arithmetic lemmas that come from the SMT solver is performed
 using the already existing `Micromega` solver of Coq. The corresponding
-checker is implemented in module [Lia.v](../src/lia/Lia.v).
+checker is implemented in module [LIA.v](theories/checker/small-checkers/lia/LIA.v).
 
 
-
-
-
-### [bva](../src/bva)
+### [BVA](theories/checker/small-checkers/bva)
 
 The small checkers for bit-vector operations can be found in module
-[Bva_checker.v](../src/bva/Bva_checker.v). They implement the rules for
-bit-blasting operators of the theory of fixed width bit-vector.
+[Bva_checker.v](theories/checker/small-checkers/BVA.v). They implement the rules
+for bit-blasting operators of the theory of fixed width bit-vector.
 
 There are small checkers for:
 
@@ -271,8 +262,8 @@ There are small checkers for:
 
 
 The theory of fixed width is realized by an implementation provided in
-[BVList.v](../src/bva/BVList.v). There, bit-vectors are interpreted by lists of
-Booleans. The type of bit-vectors is a dependent type:
+[BVList.v](theories/structures/BVList.v). There, bit-vectors are interpreted by
+lists of Booleans. The type of bit-vectors is a dependent type:
 
 ```coq
 Parameter bitvector : N -> Type.
@@ -293,10 +284,11 @@ Record bitvector_ (n:N) : Type :=
 
 
 
-### [array](../src/array)
+### array
 
 The theory of unbounded functional arrays with extensionality is realized in
-Coq by a custom type that can be found in [FArray.v](../src/array/FArray.v).
+Rocq by a custom type that can be found in
+[FArray.v](theories/structures/FArray.v).
 
 ```coq
 Definition farray (key elt : Type) _ _  :=
@@ -351,96 +343,93 @@ and the definitions of tactics.
 This part communicates directly with Coq by using the OCaml Coq API.
 
 
-### [trace](../src/trace)
+### TODO: [CK]
 
 This directory contain the implementation of certificates and the
 representation of SMT-LIB formulas in SMTCoq.
 
-[coqTerms.ml](../src/trace/coqTerms.ml) contains imports from Coq of terms to
+[coqTerms.ml](src/common/coqTerms.ml) contains imports from Coq of terms to
 be used directly in OCaml. These include usual Coq terms but also ones specific
 to SMTCoq.
 
-[smtAtom.mli](../src/trace/smtAtom.mli) contains the definitions for the types
+[smtAtom.mli](src/common/smtAtom.mli) contains the definitions for the types
 of atoms in SMTCoq but also provides smart constructors for them. The modules
 defined in this file have functions to reify Coq terms in OCaml and to
 translate back OCaml atoms and types to their Coq counterpart interpretation.
 
-[smtForm.mli](../src/trace/smtForm.mli) plays the same role as `smtAtom` but on
+[smtForm.mli](src/common/smtForm.mli) plays the same role as `smtAtom` but on
 the level of formulas.
 
-[smtCertif.ml](../src/trace/smtCertif.ml) contains definitions for an OCaml
+[smtCertif.ml](src/common/smtCertif.ml) contains definitions for an OCaml
 version of the steps of the certificate. These are the objects that are
 constructed when importing a certificate from an SMT solver for instance.
 
-[smtTrace.ml](../src/trace/smtTrace.ml) contains functions to build the Coq
+[smtTrace.ml](src/common/smtTrace.ml) contains functions to build the Coq
 version of the certificate from the OCaml one.
 
-[smtCommands.ml](../src/trace/smtCommands.ml) constitute the bulk of the
+[smtCommands.ml](src/common/smtCommands.ml) constitute the bulk of the
 implementation of the plugin. It contains the OCaml functions that are used to
 build the Coq vernacular commands (`Verit_checker`, `Lfsc_checker`, ...) and
 the tactics. It also contains functions to reconstruct Coq counter-examples
 from models returned by the SMT solver.
 
-[smtCnf.ml](../src/trace/smtCnf.ml) implements a CNF conversion on the type of
+[smtCnf.ml](src/common/smtCnf.ml) implements a CNF conversion on the type of
 SMTCoq formulas.
 
-[smtMisc.ml](../src/trace/smtMisc.ml) contains miscellaneous functions used in
+[smtMisc.ml](src/common/smtMisc.ml) contains miscellaneous functions used in
 the previous modules.
 
 
 
-### [smtlib2](../src/smtlib2)
+### [smtlib2](3rdparty/alt-ergo)
 
 This directory contains utilities to communicate directly with SMT
 solvers. This includes a lexer/parser for the SMT-LIB 2 format
-([smtlib2_parse.mly](../src/smtlib2/smtlib2_parse.mly)) a conversion module
+([smtlib2_parse.mly](3rdparty/alt-ergo/smtlib2_parse.mly)) a conversion module
 from SMT-LIB 2 to formulas and atoms of SMTCoq
-([smtlib2_genConstr.ml](../src/smtlib2/smtlib2_genConstr.ml)) and a way to call
+([smtlib2_genConstr.ml](3rdparty/alt-ergo/smtlib2_genConstr.ml)) and a way to call
 and communicate with SMT solvers through pipes
-([smtlib2_solver.mli](../src/smtlib2/smtlib2_solver.mli)).
+([smtlib2_solver.mli](3rdparty/alt-ergo/smtlib2_solver.mli)).
 
 
 
-### [zchaff](../src/zchaff)
+### [zchaff](src/zchaff)
 
 Files in this directory allow to call the SAT solver ZChaff. It contains a
 parser for the sat solver input files and ZChaff certificates. The
 implementation for the Coq tactic `zchaff` can be found in
-[zchaff.ml](../src/zchaff/zchaff.ml).
+[zchaff.ml](src/zchaff/zchaff.ml).
 
 
-
-### [verit](../src/verit)
+### [verit](src/verit)
 
 This directory contains the necessary modules to support the SMT solver veriT.
 In particular it contains a parser for the format of certificates of veriT
-([veritParser.mly](../src/verit/veritParser.mly)) and an intermediate
-representation of those certificates
-([veritSyntax.mli](../src/verit/veritSyntax.mli)). This module also implements
-a conversion function from veriT certificates to SMTCoq format of
-certificates. This pre-processor is a simple one-to-one conversion.
+([parser.mly](src/verit/parser.mly)) and an intermediate representation of those
+certificates ([syntax.mli](src/verit/syntax.mli)). This module also implements a
+conversion function from veriT certificates to SMTCoq format of certificates.
+This pre-processor is a simple one-to-one conversion.
 
-The file ([verit.ml](../src/verit/verit.ml)) contains the functions to invoke
+The file ([verit.ml](src/verit/verit.ml)) contains the functions to invoke
 veritT and create SMT-LIB 2 scripts. This is used by the definition of the
 tactic `verit` of the same file.
 
 
+### [lfsc](src/lfsc)
 
-### [lfsc](../src/lfsc)
-
-This directory contains the pre-processor for LFSC proofs to SMTCoq
-certificates (as well as veriT certificates). The files
-[ast.ml](../src/lfsc/ast.ml) and [builtin.ml](../src/lfsc/builtin.ml) contain
-an OCaml implementation of a type checker for LFSC proofs. This directory also
-contains a parser and lexer for LFSC (*c.f.*,
-[lfscParser.mly](../src/lfsc/lfscParser.mly)).
+This directory contains the pre-processor for LFSC proofs to SMTCoq certificates
+(as well as veriT certificates). The files [ast.ml](src/lfsc/ast.ml) and
+[builtin.ml](src/lfsc/builtin.ml) contain an OCaml implementation of a type
+checker for LFSC proofs. This directory also contains a parser and lexer for
+LFSC (*c.f.*, [parser.mly](src/lfsc/parser.mly)).
 
 The pre-processor is implemented in the module
-[converter.ml](../src/lfsc/converter.ml)) as a *functor*. Depending on the
+[converter.ml](src/lfsc/converter.ml)) as a *functor*. Depending on the
 module (for terms and clauses conversions) that is passed in the functor
 application, we obtain either a pre-processor from LFSC proofs to SMTCoq
 certificates directly or a converter from LFSC proofs to veriT certificates.
 
+TODO: [CK]
 > **Note:** You can obtain a standalone version of the converter by
 > issuing `make` in this directory, after having issued `make` in the
 > `src` directory. This produces a binary `lfsctosmtcoq.native` that can
@@ -449,161 +438,163 @@ certificates directly or a converter from LFSC proofs to veriT certificates.
 > `tests/runcvc4.sh`.
 
 Finally, the tactic `cvc4_bool` is implemented in the file
-[lfsc.ml](../src/lfsc/lfsc.ml)). It contains functions to call the SMT solver
-CVC4, convert its proof and call the base tactic of `smtCommands`.
+[lfsc.ml](src/lfsc/lfsc.ml)). It contains functions to call the SMT solver CVC4,
+convert its proof and call the base tactic of `smtCommands`.
 
 
-## Tactics: proof search
+TODO: [CK]
+<!-- ## Tactics: proof search -->
 
-### [BoolToProp.v](../src/BoolToProp.v)
-This module includes the tactic `bool2prop` that converts a goal, if Boolean, into
-a goal in Coq's `Prop`, after introducing universally quantified variables into the
-context. 
+<!-- ### [BoolToProp.v](../src/BoolToProp.v) -->
+<!-- This module includes the tactic `bool2prop` that converts a goal, if Boolean, into -->
+<!-- a goal in Coq's `Prop`, after introducing universally quantified variables into the -->
+<!-- context.  -->
 
-It simply performs a search in the goal and does the mentioned conversion step by step
-benefitting the `reflect` predicate popularized by the `SSReflect` library:
+<!-- It simply performs a search in the goal and does the mentioned conversion step by step -->
+<!-- benefitting the `reflect` predicate popularized by the `SSReflect` library: -->
 
-```coq
-Inductive reflect (P : Prop) : bool -> Set :=
-   | ReflectT :   P -> reflect P true 
-   | ReflectF : ~ P -> reflect P false.
-```
+<!-- ```coq -->
+<!-- Inductive reflect (P : Prop) : bool -> Set := -->
+<!--    | ReflectT :   P -> reflect P true  -->
+<!--    | ReflectF : ~ P -> reflect P false. -->
+<!-- ``` -->
 
-In fact, the predicate `reflect` returns the Boolean counterpart of a proposition.
-Besides, it makes below lemma easily provable:
+<!-- In fact, the predicate `reflect` returns the Boolean counterpart of a proposition. -->
+<!-- Besides, it makes below lemma easily provable: -->
 
-```coq
-Lemma reflect_iff : forall P b, (P<->b=true) -> reflect P b.
-```
+<!-- ```coq -->
+<!-- Lemma reflect_iff : forall P b, (P<->b=true) -> reflect P b. -->
+<!-- ``` -->
 
-This simply says that if a Coq proposition `P` is equivalent to some Boolean 
-`b` being `true` then `b` is indeed the Boolean counterpart of `P`.
+<!-- This simply says that if a Coq proposition `P` is equivalent to some Boolean  -->
+<!-- `b` being `true` then `b` is indeed the Boolean counterpart of `P`. -->
 
-Now, let's exemplify how the tactic `bool2prop` benefits above steps:
+<!-- Now, let's exemplify how the tactic `bool2prop` benefits above steps: -->
 
-Imagine a very simple goal that embodies the `or` connective
+<!-- Imagine a very simple goal that embodies the `or` connective -->
 
-```coq
-G0 || G1
-```
+<!-- ```coq -->
+<!-- G0 || G1 -->
+<!-- ``` -->
 
-for some Booleans `G0` and `G1`. Then, the tactic performes the following 
-rewrite step on the goal 
+<!-- for some Booleans `G0` and `G1`. Then, the tactic performes the following  -->
+<!-- rewrite step on the goal  -->
 
-```coq
-rewrite <- (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)).
-```
+<!-- ```coq -->
+<!-- rewrite <- (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)). -->
+<!-- ``` -->
 
-which turns it into:
+<!-- which turns it into: -->
 
-```coq
-G0 = true \/ G1 = true
-```
+<!-- ```coq -->
+<!-- G0 = true \/ G1 = true -->
+<!-- ``` -->
 
-together with introducing an additional goal:
+<!-- together with introducing an additional goal: -->
 
-```coq
-reflect (G0 = true \/ G1 = true) (G0 || G1)
-```
+<!-- ```coq -->
+<!-- reflect (G0 = true \/ G1 = true) (G0 || G1) -->
+<!-- ``` -->
 
-The first goal is indeed the intended one. However, the tactic can still go a step further 
-putting the goal into the following shape:
+<!-- The first goal is indeed the intended one. However, the tactic can still go a step further  -->
+<!-- putting the goal into the following shape: -->
 
-```coq
-H0 \/ H1
-```
+<!-- ```coq -->
+<!-- H0 \/ H1 -->
+<!-- ``` -->
 
-for some propositions `H0` and `H1`. This is indeed the case for Boolean equality and comparison over bit-vectors,
-Boolean equality and  comparison over Coq intergers `Z`, and Boolean equality over fuctional arrays;
-since the corresponding propositional predicates are proven to be equivalent. E.g., 
+<!-- for some propositions `H0` and `H1`. This is indeed the case for Boolean equality and comparison over bit-vectors, -->
+<!-- Boolean equality and  comparison over Coq intergers `Z`, and Boolean equality over fuctional arrays; -->
+<!-- since the corresponding propositional predicates are proven to be equivalent. E.g.,  -->
 
-```coq
-Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b.
-```
-where `bv_ult: bitvector n -> bitvector n -> bool` and `bv_ultP: bitvector n -> bitvector n -> Prop`. 
+<!-- ```coq -->
+<!-- Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b. -->
+<!-- ``` -->
+<!-- where `bv_ult: bitvector n -> bitvector n -> bool` and `bv_ultP: bitvector n -> bitvector n -> Prop`.  -->
 
-However, the second one must somehow be solved. This is indeed not so hard:
-it suffices to apply the below lemma which has already been proven again by benefitting the `reflect` predicate:
-
-
-```coq
-Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
-```
-
-Notice that the same sort of conversion steps for the other Boolean connectives are also handled
-by the tactic `bool2prop`.
-
-### [PropToBool.v](../src/PropToBool.v)
-This module includes the tactic `prop2bool` that converts a goal, if in Coq's `Prop`, into
-a Boolean goal, after introducing universally quantified variables into the context.
-It is, in fact, the inverse of the above explained `bool2prop` tactic.
-
-It simply performs a search in the goal and does the mentioned conversion step by step
-benefitting the `reflect` predicate (see above `BoolToProp.v`). The predicate `reflect`
-makes the following goal easily proveable:
-
-```coq
-Lemma reflect_iff : forall P b, reflect P b -> (P<->b=true).
-```
-
-This basically tells us that if `b` is the Boolean counterpart of some proposition `P`,
-then `P` is indeed equivalent to `b` being `true`.
-
-Now, let's exemplify how the tactic `prop2bool` benefits above steps:
-
-Imagine a very simple goal that embodies the `or` connective as
-
-```coq
-H0 \/ H1
-```
-
-for some propositions `H0` and `H1`. At this point, the tactic needs to go a step further and
-puts the goal into the following shape to be able to make use of the `reflect_iff` fact:
-
-```coq
-G0 = true \/ G1 = true
-```
-
-for some Booleans `G0` and `G1`. This step is indeed doable for propositional equality and comparison over
-bit-vectors, propsitional equality and comparison over Coq intergers `Z`, and propositional equality over
-fuctional arrays, since the corresponding Boolean predicates are proven to be equivalent. E.g.,
-
-```coq
-Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b.
-```
-where `bv_ult: bitvector n -> bitvector n -> bool` and `bv_ultP: bitvector n -> bitvector n -> Prop`.
+<!-- However, the second one must somehow be solved. This is indeed not so hard: -->
+<!-- it suffices to apply the below lemma which has already been proven again by benefitting the `reflect` predicate: -->
 
 
-Then, the tactic performes the following rewrite step on the goal 
+<!-- ```coq -->
+<!-- Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b). -->
+<!-- ``` -->
 
-```coq
-rewrite (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1))
-```
+<!-- Notice that the same sort of conversion steps for the other Boolean connectives are also handled -->
+<!-- by the tactic `bool2prop`. -->
 
-which turns it into:
+<!-- ### [PropToBool.v](../src/PropToBool.v) -->
+<!-- This module includes the tactic `prop2bool` that converts a goal, if in Coq's `Prop`, into -->
+<!-- a Boolean goal, after introducing universally quantified variables into the context. -->
+<!-- It is, in fact, the inverse of the above explained `bool2prop` tactic. -->
 
-```coq
-G0 || G1 = true
-```
+<!-- It simply performs a search in the goal and does the mentioned conversion step by step -->
+<!-- benefitting the `reflect` predicate (see above `BoolToProp.v`). The predicate `reflect` -->
+<!-- makes the following goal easily proveable: -->
 
-together with introducing an additional goal:
+<!-- ```coq -->
+<!-- Lemma reflect_iff : forall P b, reflect P b -> (P<->b=true). -->
+<!-- ``` -->
 
-```coq
-reflect (G0 = true \/ G1 = true) (G0 || G1)
-```
+<!-- This basically tells us that if `b` is the Boolean counterpart of some proposition `P`, -->
+<!-- then `P` is indeed equivalent to `b` being `true`. -->
 
-The first goal is indeed the intended one. So that the tactic leaves the goal as it is. But the second
-one must somehow be solved. In fact, this not so hard: it suffices to apply the below lemma which
-has already been proven again by benefitting the `reflect` predicate:
+<!-- Now, let's exemplify how the tactic `prop2bool` benefits above steps: -->
 
-```coq
-Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b).
-```
+<!-- Imagine a very simple goal that embodies the `or` connective as -->
 
-Notice that the same sort of conversion steps for the other propositional connectives are also handled
-by the tactic `prop2bool`.
+<!-- ```coq -->
+<!-- H0 \/ H1 -->
+<!-- ``` -->
 
-### [Tactics.v](../src/Tactics.v)
+<!-- for some propositions `H0` and `H1`. At this point, the tactic needs to go a step further and -->
+<!-- puts the goal into the following shape to be able to make use of the `reflect_iff` fact: -->
+
+<!-- ```coq -->
+<!-- G0 = true \/ G1 = true -->
+<!-- ``` -->
+
+<!-- for some Booleans `G0` and `G1`. This step is indeed doable for propositional equality and comparison over -->
+<!-- bit-vectors, propsitional equality and comparison over Coq intergers `Z`, and propositional equality over -->
+<!-- fuctional arrays, since the corresponding Boolean predicates are proven to be equivalent. E.g., -->
+
+<!-- ```coq -->
+<!-- Lemma bv_ult_B2P: forall n (a b: bitvector n), bv_ult a b = true <-> bv_ultP a b. -->
+<!-- ``` -->
+<!-- where `bv_ult: bitvector n -> bitvector n -> bool` and `bv_ultP: bitvector n -> bitvector n -> Prop`. -->
+
+
+<!-- Then, the tactic performes the following rewrite step on the goal  -->
+
+<!-- ```coq -->
+<!-- rewrite (@reflect_iff (G0 = true \/ G1 = true) (G0 || G1)) -->
+<!-- ``` -->
+
+<!-- which turns it into: -->
+
+<!-- ```coq -->
+<!-- G0 || G1 = true -->
+<!-- ``` -->
+
+<!-- together with introducing an additional goal: -->
+
+<!-- ```coq -->
+<!-- reflect (G0 = true \/ G1 = true) (G0 || G1) -->
+<!-- ``` -->
+
+<!-- The first goal is indeed the intended one. So that the tactic leaves the goal as it is. But the second -->
+<!-- one must somehow be solved. In fact, this not so hard: it suffices to apply the below lemma which -->
+<!-- has already been proven again by benefitting the `reflect` predicate: -->
+
+<!-- ```coq -->
+<!-- Lemma orP : forall (a b: bool), reflect (a = true \/ b = true) (a || b). -->
+<!-- ``` -->
+
+<!-- Notice that the same sort of conversion steps for the other propositional connectives are also handled -->
+<!-- by the tactic `prop2bool`. -->
+
+
+### [Tactics.v](theories/tactics/Tactics.v)
 This file includes four tactics that are written in `Ltac` language:
 
  - `zchaff` -> can function on the goals in Coq's `Prop`: 
@@ -625,7 +616,3 @@ This file includes four tactics that are written in `Ltac` language:
  first calls `prop2bool` on the goal, getting the goal in `bool`, 
  then calls either of the reificiation tactics `cvc4_bool`, `verit_bool` (can only function on Boolean goals),
  and finally puts the goal(s) back in Coq's `Prop`, by calling `bool2prop`, in case it is not solved or additional goals returned.
-
-
-
-
