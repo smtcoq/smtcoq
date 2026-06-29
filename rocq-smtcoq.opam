@@ -54,3 +54,11 @@ build: [
 ]
 dev-repo: "git+https://github.com/smtcoq/smtcoq.git"
 x-maintenance-intent: ["(latest)"]
+messages: "
+  ======================================================================
+  Thanks for installing SMTCoq !
+  To use it, you also need to install the solvers cvc4, veriT and zchaff,
+  following these instructions:
+    https://github.com/smtcoq/smtcoq/blob/main/INSTALL.md#installation-of-the-provers
+  ======================================================================
+"
