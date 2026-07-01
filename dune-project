@@ -40,12 +40,11 @@
    "keyword: automation"
    "logpath:SMTCoq"))
  (depends
-  (elpi
-   (>= 2.0.7))
-  (rocq-elpi
-   (>= 2.5.2))
+  num
   (rocq-core
-   (>= 9.0.0))))
+   (>= 9.0.0))
+  rocq-stdlib
+  rocq-trakt))
 
 (package
  ; Standalone LFSC to SMTCoq translator

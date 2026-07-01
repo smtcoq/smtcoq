@@ -33,9 +33,8 @@ homepage: "https://github.com/smtcoq/smtcoq"
 bug-reports: "https://github.com/smtcoq/smtcoq/issues"
 depends: [
   "dune" {>= "3.21"}
-  "elpi" {>= "2.0.7"}
-  "rocq-elpi" {>= "2.5.2"}
   "rocq-core" {>= "9.0.0"}
+  "rocq-trakt"
   "odoc" {with-doc}
 ]
 build: [
