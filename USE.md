@@ -153,7 +153,7 @@ expressions of type `bool`. This tactic **supports quantifiers**: it takes
 optional arguments which are names of universally quantified
 lemmas/hypotheses that can be used to solve the goal. These lemmas can
 also be given once and for all using the `Add_lemmas` command (see
-[examples/Example.v](https://github.com/smtcoq/smtcoq/blob/master/examples/Example.v)
+[examples/Example.v](https://github.com/smtcoq/smtcoq/blob/main/examples/Example.v)
 for details).
 
 In addition, the `verit` tactic applies to Coq goals of sort `Prop`: it
