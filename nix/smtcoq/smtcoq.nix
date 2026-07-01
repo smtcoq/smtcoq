@@ -7,6 +7,7 @@
   # Dependencies
   cvc4,
   cvc5,
+  flock,
   rocq-core,
   rocq-elpi,
   stdlib,
@@ -26,7 +27,7 @@ let
     '';
   };
 in
-mkRocqDerivation {
+mkRocqDerivation rec {
   pname = "smtcoq";
 
   src = ../..;
@@ -48,6 +49,16 @@ mkRocqDerivation {
     verit
     zchaff
   ];
+
+  doCheck = true;
+
+  checkInputs = [ flock ];
+  checkPhase = ''
+    runHook preCheck
+    patchShebangs ./unit-tests/files/run_zchaff.sh
+    dune runtest -p ${opam-name} ''${enableParallelBuilding:+-j $NIX_BUILD_CORES}
+    runHook postCheck
+  '';
 
   passthru = { inherit lfsc-sigs; };
 
