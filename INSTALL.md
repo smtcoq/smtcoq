@@ -256,7 +256,7 @@ export DONTSHOWVERIT="yes"
 ### veriT
 
 Download this [snapshot of
-veriT](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
+veriT](https://usr.lmf.cnrs.fr/~ckeller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz)
 which is known compatible with SMTCoq, and is already in proof
 production mode. To compile it, unpack the archive and use the following
 commands:
@@ -285,7 +285,7 @@ ZChaff can be downloaded
 [here](http://www.princeton.edu/~chaff/zchaff.html). It is not actively
 maintained, so you might encounter problems to compile it on modern
 platforms. [This
-patch](https://www.lri.fr/~keller/Documents-recherche/Smtcoq/zchaff64.patch)
+patch](https://usr.lmf.cnrs.fr/~ckeller/Documents-recherche/Smtcoq/zchaff64.patch)
 might solve your problems (thanks to Sylvain Boulmé for it); if not,
 please report an issue.
 
