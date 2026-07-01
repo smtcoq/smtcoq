@@ -1,10 +1,10 @@
-name: Build Trakt against supported released versions
+name: Build SMTCoq against supported released versions
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

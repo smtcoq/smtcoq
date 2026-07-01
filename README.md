@@ -11,7 +11,7 @@ If you are looking for powerful automated tactics that use SMT solvers, you can 
 ## Installation and use
 SMTCoq is freely available as an [opam package](https://rocq-prover.org/p/coq-smtcoq/latest) and on [GitHub](https://github.com/smtcoq/smtcoq). See the [INSTALL.md](INSTALL.md) file for instructions on how to install SMTCoq and the supported provers.
 
-See [the examples](https://github.com/smtcoq/smtcoq/blob/master/examples/Example.v) to see how to use SMTCoq. More details are given in the [USE.md](https://github.com/smtcoq/smtcoq/blob/master/USE.md) file.
+See [the examples](https://github.com/smtcoq/smtcoq/blob/main/examples/Example.v) to see how to use SMTCoq. More details are given in the [USE.md](https://github.com/smtcoq/smtcoq/blob/main/USE.md) file.
 
 SMTCoq is distributed under the CeCILL-C license.
 
