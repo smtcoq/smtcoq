@@ -65,7 +65,7 @@ forum](https://framateam.org/smtcoq) to discuss!
 * Quentin Garchery (Université Paris-Sud, Inria)
 * [Benjamin Grégoire](https://www-sop.inria.fr/members/Benjamin.Gregoire/) (Inria Sophia Antipolis)
 * [Guy Katz](http://stanford.edu/~guyk) (Stanford University)
-* [Chantal Keller](https://www.lri.fr/~keller/index-en.html) (Université Paris-Sud)
+* [Chantal Keller](https://usr.lmf.cnrs.fr/~ckeller/index-en.html) (Université Paris-Saclay)
 * [Alain Mebsout](https://mebsout.github.io/) (OcamlPro)
 * [Andrew Reynolds](http://homepage.divms.uiowa.edu/~ajreynol) (The University of Iowa)
 * [Laurent Théry](https://www-sop.inria.fr/marelle/Laurent.Thery/moi.html) (Inria Sophia Antipolis)

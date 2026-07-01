@@ -39,7 +39,7 @@ RUN wget http://www.princeton.edu/~chaff/zchaff/zchaff.2008.10.12.zip && \
 
 WORKDIR /home/coq
 
-RUN wget https://www.lri.fr/~keller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz && \
+RUN wget https://usr.lmf.cnrs.fr/~ckeller/Documents-recherche/Smtcoq/veriT9f48a98.tar.gz && \
     aunpack veriT9f48a98.tar.gz && \
     cd veriT9f48a98 && \
     autoconf && \
