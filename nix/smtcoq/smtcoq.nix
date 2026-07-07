@@ -14,6 +14,9 @@
   trakt,
   verit,
   zchaff,
+
+  # Arguments
+  version ? null,
 }:
 
 let
@@ -28,10 +31,16 @@ let
   };
 in
 mkRocqDerivation rec {
+  inherit version;
+
+  owner = "smtcoq";
   pname = "smtcoq";
 
-  src = ../..;
-  version = "dev";
+  defaultVersion = "dev";
+  release."dev" = {
+    src = lib.cleanSource ../..;
+    hash = "";
+  };
 
   opam-name = "rocq-smtcoq";
   useDune = true;
