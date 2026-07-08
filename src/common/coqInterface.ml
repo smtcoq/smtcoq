@@ -140,7 +140,7 @@ let vm_cast_no_check c = Tactics.vm_cast_no_check (EConstr.of_constr c)
 let mk_tactic tac =
   Proofview.Goal.enter (fun gl ->
     let env = Proofview.Goal.env gl in
-    let sigma = Tacmach.project gl in
+    let sigma = Proofview.Goal.sigma gl in
     let t = Proofview.Goal.concl gl in
     let t = EConstr.to_constr sigma t in (* The goal should not contain uninstanciated evars *)
     tac env sigma t
