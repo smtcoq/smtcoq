@@ -122,7 +122,7 @@ Section Relations_nat.
     - intros H. apply Zle_is_le_bool in H. apply Nat2Z.inj_le in H. assumption. Qed.
 
   Lemma Natleb_Zleb_embedding_equality : forall (n m : nat),
-      n <=? m = (Z.leb (Z.of_nat n) (Z.of_nat m)).
+      (n <=? m) = (Z.leb (Z.of_nat n) (Z.of_nat m)).
   Proof.
   intros n m.
   destruct (n <=? m) eqn:E.
@@ -138,7 +138,7 @@ apply Zle_is_le_bool. assumption.
 
 
   Lemma Natltb_Zltb_embedding_equality : forall (n m : nat),
-      n <? m = (Z.ltb (Z.of_nat n) (Z.of_nat m)).
+      (n <? m) = (Z.ltb (Z.of_nat n) (Z.of_nat m)).
   Proof. intros n m. destruct (n<?m) eqn: E.
   - symmetry. apply Zlt_is_lt_bool. apply Nat.ltb_lt in E.
 apply Nat2Z.inj_lt. assumption.
