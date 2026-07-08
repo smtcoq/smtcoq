@@ -99,7 +99,11 @@ val set_evars_tac : constr -> tactic
 (** Rocq messages *)
 val raise_anomaly : ('a, Format.formatter, unit, 'b) format4 -> 'a
 val raise_error : ('a, Format.formatter, unit, 'b) format4 -> 'a
-val raise_warning : name:string -> ?default:CWarnings.status -> ('a -> Pp.t) -> ?loc:Loc.t -> 'a -> unit
+val raise_warning :
+  name:string ->
+  ?default:CWarnings.status ->
+  ?quickfix:'a CWarnings.quickfix ->
+  ('a -> Pp.t) -> ?loc:Loc.t -> 'a -> unit
 val raise_debug : ('a, Format.formatter, unit, unit) format4 -> 'a
 
 
