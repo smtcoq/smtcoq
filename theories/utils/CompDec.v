@@ -68,6 +68,10 @@ Class OrdType T := {
   lt_not_eq : forall x y : T, lt x y -> x <> y
 }.
 
+Create HintDb typeclass_ordtype discriminated.
+Hint Constants Transparent : typeclass_ordtype.
+Hint Projections Opaque : typeclass_ordtype.
+Hint Variables Opaque : typeclass_ordtype.
 #[export] Hint Resolve lt_not_eq lt_trans : typeclass_ordtype.
 
 

@@ -1398,6 +1398,10 @@ Section List2.
   | In2_hd : forall l, In j l -> In2 i j (i::l)
   | In2_tl : forall k l, In2 i j l -> In2 i j (k::l).
 
+  Create HintDb smtcoq_in2 discriminated.
+  Hint Constants Transparent : smtcoq_in2.
+  Hint Projections Opaque : smtcoq_in2.
+  Hint Variables Opaque : smtcoq_in2.
   Local Hint Constructors In2 : smtcoq_in2.
 
 
@@ -1527,6 +1531,10 @@ Section Distinct.
         distinct_aux acc' q
     end.
 
+  Create HintDb smtcoq_in2 discriminated.
+  Hint Constants Transparent : smtcoq_in2.
+  Hint Projections Opaque : smtcoq_in2.
+  Hint Variables Opaque : smtcoq_in2.
   Local Hint Constructors In2 : smtcoq_in2.
 
   Lemma distinct_aux_spec : forall l acc, distinct_aux acc l = true <->

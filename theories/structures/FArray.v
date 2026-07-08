@@ -45,6 +45,10 @@ Module Raw.
   Lemma eqb_elt_eq x y : eqb_elt x y = true <-> x = y.
   Proof. apply eqb_spec. Qed.
 
+  Create HintDb smtcoq_array discriminated.
+  Hint Constants Transparent : smtcoq_array.
+  Hint Projections Opaque : smtcoq_array.
+  Hint Variables Opaque : smtcoq_array.
   Hint Immediate eqb_key_eq eqb_elt_eq : smtcoq_array.
 
   Definition farray := list (key * elt).
@@ -1491,6 +1495,10 @@ Section FArray.
     intros. rewrite eq_option_alt. intro e'. rewrite <- 2 find_mapsto_iff.
     apply add_neq_mapsto_iff; auto.
   Qed.
+  Create HintDb smtcoq_array discriminated.
+  Hint Constants Transparent : smtcoq_array.
+  Hint Projections Opaque : smtcoq_array.
+  Hint Variables Opaque : smtcoq_array.
   Hint Resolve add_neq_o : smtcoq_array.
 
   Lemma MapsTo_fun : forall m x (e e':elt),
