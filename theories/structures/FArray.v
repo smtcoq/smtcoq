@@ -88,13 +88,13 @@ Module Raw.
    Proof. auto. Qed.
    Hint Immediate ltk_right_r ltk_right_l : smtcoq_array.
 
-  Notation Sort := (sort ltk).
-  Notation Inf := (lelistA (ltk)).
+  Abbreviation Sort := (sort ltk).
+  Abbreviation Inf := (lelistA (ltk)).
 
   Definition MapsTo (k:key)(e:elt):= InA eqke (k,e).
   Definition In k m := exists e:elt, MapsTo k e m.
 
-  Notation NoDupA := (NoDupA eqk).
+  Abbreviation NoDupA := (NoDupA eqk).
 
   Hint Unfold MapsTo In : smtcoq_array.
 
