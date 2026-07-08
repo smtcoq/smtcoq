@@ -20,7 +20,7 @@ Local Open Scope array_scope.
 
 (* NOTE: Set Vm Optimize. *)
 
-Notation var := int (only parsing).
+Abbreviation var := int (only parsing).
 
 (* Variables interpretation *)
 Module Valuation.
@@ -48,7 +48,7 @@ Module Var.
 
 End Var.
 
-Notation _lit := int (only parsing).
+Abbreviation _lit := int (only parsing).
 
 Module Lit.
 
@@ -433,9 +433,9 @@ Module C.
 End C.
 
 
-Notation clause_id := int (only parsing).
+Abbreviation clause_id := int (only parsing).
 
-Notation resolution := (array clause_id) (only parsing).
+Abbreviation resolution := (array clause_id) (only parsing).
 
 Module S.
 
