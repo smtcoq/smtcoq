@@ -167,7 +167,7 @@ rewrite P.F.empty_o.
 case (i <? size); reflexivity.
 Qed.
 
-Lemma leb_length : forall A (t:array A), length t <=? max_length = true.
+Lemma leb_length : forall A (t:array A), (length t <=? max_length) = true.
 intros A t.
 generalize (length t); clear t.
 intro i.

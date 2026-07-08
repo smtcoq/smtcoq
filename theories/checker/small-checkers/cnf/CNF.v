@@ -499,7 +499,13 @@ Section CHECKER.
      exists (a.[i]);split;trivial.
      assert (H1: 0 <? PArray.length a) by (apply (leb_ltb_trans _ i _); auto; apply leb_0); rewrite Uint63.eqb_spec in Heq'; rewrite <- (get_or_of_imp2 H1 Heq'); apply to_list_In; rewrite length_or_of_imp; auto.
      exists (Lit.neg (a.[i]));rewrite Lit.interp_neg, Heq2;split;trivial.
-     assert (H1: i <? PArray.length a - 1 = true) by (rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt); rewrite eqb_false_spec in Heq'; assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto); rewrite ltb_spec in Hlt; lia); rewrite <- (get_or_of_imp H1); apply to_list_In; rewrite length_or_of_imp; auto.
+     assert (H1: (i <? PArray.length a - 1) = true) by (
+         rewrite ltb_spec, (to_Z_sub_1 _ _ Hlt);
+         rewrite eqb_false_spec in Heq';
+         assert (H1: [|i|] <> ([|PArray.length a|] - 1)%Z) by (intro H1; apply Heq', to_Z_inj; rewrite (to_Z_sub_1 _ _ Hlt); auto);
+         rewrite ltb_spec in Hlt;
+         lia).
+     rewrite <- (get_or_of_imp H1). apply to_list_In. rewrite length_or_of_imp; auto.
   Qed.
 
 End CHECKER.

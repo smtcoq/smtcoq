@@ -61,12 +61,12 @@ Proof.
   rewrite H2, Z_mod_same_full in H; elim H; destruct (to_Z_bounded i) as [H3 _]; assumption.
 Qed.
 
-Lemma leb_0 : forall x, 0 <=? x = true.
+Lemma leb_0 : forall x, (0 <=? x) = true.
 Proof.
  intros x;rewrite leb_spec;destruct (to_Z_bounded x);trivial.
 Qed.
 
-Lemma leb_refl : forall n, n <=? n = true.
+Lemma leb_refl : forall n, (n <=? n) = true.
 Proof.
  intros n;rewrite leb_spec;apply Z.le_refl.
 Qed.
@@ -88,7 +88,7 @@ Proof.
   rewrite H2, Z_mod_same_full in H1; exfalso. destruct (to_Z_bounded i) as [H3 _]. lia.
 Qed.
 
-Lemma not_0_ltb : forall x, x <> 0 <-> 0 <? x = true.
+Lemma not_0_ltb : forall x, x <> 0 <-> (0 <? x) = true.
 Proof.
  intros x;rewrite ltb_spec, to_Z_0;assert (W:=to_Z_bounded x);split.
  intros Hd;assert ([|x|] <> 0)%Z;[ | lia].
@@ -97,17 +97,17 @@ Proof.
  assert ([|x|] = 0)%Z;[ rewrite Heq, to_Z_0;trivial | lia].
 Qed.
 
-Lemma ltb_0 : forall x, ~ (x <? 0 = true).
+Lemma ltb_0 : forall x, ~ ((x <? 0) = true).
 Proof.
  intros x;rewrite ltb_spec, to_Z_0;destruct (to_Z_bounded x);lia.
 Qed.
 
-Lemma not_ltb_refl : forall i, ~(i <? i = true).
+Lemma not_ltb_refl : forall i, ~ ((i <? i) = true).
 Proof.
  intros;rewrite ltb_spec;lia.
 Qed.
 
-Lemma ltb_trans : forall x y z, x <? y = true ->  y <? z = true -> x <? z = true.
+Lemma ltb_trans : forall x y z, (x <? y) = true -> (y <? z) = true -> (x <? z) = true.
 Proof.
  intros x y z;rewrite !ltb_spec;apply Z.lt_trans.
 Qed.
@@ -119,12 +119,12 @@ Proof.
  rewrite leb_spec, orb_true_iff, ltb_spec, eqb_spec, <- to_Z_eq;lia.
 Qed.
 
-Lemma leb_ltb_trans : forall x y z, x <=? y = true ->  y <? z = true -> x <? z = true.
+Lemma leb_ltb_trans : forall x y z, (x <=? y) = true -> (y <? z) = true -> (x <? z) = true.
 Proof.
  intros x y z;rewrite leb_spec, !ltb_spec;apply Z.le_lt_trans.
 Qed.
 
-Lemma to_Z_add_1 : forall x y, x <? y = true -> [|x+1|] = ([|x|] + 1)%Z.
+Lemma to_Z_add_1 : forall x y, (x <? y) = true -> [|x+1|] = ([|x|] + 1)%Z.
 Proof.
   intros x y;assert (W:= to_Z_bounded x);assert (W0:= to_Z_bounded y);
    rewrite ltb_spec;intros;rewrite add_spec, to_Z_1, Z.mod_small;lia.
@@ -135,12 +135,12 @@ Proof.
   intros; assert (Bx := to_Z_bounded x); rewrite add_spec, to_Z_1, Z.mod_small; lia.
 Qed.
 
-Lemma leb_not_gtb : forall n m, m <=? n = true -> ~(n <? m = true).
+Lemma leb_not_gtb : forall n m, (m <=? n) = true -> ~ ((n <? m) = true).
 Proof.
  intros n m; rewrite ltb_spec, leb_spec;lia.
 Qed.
 
-Lemma leb_negb_gtb : forall x y, x <=? y = negb (y <? x).
+Lemma leb_negb_gtb : forall x y, (x <=? y) = negb (y <? x).
 Proof.
  intros x y;apply Bool.eq_true_iff_eq;split;intros.
  apply Bool.eq_true_not_negb;apply leb_not_gtb;trivial.
@@ -148,18 +148,18 @@ Proof.
  rewrite leb_spec; rewrite ltb_spec in H;lia.
 Qed.
 
-Lemma ltb_negb_geb : forall x y, x <? y = negb (y <=? x).
+Lemma ltb_negb_geb : forall x y, (x <? y) = negb (y <=? x).
 Proof.
  intros;rewrite leb_negb_gtb, Bool.negb_involutive;trivial.
 Qed.
 
-Lemma to_Z_sub_gt : forall x y, y <=? x = true -> [|x - y|] = ([|x|] - [|y|])%Z.
+Lemma to_Z_sub_gt : forall x y, (y <=? x) = true -> [|x - y|] = ([|x|] - [|y|])%Z.
 Proof.
  intros x y;assert (W:= to_Z_bounded x);assert (W0:= to_Z_bounded y);
    rewrite leb_spec;intros;rewrite sub_spec, Zmod_small;lia.
 Qed.
 
-Lemma to_Z_sub_1 : forall x y, y <? x = true -> [|x - 1|] = ([|x|] - 1)%Z.
+Lemma to_Z_sub_1 : forall x y, (y <? x) = true -> [|x - 1|] = ([|x|] - 1)%Z.
 Proof.
  intros;apply to_Z_sub_gt.
  generalize (leb_ltb_trans _ _ _ (leb_0 y) H).
@@ -176,14 +176,14 @@ Proof.
  intros; apply (to_Z_sub_1 _ 0); rewrite ltb_spec; assumption.
 Qed.
 
-Lemma ltb_leb_sub1 : forall x i,  x <> 0 -> (i <? x = true <-> i <=? x - 1 = true).
+Lemma ltb_leb_sub1 : forall x i,  x <> 0 -> ((i <? x) = true <-> (i <=? x - 1) = true).
 Proof.
  intros x i Hdiff.
  rewrite ltb_spec, leb_spec, to_Z_sub_1_diff;trivial.
  split;auto with zarith.
 Qed.
 
-Lemma minus_1_lt i : (i =? 0) = false -> i - 1 <? i = true.
+Lemma minus_1_lt i : (i =? 0) = false -> (i - 1 <? i) = true.
 Proof.
   intro Hl. rewrite ltb_spec, (to_Z_sub_1 _ 0).
   - lia.
@@ -329,9 +329,9 @@ Proof.
 Qed.
 
 Lemma int_ind_bounded : forall (P : int -> Prop) min max,
-  min <=? max = true ->
+  (min <=? max) = true ->
   P min ->
-  (forall i, min <=? i = true -> i <? max = true -> P i -> P (i + 1)) ->
+  (forall i, (min <=? i) = true -> (i <? max) = true -> P i -> P (i + 1)) ->
   P max.
 Proof.
  intros P min max Hle Hmin Hrec.
@@ -562,7 +562,7 @@ symmetry.
 rewrite <- not_true_iff_false, eqb_spec, <- to_Z_eq, to_Z_0; lia.
 Qed.
 
-Lemma iter_int63_S : forall i A f a, 0 <? i = true -> iter_int63 i A f a = f (iter_int63 (i - 1) A f a).
+Lemma iter_int63_S : forall i A f a, (0 <? i) = true -> iter_int63 i A f a = f (iter_int63 (i - 1) A f a).
 Proof.
 intros i A f a.
 rewrite ltb_spec, to_Z_0; intro Hi.
@@ -586,14 +586,14 @@ Definition foldi
                                       ) (from, a) in r.
 
 Lemma foldi_ge : forall A f from to (a:A),
-  to <=? from = true -> foldi f from to a = a.
+  (to <=? from) = true -> foldi f from to a = a.
 Proof.
  intros A f from to a; unfold foldi.
  intro H; rewrite H; reflexivity.
 Qed.
 
 Lemma foldi_lt_l : forall A f from to (a:A),
-  from <? to = true -> foldi f from to a = foldi f (from + 1) to (f from a).
+  (from <? to) = true -> foldi f from to a = foldi f (from + 1) to (f from a).
 Proof.
 intros A f from to a Hfromto.
 pose proof (to_Z_bounded from) as Hfrom.
@@ -623,7 +623,7 @@ rewrite ltb_spec, to_Z_0, sub_spec, Zmod_small; lia.
 Qed.
 
 Lemma foldi_lt_r : forall A f from to (a:A),
-  from <? to = true -> foldi f from to a = f (to - 1) (foldi f from (to - 1) a).
+  (from <? to) = true -> foldi f from to a = f (to - 1) (foldi f from (to - 1) a).
 Proof.
  intros A f from to a; rewrite ltb_spec; intro Hlt.
  assert (Bfrom := to_Z_bounded from); assert (Bto := to_Z_bounded to).
@@ -644,8 +644,8 @@ Proof.
 Qed.
 
 Lemma foldi_ind : forall A (P : int -> A -> Prop) f from to a,
-  from <=? to = true -> P from a ->
-  (forall i a, from <=? i = true -> i <? to = true -> P i a -> P (i + 1) (f i a)) ->
+  (from <=? to) = true -> P from a ->
+  (forall i a, (from <=? i) = true -> (i <? to) = true -> P i a -> P (i + 1) (f i a)) ->
   P to (foldi f from to a).
 Proof.
   intros A P f from to a Hle Hfrom IH.
@@ -660,8 +660,8 @@ Proof.
 Qed.
 
 Lemma foldi_ind2 : forall A B (P : int -> A -> B -> Prop) f1 f2 from to a1 a2,
-  from <=? to = true -> P from a1 a2 ->
-  (forall i a1 a2, from <=? i = true -> i <? to = true -> P i a1 a2 -> P (i + 1) (f1 i a1) (f2 i a2)) ->
+  (from <=? to) = true -> P from a1 a2 ->
+  (forall i a1 a2, (from <=? i) = true -> (i <? to) = true -> P i a1 a2 -> P (i + 1) (f1 i a1) (f2 i a2)) ->
   P to (foldi f1 from to a1) (foldi f2 from to a2).
 Proof.
   intros A B P f1 f2 from to a1 a2 Hle Hfrom IH.
@@ -676,7 +676,7 @@ Proof.
 Qed.
 
 Lemma foldi_eq_compat : forall A (f1 f2:int -> A -> A) min max a,
-  (forall i a, min <=? i = true -> i <? max = true -> f1 i a = f2 i a) ->
+  (forall i a, (min <=? i) = true -> (i <? max) = true -> f1 i a = f2 i a) ->
   foldi f1 min max a = foldi f2 min max a.
 Proof.
  intros A f1 f2 min max a Hf.
@@ -705,7 +705,7 @@ Proof.
 Qed.
 
 Lemma to_list_In : forall {A} (t: array A) i,
-  i <? length t = true -> In (t.[i]) (to_list t).
+  (i <? length t) = true -> In (t.[i]) (to_list t).
   intros A t i; assert (Bt := to_Z_bounded (length t)); assert (Bi := to_Z_bounded i); rewrite ltb_spec; unfold to_list.
   rewrite <- in_rev.
   apply foldi_ind.
@@ -722,13 +722,13 @@ Lemma to_list_In : forall {A} (t: array A) i,
 Qed.
 
 Lemma to_list_In_eq : forall {A} (t: array A) i x,
-  i <? length t = true -> x = t.[i] -> In x (to_list t).
+  (i <? length t) = true -> x = t.[i] -> In x (to_list t).
 Proof.
   intros A t i x Hi ->. now apply to_list_In.
 Qed.
 
 Lemma In_to_list : forall {A} (t: array A) x,
-  In x (to_list t) -> exists i, i <? length t = true /\ x = t.[i].
+  In x (to_list t) -> exists i, (i <? length t) = true /\ x = t.[i].
 Proof.
   intros A t x; assert (Bt := to_Z_bounded (length t)); unfold to_list.
   rewrite <- in_rev.
@@ -793,7 +793,7 @@ Proof.
 Qed.
 
 Lemma get_amapi : forall {A B} (f:int -> A -> B) t i,
-  i <? length t = true -> (amapi f t).[i] = f i (t.[i]).
+  (i <? length t) = true -> (amapi f t).[i] = f i (t.[i]).
 Proof.
   intros A B f t.
   assert (Bt := to_Z_bounded (length t)).
@@ -813,13 +813,13 @@ Proof.
 Qed.
 
 Lemma get_amap : forall {A B} (f:A -> B) t i,
-  i <? length t = true -> (amap f t).[i] = f (t.[i]).
+  (i <? length t) = true -> (amap f t).[i] = f (t.[i]).
 Proof.
   intros; unfold amap; apply get_amapi; assumption.
 Qed.
 
 Lemma get_amapi_outofbound : forall {A B} (f:int -> A -> B) t i,
-  i <? length t = false -> (amapi f t).[i] = f (length t) (default t).
+  (i <? length t) = false -> (amapi f t).[i] = f (length t) (default t).
 Proof.
   intros A B f t i H1; rewrite get_outofbound.
   apply default_amapi.
@@ -827,7 +827,7 @@ Proof.
 Qed.
 
 Lemma get_amap_outofbound : forall {A B} (f:A -> B) t i,
-  i <? length t = false -> (amap f t).[i] = f (default t).
+  (i <? length t) = false -> (amap f t).[i] = f (default t).
 Proof.
   intros; unfold amap; apply get_amapi_outofbound; assumption.
 Qed.
@@ -870,7 +870,7 @@ Lemma afold_left_spec : forall A args op (e : A),
 Lemma afold_left_eq :
   forall A OP (def : A) V1 V2,
     length V1 = length V2 ->
-    (forall i, i <? length V1 = true -> V1.[i] = V2.[i]) ->
+    (forall i, (i <? length V1) = true -> V1.[i] = V2.[i]) ->
     afold_left _ def OP V1 = afold_left _ def OP V2.
 Proof.
   intros A OP def V1 V2 Heqlength HeqV.
@@ -892,8 +892,8 @@ Qed.
 
 Lemma afold_left_ind : forall A OP def V (P : int -> A -> Prop),
   (length V = 0 -> P 0 def) ->
-  (0 <? length V = true -> P 1 (V.[0])) ->
-  (forall a i, 0 <? i = true -> i <? length V = true -> P i a -> P (i + 1) (OP a (V.[i]))) ->
+  ((0 <? length V) = true -> P 1 (V.[0])) ->
+  (forall a i, (0 <? i) = true -> (i <? length V) = true -> P i a -> P (i + 1) (OP a (V.[i]))) ->
   P (length V) (afold_left A def OP V).
 Proof.
   intros A OP def V P HP0 HP1 HPOP.
@@ -934,7 +934,7 @@ Lemma afold_right_spec : forall A args op (e : A),
 Lemma afold_right_eq :
   forall A OP (def : A) V1 V2,
     length V1 = length V2 ->
-    (forall i, i <? length V1 = true -> V1.[i] = V2.[i]) ->
+    (forall i, (i <? length V1) = true -> V1.[i] = V2.[i]) ->
     afold_right _ def OP V1 = afold_right _ def OP V2.
 Proof.
   intros A OP def V1 V2 Heqlength HeqV.
@@ -955,8 +955,8 @@ Qed.
 
 Lemma afold_right_ind : forall A OP def V (P : int -> A -> Prop),
   (length V = 0 -> P 0 def) ->
-  (0 <? length V = true -> P (length V - 1) (V.[length V - 1])) ->
-  (forall a i, 0 <? i = true -> i <? length V = true -> P i a -> P (i - 1) (OP (V.[i - 1]) a)) ->
+  ((0 <? length V) = true -> P (length V - 1) (V.[length V - 1])) ->
+  (forall a i, (0 <? i) = true -> (i <? length V) = true -> P i a -> P (i - 1) (OP (V.[i - 1]) a)) ->
   P 0 (afold_right A def OP V).
 Proof.
   intros A OP def V P HP0 HP1 HPOP.
@@ -979,7 +979,7 @@ Qed.
 (* Case andb *)
 
 Lemma afold_left_andb_false : forall i a,
-  i <? length a = true ->
+  (i <? length a) = true ->
   a .[ i] = false ->
   afold_left bool true andb a = false.
 Proof.
@@ -998,7 +998,7 @@ Qed.
 
 Lemma afold_left_andb_false_inv : forall a,
   afold_left bool true andb a = false ->
-  exists i, (i <? length a = true) /\ (a .[ i] = false).
+  exists i, ((i <? length a) = true) /\ (a .[ i] = false).
 Proof.
   intro a; assert (Ba := to_Z_bounded (length a)).
   rewrite afold_left_spec by apply andb_true_l; apply foldi_ind.
@@ -1015,7 +1015,7 @@ Proof.
 Qed.
 
 Lemma afold_left_andb_true : forall a,
-  (forall i, i <? length a = true -> a.[i] = true) ->
+  (forall i, (i <? length a) = true -> a.[i] = true) ->
   afold_left bool true andb a = true.
 Proof.
   intros a H.
@@ -1027,7 +1027,7 @@ Qed.
 
 Lemma afold_left_andb_true_inv : forall a,
   afold_left bool true andb a = true ->
-  forall i, i <? length a = true -> a.[i] = true.
+  forall i, (i <? length a) = true -> a.[i] = true.
 Proof.
   intros a H i; assert (Ba := to_Z_bounded (length a)); assert (Bi := to_Z_bounded i).
   revert H; rewrite afold_left_spec by apply andb_true_l; apply foldi_ind.
@@ -1059,7 +1059,7 @@ Qed.
 (* Case orb *)
 
 Lemma afold_left_orb_true : forall i a,
-  i <? length a = true ->
+  (i <? length a) = true ->
   a .[ i] = true ->
   afold_left bool false orb a = true.
 Proof.
@@ -1078,7 +1078,7 @@ Qed.
 
 Lemma afold_left_orb_true_inv : forall a,
   afold_left bool false orb a = true ->
-  exists i, i <? length a = true /\ a .[ i] = true.
+  exists i, (i <? length a) = true /\ a .[ i] = true.
 Proof.
   intro a; assert (Ba := to_Z_bounded (length a)).
   rewrite afold_left_spec by apply andb_true_l; apply foldi_ind.
@@ -1095,7 +1095,7 @@ Proof.
 Qed.
 
 Lemma afold_left_orb_false : forall a,
-  (forall i, i <? length a = true -> a.[i] = false) ->
+  (forall i, (i <? length a) = true -> a.[i] = false) ->
   afold_left bool false orb a = false.
 Proof.
   intros a H.
@@ -1107,7 +1107,7 @@ Qed.
 
 Lemma afold_left_orb_false_inv : forall a,
   afold_left bool false orb a = false ->
-  forall i, i <? length a = true -> a.[i] = false.
+  forall i, (i <? length a) = true -> a.[i] = false.
 Proof.
   intros a H i; assert (Ba := to_Z_bounded (length a)); assert (Bi := to_Z_bounded i).
   revert H; rewrite afold_left_spec by apply andb_true_l; apply foldi_ind.
@@ -1139,8 +1139,8 @@ Qed.
 (* Case implb *)
 
 Lemma afold_right_implb_false : forall a,
-  0 <? length a = true /\
-  (forall i, i <? length a - 1 = true -> a .[ i] = true) /\
+  (0 <? length a) = true /\
+  (forall i, (i <? length a - 1) = true -> a .[ i] = true) /\
   a.[length a - 1] = false ->
   afold_right bool true implb a = false.
 Proof.
@@ -1157,8 +1157,8 @@ Qed.
 
 Lemma afold_right_implb_false_inv : forall a,
   afold_right bool true implb a = false ->
-  0 <? length a = true /\
-  (forall i, i <? length a - 1 = true -> a .[ i] = true) /\
+  (0 <? length a) = true /\
+  (forall i, (i <? length a - 1) = true -> a .[ i] = true) /\
   a.[length a - 1] = false.
 Proof.
   intros a H; assert (Ba := to_Z_bounded (length a)); split; [ | split ].
@@ -1192,7 +1192,7 @@ Proof.
 Qed.
 
 Lemma afold_right_implb_true_aux : forall a,
-  (exists i, i <? length a - 1 = true /\ a.[i] = false) ->
+  (exists i, (i <? length a - 1) = true /\ a.[i] = false) ->
   afold_right bool true implb a = true.
 Proof.
   intros a [ i [ Hi Hai ] ].
@@ -1213,8 +1213,8 @@ Proof.
 Qed.
 
 Lemma afold_right_implb_true : forall a,
-  length a = 0 \/ (exists i, i <? length a - 1 = true /\ a.[i] = false) \/
-  (forall i, i <? length a = true -> a.[i] = true) ->
+  length a = 0 \/ (exists i, (i <? length a - 1) = true /\ a.[i] = false) \/
+  (forall i, (i <? length a) = true -> a.[i] = true) ->
   afold_right bool true implb a = true.
 Proof.
   intro a; assert (Ba := to_Z_bounded (length a)); case (reflect_eqb (length a) 0).
@@ -1223,7 +1223,7 @@ Proof.
   intros [H1|[H1|H1]].
   elim (Hneq H1).
   apply afold_right_implb_true_aux; auto.
-  assert (Heq : length a =? 0 = false) by (rewrite <- not_true_iff_false, eqb_spec; exact Hneq).
+  assert (Heq : (length a =? 0) = false) by (rewrite <- not_true_iff_false, eqb_spec; exact Hneq).
   unfold afold_right; rewrite Heq.
   revert Hneq; rewrite <- to_Z_eq, to_Z_0; intro Hneq.
   apply (foldi_ind _ (fun i a => a = true)).
@@ -1237,12 +1237,12 @@ Qed.
 
 Lemma afold_right_implb_true_inv : forall a,
   afold_right bool true implb a = true ->
-  length a = 0 \/ (exists i, i <? length a - 1 = true /\ a.[i] = false) \/
-  (forall i, i <? length a = true -> a.[i] = true).
+  length a = 0 \/ (exists i, (i <? length a - 1) = true /\ a.[i] = false) \/
+  (forall i, (i <? length a) = true -> a.[i] = true).
 Proof.
   intros a H; cut (length a = 0
-    \/ (exists i, 0 <=? i = true /\ i <? length a - 1 = true /\ a.[i] = false)
-    \/ (forall i, 0 <=? i = true -> i <? length a = true -> a.[i] = true)).
+    \/ (exists i, (0 <=? i) = true /\ (i <? length a - 1) = true /\ a.[i] = false)
+    \/ (forall i, (0 <=? i) = true -> (i <? length a) = true -> a.[i] = true)).
   clear H; intro H; destruct H as [ H | H ].
   left; tauto.
   destruct H as [ H | H ].
@@ -1588,7 +1588,7 @@ Definition aexistsbi {A:Type} (f:int->A->bool) (t:array A) :=
 
 Lemma aexistsbi_false_spec : forall A (f : int -> A -> bool) t,
   aexistsbi f t = false <->
-  forall i, i <? length t = true -> f i (t.[i]) = false.
+  forall i, (i <? length t) = true -> f i (t.[i]) = false.
 Proof.
   intros A f t; unfold aexistsbi.
   split.
@@ -1601,7 +1601,7 @@ Proof.
 Qed.
 
 Lemma aexistsbi_spec : forall A (f : int -> A -> bool) t,
-  aexistsbi f t = true <-> exists i, i <? length t = true /\ f i (t.[i]) = true.
+  aexistsbi f t = true <-> exists i, (i <? length t) = true /\ f i (t.[i]) = true.
 Proof.
   intros A f t; unfold aexistsbi.
   split.
@@ -1617,7 +1617,7 @@ Definition aforallbi {A:Type} (f:int->A->bool) (t:array A) :=
   afold_left _ true andb (amapi f t).
 
 Lemma aforallbi_false_spec : forall A (f : int -> A -> bool) t,
-  aforallbi f t = false <-> exists i, i <? length t = true /\ f i (t.[i]) = false.
+  aforallbi f t = false <-> exists i, (i <? length t) = true /\ f i (t.[i]) = false.
 Proof.
   intros A f t; unfold aforallbi.
   split.
@@ -1631,7 +1631,7 @@ Qed.
 
 Lemma aforallbi_spec : forall A (f : int -> A -> bool) t,
   aforallbi f t = true <->
-  forall i, i <? length t = true -> f i (t.[i]) = true.
+  forall i, (i <? length t) = true -> f i (t.[i]) = true.
 Proof.
   intros A f t; unfold aforallbi.
   split.
