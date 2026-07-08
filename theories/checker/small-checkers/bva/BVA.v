@@ -1121,7 +1121,7 @@ induction 1; auto with arith.
 Qed.
 
 Lemma le_le_S_eq : forall (n m: nat), (n <= m)%nat -> (S n <= m)%nat \/ n = m.
-Proof le_lt_or_eq.
+Proof. exact le_lt_or_eq. Qed.
 
 Lemma diseq_neg_eq: forall (la lb: list bool),
       List_diseqb la lb = true -> negb (RAWBITVECTOR_LIST.beq_list la lb) = true.
