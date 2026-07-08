@@ -24,7 +24,7 @@
         lib = nixpkgs.lib.fix (lib: trakt.lib // import ./nix/lib.nix { inherit lib; });
 
         overlays = {
-          smtcoq = import ./nix/smtcoq;
+          smtcoq = import ./nix/pkgs;
 
           default = nixpkgs.lib.composeManyExtensions [
             trakt.overlays.default

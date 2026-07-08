@@ -36,14 +36,14 @@ mkRocqDerivation rec {
   owner = "smtcoq";
   pname = "smtcoq";
 
+  opam-name = "rocq-smtcoq";
+  useDune = true;
+
   defaultVersion = "dev";
   release."dev" = {
     src = lib.cleanSource ../..;
     hash = "";
   };
-
-  opam-name = "rocq-smtcoq";
-  useDune = true;
 
   propagatedBuildInputs = [
     rocq-elpi
@@ -60,7 +60,6 @@ mkRocqDerivation rec {
   ];
 
   doCheck = true;
-
   checkInputs = [ flock ];
   checkPhase = ''
     runHook preCheck
