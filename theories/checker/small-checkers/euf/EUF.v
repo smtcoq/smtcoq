@@ -182,6 +182,10 @@ Section certif.
       apply C.interp_true.
       destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form);trivial.
     Qed.
+    Create HintDb smtcoq_euf discriminated.
+    Hint Constants Transparent : smtcoq_euf.
+    Hint Projections Opaque : smtcoq_euf.
+    Hint Variables Opaque : smtcoq_euf.
     Hint Resolve valid_C_true : smtcoq_euf.
 
     Local Notation interp := (Atom.interp t_i t_func t_atom).

@@ -280,6 +280,10 @@ intros. destruct H0; now contradict H0.
     Lemma wf_t_form : wf t_form.
     Proof. destruct (Form.check_form_correct interp_form_hatom interp_form_hatom_bv _ ch_form) as [[_ H] _]; auto. Qed.
 
+    Create HintDb smtcoq_spl_op discriminated.
+    Hint Constants Transparent : smtcoq_spl_op.
+    Hint Projections Opaque : smtcoq_spl_op.
+    Hint Variables Opaque : smtcoq_spl_op.
     Local Hint Immediate wf_t_atom default_t_atom default_t_form wf_t_form : smtcoq_spl_op.
 
     Lemma interp_check_distinct : forall ha diseq,

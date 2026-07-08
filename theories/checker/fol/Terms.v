@@ -20,6 +20,10 @@ Local Open Scope list_scope.
 Local Open Scope array_scope.
 Local Open Scope uint63_scope.
 
+Create HintDb smtcoq_core discriminated.
+Hint Constants Transparent : smtcoq_core.
+Hint Projections Opaque : smtcoq_core.
+Hint Variables Opaque : smtcoq_core.
 #[export] Hint Unfold is_true : smtcoq_core.
 
 
