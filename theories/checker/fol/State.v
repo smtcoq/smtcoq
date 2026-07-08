@@ -83,7 +83,7 @@ Module Lit.
   (* Register eqb as PrimInline. *)
 
   Lemma eqb_spec : forall l l', eqb l l' = true <-> l = l'.
-  Proof eqb_spec.
+  Proof. exact eqb_spec. Qed.
 
   Lemma neg_involutive : forall l,  neg (neg l) = l.
   Proof.
@@ -154,7 +154,7 @@ Module Lit.
   Lemma blit_pos :forall a b,
     Lit.blit a = Lit.blit b -> Lit.is_pos a = Lit.is_pos b ->
     a = b.
-  Proof lsr_is_even_eq.
+  Proof. exact lsr_is_even_eq. Qed.
 
   Lemma blit_lit : forall l, blit (lit (blit l)) = blit l.
   Proof.
