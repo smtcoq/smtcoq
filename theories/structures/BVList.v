@@ -2511,8 +2511,8 @@ Module BITVECTOR_LIST <: BITVECTOR.
 
   Include RAW2BITVECTOR(RAWBITVECTOR_LIST).
 
-  Notation "x |0" := (cons false x) (left associativity, at level 73, format "x |0"): bv_scope.
-  Notation "x |1" := (cons true x) (left associativity, at level 73, format "x |1"): bv_scope.
+  Notation "x |0" := (cons false x) (left associativity, at level 1, format "x |0"): bv_scope.
+  Notation "x |1" := (cons true x) (left associativity, at level 1, format "x |1"): bv_scope.
   Notation "'b|0'" := [false] (at level 70): bv_scope.
   Notation "'b|1'" := [true] (at level 70): bv_scope.
   Notation "# x |" := (@of_bits x) (no associativity, at level 1, format "# x |"): bv_scope.
