@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -60,9 +60,9 @@ module HS = struct
       | [], _ -> -1
       | _, [] -> 1
       | x::r1, y::r2 ->
-	let c = compare x y in
-	if c <> 0 then c
-	else compare_list r1 r2
+    let c = compare x y in
+    if c <> 0 then c
+    else compare_list r1 r2
 
   let rec list_equal l1 l2 =
     match l1, l2 with

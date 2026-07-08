@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+open Common
 open Ast
 
 
@@ -308,11 +309,11 @@ let mp_isneg x =
   (* eprintf "mp_isneg %a .@." print_term x; *)
   match value x with
   | Int n -> Big_int.sign_big_int n < 0
-  | _ -> failwith ("mp_isneg")
+  | _ -> CoqInterface.raise_anomaly "mp_isneg"
 
 let mp_iszero x = match value x with
   | Int n -> Big_int.sign_big_int n = 0
-  | _ -> failwith ("mp_iszero")
+  | _ -> CoqInterface.raise_anomaly "mp_iszero"
 
 
 let uminus = declare_get "~" (pi "a" mpz mpz)
@@ -661,7 +662,7 @@ let rec append c1 c2 =
   | Const _ when term_equal c1 cln -> c2
   | App (f, [l; c1']) when term_equal f clc_s ->
     clc l (append c1' c2)
-  | _ -> failwith "Match failure"
+  | _ -> CoqInterface.raise_anomaly "Match failure"
 
 
 

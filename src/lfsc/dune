@@ -1,0 +1,8 @@
+(library
+ (name lfsc)
+ (public_name rocq-smtcoq.lfsc)
+ (libraries common verit))
+
+(ocamllex lexer)
+
+(ocamlyacc parser)

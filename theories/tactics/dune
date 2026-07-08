@@ -1,0 +1,15 @@
+(rocq.theory
+ (generate_project_file)
+ (package rocq-smtcoq)
+ (name SMTCoq.tactics)
+ (theories
+  Stdlib
+  Trakt
+  Ltac2
+  SMTCoq.utils
+  SMTCoq.structures
+  SMTCoq.checker
+  SMTCoq.tactics.preproc)
+ (plugins rocq-smtcoq.smtcoq)
+ (flags
+  (:standard -I ../../_build/install/default/lib)))

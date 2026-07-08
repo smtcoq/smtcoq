@@ -1,5 +1,20 @@
 all:
-	cd src && $(MAKE)
+	dune build theories/SMTCoq.vo
 
-install: all
-	cd src && $(MAKE) install
+install:
+	dune build -p rocq-smtcoq
+	dune install rocq-smtcoq
+
+test:
+	cd unit-tests && dune build
+
+example:
+	cd examples && dune build
+
+clean:
+	dune clean
+	rm -f rocq-smtcoq.install
+	find . -name _RocqProject -delete
+
+.PHONY: all install test example clean
+.NOTPARALLEL:

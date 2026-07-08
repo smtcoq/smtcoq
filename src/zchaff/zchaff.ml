@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+open Common
 open CoqTerms
 open SmtForm
 open SmtCertif
@@ -118,7 +119,7 @@ let import_cnf filename =
 let import_cnf_trace reloc filename first last =
   (* Format.fprintf Format.err_formatter "init@."; *)
   (* pp_trace Format.err_formatter first; *)
-  let confl = ZchaffParser.parse_proof reloc filename last in
+  let confl = Parser.parse_proof reloc filename last in
   (* Format.fprintf Format.err_formatter "zchaff@."; *)
   (* pp_trace Format.err_formatter first; *)
   SmtTrace.select confl;
@@ -190,6 +191,8 @@ let cCertif = CoqTerms.csat_checker_Certif
 
 let parse_certif dimacs trace fdimacs ftrace =
   SmtTrace.clear ();
+  let fdimacs = CoqInterface.resolve_file_path fdimacs in
+  let ftrace = CoqInterface.resolve_file_path ftrace in
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
   let ce1 = CoqInterface.mkUConst d in
@@ -210,6 +213,8 @@ let cchecker = CoqTerms.csat_checker_checker
 
 let theorems interp name fdimacs ftrace =
   SmtTrace.clear ();
+  let fdimacs = CoqInterface.resolve_file_path fdimacs in
+  let ftrace = CoqInterface.resolve_file_path ftrace in
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
 
@@ -254,6 +259,8 @@ let theorem_abs =
 
 let checker fdimacs ftrace =
   SmtTrace.clear ();
+  let fdimacs = CoqInterface.resolve_file_path fdimacs in
+  let ftrace = CoqInterface.resolve_file_path ftrace in
   let _,first,last,reloc = import_cnf fdimacs in
   let d = make_roots first last in
 
@@ -266,9 +273,8 @@ let checker fdimacs ftrace =
   let tm = mklApp cchecker [|d; certif|] in
 
   let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
-  Format.eprintf "     = %s\n     : bool@."
-    (if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then
-        "true" else "false")
+  if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
+  else CoqInterface.raise_error "Certificate checking failure."
 
 
 
@@ -319,25 +325,45 @@ let export out_channel nvars first =
 let call_zchaff nvars root =
   let (filename, outchan) = Filename.open_temp_file "zchaff_coq" ".cnf" in
   let resfilename = (Filename.chop_extension filename)^".zlog" in
+  let errfilename, errchan = Filename.open_temp_file "stderr_zchaff" ".log" in
+  close_out errchan;
   let reloc, last = export outchan nvars root in
   close_out outchan;
-  let command = "zchaff " ^ filename ^ " > " ^ resfilename in
-  Format.eprintf "%s@." command;
+
+  let fl = Unix.openfile ".smtcoq_zchaff_lock" [Unix.O_CREAT; Unix.O_RDWR] 0o644 in
+  Unix.lockf fl Unix.F_LOCK 0;
+
+  let command = "zchaff " ^ filename ^ " > " ^ resfilename ^ " 2> " ^ errfilename in
+
+  CoqInterface.raise_debug "%s" command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  Format.eprintf "Zchaff = %.5f@." (t1-.t0);
-  if exit_code <> 0 then
-    failwith ("Zchaff.call_zchaff: command " ^ command ^
-	        " exited with code " ^ (string_of_int exit_code));
+  SolverStatus.raise_debug_file_contents errfilename;
+  Sys.remove errfilename;
+  CoqInterface.raise_debug "Zchaff = %.5f" (t1 -. t0);
+
+  if exit_code <> 0 then begin
+    Unix.lockf fl Unix.F_ULOCK 0;
+    Unix.close fl;
+    CoqInterface.raise_error "Command %s exited with code %d" command exit_code
+  end;
+
   let logfilename = (Filename.chop_extension filename) ^ ".log" in
-  let command2 = "mv resolve_trace "^logfilename in
-  let exit_code2 = Sys.command command2 in
-  if exit_code2 <> 0 then
-      failwith ("Zchaff.call_zchaff: command " ^ command2 ^
-                  " exited with code " ^ (string_of_int exit_code2) ^
-        "\nDid you forget to turn on Zchaff proof production?" );
-  (* import_cnf_trace reloc logfilename root last  *)
+  let command = "mv resolve_trace "^logfilename in
+
+  let exit_code = Sys.command command in
+  if exit_code <> 0 then begin
+    Unix.lockf fl Unix.F_ULOCK 0;
+    Unix.close fl;
+    CoqInterface.raise_debug
+      "Command %s exited with code %d\nDid you forget to turn on Zchaff proof production?"
+      command exit_code
+  end;
+
+  Unix.lockf fl Unix.F_ULOCK 0;
+  Unix.close fl;
+
   (reloc, resfilename, logfilename, last)
 
 
@@ -419,7 +445,7 @@ let get_arguments concl =
   match args with
   | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
   | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
-  | _ -> failwith ("Zchaff.get_arguments :can only deal with equality over bool")
+  | _ -> CoqInterface.raise_error "Zchaff.get_arguments: can only deal with equality over bool"
 
 
 (* Check that the result is Unsat, otherwise raise a model *)
@@ -493,7 +519,7 @@ let make_proof pform_tbl atom_tbl env reify_form l =
   let (reloc, resfilename, logfilename, last) =
     call_zchaff (Form.nvars reify_form) root in
   (try check_unsat resfilename with
-    | Sat model -> CoqInterface.error (List.fold_left (fun acc i ->
+    | Sat model -> CoqInterface.raise_error "%s" (List.fold_left (fun acc i ->
       let index = if i > 0 then i-1 else -i-1 in
       let ispos = i > 0 in
       try (

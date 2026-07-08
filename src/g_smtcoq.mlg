@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,12 +10,13 @@
 (**************************************************************************)
 
 
-DECLARE PLUGIN "coq-smtcoq.smtcoq"
+DECLARE PLUGIN "rocq-smtcoq.smtcoq"
 
 {
 
 open Stdarg
 open Ltac_plugin
+open Common
 
 }
 

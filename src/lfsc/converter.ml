@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -12,6 +12,7 @@
 
 open Ast
 open Builtin
+open Common
 open Format
 open Translator_sig
 
@@ -124,10 +125,10 @@ module Make (T : Translator_sig.S) = struct
     | Some (n, [_; tr; p]) when n == H.th_let_pf ->
       begin match app_name tr with
         | Some (n, _) when n == H.trust_f ->
-          eprintf "Warning: hole for trust_f.@."
+            CoqInterface.raise_debug "Warning: hole for trust_f.@."
         | Some (rule, _) ->
-          eprintf "Warning: hole for unsupported rule %a.@." Hstring.print rule
-        | None -> eprintf "Warning: hole@."
+            CoqInterface.raise_debug "Warning: hole for unsupported rule %a.@." Hstring.print rule
+        | None -> CoqInterface.raise_debug "Warning: hole@."
       end;
       let formula = th_res tr in
       begin match value p with
@@ -826,7 +827,8 @@ module Make (T : Translator_sig.S) = struct
       { env with clauses = mk_clause_cl Bbdis [th_res p] [] :: env.clauses }
   
     | Some (rule, args) ->
-      eprintf "Warning: Introducing hole for unsupported rule %a@."
+      CoqInterface.raise_debug
+        "Warning: Introducing hole for unsupported rule %a@."
         Hstring.print rule;
       { env with clauses = mk_clause_cl Hole [th_res p] [] :: env.clauses }
 
@@ -1179,8 +1181,9 @@ module Make (T : Translator_sig.S) = struct
       end
       
     | Some (rule, args) ->
-      eprintf "Warning: Introducing hole for unsupported rule %a@."
-        Hstring.print rule;
+      CoqInterface.raise_warning ~name:"SMTCoq-introducing-hole"
+        Pp.(fun rule -> str "Introducing hole for unsupported rule:" ++ spc() ++ str rule)
+        (Hstring.view rule);
       Some (mk_clause_cl Hole [ttype p] [])
 
   
@@ -1284,11 +1287,11 @@ module Make (T : Translator_sig.S) = struct
   
 
   let convert_pt p =
-    eprintf "Converting LFSC proof to SMTCoq...@?";
+    CoqInterface.raise_debug "Converting LFSC proof to SMTCoq...@?";
     let t0 = Sys.time () in
     let r = convert p in
     let t1 = Sys.time () in
-    eprintf " Done [%.3f s]@." (t1 -. t0);
+    CoqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
     r
 
   

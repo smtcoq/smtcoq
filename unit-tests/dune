@@ -1,0 +1,18 @@
+(alias
+ (name runtest)
+ (deps
+  (alias_rec all)))
+
+(env
+ (_
+  (env-vars
+   (LFSCSIGS "../../src/lfsc/signatures"))
+  (rocq
+   (flags
+    (:standard -I ../_build/install/default/lib)))))
+
+(rocq.theory
+ (name SMTCoq.tests)
+ (generate_project_file)
+ (theories SMTCoq)
+ (modules abduce_tactics lfsc_tactics verit_tactics zchaff_tactics))

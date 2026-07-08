@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,14 +10,14 @@
 (**************************************************************************)
 
 
-open Format
+open Common
 
 open SmtMisc
 open CoqTerms
 open SmtCertif
 open SmtTrace
 open SmtAtom
-
+open Format
 
 (******************************************************************************)
 (* Given a lfsc trace build the corresponding certif and theorem             *)
@@ -52,33 +52,33 @@ let process_signatures_once =
         List.iter (fun f ->
             let chan = open_in f in
             let lexbuf = Lexing.from_channel chan in
-            LfscParser.ignore_commands LfscLexer.main lexbuf;
+            Parser.ignore_commands Lexer.main lexbuf;
             close_in chan
           ) signatures
       with
       | Ast.TypingError (t1, t2) ->
-        CoqInterface.error
-          (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+        CoqInterface.raise_error
+          "@[<hov>LFSC typing error: expected %a, got %a@]@."
              Ast.print_term t1
-             Ast.print_term t2)
+             Ast.print_term t2
 
 
 let lfsc_parse_last lb =
-  printf "Type-checking LFSC proof...@?";
+  CoqInterface.raise_debug "Type-checking LFSC proof...@?";
   let t0 = Sys.time () in
-  let r = LfscParser.last_command LfscLexer.main lb in
+  let r = Parser.last_command Lexer.main lb in
   let t1 = Sys.time () in
-  printf " Done [%.3f s]@." (t1 -. t0);
+  CoqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
   r
 
 let lfsc_parse_one lb =
-  printf "Type-checking LFSC proof...@?";
+  CoqInterface.raise_debug "Type-checking LFSC proof...@?";
   let t0 = Sys.time () in
-  let r = LfscParser.one_command LfscLexer.main lb in
+  let r = Parser.one_command Lexer.main lb in
   let t1 = Sys.time () in
-  printf " Done [%.3f s]@." (t1 -. t0);
+  CoqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
   r
-  
+
 
 let import_trace first parse lexbuf =
   Printexc.record_backtrace true;
@@ -92,7 +92,7 @@ let import_trace first parse lexbuf =
       (* Afterwards, the SMTCoq libraries will produce the remaining, you do
          not have to care *)
       let first =
-        let aux = VeritSyntax.get_clause 1 in
+        let aux = Verit.Syntax.get_clause 1 in
         match first, aux.value with
         | Some (root,l), Some (fl::nil) ->
           (* Format.eprintf "Root: %a ,,,,,,\n\ *)
@@ -107,7 +107,7 @@ let import_trace first parse lexbuf =
             root
           )
         | _,_ -> aux in
-      let confl = VeritSyntax.get_clause confl_num in
+      let confl = Verit.Syntax.get_clause confl_num in
       SmtTrace.select confl;
       occur confl;
       (alloc first, confl)
@@ -116,10 +116,10 @@ let import_trace first parse lexbuf =
 
   with
   | Ast.TypingError (t1, t2) ->
-    CoqInterface.error
-      (asprintf "@[<hov>LFSC typing error: expected %a, got %a@]@."
+    CoqInterface.raise_error
+      "@[<hov>LFSC typing error: expected %a, got %a@]@."
          Ast.print_term t1
-         Ast.print_term t2)
+         Ast.print_term t2
 
 
 
@@ -135,13 +135,15 @@ let import_trace_from_file first filename =
 let clear_all () =
   SmtTrace.clear ();
   SmtMaps.clear ();
-  VeritSyntax.clear ();
+  Verit.Syntax.clear ();
   Tosmtcoq.clear ();
   C.clear ()
 
 
 let import_all fsmt fproof =
   clear_all ();
+  let fsmt = CoqInterface.resolve_file_path fsmt in
+  let fproof = CoqInterface.resolve_file_path fproof in
   let rt = SmtBtype.create () in
   let ro = Op.create () in
   let ra = Tosmtcoq.ra in
@@ -167,11 +169,11 @@ let theorem name fsmt fproof =
 (* Same but print runtime *)
 let checker fsmt fproof =
   let c = import_all fsmt fproof in
-  printf "Coq checker...@.";
+  CoqInterface.raise_debug "Coq checker...@.";
   let t0 = Sys.time () in
   let r = SmtCommands.checker c in
   let t1 = Sys.time () in
-  printf "Done (Coq) [%.3f s]@." (t1 -. t0);
+  CoqInterface.raise_debug "Done (Coq) [%.3f s]@." (t1 -. t0);
   r
 
 
@@ -251,7 +253,7 @@ let checker fsmt fproof =
 (*   (\* Just for printing *\) *)
 
 (*   open Atom *)
-  
+
 (*   let distrib x l = List.map (fun y -> (x,y)) l *)
 
 (*   let rec cross acc l = match l with *)
@@ -260,7 +262,7 @@ let checker fsmt fproof =
 (*       cross (List.rev_append (distrib x r) acc) r *)
 
 (*   let cross = cross [] *)
-  
+
 (*   let rec compute_int = function *)
 (*     | Acop c -> *)
 (*       (match c with *)
@@ -314,7 +316,7 @@ let checker fsmt fproof =
 (*       | BO_Zge -> ">=" *)
 (*       | BO_Zgt -> ">" *)
 (*       | BO_eq _ -> "=" *)
-  
+
 (*   and to_smt_bop fmt op h1 h2 = *)
 (*     match op with *)
 (*     | BO_Zlt -> fprintf fmt "(not (>= %a %a)" to_smt h1 to_smt h2 *)
@@ -373,16 +375,19 @@ let call_abduce i env rt ro ra rf root lsmt =
     List.iter (fun x -> assume cvc5 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
 
     let proof =
-      let abduct1 = SmtCommands.abduct_string env rt ro ra rf 
+      let abduct1 = SmtCommands.abduct_string env rt ro ra rf
             (get_abduct cvc5 (asprintf "%a" (Form.to_smt ~debug:false) fl)) in
       let rec produce_abducts n =
         (if n > 0 then
-          (SmtCommands.abduct_string env rt ro ra rf (get_abduct_next cvc5)) :: produce_abducts (n-1) 
+          (SmtCommands.abduct_string env rt ro ra rf (get_abduct_next cvc5)) :: produce_abducts (n-1)
         else []) in
       let abducts = List.rev (produce_abducts (i - 1)) in
-        CoqInterface.error
-        ("cvc5 returned SAT.\nThe solver cannot prove the goal, but one of the following hypotheses (printed in Prop, but the corresponding Boolean versions also apply) would make it provable:\n" ^
-          abduct1^"\n"^(String.concat "\n" abducts))
+        CoqInterface.raise_error
+          "%s\n%s\n%s\n%s\n"
+          "cvc5 returned SAT."
+          "The solver cannot prove the goal, but one of the following hypotheses (printed in Prop, but the corresponding Boolean versions also apply) would make it provable:"
+          abduct1
+          (String.concat "\n" abducts)
     in
 
     quit cvc5;
@@ -458,7 +463,7 @@ let call_cvc4 _ env rt ro ra rf root lsmt =
     SmtMaps.add_btype s (SmtBtype.Tindex t);
     declare_sort cvc4 s 0;
   ) (SmtBtype.to_list rt);
-  
+
   (* Declare functions and variables *)
   List.iter (fun (i,cod,dom,op) ->
     let s = "op_"^(string_of_int i) in
@@ -480,15 +485,15 @@ let call_cvc4 _ env rt ro ra rf root lsmt =
       begin
         try get_proof cvc4 (import_trace (Some root) lfsc_parse_one)
         with
-        | Ast.CVC4Sat -> CoqInterface.error "CVC4 returned SAT"
-        | No_proof -> CoqInterface.error "CVC4 did not generate a proof"
-        | Failure s -> CoqInterface.error ("Importing of proof failed: " ^ s)
+        | Ast.CVC4Sat -> CoqInterface.raise_error "CVC4 returned SAT"
+        | No_proof -> CoqInterface.raise_error "CVC4 did not generate a proof"
+        | Failure s -> CoqInterface.raise_error "Importing of proof failed: %s" s
       end
     | Sat ->
       let smodel = get_model cvc4 in
-      CoqInterface.error
-        ("CVC4 returned sat. Here is the model:\n\n" ^
-         SmtCommands.model_string env rt ro ra rf smodel)
+      CoqInterface.raise_error
+        "CVC4 returned sat. Here is the model:\n\n%s"
+        (SmtCommands.model_string env rt ro ra rf smodel)
   in
 
   quit cvc4;
@@ -528,8 +533,7 @@ let get_model_from_file filename =
   let lexbuf = Lexing.from_channel chan in
   match SExprParser.sexps SExprLexer.main lexbuf with
   | [SExpr.Atom "sat"; m] -> m
-  | _ -> CoqInterface.error "CVC4 returned SAT but no model"
-
+  | _ -> CoqInterface.raise_error "CVC4 returned SAT but no model"
 
 let call_cvc4_file _ env rt ro ra rf root =
   let fl = snd root in
@@ -538,6 +542,8 @@ let call_cvc4_file _ env rt ro ra rf root =
   close_out outchan;
   let bf = Filename.chop_extension filename in
   let prooffilename = bf ^ ".lfsc" in
+  let errfilename, errchan = Filename.open_temp_file "stderr_cvc4" ".log" in
+  close_out errchan;
 
   (* let cvc4_cmd = *)
   (*   "cvc4 --proof --dump-proof -m --dump-model \ *)
@@ -545,37 +551,40 @@ let call_cvc4_file _ env rt ro ra rf root =
   (*    --no-bv-eq --no-bv-ineq --no-bv-algebraic " *)
   (*   ^ filename ^ " > " ^ prooffilename in *)
   (* CVC4 crashes when asking for both models and proofs *)
-  
+
   let cvc4_cmd =
     "cvc4 --proof --dump-proof \
      --simplification=none --fewer-preprocessing-holes \
      --no-bv-eq --no-bv-ineq --no-bv-algebraic "
-    ^ filename ^ " > " ^ prooffilename in
+    ^ filename ^ " > " ^ prooffilename ^ " 2> " ^ errfilename in
   (* let clean_cmd = "sed -i -e '1d' " ^ prooffilename in *)
-  eprintf "%s@." cvc4_cmd;
+  CoqInterface.raise_debug "%s" cvc4_cmd;
   let t0 = Sys.time () in
   let exit_code = Sys.command cvc4_cmd in
-  
-  let t1 = Sys.time () in
-  eprintf "CVC4 = %.5f@." (t1-.t0);
+  SolverStatus.raise_debug_file_contents errfilename;
+  Sys.remove errfilename;
 
-  if exit_code <> 0 then
-    CoqInterface.error ("CVC4 crashed: return code "^string_of_int exit_code);
+  let t1 = Sys.time () in
+  CoqInterface.raise_debug "CVC4 = %.5f" (t1 -. t0);
+
+  if exit_code <> 0 then begin
+    CoqInterface.raise_error "CVC4 crashed: return code %d" exit_code
+  end;
 
   (* ignore (Sys.command clean_cmd); *)
 
   try import_trace_from_file (Some root) prooffilename
   with
-  | No_proof -> CoqInterface.error "CVC4 did not generate a proof"
-  | Failure s -> CoqInterface.error ("Importing of proof failed: " ^ s)
+  | No_proof -> CoqInterface.raise_error "CVC4 did not generate a proof"
+  | Failure s -> CoqInterface.raise_error "Importing of proof failed: %s" s
   | Ast.CVC4Sat ->
     let smodel = get_model_from_file prooffilename in
-    CoqInterface.error
-      ("CVC4 returned sat. Here is the model:\n\n" ^
-       SmtCommands.model_string env rt ro ra rf smodel)
+    CoqInterface.raise_error
+      "CVC4 returned sat. Here is the model:\n\n%s"
+      (SmtCommands.model_string env rt ro ra rf smodel)
 
 
-let cvc4_logic = 
+let cvc4_logic =
   SL.of_list [LUF; LLia; LBitvectors; LArrays]
 
 
@@ -615,3 +624,10 @@ let tactic_gen_abduct i vm_cast lcpl lcepl =
 let tactic () = tactic_gen vm_cast_true
 let tactic_no_check () = tactic_gen (fun _ -> vm_cast_true_no_check)
 let tactic_abduct i = tactic_gen_abduct i vm_cast_true
+
+module Ast = Ast
+module Builtin = Builtin
+module VeritPrinter = VeritPrinter
+module Converter = Converter
+module Parser = Parser
+module Lexer = Lexer

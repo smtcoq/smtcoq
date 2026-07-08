@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -9,6 +9,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+
+open Common
 
 type lex_buff = {
             buff       : bytes;
@@ -26,8 +28,7 @@ let open_file s name =
     let buff_end = input in_channel buff 0 buff_length in
     { buff = buff; curr_char = 0; buff_end = buff_end; in_ch = in_channel }
   with _ ->
-    Printf.printf ("%s file %s does not exists.\n") s name;
-    exit 1
+    CoqInterface.raise_error "%s file %s does not exists." s name
 
 let close lb =
   lb.buff_end <- 0;

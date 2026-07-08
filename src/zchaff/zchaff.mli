@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -9,6 +9,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
+
+open Common
 
 val pp_trace : Format.formatter -> SatAtom.Form.t SmtCertif.clause -> unit
 val parse_certif : CoqInterface.id -> CoqInterface.id -> string -> string -> unit

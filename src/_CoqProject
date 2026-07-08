@@ -6,14 +6,6 @@
 
 
 
-########################################################################
-## To generate the Makefile:                                          ##
-##   coq_makefile -f _CoqProject -o Makefile                          ##
-##   sed -i 's/^CAMLDONTLINK=unix,str$/CAMLDONTLINK=num,str,unix,dynlink,threads/' Makefile ##
-## WARNING: DO NOT FORGET THE SECOND LINE (see PR#62)                 ##
-########################################################################
-
-
 META.coq-smtcoq
 
 -R . SMTCoq
@@ -28,6 +20,7 @@ META.coq-smtcoq
 -I lia
 -I smtlib2
 -I trace
+-I preproc
 -I verit
 -I zchaff
 -I PArray
@@ -66,6 +59,7 @@ trace/smtMisc.ml
 trace/smtMisc.mli
 trace/smtTrace.ml
 trace/smtTrace.mli
+trace/solverStatus.ml
 trace/coqInterface.ml
 trace/coqInterface.mli
 
@@ -139,11 +133,12 @@ spl/Syntactic.v
 spl/Arithmetic.v
 spl/Operators.v
 
-Conversion_tactics.v
+preproc/Database_trakt.v
+preproc/Conversion.v
+
 Misc.v
 SMTCoq.v
 ReflectFacts.v
-PropToBool.v
 QInst.v
 Tactics.v
 SMT_terms.v

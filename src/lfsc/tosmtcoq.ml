@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,6 +10,7 @@
 (**************************************************************************)
 
 
+open Common
 open SmtAtom
 open SmtForm
 open Ast
@@ -59,75 +60,75 @@ let cl_cpt = ref 0
 
 
 let get_rule = function
-  | Reso -> VeritSyntax.Reso
-  | Weak -> VeritSyntax.Weak
-  | Or -> VeritSyntax.Or
-  | Orp -> VeritSyntax.Orp
-  | Imp -> VeritSyntax.Imp
-  | Impp -> VeritSyntax.Impp
-  | Nand -> VeritSyntax.Nand
-  | Andn -> VeritSyntax.Andn
-  | Nimp1 -> VeritSyntax.Nimp1
-  | Nimp2 -> VeritSyntax.Nimp2
-  | Impn1 -> VeritSyntax.Impn1
-  | Impn2 -> VeritSyntax.Impn2
-  | Nor -> VeritSyntax.Nor
-  | Orn -> VeritSyntax.Orn
-  | And -> VeritSyntax.And
-  | Andp -> VeritSyntax.Andp
-  | Equ1 -> VeritSyntax.Equ1
-  | Equ2 -> VeritSyntax.Equ2
-  | Nequ1 -> VeritSyntax.Nequ1
-  | Nequ2 -> VeritSyntax.Nequ2
-  | Equp1 -> VeritSyntax.Equp1
-  | Equp2 -> VeritSyntax.Equp2
-  | Equn1 -> VeritSyntax.Equn1
-  | Equn2 -> VeritSyntax.Equn2
-  | Xor1 -> VeritSyntax.Xor1
-  | Xor2 -> VeritSyntax.Xor2
-  | Xorp1 -> VeritSyntax.Xorp1
-  | Xorp2 -> VeritSyntax.Xorp2
-  | Xorn1 -> VeritSyntax.Xorn1
-  | Xorn2 -> VeritSyntax.Xorn2
-  | Nxor1 -> VeritSyntax.Nxor1
-  | Nxor2 -> VeritSyntax.Nxor2
-  | Itep1 -> VeritSyntax.Itep1
-  | Itep2 -> VeritSyntax.Itep2
-  | Iten1 -> VeritSyntax.Iten1
-  | Iten2 -> VeritSyntax.Iten2
-  | Ite1 -> VeritSyntax.Ite1
-  | Ite2 -> VeritSyntax.Ite2
-  | Nite1 -> VeritSyntax.Nite1
-  | Nite2 -> VeritSyntax.Nite2
-  | Eqtr -> VeritSyntax.Eqtr
-  | Eqcp -> VeritSyntax.Eqcp
-  | Eqco -> VeritSyntax.Eqco
-  | Eqre -> VeritSyntax.Eqre
-  | Lage -> VeritSyntax.Lage
-  | Flat -> VeritSyntax.Flat
-  | Hole -> VeritSyntax.Hole
-  | True -> VeritSyntax.True
-  | Fals -> VeritSyntax.Fals
-  | Bbva -> VeritSyntax.Bbva
-  | Bbconst -> VeritSyntax.Bbconst
-  | Bbeq -> VeritSyntax.Bbeq
-  | Bbdis -> VeritSyntax.Bbdis
-  | Bbop -> VeritSyntax.Bbop
-  | Bbadd -> VeritSyntax.Bbadd
-  | Bbmul -> VeritSyntax.Bbmul
-  | Bbult -> VeritSyntax.Bbult
-  | Bbslt -> VeritSyntax.Bbslt
-  | Bbshl -> VeritSyntax.Bbshl
-  | Bbshr -> VeritSyntax.Bbshr
-  | Bbnot -> VeritSyntax.Bbnot
-  | Bbneg -> VeritSyntax.Bbneg
-  | Bbconc -> VeritSyntax.Bbconc
-  | Bbextr -> VeritSyntax.Bbextr
-  | Bbzext -> VeritSyntax.Bbzext
-  | Bbsext -> VeritSyntax.Bbsext
-  | Row1 -> VeritSyntax.Row1
-  | Row2 -> VeritSyntax.Row2
-  | Exte -> VeritSyntax.Exte
+  | Reso -> Verit.Syntax.Reso
+  | Weak -> Verit.Syntax.Weak
+  | Or -> Verit.Syntax.Or
+  | Orp -> Verit.Syntax.Orp
+  | Imp -> Verit.Syntax.Imp
+  | Impp -> Verit.Syntax.Impp
+  | Nand -> Verit.Syntax.Nand
+  | Andn -> Verit.Syntax.Andn
+  | Nimp1 -> Verit.Syntax.Nimp1
+  | Nimp2 -> Verit.Syntax.Nimp2
+  | Impn1 -> Verit.Syntax.Impn1
+  | Impn2 -> Verit.Syntax.Impn2
+  | Nor -> Verit.Syntax.Nor
+  | Orn -> Verit.Syntax.Orn
+  | And -> Verit.Syntax.And
+  | Andp -> Verit.Syntax.Andp
+  | Equ1 -> Verit.Syntax.Equ1
+  | Equ2 -> Verit.Syntax.Equ2
+  | Nequ1 -> Verit.Syntax.Nequ1
+  | Nequ2 -> Verit.Syntax.Nequ2
+  | Equp1 -> Verit.Syntax.Equp1
+  | Equp2 -> Verit.Syntax.Equp2
+  | Equn1 -> Verit.Syntax.Equn1
+  | Equn2 -> Verit.Syntax.Equn2
+  | Xor1 -> Verit.Syntax.Xor1
+  | Xor2 -> Verit.Syntax.Xor2
+  | Xorp1 -> Verit.Syntax.Xorp1
+  | Xorp2 -> Verit.Syntax.Xorp2
+  | Xorn1 -> Verit.Syntax.Xorn1
+  | Xorn2 -> Verit.Syntax.Xorn2
+  | Nxor1 -> Verit.Syntax.Nxor1
+  | Nxor2 -> Verit.Syntax.Nxor2
+  | Itep1 -> Verit.Syntax.Itep1
+  | Itep2 -> Verit.Syntax.Itep2
+  | Iten1 -> Verit.Syntax.Iten1
+  | Iten2 -> Verit.Syntax.Iten2
+  | Ite1 -> Verit.Syntax.Ite1
+  | Ite2 -> Verit.Syntax.Ite2
+  | Nite1 -> Verit.Syntax.Nite1
+  | Nite2 -> Verit.Syntax.Nite2
+  | Eqtr -> Verit.Syntax.Eqtr
+  | Eqcp -> Verit.Syntax.Eqcp
+  | Eqco -> Verit.Syntax.Eqco
+  | Eqre -> Verit.Syntax.Eqre
+  | Lage -> Verit.Syntax.Lage
+  | Flat -> Verit.Syntax.Flat
+  | Hole -> Verit.Syntax.Hole
+  | True -> Verit.Syntax.True
+  | Fals -> Verit.Syntax.Fals
+  | Bbva -> Verit.Syntax.Bbva
+  | Bbconst -> Verit.Syntax.Bbconst
+  | Bbeq -> Verit.Syntax.Bbeq
+  | Bbdis -> Verit.Syntax.Bbdis
+  | Bbop -> Verit.Syntax.Bbop
+  | Bbadd -> Verit.Syntax.Bbadd
+  | Bbmul -> Verit.Syntax.Bbmul
+  | Bbult -> Verit.Syntax.Bbult
+  | Bbslt -> Verit.Syntax.Bbslt
+  | Bbshl -> Verit.Syntax.Bbshl
+  | Bbshr -> Verit.Syntax.Bbshr
+  | Bbnot -> Verit.Syntax.Bbnot
+  | Bbneg -> Verit.Syntax.Bbneg
+  | Bbconc -> Verit.Syntax.Bbconc
+  | Bbextr -> Verit.Syntax.Bbextr
+  | Bbzext -> Verit.Syntax.Bbzext
+  | Bbsext -> Verit.Syntax.Bbsext
+  | Row1 -> Verit.Syntax.Row1
+  | Row2 -> Verit.Syntax.Row2
+  | Exte -> Verit.Syntax.Exte
 
 let string_of_rule = function
   | Reso -> "resolution"
@@ -391,21 +392,20 @@ let rec term_smtcoq_old t =
       | Some (n, [a]) when n == H.uminus_Int ->
         Form.Atom (Atom.mk_opp ra (term_smtcoq_atom a))
       | Some (n, _) ->
-        Format.eprintf "\nTerm: %a\n@." print_term t;
-        failwith ("LFSC function symbol "^Hstring.view n^" not supported.")
+        CoqInterface.raise_error "LFSC function symbol %s not supported" (Hstring.view n)
       | _ -> assert false
     end
 
-  | Rat _ -> failwith ("LFSC rationals not supported")
-  | Type -> failwith ("LFSC Type not supported")
-  | Kind -> failwith ("LFSC Kind not supported")
-  | Mpz -> failwith ("LFSC mpz not supported")
-  | Mpq -> failwith ("LFSC mpq not supported")
-  | Pi _ -> failwith ("LFSC pi abstractions not supported")
-  | Lambda _ -> failwith ("LFSC lambda abstractions not supported")
-  | Hole _ -> failwith ("LFSC holes not supported")
-  | Ptr _ -> failwith ("LFSC Ptr not supported")
-  | SideCond _ -> failwith ("LFSC side conditions not supported")
+  | Rat _ -> CoqInterface.raise_error "LFSC rationals not supported"
+  | Type -> CoqInterface.raise_error "LFSC Type not supported"
+  | Kind -> CoqInterface.raise_error "LFSC Kind not supported"
+  | Mpz -> CoqInterface.raise_error "LFSC mpz not supported"
+  | Mpq -> CoqInterface.raise_error "LFSC mpq not supported"
+  | Pi _ -> CoqInterface.raise_error "LFSC pi abstractions not supported"
+  | Lambda _ -> CoqInterface.raise_error "LFSC lambda abstractions not supported"
+  | Hole _ -> CoqInterface.raise_error "LFSC holes not supported"
+  | Ptr _ -> CoqInterface.raise_error "LFSC Ptr not supported"
+  | SideCond _ -> CoqInterface.raise_error "LFSC side conditions not supported"
   | _ -> assert false
 
 
@@ -447,8 +447,7 @@ and uncurry acc t = match app_name t, acc with
        Form.Atom (Atom.get ra (Aapp (SmtMaps.get_fun (Hstring.view n), args)))
      | _ -> assert false)
   | _ ->
-    eprintf "uncurry fail: %a@." Ast.print_term t;
-    assert false
+    CoqInterface.raise_error "uncurry fail: %a@." Ast.print_term t
 
 (* Endianness dependant: LFSC big endian -> SMTCoq little endian *)
 and bblt_lits acc t = match name t with
@@ -518,10 +517,10 @@ let mk_clause ?(reuse=true) rule cl args =
   match new_clause_id ~reuse cl with
   | NewCl id ->
     if show_veritproof then
-      eprintf "%d:(%s %a %a)@." id (string_of_rule rule)
+      CoqInterface.raise_debug "%d:(%s %a %a)@." id (string_of_rule rule)
         print_clause cl
         (fun fmt -> List.iter (fprintf fmt " %d")) args;
-    VeritSyntax.mk_clause (id, (get_rule rule), cl, args)
+    Verit.Syntax.mk_clause (id, get_rule rule, cl, args)
   | OldCl id ->
     (* Format.eprintf "old_clause %d@." id; *)
     id
@@ -537,8 +536,8 @@ let mk_input name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     if show_veritproof then eprintf "%d:input  %a@." id print_clause cl;
-     VeritSyntax.mk_clause (id, VeritSyntax.Inpu, cl, []) |> ignore
+     if show_veritproof then CoqInterface.raise_debug "%d:input  %a@." id print_clause cl;
+     Verit.Syntax.mk_clause (id, Verit.Syntax.Inpu, cl, []) |> ignore
    | OldCl _ -> ()
 
 
@@ -548,8 +547,8 @@ let mk_admit_preproc name formula =
    | NewCl id ->
      register_clause_id cl id;
      HS.add inputs name id;
-     if show_veritproof then eprintf "%d:hole  %a@." id print_clause cl;
-     VeritSyntax.mk_clause (id, VeritSyntax.Hole, cl, []) |> ignore
+     if show_veritproof then CoqInterface.raise_debug "%d:hole  %a@." id print_clause cl;
+     Verit.Syntax.mk_clause (id, Verit.Syntax.Hole, cl, []) |> ignore
    | OldCl _ -> ()
 
 

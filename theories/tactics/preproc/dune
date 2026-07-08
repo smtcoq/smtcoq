@@ -1,0 +1,5 @@
+(rocq.theory
+ (generate_project_file)
+ (package rocq-smtcoq)
+ (name SMTCoq.tactics.preproc)
+ (theories Stdlib elpi elpi_elpi Trakt SMTCoq.utils SMTCoq.structures))

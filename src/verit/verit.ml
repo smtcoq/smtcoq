@@ -1,7 +1,7 @@
 (**************************************************************************)
 (*                                                                        *)
 (*     SMTCoq                                                             *)
-(*     Copyright (C) 2011 - 2022                                          *)
+(*     Copyright (C) 2011 - 2026                                          *)
 (*                                                                        *)
 (*     See file "AUTHORS" for the list of authors                         *)
 (*                                                                        *)
@@ -10,12 +10,15 @@
 (**************************************************************************)
 
 
+open Common
 open SmtMisc
 open CoqTerms
 open SmtTrace
 open SmtAtom
 open SmtBtype
 open SmtCertif
+
+module Syntax = Syntax
 
 
 (* let debug = false *)
@@ -65,32 +68,32 @@ let import_trace ra_quant rf_quant filename first lsmt =
   (* let _ = Parsing.set_trace true in *)
   try
     while true do
-      confl_num := VeritParser.line VeritLexer.token lexbuf;
+      confl_num := Parser.line Lexer.token lexbuf;
       if !is_first then (
         is_first := false;
         first_num := !confl_num
       );
       incr line
     done;
-    raise VeritLexer.Eof
+    raise Lexer.Eof
   with
-    | VeritLexer.Eof ->
+    | Lexer.Eof ->
        close_in chan;
-       let cfirst = ref (VeritSyntax.get_clause !first_num) in
-       let confl = ref (VeritSyntax.get_clause !confl_num) in
+       let cfirst = ref (Syntax.get_clause !first_num) in
+       let confl = ref (Syntax.get_clause !confl_num) in
        let re_hash = Form.hash_hform (Atom.hash_hatom ra_quant) rf_quant in
 
        begin match first with
        | None -> ()
        | Some _ ->
-          let init_index = VeritSyntax.init_index lsmt re_hash in
+          let init_index = Syntax.init_index lsmt re_hash in
           let cf, lr = order_roots init_index !cfirst in
           cfirst := cf;
 
           (* Adding quantifier-free lemmas used as inputs in the final
              certificate, using the ForallInst rule (which simply proves
              lemma -> lemma) *)
-          let to_add = VeritSyntax.qf_to_add (List.tl lr) in
+          let to_add = Syntax.qf_to_add (List.tl lr) in
           let to_add =
             (match first, !cfirst.value with
              | Some (root, l), Some [fl] when init_index fl = 1 && not (Form.equal l (re_hash fl)) ->
@@ -113,17 +116,19 @@ let import_trace ra_quant rf_quant filename first lsmt =
 let clear_all () =
   SmtTrace.clear ();
   SmtMaps.clear ();
-  VeritSyntax.clear ()
+  Syntax.clear ()
 
 
 let import_all fsmt fproof =
   clear_all ();
+  let fsmt = CoqInterface.resolve_file_path fsmt in
+  let fproof = CoqInterface.resolve_file_path fproof in
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
-  let ra_quant = VeritSyntax.ra_quant in
-  let rf_quant = VeritSyntax.rf_quant in
+  let ra = Syntax.ra in
+  let rf = Syntax.rf in
+  let ra_quant = Syntax.ra_quant in
+  let rf_quant = Syntax.rf_quant in
   let roots = Smtlib2_genConstr.import_smtlib2 rt ro ra rf fsmt in
   let (max_id, confl) = import_trace ra_quant rf_quant fproof None [] in
   (rt, ro, ra, rf, roots, max_id, confl)
@@ -177,14 +182,8 @@ let export out_channel rt ro lsmt =
 
 exception Unknown
 
-let verit_warning = CWarnings.create ~name:"verit-warning" ~category:CoqInterface.smtcoq_cat
+let verit_warning = CoqInterface.raise_warning ~name:"verit-warning"
     Pp.(fun w -> str "veriT outputted the warning:" ++ spc() ++ str w)
-
-let verit_non_zero_exit =
-  CWarnings.create ~name:"verit-non-zero-exit-code" ~category:CoqInterface.smtcoq_cat
-    Pp.(fun (command,code) ->
-        str "Verit.call_verit: command" ++ spc() ++ str command ++ spc() ++
-        str "exited with code" ++ spc () ++ int code)
 
 let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   let (filename, outchan) = Filename.open_temp_file "verit_coq" ".smt2" in
@@ -193,17 +192,20 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   let logfilename = Filename.chop_extension filename ^ ".vtlog" in
   let wname, woc = Filename.open_temp_file "warnings_verit" ".log" in
   close_out woc;
-  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " 2> " ^ wname in
+  let oname, ooc = Filename.open_temp_file "stdout_verit" ".log" in
+  close_out ooc;
+  let command = "veriT --proof-prune --proof-merge --proof-with-sharing --cnf-definitional --disable-ackermann --input=smtlib2 --proof=" ^ logfilename ^ " " ^ filename ^ " > " ^ oname ^ " 2> " ^ wname in
   let command = 
     match timeout with
       | Some i -> "timeout "^(string_of_int i)^" "^command
       | None -> command
   in
-  Format.eprintf "%s@." command;
+  CoqInterface.raise_debug "%s" command;
   let t0 = Sys.time () in
   let exit_code = Sys.command command in
   let t1 = Sys.time () in
-  Format.eprintf "Verit = %.5f@." (t1-.t0);
+  SolverStatus.raise_debug_file_contents oname;
+  CoqInterface.raise_debug "Verit = %.5f" (t1 -. t0);
 
   let win = open_in wname in
 
@@ -219,21 +221,23 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
         else if n >= 7 && String.sub l 0 7 = "warning" then
           verit_warning (String.sub l 7 (n-7))
         else if n >= 8 && String.sub l 0 8 = "error : " then
-          CoqInterface.error ("veriT failed with the error: " ^ (String.sub l 8 (n-8)))
+          CoqInterface.raise_error "veriT failed with the error: %s" (String.sub l 8 (n-8))
         else
-          CoqInterface.error ("veriT failed with the error: " ^ l)
+          CoqInterface.raise_error "veriT failed with the error: %s" l
       done
     with End_of_file -> () in
-  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; let _ = CoqInterface.anomaly "veriT timed out" in ());
+
+  if exit_code = 124 (*code for timeout*) then (close_in win; Sys.remove wname; Sys.remove oname; CoqInterface.raise_error "veriT timed out");
+
   try
-    if exit_code <> 0 then verit_non_zero_exit (command,exit_code);
+    (if exit_code <> 0 then CoqInterface.raise_error "veriT exited with code %d" exit_code);
     raise_warnings_errors ();
     let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
-    close_in win; Sys.remove wname; res
-  with x -> close_in win; Sys.remove wname;
+    close_in win; Sys.remove wname; Sys.remove oname; res
+  with x -> close_in win; Sys.remove wname; Sys.remove oname;
             match x with
-            | Unknown -> CoqInterface.error "veriT returns 'unknown'"
-            | VeritSyntax.Sat -> CoqInterface.error "veriT found a counter-example"
+            | Unknown -> CoqInterface.raise_error "veriT returns 'unknown'"
+            | Syntax.Sat -> CoqInterface.raise_error "veriT found a counter-example"
             | _ -> raise x
 
 let verit_logic =
@@ -253,11 +257,10 @@ let tactic_gen vm_cast timeout lcpl lcepl =
   clear_all ();
   let rt = SmtBtype.create () in
   let ro = Op.create () in
-  let ra = VeritSyntax.ra in
-  let rf = VeritSyntax.rf in
-  let ra_quant = VeritSyntax.ra_quant in
-  let rf_quant = VeritSyntax.rf_quant in
+  let ra = Syntax.ra in
+  let rf = Syntax.rf in
+  let ra_quant = Syntax.ra_quant in
+  let rf_quant = Syntax.rf_quant in
   SmtCommands.tactic 0 (call_verit timeout) verit_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl
 let tactic = tactic_gen vm_cast_true
 let tactic_no_check = tactic_gen (fun _ -> vm_cast_true_no_check)
-

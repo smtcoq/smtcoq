@@ -1,0 +1,8 @@
+(library
+ (name common)
+ (public_name rocq-smtcoq.common)
+ (libraries num rocq-runtime.plugins.micromega smtlib2))
+
+(ocamllex sExprLexer)
+
+(ocamlyacc sExprParser)

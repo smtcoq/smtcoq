@@ -14,18 +14,20 @@ easily re-usable for your own usage.
 ## Overview
 
 After installation, the SMTCoq module can be used in Coq files via the
-`Require Import SMTCoq.SMTCoq.` command. For each supported solver, it
+`From SMTCoq Require Import SMTCoq.` command. For each supported solver, it
 provides:
 
-- a vernacular command to check answers: `XXX_Checker "problem_file"
-  "witness_file"` returns `true` only if `witness_file` contains a proof
-  of the unsatisfiability of the problem stated in `problem_file`;
+- a vernacular command to check answers:
+  `XXX_Checker "problem_file" "witness_file"`
+  returns only if `witness_file` contains a proof
+  of the unsatisfiability of the problem stated in `problem_file`, and
+  fails otherwise;
 
 - a vernacular command to safely import theorems:
   `XXX_Theorem theo "problem_file" "witness_file"` produces a Coq term
   `theo` whose type is the theorem stated in `problem_file` if
   `witness_file` is a proof of the unsatisfiability of it, and fails
-  otherwise.
+  otherwise;
 
 - safe tactics to try to solve a Coq goal using the chosen solver (or a
   combination of solvers).
@@ -64,17 +66,17 @@ To check the result given by zChaff on an unsatisfiable dimacs file
 
 - In a Coq file `file.v`, put:
 ```coq
-Require Import SMTCoq.SMTCoq.
+From SMTCoq Require Import SMTCoq.
 Zchaff_Checker "file.cnf" "resolve_trace".
 ```
 
-- Compile `file.v`: `coqc file.v`. If it returns `true` then zChaff
+- Compile `file.v`: `coqc file.v`. If it does not report an error, then zChaff
   indeed proved that the problem was unsatisfiable.
 
 - You can also produce Coq theorems from zChaff proof witnesses: the
   commands
 ```coq
-Require Import SMTCoq.SMTCoq.
+From SMTCoq Require Import SMTCoq.
 Zchaff_Theorem theo "file.cnf" "resolve_trace".
 ```
 will produce a Coq term `theo` whose type is the theorem stated in
@@ -115,19 +117,19 @@ This command produces a proof witness file named `file.log`.
 
 - In a Coq file `file.v`, put:
 ```coq
-Require Import SMTCoq.SMTCoq.
+From SMTCoq Require Import SMTCoq.
 Section File.
   Verit_Checker "file.smt2" "file.log".
 End File.
 ```
 
-- Compile `file.v`: `coqc file.v`. If it returns `true` then veriT
+- Compile `file.v`: `coqc file.v`. If it does not report an error, then veriT
   indeed proved that the problem was unsatisfiable.
 
 - You can also produce Coq theorems from veriT proof witnesses: the
   commands
 ```coq
-Require Import SMTCoq.SMTCoq.
+From SMTCoq Require Import SMTCoq.
 Section File.
   Verit_Theorem theo "file.smt2" "file.log".
 End File.
@@ -151,12 +153,12 @@ expressions of type `bool`. This tactic **supports quantifiers**: it takes
 optional arguments which are names of universally quantified
 lemmas/hypotheses that can be used to solve the goal. These lemmas can
 also be given once and for all using the `Add_lemmas` command (see
-[examples/Example.v](https://github.com/smtcoq/smtcoq/blob/master/examples/Example.v)
+[examples/Example.v](https://github.com/smtcoq/smtcoq/blob/main/examples/Example.v)
 for details).
 
 In addition, the `verit` tactic applies to Coq goals of sort `Prop`: it
 first converts the goal into a term of type `bool` (thanks to the
-`reflect` predicate of `SSReflect`), and then calls the previous tactic
+`trakt` plugin), and then calls the previous tactic
 `verit_bool`.
 
 The theories that are currently supported by these tactics are `QF_UF`
@@ -201,13 +203,13 @@ Section File.
 End File.
 ```
 
-- Compile `name.v`: `coqc name.v`. If it returns `true` then the problem
+- Compile `name.v`: `coqc name.v`. If it does not report an error, then the problem
   is indeed unsatisfiable.
 
-NB: Use `cvc4tocoq` script in `src/lfsc/tests` to automatize the above steps.
+<!-- NB: Use `cvc4tocoq` script in `src/lfsc/tests` to automatize the above steps. -->
 
-- Ex: `./cvc4tocoq name.smt2` returns `true` only if the problem
-  `name.smt2` has been proved unsatisfiable by CVC4.
+<!-- - Ex: `./cvc4tocoq name.smt2` returns `true` only if the problem -->
+<!--   `name.smt2` has been proved unsatisfiable by CVC4. -->
 
 The theories that are currently supported by these commands are `QF_UF`
 (theory of equality), `QF_LIA` (linear integer arithmetic), `QF_IDL`
@@ -226,8 +228,7 @@ where `l` is a quantifier-free list of terms and `b1` and `b2` are
 expressions of type `bool`.
 
 In addition, the `cvc4` tactic applies to Coq goals of sort `Prop`: it
- first converts the goal into a term of type `bool` (thanks to the
- `reflect` predicate of `SSReflect`), it then calls the previous tactic
+ first converts the goal into a term of type `bool`, it then calls the previous tactic
  `cvc4_bool`, and it finally converts any unsolved subgoals returned by
  CVC4 back to `Prop`, thus offering to the user the possibility to solve
  these (usually simpler) subgoals.
@@ -245,8 +246,7 @@ at `Qed` even if everything went through during proof elaboration.)
 ## The smt tactic
 
 The more powerful tactic `smt` combines all the previous tactics: it
-first converts the goal to a term of type `bool` (thanks to the
-`reflect` predicate of `SSReflect`), it then calls a combination of the
+first converts the goal to a term of type `bool`, it then calls a combination of the
 `cvc4_bool` and `verit_bool` tactics, and it finally converts any
 unsolved subgoals back to `Prop`, thus offering to the user the
 possibility to solve these (usually simpler) subgoals.
@@ -298,11 +298,3 @@ can be used more generally on any quantifier-free theory (on a goal that has
 the shape specified above). Any symbols that are not supported (specified
 in one of the supported theories) will be treated as uninterpreted by
 the SMT solver.
-
-
-## Conversion tactics
-
-SMTCoq provides conversion tactics, to inject various integer types into
-the type Z supported by SMTCoq. They can be called before the other
-SMTCoq tactics. These tactics are named `nat_convert`, `N_convert` and
-`pos_convert`. They can be combined.

@@ -1,0 +1,3 @@
+(executable
+ (name lfsctosmtcoq)
+ (libraries rocq-smtcoq.lfsc))

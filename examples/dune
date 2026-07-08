@@ -1,0 +1,28 @@
+(alias
+ (name runtest)
+ (deps
+  (alias_rec all)))
+
+(env
+ (_
+  (env-vars
+   (LFSCSIGS "../../src/lfsc/signatures"))
+  (rocq
+   (flags
+    (:standard -I ../_build/install/default/lib)))))
+
+(rocq.theory
+ (name SMTCoq.Example)
+ (generate_project_file)
+ (theories SMTCoq))
+
+; The following stanza is required for Dune to copy the folder "files"
+
+(rule
+ (target dummy.v)
+ (deps
+  (glob_files files/*))
+ (action
+  (with-stdout-to
+   %{target}
+   (echo "(* copy files to _build *)"))))
