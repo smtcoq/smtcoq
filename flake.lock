@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783156736,
-        "narHash": "sha256-CoczQ8EwKQBodMk0v0Q2aAyJYR5dRqCI70hUtQq1ptA=",
+        "lastModified": 1783540115,
+        "narHash": "sha256-CRak+zdxYZvQ1cVMI6Z4fZ8+VHUzn9Bku3ONqzA1Wf8=",
         "ref": "refs/heads/main",
-        "rev": "6f5f41669791dee1adf8ce68028759761b7a63cb",
-        "revCount": 1,
+        "rev": "10f33f6ce899d443edebe25fa95799523248f4ba",
+        "revCount": 2,
         "type": "git",
         "url": "https://codeberg.org/lafeychine/rocq-utils"
       },
@@ -93,11 +93,11 @@
         "rocq-utils": "rocq-utils"
       },
       "locked": {
-        "lastModified": 1783497925,
-        "narHash": "sha256-+YDl+vEAkcT62cswJktxgYm+yyjd+LRUc544U0oroDg=",
+        "lastModified": 1783541229,
+        "narHash": "sha256-cH2JSjtTJguVjDr1kjzA8Ux2XkCe7QGlrtZdaA2V2cM=",
         "owner": "rocq-trakt",
         "repo": "trakt",
-        "rev": "541529d762bd2aecfb256af589e37690bc382e23",
+        "rev": "89a9157b40fa75af240c8df8e41aaf13d24de194",
         "type": "github"
       },
       "original": {
