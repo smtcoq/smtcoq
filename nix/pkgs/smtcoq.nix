@@ -20,6 +20,8 @@
 }:
 
 let
+  case = case: out: { inherit case out; };
+
   lfsc-sigs = stdenv.mkDerivation {
     name = "lfsc-sigs";
     src = ../../src/lfsc/signatures;
@@ -39,7 +41,10 @@ mkRocqDerivation rec {
   opam-name = "rocq-smtcoq";
   useDune = true;
 
-  defaultVersion = "dev";
+  defaultVersion = lib.switch rocq-core.rocq-version [
+    (case (lib.versions.range "9.0" "9.1") "dev")
+  ] null;
+
   release."dev" = {
     src = lib.cleanSource ../..;
     hash = "";

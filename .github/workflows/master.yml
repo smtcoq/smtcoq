@@ -1,0 +1,67 @@
+name: Build Trakt against specific versions
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+    inputs:
+      rocq:
+        default: "master"
+        description: "Rocq version or commit"
+        required: true
+      stdlib:
+        default: "master"
+        description: "Stdlib version or commit"
+        required: true
+      elpi:
+        default: "master"
+        description: "Elpi version or commit"
+        required: true
+      rocq-elpi:
+        default: "master"
+        description: "Rocq-Elpi version or commit"
+        required: true
+      trakt:
+        default: "master"
+        description: "Trakt version or commit"
+        required: true
+      smtcoq:
+        default: "master"
+        description: "SMTCoq version or commit"
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  master:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: nixbuild/nix-quick-install-action@v35
+
+      - name: Build against specific versions
+        run: |
+          nix build --impure --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = import flake.inputs.nixpkgs {
+                system = "x86_64-linux";
+                overlays = [ flake.overlays.default ];
+              };
+            in
+            flake.lib.mkSMTCoq pkgs {
+              rocq = "${{ inputs.rocq || 'master' }}";
+              stdlib = "${{ inputs.stdlib || 'master' }}";
+              elpi = "${{ inputs.elpi || 'master' }}";
+              rocq-elpi = "${{ inputs.rocq-elpi || 'master' }}";
+              trakt = "${{ inputs.trakt || 'master' }}";
+              smtcoq = "${{ inputs.smtcoq || 'master' }}";
+            }' --print-build-logs

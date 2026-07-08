@@ -17,10 +17,10 @@ jobs:
       actions: write # Allow to purge the cache
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: nixbuild/nix-quick-install-action@v34
+      - uses: actions/checkout@v7
+      - uses: nixbuild/nix-quick-install-action@v35
 
-      - uses: nix-community/cache-nix-action@v6
+      - uses: nix-community/cache-nix-action@v7
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('**/flake.lock', '**/*.nix') }}
           gc-max-store-size: 10G
@@ -28,3 +28,6 @@ jobs:
 
       - name: Build the current version in nixpkgs
         run: nix build .#smtcoq --print-build-logs
+
+      - name: Build the whole matrix of supported released versions
+        run: nix flake check --print-build-logs
