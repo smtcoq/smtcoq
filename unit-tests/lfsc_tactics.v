@@ -279,9 +279,9 @@ Section EUF.
   Proof using. smt. Qed.
 
 
-  (* Goal forall (t: Type) (p: CompDec t) (x y: t),  *)
-  (*   x = y <-> x = y. *)
-  (* Proof using. smt. Qed. *)
+  Goal forall (t: Type) (p: CompDec t) (x y: t),
+    x = y <-> x = y.
+  Proof using. smt. Qed.
 
 End EUF.
 
@@ -539,98 +539,97 @@ Section PR.
   Qed.
 
 
-  (* TODO: Slowness *)
-  (* (* Pigeon hole: 4 holes, 5 pigeons *) *)
-  (* Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, ( *)
-  (*   (orb (negb x11) (negb x21)) && *)
-  (*   (orb (negb x11) (negb x31)) && *)
-  (*   (orb (negb x11) (negb x41)) && *)
-  (*   (orb (negb x21) (negb x31)) && *)
-  (*   (orb (negb x21) (negb x41)) && *)
-  (*   (orb (negb x31) (negb x41)) && *)
+  (* Pigeon hole: 4 holes, 5 pigeons *)
+  Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, (
+    (orb (negb x11) (negb x21)) &&
+    (orb (negb x11) (negb x31)) &&
+    (orb (negb x11) (negb x41)) &&
+    (orb (negb x21) (negb x31)) &&
+    (orb (negb x21) (negb x41)) &&
+    (orb (negb x31) (negb x41)) &&
 
-  (*   (orb (negb x12) (negb x22)) && *)
-  (*   (orb (negb x12) (negb x32)) && *)
-  (*   (orb (negb x12) (negb x42)) && *)
-  (*   (orb (negb x22) (negb x32)) && *)
-  (*   (orb (negb x22) (negb x42)) && *)
-  (*   (orb (negb x32) (negb x42)) && *)
+    (orb (negb x12) (negb x22)) &&
+    (orb (negb x12) (negb x32)) &&
+    (orb (negb x12) (negb x42)) &&
+    (orb (negb x22) (negb x32)) &&
+    (orb (negb x22) (negb x42)) &&
+    (orb (negb x32) (negb x42)) &&
 
-  (*   (orb (negb x13) (negb x23)) && *)
-  (*   (orb (negb x13) (negb x33)) && *)
-  (*   (orb (negb x13) (negb x43)) && *)
-  (*   (orb (negb x23) (negb x33)) && *)
-  (*   (orb (negb x23) (negb x43)) && *)
-  (*   (orb (negb x33) (negb x43)) && *)
+    (orb (negb x13) (negb x23)) &&
+    (orb (negb x13) (negb x33)) &&
+    (orb (negb x13) (negb x43)) &&
+    (orb (negb x23) (negb x33)) &&
+    (orb (negb x23) (negb x43)) &&
+    (orb (negb x33) (negb x43)) &&
 
-  (*   (orb (negb x14) (negb x24)) && *)
-  (*   (orb (negb x14) (negb x34)) && *)
-  (*   (orb (negb x14) (negb x44)) && *)
-  (*   (orb (negb x24) (negb x34)) && *)
-  (*   (orb (negb x24) (negb x44)) && *)
-  (*   (orb (negb x34) (negb x44)) && *)
+    (orb (negb x14) (negb x24)) &&
+    (orb (negb x14) (negb x34)) &&
+    (orb (negb x14) (negb x44)) &&
+    (orb (negb x24) (negb x34)) &&
+    (orb (negb x24) (negb x44)) &&
+    (orb (negb x34) (negb x44)) &&
 
-  (*   (orb (negb x15) (negb x25)) && *)
-  (*   (orb (negb x15) (negb x35)) && *)
-  (*   (orb (negb x15) (negb x45)) && *)
-  (*   (orb (negb x25) (negb x35)) && *)
-  (*   (orb (negb x25) (negb x45)) && *)
-  (*   (orb (negb x35) (negb x45)) && *)
-
-
-  (*   (orb (negb x11) (negb x12)) && *)
-  (*   (orb (negb x11) (negb x13)) && *)
-  (*   (orb (negb x11) (negb x14)) && *)
-  (*   (orb (negb x11) (negb x15)) && *)
-  (*   (orb (negb x12) (negb x13)) && *)
-  (*   (orb (negb x12) (negb x14)) && *)
-  (*   (orb (negb x12) (negb x15)) && *)
-  (*   (orb (negb x13) (negb x14)) && *)
-  (*   (orb (negb x13) (negb x15)) && *)
-  (*   (orb (negb x14) (negb x15)) && *)
-
-  (*   (orb (negb x21) (negb x22)) && *)
-  (*   (orb (negb x21) (negb x23)) && *)
-  (*   (orb (negb x21) (negb x24)) && *)
-  (*   (orb (negb x21) (negb x25)) && *)
-  (*   (orb (negb x22) (negb x23)) && *)
-  (*   (orb (negb x22) (negb x24)) && *)
-  (*   (orb (negb x22) (negb x25)) && *)
-  (*   (orb (negb x23) (negb x24)) && *)
-  (*   (orb (negb x23) (negb x25)) && *)
-  (*   (orb (negb x24) (negb x25)) && *)
-
-  (*   (orb (negb x31) (negb x32)) && *)
-  (*   (orb (negb x31) (negb x33)) && *)
-  (*   (orb (negb x31) (negb x34)) && *)
-  (*   (orb (negb x31) (negb x35)) && *)
-  (*   (orb (negb x32) (negb x33)) && *)
-  (*   (orb (negb x32) (negb x34)) && *)
-  (*   (orb (negb x32) (negb x35)) && *)
-  (*   (orb (negb x33) (negb x34)) && *)
-  (*   (orb (negb x33) (negb x35)) && *)
-  (*   (orb (negb x34) (negb x35)) && *)
-
-  (*   (orb (negb x41) (negb x42)) && *)
-  (*   (orb (negb x41) (negb x43)) && *)
-  (*   (orb (negb x41) (negb x44)) && *)
-  (*   (orb (negb x41) (negb x45)) && *)
-  (*   (orb (negb x42) (negb x43)) && *)
-  (*   (orb (negb x42) (negb x44)) && *)
-  (*   (orb (negb x42) (negb x45)) && *)
-  (*   (orb (negb x43) (negb x44)) && *)
-  (*   (orb (negb x43) (negb x45)) && *)
-  (*   (orb (negb x44) (negb x45)) && *)
+    (orb (negb x15) (negb x25)) &&
+    (orb (negb x15) (negb x35)) &&
+    (orb (negb x15) (negb x45)) &&
+    (orb (negb x25) (negb x35)) &&
+    (orb (negb x25) (negb x45)) &&
+    (orb (negb x35) (negb x45)) &&
 
 
-  (*   (orb (orb (orb x11 x21) x31) x41) && *)
-  (*   (orb (orb (orb x12 x22) x32) x42) && *)
-  (*   (orb (orb (orb x13 x23) x33) x43) && *)
-  (*   (orb (orb (orb x14 x24) x34) x44) && *)
-  (*   (orb (orb (orb x15 x25) x35) x45)) = false. *)
-  (* Proof using. *)
-  (*   smt. *)
-  (* Qed. *)
+    (orb (negb x11) (negb x12)) &&
+    (orb (negb x11) (negb x13)) &&
+    (orb (negb x11) (negb x14)) &&
+    (orb (negb x11) (negb x15)) &&
+    (orb (negb x12) (negb x13)) &&
+    (orb (negb x12) (negb x14)) &&
+    (orb (negb x12) (negb x15)) &&
+    (orb (negb x13) (negb x14)) &&
+    (orb (negb x13) (negb x15)) &&
+    (orb (negb x14) (negb x15)) &&
+
+    (orb (negb x21) (negb x22)) &&
+    (orb (negb x21) (negb x23)) &&
+    (orb (negb x21) (negb x24)) &&
+    (orb (negb x21) (negb x25)) &&
+    (orb (negb x22) (negb x23)) &&
+    (orb (negb x22) (negb x24)) &&
+    (orb (negb x22) (negb x25)) &&
+    (orb (negb x23) (negb x24)) &&
+    (orb (negb x23) (negb x25)) &&
+    (orb (negb x24) (negb x25)) &&
+
+    (orb (negb x31) (negb x32)) &&
+    (orb (negb x31) (negb x33)) &&
+    (orb (negb x31) (negb x34)) &&
+    (orb (negb x31) (negb x35)) &&
+    (orb (negb x32) (negb x33)) &&
+    (orb (negb x32) (negb x34)) &&
+    (orb (negb x32) (negb x35)) &&
+    (orb (negb x33) (negb x34)) &&
+    (orb (negb x33) (negb x35)) &&
+    (orb (negb x34) (negb x35)) &&
+
+    (orb (negb x41) (negb x42)) &&
+    (orb (negb x41) (negb x43)) &&
+    (orb (negb x41) (negb x44)) &&
+    (orb (negb x41) (negb x45)) &&
+    (orb (negb x42) (negb x43)) &&
+    (orb (negb x42) (negb x44)) &&
+    (orb (negb x42) (negb x45)) &&
+    (orb (negb x43) (negb x44)) &&
+    (orb (negb x43) (negb x45)) &&
+    (orb (negb x44) (negb x45)) &&
+
+
+    (orb (orb (orb x11 x21) x31) x41) &&
+    (orb (orb (orb x12 x22) x32) x42) &&
+    (orb (orb (orb x13 x23) x33) x43) &&
+    (orb (orb (orb x14 x24) x34) x44) &&
+    (orb (orb (orb x15 x25) x35) x45)) = false.
+  Proof using.
+    smt.
+  Qed.
 
 
   Goal forall a b c f p, ((Z.eqb a c) && (Z.eqb b c) && ((negb (Z.eqb (f a) (f b))) || ((p a) && (negb (p b))))) = false.
@@ -810,33 +809,33 @@ Section A_BV_EUF_LIA_PR.
   (*   smt. *)
   (* Qed. *)
 
-  (* (** the example in the CAV paper *) *)
-  (* Goal forall (a b: farray Z Z) (v w x y: Z) *)
-  (*             (r s: bitvector 4) *)
-  (*             (f: Z -> Z) *)
-  (*             (g: farray Z Z -> Z) *)
-  (*             (h: bitvector 4 -> Z), *)
-  (*             a[x <- v] = b /\ a[y <- w] = b -> *)
-  (*             r = s /\ h r = v /\ h s = y -> *)
-  (*             v < x + 1 /\ v > x - 1 -> *)
-  (*             f (h r) = f (h s) \/ g a = g b. *)
-  (* Proof using. *)
-  (*   smt. (** "cvc4. verit." also solves the goal *) *)
-  (* Qed. *)
+  (** the example in the CAV paper *)
+  Goal forall (a b: farray Z Z) (v w x y: Z)
+              (r s: bitvector 4)
+              (f: Z -> Z)
+              (g: farray Z Z -> Z)
+              (h: bitvector 4 -> Z),
+              a[x <- v] = b /\ a[y <- w] = b ->
+              r = s /\ h r = v /\ h s = y ->
+              v < x + 1 /\ v > x - 1 ->
+              f (h r) = f (h s) \/ g a = g b.
+  Proof using.
+    smt. (** "cvc4. verit." also solves the goal *)
+  Qed.
 
-  (* (** the example in the FroCoS paper *) *)
-  (* Goal forall (a b: farray Z Z) (v w x y z t: Z) *)
-  (*             (r s: bitvector 4) *)
-  (*             (f: Z -> Z) *)
-  (*             (g: farray Z Z -> Z) *)
-  (*             (h: bitvector 4 -> Z), *)
-  (*             a[x <- v] = b /\ a[y <- w] = b -> *)
-  (*             a[z <- w] = b /\ a[t <- v] = b -> *)
-  (*             r = s -> v < x + 10 /\ v > x - 5 -> *)
-  (*             ~ (g a = g b) \/ f (h r) = f (h s). *)
-  (* Proof using. *)
-  (*   smt. (** "cvc4. verit." also solves the goal *) *)
-  (* Qed. *)
+  (** the example in the FroCoS paper *)
+  Goal forall (a b: farray Z Z) (v w x y z t: Z)
+              (r s: bitvector 4)
+              (f: Z -> Z)
+              (g: farray Z Z -> Z)
+              (h: bitvector 4 -> Z),
+              a[x <- v] = b /\ a[y <- w] = b ->
+              a[z <- w] = b /\ a[t <- v] = b ->
+              r = s -> v < x + 10 /\ v > x - 5 ->
+              ~ (g a = g b) \/ f (h r) = f (h s).
+  Proof using.
+    smt. (** "cvc4. verit." also solves the goal *)
+  Qed.
 
 
   (* Goal forall (a b: farray (bitvector 4) Z) *)
@@ -868,151 +867,148 @@ Section A_BV_EUF_LIA_PR.
      is correctly exported to SMT-LIB, CVC4-1.6 does not provide useful
      proofs anyway. *)
 
-  (* Goal forall (x: bitvector 1), bv_subt x #b|0| = x. *)
-  (* Proof using. *)
-  (*   smt. *)
-  (* Abort. *)
+  Goal forall (x: bitvector 1), bv_subt x #b|0| = x.
+  Proof using.
+    smt.
+  Abort.
 
-  (* (* The original issue (invalid) *) *)
-  (* Goal forall (x: bitvector 1), bv_subt (bv_shl #b|0| x) #b|0| = #b|0|. *)
-  (* Proof using. *)
-  (*   smt. *)
-  (* Abort. *)
+  (* The original issue (invalid) *)
+  Goal forall (x: bitvector 1), bv_subt (bv_shl #b|0| x) #b|0| = #b|0|.
+  Proof using.
+    smt.
+  Abort.
 
 End A_BV_EUF_LIA_PR.
 
 
 (* Example of the webpage *)
 
+Section Group.
+  Variable G : Type.
+  (* We suppose that G has a decidable equality *)
+  Variable HG : CompDec G.
+  Variable op : G -> G -> G.
+  Variable inv : G -> G.
+  Variable e : G.
 
-(* TODO: "quantifier typing error" *)
-(* Section Group. *)
-(*   Variable G : Type. *)
-(*   (* We suppose that G has a decidable equality *) *)
-(*   Variable HG : CompDec G. *)
-(*   Variable op : G -> G -> G. *)
-(*   Variable inv : G -> G. *)
-(*   Variable e : G. *)
+  Local Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60).
 
-(*   Local Notation "a ==? b" := (@eqb_of_compdec G HG a b) (at level 60). *)
+  (* We can prove automatically that we have a group if we only have the *)
+(*      "left" versions of the axioms of a group *)
+  Hypothesis associative :
+    forall a b c : G, op a (op b c) ==? op (op a b) c.
+  Hypothesis inverse :
+    forall a : G, op (inv a) a ==? e.
+  Hypothesis identity :
+    forall a : G, op e a ==? a.
+  Add_lemmas associative inverse identity.
 
-(*   (* We can prove automatically that we have a group if we only have the *) *)
-(* (*      "left" versions of the axioms of a group *) *)
-(*   Hypothesis associative : *)
-(*     forall a b c : G, op a (op b c) ==? op (op a b) c. *)
-(*   Hypothesis inverse : *)
-(*     forall a : G, op (inv a) a ==? e. *)
-(*   Hypothesis identity : *)
-(*     forall a : G, op e a ==? a. *)
-(*   Add_lemmas associative inverse identity. *)
+  (* The "right" version of inverse *)
+  Lemma inverse' :
+    forall a : G, op a (inv a) ==? e.
+  Proof using inverse identity associative. smt. Qed.
 
-(*   (* The "right" version of inverse *) *)
-(*   Lemma inverse' : *)
-(*     forall a : G, op a (inv a) ==? e. *)
-(*   Proof using. smt. Qed. *)
+  (* The "right" version of identity *)
+  Lemma identity' :
+    forall a : G, op a e ==? a.
+  Proof using inverse inv identity associative. smt inverse'. Qed.
 
-(*   (* The "right" version of identity *) *)
-(*   Lemma identity' : *)
-(*     forall a : G, op a e ==? a. *)
-(*   Proof using. smt inverse'. Qed. *)
+  (* Some other interesting facts about groups *)
+  Lemma unique_identity e':
+    (forall z, op e' z ==? z) -> e' ==? e.
+  Proof using inverse inv identity associative. smt. Qed.
 
-(*   (* Some other interesting facts about groups *) *)
-(*   Lemma unique_identity e': *)
-(*     (forall z, op e' z ==? z) -> e' ==? e. *)
-(*   Proof using. smt. Qed. *)
+  Lemma simplification_right x1 x2 y:
+      op x1 y ==? op x2 y -> x1 ==? x2.
+  Proof using inverse inv identity e associative. smt_no_check inverse'. Qed.
 
-(*   Lemma simplification_right x1 x2 y: *)
-(*       op x1 y ==? op x2 y -> x1 ==? x2. *)
-(*   Proof using. smt_no_check inverse'. Qed. *)
+  Lemma simplification_left x1 x2 y:
+      op y x1 ==? op y x2 -> x1 ==? x2.
+  Proof using inverse inv identity e associative. smt_no_check inverse'. Qed.
 
-(*   Lemma simplification_left x1 x2 y: *)
-(*       op y x1 ==? op y x2 -> x1 ==? x2. *)
-(*   Proof using. smt_no_check inverse'. Qed. *)
-
-(*   Clear_lemmas. *)
-(* End Group. *)
+  Clear_lemmas.
+End Group.
 
 
-(* TODO *)
-(* Section EqualityOnUninterpretedType1. *)
-(*   Variable A : Type. *)
-(*   Hypothesis HA : CompDec A. *)
+Section EqualityOnUninterpretedType1.
+  Variable A : Type.
+  Hypothesis HA : CompDec A.
 
-(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Qed. *)
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof using HA. cvc4. Qed.
 
-(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. smt. Qed. *)
-(* End EqualityOnUninterpretedType1. *)
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof using HA. smt. Qed.
+End EqualityOnUninterpretedType1.
 
-(* TODO *)
-(* Section EqualityOnUninterpretedType2. *)
-(*   Variable A B : Type. *)
-(*   Hypothesis HA : CompDec A. *)
-(*   Hypothesis HB : CompDec B. *)
+Section EqualityOnUninterpretedType2.
+  Variable A B : Type.
+  Hypothesis HA : CompDec A.
+  Hypothesis HB : CompDec B.
 
-(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Qed. *)
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof using HA. cvc4. Qed.
 
-(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. smt. Qed. *)
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof using HA. smt. Qed.
 
-(*   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Qed. *)
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof using HB. cvc4. Qed.
 
-(*   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
-(*   Proof using. smt. Qed. *)
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof using HB. smt. Qed.
 
-(*   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Qed. *)
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof using HB HA. cvc4. Qed.
 
-(*   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. smt. Qed. *)
-(* End EqualityOnUninterpretedType2. *)
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof using HB HA. smt. Qed.
+End EqualityOnUninterpretedType2.
 
-(* Section EqualityOnUninterpretedType3. *)
-(*   Variable A B : Type. *)
+Section EqualityOnUninterpretedType3.
+  Variable A B : Type.
 
-(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Abort. *)
+  Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
+  Proof using. cvc4. Abort.
 
-(*   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. smt. Abort. *)
+  (* Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b. *)
+  (* Proof using. smt. Abort. *)
 
-(*   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Abort. *)
+  Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
+  Proof using. cvc4. Abort.
 
-(*   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
-(*   Proof using. smt. Abort. *)
+  (* Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b. *)
+  (* Proof using. smt. Abort. *)
 
-(*   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. cvc4. Abort. *)
+  Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
+  Proof using. cvc4. Abort.
 
-(*   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
-(*   Proof using. smt. Abort. *)
+  (* Goal forall (f : A -> B) (a b : A), a = b -> f a = f b. *)
+  (* Proof using. smt. Abort. *)
 
-(*   Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d. *)
-(*   Proof using. cvc4. Abort. *)
+  Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
+  Proof using. cvc4. Abort.
 
-(*   Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d. *)
-(*   Proof using. smt. Abort. *)
-(* End EqualityOnUninterpretedType3. *)
+  (* Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d. *)
+  (* Proof using. smt. Abort. *)
+End EqualityOnUninterpretedType3.
 
 
-(* TODO *)
-(* Section Issue17. *)
+Section Issue17.
 
-(*   Variable A : Type. *)
-(*   Variable cd : CompDec A. *)
+  Variable A : Type.
+  Variable cd : CompDec A.
 
-(*   Goal forall (a:A), a = a. *)
-(*   Proof using. smt. Qed. *)
+  Goal forall (a:A), a = a.
+  Proof using cd. smt. Qed.
 
-(* End Issue17. *)
+End Issue17.
 
 
 (* TODO *)
-(* From cvc4_bool : Uncaught exception Not_found *)
+(* Import FArray. *)
+(* Local Open Scope farray_scope. *)
+
 (* Goal forall (a b c d: farray Z Z), *)
 (*     b[0 <- 4] = c  -> *)
 (*     d = b[0 <- 4][1 <- 4]  -> *)

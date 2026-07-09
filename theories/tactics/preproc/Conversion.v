@@ -11,6 +11,10 @@
 
 
 From Stdlib Require Import ZArith.
+
+From Ltac2 Require Import Ltac2.
+Set Default Proof Mode "Classic".
+
 From Trakt Require Import Trakt.
 
 From SMTCoq.utils Require Import CompDec.
@@ -70,32 +74,6 @@ Ltac pose_hyps Hs acc :=
 (* Abort. *)
 
 
-(* Get all the hypotheses and the goal *)
-
-Ltac get_context b :=
-  match goal with
-  | H : ?P |- _ =>
-    let _ := match goal with _ => revert H end in
-    let acc := get_context b in
-    let _ := match goal with _ => intro H end in
-    constr:((acc,P))
-  | _ => constr:(b)
-  end.
-
-Ltac get_context_concl :=
-  match goal with
-  | |- ?g => get_context g
-  end.
-
-(* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
-(*     3%Z = 4%Z /\ a1 = a2 /\ b1 = b2 /\ b3 = b4 /\ 5%nat = 6%nat /\ c1 = c2 -> *)
-(*     17%positive = 42%positive. *)
-(* Proof. *)
-(*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
-(*   let h := get_context_concl in idtac h. *)
-(* Abort. *)
-
-
 (* List of interpreted types *)
 
 Ltac is_interpreted_type T :=
@@ -135,35 +113,33 @@ Ltac add_compdecs_term u :=
   | _ => idtac
   end.
 
-Ltac add_compdecs_terms t :=
-  match t with
-  | (?t', ?H) =>
-    add_compdecs_term H;
-    add_compdecs_terms t'
-  | ?g => add_compdecs_term g
+
+Ltac2 rec add_compdecs_rec l :=
+  match l with
+  | [] => ()
+  | u::us =>
+      let n := Control.numgoals () in
+      Control.focus n n
+        (fun () =>
+           ltac1:(u |- add_compdecs_term u) (Ltac1.of_constr u);
+           add_compdecs_rec us
+        )
   end.
 
-(* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
-(*     3%Z = 4%Z /\ a1 = a2 /\ b1 = b2 /\ b3 = b4 /\ 5%nat = 6%nat /\ c1 = c2 -> *)
-(*     17%positive = 42%positive /\ (5,6) = (6,7). *)
-(* Proof. *)
-(*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
-(*   let h := get_context_concl in add_compdecs_terms h. *)
-(*   Show 3. *)
-(* Abort. *)
 
-
-Ltac add_compdecs :=
-  let h := get_context_concl in
-  add_compdecs_terms h.
+Ltac2 add_compdecs () :=
+  let h := Control.hyps () in
+  let h' := Ltac2.List.map (fun icc => let (_, _, c) := icc in c) h in
+  let g := Control.goal () in
+  add_compdecs_rec (g::h').
 
 (* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
 (*     3%Z = 4%Z /\ a1 = a2 /\ b1 = b2 /\ b3 = b4 /\ 5%nat = 6%nat /\ c1 = c2 -> *)
 (*     17%positive = 42%positive /\ (5,6) = (6,7). *)
 (* Proof. *)
 (*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
-(*   add_compdecs. *)
-(*   Show 3. *)
+(*   ltac2:(add_compdecs ()). *)
+(*   Show 4. *)
 (* Abort. *)
 
 
@@ -379,7 +355,7 @@ Ltac remove_compdec_hyps_option Hs :=
 (* Perform all the preprocessing *)
 
 Ltac preprocess1 Hs :=
-  add_compdecs;
+  ltac2:(add_compdecs ());
   [ .. |
     remove_compdec_hyps_option Hs;
     let cpds := collect_compdecs in
