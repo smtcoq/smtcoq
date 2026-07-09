@@ -1,0 +1,16 @@
+(alias
+ (name benchmark)
+ (deps dune.inc))
+
+(rule
+ (target dune.inc)
+ (mode promote)
+ (deps
+  generate_dune_rules.sh
+  (glob_files *.cnf))
+ (action
+  (with-stdout-to
+   %{target}
+   (run ./generate_dune_rules.sh %{deps}))))
+
+(include dune.inc)

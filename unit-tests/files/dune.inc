@@ -2,21 +2,6 @@
 ; Once this file is modified, track it with git.
 
 (rule
- (target zchaff_vernac_cmu_bmc_barrel6.v)
- (deps cmu_bmc_barrel6.cnf cmu_bmc_barrel6.zlog)
- (action
-  (write-file
-   %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"cmu_bmc_barrel6.cnf\" \"cmu_bmc_barrel6.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
-
-(rule
- (target cmu_bmc_barrel6.zlog)
- (deps run_zchaff.sh cmu_bmc_barrel6.cnf)
- (action
-  (ignore-stdout
-   (run ./run_zchaff.sh %{deps} %{target}))))
-
-(rule
  (target zchaff_vernac_hole4.v)
  (deps hole4.cnf hole4.zlog)
  (action
@@ -117,21 +102,6 @@
 (rule
  (target sat7.zlog)
  (deps run_zchaff.sh sat7.cnf)
- (action
-  (ignore-stdout
-   (run ./run_zchaff.sh %{deps} %{target}))))
-
-(rule
- (target zchaff_vernac_velev_sss_1_0_05.v)
- (deps velev_sss_1_0_05.cnf velev_sss_1_0_05.zlog)
- (action
-  (write-file
-   %{target}
-   "From SMTCoq Require Import SMTCoq.\nSection Checker.\n  Zchaff_Checker \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\nEnd Checker.\nSection Thm.\n  Zchaff_Theorem thm \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\nEnd Thm.\nSection Parse.\n  Parse_certif_zchaff d t \"velev_sss_1_0_05.cnf\" \"velev_sss_1_0_05.zlog\".\n  Goal Sat_Checker.checker d t. vm_compute. reflexivity. Qed.\nEnd Parse.\n")))
-
-(rule
- (target velev_sss_1_0_05.zlog)
- (deps run_zchaff.sh velev_sss_1_0_05.cnf)
  (action
   (ignore-stdout
    (run ./run_zchaff.sh %{deps} %{target}))))
@@ -1282,7 +1252,6 @@
  (theories Stdlib SMTCoq)
  (plugins rocq-smtcoq.smtcoq)
  (modules
-  zchaff_vernac_cmu_bmc_barrel6
   zchaff_vernac_hole4
   zchaff_vernac_sat1
   zchaff_vernac_sat2
@@ -1290,7 +1259,6 @@
   zchaff_vernac_sat5
   zchaff_vernac_sat6
   zchaff_vernac_sat7
-  zchaff_vernac_velev_sss_1_0_05
   lfsc_vernac_bv1
   verit_vernac_bv1
   lfsc_vernac_bv2
