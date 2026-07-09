@@ -17,7 +17,9 @@ with lib;
     }:
     (mkTraktScope pkgs versions).overrideScope (
       _: prev: {
-        trakt = prev.trakt.overrideAttrs (_: { doCheck = false; });
+        trakt = prev.trakt.overrideAttrs (_: {
+          doCheck = false;
+        });
         smtcoq = prev.smtcoq.override { version = smtcoq; };
       }
     );

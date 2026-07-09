@@ -51,21 +51,17 @@ mkRocqDerivation rec {
   };
 
   propagatedBuildInputs = [
-    rocq-elpi
-    stdlib
-    trakt
-  ];
-
-  buildInputs = [
     cvc4
     cvc5
     rocq-core.ocamlPackages.num
+    rocq-elpi
+    trakt
     verit
     zchaff
   ];
 
   doCheck = true;
-  checkInputs = [ flock ];
+  nativeCheckInputs = [ flock ];
   checkPhase = ''
     runHook preCheck
     patchShebangs ./unit-tests/files/run_zchaff.sh
