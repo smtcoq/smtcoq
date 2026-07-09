@@ -162,97 +162,97 @@ Proof using. verit. Qed.
 
 
 (* Pigeon hole: 4 holes, 5 pigeons *)
-(* TODO: too long with Rocq-9.* *)
-(* Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, ( *)
-(*   (orb (negb x11) (negb x21)) && *)
-(*   (orb (negb x11) (negb x31)) && *)
-(*   (orb (negb x11) (negb x41)) && *)
-(*   (orb (negb x21) (negb x31)) && *)
-(*   (orb (negb x21) (negb x41)) && *)
-(*   (orb (negb x31) (negb x41)) && *)
 
-(*   (orb (negb x12) (negb x22)) && *)
-(*   (orb (negb x12) (negb x32)) && *)
-(*   (orb (negb x12) (negb x42)) && *)
-(*   (orb (negb x22) (negb x32)) && *)
-(*   (orb (negb x22) (negb x42)) && *)
-(*   (orb (negb x32) (negb x42)) && *)
+Goal forall x11 x12 x13 x14 x15 x21 x22 x23 x24 x25 x31 x32 x33 x34 x35 x41 x42 x43 x44 x45, (
+  (orb (negb x11) (negb x21)) &&
+  (orb (negb x11) (negb x31)) &&
+  (orb (negb x11) (negb x41)) &&
+  (orb (negb x21) (negb x31)) &&
+  (orb (negb x21) (negb x41)) &&
+  (orb (negb x31) (negb x41)) &&
 
-(*   (orb (negb x13) (negb x23)) && *)
-(*   (orb (negb x13) (negb x33)) && *)
-(*   (orb (negb x13) (negb x43)) && *)
-(*   (orb (negb x23) (negb x33)) && *)
-(*   (orb (negb x23) (negb x43)) && *)
-(*   (orb (negb x33) (negb x43)) && *)
+  (orb (negb x12) (negb x22)) &&
+  (orb (negb x12) (negb x32)) &&
+  (orb (negb x12) (negb x42)) &&
+  (orb (negb x22) (negb x32)) &&
+  (orb (negb x22) (negb x42)) &&
+  (orb (negb x32) (negb x42)) &&
 
-(*   (orb (negb x14) (negb x24)) && *)
-(*   (orb (negb x14) (negb x34)) && *)
-(*   (orb (negb x14) (negb x44)) && *)
-(*   (orb (negb x24) (negb x34)) && *)
-(*   (orb (negb x24) (negb x44)) && *)
-(*   (orb (negb x34) (negb x44)) && *)
+  (orb (negb x13) (negb x23)) &&
+  (orb (negb x13) (negb x33)) &&
+  (orb (negb x13) (negb x43)) &&
+  (orb (negb x23) (negb x33)) &&
+  (orb (negb x23) (negb x43)) &&
+  (orb (negb x33) (negb x43)) &&
 
-(*   (orb (negb x15) (negb x25)) && *)
-(*   (orb (negb x15) (negb x35)) && *)
-(*   (orb (negb x15) (negb x45)) && *)
-(*   (orb (negb x25) (negb x35)) && *)
-(*   (orb (negb x25) (negb x45)) && *)
-(*   (orb (negb x35) (negb x45)) && *)
+  (orb (negb x14) (negb x24)) &&
+  (orb (negb x14) (negb x34)) &&
+  (orb (negb x14) (negb x44)) &&
+  (orb (negb x24) (negb x34)) &&
+  (orb (negb x24) (negb x44)) &&
+  (orb (negb x34) (negb x44)) &&
 
-
-(*   (orb (negb x11) (negb x12)) && *)
-(*   (orb (negb x11) (negb x13)) && *)
-(*   (orb (negb x11) (negb x14)) && *)
-(*   (orb (negb x11) (negb x15)) && *)
-(*   (orb (negb x12) (negb x13)) && *)
-(*   (orb (negb x12) (negb x14)) && *)
-(*   (orb (negb x12) (negb x15)) && *)
-(*   (orb (negb x13) (negb x14)) && *)
-(*   (orb (negb x13) (negb x15)) && *)
-(*   (orb (negb x14) (negb x15)) && *)
-
-(*   (orb (negb x21) (negb x22)) && *)
-(*   (orb (negb x21) (negb x23)) && *)
-(*   (orb (negb x21) (negb x24)) && *)
-(*   (orb (negb x21) (negb x25)) && *)
-(*   (orb (negb x22) (negb x23)) && *)
-(*   (orb (negb x22) (negb x24)) && *)
-(*   (orb (negb x22) (negb x25)) && *)
-(*   (orb (negb x23) (negb x24)) && *)
-(*   (orb (negb x23) (negb x25)) && *)
-(*   (orb (negb x24) (negb x25)) && *)
-
-(*   (orb (negb x31) (negb x32)) && *)
-(*   (orb (negb x31) (negb x33)) && *)
-(*   (orb (negb x31) (negb x34)) && *)
-(*   (orb (negb x31) (negb x35)) && *)
-(*   (orb (negb x32) (negb x33)) && *)
-(*   (orb (negb x32) (negb x34)) && *)
-(*   (orb (negb x32) (negb x35)) && *)
-(*   (orb (negb x33) (negb x34)) && *)
-(*   (orb (negb x33) (negb x35)) && *)
-(*   (orb (negb x34) (negb x35)) && *)
-
-(*   (orb (negb x41) (negb x42)) && *)
-(*   (orb (negb x41) (negb x43)) && *)
-(*   (orb (negb x41) (negb x44)) && *)
-(*   (orb (negb x41) (negb x45)) && *)
-(*   (orb (negb x42) (negb x43)) && *)
-(*   (orb (negb x42) (negb x44)) && *)
-(*   (orb (negb x42) (negb x45)) && *)
-(*   (orb (negb x43) (negb x44)) && *)
-(*   (orb (negb x43) (negb x45)) && *)
-(*   (orb (negb x44) (negb x45)) && *)
+  (orb (negb x15) (negb x25)) &&
+  (orb (negb x15) (negb x35)) &&
+  (orb (negb x15) (negb x45)) &&
+  (orb (negb x25) (negb x35)) &&
+  (orb (negb x25) (negb x45)) &&
+  (orb (negb x35) (negb x45)) &&
 
 
-(*   (orb (orb (orb x11 x21) x31) x41) && *)
-(*   (orb (orb (orb x12 x22) x32) x42) && *)
-(*   (orb (orb (orb x13 x23) x33) x43) && *)
-(*   (orb (orb (orb x14 x24) x34) x44) && *)
-(*   (orb (orb (orb x15 x25) x35) x45)) = false. *)
-(* Proof. *)
-(*   verit. *)
-(* Qed. *)
+  (orb (negb x11) (negb x12)) &&
+  (orb (negb x11) (negb x13)) &&
+  (orb (negb x11) (negb x14)) &&
+  (orb (negb x11) (negb x15)) &&
+  (orb (negb x12) (negb x13)) &&
+  (orb (negb x12) (negb x14)) &&
+  (orb (negb x12) (negb x15)) &&
+  (orb (negb x13) (negb x14)) &&
+  (orb (negb x13) (negb x15)) &&
+  (orb (negb x14) (negb x15)) &&
+
+  (orb (negb x21) (negb x22)) &&
+  (orb (negb x21) (negb x23)) &&
+  (orb (negb x21) (negb x24)) &&
+  (orb (negb x21) (negb x25)) &&
+  (orb (negb x22) (negb x23)) &&
+  (orb (negb x22) (negb x24)) &&
+  (orb (negb x22) (negb x25)) &&
+  (orb (negb x23) (negb x24)) &&
+  (orb (negb x23) (negb x25)) &&
+  (orb (negb x24) (negb x25)) &&
+
+  (orb (negb x31) (negb x32)) &&
+  (orb (negb x31) (negb x33)) &&
+  (orb (negb x31) (negb x34)) &&
+  (orb (negb x31) (negb x35)) &&
+  (orb (negb x32) (negb x33)) &&
+  (orb (negb x32) (negb x34)) &&
+  (orb (negb x32) (negb x35)) &&
+  (orb (negb x33) (negb x34)) &&
+  (orb (negb x33) (negb x35)) &&
+  (orb (negb x34) (negb x35)) &&
+
+  (orb (negb x41) (negb x42)) &&
+  (orb (negb x41) (negb x43)) &&
+  (orb (negb x41) (negb x44)) &&
+  (orb (negb x41) (negb x45)) &&
+  (orb (negb x42) (negb x43)) &&
+  (orb (negb x42) (negb x44)) &&
+  (orb (negb x42) (negb x45)) &&
+  (orb (negb x43) (negb x44)) &&
+  (orb (negb x43) (negb x45)) &&
+  (orb (negb x44) (negb x45)) &&
+
+
+  (orb (orb (orb x11 x21) x31) x41) &&
+  (orb (orb (orb x12 x22) x32) x42) &&
+  (orb (orb (orb x13 x23) x33) x43) &&
+  (orb (orb (orb x14 x24) x34) x44) &&
+  (orb (orb (orb x15 x25) x35) x45)) = false.
+Proof.
+  verit.
+Qed.
 
 
 (* uf1.smt *)
@@ -761,11 +761,10 @@ Section list.
                (inlist b ((a :: l1) ++ l2)).
   Add_lemmas in_nil in_inv inlist_app_comm_cons.
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Lemma coqhammer_example l1 l2 x y1 y2 y3: *)
-  (*   implb (orb (inlist x l1) (orb (inlist x l2) (orb (x =? y1) (inlist x (y2 ::y3::nil))))) *)
-  (*         (inlist x (y1::(l1 ++ (y2 :: (l2 ++ (y3 :: nil)))))). *)
-  (* Proof using dec_Zlist in_eq in_cons in_or_app in_nil in_inv inlist_app_comm_cons. verit_no_check. Qed. *)
+  Lemma coqhammer_example l1 l2 x y1 y2 y3:
+    implb (orb (inlist x l1) (orb (inlist x l2) (orb (x =? y1) (inlist x (y2 ::y3::nil)))))
+          (inlist x (y1::(l1 ++ (y2 :: (l2 ++ (y3 :: nil)))))).
+  Proof using dec_Zlist in_eq in_cons in_or_app in_nil in_inv inlist_app_comm_cons. verit_no_check. Qed.
 
   Clear_lemmas.
 End list.
@@ -1074,9 +1073,7 @@ Section EqualityOnUninterpretedType3.
   Goal forall (f : A -> Z) (a b : A), a = b -> f a = f b.
   Proof using.
     verit;
-      [ match goal with | [ |- CompDec A ] => idtac | _ => fail end
-      | match goal with | [ |- CompDec A ] => idtac | _ => fail end ].
-    (* TODO: should have only one subgoal *)
+      [ match goal with | [ |- CompDec A ] => idtac | _ => fail end ].
   Abort.
 
   Goal forall (f : Z -> B) (a b : Z), a = b -> f a = f b.
@@ -1086,12 +1083,18 @@ Section EqualityOnUninterpretedType3.
   Abort.
 
   Goal forall (f : A -> B) (a b : A), a = b -> f a = f b.
-  Proof using. verit. Abort.
-  (* TODO: should have only two subgoals *)
+  Proof using.
+    verit;
+      [ match goal with | [ |- CompDec B ] => idtac | _ => fail end
+      | match goal with | [ |- CompDec A ] => idtac | _ => fail end ].
+  Abort.
 
   Goal forall (f : A -> A -> B) (a b c d : A), a = b -> c = d -> f a c = f b d.
-  Proof using. verit. Abort.
-  (* TODO: should have only two subgoals *)
+  Proof using.
+    verit;
+      [ match goal with | [ |- CompDec B ] => idtac | _ => fail end
+      | match goal with | [ |- CompDec A ] => idtac | _ => fail end ].
+  Abort.
 End EqualityOnUninterpretedType3.
 
 
@@ -1176,9 +1179,8 @@ Section CompDecHypotheses.
   Hypothesis H4_bool : forall (H : CompDec bool) (H0 : bool), search H0 nil = false.
   Hypothesis H4_A : forall (H : CompDec A) (H0 : A), search H0 nil = false.
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Goal search x l2 = search x l2. *)
-  (* Proof. verit. Qed. *)
+  Goal search x l2 = search x l2.
+  Proof. verit. Qed.
 
 End CompDecHypotheses.
 
@@ -1212,9 +1214,8 @@ Section CompDecOnInterpretedType.
   Variable H4_bool : (forall H3 : bool, search H3 nil <---> false = true).
   Variable H4_A : (forall H3 : A, search H3 nil <---> false = true).
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Goal search x l2 <---> search x l2 = true. *)
-  (* Proof. verit. Qed. *)
+  Goal search x l2 <---> search x l2 = true.
+  Proof. verit. Qed.
 
 End CompDecOnInterpretedType.
 
@@ -1248,9 +1249,8 @@ Section Vauto.
   Variable l : list A.
   Variable H : search b (a :: l).
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Goal eqb_of_compdec HA a b \/ search b l. *)
-  (* Proof. verit_no_check. Qed. *)
+  Goal eqb_of_compdec HA a b \/ search b l.
+  Proof. verit_no_check. Qed.
 End Vauto.
 
 
@@ -1317,9 +1317,8 @@ Section EqSym.
   Variable a : A.
   Variable r : list A.
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Goal hd_error (x :: xs) = Some a /\ tl (x :: xs) = r <-> x :: xs = a :: r. *)
-  (* Proof. verit. Qed. *)
+  Goal hd_error (x :: xs) = Some a /\ tl (x :: xs) = r <-> x :: xs = a :: r.
+  Proof. verit. Qed.
 End EqSym.
 
 
@@ -1409,10 +1408,9 @@ Section OCamlCompDec.
   Variable H12 : forall (H H0 : list A) (H1 : list (list A)), proj_list0 (list A) H (H0 :: H1) = H0.
   Variable H11 : forall (x : A) (x0 x1 : list A), x1 = nil \/ x1 = proj_list0 A x x1 :: proj_list A x0 x1.
 
-  (* TODO: too long with Rocq-9.* *)
-  (* Goal forall (x y : list A) (a0 : A), *)
-  (*     x ++ y = a0::nil -> x = nil /\ y = a0::nil \/ x = a0::nil /\ y = nil. *)
-  (* Proof. verit_no_check. Qed. *)
+  Goal forall (x y : list A) (a0 : A),
+      x ++ y = a0::nil -> x = nil /\ y = a0::nil \/ x = a0::nil /\ y = nil.
+  Proof. verit_no_check. Qed.
 End OCamlCompDec.
 
 
@@ -1492,9 +1490,13 @@ Section OpenCompdec.
   Variable H3 : forall x : A, Some x = None -> False.
   Variable Hpb : forall x x0 : A, Some x = Some x0 -> x = x0.
 
-  (* TODO: The elpi tactic/command trakt failed without giving a specific error *)
-  (* Goal l <> nil. *)
-  (* Proof. verit. Abort. *)
+  Goal l <> nil.
+  Proof.
+    verit;
+      [ match goal with | [ |- CompDec (list A) ] => idtac | _ => fail end
+      | match goal with | [ |- CompDec (option A) ] => idtac | _ => fail end
+      | match goal with | [ |- CompDec A ] => idtac | _ => fail end ].
+  Abort.
   (* Should leave open CompDec goals but not fail *)
 
 End OpenCompdec.
