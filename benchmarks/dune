@@ -2,15 +2,15 @@
  (name benchmark)
  (deps dune.inc))
 
-(rule
- (target dune.inc)
- (mode promote)
- (deps
-  generate_dune_rules.sh
-  (glob_files *.cnf))
- (action
-  (with-stdout-to
-   %{target}
-   (run ./generate_dune_rules.sh %{deps}))))
+(env
+ (_
+  (env-vars
+   (LFSCSIGS "../../src/lfsc/signatures"))
+  (rocq
+   (flags
+    (:standard -I ../_build/install/default/lib)))))
 
-(include dune.inc)
+(rocq.theory
+ (name SMTCoq.benchmark)
+ (generate_project_file)
+ (theories SMTCoq))
