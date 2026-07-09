@@ -204,7 +204,7 @@ Ltac generate_rels compdecs :=
     let ty := type of HA in
     lazymatch ty with
     | CompDec.CompDec ?A =>
-      let rel := constr:((2%nat, @eq A, @CompDec.eqb_of_compdec A HA, @CompDec.compdec_eq_eqb A HA)) in
+      let rel := constr:((2%nat, @Logic.eq A, @CompDec.eqb_of_compdec A HA, @CompDec.compdec_eq_eqb A HA)) in
       let acc := generate_rels compdecs' in
       lazymatch acc with
       | None => constr:(Some rel)
