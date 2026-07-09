@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783540115,
-        "narHash": "sha256-CRak+zdxYZvQ1cVMI6Z4fZ8+VHUzn9Bku3ONqzA1Wf8=",
+        "lastModified": 1783585727,
+        "narHash": "sha256-GRKihDcL+6ySSS2FUHa1cjJnCk8RztXq5TvwYFfb0lY=",
         "ref": "refs/heads/main",
-        "rev": "10f33f6ce899d443edebe25fa95799523248f4ba",
-        "revCount": 2,
+        "rev": "f3e509c4fb9f4a0fbc1f3282f5a493e07bb55565",
+        "revCount": 3,
         "type": "git",
         "url": "https://codeberg.org/lafeychine/rocq-utils"
       },
@@ -93,16 +93,15 @@
         "rocq-utils": "rocq-utils"
       },
       "locked": {
-        "lastModified": 1783541229,
-        "narHash": "sha256-cH2JSjtTJguVjDr1kjzA8Ux2XkCe7QGlrtZdaA2V2cM=",
+        "lastModified": 1783586099,
+        "narHash": "sha256-UxhIQgVDz9aFd5H5QpS3SST06yZ15nEgYxbOvn0oO0Y=",
         "owner": "rocq-trakt",
         "repo": "trakt",
-        "rev": "89a9157b40fa75af240c8df8e41aaf13d24de194",
+        "rev": "deed4edd51131fa21592a20c31b2ad92bf8dea83",
         "type": "github"
       },
       "original": {
         "owner": "rocq-trakt",
-        "ref": "nix-overlay-reusage",
         "repo": "trakt",
         "type": "github"
       }

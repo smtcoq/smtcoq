@@ -1,6 +1,6 @@
 {
   inputs = {
-    trakt.url = "github:rocq-trakt/trakt?ref=nix-overlay-reusage";
+    trakt.url = "github:rocq-trakt/trakt";
 
     nixpkgs.follows = "trakt/nixpkgs";
     flake-parts.follows = "trakt/flake-parts";
