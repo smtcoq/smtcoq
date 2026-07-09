@@ -33,7 +33,9 @@ homepage: "https://github.com/smtcoq/smtcoq"
 bug-reports: "https://github.com/smtcoq/smtcoq/issues"
 depends: [
   "dune" {>= "3.21"}
+  "num"
   "rocq-core" {>= "9.0.0"}
+  "rocq-stdlib"
   "rocq-trakt"
   "odoc" {with-doc}
 ]
