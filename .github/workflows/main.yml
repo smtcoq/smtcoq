@@ -17,10 +17,6 @@ on:
         default: "master"
         description: "Stdlib version or commit"
         required: true
-      elpi:
-        default: "master"
-        description: "Elpi version or commit"
-        required: true
       rocq-elpi:
         default: "master"
         description: "Rocq-Elpi version or commit"
@@ -60,7 +56,6 @@ jobs:
             flake.lib.mkSMTCoq pkgs {
               rocq = "${{ inputs.rocq || 'master' }}";
               stdlib = "${{ inputs.stdlib || 'master' }}";
-              elpi = "${{ inputs.elpi || 'master' }}";
               rocq-elpi = "${{ inputs.rocq-elpi || 'master' }}";
               trakt = "${{ inputs.trakt || 'master' }}";
               smtcoq = "${{ inputs.smtcoq || 'master' }}";
