@@ -2,9 +2,9 @@ name: Build Trakt against specific versions
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   schedule:
     - cron: '0 0 * * 1'
   workflow_dispatch:
@@ -26,7 +26,7 @@ on:
         description: "Trakt version or commit"
         required: true
       smtcoq:
-        default: "master"
+        default: "main"
         description: "SMTCoq version or commit"
         required: true
 
@@ -35,7 +35,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  master:
+  main:
     runs-on: ubuntu-latest
     continue-on-error: true
 
@@ -58,5 +58,5 @@ jobs:
               stdlib = "${{ inputs.stdlib || 'master' }}";
               rocq-elpi = "${{ inputs.rocq-elpi || 'master' }}";
               trakt = "${{ inputs.trakt || 'master' }}";
-              smtcoq = "${{ inputs.smtcoq || 'master' }}";
+              smtcoq = "${{ inputs.smtcoq || 'main' }}";
             }' --print-build-logs
