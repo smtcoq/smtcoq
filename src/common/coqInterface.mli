@@ -43,6 +43,16 @@ val mkArrow : types -> types -> constr
 val pr_constr_env : Environ.env -> constr -> Pp.t
 val pr_constr : constr -> Pp.t
 
+type constr_expr = Constrexpr.constr_expr
+val ppconstr_modular_constr_pr :
+  ((unit -> Pp.t) ->
+   int option ->
+   Constrexpr.entry_relative_level -> constr_expr -> Pp.t) ->
+  (unit -> Pp.t) ->
+  int option ->
+  Constrexpr.entry_relative_level -> constr_expr -> Pp.t
+
+
 val mkUConst : constr -> Declare.proof_entry
 val mkTConst : constr -> constr -> types -> Declare.proof_entry
 val declare_new_type : id -> types
@@ -108,8 +118,6 @@ val raise_debug : ('a, Format.formatter, unit, unit) format4 -> 'a
 
 
 (* Other differences between the two versions of Coq *)
-type constr_expr = Constrexpr.constr_expr
-
 val destruct_rel_decl : Constr.rel_declaration -> name * types
 val interp_constr : Environ.env -> Evd.evar_map -> constr_expr -> constr
 val ppconstr_lsimpleconstr : Constrexpr.entry_relative_level

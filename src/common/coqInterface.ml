@@ -45,6 +45,7 @@ let mkArrow a b = Term.mkArrow a Sorts.Relevant b
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 let pr_constr = pr_constr_env Environ.empty_env
+let ppconstr_modular_constr_pr = Ppconstr.modular_constr_pr ~flags:(Ppconstr.current_flags())
 
 
 let mkUConst : Constr.t -> Declare.proof_entry = fun c ->
