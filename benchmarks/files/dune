@@ -1,5 +1,5 @@
 (alias
- (name runtest)
+ (name benchmark)
  (deps
   (alias_rec all)))
 
