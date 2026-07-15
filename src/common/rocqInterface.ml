@@ -45,7 +45,6 @@ let mkArrow a b = Term.mkArrow a Sorts.Relevant b
 
 let pr_constr_env env = Printer.pr_constr_env env Evd.empty
 let pr_constr = pr_constr_env Environ.empty_env
-let ppconstr_modular_constr_pr = Ppconstr.modular_constr_pr ~flags:(Ppconstr.current_flags())
 
 
 let mkUConst : Constr.t -> Declare.proof_entry = fun c ->
@@ -56,7 +55,7 @@ let mkUConst : Constr.t -> Declare.proof_entry = fun c ->
     ~opaque:false
     ~inline:false
     ~types:(EConstr.Unsafe.to_constr ty) (* Cannot contain evars since it comes from a Constr.t *)
-    ~univs:(Evd.univ_entry ~poly:PolyFlags.default evd)
+    ~univs:(RocqVersionCompat.evd_univ_entry evd)
     c
 
 let mkTConst c noc ty =
@@ -67,20 +66,16 @@ let mkTConst c noc ty =
     ~opaque:false
     ~inline:false
     ~types:ty
-    ~univs:(Evd.univ_entry ~poly:PolyFlags.default evd)
+    ~univs:(RocqVersionCompat.evd_univ_entry evd)
     c
-
-(* TODO: when switching to econstr, may have universe constraints *)
-let empty_named_universes_entry =
-  UState.univ_entry ~poly:PolyFlags.default UState.empty
 
 (* TODO : Set -> Type *)
 let declare_new_type t =
-  let _ = ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind:Decls.Definitional ~univs:empty_named_universes_entry ~impargs:[] ~impl:Glob_term.Explicit ~name:t Constr.mkSet in
+  let _ = ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind:Decls.Definitional ~univs:RocqVersionCompat.empty_named_universes_entry ~impargs:[] ~impl:Glob_term.Explicit ~name:t Constr.mkSet in
   Constr.mkVar t
 
 let declare_new_variable v constr_t =
-  let _ = ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind:Decls.Definitional ~univs:empty_named_universes_entry ~impargs:[] ~impl:Glob_term.Explicit ~name:v constr_t in
+  let _ = ComAssumption.declare_variable ~coe:Vernacexpr.NoCoercion ~kind:Decls.Definitional ~univs:RocqVersionCompat.empty_named_universes_entry ~impargs:[] ~impl:Glob_term.Explicit ~name:v constr_t in
   Constr.mkVar v
 
 let declare_constant n c =
@@ -176,9 +171,6 @@ let raise_debug fmt =
   Format.kasprintf (fun s -> if CDebug.get_flag flag then Feedback.msg_info (Pp.str s)) fmt
 
 
-(* Other differences between the two versions of Coq *)
-type constr_expr = Constrexpr.constr_expr
-
 let destruct_rel_decl r = Context.Rel.Declaration.get_name r,
                           Context.Rel.Declaration.get_type r
 
@@ -189,7 +181,7 @@ let ppconstr_lsimpleconstr = Ppconstr.lsimpleconstr
 
 let constrextern_extern_constr c =
   let env = Global.env () in
-  Constrextern.extern_constr ~flags:(PrintingFlags.current()) ~inctx:false env (Evd.from_env env) (EConstr.of_constr c)
+  RocqVersionCompat.constrextern_extern_constr ~inctx:false env (Evd.from_env env) (EConstr.of_constr c)
 
 let get_rel_dec_name = function
   | Context.Rel.Declaration.LocalAssum (n, _) | Context.Rel.Declaration.LocalDef (n, _, _) ->

@@ -14,4 +14,4 @@ open Common
 
 val build_lia_certif :
   SmtAtom.Form.t list ->
-  CoqInterface.Micromega_plugin_Certificate.Mc.zArithProof list option
+  RocqInterface.Micromega_plugin_Certificate.Mc.zArithProof list option

@@ -13,12 +13,12 @@
 open Common
 
 val pp_trace : Format.formatter -> SatAtom.Form.t SmtCertif.clause -> unit
-val parse_certif : CoqInterface.id -> CoqInterface.id -> string -> string -> unit
+val parse_certif : RocqInterface.id -> RocqInterface.id -> string -> string -> unit
 val checker : string -> string -> unit
-val theorem : CoqInterface.id -> string -> string -> unit
-val theorem_abs : CoqInterface.id -> string -> string -> unit
-val tactic : unit -> CoqInterface.tactic
-val tactic_no_check : unit -> CoqInterface.tactic
+val theorem : RocqInterface.id -> string -> string -> unit
+val theorem_abs : RocqInterface.id -> string -> string -> unit
+val tactic : unit -> RocqInterface.tactic
+val tactic_no_check : unit -> RocqInterface.tactic
 val import_cnf : string ->
                  int * SatAtom.Form.t SmtCertif.clause *
                    SatAtom.Form.t SmtCertif.clause *

@@ -27,7 +27,7 @@ module Atom =
 
     type reify_tbl =
         { mutable count : int;
-	          tbl : (CoqInterface.constr, int) Hashtbl.t
+	          tbl : (RocqInterface.constr, int) Hashtbl.t
 	}
 
     let create () = 

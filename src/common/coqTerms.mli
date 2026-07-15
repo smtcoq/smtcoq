@@ -10,7 +10,7 @@
 (**************************************************************************)
 
 
-type coqTerm = CoqInterface.constr lazy_t
+type coqTerm = RocqInterface.constr lazy_t
 
 (* Int63 *)
 val cint : coqTerm
@@ -314,27 +314,27 @@ val ceuf_checker_Name_RowEq : coqTerm
 val ceuf_checker_Name_RowNeq : coqTerm
 val ceuf_checker_Name_Ext : coqTerm
 val ceuf_checker_Name_Hole : coqTerm
-val ceuf_checker_certif_ops : CoqInterface.constr array option -> certif_ops
+val ceuf_checker_certif_ops : RocqInterface.constr array option -> certif_ops
 
 
 (* Some constructions *)
 val ceq_refl_true : coqTerm
-val eq_refl_true : unit -> CoqInterface.constr
-val vm_cast_true_no_check : CoqInterface.constr -> CoqInterface.constr
-val vm_cast_true : Environ.env -> CoqInterface.constr -> CoqInterface.constr
-val mkNat : int -> CoqInterface.constr
-val mkN : int -> CoqInterface.constr
-val mk_bv_list : bool list -> CoqInterface.constr
+val eq_refl_true : unit -> RocqInterface.constr
+val vm_cast_true_no_check : RocqInterface.constr -> RocqInterface.constr
+val vm_cast_true : Environ.env -> RocqInterface.constr -> RocqInterface.constr
+val mkNat : int -> RocqInterface.constr
+val mkN : int -> RocqInterface.constr
+val mk_bv_list : bool list -> RocqInterface.constr
 val mkArray : Constr.types * Constr.t array -> Constr.t
 
 (* Reification *)
-val mk_bool : CoqInterface.constr -> bool
-val mk_bool_list : CoqInterface.constr -> bool list
-val mk_nat : CoqInterface.constr -> int
-val mk_N : CoqInterface.constr -> int
-val mk_Z : CoqInterface.constr -> int
-val mk_bvsize : CoqInterface.constr -> int
+val mk_bool : RocqInterface.constr -> bool
+val mk_bool_list : RocqInterface.constr -> bool list
+val mk_nat : RocqInterface.constr -> int
+val mk_N : RocqInterface.constr -> int
+val mk_Z : RocqInterface.constr -> int
+val mk_bvsize : RocqInterface.constr -> int
 
 (* Switches between constr and OCaml *)
-val option_of_constr_option : CoqInterface.constr -> CoqInterface.constr option
-val list_of_constr_tuple : CoqInterface.constr -> CoqInterface.constr list
+val option_of_constr_option : RocqInterface.constr -> RocqInterface.constr option
+val list_of_constr_tuple : RocqInterface.constr -> RocqInterface.constr list

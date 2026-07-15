@@ -440,7 +440,7 @@ let callback name l =
     let l = List.map eval_arg l in
     f l
   with Not_found ->
-    CoqInterface.raise_error "No side condition for %s" (Hstring.view name)
+    RocqInterface.raise_error "No side condition for %s" (Hstring.view name)
 
 
 
@@ -644,13 +644,13 @@ let rec fill_hole sigma h t =
   match h.value with
   | Hole _ ->
     if debug then
-      CoqInterface.raise_debug ">>>>> Fill hole @[%a@] with @[%a@]@."
+      RocqInterface.raise_debug ">>>>> Fill hole @[%a@] with @[%a@]@."
         print_term h print_term t;
     let t' = apply_subst sigma t in
     (* h.value <- t'.value; (\* KLUDGE *\) *)
     if not (occur_check h t') then h.value <- Ptr (deref t');
     if debug then
-      CoqInterface.raise_debug ">>>>>>>>> @[%a@]@." print_term_type h;
+      RocqInterface.raise_debug ">>>>>>>>> @[%a@]@." print_term_type h;
     fill_hole sigma h.ttype t'.ttype;
     (* (try compat_with sigma t'.ttype h.ttype with _ -> ()); *)
   | _ -> ()
@@ -662,9 +662,9 @@ let rec fill_hole sigma h t =
 (* apsub is false if we want to prevent application of substitutions *)
 and compat_with1 ?(apsub=true) sigma t1 t2 =
   if debug then (
-    CoqInterface.raise_debug "compat_with(%b): @[<hov>%a@] and @[<hov>%a@]@."
+    RocqInterface.raise_debug "compat_with(%b): @[<hov>%a@] and @[<hov>%a@]@."
       apsub print_term t1 print_term t2;
-    CoqInterface.raise_debug "  with sigma = %a@." print_subst sigma
+    RocqInterface.raise_debug "  with sigma = %a@." print_subst sigma
   );
 
   match t1.value, t2.value with
@@ -756,7 +756,7 @@ and term_equal t1 t2 =
 
 and check_side_condition name l expected =
   if debug then
-    CoqInterface.raise_debug "Adding side condition : (%a%a) =?= %a@."
+    RocqInterface.raise_debug "Adding side condition : (%a%a) =?= %a@."
       Hstring.print name
       (fun fmt -> List.iter (fprintf fmt "@ %a" print_term)) l
       print_term expected;
@@ -779,18 +779,18 @@ let rec ty_of_app sigma ty args = match ty.value, args with
       ty_of_app sigma t args
 
   | _, [] -> apply_subst sigma ty
-  | _ -> CoqInterface.raise_error "Type of function not a pi-type."
+  | _ -> RocqInterface.raise_error "Type of function not a pi-type."
 
 
 let mk_const x =
-  if debug then CoqInterface.raise_debug "mk_const %s@." x;
+  if debug then RocqInterface.raise_debug "mk_const %s@." x;
   try
     let stype = HN.find symbols (Name (Hstring.make x)) in
     let s = mk_symbol x stype in
     try
       HN.find definitions s.sname
     with Not_found -> { value = Const s; ttype = stype }
-  with Not_found -> CoqInterface.raise_error "Symbol %s is not declared." x
+  with Not_found -> RocqInterface.raise_error "Symbol %s is not declared." x
 
 
 let symbol_to_const s = { value = Const s; ttype = s.stype }
@@ -798,7 +798,7 @@ let symbol_to_const s = { value = Const s; ttype = s.stype }
 
 let rec mk_app ?(lookup=true) sigma f args =
   if debug then
-    CoqInterface.raise_debug "mk_App : %a@." (print_tval false)
+    RocqInterface.raise_debug "mk_App : %a@." (print_tval false)
       { value = App (f, args); ttype = lfsc_type } ;
 
   match f.value, args with
@@ -879,7 +879,7 @@ let run_side_conditions () =
   List.iter (fun (name, l, expected) ->
       let res = callback name l in
       if not (term_equal res expected) then
-        CoqInterface.raise_error
+        RocqInterface.raise_error
           "Side condition %a failed: Got %a, expected %a"
           Hstring.print name print_term res print_term expected;
     ) (sort_sc_checks !sc_to_check);
@@ -901,7 +901,7 @@ let mk_lambda s t =
   
 let mk_ascr ty t =
   if debug then
-    CoqInterface.raise_debug "\nMK ASCR:: should have type %a, has type %a\n@."
+    RocqInterface.raise_debug "\nMK ASCR:: should have type %a, has type %a\n@."
       print_term ty print_term t.ttype;
   compat_with empty_subst ty t.ttype; t
   (* { t with ttype = ty } *)

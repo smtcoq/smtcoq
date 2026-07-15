@@ -16,7 +16,7 @@ let cInt_tbl = Hashtbl.create 17
 let mkInt i = 
   try Hashtbl.find cInt_tbl i 
   with Not_found ->
-    let ci = CoqInterface.mkInt i in
+    let ci = RocqInterface.mkInt i in
     Hashtbl.add cInt_tbl i ci;
     ci
 
@@ -25,18 +25,18 @@ type 'a gen_hashed = { index : int; mutable hval : 'a }
 
 
 (** Functions over constr *)
-let mklApp f args = CoqInterface.mkApp (Lazy.force f, args)
+let mklApp f args = RocqInterface.mkApp (Lazy.force f, args)
 
-let string_of_name_def d n = try CoqInterface.string_of_name n with | _ -> d
+let string_of_name_def d n = try RocqInterface.string_of_name n with | _ -> d
 
 let string_coq_constr t =
   let rec fix rf x = rf (fix rf) x in
   let pr =
     fix
-      CoqInterface.ppconstr_modular_constr_pr
-      Pp.mt None CoqInterface.ppconstr_lsimpleconstr
+      RocqVersionCompat.ppconstr_modular_constr_pr
+      Pp.mt None RocqInterface.ppconstr_lsimpleconstr
   in
-  Pp.string_of_ppcmds (pr (CoqInterface.constrextern_extern_constr t))
+  Pp.string_of_ppcmds (pr (RocqInterface.constrextern_extern_constr t))
 
 
 (** Logics *)
@@ -100,15 +100,15 @@ let lexeme_len { Lexing.lex_start_pos; Lexing.lex_curr_pos; _ } = lex_curr_pos -
 
 let main_failure lexbuf msg =
   let { Lexing.pos_lnum; Lexing.pos_bol; Lexing.pos_cnum; Lexing.pos_fname = _ } = Lexing.lexeme_start_p lexbuf in
-  CoqInterface.raise_error
+  RocqInterface.raise_error
     "Sexplib.Lexer.main: %s at line %d char %d"
     msg pos_lnum (pos_cnum - pos_bol)
 
 
 (* Constr hashtables up to aliasing, casts, ... *)
 module ConstrHash = struct
-  type t = CoqInterface.constr
-  let equal = CoqInterface.eq_constr
-  let hash = CoqInterface.hash_constr
+  type t = RocqInterface.constr
+  let equal = RocqInterface.eq_constr
+  let hash = RocqInterface.hash_constr
 end
 module ConstrHashtbl = Hashtbl.Make(ConstrHash)

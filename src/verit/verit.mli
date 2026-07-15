@@ -15,16 +15,16 @@ open Common
 module Syntax : module type of Syntax
 
 val parse_certif :
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id -> CoqInterface.id -> CoqInterface.id -> string -> string -> unit
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id -> RocqInterface.id -> RocqInterface.id -> string -> string -> unit
 val checker : string -> string -> unit
 val checker_debug : string -> string -> unit
-val theorem : CoqInterface.id -> string -> string -> unit
-val tactic : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
-val tactic_no_check : int option -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val theorem : RocqInterface.id -> string -> string -> unit
+val tactic : int option -> EConstr.t -> RocqVersionCompat.constr_expr list -> RocqInterface.tactic
+val tactic_no_check : int option -> EConstr.t -> RocqVersionCompat.constr_expr list -> RocqInterface.tactic
 
 (* For extraction *)
 val clear_all : unit -> unit
