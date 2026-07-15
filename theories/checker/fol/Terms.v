@@ -27,12 +27,12 @@ Hint Variables Opaque : smtcoq_core.
 #[export] Hint Unfold is_true : smtcoq_core.
 
 
-(* Remark: we use Abbreviation instead of Definition du eliminate conversion check during the type checking *)
-Abbreviation atom := int (only parsing).
+(* Remark: we use Notation instead of Definition du eliminate conversion check during the type checking *)
+Notation atom := int (only parsing).
 
 Module Form.
 
-  Abbreviation fargs := (array _lit) (only parsing).
+  Notation fargs := (array _lit) (only parsing).
 
   Inductive form : Type :=
   | Fatom (_:atom)
@@ -260,7 +260,7 @@ Module Typ.
 
   Import FArray.
 
-  Abbreviation index := N (only parsing).
+  Notation index := N (only parsing).
 
   Inductive type :=
   | TFArray : type -> type -> type
@@ -457,7 +457,7 @@ Module Typ.
     Arguments Cast {A B} k.
     Arguments NoCast {A B}.
 
-    Abbreviation idcast := (Cast (fun P x => x)).
+    Notation idcast := (Cast (fun P x => x)).
     (* La fonction cast calcule cast_result *)
 
     Fixpoint positive_cast (n m : positive) {struct n} :
@@ -715,7 +715,7 @@ Qed.
 
 Module Atom.
 
-  Abbreviation func := int (only parsing).
+  Notation func := int (only parsing).
 
   Inductive cop : Type :=
    | CO_xH
@@ -764,7 +764,7 @@ Module Atom.
   Inductive terop : Type :=
    | TO_store (_ : Typ.type) (_ : Typ.type).
 
-  Abbreviation hatom := int (only parsing).
+  Notation hatom := int (only parsing).
 
   Inductive atom : Type :=
    | Acop (_: cop)
@@ -1009,8 +1009,8 @@ Qed.
   Section Typing_Interp.
     Variable t_i : PArray.array typ_compdec.
 
-    Local Abbreviation interp_t := (Typ.interp t_i).
-    Local Abbreviation interp_ft := (Typ.interp_ftype t_i).
+    Local Notation interp_t := (Typ.interp t_i).
+    Local Notation interp_ft := (Typ.interp_ftype t_i).
 
     Definition bval := val Typ.type interp_t.
     Definition Bval := Val Typ.type interp_t.
@@ -2328,7 +2328,7 @@ Qed.
 
       Definition get_type' (t_interp':array bval) i := v_type _ _ (t_interp'.[i]).
 
-      Local Abbreviation get_type := (get_type' t_interp).
+      Local Notation get_type := (get_type' t_interp).
 
       (* If an atom is well-typed, it has an interpretation *)
 

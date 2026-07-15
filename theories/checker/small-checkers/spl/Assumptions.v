@@ -80,7 +80,7 @@ Section Checker_correct.
   Variable t_atom : array Atom.atom.
   Variable t_form : array Form.form.
 
-  Local Abbreviation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form).
+  Local Notation rho := (Form.interp_state_var (Atom.interp_form_hatom t_i t_func t_atom) (Atom.interp_form_hatom_bv t_i t_func t_atom) t_form).
 
   Variable s : S.t.
   Hypothesis Hs : S.valid rho s.
