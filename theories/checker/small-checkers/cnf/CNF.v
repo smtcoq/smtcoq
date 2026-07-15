@@ -123,7 +123,7 @@ Qed.
 Section CHECKER.
 
   Variable t_form : PArray.array form.
-  Local Abbreviation get_hash := (PArray.get t_form) (only parsing).
+  Local Notation get_hash := (PArray.get t_form) (only parsing).
   Variable s : S.t.
 
 
@@ -322,7 +322,7 @@ Section CHECKER.
 
   Hypothesis Hch_f : check_form t_form.
 
-  Local Abbreviation rho := (Form.interp_state_var interp_atom interp_bvatom t_form).
+  Local Notation rho := (Form.interp_state_var interp_atom interp_bvatom t_form).
 
   Let Hwfrho : Valuation.wf rho.
   Proof.

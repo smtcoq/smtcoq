@@ -163,8 +163,8 @@ let raise_anomaly fmt =
 let raise_error fmt =
   Format.kasprintf (fun s -> CErrors.user_err (Pp.str s)) fmt
 
-let raise_warning ~name =
-  CWarnings.create ~category:warning_category ~name
+let raise_warning ~name ?default pp =
+  CWarnings.create ~category:warning_category ~name ?default pp
 
 let raise_debug fmt =
   let (flag, _) = debug_component in

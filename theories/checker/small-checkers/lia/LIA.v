@@ -24,8 +24,8 @@ Section certif.
   Variable t_form : PArray.array Form.form.
   Variable t_atom : PArray.array Atom.atom.
 
-  Local Abbreviation get_atom := (PArray.get t_atom) (only parsing).
-  Local Abbreviation get_form := (PArray.get t_form) (only parsing).
+  Local Notation get_atom := (PArray.get t_atom) (only parsing).
+  Local Notation get_form := (PArray.get t_form) (only parsing).
 
   Import EnvRing Atom.
 
@@ -385,21 +385,21 @@ Section certif.
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Abbreviation check_atom :=
+    Local Notation check_atom :=
       (check_aux t_i t_func (get_type t_i t_func t_atom)).
 
-    Local Abbreviation interp_form_hatom :=
+    Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
 
-    Local Abbreviation interp_form_hatom_bv :=
+    Local Notation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
 
-    Local Abbreviation rho :=
+    Local Notation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
-    Local Abbreviation t_interp := (t_interp t_i t_func t_atom).
+    Local Notation t_interp := (t_interp t_i t_func t_atom).
 
-    Local Abbreviation interp_atom :=
+    Local Notation interp_atom :=
       (interp_aux t_i t_func (get t_interp)).
 
     Let wf_t_atom : Atom.wf t_atom.
@@ -1052,7 +1052,7 @@ Transparent build_z_atom.
     Qed.
 
 
-    Local Abbreviation eval_f := (eval_f (fun k x => x)).
+    Local Notation eval_f := (eval_f (fun k x => x)).
 
     Lemma build_not2_pos_correct : forall vm (f:GFormula isProp) l i,
       bounded_bformula (fst vm) f -> (rho (Lit.blit l) <-> eval_f (Zeval_formula (interp_vmap vm)) f) -> Lit.is_pos l -> bounded_bformula (fst vm) (build_not2 i f) /\ (Form.interp interp_form_hatom interp_form_hatom_bv t_form (Form.Fnot2 i l) <-> eval_f (Zeval_formula (interp_vmap vm)) (build_not2 i f)).
@@ -1428,8 +1428,8 @@ Transparent build_z_atom.
     apply H4 in HH;discriminate.
    Qed.
 
-   Local Abbreviation hinterp := (Atom.interp_hatom t_i t_func t_atom).
-   Local Abbreviation interp := (Atom.interp t_i t_func t_atom).
+   Local Notation hinterp := (Atom.interp_hatom t_i t_func t_atom).
+   Local Notation interp := (Atom.interp t_i t_func t_atom).
 
    Lemma get_eq_interp :
      forall (l:_lit) (f:Atom.hatom -> Atom.hatom -> C.t),

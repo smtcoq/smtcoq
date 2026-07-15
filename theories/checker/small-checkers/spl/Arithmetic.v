@@ -28,7 +28,7 @@ Section Arith.
   Variable t_form : PArray.array Form.form.
   Variable t_atom : PArray.array Atom.atom.
 
-  Local Abbreviation build_clause := (LIA.build_clause t_form t_atom).
+  Local Notation build_clause := (LIA.build_clause t_form t_atom).
 
 
   Definition check_spl_arith orig res l :=
@@ -53,11 +53,11 @@ Section Arith.
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Abbreviation interp_form_hatom :=
+    Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
-    Local Abbreviation interp_form_hatom_bv :=
+    Local Notation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
-    Local Abbreviation rho :=
+    Local Notation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
 

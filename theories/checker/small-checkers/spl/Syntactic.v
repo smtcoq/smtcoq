@@ -32,7 +32,7 @@ Section CheckAtom.
   Variable t_func : PArray.array (tval t_i).
   Variable t_atom : PArray.array atom.
 
-  Local Abbreviation get_atom := (PArray.get t_atom).
+  Local Notation get_atom := (PArray.get t_atom).
 
   Section AUX.
 
@@ -306,7 +306,7 @@ Section FLATTEN.
 
   Variable t_form : PArray.array form.
 
-  Local Abbreviation get_form := (PArray.get t_form).
+  Local Notation get_form := (PArray.get t_form).
 
   Definition remove_not l :=
     match get_form (Lit.blit l) with
@@ -411,8 +411,8 @@ Section FLATTEN.
   Hypothesis check_neg_atom_correct :
     forall a1 a2, check_neg_atom a1 a2 -> interp_atom a1 = negb (interp_atom a2).
 
-  Local Abbreviation interp_var := (interp_state_var interp_atom interp_bvatom t_form).
-  Local Abbreviation interp_lit := (Lit.interp interp_var).
+  Local Notation interp_var := (interp_state_var interp_atom interp_bvatom t_form).
+  Local Notation interp_lit := (Lit.interp interp_var).
 
   Lemma interp_Fnot2 : forall i l, interp interp_atom interp_bvatom t_form (Fnot2 i l) = interp_lit l.
   Proof.
