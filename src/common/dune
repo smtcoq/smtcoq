@@ -6,3 +6,8 @@
 (ocamllex sExprLexer)
 
 (ocamlyacc sExprParser)
+
+(rule
+ (targets rocqVersionCompat.ml)
+ (action
+  (copy rocqVersionCompat-%{rocq:version.major}.%{rocq:version.minor}.ml rocqVersionCompat.ml)))
