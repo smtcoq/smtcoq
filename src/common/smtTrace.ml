@@ -91,7 +91,7 @@ let has_prev c =
 let prev c =
   match c.prev with
   | Some c1 -> c1
-  | None -> CoqInterface.raise_anomaly "prev %i\n" c.id
+  | None -> RocqInterface.raise_anomaly "prev %i\n" c.id
 
 let link c1 c2 =
   c1.next <- Some c2;
@@ -112,7 +112,7 @@ let insert_before c cprev =
 let get_res c s =
   match c.kind with
   | Res res -> res
-  | _ -> CoqInterface.raise_anomaly "get_res %s\n" s
+  | _ -> RocqInterface.raise_anomaly "get_res %s\n" s
 
 let get_other c s =
   match c.kind with
@@ -416,12 +416,12 @@ let to_coq to_lit interp (cstep,
           mklApp cEqCgrP [|out_c c; out_f f1; out_f f2; res|]
 	| LiaMicromega (cl,d) ->
           let cl' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force cint; out_f f; l|]) cl (mklApp cnil [|Lazy.force cint|]) in
-          let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqTerms.micromega_coq_proofTerm; CoqInterface.micromega_dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force CoqTerms.micromega_coq_proofTerm|]) in
+          let c' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqTerms.micromega_coq_proofTerm; RocqInterface.micromega_dump_proof_term f; l|]) d (mklApp cnil [|Lazy.force CoqTerms.micromega_coq_proofTerm|]) in
           mklApp cLiaMicromega [|out_c c; cl'; c'|]
         | LiaDiseq l -> mklApp cLiaDiseq [|out_c c; out_f l|]
         | SplArith (orig,res,l) ->
           let res' = out_f res in
-          let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqTerms.micromega_coq_proofTerm; CoqInterface.micromega_dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force CoqTerms.micromega_coq_proofTerm|]) in
+          let l' = List.fold_right (fun f l -> mklApp ccons [|Lazy.force CoqTerms.micromega_coq_proofTerm; RocqInterface.micromega_dump_proof_term f; l|]) l (mklApp cnil [|Lazy.force CoqTerms.micromega_coq_proofTerm|]) in
           mklApp cSplArith [|out_c c; out_c orig; res'; l'|]
 	| SplDistinctElim (c',f) -> mklApp cSplDistinctElim [|out_c c;out_c c'; out_f f|]
         | BBVar res -> mklApp cBBVar [|out_c c; out_f res|]
@@ -465,10 +465,10 @@ let to_coq to_lit interp (cstep,
         | Ext (res) -> mklApp cExt [|out_c c; out_f res|]
         | Hole (prem_id, concl) ->
            let prem = List.map (fun cl -> match cl.value with Some l -> l | None -> assert false) prem_id in
-           let ass_name = CoqInterface.mkId ("ass"^(string_of_int (Hashtbl.hash concl))) in
+           let ass_name = RocqInterface.mkId ("ass"^(string_of_int (Hashtbl.hash concl))) in
            let ass_ty = interp (prem, concl) in
            cuts := (ass_name, ass_ty)::!cuts;
-           let ass_var = CoqInterface.mkVar ass_name in
+           let ass_var = RocqInterface.mkVar ass_name in
            let prem_id' = List.fold_right (fun c l -> mklApp ccons [|Lazy.force cint; out_c c; l|]) prem_id (mklApp cnil [|Lazy.force cint|]) in
            let prem' = List.fold_right (fun cl l -> mklApp ccons [|Lazy.force cState_C_t; out_cl cl; l|]) prem (mklApp cnil [|Lazy.force cState_C_t|]) in
            let concl' = out_cl concl in
@@ -478,9 +478,9 @@ let to_coq to_lit interp (cstep,
              | Some find -> find cl
              | None -> assert false in
            let concl' = out_cl [concl] in
-           let app_name = CoqInterface.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
-           let app_var = CoqInterface.mkVar app_name in
-           let app_ty = CoqInterface.mkArrow clemma (interp ([], [concl])) in
+           let app_name = RocqInterface.mkId ("app" ^ (string_of_int (Hashtbl.hash concl))) in
+           let app_var = RocqInterface.mkVar app_name in
+           let app_ty = RocqInterface.mkArrow clemma (interp ([], [concl])) in
            cuts := (app_name, app_ty)::!cuts;
            mklApp cForallInst [|out_c c; clemma; cplemma; concl'; app_var|]
 	end
@@ -494,7 +494,7 @@ let to_coq to_lit interp (cstep,
   let last_root = !r in
   (* Be careful, step_to_coq makes a side effect on cuts so it needs to be called first *)
   let res =
-    CoqInterface.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r
+    RocqInterface.mkTrace step_to_coq next carray clist cnil ccons cpair !nc step def_step r
   in
   (res, last_root, !cuts)
 

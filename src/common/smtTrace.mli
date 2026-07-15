@@ -48,26 +48,26 @@ val alloc : 'a SmtCertif.clause -> int
 val naive_alloc : 'a SmtCertif.clause -> int
 val build_certif : 'a SmtCertif.clause -> 'b SmtCertif.clause -> int
 val to_coq :
-  ('a -> CoqInterface.constr) ->
-  ('a list list * 'a list -> CoqInterface.types) ->
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t *
-  CoqInterface.constr Lazy.t * CoqInterface.constr Lazy.t ->
+  ('a -> RocqInterface.constr) ->
+  ('a list list * 'a list -> RocqInterface.types) ->
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t *
+  RocqInterface.constr Lazy.t * RocqInterface.constr Lazy.t ->
   'a SmtCertif.clause ->
-  ('a SmtCertif.clause -> CoqInterface.types * CoqInterface.constr) option ->
-  CoqInterface.constr * 'a SmtCertif.clause *
-    (CoqInterface.id * CoqInterface.types) list
+  ('a SmtCertif.clause -> RocqInterface.types * RocqInterface.constr) option ->
+  RocqInterface.constr * 'a SmtCertif.clause *
+    (RocqInterface.id * RocqInterface.types) list
 
 
 module MakeOpt :

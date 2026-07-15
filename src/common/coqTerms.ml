@@ -13,7 +13,7 @@
 open SmtMisc
 
 
-type coqTerm = CoqInterface.constr lazy_t
+type coqTerm = RocqInterface.constr lazy_t
 
 let gc prefix constant =
   lazy (UnivGen.constr_of_monomorphic_global (Global.env ()) (Rocqlib.lib_ref (prefix ^ "." ^ constant)))
@@ -404,8 +404,8 @@ let ceq_refl_true =
 let eq_refl_true () = Lazy.force ceq_refl_true
 
 let vm_cast_true_no_check t =
-  CoqInterface.mkCast(eq_refl_true (),
-              CoqInterface.vmcast,
+  RocqInterface.mkCast(eq_refl_true (),
+              RocqInterface.vmcast,
               mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
 
 (* This version checks convertibility right away instead of delaying it at
@@ -413,14 +413,14 @@ let vm_cast_true_no_check t =
    SMTCoq's tactics. *)
 let vm_cast_true env t =
   match
-    CoqInterface.vm_conv CUMUL env
+    RocqInterface.vm_conv CUMUL env
       (mklApp ceq
          [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
       (mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
   with
   | Result.Ok () -> vm_cast_true_no_check t
   | Result.Error () ->
-    CoqInterface.raise_error "SMTCoq was not able to check the proof certificate."
+    RocqInterface.raise_error "SMTCoq was not able to check the proof certificate."
 
 (* Compute a nat *)
 let rec mkNat = function
@@ -466,39 +466,39 @@ let mkArray : Constr.types * Constr.t array -> Constr.t =
 
 (* Reification *)
 let mk_bool b =
-  let c, args = CoqInterface.decompose_app_list b in
-  if CoqInterface.eq_constr c (Lazy.force ctrue) then true
-  else if CoqInterface.eq_constr c (Lazy.force cfalse) then false
+  let c, args = RocqInterface.decompose_app_list b in
+  if RocqInterface.eq_constr c (Lazy.force ctrue) then true
+  else if RocqInterface.eq_constr c (Lazy.force cfalse) then false
   else assert false
 
 let rec mk_bool_list bs =
-  let c, args = CoqInterface.decompose_app_list bs in
-  if CoqInterface.eq_constr c (Lazy.force cnil) then []
-  else if CoqInterface.eq_constr c (Lazy.force ccons) then
+  let c, args = RocqInterface.decompose_app_list bs in
+  if RocqInterface.eq_constr c (Lazy.force cnil) then []
+  else if RocqInterface.eq_constr c (Lazy.force ccons) then
     match args with
     | [_; b; bs] -> mk_bool b :: mk_bool_list bs
     | _ -> assert false
   else assert false
 
 let rec mk_nat n =
-  let c, args = CoqInterface.decompose_app_list n in
-  if CoqInterface.eq_constr c (Lazy.force cO) then
+  let c, args = RocqInterface.decompose_app_list n in
+  if RocqInterface.eq_constr c (Lazy.force cO) then
     0
-  else if CoqInterface.eq_constr c (Lazy.force cS) then
+  else if RocqInterface.eq_constr c (Lazy.force cS) then
     match args with
     | [n] -> (mk_nat n) + 1
     | _ -> assert false
   else assert false
 
 let rec mk_positive n =
-  let c, args = CoqInterface.decompose_app_list n in
-  if CoqInterface.eq_constr c (Lazy.force cxH) then
+  let c, args = RocqInterface.decompose_app_list n in
+  if RocqInterface.eq_constr c (Lazy.force cxH) then
     1
-  else if CoqInterface.eq_constr c (Lazy.force cxO) then
+  else if RocqInterface.eq_constr c (Lazy.force cxO) then
     match args with
     | [n] -> 2 * (mk_positive n)
     | _ -> assert false
-  else if CoqInterface.eq_constr c (Lazy.force cxI) then
+  else if RocqInterface.eq_constr c (Lazy.force cxI) then
     match args with
     | [n] -> 2 * (mk_positive n) + 1
     | _ -> assert false
@@ -506,10 +506,10 @@ let rec mk_positive n =
 
 
 let mk_N n =
-  let c, args = CoqInterface.decompose_app_list n in
-  if CoqInterface.eq_constr c (Lazy.force cN0) then
+  let c, args = RocqInterface.decompose_app_list n in
+  if RocqInterface.eq_constr c (Lazy.force cN0) then
     0
-  else if CoqInterface.eq_constr c (Lazy.force cNpos) then
+  else if RocqInterface.eq_constr c (Lazy.force cNpos) then
     match args with
     | [n] -> mk_positive n
     | _ -> assert false
@@ -517,13 +517,13 @@ let mk_N n =
 
 
 let mk_Z n =
-  let c, args = CoqInterface.decompose_app_list n in
-  if CoqInterface.eq_constr c (Lazy.force cZ0) then 0
-  else if CoqInterface.eq_constr c (Lazy.force cZpos) then
+  let c, args = RocqInterface.decompose_app_list n in
+  if RocqInterface.eq_constr c (Lazy.force cZ0) then 0
+  else if RocqInterface.eq_constr c (Lazy.force cZpos) then
     match args with
     | [n] -> mk_positive n
     | _ -> assert false
-  else if CoqInterface.eq_constr c (Lazy.force cZneg) then
+  else if RocqInterface.eq_constr c (Lazy.force cZneg) then
     match args with
     | [n] -> - mk_positive n
     | _ -> assert false
@@ -532,12 +532,12 @@ let mk_Z n =
 
 (* size of bivectors are either N.of_nat (length l) or an N *)
 let mk_bvsize n =
-  let c, args = CoqInterface.decompose_app_list n in
-  if CoqInterface.eq_constr c (Lazy.force cof_nat) then
+  let c, args = RocqInterface.decompose_app_list n in
+  if RocqInterface.eq_constr c (Lazy.force cof_nat) then
     match args with
     | [nl] ->
-      let c, args = CoqInterface.decompose_app_list nl in
-      if CoqInterface.eq_constr c (Lazy.force clength) then
+      let c, args = RocqInterface.decompose_app_list nl in
+      if RocqInterface.eq_constr c (Lazy.force clength) then
         match args with
         | [_; l] -> List.length (mk_bool_list l)
         | _ -> assert false
@@ -548,7 +548,7 @@ let mk_bvsize n =
 (** Switches between constr and OCaml *)
 (* Transform a option constr into a constr option *)
 let option_of_constr_option co =
-  let c, args = CoqInterface.decompose_app_list co in
+  let c, args = RocqInterface.decompose_app_list co in
   if c = Lazy.force cSome then
     match args with
       | [_;c] -> Some c
@@ -559,7 +559,7 @@ let option_of_constr_option co =
 (* Transform a tuple of constr into a (reversed) list of constr *)
 let list_of_constr_tuple =
   let rec list_of_constr_tuple acc t =
-    let c, args = CoqInterface.decompose_app_list t in
+    let c, args = RocqInterface.decompose_app_list t in
     if c = Lazy.force cpair then
       match args with
         | [_;_;t1;t2] ->

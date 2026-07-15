@@ -76,14 +76,14 @@ module Op :
 
     val create : unit -> reify_tbl
 
-    val declare : reify_tbl -> CoqInterface.constr -> btype array ->
+    val declare : reify_tbl -> RocqInterface.constr -> btype array ->
                   btype -> string option -> indexed_op
 
-    val of_coq : reify_tbl -> CoqInterface.constr -> indexed_op
+    val of_coq : reify_tbl -> RocqInterface.constr -> indexed_op
 
-    val interp_tbl : CoqInterface.constr ->
-      (btype array -> btype -> CoqInterface.constr -> CoqInterface.constr) ->
-      reify_tbl -> CoqInterface.constr
+    val interp_tbl : RocqInterface.constr ->
+      (btype array -> btype -> RocqInterface.constr -> RocqInterface.constr) ->
+      reify_tbl -> RocqInterface.constr
 
     val to_list : reify_tbl -> (int * (btype array) * btype * indexed_op) list
 
@@ -142,18 +142,18 @@ module Atom :
       (** Given a coq term, build the corresponding atom *)
       exception UnknownUnderForall
       val of_coq : ?eqsym:bool -> SmtBtype.reify_tbl -> Op.reify_tbl ->
-        reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> CoqInterface.constr -> t
+        reify_tbl -> SmtMisc.logic -> Environ.env -> Evd.evar_map -> RocqInterface.constr -> t
 
-      val get_coq_term_op : int -> CoqInterface.constr
+      val get_coq_term_op : int -> RocqInterface.constr
 
-      val to_coq : t -> CoqInterface.constr
+      val to_coq : t -> RocqInterface.constr
 
       val to_array : reify_tbl -> 'a -> (atom -> 'a) -> 'a array
 
-      val interp_tbl : reify_tbl -> CoqInterface.constr
+      val interp_tbl : reify_tbl -> RocqInterface.constr
 
-      val interp_to_coq : CoqInterface.constr -> (int, CoqInterface.constr) Hashtbl.t ->
-	t -> CoqInterface.constr
+      val interp_to_coq : RocqInterface.constr -> (int, RocqInterface.constr) Hashtbl.t ->
+	t -> RocqInterface.constr
 
       val logic : t -> SmtMisc.logic
 
@@ -201,5 +201,5 @@ module Trace : sig
 end
 
 
-val make_t_i : SmtBtype.reify_tbl -> CoqInterface.constr
-val make_t_func : Op.reify_tbl -> CoqInterface.constr -> CoqInterface.constr
+val make_t_i : SmtBtype.reify_tbl -> RocqInterface.constr
+val make_t_func : Op.reify_tbl -> RocqInterface.constr -> RocqInterface.constr

@@ -110,7 +110,7 @@ let parse_VAR_CONF reloc lb last =
       let yd =
         try Hashtbl.find vartbl (Var y)
         with Not_found ->
-          CoqInterface.raise_anomaly "Var %i not found.\n" y
+          RocqInterface.raise_anomaly "Var %i not found.\n" y
       in
       match yd.vclause with
       | Some cy -> cy :: build_res0 l
@@ -124,7 +124,7 @@ let parse_VAR_CONF reloc lb last =
         let yd =
           try Hashtbl.find vartbl (Var y)
           with Not_found ->
-            CoqInterface.raise_anomaly "Var %i not found.\n" y in
+            RocqInterface.raise_anomaly "Var %i not found.\n" y in
         match yd.vclause with
         | Some cy -> cy :: build_res1 x l
         | _ -> assert false in

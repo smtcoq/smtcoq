@@ -96,11 +96,11 @@ type 'hform rule =
     *)
 
   (* Linear arithmetic *)
-  | LiaMicromega of 'hform list * CoqInterface.Micromega_plugin_Certificate.Mc.zArithProof list
+  | LiaMicromega of 'hform list * RocqInterface.Micromega_plugin_Certificate.Mc.zArithProof list
   | LiaDiseq of 'hform
 
   (* Arithmetic simplifications *)
-  | SplArith of 'hform clause * 'hform * CoqInterface.Micromega_plugin_Certificate.Mc.zArithProof list
+  | SplArith of 'hform clause * 'hform * RocqInterface.Micromega_plugin_Certificate.Mc.zArithProof list
 
   (* Elimination of operators *)
   | SplDistinctElim of 'hform clause * 'hform

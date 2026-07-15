@@ -13,14 +13,14 @@
 open Common
 
 val parse_certif :
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id -> CoqInterface.id -> string -> string -> unit
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id -> RocqInterface.id -> string -> string -> unit
 val checker_debug : string -> string -> 'a
-val theorem : CoqInterface.id -> string -> string -> unit
+val theorem : RocqInterface.id -> string -> string -> unit
 val checker : string -> string -> unit
 val call_cvc4_file :
   int ->
@@ -31,9 +31,9 @@ val call_cvc4_file :
   'b ->
   SmtAtom.Form.t SmtCertif.clause * SmtAtom.Form.t ->
   int * SmtAtom.Form.t SmtCertif.clause
-val tactic : unit -> CoqInterface.tactic
-val tactic_no_check : unit -> CoqInterface.tactic
-val tactic_abduct : int -> EConstr.t -> CoqInterface.constr_expr list -> CoqInterface.tactic
+val tactic : unit -> RocqInterface.tactic
+val tactic_no_check : unit -> RocqInterface.tactic
+val tactic_abduct : int -> EConstr.t -> RocqVersionCompat.constr_expr list -> RocqInterface.tactic
 
 module Ast : module type of Ast
 module Converter : module type of Converter

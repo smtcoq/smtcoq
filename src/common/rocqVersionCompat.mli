@@ -9,12 +9,20 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let raise_debug_file_contents filename =
-  try
-    let ic = open_in filename in
-    (try
-       while true do
-         RocqInterface.raise_debug "%s" (input_line ic)
-       done
-     with End_of_file -> close_in ic)
-  with Sys_error _ -> ()
+
+type constr_expr = Constrexpr.constr_expr
+val ppconstr_modular_constr_pr :
+  ((unit -> Pp.t) ->
+   int option ->
+   Constrexpr.entry_relative_level -> constr_expr -> Pp.t) ->
+  (unit -> Pp.t) ->
+  int option ->
+  Constrexpr.entry_relative_level -> constr_expr -> Pp.t
+val constrextern_extern_constr :
+  ?inctx:bool ->
+  ?scope:Notation_term.scope_name ->
+  Environ.env -> Evd.evar_map -> EConstr.constr -> constr_expr
+
+val evd_univ_entry : Evd.evar_map -> UState.named_universes_entry
+
+val empty_named_universes_entry : UState.named_universes_entry
