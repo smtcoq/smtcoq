@@ -1,4 +1,4 @@
-name: Build Trakt against specific versions
+name: Build SMTCoq against specific versions
 
 on:
   push:
