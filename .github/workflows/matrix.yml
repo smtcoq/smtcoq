@@ -13,18 +13,15 @@ concurrency:
 jobs:
   matrix:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write # Allow to purge the cache
-
     steps:
       - uses: actions/checkout@v7
       - uses: nixbuild/nix-quick-install-action@v35
 
-      - uses: nix-community/cache-nix-action@v7
+      - uses: ryanccn/attic-action@v0
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/flake.lock', '**/*.nix') }}
-          gc-max-store-size: 10G
-          purge: true
+          cache: smtcoq
+          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          token: ${{ secrets.ATTIC_TOKEN }}
 
       - name: Build the current version in nixpkgs
         run: nix build .#smtcoq --print-build-logs
