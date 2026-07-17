@@ -16,6 +16,7 @@ benchmark:
 
 clean:
 	dune clean
+	find . -name "_RocqProject" -delete
 	rm -f rocq-smtcoq.install
 
 .PHONY: all install test example benchmark clean
