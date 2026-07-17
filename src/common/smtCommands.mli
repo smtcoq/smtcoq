@@ -12,13 +12,13 @@
 exception DoNothing
 
 val parse_certif :
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
-  CoqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
+  RocqInterface.id ->
   SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl *
   SmtAtom.Atom.reify_tbl * SmtAtom.Form.reify *
   SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
@@ -30,7 +30,7 @@ val checker_debug :
   SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause -> 'a
 
 val theorem :
-  CoqInterface.id ->
+  RocqInterface.id ->
   SmtBtype.reify_tbl * SmtAtom.Op.reify_tbl *
   SmtAtom.Atom.reify_tbl * SmtAtom.Form.reify *
   SmtAtom.Form.t list * int * SmtAtom.Form.t SmtCertif.clause ->
@@ -57,9 +57,9 @@ val tactic :
   SmtAtom.Form.reify ->
   SmtAtom.Atom.reify_tbl ->
   SmtAtom.Form.reify ->
-  (Environ.env -> CoqInterface.constr -> CoqInterface.constr) ->
-  CoqInterface.constr list ->
-  CoqInterface.constr_expr list -> CoqInterface.tactic
+  (Environ.env -> RocqInterface.constr -> RocqInterface.constr) ->
+  RocqInterface.constr list ->
+  RocqVersionCompat.constr_expr list -> RocqInterface.tactic
 
 val model_string : Environ.env -> SmtBtype.reify_tbl -> 'a -> 'b -> 'c -> SExpr.t -> string
 

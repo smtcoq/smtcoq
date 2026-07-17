@@ -9,12 +9,13 @@
 (*                                                                        *)
 (**************************************************************************)
 
-let raise_debug_file_contents filename =
-  try
-    let ic = open_in filename in
-    (try
-       while true do
-         RocqInterface.raise_debug "%s" (input_line ic)
-       done
-     with End_of_file -> close_in ic)
-  with Sys_error _ -> ()
+
+type constr_expr = Constrexpr.constr_expr
+let ppconstr_modular_constr_pr = Ppconstr.modular_constr_pr ~flags:(Ppconstr.current_flags())
+let constrextern_extern_constr = Constrextern.extern_constr ~flags:(PrintingFlags.current())
+
+let evd_univ_entry evd = Evd.univ_entry ~poly:PolyFlags.default evd
+
+(* TODO: when switching to econstr, may have universe constraints *)
+let empty_named_universes_entry =
+  UState.univ_entry ~poly:PolyFlags.default UState.empty

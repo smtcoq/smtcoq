@@ -27,8 +27,8 @@ Hint Variables Opaque : smtcoq_core.
 #[export] Hint Unfold is_true : smtcoq_core.
 
 
-(* Remark: we use Abbreviation instead of Definition du eliminate conversion check during the type checking *)
-Abbreviation atom := int (only parsing).
+(* Remark: we use Notation instead of Definition du eliminate conversion check during the type checking *)
+Notation atom := int (only parsing).
 
 Module Form.
 

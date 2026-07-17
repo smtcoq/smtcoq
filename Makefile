@@ -1,20 +1,22 @@
 all:
-	dune build theories/SMTCoq.vo
+	dune build theories
 
 install:
 	dune build -p rocq-smtcoq
 	dune install rocq-smtcoq
 
 test:
-	cd unit-tests && dune build
+	dune build unit-tests
 
 example:
-	cd examples && dune build
+	dune build examples
+
+benchmark:
+	dune build benchmarks
 
 clean:
 	dune clean
 	rm -f rocq-smtcoq.install
-	find . -name _RocqProject -delete
 
-.PHONY: all install test example clean
+.PHONY: all install test example benchmark clean
 .NOTPARALLEL:

@@ -10,12 +10,12 @@
 (**************************************************************************)
 
 
-val cInt_tbl : (int, CoqInterface.constr) Hashtbl.t
-val mkInt : int -> CoqInterface.constr
+val cInt_tbl : (int, RocqInterface.constr) Hashtbl.t
+val mkInt : int -> RocqInterface.constr
 type 'a gen_hashed = { index : int; mutable hval : 'a; }
-val mklApp : CoqInterface.constr Lazy.t -> CoqInterface.constr array -> CoqInterface.constr
-val string_of_name_def : string -> CoqInterface.name -> string
-val string_coq_constr : CoqInterface.constr -> string
+val mklApp : RocqInterface.constr Lazy.t -> RocqInterface.constr array -> RocqInterface.constr
+val string_of_name_def : string -> RocqInterface.name -> string
+val string_coq_constr : RocqInterface.constr -> string
 type logic_item = LUF | LLia | LBitvectors | LArrays
 module SL : Set.S with type elt = logic_item
 type logic = SL.t
@@ -36,7 +36,7 @@ val main_failure : Lexing.lexbuf -> string -> 'a
 module ConstrHashtbl : sig
   type 'a t
   val create : int -> 'a t
-  val add : 'a t -> CoqInterface.constr -> 'a -> unit
-  val find : 'a t -> CoqInterface.constr -> 'a
+  val add : 'a t -> RocqInterface.constr -> 'a -> unit
+  val find : 'a t -> RocqInterface.constr -> 'a
   val clear : 'a t -> unit
 end

@@ -309,11 +309,11 @@ let mp_isneg x =
   (* eprintf "mp_isneg %a .@." print_term x; *)
   match value x with
   | Int n -> Big_int.sign_big_int n < 0
-  | _ -> CoqInterface.raise_anomaly "mp_isneg"
+  | _ -> RocqInterface.raise_anomaly "mp_isneg"
 
 let mp_iszero x = match value x with
   | Int n -> Big_int.sign_big_int n = 0
-  | _ -> CoqInterface.raise_anomaly "mp_iszero"
+  | _ -> RocqInterface.raise_anomaly "mp_iszero"
 
 
 let uminus = declare_get "~" (pi "a" mpz mpz)
@@ -662,7 +662,7 @@ let rec append c1 c2 =
   | Const _ when term_equal c1 cln -> c2
   | App (f, [l; c1']) when term_equal f clc_s ->
     clc l (append c1' c2)
-  | _ -> CoqInterface.raise_anomaly "Match failure"
+  | _ -> RocqInterface.raise_anomaly "Match failure"
 
 
 

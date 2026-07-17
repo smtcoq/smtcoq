@@ -108,38 +108,38 @@ let interp_conseq_uf t_i (prem, concl) =
   let tf = Hashtbl.create 17 in
   let rec interp = function
     | [] -> mklApp cis_true [|interp_uf t_i ta tf concl|]
-    | c::prem -> CoqInterface.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
+    | c::prem -> RocqInterface.mkArrow (mklApp cis_true [|interp_uf t_i ta tf c|]) (interp prem) in
   interp prem
 
 
 let print_assm =
-  CoqInterface.raise_warning ~name:"SMTCoq-assuming-hypothesis"
+  RocqInterface.raise_warning ~name:"SMTCoq-assuming-hypothesis"
     Pp.(fun ty -> str "Assuming the following hypothesis:" ++ spc() ++ str (string_coq_constr ty))
 
 
 let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, roots, max_id, confl) =
 
   let t_i' = make_t_i rt in
-  let ce5 = CoqInterface.mkUConst t_i' in
-  let ct_i = CoqInterface.mkConst (CoqInterface.declare_constant t_i ce5) in
+  let ce5 = RocqInterface.mkUConst t_i' in
+  let ct_i = RocqInterface.mkConst (RocqInterface.declare_constant t_i ce5) in
 
   let t_func' = make_t_func ro ct_i in
-  let ce6 = CoqInterface.mkUConst t_func' in
-  let ct_func = CoqInterface.mkConst (CoqInterface.declare_constant t_func ce6) in
+  let ce6 = RocqInterface.mkUConst t_func' in
+  let ct_func = RocqInterface.mkConst (RocqInterface.declare_constant t_func ce6) in
 
   let t_atom' = Atom.interp_tbl ra in
-  let ce1 = CoqInterface.mkUConst t_atom' in
-  let ct_atom = CoqInterface.mkConst (CoqInterface.declare_constant t_atom ce1) in
+  let ce1 = RocqInterface.mkUConst t_atom' in
+  let ct_atom = RocqInterface.mkConst (RocqInterface.declare_constant t_atom ce1) in
 
   let t_form' = snd (Form.interp_tbl rf) in
-  let ce2 = CoqInterface.mkUConst t_form' in
-  let ct_form = CoqInterface.mkConst (CoqInterface.declare_constant t_form ce2) in
+  let ce2 = RocqInterface.mkUConst t_form' in
+  let ct_form = RocqInterface.mkConst (RocqInterface.declare_constant t_form ce2) in
 
   (* EMPTY LEMMA LIST *)
   let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
       (interp_conseq_uf ct_i) (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl None in
   List.iter (fun (v,ty) ->
-    let _ = CoqInterface.declare_new_variable v ty in
+    let _ = RocqInterface.declare_new_variable v ty in
     print_assm ty
   ) cuts;
 
@@ -155,15 +155,15 @@ let parse_certif t_i t_func t_atom t_form root used_root trace (rt, ro, ra, rf, 
     let i = ref (l-1) in
     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
     mklApp cSome [|mklApp carray [|Lazy.force cint|]; CoqTerms.mkArray (Lazy.force cint, res)|] in
-  let ce3 = CoqInterface.mkUConst roots in
-  let _ = CoqInterface.declare_constant root ce3 in
-  let ce3' = CoqInterface.mkUConst used_roots in
-  let _ = CoqInterface.declare_constant used_root ce3' in
+  let ce3 = RocqInterface.mkUConst roots in
+  let _ = RocqInterface.declare_constant root ce3 in
+  let ce3' = RocqInterface.mkUConst used_roots in
+  let _ = RocqInterface.declare_constant used_root ce3' in
 
   let certif =
     mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
-  let ce4 = CoqInterface.mkUConst certif in
-  let _ = CoqInterface.declare_constant trace ce4 in
+  let ce4 = RocqInterface.mkUConst certif in
+  let _ = RocqInterface.declare_constant trace ce4 in
 
   ()
 
@@ -177,15 +177,15 @@ let interp_roots t_i roots =
     | f::roots -> List.fold_left (fun acc f -> mklApp candb [|acc; interp f|]) (interp f) roots
 
 let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
-  let nti = CoqInterface.mkName "t_i" in
-  let ntfunc = CoqInterface.mkName "t_func" in
-  let ntatom = CoqInterface.mkName "t_atom" in
-  let ntform = CoqInterface.mkName "t_form" in
-  let nc = CoqInterface.mkName "c" in
-  let nused_roots = CoqInterface.mkName "used_roots" in
-  let nd = CoqInterface.mkName "d" in
+  let nti = RocqInterface.mkName "t_i" in
+  let ntfunc = RocqInterface.mkName "t_func" in
+  let ntatom = RocqInterface.mkName "t_atom" in
+  let ntform = RocqInterface.mkName "t_form" in
+  let nc = RocqInterface.mkName "c" in
+  let nused_roots = RocqInterface.mkName "used_roots" in
+  let nd = RocqInterface.mkName "d" in
 
-  let v = CoqInterface.mkRel in
+  let v = RocqInterface.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = make_t_func ro (v 1 (*t_i*)) in
@@ -197,7 +197,7 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
       (interp_conseq_uf t_i)
       (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl None in
   List.iter (fun (v,ty) ->
-    let _ = CoqInterface.declare_new_variable v ty in
+    let _ = RocqInterface.declare_new_variable v ty in
     print_assm ty
   ) cuts;
 
@@ -219,50 +219,50 @@ let theorem name (rt, ro, ra, rf, roots, max_id, confl) =
 
   let theorem_concl = mklApp cnot [|mklApp cis_true [|interp_roots t_i roots|]|] in
   let theorem_proof_cast =
-    CoqInterface.mkCast (
-        CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-        CoqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-        CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-        CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-        CoqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-        CoqInterface.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-        CoqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+    RocqInterface.mkCast (
+        RocqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+        RocqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+        RocqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+        RocqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+        RocqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+        RocqInterface.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+        RocqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*);
 	         vm_cast_true_no_check
 	           (mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])|]))))))),
-        CoqInterface.vmcast,
+        RocqInterface.vmcast,
         theorem_concl)
   in
   let theorem_proof_nocast =
-        CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-        CoqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-        CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-        CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-        CoqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-        CoqInterface.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-        CoqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+        RocqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+        RocqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+        RocqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+        RocqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+        RocqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+        RocqInterface.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+        RocqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
         mklApp cchecker_correct
                [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|])))))))
   in
 
-  let ce = CoqInterface.mkTConst theorem_proof_cast theorem_proof_nocast theorem_concl in
-  let _ = CoqInterface.declare_constant name ce in
+  let ce = RocqInterface.mkTConst theorem_proof_cast theorem_proof_nocast theorem_concl in
+  let _ = RocqInterface.declare_constant name ce in
   ()
 
 
 (* Given an SMT-LIB2 file and a certif, call the checker *)
 
 let checker (rt, ro, ra, rf, roots, max_id, confl) =
-  let nti = CoqInterface.mkName "t_i" in
-  let ntfunc = CoqInterface.mkName "t_func" in
-  let ntatom = CoqInterface.mkName "t_atom" in
-  let ntform = CoqInterface.mkName "t_form" in
-  let nc = CoqInterface.mkName "c" in
-  let nused_roots = CoqInterface.mkName "used_roots" in
-  let nd = CoqInterface.mkName "d" in
+  let nti = RocqInterface.mkName "t_i" in
+  let ntfunc = RocqInterface.mkName "t_func" in
+  let ntatom = RocqInterface.mkName "t_atom" in
+  let ntform = RocqInterface.mkName "t_form" in
+  let nc = RocqInterface.mkName "c" in
+  let nused_roots = RocqInterface.mkName "used_roots" in
+  let nd = RocqInterface.mkName "d" in
 
-  let v = CoqInterface.mkRel in
+  let v = RocqInterface.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = make_t_func ro (v 1 (*t_i*)) in
@@ -274,7 +274,7 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
       (interp_conseq_uf t_i)
       (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*); v 2(*t_atom*); v 1(* t_form *)|])) confl None in
   List.iter (fun (v,ty) ->
-    let _ = CoqInterface.declare_new_variable v ty in
+    let _ = RocqInterface.declare_new_variable v ty in
     print_assm ty
   ) cuts;
 
@@ -295,18 +295,18 @@ let checker (rt, ro, ra, rf, roots, max_id, confl) =
     CoqTerms.mkArray (Lazy.force cint, res) in
 
   let tm =
-   CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-   CoqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-   CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-   CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-   CoqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
-   CoqInterface.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-   CoqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+   RocqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+   RocqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
+   RocqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   RocqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   RocqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
+   RocqInterface.mkLetIn (nused_roots, used_rootsCstr, mklApp coption [|mklApp carray [|Lazy.force cint|]|],
+   RocqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
    mklApp cchecker [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*); v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
 
-  let res = CoqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
-  if CoqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
-  else CoqInterface.raise_error "Certificate checking failure."
+  let res = RocqInterface.cbv_vm (Global.env ()) tm (Lazy.force CoqTerms.cbool) in
+  if RocqInterface.eq_constr res (Lazy.force CoqTerms.ctrue) then ()
+  else RocqInterface.raise_error "Certificate checking failure."
 
 let count_used confl =
   let cpt = ref 0 in
@@ -321,15 +321,15 @@ let count_used confl =
 
 
 let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
-  let nti = CoqInterface.mkName "t_i" in
-  let ntfunc = CoqInterface.mkName "t_func" in
-  let ntatom = CoqInterface.mkName "t_atom" in
-  let ntform = CoqInterface.mkName "t_form" in
-  let nc = CoqInterface.mkName "c" in
-  let nused_roots = CoqInterface.mkName "used_roots" in
-  let nd = CoqInterface.mkName "d" in
+  let nti = RocqInterface.mkName "t_i" in
+  let ntfunc = RocqInterface.mkName "t_func" in
+  let ntatom = RocqInterface.mkName "t_atom" in
+  let ntform = RocqInterface.mkName "t_form" in
+  let nc = RocqInterface.mkName "c" in
+  let nused_roots = RocqInterface.mkName "used_roots" in
+  let nd = RocqInterface.mkName "d" in
 
-  let v = CoqInterface.mkRel in
+  let v = RocqInterface.mkRel in
 
   let t_i = make_t_i rt in
   let t_func = make_t_func ro (v 1 (*t_i*)) in
@@ -341,7 +341,7 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
       (certif_ops (Some [|v 4(*t_i*); v 3(*t_func*);
                           v 2(*t_atom*); v 1(* t_form *)|])) confl None in
   List.iter (fun (v,ty) ->
-    let _ = CoqInterface.declare_new_variable v ty in
+    let _ = RocqInterface.declare_new_variable v ty in
     print_assm ty
   ) cuts;
 
@@ -364,76 +364,76 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
     CoqTerms.mkArray (Lazy.force cint, res) in
 
   let tm =
-   CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-   CoqInterface.mkLetIn (ntfunc, t_func,
+   RocqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+   RocqInterface.mkLetIn (ntfunc, t_func,
                  mklApp carray [|mklApp ctval [|v 1(* t_i *)|]|],
-   CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-   CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-   CoqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*);
+   RocqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+   RocqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+   RocqInterface.mkLetIn (nc, certif, mklApp ccertif [|v 4 (*t_i*); v 3 (*t_func*);
                                               v 2 (*t_atom*); v 1 (*t_form*)|],
-   CoqInterface.mkLetIn (nused_roots, used_rootsCstr,
+   RocqInterface.mkLetIn (nused_roots, used_rootsCstr,
                  mklApp coption [|mklApp carray [|Lazy.force cint|]|],
-   CoqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
+   RocqInterface.mkLetIn (nd, rootsCstr, mklApp carray [|Lazy.force cint|],
    mklApp cchecker_debug [|v 7 (*t_i*); v 6 (*t_func*); v 5 (*t_atom*);
        v 4 (*t_form*); v 1 (*d*); v 2 (*used_roots*); v 3 (*c*)|]))))))) in
 
-  let res = CoqInterface.cbv_vm (Global.env ()) tm
+  let res = RocqInterface.cbv_vm (Global.env ()) tm
       (mklApp coption
          [|mklApp cprod
              [|Lazy.force cnat; Lazy.force cname_step|]|]) in
 
-  match CoqInterface.decompose_app_list res with
-  | c, _ when CoqInterface.eq_constr c (Lazy.force cNone) ->
-    CoqInterface.raise_error
+  match RocqInterface.decompose_app_list res with
+  | c, _ when RocqInterface.eq_constr c (Lazy.force cNone) ->
+    RocqInterface.raise_error
       "Debug checker is only meant to be used for certificates that fail to be checked by SMTCoq."
-  | c, [_; n] when CoqInterface.eq_constr c (Lazy.force cSome) ->
-    (match CoqInterface.decompose_app_list n with
-     | c, [_; _; cnb; cn] when CoqInterface.eq_constr c (Lazy.force cpair) ->
-       let n = fst (CoqInterface.decompose_app_list cn) in
+  | c, [_; n] when RocqInterface.eq_constr c (Lazy.force cSome) ->
+    (match RocqInterface.decompose_app_list n with
+     | c, [_; _; cnb; cn] when RocqInterface.eq_constr c (Lazy.force cpair) ->
+       let n = fst (RocqInterface.decompose_app_list cn) in
        let name =
-         if CoqInterface.eq_constr n (Lazy.force cName_Res ) then "Res"
-         else if CoqInterface.eq_constr n (Lazy.force cName_Weaken) then "Weaken"
-         else if CoqInterface.eq_constr n (Lazy.force cName_ImmFlatten) then "ImmFlatten"
-         else if CoqInterface.eq_constr n (Lazy.force cName_CTrue) then "CTrue"
-         else if CoqInterface.eq_constr n (Lazy.force cName_CFalse ) then "CFalse"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BuildDef) then "BuildDef"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BuildDef2) then "BuildDef2"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BuildProj ) then "BuildProj"
-         else if CoqInterface.eq_constr n (Lazy.force cName_ImmBuildDef) then "ImmBuildDef"
-         else if CoqInterface.eq_constr n (Lazy.force cName_ImmBuildDef2) then "ImmBuildDef2"
-         else if CoqInterface.eq_constr n (Lazy.force cName_ImmBuildProj ) then "ImmBuildProj"
-         else if CoqInterface.eq_constr n (Lazy.force cName_EqTr ) then "EqTr"
-         else if CoqInterface.eq_constr n (Lazy.force cName_EqCgr ) then "EqCgr"
-         else if CoqInterface.eq_constr n (Lazy.force cName_EqCgrP) then "EqCgrP"
-         else if CoqInterface.eq_constr n (Lazy.force cName_LiaMicromega ) then "LiaMicromega"
-         else if CoqInterface.eq_constr n (Lazy.force cName_LiaDiseq) then "LiaDiseq"
-         else if CoqInterface.eq_constr n (Lazy.force cName_SplArith) then "SplArith"
-         else if CoqInterface.eq_constr n (Lazy.force cName_SplDistinctElim ) then "SplDistinctElim"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBVar) then "BBVar"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBConst) then "BBConst"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBOp) then "BBOp"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBNot) then "BBNot"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBNeg) then "BBNeg"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBAdd) then "BBAdd"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBConcat) then "BBConcat"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBMul) then "BBMul"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBUlt) then "BBUlt"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBSlt) then "BBSlt"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBEq) then "BBEq"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBDiseq) then "BBDiseq"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBExtract) then "BBExtract"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBZextend) then "BBZextend"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBSextend) then "BBSextend"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBShl) then "BBShl"
-         else if CoqInterface.eq_constr n (Lazy.force cName_BBShr) then "BBShr"
-         else if CoqInterface.eq_constr n (Lazy.force cName_RowEq) then "RowEq"
-         else if CoqInterface.eq_constr n (Lazy.force cName_RowNeq) then "RowNeq"
-         else if CoqInterface.eq_constr n (Lazy.force cName_Ext) then "Ext"
-         else if CoqInterface.eq_constr n (Lazy.force cName_Hole) then "Hole"
+         if RocqInterface.eq_constr n (Lazy.force cName_Res ) then "Res"
+         else if RocqInterface.eq_constr n (Lazy.force cName_Weaken) then "Weaken"
+         else if RocqInterface.eq_constr n (Lazy.force cName_ImmFlatten) then "ImmFlatten"
+         else if RocqInterface.eq_constr n (Lazy.force cName_CTrue) then "CTrue"
+         else if RocqInterface.eq_constr n (Lazy.force cName_CFalse ) then "CFalse"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BuildDef) then "BuildDef"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BuildDef2) then "BuildDef2"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BuildProj ) then "BuildProj"
+         else if RocqInterface.eq_constr n (Lazy.force cName_ImmBuildDef) then "ImmBuildDef"
+         else if RocqInterface.eq_constr n (Lazy.force cName_ImmBuildDef2) then "ImmBuildDef2"
+         else if RocqInterface.eq_constr n (Lazy.force cName_ImmBuildProj ) then "ImmBuildProj"
+         else if RocqInterface.eq_constr n (Lazy.force cName_EqTr ) then "EqTr"
+         else if RocqInterface.eq_constr n (Lazy.force cName_EqCgr ) then "EqCgr"
+         else if RocqInterface.eq_constr n (Lazy.force cName_EqCgrP) then "EqCgrP"
+         else if RocqInterface.eq_constr n (Lazy.force cName_LiaMicromega ) then "LiaMicromega"
+         else if RocqInterface.eq_constr n (Lazy.force cName_LiaDiseq) then "LiaDiseq"
+         else if RocqInterface.eq_constr n (Lazy.force cName_SplArith) then "SplArith"
+         else if RocqInterface.eq_constr n (Lazy.force cName_SplDistinctElim ) then "SplDistinctElim"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBVar) then "BBVar"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBConst) then "BBConst"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBOp) then "BBOp"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBNot) then "BBNot"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBNeg) then "BBNeg"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBAdd) then "BBAdd"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBConcat) then "BBConcat"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBMul) then "BBMul"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBUlt) then "BBUlt"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBSlt) then "BBSlt"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBEq) then "BBEq"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBDiseq) then "BBDiseq"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBExtract) then "BBExtract"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBZextend) then "BBZextend"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBSextend) then "BBSextend"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBShl) then "BBShl"
+         else if RocqInterface.eq_constr n (Lazy.force cName_BBShr) then "BBShr"
+         else if RocqInterface.eq_constr n (Lazy.force cName_RowEq) then "RowEq"
+         else if RocqInterface.eq_constr n (Lazy.force cName_RowNeq) then "RowNeq"
+         else if RocqInterface.eq_constr n (Lazy.force cName_Ext) then "Ext"
+         else if RocqInterface.eq_constr n (Lazy.force cName_Hole) then "Hole"
          else string_coq_constr n
        in
        let nb = mk_nat cnb + List.length roots + (confl.id + 1 - count_used confl) in
-       CoqInterface.raise_error "Step number %d (%s) of the certificate likely failed." nb name
+       RocqInterface.raise_error "Step number %d (%s) of the certificate likely failed." nb name
      | _ -> assert false
     )
   | _ -> assert false
@@ -441,9 +441,9 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 
 
 (* let rec of_coq_list cl =
- *   match CoqInterface.decompose_app_list cl with
- *   | c, _ when CoqInterface.eq_constr c (Lazy.force cnil) -> []
- *   | c, [_; x; cr] when CoqInterface.eq_constr c (Lazy.force ccons) ->
+ *   match RocqInterface.decompose_app_list cl with
+ *   | c, _ when RocqInterface.eq_constr c (Lazy.force cnil) -> []
+ *   | c, [_; x; cr] when RocqInterface.eq_constr c (Lazy.force ccons) ->
  *     x :: of_coq_list cr
  *   | _ -> assert false *)
 
@@ -452,29 +452,29 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *     (rt, ro, ra, rf, roots, max_id, confl) =
  * 
  *   let t_i' = make_t_i rt in
- *   let ce5 = CoqInterface.mkUConst t_i' in
- *   let ct_i = CoqInterface.mkConst (CoqInterface.declare_constant t_i ce5) in
+ *   let ce5 = RocqInterface.mkUConst t_i' in
+ *   let ct_i = RocqInterface.mkConst (RocqInterface.declare_constant t_i ce5) in
  * 
  *   let t_func' = make_t_func ro ct_i in
- *   let ce6 = CoqInterface.mkUConst t_func' in
+ *   let ce6 = RocqInterface.mkUConst t_func' in
  *   let ct_func =
- *     CoqInterface.mkConst (CoqInterface.declare_constant t_func ce6) in
+ *     RocqInterface.mkConst (RocqInterface.declare_constant t_func ce6) in
  * 
  *   let t_atom' = Atom.interp_tbl ra in
- *   let ce1 = CoqInterface.mkUConst t_atom' in
+ *   let ce1 = RocqInterface.mkUConst t_atom' in
  *   let ct_atom =
- *     CoqInterface.mkConst (CoqInterface.declare_constant t_atom ce1) in
+ *     RocqInterface.mkConst (RocqInterface.declare_constant t_atom ce1) in
  * 
  *   let t_form' = snd (Form.interp_tbl rf) in
- *   let ce2 = CoqInterface.mkUConst t_form' in
+ *   let ce2 = RocqInterface.mkUConst t_form' in
  *   let ct_form =
- *     CoqInterface.mkConst (CoqInterface.declare_constant t_form ce2) in
+ *     RocqInterface.mkConst (RocqInterface.declare_constant t_form ce2) in
  * 
  *   let (tres, last_root, cuts) = SmtTrace.to_coq (fun i -> mkInt (Form.to_lit i))
  *       (interp_conseq_uf ct_i)
  *       (certif_ops (Some [|ct_i; ct_func; ct_atom; ct_form|])) confl None in
  *   List.iter (fun (v,ty) ->
- *     let _ = CoqInterface.declare_new_variable v ty in
+ *     let _ = RocqInterface.declare_new_variable v ty in
  *     print_assm ty
  *   ) cuts;
  * 
@@ -491,29 +491,29 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *     List.iter (fun j -> res.(!i) <- mkInt j; decr i) used_roots;
  *     mklApp cSome [|mklApp carray [|Lazy.force cint|];
  *                    CoqTerms.mkArray (Lazy.force cint, res)|] in
- *   let ce3 = CoqInterface.mkUConst croots in
- *   let _ = CoqInterface.declare_constant root ce3 in
- *   let ce3' = CoqInterface.mkUConst cused_roots in
- *   let _ = CoqInterface.declare_constant used_root ce3' in
+ *   let ce3 = RocqInterface.mkUConst croots in
+ *   let _ = RocqInterface.declare_constant root ce3 in
+ *   let ce3' = RocqInterface.mkUConst cused_roots in
+ *   let _ = RocqInterface.declare_constant used_root ce3' in
  * 
  *   let certif =
  *     mklApp cCertif [|ct_i; ct_func; ct_atom; ct_form; mkInt (max_id + 1);
  *                      tres;mkInt (get_pos confl)|] in
- *   let ce4 = CoqInterface.mkUConst certif in
- *   let _ = CoqInterface.declare_constant trace ce4 in
+ *   let ce4 = RocqInterface.mkUConst certif in
+ *   let _ = RocqInterface.declare_constant trace ce4 in
  * 
  *   let setup =
  *    mklApp csetup_checker_step_debug
  *      [| ct_i; ct_func; ct_atom; ct_form; croots; cused_roots; certif |] in
  * 
- *   let setup = CoqInterface.cbv_vm (Global.env ()) setup
+ *   let setup = RocqInterface.cbv_vm (Global.env ()) setup
  *       (mklApp cprod
  *          [|Lazy.force cState_S_t;
  *            mklApp clist [|mklApp cstep
  *                             [|ct_i; ct_func; ct_atom; ct_form|]|]|]) in
  * 
- *   let s, steps = match CoqInterface.decompose_app_list setup with
- *     | c, [_; _; s; csteps] when CoqInterface.eq_constr c (Lazy.force cpair) ->
+ *   let s, steps = match RocqInterface.decompose_app_list setup with
+ *     | c, [_; _; s; csteps] when RocqInterface.eq_constr c (Lazy.force cpair) ->
  *       s, of_coq_list csteps
  *     | _ -> assert false
  *   in
@@ -527,22 +527,22 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
  *         [| ct_i; ct_func; ct_atom; ct_form; s; step |] in
  * 
  *     let res =
- *       CoqInterface.cbv_vm (Global.env ()) tm
+ *       RocqInterface.cbv_vm (Global.env ()) tm
  *           (mklApp cprod [|Lazy.force cState_S_t; Lazy.force cbool|]) in
  * 
- *     match CoqInterface.decompose_app_list res with
- *     | c, [_; _; s; cbad] when CoqInterface.eq_constr c (Lazy.force cpair) ->
+ *     match RocqInterface.decompose_app_list res with
+ *     | c, [_; _; s; cbad] when RocqInterface.eq_constr c (Lazy.force cpair) ->
  *       if not (mk_bool cbad) then s
- *       else CoqInterface.error ("Step number " ^ string_of_int !cpt ^
+ *       else RocqInterface.error ("Step number " ^ string_of_int !cpt ^
  *                              " (" ^ string_coq_constr
- *                                (fst (CoqInterface.decompose_app_list step)) ^ ")" ^
+ *                                (fst (RocqInterface.decompose_app_list step)) ^ ")" ^
  *                              " of the certificate likely failed." )
  *     | _ -> assert false
  *   in
  * 
  *   List.fold_left debug_step s steps |> ignore;
  * 
- *   CoqInterface.error ("Debug checker is only meant to be used for certificates \
+ *   RocqInterface.error ("Debug checker is only meant to be used for certificates \
  *                      that fail to be checked by SMTCoq.") *)
 
 
@@ -550,16 +550,16 @@ let checker_debug (rt, ro, ra, rf, roots, max_id, confl) =
 (* Tactic *)
 
 let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
-  let nti = CoqInterface.mkName "t_i" in
-  let ntfunc = CoqInterface.mkName "t_func" in
-  let ntatom = CoqInterface.mkName "t_atom" in
-  let ntform = CoqInterface.mkName "t_form" in
-  let nc = CoqInterface.mkName "c" in
+  let nti = RocqInterface.mkName "t_i" in
+  let ntfunc = RocqInterface.mkName "t_func" in
+  let ntatom = RocqInterface.mkName "t_atom" in
+  let ntform = RocqInterface.mkName "t_form" in
+  let nc = RocqInterface.mkName "c" in
 
-  let v = CoqInterface.mkRel in
+  let v = RocqInterface.mkRel in
 
   let t_i = make_t_i rt in
-  let t_func = CoqInterface.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
+  let t_func = RocqInterface.lift 1 (make_t_func ro (v 0 (*t_i - 1*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
   let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq
@@ -574,11 +574,11 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
         mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
   let add_lets t =
-    CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    CoqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
-    CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    CoqInterface.mkLetIn (nc, certif, mklApp ccertif
+    RocqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+    RocqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
+    RocqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    RocqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    RocqInterface.mkLetIn (nc, certif, mklApp ccertif
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
@@ -605,16 +605,16 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
 
 
 let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
-  let nti = CoqInterface.mkName "t_i" in
-  let ntfunc = CoqInterface.mkName "t_func" in
-  let ntatom = CoqInterface.mkName "t_atom" in
-  let ntform = CoqInterface.mkName "t_form" in
-  let nc = CoqInterface.mkName "c" in
+  let nti = RocqInterface.mkName "t_i" in
+  let ntfunc = RocqInterface.mkName "t_func" in
+  let ntatom = RocqInterface.mkName "t_atom" in
+  let ntform = RocqInterface.mkName "t_form" in
+  let nc = RocqInterface.mkName "c" in
 
-  let v = CoqInterface.mkRel in
+  let v = RocqInterface.mkRel in
 
   let t_i = make_t_i rt in
-  let t_func = CoqInterface.lift 1 (make_t_func ro (v 0 (*t_i*))) in
+  let t_func = RocqInterface.lift 1 (make_t_func ro (v 0 (*t_i*))) in
   let t_atom = Atom.interp_tbl ra in
   let t_form = snd (Form.interp_tbl rf) in
   let (tres,_,cuts) = SmtTrace.to_coq Form.to_coq
@@ -624,11 +624,11 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
     mklApp cCertif [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*); mkInt (max_id + 1); tres;mkInt (get_pos confl)|] in
 
   let add_lets t =
-    CoqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
-    CoqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
-    CoqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
-    CoqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
-    CoqInterface.mkLetIn (nc, certif, mklApp ccertif
+    RocqInterface.mkLetIn (nti, t_i, mklApp carray [|Lazy.force ctyp_compdec|],
+    RocqInterface.mkLetIn (ntfunc, t_func, mklApp carray [|mklApp ctval [|v 1(*t_i*)|]|],
+    RocqInterface.mkLetIn (ntatom, t_atom, mklApp carray [|Lazy.force catom|],
+    RocqInterface.mkLetIn (ntform, t_form, mklApp carray [|Lazy.force cform|],
+    RocqInterface.mkLetIn (nc, certif, mklApp ccertif
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
@@ -656,11 +656,11 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
 
 
 let get_arguments concl =
-  let f, args = CoqInterface.decompose_app_list concl in
+  let f, args = RocqInterface.decompose_app_list concl in
   match args with
-  | [ty;a;b] when (CoqInterface.eq_constr f (Lazy.force ceq)) && (CoqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
-  | [a] when (CoqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
-  | _ -> CoqInterface.raise_error "Verit.tactic: can only deal with equality over bool"
+  | [ty;a;b] when (RocqInterface.eq_constr f (Lazy.force ceq)) && (RocqInterface.eq_constr ty (Lazy.force cbool)) -> a, b
+  | [a] when (RocqInterface.eq_constr f (Lazy.force cis_true)) -> a, Lazy.force ctrue
+  | _ -> RocqInterface.raise_error "Verit.tactic: can only deal with equality over bool"
 
 
 let make_proof i call_solver env rt ro ra_quant rf_quant l ls_smtc =
@@ -679,7 +679,7 @@ let gen_rel_name =
   fun () -> incr num; "SMTCoqRelName"^(string_of_int !num)
 
 let warn_discarding_lemma =
-  CoqInterface.raise_warning ~name:"SMTCoq-discarding-lemma"
+  RocqInterface.raise_warning ~name:"SMTCoq-discarding-lemma"
     Pp.(fun clemma ->
         str "Discarding the following lemma (unsupported):" ++ spc() ++
         str (SmtMisc.string_coq_constr clemma))
@@ -695,16 +695,16 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
   let rel_context = List.map (fun rel -> Context.Rel.Declaration.set_name (Names.Name.mk_name (Names.Id.of_string (gen_rel_name ()))) rel) rel_context in
 
   let env_lemma = Environ.push_rel_context rel_context env in
-  let f, args = CoqInterface.decompose_app_list qf_lemma in
+  let f, args = RocqInterface.decompose_app_list qf_lemma in
   let core_f =
-    if CoqInterface.eq_constr f (Lazy.force cis_true) then
+    if RocqInterface.eq_constr f (Lazy.force cis_true) then
       match args with
       | [a] -> Some a
       | _ -> warn ()
-    else if CoqInterface.eq_constr f (Lazy.force ceq) then
+    else if RocqInterface.eq_constr f (Lazy.force ceq) then
       match args with
-      | [ty; arg1; arg2] when CoqInterface.eq_constr ty (Lazy.force cbool) &&
-                                CoqInterface.eq_constr arg2 (Lazy.force ctrue) ->
+      | [ty; arg1; arg2] when RocqInterface.eq_constr ty (Lazy.force cbool) &&
+                                RocqInterface.eq_constr arg2 (Lazy.force ctrue) ->
          Some arg1
       | _ -> warn ()
     else warn () in
@@ -719,8 +719,8 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
       | None -> None
   in
   let forall_args =
-    let fmap r = let n, t = CoqInterface.destruct_rel_decl r in
-                 CoqInterface.string_of_name n, SmtBtype.of_coq rt solver_logic t in
+    let fmap r = let n, t = RocqInterface.destruct_rel_decl r in
+                 RocqInterface.string_of_name n, SmtBtype.of_coq rt solver_logic t in
     List.map fmap rel_context
   in
   match forall_args with
@@ -733,11 +733,11 @@ let of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic clemma =
 let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl env sigma concl =
   let a, b = get_arguments concl in
 
-  let tlcepl = List.map (CoqInterface.interp_constr env sigma) lcepl in
+  let tlcepl = List.map (RocqInterface.interp_constr env sigma) lcepl in
   let lcpl = lcpl @ tlcepl in
 
   let create_lemma l =
-    let cl = CoqInterface.retyping_get_type_of env sigma l in
+    let cl = RocqInterface.retyping_get_type_of env sigma l in
     match of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic cl with
       | Some smt -> Some ((cl, l), smt)
       | None -> None
@@ -745,7 +745,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
   let l_pl_ls = SmtMisc.filter_map create_lemma lcpl in
   let lsmt = List.map snd l_pl_ls in
 
-  let lem_tbl : (int, CoqInterface.constr * CoqInterface.constr) Hashtbl.t =
+  let lem_tbl : (int, RocqInterface.constr * RocqInterface.constr) Hashtbl.t =
     Hashtbl.create 100
   in
   let new_ref ((l, pl), ls) =
@@ -771,11 +771,11 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
   in
   try (
     let (body_cast, body_nocast, cuts) =
-      if ((CoqInterface.eq_constr b (Lazy.force ctrue)) ||
-          (CoqInterface.eq_constr b (Lazy.force cfalse))) then (
+      if ((RocqInterface.eq_constr b (Lazy.force ctrue)) ||
+          (RocqInterface.eq_constr b (Lazy.force cfalse))) then (
         let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
         let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
-        let nl = if (CoqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
+        let nl = if (RocqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
         let lsmt = Form.flatten rf nl :: lsmt in
         let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
         build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
@@ -794,21 +794,21 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
     let cuts = (SmtBtype.get_cuts rt) @ cuts in
 
     List.fold_right (fun (eqn, eqt) tac ->
-        CoqInterface.tclTHENLAST
-          (CoqInterface.assert_before (CoqInterface.name_of_id eqn) eqt)
+        RocqInterface.tclTHENLAST
+          (RocqInterface.assert_before (RocqInterface.name_of_id eqn) eqt)
           tac
       ) cuts
-      (CoqInterface.tclTHEN
-         (CoqInterface.set_evars_tac body_nocast)
-         (CoqInterface.vm_cast_no_check body_cast))) 
+      (RocqInterface.tclTHEN
+         (RocqInterface.set_evars_tac body_nocast)
+         (RocqInterface.vm_cast_no_check body_cast))) 
   with
-  | DoNothing -> CoqInterface.tclIDTAC
+  | DoNothing -> RocqInterface.tclIDTAC
 
 
 let tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl =
-  CoqInterface.tclTHEN
+  RocqInterface.tclTHEN
     Tactics.intros
-    (CoqInterface.mk_tactic (core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl))
+    (RocqInterface.mk_tactic (core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast lcpl lcepl))
 
 
 (**********************************************)
@@ -825,7 +825,7 @@ let string_index_of_constr env i cf =
   try
     let s = string_coq_constr cf in
     let nc = Environ.named_context env in
-    let nd = Environ.lookup_named (CoqInterface.mkId s) env in
+    let nd = Environ.lookup_named (RocqInterface.mkId s) env in
     let cpt = ref 0 in
     (try List.iter (fun n -> incr cpt; if n == nd then raise Exit) nc
      with Exit -> ());
@@ -835,11 +835,11 @@ let string_index_of_constr env i cf =
 
 let vstring_i env i =
   let cf = SmtAtom.Atom.get_coq_term_op i in
-  if CoqInterface.isRel cf then
-    let dbi = CoqInterface.destRel cf in
+  if RocqInterface.isRel cf then
+    let dbi = RocqInterface.destRel cf in
     let s =
       Environ.lookup_rel dbi env
-      |> CoqInterface.get_rel_dec_name
+      |> RocqInterface.get_rel_dec_name
       |> SmtMisc.string_of_name_def "?"
     in
     s, dbi
@@ -981,7 +981,7 @@ let model_item env rt ro ra rf =
       * let outf = Format.formatter_of_out_channel out in
       * SExpr.print outf l; pp_print_flush outf ();
       * close_out out; *)
-     CoqInterface.raise_error "Could not reconstruct model"
+     RocqInterface.raise_error "Could not reconstruct model"
 
 
 (* Ignore the string "model" at the beginning of the Sexpr, 
@@ -992,7 +992,7 @@ let model env rt ro ra rf = function
   | List (Atom "model" :: l) | List l ->
      List.fold_left (fun acc m -> match model_item env rt ro ra rf m with Fun m -> m::acc | Sort -> acc) [] l
      |> List.sort (fun ((_ ,i1), _) ((_, i2), _) -> i2 - i1)
-  | _ -> CoqInterface.raise_error "No model"
+  | _ -> RocqInterface.raise_error "No model"
 
 
 (* Print model represented as an SExpr.t *)
@@ -1008,4 +1008,4 @@ let abduct_string env rt ro ra rf =
   function
   | List [Atom "define-fun"; Atom "A"; List []; _; expr] ->
       smt2_sexpr_to_coq_string env t_i ra rf expr
-  | _ -> CoqInterface.raise_error "Could not reconstruct abduct"
+  | _ -> RocqInterface.raise_error "Could not reconstruct abduct"

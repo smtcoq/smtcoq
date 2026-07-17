@@ -301,7 +301,7 @@ and print_term fmt t =
           (fun fmt -> List.iter (fprintf fmt " %a" print_term)) l
 
       | None ->
-        CoqInterface.raise_error "Could not translate term %a@." Ast.print_term t
+        RocqInterface.raise_error "Could not translate term %a@." Ast.print_term t
 
 
 let print_term fmt t = print_term fmt t (* (get_real t) *)

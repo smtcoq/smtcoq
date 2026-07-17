@@ -21,8 +21,10 @@
       ];
 
       flake = {
+        lib = nixpkgs.lib.fix (lib: trakt.lib // import ./nix/lib.nix { inherit lib; });
+
         overlays = {
-          smtcoq = import ./nix/smtcoq;
+          smtcoq = import ./nix/pkgs;
 
           default = nixpkgs.lib.composeManyExtensions [
             trakt.overlays.default
@@ -46,7 +48,12 @@
           formatter = pkgs.nixfmt-tree;
 
           packages = rec {
-            inherit (pkgs) cvc4 cvc5 verit zchaff;
+            inherit (pkgs)
+              cvc4
+              cvc5
+              verit
+              zchaff
+              ;
             inherit (pkgs.rocqPackages) smtcoq;
 
             default = smtcoq;
@@ -57,6 +64,10 @@
 
             LFSCSIGS = "${pkgs.rocqPackages.smtcoq.passthru.lfsc-sigs}";
           };
+
+          checks = pkgs.lib.listToAttrs (
+            map (self.lib.mkSMTCoq pkgs) (self.lib.mkRocqConstraints pkgs.rocqPackages "smtcoq")
+          );
         };
     };
 }

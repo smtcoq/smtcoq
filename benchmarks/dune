@@ -1,0 +1,16 @@
+(alias
+ (name benchmark)
+ (deps dune.inc))
+
+(env
+ (_
+  (env-vars
+   (LFSCSIGS "../../src/lfsc/signatures"))
+  (rocq
+   (flags
+    (:standard -I ../_build/install/default/lib)))))
+
+(rocq.theory
+ (name SMTCoq.benchmark)
+ (generate_project_file)
+ (theories SMTCoq))

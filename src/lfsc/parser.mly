@@ -20,7 +20,7 @@ open Format
 
 let parse_failure what =
   let pos = Parsing.symbol_start_pos () in
-  CoqInterface.raise_error
+  RocqInterface.raise_error
     "Sexplib.Parser: failed to parse line %d char %d: %s"
     pos.pos_lnum (pos.pos_cnum - pos.pos_bol) what
 

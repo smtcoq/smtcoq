@@ -14,7 +14,7 @@ open Common
 
 (*** Linking SMT Terms to Micromega Terms ***)
 open Util
-open CoqInterface.Micromega_plugin_Micromega
+open RocqInterface.Micromega_plugin_Micromega
 
 open SmtForm
 open SmtAtom
@@ -94,7 +94,7 @@ let smt_binop_to_micromega_formula tbl op ha hb =
     | BO_Zge -> OpGe
     | BO_Zgt -> OpGt
     | BO_eq _ -> OpEq
-    | _ -> CoqInterface.raise_error
+    | _ -> RocqInterface.raise_error
              "lia.ml: smt_binop_to_micromega_formula expecting a formula"
   in
   let lhs = smt_Atom_to_micromega_pExpr tbl ha in
@@ -104,7 +104,7 @@ let smt_binop_to_micromega_formula tbl op ha hb =
 let smt_Atom_to_micromega_formula tbl ha =
   match Atom.atom ha with
     | Abop (op,ha,hb) -> smt_binop_to_micromega_formula tbl op ha hb
-    | _ -> CoqInterface.raise_error
+    | _ -> RocqInterface.raise_error
              "lia.ml: smt_Atom_to_micromega_formula was expecting an LIA formula"
 
 (* specialized fold *)
@@ -154,7 +154,7 @@ let smt_clause_to_coq_micromega_formula tbl cl =
   binop_list tbl (fun x y -> AND (IsProp, x,y)) (TT IsProp) (List.map Form.neg cl)
 
 let tauto_lia ff =
-  let cnf_ff,_ = CoqInterface.Micromega_plugin_Micromega.cnfZ IsProp ff in
+  let cnf_ff,_ = RocqInterface.Micromega_plugin_Micromega.cnfZ IsProp ff in
  let rec xwitness_list l =
   match l with
    | [] -> Some []
@@ -162,8 +162,8 @@ let tauto_lia ff =
       match xwitness_list l with
       | None -> None
       | Some l ->
-         match CoqInterface.Micromega_plugin_Certificate.lia max_int (List.map (fun ((e, o), _) -> CoqInterface.Micromega_plugin_Micromega.denorm e, o) e) with
-         | CoqInterface.Micromega_plugin_Certificate.Prf w -> Some (w::l)
+         match RocqInterface.Micromega_plugin_Certificate.lia max_int (List.map (fun ((e, o), _) -> RocqInterface.Micromega_plugin_Micromega.denorm e, o) e) with
+         | RocqInterface.Micromega_plugin_Certificate.Prf w -> Some (w::l)
          | _ -> None in
  xwitness_list cnf_ff
 

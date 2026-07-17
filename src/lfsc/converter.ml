@@ -125,10 +125,10 @@ module Make (T : Translator_sig.S) = struct
     | Some (n, [_; tr; p]) when n == H.th_let_pf ->
       begin match app_name tr with
         | Some (n, _) when n == H.trust_f ->
-            CoqInterface.raise_debug "Warning: hole for trust_f.@."
+            RocqInterface.raise_debug "Warning: hole for trust_f.@."
         | Some (rule, _) ->
-            CoqInterface.raise_debug "Warning: hole for unsupported rule %a.@." Hstring.print rule
-        | None -> CoqInterface.raise_debug "Warning: hole@."
+            RocqInterface.raise_debug "Warning: hole for unsupported rule %a.@." Hstring.print rule
+        | None -> RocqInterface.raise_debug "Warning: hole@."
       end;
       let formula = th_res tr in
       begin match value p with
@@ -827,7 +827,7 @@ module Make (T : Translator_sig.S) = struct
       { env with clauses = mk_clause_cl Bbdis [th_res p] [] :: env.clauses }
   
     | Some (rule, args) ->
-      CoqInterface.raise_debug
+      RocqInterface.raise_debug
         "Warning: Introducing hole for unsupported rule %a@."
         Hstring.print rule;
       { env with clauses = mk_clause_cl Hole [th_res p] [] :: env.clauses }
@@ -1181,7 +1181,7 @@ module Make (T : Translator_sig.S) = struct
       end
       
     | Some (rule, args) ->
-      CoqInterface.raise_warning ~name:"SMTCoq-introducing-hole"
+      RocqInterface.raise_warning ~name:"SMTCoq-introducing-hole"
         Pp.(fun rule -> str "Introducing hole for unsupported rule:" ++ spc() ++ str rule)
         (Hstring.view rule);
       Some (mk_clause_cl Hole [ttype p] [])
@@ -1287,11 +1287,11 @@ module Make (T : Translator_sig.S) = struct
   
 
   let convert_pt p =
-    CoqInterface.raise_debug "Converting LFSC proof to SMTCoq...@?";
+    RocqInterface.raise_debug "Converting LFSC proof to SMTCoq...@?";
     let t0 = Sys.time () in
     let r = convert p in
     let t1 = Sys.time () in
-    CoqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
+    RocqInterface.raise_debug " Done [%.3f s]@." (t1 -. t0);
     r
 
   

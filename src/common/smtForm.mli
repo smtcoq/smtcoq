@@ -77,7 +77,7 @@ module type FORM =
       val get : ?declare:bool -> reify -> pform -> t
 
       (** Given a coq term, build the corresponding formula *)
-      val of_coq : (CoqInterface.constr -> hatom) -> reify -> CoqInterface.constr -> t
+      val of_coq : (RocqInterface.constr -> hatom) -> reify -> RocqInterface.constr -> t
 
       val hash_hform : (hatom -> hatom) -> reify -> t -> t
 
@@ -90,20 +90,20 @@ module type FORM =
 
       (** Producing Coq terms *)
 
-      val to_coq : t -> CoqInterface.constr
+      val to_coq : t -> RocqInterface.constr
 
       val pform_tbl : reify -> pform array
 
       val to_array : reify -> 'a -> (pform -> 'a) -> int * 'a array
-      val interp_tbl : reify -> CoqInterface.constr * CoqInterface.constr
+      val interp_tbl : reify -> RocqInterface.constr * RocqInterface.constr
       val nvars : reify -> int
       (* Producing a Coq term corresponding to the interpretation
          of a formula *)
       (* [interp_atom] map [hatom] to coq term, it is better if it produce
          shared terms. *)
       val interp_to_coq :
-	  (hatom -> CoqInterface.constr) -> (int, CoqInterface.constr) Hashtbl.t ->
-	    t -> CoqInterface.constr
+	  (hatom -> RocqInterface.constr) -> (int, RocqInterface.constr) Hashtbl.t ->
+	    t -> RocqInterface.constr
 
       (* Unstratified terms *)
       type atom_form_lit =
