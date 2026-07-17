@@ -54,7 +54,6 @@ mkRocqDerivation rec {
     cvc4
     cvc5
     rocq-core.ocamlPackages.num
-    rocq-elpi
     trakt
     verit
     zchaff
