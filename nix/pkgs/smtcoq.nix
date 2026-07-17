@@ -42,7 +42,7 @@ mkRocqDerivation rec {
   useDune = true;
 
   defaultVersion = lib.switch rocq-core.rocq-version [
-    (case (lib.versions.range "9.0" "9.1") "dev")
+    (case (lib.versions.range "9.0" "9.2") "dev")
   ] null;
 
   release."dev" = {
