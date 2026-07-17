@@ -45,8 +45,3 @@
    (>= 9.0.0))
   rocq-stdlib
   rocq-trakt))
-
-(package
- ; Standalone LFSC to SMTCoq translator
- (name lfsctosmtcoq)
- (allow_empty))
