@@ -48,29 +48,26 @@ List.filter (fun x => match x with
                     end) h.
 
 Ltac2 get_hyps_ltac2 () :=
-let hs := get_hyps_aux () in
-match hs with
-| [] => '(@None nat)
-| x :: xs => 
-    match x with
-    | (id, _, _) => 
-    let h := Control.hyp id in
-    let rec tac_aux xs acc :=
-      match xs with
-      | y :: ys => 
-        match y with
-        | (id', _, _) => 
-        let h1 := Control.hyp id' in let res := tac_aux ys acc in '($h1, $res)
-        end
-      | [] => acc
-      end in let res := tac_aux xs h in '(Some ($res))
-  end
-end. 
+  let hs := get_hyps_aux () in
+  List.map (fun (_, _, h) => h) hs.
 
-Ltac2 get_hyps_cont_ltac1 (tac : Ltac1.t -> unit) := 
-Control.enter (fun () =>
-let hs := Ltac1.of_constr (get_hyps_ltac2 ()) in
-tac hs).
+Ltac2 get_hyps_cont_ltac1 (tac : Ltac1.t -> unit) :=
+  let rec tupleify l acc :=
+    match l with
+    | [] => acc
+    | x::xs => tupleify xs '($x, $acc)
+    end
+  in
+  Control.enter (fun () =>
+    let hs := get_hyps_ltac2 () in
+    let hs' :=
+      match hs with
+      | [] => '(@None unit)
+      | x::xs => let res := tupleify xs x in '(Some $res)
+      end
+    in
+    tac (Ltac1.of_constr hs')
+  ).
 
 (*
 Section Test.
@@ -172,38 +169,27 @@ Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
 Ltac zchaff          := trakt bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check.
 
-Ltac verit_tac global veritbool veritboolto to :=
-  let tac :=
-  ltac2:(h veritbool veritboolto to |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h veritbool veritboolto to local |-
-  let Hsglob :=
-    match h with
-    | Some ?h' => pose_hyps h' (@None unit)
-    | None => constr:(@None unit)
-    end
-  in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    match to with
-      | Some ?t => veritboolto Hs' t
-      | None => veritbool Hs'
-    end;
-    QInst.vauto
-  ]) h veritbool veritboolto to))
-  in
-  tac global veritbool veritboolto to.
+Ltac2 verit_tac global nocheck to :=
+  intros; unfold is_true in *;
+  let local := get_hyps_ltac2 () in
+  let hsglob := pose_hyps_ltac2 global [] in
+  let hs := pose_hyps_ltac2 local hsglob in
+  (* preprocess1 hs true; *)
+  (* ltac2:(preprocess1 Hs true); *)
+  (* [ .. | *)
+  (*   let Hs' := intros_names in *)
+  (*   preprocess2 Hs'; *)
+  (*   match to with *)
+  (*     | Some ?t => veritboolto Hs' t *)
+  (*     | None => veritbool Hs' *)
+  (*   end; *)
+  (*   QInst.vauto *)
+  (* ] *)
+  ltac1:(idtac).
 
 
 Tactic Notation "verit" constr(global) :=
-  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto (@None unit).
+  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto 0.
 Tactic Notation "verit"                :=
   verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto (@None unit).
 Tactic Notation "verit_no_check" constr(global) :=

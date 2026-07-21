@@ -74,6 +74,47 @@ Ltac pose_hyps Hs acc :=
 (* Abort. *)
 
 
+Ltac2 pose_hyps_ltac2_aux hs acc id :=
+  List.fold_left (
+    fun (a, ids) h' =>
+      (* Starting from 9.1, the following two lines can be replaced by Fresh.next *)
+      let h := Fresh.fresh ids id in
+      let ids' := Fresh.Free.union ids (Fresh.Free.of_ids [h]) in
+      ltac1:(h h' |- assert (h := h')) (Ltac1.of_ident h) (Ltac1.of_constr h');
+      (h::a, ids')
+  ) acc hs.
+
+(* Ltac2 rec pose_hyps_aux hs acc id := *)
+(*   match! hs with *)
+(*   | (?hs1, ?hs2) => *)
+(*     let acc1 := pose_hyps_aux hs1 acc id in *)
+(*     let acc2 := pose_hyps_aux hs2 acc1 id in *)
+(*     acc2 *)
+(*   | ?h' => *)
+(*       let (a, ids) := acc in *)
+(*       (* Since 9.1, the following two lines can be replaced by Fresh.next *) *)
+(*       let h := Fresh.fresh ids id in *)
+(*       let ids' := Fresh.Free.union ids (Fresh.Free.of_ids [h]) in *)
+(*       ltac1:(h h' |- assert (h := h')) (Ltac1.of_ident h) (Ltac1.of_constr h'); *)
+(*       (h::a, ids') *)
+(*   end. *)
+
+Ltac2 pose_hyps_ltac2 hs acc :=
+  match Ident.of_string "H" with
+  | Some id =>
+      let (r, _) := pose_hyps_ltac2_aux hs (acc, Fresh.Free.of_goal ()) id in
+      r
+  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Conversion.pose_hyps")))
+  end.
+
+(* Goal True. *)
+(*   ltac2:( *)
+(*     let hs := pose_hyps_ltac2 ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] [] in *)
+(*     List.iter (fun h => Message.print (Message.of_ident h)) hs *)
+(*   ). *)
+(* Abort. *)
+
+
 (* List of interpreted types *)
 
 Ltac is_interpreted_type T :=
@@ -354,14 +395,18 @@ Ltac remove_compdec_hyps_option Hs :=
 
 (* Perform all the preprocessing *)
 
-Ltac preprocess1 Hs :=
-  ltac2:(add_compdecs ());
-  [ .. |
-    remove_compdec_hyps_option Hs;
-    let cpds := collect_compdecs in
-    let rels := generate_rels cpds in
-    trakt1 rels Hs].
-
+Ltac2 preprocess1 hs b :=
+  if b then add_compdecs () else ();
+  let n := Control.numgoals () in
+  Control.focus n n
+    (fun () =>
+       ltac1:( Hs |-
+                 remove_compdec_hyps_option Hs;
+                 let cpds := collect_compdecs in
+                 let rels := generate_rels cpds in
+                 trakt1 rels Hs
+             ) (Ltac1.of_constr hs)
+    ).
 
 (* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
 (*     3%Z = 4%Z /\ a1 = a2 /\ b1 = b2 /\ b3 = b4 /\ 5%nat = 6%nat /\ c1 = c2 -> *)
@@ -369,9 +414,10 @@ Ltac preprocess1 Hs :=
 (* Proof. *)
 (*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
 (*   assert (H1 := @List.nil_cons positive 5%positive nil). *)
-(*   preprocess1 (Some (H1, H)). *)
-(*   Show 3. *)
+(*   ltac2:(preprocess1 '(Some (H1, H)) true). *)
+(*   Show 5. *)
 (* Abort. *)
+
 
 Ltac preprocess2 Hs' :=
   lazymatch Hs' with
