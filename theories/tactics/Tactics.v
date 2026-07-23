@@ -45,11 +45,11 @@ Ltac2 verit_tac global inbool nocheck :=
         ltac1:(r |- verit_bool_base_auto r) (Ltac1.of_constr r)
     ) else (
         preprocess1 hs;
-        let hs' := preprocess2 () in
-        let hs' := List.map Control.hyp hs' in
-        let r := tupleify hs' in
         let n := Control.numgoals () in
         Control.focus n n (fun () =>
+          let hs' := preprocess2 () in
+          let hs' := List.map Control.hyp hs' in
+          let r := tupleify hs' in
           if nocheck then
             ltac1:(r |- verit_bool_no_check_base_auto r) (Ltac1.of_constr r)
           else
