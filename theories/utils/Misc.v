@@ -1763,4 +1763,34 @@ Ltac2 pose_hyps hs acc :=
 (* Abort. *)
 
 
+(* Revert a list of hypotheses *)
+
+Ltac2 rec revert_hyps hs :=
+  match hs with
+  | [] => ()
+  | h::hs => ltac1:(h |- revert h) (Ltac1.of_ident h); revert_hyps hs
+  end.
+
+(* Goal True = True -> false = false -> True. *)
+(* Proof. *)
+(*   intros H1 H2. *)
+(*   revert_hyps []. *)
+(*   revert_hyps [@H1; @H2]. *)
+(* Abort. *)
+
+
+(* Collection all the hypotheses of type Prop *)
+
+Ltac2 get_hyps_prop () :=
+  let h := Control.hyps () in
+  let hs := List.filter (
+                fun x =>
+                  match x with
+                  | (_, _, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
+                  end
+            ) h
+  in
+  List.map (fun (id, _, v) => (id, v)) hs.
+
+
 Set Default Proof Mode "Classic".

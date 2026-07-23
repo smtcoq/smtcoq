@@ -256,13 +256,24 @@ Ltac2 remove_compdec_hyps hs :=
 
 (* Perform all the preprocessing *)
 
-Ltac preprocess1 Hs :=
-  ltac2:(add_compdecs ());
-  [ .. |
-    remove_compdec_hyps_option Hs;
-    let cpds := collect_compdecs in
-    let rels := generate_rels cpds in
-    trakt1 rels Hs].
+Ltac2 preprocess1 global :=
+  Control.enter (fun () =>
+    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let hsglob := pose_hyps global [] in
+    let hs := pose_hyps local hsglob in
+    add_compdecs ();
+    let n := Control.numgoals () in
+    Control.focus n n (fun () =>
+      remove_compdec_hyps hs;
+      let n := Control.numgoals () in
+      Control.focus n n (fun () =>
+        let cpds := collect_compdecs () in
+        let rels := generate_rels cpds in
+        revert_hyps hs;
+        trakt_rels rels
+      )
+    )
+  ).
 
 
 (* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
@@ -271,7 +282,7 @@ Ltac preprocess1 Hs :=
 (* Proof. *)
 (*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
 (*   assert (H1 := @List.nil_cons positive 5%positive nil). *)
-(*   preprocess1 (Some (H1, H)). *)
+(*   preprocess1 ['Z.add_0_r]. *)
 (*   Show 3. *)
 (* Abort. *)
 
