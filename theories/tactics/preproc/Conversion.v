@@ -254,6 +254,17 @@ Ltac2 remove_compdec_hyps hs :=
 (* Abort. *)
 
 
+(* Post-processing of Trakt *)
+
+Ltac2 rec post_trakt hs :=
+  match hs with
+  | [] => ()
+  | h::hs =>
+      ltac1:(h |- try (revert h; trakt_reorder_quantifiers; trakt_boolify_arrows; intro h)) (Ltac1.of_ident h);
+      post_trakt hs
+  end.
+
+
 (* Perform all the preprocessing *)
 
 Ltac2 preprocess1 global :=
@@ -270,7 +281,9 @@ Ltac2 preprocess1 global :=
         let cpds := collect_compdecs () in
         let rels := generate_rels cpds in
         revert_hyps hs;
-        trakt_rels rels
+        trakt_rels rels;
+        let hs := intros_and_return_props () in
+        post_trakt hs
       )
     )
   ).
@@ -285,9 +298,3 @@ Ltac2 preprocess1 global :=
 (*   preprocess1 ['Z.add_0_r]. *)
 (*   Show 3. *)
 (* Abort. *)
-
-Ltac preprocess2 Hs' :=
-  lazymatch Hs' with
-  | Some ?Hs' => post_trakt Hs'
-  | None => idtac
-  end.
