@@ -267,11 +267,8 @@ Ltac2 rec post_trakt hs :=
 
 (* Perform all the preprocessing *)
 
-Ltac2 preprocess1 global :=
+Ltac2 preprocess1 hs :=
   Control.enter (fun () =>
-    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
-    let hsglob := pose_hyps global [] in
-    let hs := pose_hyps local hsglob in
     add_compdecs ();
     let n := Control.numgoals () in
     Control.focus n n (fun () =>
@@ -281,13 +278,15 @@ Ltac2 preprocess1 global :=
         let cpds := collect_compdecs () in
         let rels := generate_rels cpds in
         revert_hyps hs;
-        trakt_rels rels;
-        let hs := intros_and_return_props () in
-        post_trakt hs
+        trakt_rels rels
       )
     )
   ).
 
+Ltac2 preprocess2 () :=
+  let hs := intros_and_return_props () in
+  post_trakt hs;
+  hs.
 
 (* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
 (*     3%Z = 4%Z /\ a1 = a2 /\ b1 = b2 /\ b3 = b4 /\ 5%nat = 6%nat /\ c1 = c2 -> *)
@@ -295,6 +294,8 @@ Ltac2 preprocess1 global :=
 (* Proof. *)
 (*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
 (*   assert (H1 := @List.nil_cons positive 5%positive nil). *)
-(*   preprocess1 ['Z.add_0_r]. *)
-(*   Show 3. *)
+(*   preprocess1 [@H; @H1]. *)
+(*   Focus 3. *)
+(*   let hs := preprocess2 () in *)
+(*   List.iter (fun h => Message.print (Message.of_ident h)) hs. *)
 (* Abort. *)
