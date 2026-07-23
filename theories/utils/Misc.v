@@ -1695,3 +1695,72 @@ Register Stdlib.Bool.Bool.ifb as core.bool.ifb.
 Register Stdlib.Bool.Bool.reflect as core.bool.reflect.
 Register Corelib.Init.Datatypes.length as core.list.length.
 Register Stdlib.micromega.ZMicromega.ZArithProof as micromega.ZMicromega.ZArithProof.
+
+
+(* Ltac2 helpers *)
+
+From Ltac2 Require Import Ltac2.
+From Ltac2 Require Import Printf.
+
+
+(* Transform a list of constr into a constr tuple *)
+
+Ltac2 rec tupleify_aux l acc :=
+  match l with
+  | [] => acc
+  | x::xs => tupleify_aux xs '($acc, $x)
+  end.
+
+Ltac2 tupleify l :=
+  match l with
+  | [] => '(@None unit)
+  | x::xs =>
+      let r := tupleify_aux xs x in
+      '(Some $r)
+  end.
+
+(* Goal True. *)
+(*   let t := tupleify [] in printf "%t" t. *)
+(*   let t := tupleify ['O; 'Type; '(list nat)] in printf "%t" t. *)
+(* Abort. *)
+
+
+(* Generalize a list of hypotheses *)
+
+Ltac2 generalize_hyps hs :=
+  List.iter (
+      fun h => ltac1:(h |- generalize h) (Ltac1.of_constr h)
+  ) hs.
+
+(* Goal True. *)
+(*   generalize_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons]. *)
+(* Abort. *)
+
+
+(* Assert a list of hypotheses *)
+
+Ltac2 pose_hyps_aux hs acc id :=
+  List.fold_left (
+    fun (a, ids) h' =>
+      (* Starting from 9.1, the following two lines can be replaced by Fresh.next *)
+      let h := Fresh.fresh ids id in
+      let ids' := Fresh.Free.union ids (Fresh.Free.of_ids [h]) in
+      ltac1:(h h' |- assert (h := h')) (Ltac1.of_ident h) (Ltac1.of_constr h');
+      (h::a, ids')
+  ) acc hs.
+
+Ltac2 pose_hyps hs acc :=
+  match Ident.of_string "H" with
+  | Some id =>
+      let (r, _) := pose_hyps_aux hs (acc, Fresh.Free.of_goal ()) id in
+      r
+  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Misc.pose_hyps")))
+  end.
+
+(* Goal True. *)
+(*   let hs := pose_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] [] in *)
+(*   List.iter (fun h => Message.print (Message.of_ident h)) hs. *)
+(* Abort. *)
+
+
+Set Default Proof Mode "Classic".
