@@ -1703,7 +1703,7 @@ From Ltac2 Require Import Ltac2.
 From Ltac2 Require Import Printf.
 
 
-(* Transform a list of constr into a constr tuple *)
+(* Transform a list of constr into a constr tuple and vice versa *)
 
 Ltac2 rec tupleify_aux l acc :=
   match l with
@@ -1722,6 +1722,22 @@ Ltac2 tupleify l :=
 (* Goal True. *)
 (*   let t := tupleify [] in printf "%t" t. *)
 (*   let t := tupleify ['O; 'Type; '(list nat)] in printf "%t" t. *)
+(* Abort. *)
+
+
+Ltac2 rec untupleify_aux t acc :=
+  match! t with
+  | (?t1, ?t2) =>
+      let acc1 := untupleify_aux t1 acc in
+      let acc2 := untupleify_aux t2 acc1 in
+      acc2
+  | _ => t::acc
+  end.
+
+Ltac2 untupleify t := untupleify_aux t [].
+
+(* Goal True. *)
+(*   let l := untupleify '(O, Type, list nat) in List.iter (fun t => printf "%t" t) l. *)
 (* Abort. *)
 
 
