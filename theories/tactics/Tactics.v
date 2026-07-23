@@ -176,6 +176,8 @@ Ltac verit_tac global veritbool veritboolto to :=
   let tac :=
   ltac2:(h veritbool veritboolto to |- intros; unfold is_true in *; get_hyps_cont_ltac1
   (ltac1:(h veritbool veritboolto to local |-
+    (* Generalize global and local hypotheses
+       (local: to avoid problems with Section variables) *)
   let Hsglob :=
     match h with
     | Some ?h' => pose_hyps h' (@None unit)

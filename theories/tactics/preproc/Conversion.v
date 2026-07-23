@@ -17,43 +17,27 @@ From Ltac2 Require Import Ltac2.
 
 From Trakt Require Import Trakt.
 
-From SMTCoq.utils Require Import CompDec.
-From SMTCoq.structures Require Import BVList FArray.
+From SMTCoq.utils Require Import Misc CompDec.
+From SMTCoq.structures Require Import BVList FArray CompDecInstances.
 
 Require Import DatabaseTrakt.
 
+
+(* Section Test. *)
+(*   Variables (A:Type) (HA:CompDec.CompDec A). *)
+
+(*   Goal forall (a1 a2:A), a1 = a2. *)
+(*   Proof. *)
+(*     intros a1 a2. *)
+(*     ltac1:(trakt Z bool with rel (2%nat, @Logic.eq A, @CompDec.eqb_of_compdec A HA, @CompDec.compdec_eq_eqb A HA)). *)
+(*   Abort. *)
+(* End Test. *)
 
 
 (* Conversion tactic *)
 
 Infix "--->" := implb (at level 60, right associativity) : bool_scope.
 Infix "<--->" := Bool.eqb (at level 60, right associativity) : bool_scope.
-
-
-(* Assert global and local hypotheses (local: to avoid problems with Section variables) *)
-
-Ltac2 pose_hyps_ltac2_aux hs acc id :=
-  List.fold_left (
-    fun (a, ids) h' =>
-      (* Starting from 9.1, the following two lines can be replaced by Fresh.next *)
-      let h := Fresh.fresh ids id in
-      let ids' := Fresh.Free.union ids (Fresh.Free.of_ids [h]) in
-      ltac1:(h h' |- assert (h := h')) (Ltac1.of_ident h) (Ltac1.of_constr h');
-      (h::a, ids')
-  ) acc hs.
-
-Ltac2 pose_hyps_ltac2 hs acc :=
-  match Ident.of_string "H" with
-  | Some id =>
-      let (r, _) := pose_hyps_ltac2_aux hs (acc, Fresh.Free.of_goal ()) id in
-      r
-  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Conversion.pose_hyps")))
-  end.
-
-Goal True.
-  let hs := pose_hyps_ltac2 ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] [] in
-  List.iter (fun h => Message.print (Message.of_ident h)) hs.
-Abort.
 
 
 (* List of interpreted types *)
@@ -165,9 +149,6 @@ Ltac2 rec collect_compdecs () :=
 
 (* Generate CompDec rels for trakt *)
 
-From Ltac2 Require Import Constr.
-Import Unsafe.
-
 Ltac2 rec generate_rels compdecs :=
   match compdecs with
   | [] => []
@@ -186,7 +167,7 @@ Ltac2 rec generate_rels compdecs :=
 (* Proof. *)
 (*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
 (*   add_compdecs (). *)
-(*   Focus 3. *)
+(*   Focus 4. *)
 (*   let cs := collect_compdecs () in *)
 (*   let rels := generate_rels cs in *)
 (*   List.iter (fun h => Message.print (Message.of_constr h)) rels. *)
@@ -195,151 +176,82 @@ Ltac2 rec generate_rels compdecs :=
 
 (* Use trakt *)
 
-Ltac trakt_rels rels :=
-  lazymatch rels with
-  | Some ?rels' => first [trakt Z bool with rel rels' | trakt bool with rel rels']
-  | None => first [trakt Z bool | trakt bool]
+Ltac2 trakt_rels rels :=
+  match! tupleify rels with
+  | Some ?rels' =>
+      ltac1:(rels' |- first [trakt Z bool with rel rels' | trakt bool with rel rels'])
+              (Ltac1.of_constr rels')
+  | None => ltac1:(first [trakt Z bool | trakt bool])
   end.
-
-Ltac revert_and_trakt Hs rels :=
-  lazymatch Hs with
-  | (?Hs, ?H) =>
-    revert H;
-    revert_and_trakt Hs rels
-    (* intro H *)
-  | ?H =>
-    revert H;
-    trakt_rels rels
-    (* intro H *)
-  end.
-
-
-Definition sep := True.
-
-Ltac get_hyps_upto_sep :=
-  lazymatch goal with
-  | H' : ?P |- _ =>
-    lazymatch P with
-    | sep => constr:(@None unit)
-    | _ =>
-      let T := type of P in
-      lazymatch T with
-      | Prop =>
-        let _ := match goal with _ => revert H' end in
-        let acc := get_hyps_upto_sep in
-        let _ := match goal with _ => intro H' end in
-        lazymatch acc with
-        | Some ?acc' => constr:(Some (acc', H'))
-        | None => constr:(Some H')
-        end
-      | _ =>
-        let _ := match goal with _ => revert H' end in
-        let acc := get_hyps_upto_sep in
-        let _ := match goal with _ => intro H' end in
-        acc
-      end
-    end
-  end.
-
-
-(* Goal False -> 1 = 1 -> unit -> false = true -> True. *)
-(* Proof. *)
-(*   intros H1 H2. *)
-(*   assert (H : sep) by exact I. *)
-(*   intros H3 H4. *)
-(*   let Hs := get_hyps_upto_sep in idtac Hs. *)
-(* Abort. *)
-
-
-Ltac intros_names :=
-  let H := fresh in
-  let _ := match goal with _ => assert (H : sep) by exact I; intros end in
-  let Hs := get_hyps_upto_sep in
-  let _ := match goal with _ => clear H end in
-  Hs.
-
-
-(* Goal False -> 1 = 1 -> unit -> false = true -> True. *)
-(* Proof. *)
-(*   intros H1 H2. *)
-(*   let Hs := intros_names in idtac Hs. *)
-(* Abort. *)
-
-
-Ltac post_trakt Hs :=
-  lazymatch Hs with
-  | (?Hs1, ?Hs2) =>
-    post_trakt Hs1;
-    post_trakt Hs2
-  | ?H => try (revert H; trakt_reorder_quantifiers; trakt_boolify_arrows; intro H)
-  end.
-
-Ltac trakt1 rels Hs :=
-  lazymatch Hs with
-  | Some ?Hs => revert_and_trakt Hs rels
-  | None => trakt_rels rels
-  end.
-
-
-(* Section Test. *)
-(*   Variables (A:Type) (HA:CompDec.CompDec A). *)
-
-(*   Goal forall (a1 a2:A), a1 = a2. *)
-(*   Proof. *)
-(*     intros a1 a2. *)
-(*     trakt Z bool with rel (2%nat, @eq A, @CompDec.eqb_of_compdec A HA, @Classes.compdec_eq_eqb A HA). *)
-(*   Abort. *)
-(* End Test. *)
 
 (* Goal forall (A B C:Type) (HA:CompDec.CompDec A) (a1 a2:A) (b1 b2 b3 b4:B) (c1 c2:C), *)
 (*     3%Z = 4%Z /\ a1 = a2 /\ b1 = b2 /\ b3 = b4 /\ 5%nat = 6%nat /\ c1 = c2 -> *)
 (*     17%positive = 42%positive /\ (5,6) = (6,7). *)
 (* Proof. *)
-(*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros H. *)
-(*   add_compdecs. *)
-(*   Focus 3. *)
-(*   (* Set Printing All. *) *)
-(*   let cs := collect_compdecs in *)
+(*   intros A B C HA a1 a2 b1 b2 b3 b4 c1 c2. intros. *)
+(*   add_compdecs (). *)
+(*   Focus 4. *)
+(*   revert H. *)
+(*   let cs := collect_compdecs () in *)
 (*   let rels := generate_rels cs in *)
-(*   trakt1 rels (Some H). *)
+(*   trakt_rels rels. *)
 (* Abort. *)
 
 
 (* Remove quantifications on CompDecs in hypotheses *)
 
-Ltac remove_compdec_hyp H :=
-  let TH := type of H in
-  match TH with
-  | forall p : CompDec.CompDec ?A, _ =>
-    match goal with
-    | [ p' : CompDec.CompDec A |- _ ] =>
-      let H1 := fresh in
-      assert (H1 := H p'); clear H; assert (H := H1); clear H1;
-      remove_compdec_hyp H
-    | _ =>
-      let c := fresh "c" in
-      assert (c : CompDec.CompDec A);
-      [ try (exact _)
-      | let H1 := fresh in
-        assert (H1 := H c); clear H; assert (H := H1); clear H1;
-        remove_compdec_hyp H ]
+Ltac2 rec remove_compdec_hyp name h :=
+  let n := Control.numgoals () in
+  Control.focus n n (fun () =>
+    let hhyp := Control.hyp h in
+    let th := Constr.type hhyp in
+    match! th with
+    | forall p : CompDec.CompDec ?a, _ =>
+      match! goal with
+      | [ p' : CompDec.CompDec ?a' |- _ ] =>
+          if Constr.equal a a' then (
+            let idh1 := Fresh.in_goal name in
+            ltac1:(h h1 p' |- assert (h1 := h p'); clear h; assert (h := h1); clear h1)
+                    (Ltac1.of_ident h) (Ltac1.of_ident idh1) (Ltac1.of_ident p');
+            remove_compdec_hyp name h
+          ) else (
+            fail
+          )
+      | [ |- _ ] =>
+          let c := Fresh.in_goal name in
+          ltac1:(c a |- assert (c : CompDec.CompDec a))
+                  (Ltac1.of_ident c) (Ltac1.of_constr a);
+          Control.dispatch [
+            (fun () => ltac1:(try (exact _)));
+            (fun () =>
+               let idh1 := Fresh.in_goal name in
+               ltac1:(h h1 c |- assert (h1 := h c); clear h; assert (h := h1); clear h1)
+                       (Ltac1.of_ident h) (Ltac1.of_ident idh1) (Ltac1.of_ident c);
+               remove_compdec_hyp name h
+            )
+          ]
+      end
+    | _ => ()
     end
-  | _ => idtac
+  ).
+
+Ltac2 remove_compdec_hyps hs :=
+  match Ident.of_string "c" with
+  | Some id =>
+      List.iter (remove_compdec_hyp id) hs
+  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Conversion.remove_compdec_hyps")))
   end.
 
-Ltac remove_compdec_hyps Hs :=
-  lazymatch Hs with
-  | (?Hs1, ?Hs2) =>
-    remove_compdec_hyps Hs1;
-    remove_compdec_hyps Hs2
-  | ?H => remove_compdec_hyp H
-  end.
-
-Ltac remove_compdec_hyps_option Hs :=
-  lazymatch Hs with
-  | Some ?Hs => remove_compdec_hyps Hs
-  | None => idtac
-  end.
+(* Goal forall (A B:Type), CompDec.CompDec A -> *)
+(*       (CompDec.CompDec A -> CompDec.CompDec B -> CompDec.CompDec Z -> forall (a:A), a = a) -> *)
+(*       (CompDec.CompDec B -> CompDec.CompDec Z -> forall (x:Z), x = x) *)
+(*     -> True. *)
+(* Proof. *)
+(*   intros A B HA H1 H2. *)
+(*   remove_compdec_hyps []. *)
+(*   remove_compdec_hyps [@H1; @H2]. *)
+(*   Show 2. *)
+(* Abort. *)
 
 
 (* Perform all the preprocessing *)
