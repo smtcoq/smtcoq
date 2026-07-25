@@ -1,0 +1,39 @@
+name: Build SMTCoq against reverse dependencies
+
+on:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reverse:
+    name: ${{ matrix.name }}
+    secrets:
+      ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
+      ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Sniper
+            repository: github:SMTCoq/Sniper
+            override-input: SMTCoq
+
+    uses: rocq-trakt/trakt/.github/workflows/matrix-template.yml@master
+    with:
+      repository: ${{ matrix.repository }}
+      override-input: ${{ matrix.override-input }}
+
+  reverse-success:
+    if: ${{ always() }}
+    needs: reverse
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Has the matrix failed?
+        if: ${{ needs.reverse.result != 'success' }}
+        run: exit 1
