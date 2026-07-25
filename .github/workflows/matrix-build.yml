@@ -1,0 +1,30 @@
+name: Build SMTCoq against supported released versions
+
+on:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: SMTCoq
+    secrets:
+      ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
+      ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+
+    uses: rocq-trakt/trakt/.github/workflows/matrix-template.yml@master
+    with:
+      repository: .
+
+  build-success:
+    if: ${{ always() }}
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Has the build matrix failed?
+        if: ${{ needs.build.result != 'success' }}
+        run: exit 1
