@@ -6,29 +6,19 @@ on:
   pull_request:
     branches: [ rocq-master ]
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 4 * * 5'
   workflow_dispatch:
     inputs:
       rocq:
-        default: "master"
-        description: "Rocq version or commit"
-        required: true
+        description: Rocq version or commit
       stdlib:
-        default: "master"
-        description: "Stdlib version or commit"
-        required: true
+        description: Stdlib version or commit
       rocq-elpi:
-        default: "master"
-        description: "Rocq-Elpi version or commit"
-        required: true
+        description: Rocq-Elpi version or commit
       trakt:
-        default: "master"
-        description: "Trakt version or commit"
-        required: true
+        description: Trakt version or commit
       smtcoq:
-        default: "rocq-master"
-        description: "SMTCoq version or commit"
-        required: true
+        description: SMTCoq version or commit
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
