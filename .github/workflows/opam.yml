@@ -1,0 +1,28 @@
+name: Build SMTCoq with Docker
+
+on:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  opam:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: coq-community/docker-coq-action@v1
+        with:
+          opam_file: rocq-smtcoq.opam
+          custom_image: ghcr.io/rocq-trakt/rocq:latest
+
+          install: |
+            startGroup "Install dependencies"
+              opam pin add -n -y rocq-trakt git+https://github.com/rocq-trakt/trakt
+              opam pin add -n -y -k path $PACKAGE $WORKDIR
+              opam install --confirm-level=yes -j 2 $PACKAGE --deps-only
+            endGroup
