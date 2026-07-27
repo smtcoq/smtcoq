@@ -18,8 +18,8 @@ jobs:
 
       - name: Verify dune style
         run: |
-          find . -name dune -o -name dune-project \
-              -exec bash -c 'diff -u {} <(dune format-dune-file {})' \;
+          find . -name dune -o -name dune-project | \
+            nix shell nixpkgs#dune -c xargs -I {} bash -c 'diff -u {} <(dune format-dune-file {})'
 
       - name: Verify Nix style
         run: nix fmt . -- --ci
