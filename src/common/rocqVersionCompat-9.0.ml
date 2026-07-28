@@ -19,3 +19,6 @@ let evd_univ_entry evd = Evd.univ_entry ~poly:false evd
 (* TODO: when switching to econstr, may have universe constraints *)
 let empty_named_universes_entry =
   UState.univ_entry ~poly:false UState.empty
+
+(* [Constr.hash] was moved to [Termops.ConstrData] in Rocq 9.3. *)
+let hash_constr = Constr.hash

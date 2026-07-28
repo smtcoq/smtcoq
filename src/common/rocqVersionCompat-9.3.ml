@@ -11,20 +11,14 @@
 
 
 type constr_expr = Constrexpr.constr_expr
-val ppconstr_modular_constr_pr :
-  ((unit -> Pp.t) ->
-   int option ->
-   Constrexpr.entry_relative_level -> constr_expr -> Pp.t) ->
-  (unit -> Pp.t) ->
-  int option ->
-  Constrexpr.entry_relative_level -> constr_expr -> Pp.t
-val constrextern_extern_constr :
-  ?inctx:bool ->
-  ?scope:Notation_term.scope_name ->
-  Environ.env -> Evd.evar_map -> EConstr.constr -> constr_expr
+let ppconstr_modular_constr_pr = Ppconstr.modular_constr_pr ~flags:(Ppconstr.current_flags())
+let constrextern_extern_constr = Constrextern.extern_constr ~flags:(PrintingFlags.current())
 
-val evd_univ_entry : Evd.evar_map -> UState.named_universes_entry
+let evd_univ_entry evd = Evd.univ_entry ~poly:PolyFlags.default evd
 
-val empty_named_universes_entry : UState.named_universes_entry
+(* TODO: when switching to econstr, may have universe constraints *)
+let empty_named_universes_entry =
+  UState.univ_entry ~poly:PolyFlags.default UState.empty
 
-val hash_constr : Constr.t -> int
+(* [Constr.hash] was moved to [Termops.ConstrData] in Rocq 9.3. *)
+let hash_constr = Termops.ConstrData.hash
