@@ -1695,3 +1695,145 @@ Register Stdlib.Bool.Bool.ifb as core.bool.ifb.
 Register Stdlib.Bool.Bool.reflect as core.bool.reflect.
 Register Corelib.Init.Datatypes.length as core.list.length.
 Register Stdlib.micromega.ZMicromega.ZArithProof as micromega.ZMicromega.ZArithProof.
+
+
+(* Ltac2 helpers *)
+
+From Ltac2 Require Import Ltac2.
+From Ltac2 Require Import Printf.
+
+
+(* Transform a list of constr into a constr tuple and vice versa *)
+
+Ltac2 rec tupleify_aux l acc :=
+  match l with
+  | [] => acc
+  | x::xs => tupleify_aux xs '($acc, $x)
+  end.
+
+Ltac2 tupleify l :=
+  match l with
+  | [] => '(@None unit)
+  | x::xs =>
+      let r := tupleify_aux xs x in
+      '(Some $r)
+  end.
+
+(* Goal True. *)
+(*   let t := tupleify [] in printf "%t" t. *)
+(*   let t := tupleify ['O; 'Type; '(list nat)] in printf "%t" t. *)
+(* Abort. *)
+
+
+Ltac2 rec untupleify_aux t acc :=
+  match! t with
+  | (?t1, ?t2) =>
+      let acc1 := untupleify_aux t1 acc in
+      let acc2 := untupleify_aux t2 acc1 in
+      acc2
+  | _ => t::acc
+  end.
+
+Ltac2 untupleify t := untupleify_aux t [].
+
+(* Goal True. *)
+(*   let l := untupleify '(O, Type, list nat) in List.iter (fun t => printf "%t" t) l. *)
+(* Abort. *)
+
+
+(* Generalize a list of hypotheses *)
+
+Ltac2 generalize_hyps hs :=
+  List.iter (
+      fun h => ltac1:(h |- generalize h) (Ltac1.of_constr h)
+  ) hs.
+
+(* Goal True. *)
+(*   generalize_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons]. *)
+(* Abort. *)
+
+
+(* Assert a list of hypotheses *)
+
+Ltac2 pose_hyps_aux hs acc id :=
+  List.fold_left (
+    fun (a, ids) h' =>
+      (* Starting from 9.1, the following two lines can be replaced by Fresh.next *)
+      let h := Fresh.fresh ids id in
+      let ids' := Fresh.Free.union ids (Fresh.Free.of_ids [h]) in
+      ltac1:(h h' |- assert (h := h')) (Ltac1.of_ident h) (Ltac1.of_constr h');
+      (h::a, ids')
+  ) acc hs.
+
+Ltac2 pose_hyps hs acc :=
+  match Ident.of_string "H" with
+  | Some id =>
+      let (r, _) := pose_hyps_aux hs (acc, Fresh.Free.of_goal ()) id in
+      r
+  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Misc.pose_hyps")))
+  end.
+
+(* Goal True. *)
+(*   let hs := pose_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] [] in *)
+(*   List.iter (fun h => Message.print (Message.of_ident h)) hs. *)
+(* Abort. *)
+
+
+(* Revert a list of hypotheses *)
+
+Ltac2 rec revert_hyps hs :=
+  match hs with
+  | [] => ()
+  | h::hs => ltac1:(h |- revert h) (Ltac1.of_ident h); revert_hyps hs
+  end.
+
+(* Goal True = True -> false = false -> True. *)
+(* Proof. *)
+(*   intros H1 H2. *)
+(*   revert_hyps []. *)
+(*   revert_hyps [@H1; @H2]. *)
+(* Abort. *)
+
+
+(* Introduce hypotheses and return the names of hypothesis of sort Prop *)
+
+Ltac2 rec intros_and_return_props_aux acc name :=
+  match! goal with
+  | [ |- forall (_ : ?t), _ ] =>
+      let h := Fresh.in_goal name in
+      ltac1:(h |- intro h) (Ltac1.of_ident h);
+      match! Constr.type t with
+      | Prop => intros_and_return_props_aux (h::acc) name
+      | _ => intros_and_return_props_aux acc name
+      end
+  | [ |- _ ] => acc
+  end.
+
+Ltac2 intros_and_return_props () :=
+  match Ident.of_string "H" with
+  | Some name => intros_and_return_props_aux [] name
+  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Misc.intros_and_return_props")))
+  end.
+
+(* Goal forall (A B:Type) (a:A), a = a -> forall (b:B), b = b -> True. *)
+(* Proof. *)
+(*   let hs := intros_and_return_props () in *)
+(*   List.iter (fun h => printf "%I" h) hs. *)
+(* Abort. *)
+
+
+(* Collection all the hypotheses of type Prop *)
+
+Ltac2 get_hyps_prop () :=
+  let h := Control.hyps () in
+  let hs := List.filter (
+                fun x =>
+                  match x with
+                  | (_, _, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
+                  end
+            ) h
+  in
+  List.map (fun (id, _, v) => (id, v)) hs.
+
+
+Set Default Proof Mode "Classic".

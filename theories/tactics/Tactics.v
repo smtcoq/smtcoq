@@ -12,7 +12,8 @@
 
 From Stdlib Require Import Uint63 List Bool ZArith.
 From Trakt Require Import Trakt.
-From Ltac2 Require Import Ltac2.
+From Ltac2 Require Import Ltac2 Bool.
+Set Default Proof Mode "Classic".
 
 From SMTCoq.utils Require Import PArray.
 From SMTCoq.structures Require Import CompDecInstances.
@@ -23,276 +24,128 @@ Require Import Conversion QInst.
 
 Declare ML Module "rocq-smtcoq.smtcoq".
 
-(** A printer for testing Ltac2 functions returning hypothesis *)
 
-Ltac2 rec hyps_printer (h : (ident * constr option * constr) list) 
-:=
-match h with
-| [] => ()
-| x :: xs => match x with
-            | (id, _, cstr) => 
-let () := Message.print (Message.concat (Message.of_ident id)
-                                        (Message.concat (Message.of_string " : ")
-                                                        (Message.of_constr cstr))) 
-in hyps_printer xs
-end 
-end.
-
-
-(* Collect all the hypotheses from the context *)
-
-Ltac2 get_hyps_aux () :=
-let h := Control.hyps () in
-List.filter (fun x => match x with
-                    | (_, _, c) => let ty := Constr.type c in Constr.equal ty '(Prop)
-                    end) h.
-
-Ltac2 get_hyps_ltac2 () :=
-let hs := get_hyps_aux () in
-match hs with
-| [] => '(@None nat)
-| x :: xs => 
-    match x with
-    | (id, _, _) => 
-    let h := Control.hyp id in
-    let rec tac_aux xs acc :=
-      match xs with
-      | y :: ys => 
-        match y with
-        | (id', _, _) => 
-        let h1 := Control.hyp id' in let res := tac_aux ys acc in '($h1, $res)
-        end
-      | [] => acc
-      end in let res := tac_aux xs h in '(Some ($res))
-  end
-end. 
-
-Ltac2 get_hyps_cont_ltac1 (tac : Ltac1.t -> unit) := 
-Control.enter (fun () =>
-let hs := Ltac1.of_constr (get_hyps_ltac2 ()) in
-tac hs).
-
-(*
-Section Test.
-Variable A : Type.
-Hypothesis H1 : forall a:A, a = a.
-Variable n : Z.
-Hypothesis H2 : n = 17%Z.
-
-Goal True.
-Proof.
-let hs := get_hyps_aux () in hyps_printer hs. 
-let hs := get_hyps_ltac2 () in Message.print (Message.of_constr hs).
-get_hyps_cont_ltac1 ltac1:(H |- idtac H).
-Abort.
-
-Goal True.
-Proof. clear A H1 n H2.
-let hs := get_hyps_aux () in hyps_printer hs. 
-let hs := get_hyps () in Message.print (Message.of_constr hs).
-Abort.
-End Test.  *)
-
-
-
-(** Tactics in bool *)
-
-Ltac verit_bool_base_auto h := verit_bool_base h; try (exact _).
-Ltac verit_bool_no_check_base_auto h := verit_bool_no_check_base h; try (exact _).
-
-Tactic Notation "verit_bool" constr(h) :=
-  let tac :=
-  ltac2:(h |- get_hyps_cont_ltac1
-  (ltac1:(h hs |- 
-  match hs with
-  | Some ?hs => verit_bool_base_auto (Some (h, hs))
-  | None => verit_bool_base_auto (Some h)
-  end;
-  vauto) h)) in tac h.
-
-Tactic Notation "verit_bool" :=
-  ltac2:(get_hyps_cont_ltac1 ltac1:(hs |- verit_bool_base_auto hs; vauto)).
-
-Tactic Notation "verit_bool_no_check" constr(h) :=
-  let tac :=
-  ltac2:(h |- get_hyps_cont_ltac1 (ltac1:(h hs |-
-  match hs with
-  | Some ?hs => verit_bool_no_check_base_auto (Some (h, hs))
-  | None => verit_bool_no_check_base_auto (Some h)
-  end;
-  vauto) h)) in tac h.
-
-Tactic Notation "verit_bool_no_check" :=
-  ltac2:(get_hyps_cont_ltac1 ltac1:(hs |- verit_bool_no_check_base_auto hs; vauto)).
-
-
-(** Tactics in bool with timeout **)
-
-Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_base_timeout h timeout; auto with typeclass_instances.
-Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) := verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
-(* Ltac verit_bool_base_auto_timeout h timeout := *)
-(*   verit_bool_base_timeout h timeout; auto with typeclass_instances. *)
-(* Ltac verit_bool_no_check_base_auto_timeout h timeout := *)
-(*   verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances. *)
-
-Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
-  let tac :=
-  ltac2:(h timeout |- get_hyps_cont_ltac1
-  (ltac1:(h timeout hs |- 
-  match hs with
-  | Some ?hs => verit_bool_base_auto_timeout (Some (h, hs)) timeout
-  | None => verit_bool_base_auto_timeout (Some h) timeout
-  end;
-  vauto) h timeout)) in tac h timeout.
-
-Tactic Notation "verit_bool_timeout" int_or_var(timeout) :=
-  let tac :=
-  ltac2:(timeout |- get_hyps_cont_ltac1 (ltac1:(timeout hs |- verit_bool_base_auto_timeout hs timeout; vauto) timeout))
-  in tac timeout.
-
-Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
-  let tac :=
-  ltac2:(h timeout |- get_hyps_cont_ltac1
-  (ltac1:(h timeout hs |- 
-  match hs with
-  | Some ?hs => verit_bool_no_check_base_auto_timeout (Some (h, hs)) timeout
-  | None => verit_bool_no_check_base_auto_timeout (Some h) timeout
-  end;
-  vauto) h timeout)) in tac h timeout.
-
-Tactic Notation "verit_bool_no_check_timeout"   int_or_var(timeout)        :=
-  let tac :=
-  ltac2:(timeout |- get_hyps_cont_ltac1 (ltac1:(timeout hs |- verit_bool_no_check_base_auto_timeout hs timeout; vauto) timeout))
-  in tac timeout.
-
-
-
-(** Tactics in Prop **)
+(** ZChaff tactics **)
 
 Ltac zchaff          := trakt bool; Tactics.zchaff_bool.
 Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check.
 
-Ltac verit_tac global veritbool veritboolto to :=
-  let tac :=
-  ltac2:(h veritbool veritboolto to |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h veritbool veritboolto to local |-
-  let Hsglob :=
-    match h with
-    | Some ?h' => pose_hyps h' (@None unit)
-    | None => constr:(@None unit)
-    end
-  in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    match to with
-      | Some ?t => veritboolto Hs' t
-      | None => veritbool Hs'
-    end;
-    QInst.vauto
-  ]) h veritbool veritboolto to))
-  in
-  tac global veritbool veritboolto to.
+
+(** verit tactics *)
+
+Ltac verit_bool_base_auto h := verit_bool_base h; try (exact _).
+Ltac verit_bool_no_check_base_auto h := verit_bool_no_check_base h; try (exact _).
+
+Tactic Notation "verit_bool_base_auto_timeout" constr(h) int_or_var(timeout) :=
+  verit_bool_base_timeout h timeout; auto with typeclass_instances.
+Tactic Notation "verit_bool_no_check_base_auto_timeout" constr(h) int_or_var(timeout) :=
+  verit_bool_no_check_base_timeout h timeout; auto with typeclass_instances.
 
 
-Tactic Notation "verit" constr(global) :=
-  verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto (@None unit).
-Tactic Notation "verit"                :=
-  verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto (@None unit).
-Tactic Notation "verit_no_check" constr(global) :=
-  verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit).
-Tactic Notation "verit_no_check"                :=
-  verit_tac (@None unit) verit_bool_no_check_base_auto verit_bool_no_check_base_auto (@None unit).
-(* Tactic Notation "verit_timeout" constr(global) constr(timeout) := *)
-(*   verit_tac (Some global) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout). *)
-(* Tactic Notation "verit_timeout"                constr(timeout) := *)
-(*   verit_tac (@None unit) verit_bool_base_auto verit_bool_base_auto_timeout (Some timeout). *)
-(* Tactic Notation "verit_no_check_timeout" constr(global) constr(timeout) := *)
-(*   verit_tac (Some global) verit_bool_no_check_base_auto verit_bool_no_check_base_auto_timeout (Some timeout). *)
+Ltac2 global_of_ltac1_constr h :=
+  match Ltac1.to_constr h with
+  | Some h => untupleify h
+  | None => []
+  end.
 
-Tactic Notation "verit_timeout" constr(global) int_or_var(timeout) :=
-  let tac :=
-  ltac2:(h timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h timeout local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) h timeout)) in tac global timeout.
+Ltac2 ltac2_int_of_ltac1_int_def0 i :=
+  match Ltac1.to_int i with
+  | Some t => t
+  | None => 0
+  end.
 
-Tactic Notation "verit_timeout"           int_or_var(timeout) :=
-  let tac :=
-  ltac2:(timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(timeout local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) timeout)) in tac timeout.
+Ltac2 verit_call_tactic nocheck timeout r :=
+  if nocheck && (Int.equal timeout 0) then
+    ltac1:(r |- verit_bool_no_check_base_auto r) (Ltac1.of_constr r)
+  else if nocheck && (Int.gt timeout 0) then
+    ltac1:(r t |- verit_bool_no_check_base_auto_timeout r t)
+            (Ltac1.of_constr r) (Ltac1.of_int timeout)
+  else if (neg nocheck) && (Int.equal timeout 0) then
+    ltac1:(r |- verit_bool_base_auto r) (Ltac1.of_constr r)
+  else if (neg nocheck) && (Int.gt timeout 0) then
+    ltac1:(r t |- verit_bool_base_auto_timeout r t)
+            (Ltac1.of_constr r) (Ltac1.of_int timeout)
+  else
+    Control.throw (Tactic_failure (Some (Message.of_string "timeout should be non-negative"))).
 
-Tactic Notation "verit_no_check_timeout" constr(global) int_or_var(timeout) :=
-  let tac :=
-  ltac2:(h timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(h timeout local |-
-  let Hsglob := pose_hyps h (@None unit) in
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' Hsglob
-      | None => constr:(Hsglob)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_no_check_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) h timeout)) in tac global timeout.
-
-Tactic Notation "verit_no_check_timeout"           int_or_var(timeout) :=
-  let tac :=
-  ltac2:(timeout |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(timeout local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    verit_bool_no_check_base_auto_timeout Hs' timeout;
-    QInst.vauto
-  ]) timeout)) in tac timeout.
+Ltac2 verit_tac global inbool nocheck timeout addcompdecs :=
+  Control.enter (fun () =>
+    ltac1:(intros; unfold is_true in *);
+    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let hsglob := pose_hyps global [] in
+    let hs := pose_hyps local hsglob in
+    if inbool then (
+      let r := tupleify (List.map Control.hyp hs) in
+      verit_call_tactic nocheck timeout r
+    ) else (
+        preprocess1 addcompdecs hs;
+        let n := Control.numgoals () in
+        Control.focus n n (fun () =>
+          let hs' := preprocess2 () in
+          let hs' := List.map Control.hyp hs' in
+          let r := tupleify hs' in
+          verit_call_tactic nocheck timeout r
+        )
+    );
+    ltac1:(QInst.vauto)
+  ).
 
 
-(* CVC4 *)
+Tactic Notation "verit_bool" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) true false 0 true) in
+  tac h.
+Tactic Notation "verit_bool" := ltac2:(verit_tac [] true false 0 true).
+Tactic Notation "verit_bool_no_check" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) true true 0 true) in
+  tac h.
+Tactic Notation "verit_bool_no_check" := ltac2:(verit_tac [] true true 0 true).
+
+Tactic Notation "verit" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false false 0 true) in
+  tac h.
+Tactic Notation "verit" := ltac2:(verit_tac [] false false 0 true).
+Tactic Notation "verit_no_check" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0 true) in
+  tac h.
+Tactic Notation "verit_no_check" := ltac2:(verit_tac [] false true 0 true).
+
+Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true false (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac h timeout.
+Tactic Notation "verit_bool_timeout" int_or_var(timeout) :=
+  let tac := ltac2:(t |- verit_tac [] true false (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac timeout.
+Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true true (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac h timeout.
+Tactic Notation "verit_bool_no_check_timeout" int_or_var(timeout) :=
+  let tac := ltac2:(t |- verit_tac [] true true (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac timeout.
+
+Tactic Notation "verit_timeout" constr(h) int_or_var(timeout) :=
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false false (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac h timeout.
+Tactic Notation "verit_timeout" int_or_var(timeout) :=
+  let tac := ltac2:(t |- verit_tac [] false false (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac timeout.
+Tactic Notation "verit_no_check_timeout" constr(h) int_or_var (timeout) :=
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false true (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac h timeout.
+Tactic Notation "verit_no_check_timeout" int_or_var(timeout) :=
+  let tac := ltac2:(t |- verit_tac [] false true (ltac2_int_of_ltac1_int_def0 t) true) in
+  tac timeout.
+
+Tactic Notation "verit_no_check_nocompdecs" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0 false) in
+  tac h.
+Tactic Notation "verit_no_check_nocompdecs" := ltac2:(verit_tac [] false true 0 false).
+Tactic Notation "verit_nocompdecs" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false false 0 false) in
+  tac h.
+Tactic Notation "verit_nocompdecs" := ltac2:(verit_tac [] false false 0 false).
+
+
+(* CVC4 tactics *)
 From SMTCoq.tactics.preproc Require Import ReflectFacts.
 
 Ltac prop2boolImp :=
@@ -303,33 +156,24 @@ Ltac prop2boolImp :=
         [ | apply implyP]
     end.
 
-Tactic Notation "cvc4"          :=
-  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    prop2boolImp;
-    cvc4_bool
-  ])).
+Ltac2 cvc4_tac nocheck :=
+  Control.enter (fun () =>
+    ltac1:(intros; unfold is_true in *);
+    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let hs := pose_hyps local [] in
+    preprocess1 true hs;
+    let n := Control.numgoals () in
+    Control.focus n n (fun () =>
+      ltac1:(prop2boolImp);
+      if nocheck then
+        ltac1:(cvc4_bool_no_check)
+      else
+        ltac1:(cvc4_bool)
+    )
+  ).
 
-Tactic Notation "cvc4_no_check" :=
-  ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    prop2boolImp;
-    cvc4_bool_no_check
-  ])).
+Tactic Notation "cvc4"          := ltac2:(cvc4_tac false).
+Tactic Notation "cvc4_no_check" := ltac2:(cvc4_tac true).
 
 Tactic Notation "smt" constr(h) := try verit h; cvc4; try verit h.
 Tactic Notation "smt"           := try verit  ; cvc4; try verit.
@@ -338,20 +182,23 @@ Tactic Notation "smt_no_check" constr(h) :=
 Tactic Notation "smt_no_check"           :=
   try verit_no_check  ; cvc4_no_check; try verit_no_check.
 
+Ltac2 abduce_tac i :=
+  Control.enter (fun () =>
+    ltac1:(intros; unfold is_true in *);
+    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let hs := pose_hyps local [] in
+    preprocess1 true hs;
+    let n := Control.numgoals () in
+    Control.focus n n (fun () =>
+      let hs' := preprocess2 () in
+      let hs' := List.map Control.hyp hs' in
+      let r := tupleify hs' in
+      ltac1:(i r |- cvc5_bool_abduct i r)
+              (Ltac1.of_int i) (Ltac1.of_constr r);
+      ltac1:(QInst.vauto)
+    )
+  ).
+
 Tactic Notation "abduce" int_or_var(i) :=
-  let tac :=
-  ltac2:(i |- intros; unfold is_true in *; get_hyps_cont_ltac1
-  (ltac1:(i local |-
-  let Hs :=
-      lazymatch local with
-      | Some ?local' => pose_hyps local' (@None unit)
-      | None => constr:(@None unit)
-      end
-  in
-  preprocess1 Hs;
-  [ .. |
-    let Hs' := intros_names in
-    preprocess2 Hs';
-    cvc5_bool_abduct i Hs';
-    QInst.vauto
-  ]) i)) in tac i.
+  let tac := ltac2:(i |- abduce_tac (ltac2_int_of_ltac1_int_def0 i)) in
+  tac i.
