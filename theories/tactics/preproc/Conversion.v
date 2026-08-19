@@ -267,9 +267,9 @@ Ltac2 rec post_trakt hs :=
 
 (* Perform all the preprocessing *)
 
-Ltac2 preprocess1 hs :=
+Ltac2 preprocess1 addcompdecs hs :=
   Control.enter (fun () =>
-    add_compdecs ();
+    if addcompdecs then add_compdecs () else ();
     let n := Control.numgoals () in
     Control.focus n n (fun () =>
       remove_compdec_hyps hs;

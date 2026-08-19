@@ -68,7 +68,7 @@ Ltac2 verit_call_tactic nocheck timeout r :=
   else
     Control.throw (Tactic_failure (Some (Message.of_string "timeout should be non-negative"))).
 
-Ltac2 verit_tac global inbool nocheck timeout :=
+Ltac2 verit_tac global inbool nocheck timeout addcompdecs :=
   Control.enter (fun () =>
     ltac1:(intros; unfold is_true in *);
     let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
@@ -78,7 +78,7 @@ Ltac2 verit_tac global inbool nocheck timeout :=
       let r := tupleify (List.map Control.hyp hs) in
       verit_call_tactic nocheck timeout r
     ) else (
-        preprocess1 hs;
+        preprocess1 addcompdecs hs;
         let n := Control.numgoals () in
         Control.focus n n (fun () =>
           let hs' := preprocess2 () in
@@ -92,48 +92,57 @@ Ltac2 verit_tac global inbool nocheck timeout :=
 
 
 Tactic Notation "verit_bool" constr(h) :=
-  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) true false 0) in
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) true false 0 true) in
   tac h.
-Tactic Notation "verit_bool" := ltac2:(verit_tac [] true false 0).
+Tactic Notation "verit_bool" := ltac2:(verit_tac [] true false 0 true).
 Tactic Notation "verit_bool_no_check" constr(h) :=
-  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) true true 0) in
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) true true 0 true) in
   tac h.
-Tactic Notation "verit_bool_no_check" := ltac2:(verit_tac [] true true 0).
+Tactic Notation "verit_bool_no_check" := ltac2:(verit_tac [] true true 0 true).
 
 Tactic Notation "verit" constr(h) :=
-  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false false 0) in
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false false 0 true) in
   tac h.
-Tactic Notation "verit" := ltac2:(verit_tac [] false false 0).
+Tactic Notation "verit" := ltac2:(verit_tac [] false false 0 true).
 Tactic Notation "verit_no_check" constr(h) :=
-  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0) in
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0 true) in
   tac h.
-Tactic Notation "verit_no_check" := ltac2:(verit_tac [] false true 0).
+Tactic Notation "verit_no_check" := ltac2:(verit_tac [] false true 0 true).
 
 Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true false (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true false (ltac2_int_of_ltac1_int_def0 t) true) in
   tac h timeout.
 Tactic Notation "verit_bool_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] true false (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(t |- verit_tac [] true false (ltac2_int_of_ltac1_int_def0 t) true) in
   tac timeout.
 Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true true (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true true (ltac2_int_of_ltac1_int_def0 t) true) in
   tac h timeout.
 Tactic Notation "verit_bool_no_check_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] true true (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(t |- verit_tac [] true true (ltac2_int_of_ltac1_int_def0 t) true) in
   tac timeout.
 
 Tactic Notation "verit_timeout" constr(h) int_or_var(timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false false (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false false (ltac2_int_of_ltac1_int_def0 t) true) in
   tac h timeout.
 Tactic Notation "verit_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] false false (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(t |- verit_tac [] false false (ltac2_int_of_ltac1_int_def0 t) true) in
   tac timeout.
 Tactic Notation "verit_no_check_timeout" constr(h) int_or_var (timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false true (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false true (ltac2_int_of_ltac1_int_def0 t) true) in
   tac h timeout.
 Tactic Notation "verit_no_check_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] false true (ltac2_int_of_ltac1_int_def0 t)) in
+  let tac := ltac2:(t |- verit_tac [] false true (ltac2_int_of_ltac1_int_def0 t) true) in
   tac timeout.
+
+Tactic Notation "verit_no_check_nocompdecs" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0 false) in
+  tac h.
+Tactic Notation "verit_no_check_nocompdecs" := ltac2:(verit_tac [] false true 0 false).
+Tactic Notation "verit_nocompdecs" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false false 0 false) in
+  tac h.
+Tactic Notation "verit_nocompdecs" := ltac2:(verit_tac [] false false 0 false).
 
 
 (* CVC4 tactics *)
@@ -152,7 +161,7 @@ Ltac2 cvc4_tac nocheck :=
     ltac1:(intros; unfold is_true in *);
     let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
     let hs := pose_hyps local [] in
-    preprocess1 hs;
+    preprocess1 true hs;
     let n := Control.numgoals () in
     Control.focus n n (fun () =>
       ltac1:(prop2boolImp);
@@ -178,7 +187,7 @@ Ltac2 abduce_tac i :=
     ltac1:(intros; unfold is_true in *);
     let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
     let hs := pose_hyps local [] in
-    preprocess1 hs;
+    preprocess1 true hs;
     let n := Control.numgoals () in
     Control.focus n n (fun () =>
       let hs' := preprocess2 () in
