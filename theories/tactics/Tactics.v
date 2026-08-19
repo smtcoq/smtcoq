@@ -25,6 +25,12 @@ Require Import Conversion QInst.
 Declare ML Module "rocq-smtcoq.smtcoq".
 
 
+(** ZChaff tactics **)
+
+Ltac zchaff          := trakt bool; Tactics.zchaff_bool.
+Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check.
+
+
 (** verit tactics *)
 
 Ltac verit_bool_base_auto h := verit_bool_base h; try (exact _).
@@ -42,7 +48,7 @@ Ltac2 global_of_ltac1_constr h :=
   | None => []
   end.
 
-Ltac2 timeout_of_ltac1_int i :=
+Ltac2 ltac2_int_of_ltac1_int_def0 i :=
   match Ltac1.to_int i with
   | Some t => t
   | None => 0
@@ -104,98 +110,86 @@ Tactic Notation "verit_no_check" constr(h) :=
 Tactic Notation "verit_no_check" := ltac2:(verit_tac [] false true 0).
 
 Tactic Notation "verit_bool_timeout" constr(h) int_or_var(timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true false (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true false (ltac2_int_of_ltac1_int_def0 t)) in
   tac h timeout.
 Tactic Notation "verit_bool_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] true false (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(t |- verit_tac [] true false (ltac2_int_of_ltac1_int_def0 t)) in
   tac timeout.
 Tactic Notation "verit_bool_no_check_timeout" constr(h) int_or_var (timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true true (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) true true (ltac2_int_of_ltac1_int_def0 t)) in
   tac h timeout.
 Tactic Notation "verit_bool_no_check_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] true true (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(t |- verit_tac [] true true (ltac2_int_of_ltac1_int_def0 t)) in
   tac timeout.
 
 Tactic Notation "verit_timeout" constr(h) int_or_var(timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false false (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false false (ltac2_int_of_ltac1_int_def0 t)) in
   tac h timeout.
 Tactic Notation "verit_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] false false (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(t |- verit_tac [] false false (ltac2_int_of_ltac1_int_def0 t)) in
   tac timeout.
 Tactic Notation "verit_no_check_timeout" constr(h) int_or_var (timeout) :=
-  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false true (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false true (ltac2_int_of_ltac1_int_def0 t)) in
   tac h timeout.
 Tactic Notation "verit_no_check_timeout" int_or_var(timeout) :=
-  let tac := ltac2:(t |- verit_tac [] false true (timeout_of_ltac1_int t)) in
+  let tac := ltac2:(t |- verit_tac [] false true (ltac2_int_of_ltac1_int_def0 t)) in
   tac timeout.
 
 
-(* (** Tactics in Prop **) *)
+(* CVC4 tactics *)
+From SMTCoq.tactics.preproc Require Import ReflectFacts.
 
-(* Ltac zchaff          := trakt bool; Tactics.zchaff_bool. *)
-(* Ltac zchaff_no_check := trakt bool; Tactics.zchaff_bool_no_check. *)
+Ltac prop2boolImp :=
+  repeat
+    match goal with
+    | [ |- context[?G0 = true -> ?G1 = true ] ] =>
+        rewrite (@reflect_iff (G0 = true -> G1 = true) (implb G0 G1));
+        [ | apply implyP]
+    end.
 
+Ltac2 cvc4_tac nocheck :=
+  Control.enter (fun () =>
+    ltac1:(intros; unfold is_true in *);
+    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let hs := pose_hyps local [] in
+    preprocess1 hs;
+    let n := Control.numgoals () in
+    Control.focus n n (fun () =>
+      ltac1:(prop2boolImp);
+      if nocheck then
+        ltac1:(cvc4_bool_no_check)
+      else
+        ltac1:(cvc4_bool)
+    )
+  ).
 
-(* (* CVC4 *) *)
-(* From SMTCoq.tactics.preproc Require Import ReflectFacts. *)
+Tactic Notation "cvc4"          := ltac2:(cvc4_tac false).
+Tactic Notation "cvc4_no_check" := ltac2:(cvc4_tac true).
 
-(* Ltac prop2boolImp := *)
-(*   repeat *)
-(*     match goal with *)
-(*     | [ |- context[?G0 = true -> ?G1 = true ] ] => *)
-(*         rewrite (@reflect_iff (G0 = true -> G1 = true) (implb G0 G1)); *)
-(*         [ | apply implyP] *)
-(*     end. *)
+Tactic Notation "smt" constr(h) := try verit h; cvc4; try verit h.
+Tactic Notation "smt"           := try verit  ; cvc4; try verit.
+Tactic Notation "smt_no_check" constr(h) :=
+  try verit_no_check h; cvc4_no_check; try verit_no_check h.
+Tactic Notation "smt_no_check"           :=
+  try verit_no_check  ; cvc4_no_check; try verit_no_check.
 
-(* Tactic Notation "cvc4"          := *)
-(*   ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |- *)
-(*   let Hs := *)
-(*       lazymatch local with *)
-(*       | Some ?local' => pose_hyps local' (@None unit) *)
-(*       | None => constr:(@None unit) *)
-(*       end *)
-(*   in *)
-(*   preprocess1 Hs; *)
-(*   [ .. | *)
-(*     prop2boolImp; *)
-(*     cvc4_bool *)
-(*   ])). *)
+Ltac2 abduce_tac i :=
+  Control.enter (fun () =>
+    ltac1:(intros; unfold is_true in *);
+    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let hs := pose_hyps local [] in
+    preprocess1 hs;
+    let n := Control.numgoals () in
+    Control.focus n n (fun () =>
+      let hs' := preprocess2 () in
+      let hs' := List.map Control.hyp hs' in
+      let r := tupleify hs' in
+      ltac1:(i r |- cvc5_bool_abduct i r)
+              (Ltac1.of_int i) (Ltac1.of_constr r);
+      ltac1:(QInst.vauto)
+    )
+  ).
 
-(* Tactic Notation "cvc4_no_check" := *)
-(*   ltac2:(intros; unfold is_true in *; get_hyps_cont_ltac1 ltac1:(local |- *)
-(*   let Hs := *)
-(*       lazymatch local with *)
-(*       | Some ?local' => pose_hyps local' (@None unit) *)
-(*       | None => constr:(@None unit) *)
-(*       end *)
-(*   in *)
-(*   preprocess1 Hs; *)
-(*   [ .. | *)
-(*     prop2boolImp; *)
-(*     cvc4_bool_no_check *)
-(*   ])). *)
-
-(* Tactic Notation "smt" constr(h) := try verit h; cvc4; try verit h. *)
-(* Tactic Notation "smt"           := try verit  ; cvc4; try verit. *)
-(* Tactic Notation "smt_no_check" constr(h) := *)
-(*   try verit_no_check h; cvc4_no_check; try verit_no_check h. *)
-(* Tactic Notation "smt_no_check"           := *)
-(*   try verit_no_check  ; cvc4_no_check; try verit_no_check. *)
-
-(* Tactic Notation "abduce" int_or_var(i) := *)
-(*   let tac := *)
-(*   ltac2:(i |- intros; unfold is_true in *; get_hyps_cont_ltac1 *)
-(*   (ltac1:(i local |- *)
-(*   let Hs := *)
-(*       lazymatch local with *)
-(*       | Some ?local' => pose_hyps local' (@None unit) *)
-(*       | None => constr:(@None unit) *)
-(*       end *)
-(*   in *)
-(*   preprocess1 Hs; *)
-(*   [ .. | *)
-(*     let Hs' := intros_names in *)
-(*     preprocess2 Hs'; *)
-(*     cvc5_bool_abduct i Hs'; *)
-(*     QInst.vauto *)
-(*   ]) i)) in tac i. *)
+Tactic Notation "abduce" int_or_var(i) :=
+  let tac := ltac2:(i |- abduce_tac (ltac2_int_of_ltac1_int_def0 i)) in
+  tac i.
