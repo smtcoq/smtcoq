@@ -22,8 +22,8 @@ Section certif.
   Variable t_form : PArray.array Form.form.
   Variable t_atom : PArray.array Atom.atom.
 
-  Local Abbreviation get_atom := (PArray.get t_atom) (only parsing).
-  Local Abbreviation get_form := (PArray.get t_form) (only parsing).
+  Local Notation get_atom := (PArray.get t_atom) (only parsing).
+  Local Notation get_form := (PArray.get t_form) (only parsing).
 
   Definition get_eq (x:var) (f : int -> int -> C.t) :=
     match get_form x with
@@ -144,16 +144,16 @@ Section certif.
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Abbreviation interp_hatom :=
+    Local Notation interp_hatom :=
       (Atom.interp_hatom t_i t_func t_atom).
 
-    Local Abbreviation interp_form_hatom :=
+    Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
 
-    Local Abbreviation interp_form_hatom_bv :=
+    Local Notation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
 
-    Local Abbreviation rho :=
+    Local Notation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Let wf_t_atom : Atom.wf t_atom.
@@ -188,7 +188,7 @@ Section certif.
     Hint Variables Opaque : smtcoq_euf.
     Hint Resolve valid_C_true : smtcoq_euf.
 
-    Local Abbreviation interp := (Atom.interp t_i t_func t_atom).
+    Local Notation interp := (Atom.interp t_i t_func t_atom).
 
     Lemma wf_interp_form : forall x,
        rho x = Form.interp interp_form_hatom interp_form_hatom_bv t_form (t_form.[x]).
@@ -197,10 +197,10 @@ Section certif.
       destruct H; intros x;rewrite Form.wf_interp_form;trivial.
     Qed.
 
-    Local Abbreviation get_type :=
+    Local Notation get_type :=
         (Atom.get_type t_i t_func t_atom).
 
-    Local Abbreviation check_type :=
+    Local Notation check_type :=
         (Atom.check_aux t_i t_func get_type).
 
     Lemma get_eq_interp :

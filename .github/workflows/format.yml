@@ -1,0 +1,25 @@
+name: Verify writing style
+
+on:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: nixbuild/nix-quick-install-action@v35
+
+      - name: Verify dune style
+        run: |
+          find . -name dune -o -name dune-project | \
+            nix shell nixpkgs#dune -c xargs -I {} bash -c 'diff -u {} <(dune format-dune-file {})'
+
+      - name: Verify Nix style
+        run: nix fmt . -- --ci
