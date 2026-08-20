@@ -9,7 +9,7 @@ PROGRAM=smtcoq
 
 LIB=smtcoq_extr.cmx
 
-COQLIBPATH=$(shell ocamlfind query coq-core)/
+# COQLIBPATH=$(shell ocamlfind query rocq-runtime)/
 
 FLAGS=-rectypes
 COMPILEFLAGS=-for-pack Smtcoq_extr
@@ -38,7 +38,7 @@ COQUNITS=kernel lib library parsing pretyping interp proofs tactics toplevel \
 OCAMLC=ocamlc
 OCAMLOPT=ocamlopt
 OCAMLFIND=ocamlfind
-OCAMLFINDLIB=-thread -package zarith,num,findlib $(foreach x,$(COQUNITS),-package coq-core.$(x))
+OCAMLFINDLIB=-thread -package zarith,num,findlib $(foreach x,$(COQUNITS),-package rocq-runtime.$(x))
 
 
 all: $(LIB) $(PROGRAM)
