@@ -60,11 +60,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783585727,
-        "narHash": "sha256-GRKihDcL+6ySSS2FUHa1cjJnCk8RztXq5TvwYFfb0lY=",
+        "lastModified": 1787575763,
+        "narHash": "sha256-15nttb8eIUZynYXDZBuphktiUvlAtSlcMuiUwt1CpZY=",
         "owner": "lafeychine",
         "repo": "rocq-utils",
-        "rev": "f3e509c4fb9f4a0fbc1f3282f5a493e07bb55565",
+        "rev": "8c5b523502c83e940cf102f9b7956d738fbd8517",
         "type": "github"
       },
       "original": {
@@ -93,11 +93,11 @@
         "rocq-utils": "rocq-utils"
       },
       "locked": {
-        "lastModified": 1787124085,
-        "narHash": "sha256-pbT6FxEf+/OHFIAHNA446ry6hstwbdpVL+lmXSHEjS0=",
+        "lastModified": 1787580542,
+        "narHash": "sha256-1Zsy2of4SupbMjhQTZ3KC1r1zqarf41cdKSlefbWMTc=",
         "owner": "rocq-trakt",
         "repo": "trakt",
-        "rev": "a21310d84a55b86bfc55ee951ce43bc7384afb17",
+        "rev": "b245940ea5d942828c6bc00e42155931805d9474",
         "type": "github"
       },
       "original": {
