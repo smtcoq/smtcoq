@@ -27,6 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
 
+    env:
+      SMTCOQ: >-
+        ${{ github.event_name == 'pull_request' && 'dev' ||
+            github.event_name == 'schedule' && 'rocq-master' ||
+            github.event_name == 'workflow_dispatch' && (inputs.trakt || 'rocq-master') }}
+
     steps:
       - uses: actions/checkout@v7
       - uses: nixbuild/nix-quick-install-action@v35
@@ -46,5 +52,5 @@ jobs:
               stdlib = "${{ inputs.stdlib || 'master' }}";
               rocq-elpi = "${{ inputs.rocq-elpi || 'master' }}";
               trakt = "${{ inputs.trakt || 'master' }}";
-              smtcoq = "${{ inputs.smtcoq || 'rocq-master' }}";
+              smtcoq = builtins.getEnv "SMTCOQ";
             }' --print-build-logs
