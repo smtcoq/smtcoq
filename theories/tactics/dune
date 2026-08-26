@@ -3,6 +3,7 @@
  (package rocq-smtcoq)
  (name SMTCoq.tactics)
  (theories
+  micromega_plugin  ; we need micromega_plugin because dune doesn't handle transitive dependencies
   Stdlib
   Trakt
   Ltac2
