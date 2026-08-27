@@ -29,8 +29,8 @@ Section Operators.
   Variable t_form : PArray.array Form.form.
   Variable t_atom : PArray.array Atom.atom.
 
-  Local Notation get_form := (PArray.get t_form).
-  Local Notation get_atom := (PArray.get t_atom).
+  Local Abbreviation get_form := (PArray.get t_form).
+  Local Abbreviation get_atom := (PArray.get t_atom).
 
 
   Fixpoint check_in x l :=
@@ -261,11 +261,11 @@ intros. destruct H0; now contradict H0.
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Notation interp_form_hatom :=
+    Local Abbreviation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
-    Local Notation interp_form_hatom_bv :=
+    Local Abbreviation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
-    Local Notation rho :=
+    Local Abbreviation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Let wf_t_atom : Atom.wf t_atom.
@@ -368,11 +368,11 @@ intros. destruct H0; now contradict H0.
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Notation interp_form_hatom :=
+    Local Abbreviation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
-    Local Notation interp_form_hatom_bv :=
+    Local Abbreviation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
-    Local Notation rho :=
+    Local Abbreviation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
     Hypothesis interp_check_var : forall x y,
@@ -501,11 +501,11 @@ intros. destruct H0; now contradict H0.
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Notation interp_form_hatom :=
+    Local Abbreviation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
-    Local Notation interp_form_hatom_bv :=
+    Local Abbreviation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
-    Local Notation rho :=
+    Local Abbreviation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
 
