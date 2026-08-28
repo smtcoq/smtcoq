@@ -28,6 +28,7 @@ Section StrictOrder.
 End StrictOrder.
 
 Section Unit.
+
   Let eqb : unit -> unit -> bool := fun _ _ => true.
 
   Let lt : unit -> unit -> Prop := fun _ _ => False.
@@ -559,6 +560,73 @@ Section Uint63.
   |}.
 
 End Uint63.
+
+Section Comparison.
+
+  Definition comparison_eqb (c1 c2:comparison) : bool :=
+    match c1, c2 with
+    | Eq, Eq
+    | Lt, Lt
+    | Gt, Gt => true
+    | _, _ => false
+    end.
+
+  Lemma comparison_eqb_spec c1 c2 :
+    comparison_eqb c1 c2 = true <-> c1 = c2.
+  Proof. now destruct c1; destruct c2. Defined.
+
+  Definition comparison_ltb (c1 c2:comparison) : bool :=
+    match c1, c2 with
+    | Eq, Lt
+    | Eq, Gt
+    | Lt, Gt => true
+    | _, _ => false
+    end.
+
+  Lemma comparison_ltb_diseq c1 c2 :
+    comparison_ltb c1 c2 = true -> c1 <> c2.
+  Proof. now destruct c1; destruct c2. Defined.
+
+  Lemma comparison_ltb_eqb_sym c1 c2 :
+    comparison_ltb c1 c2 = false ->
+    comparison_eqb c1 c2 = false ->
+    comparison_ltb c2 c1 = true.
+  Proof. now destruct c1; destruct c2; simpl. Defined.
+
+  Global Instance comparison_ord : OrdType comparison.
+  Proof.
+    exists (fun c1 c2 => comparison_ltb c1 c2 = true); unfold comparison_ltb.
+    - intros x y z. now destruct x; destruct y; destruct z.
+    - intros x y. now destruct x; destruct y.
+  Defined.
+
+  Global Instance comparison_comp: Comparable comparison.
+  Proof.
+    constructor.
+    intros x y.
+    case_eq (comparison_ltb x y); intro;
+      case_eq (comparison_eqb x y); intro; unfold lt in *; simpl.
+    - rewrite comparison_eqb_spec in H0.
+      contradict H0.
+      now apply comparison_ltb_diseq.
+    - apply LT. exact H.
+    - apply EQ. now apply comparison_eqb_spec.
+    - apply GT. now apply comparison_ltb_eqb_sym.
+  Defined.
+
+  Global Instance comparison_eqbtype : EqbType comparison :=
+    {| eqb := comparison_eqb; eqb_spec := comparison_eqb_spec |}.
+
+  Global Instance comparison_inh : Inhabited comparison := {| default_value := Eq |}.
+
+  Global Instance comparison_compdec : CompDec comparison := {|
+    Eqb := comparison_eqbtype;
+    Ordered := comparison_ord;
+    Comp := comparison_comp;
+    Inh := comparison_inh
+  |}.
+
+End Comparison.
 
 
 (* Register constants for OCaml access *)
