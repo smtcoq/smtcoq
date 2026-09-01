@@ -13,6 +13,31 @@
 From SMTCoq Require Import SMTCoq.
 From Stdlib Require Import Bool PArray Uint63 List ZArith.
 
+
+Section Index_out_of_bounds.
+
+  Variable max : forall {A}, (A -> A -> comparison) -> A -> A -> A.
+  Variable option_cmp : forall {A}, (A -> A -> comparison) -> option A -> option A -> comparison.
+  Variable A : Type.
+  Variable cmp : A -> A -> comparison.
+  Variable max_None_None : max (option_cmp cmp) None None = None.
+  Variable max_list : list A -> option A -> option A.
+  Variables a b : A.
+  Variable l : list A.
+  Variable comp : bool.
+  Variable H : comp = true <-> cmp a b = Lt.
+  Variable pat : A.
+  Variable p : CompDec comparison.
+  Variable p0 : CompDec (option A).
+
+  Goal Some pat = max_list (l ++ (a::nil)) None.
+  Proof.
+    Fail verit_nocompdecs.
+  Abort.
+
+End Index_out_of_bounds.
+
+
 Open Scope Z_scope.
 
 
