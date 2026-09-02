@@ -1344,8 +1344,9 @@ module Atom =
         | _ -> assert false
 
       and mk_unknown c args ty =
-        (* Collecting types and CompDec allows to reify applied
-           polymorphic functions *)
+        (* Collecting types, CompDec and functions in the arguments. The goal is
+           to reify applied polymorphic functions and applied higher-order
+           functions. *)
         let rec collect_types = function
           | [] -> ([],[])
           | x::xs as l ->
@@ -1354,6 +1355,7 @@ module Atom =
                | [] -> 
                  let ty = RocqInterface.retyping_get_type_of env sigma x in
                  if Constr.iskind ty ||
+                      Constr.isProd ty ||
                       let c, _ = RocqInterface.decompose_app_list ty in
                       RocqInterface.eq_constr c (Lazy.force cCompDec)
                  then
