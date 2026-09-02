@@ -13,6 +13,7 @@
 From SMTCoq Require Import SMTCoq.
 From Stdlib Require Import Bool PArray Uint63 List ZArith.
 
+
 Open Scope Z_scope.
 
 
@@ -1500,3 +1501,59 @@ Section OpenCompdec.
   (* Should leave open CompDec goals but not fail *)
 
 End OpenCompdec.
+
+
+(* Tests when a function is used both applied and as an argument of a
+   higher-order function *)
+
+Section HO.
+
+  Variable f g : Z -> Z.
+
+  Goal map f nil = nil -> map g nil = nil ->
+    map f nil = map g nil /\ f 3%Z = f 3%Z.
+  Proof.
+    verit.
+  Qed.
+
+End HO.
+
+
+Section HO2.
+
+  Variable max : forall {A}, (A -> A -> comparison) -> A -> A -> A.
+  Variable option_cmp :
+    forall {A}, (A -> A -> comparison) -> option A -> option A -> comparison.
+  Variable A : Type.
+  Variable CA : CompDec A.
+  Variable cmp : A -> A -> comparison.
+  Variable max_Some_Some :
+    forall a b : A, max (option_cmp cmp) (Some a) (Some b) = Some (max cmp a b).
+  Variable max_comm : forall a b : A, max cmp a b = max cmp b a.
+  Variable max_list : list A -> option A -> option A.
+  Variable max_list_nil : forall acc : option A, max_list nil acc = acc.
+  Variable max_list_cons : forall (x : A) (xs : list A) (acc : option A),
+      max_list (x :: xs) acc = max_list xs (max (option_cmp cmp) acc (Some x)).
+  Variable max_list_app :
+    forall (l1 l2 : list A) (acc : option A),
+      max_list (l1 ++ l2) acc = max_list l2 (max_list l1 acc).
+  Variables a b : A.
+  Variable l : list A.
+  Variable comp : bool.
+  Variable H : comp = true <-> cmp a b = Lt.
+  Variable H0 : Some b = max_list l None.
+  Variable pat : A.
+  Variable H8 : comp = true -> b = pat.
+  Variable H6 : comp = false -> a = pat.
+  Variable p : CompDec comparison.
+  Variable p0 : CompDec (option A).
+  Variable p1 : CompDec (list A).
+  Variable H11 : forall x y, cmp x y = Lt -> max cmp x y = y.
+  Variable H12 : forall x y, cmp x y <> Lt -> max cmp x y = x.
+
+  Goal Some pat = max_list (l ++ (a::nil)) None.
+  Proof.
+    verit_nocompdecs.
+  Qed.
+
+End HO2.
