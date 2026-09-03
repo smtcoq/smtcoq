@@ -135,14 +135,27 @@ Tactic Notation "verit_no_check_timeout" int_or_var(timeout) :=
   let tac := ltac2:(t |- verit_tac [] false true (ltac2_int_of_ltac1_int_def0 t) true) in
   tac timeout.
 
-Tactic Notation "verit_no_check_nocompdecs" constr(h) :=
-  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0 false) in
-  tac h.
-Tactic Notation "verit_no_check_nocompdecs" := ltac2:(verit_tac [] false true 0 false).
 Tactic Notation "verit_nocompdecs" constr(h) :=
   let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false false 0 false) in
   tac h.
 Tactic Notation "verit_nocompdecs" := ltac2:(verit_tac [] false false 0 false).
+Tactic Notation "verit_no_check_nocompdecs" constr(h) :=
+  let tac := ltac2:(h |- verit_tac (global_of_ltac1_constr h) false true 0 false) in
+  tac h.
+Tactic Notation "verit_no_check_nocompdecs" := ltac2:(verit_tac [] false true 0 false).
+
+Tactic Notation "verit_nocompdecs_timeout" constr(h) int_or_var(timeout) :=
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false false (ltac2_int_of_ltac1_int_def0 t) false) in
+  tac h timeout.
+Tactic Notation "verit_nocompdecs_timeout" int_or_var(timeout) :=
+  let tac := ltac2:(t |- verit_tac [] false false (ltac2_int_of_ltac1_int_def0 t) false) in
+  tac timeout.
+Tactic Notation "verit_no_check_nocompdecs_timeout" constr(h) int_or_var(timeout) :=
+  let tac := ltac2:(h t |- verit_tac (global_of_ltac1_constr h) false true (ltac2_int_of_ltac1_int_def0 t) false) in
+  tac h timeout.
+Tactic Notation "verit_no_check_nocompdecs_timeout" int_or_var(timeout) :=
+  let tac := ltac2:(t |- verit_tac [] false true (ltac2_int_of_ltac1_int_def0 t) false) in
+  tac timeout.
 
 
 (* CVC4 tactics *)
