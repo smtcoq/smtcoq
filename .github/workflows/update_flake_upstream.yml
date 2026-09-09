@@ -1,0 +1,53 @@
+name: Update flake on each of the linked repositories
+
+on:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    # NOTE: Feel free to ask us to add your repository here
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - owner: SMTCoq
+            name: Sniper
+
+    steps:
+      - name: Generate token for Nix Updater
+        uses: actions/create-github-app-token@v3
+        id: nix-updater
+        with:
+          client-id: ${{ vars.NIX_UPDATER_ID }}
+          private-key: ${{ secrets.NIX_UPDATER_KEY }}
+          owner: ${{ matrix.owner }}
+          repositories: ${{ matrix.name }}
+
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ matrix.owner}}/${{ matrix.name }}
+          token: ${{ steps.nix-updater.outputs.token }}
+
+      - uses: nixbuild/nix-quick-install-action@v35
+
+      - name: Update Nix
+        run: nix flake update ${{ github.event.client_payload.name }}
+
+      - name: Has the update succeeded?
+        run: |
+          test "${{ github.sha }}" = "$(nix eval --impure --raw --expr '
+            (builtins.fromJSON (builtins.readFile ./flake.lock)).nodes.SMTCoq.locked.rev
+          ')"
+
+      - name: Commit files
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -a -m "chore(nix): Update SMTCoq to ${{ github.sha }}"
+          git push
