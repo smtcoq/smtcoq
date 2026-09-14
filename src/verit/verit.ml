@@ -161,13 +161,13 @@ let export out_channel rt ro lsmt =
     let bt = Tindex t in
     let s = Format.asprintf "%a" SmtBtype.to_smt_indexed t in
     SmtMaps.add_btype s bt;
-    Format.fprintf fmt "; %a\n(declare-sort %s 0)@." SmtBtype.pp t s
+    Format.fprintf fmt "; %a\n(declare-sort %s 0)@." SmtBtype.pp_indexed t s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->
-    let s = "op_"^(string_of_int i) in
+    let s = Format.asprintf "%a" SmtAtom.to_smt_in i in
     SmtMaps.add_fun s op;
-    Format.fprintf fmt "(declare-fun %s (" s;
+    Format.fprintf fmt "; %a\n(declare-fun %s (" SmtAtom.pp_indexed op s;
     let is_first = ref true in
     Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;
     Format.fprintf fmt ") ";

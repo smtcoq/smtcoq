@@ -97,7 +97,7 @@ let rec to_smt fmt = function
   | TFArray (ti, te) ->
      Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
 
-let pp fmt it =
+let pp_indexed fmt it =
   match it.hval with
     | CompDec t
     | Delayed t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (RocqInterface.pr_constr t))

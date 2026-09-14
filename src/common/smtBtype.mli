@@ -40,7 +40,7 @@ val to_smt : Format.formatter -> btype -> unit
 val to_smt_indexed : Format.formatter -> indexed_type -> unit
 
 (* Pretty-printing the corresponding Rocq interpreted type *)
-val pp : Format.formatter -> indexed_type -> unit
+val pp_indexed : Format.formatter -> indexed_type -> unit
 
 type reify_tbl
 
