@@ -154,6 +154,13 @@ let checker fsmt fproof =
 (******************************************************************************)
 
 let export out_channel rt ro lsmt =
+  (* Print multi-line comments
+     CK: I wouldn't be surprised if we can do better *)
+  let print_string_comment fmt s =
+    let l = String.split_on_char '\n' s in
+    List.iter (fun s' -> Format.fprintf fmt "; %s@." s') l
+  in
+
   let fmt = Format.formatter_of_out_channel out_channel in
   Format.fprintf fmt "(set-logic UFLIA)@.";
 
@@ -161,13 +168,17 @@ let export out_channel rt ro lsmt =
     let bt = Tindex t in
     let s = Format.asprintf "%a" SmtBtype.to_smt_indexed t in
     SmtMaps.add_btype s bt;
-    Format.fprintf fmt "; %a\n(declare-sort %s 0)@." SmtBtype.pp_indexed t s
+    let ss = Format.asprintf "%a" SmtBtype.pp_indexed t in
+    print_string_comment fmt ss;
+    Format.fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->
     let s = Format.asprintf "%a" SmtAtom.to_smt_in i in
     SmtMaps.add_fun s op;
-    Format.fprintf fmt "; %a\n(declare-fun %s (" SmtAtom.pp_indexed op s;
+    let ss = Format.asprintf "%a" SmtAtom.pp_indexed op in
+    print_string_comment fmt ss;
+    Format.fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;
     Format.fprintf fmt ") ";
@@ -176,9 +187,8 @@ let export out_channel rt ro lsmt =
   ) (Op.to_list ro);
 
   let print_assert c u =
-    Format.fprintf fmt "; %s\n(assert " c;
-    Form.to_smt fmt u;
-    Format.fprintf fmt ")\n"
+    print_string_comment fmt c;
+    Format.fprintf fmt "(assert %a)\n" (fun f -> Form.to_smt f) u
   in
   List.iter (fun (c, u) -> print_assert c u) lsmt;
 
