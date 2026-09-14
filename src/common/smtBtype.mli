@@ -33,7 +33,11 @@ module HashedBtype : Hashtbl.HashedType with type t = btype
 
 val to_coq : btype -> RocqInterface.constr
 
+(* Printing the type as the SMT solvers sees it *)
 val to_smt : Format.formatter -> btype -> unit
+
+(* Pretty-printing the corresponding Rocq type *)
+val pp : Format.formatter -> indexed_type -> unit
 
 type reify_tbl
 

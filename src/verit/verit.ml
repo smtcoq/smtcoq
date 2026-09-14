@@ -158,9 +158,10 @@ let export out_channel rt ro lsmt =
   Format.fprintf fmt "(set-logic UFLIA)@.";
 
   List.iter (fun (i,t) ->
-    let s = "Tindex_"^(string_of_int i) in
-    SmtMaps.add_btype s (Tindex t);
-    Format.fprintf fmt "(declare-sort %s 0)@." s
+    let bt = Tindex t in
+    let s = Format.asprintf "%a" SmtBtype.to_smt bt in
+    SmtMaps.add_btype s bt;
+    Format.fprintf fmt "; %a\n(declare-sort %s 0)@." SmtBtype.pp t s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->

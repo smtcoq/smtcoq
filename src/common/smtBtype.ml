@@ -95,6 +95,11 @@ let rec to_smt fmt = function
   | TFArray (ti, te) ->
      Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
 
+let pp fmt it =
+  match it.hval with
+    | CompDec t
+    | Delayed t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (RocqInterface.pr_constr t))
+
 let rec logic = function
   | TZ | Tpositive -> SL.singleton LLia
   | Tbool -> SL.empty
