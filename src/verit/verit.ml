@@ -180,12 +180,7 @@ let export out_channel rt ro lsmt =
     Form.to_smt fmt u;
     Format.fprintf fmt ")\n"
   in
-  (match lsmt with
-     | [] -> assert false
-     | g::l ->
-        print_assert "Goal" g;
-        List.iter (print_assert "Hyp") l
-  );
+  List.iter (fun (c, u) -> print_assert c u) lsmt;
 
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
@@ -241,7 +236,9 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   try
     (if exit_code <> 0 then RocqInterface.raise_error "veriT exited with code %d" exit_code);
     raise_warnings_errors ();
-    let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
+    let res =
+      import_trace ra_quant rf_quant logfilename (Some first) (List.map snd lsmt)
+    in
     close_in win; Sys.remove wname; Sys.remove oname; res
   with x -> close_in win; Sys.remove wname; Sys.remove oname;
             match x with
