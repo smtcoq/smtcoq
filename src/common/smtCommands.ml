@@ -744,9 +744,13 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
     let cl = RocqInterface.retyping_get_type_of env sigma l in
     match of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic cl with
       | Some smt ->
-         assert (RocqInterface.isVar l);
-         let id = RocqInterface.destVar l in
-         let name = RocqInterface.string_of_name (RocqInterface. name_of_id id) in
+         let name =
+           if (RocqInterface.isVar l) then
+             let id = RocqInterface.destVar l in
+             RocqInterface.string_of_name (RocqInterface.name_of_id id)
+           else
+             ""
+         in
          Some ((cl, l), (name, smt))
       | None -> None
   in
