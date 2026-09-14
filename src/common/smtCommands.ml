@@ -582,18 +582,20 @@ let build_body rt ro ra rf l b (max_id, confl) vm_cast find =
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
-  let cbc =
-    add_lets
-      (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
+  let cbc env =
+    let l =
+      add_lets
+        (mklApp cchecker_b [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
                            v 2 (*t_form*); l; b; v 1 (*certif*)|])
-    |> vm_cast
+    in
+    vm_cast env l
   in
 
-  let proof_cast =
+  let proof_cast env =
     add_lets
       (mklApp cchecker_b_correct
          [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
-           l; b; v 1 (*certif*); cbc |]) in
+           l; b; v 1 (*certif*); cbc env |]) in
 
   let proof_nocast =
     add_lets
@@ -632,18 +634,20 @@ let build_body_eq rt ro ra rf l1 l2 l (max_id, confl) vm_cast find =
              [|v 4 (*t_i*); v 3 (*t_func*); v 2 (*t_atom*); v 1 (*t_form*)|],
     t))))) in
 
-  let ceqc =
-    add_lets
-      (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
-                            v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])
-      |> vm_cast
+  let ceqc env =
+    let l =
+      add_lets
+        (mklApp cchecker_eq [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*);
+                              v 2 (*t_form*); l1; l2; l; v 1 (*certif*)|])
+    in
+    vm_cast env l
   in
 
-  let proof_cast =
+  let proof_cast env =
     add_lets
       (mklApp cchecker_eq_correct
          [|v 5 (*t_i*);v 4 (*t_func*);v 3 (*t_atom*); v 2 (*t_form*);
-           l1; l2; l; v 1 (*certif*); ceqc|])
+           l1; l2; l; v 1 (*certif*); ceqc env|])
   in
   let proof_nocast =
     add_lets
@@ -778,7 +782,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
         let nl = if (RocqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
         let lsmt = Form.flatten rf nl :: lsmt in
         let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
-        build_body rt ro ra rf (Form.to_coq l) b max_id_confl (vm_cast env) (Some find_lemma)
+        build_body rt ro ra rf (Form.to_coq l) b max_id_confl vm_cast (Some find_lemma)
       ) else (
         let l1 = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
         let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
@@ -789,7 +793,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
         let lsmt = Form.flatten rf nl :: lsmt in
         let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
         build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
-          (Form.to_coq nl) max_id_confl (vm_cast env) (Some find_lemma) ) in
+          (Form.to_coq nl) max_id_confl vm_cast (Some find_lemma)) in
 
     let cuts = (SmtBtype.get_cuts rt) @ cuts in
 
@@ -800,7 +804,10 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
       ) cuts
       (RocqInterface.tclTHEN
          (RocqInterface.set_evars_tac body_nocast)
-         (RocqInterface.vm_cast_no_check body_cast))) 
+         (
+           RocqInterface.mk_tactic
+            (fun local_env _ _ -> RocqInterface.vm_cast_no_check (body_cast local_env))
+         )))
   with
   | DoNothing -> RocqInterface.tclIDTAC
 
