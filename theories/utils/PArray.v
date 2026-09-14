@@ -70,11 +70,10 @@ Module Map := FMapAVL.Make(IntOrderedType).
 
 (* An array is represented as a tuple of a finite map, the default
    element, and the length *)
-Universe parray.
-Definition array (A: Type@{parray}) : Type@{parray} :=
+Definition array (A:Type) : Type :=
   (Map.t A * A * int)%type.
 
-Definition make {A:Type@{parray}} (l:int) (d:A) : array A := (Map.empty A, d, l).
+Definition make {A:Type} (l:int) (d:A) : array A := (Map.empty A, d, l).
 
 Definition get {A:Type} (t:array A) (i:int) : A :=
   let (td, l) := t in
