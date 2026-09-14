@@ -175,9 +175,17 @@ let export out_channel rt ro lsmt =
     Format.fprintf fmt ")@."
   ) (Op.to_list ro);
 
-  List.iter (fun u -> Format.fprintf fmt "(assert ";
-                      Form.to_smt fmt u;
-                      Format.fprintf fmt ")\n") lsmt;
+  let print_assert c u =
+    Format.fprintf fmt "; %s\n(assert " c;
+    Form.to_smt fmt u;
+    Format.fprintf fmt ")\n"
+  in
+  (match lsmt with
+     | [] -> assert false
+     | g::l ->
+        print_assert "Goal" g;
+        List.iter (print_assert "Hyp") l
+  );
 
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
