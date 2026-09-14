@@ -413,10 +413,7 @@ let vm_cast_true_no_check t =
    SMTCoq's tactics. *)
 let vm_cast_true env t =
   match
-    RocqInterface.vm_conv CUMUL env
-      (mklApp ceq
-         [|Lazy.force cbool; Lazy.force ctrue; Lazy.force ctrue|])
-      (mklApp ceq [|Lazy.force cbool; t; Lazy.force ctrue|])
+    RocqInterface.vm_conv CUMUL env t (Lazy.force ctrue)
   with
   | Result.Ok () -> vm_cast_true_no_check t
   | Result.Error () ->
