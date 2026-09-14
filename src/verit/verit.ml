@@ -154,18 +154,30 @@ let checker fsmt fproof =
 (******************************************************************************)
 
 let export out_channel rt ro lsmt =
+  (* Print multi-line comments
+     CK: I wouldn't be surprised if we can do better *)
+  let print_string_comment fmt s =
+    let l = String.split_on_char '\n' s in
+    List.iter (fun s' -> Format.fprintf fmt "; %s@." s') l
+  in
+
   let fmt = Format.formatter_of_out_channel out_channel in
   Format.fprintf fmt "(set-logic UFLIA)@.";
 
   List.iter (fun (i,t) ->
-    let s = "Tindex_"^(string_of_int i) in
-    SmtMaps.add_btype s (Tindex t);
+    let bt = Tindex t in
+    let s = Format.asprintf "%a" SmtBtype.to_smt_indexed t in
+    SmtMaps.add_btype s bt;
+    let ss = Format.asprintf "%a" SmtBtype.pp_indexed t in
+    print_string_comment fmt ss;
     Format.fprintf fmt "(declare-sort %s 0)@." s
   ) (SmtBtype.to_list rt);
 
   List.iter (fun (i,dom,cod,op) ->
-    let s = "op_"^(string_of_int i) in
+    let s = Format.asprintf "%a" SmtAtom.to_smt_in i in
     SmtMaps.add_fun s op;
+    let ss = Format.asprintf "%a" SmtAtom.pp_indexed op in
+    print_string_comment fmt ss;
     Format.fprintf fmt "(declare-fun %s (" s;
     let is_first = ref true in
     Array.iter (fun t -> if !is_first then is_first := false else Format.fprintf fmt " "; SmtBtype.to_smt fmt t) dom;
@@ -174,9 +186,11 @@ let export out_channel rt ro lsmt =
     Format.fprintf fmt ")@."
   ) (Op.to_list ro);
 
-  List.iter (fun u -> Format.fprintf fmt "(assert ";
-                      Form.to_smt fmt u;
-                      Format.fprintf fmt ")\n") lsmt;
+  let print_assert c u =
+    print_string_comment fmt c;
+    Format.fprintf fmt "(assert %a)\n" (fun f -> Form.to_smt f) u
+  in
+  List.iter (fun (c, u) -> print_assert c u) lsmt;
 
   Format.fprintf fmt "(check-sat)\n(exit)@."
 
@@ -232,7 +246,9 @@ let call_verit timeout _ _ rt ro ra_quant rf_quant first lsmt =
   try
     (if exit_code <> 0 then RocqInterface.raise_error "veriT exited with code %d" exit_code);
     raise_warnings_errors ();
-    let res = import_trace ra_quant rf_quant logfilename (Some first) lsmt in
+    let res =
+      import_trace ra_quant rf_quant logfilename (Some first) (List.map snd lsmt)
+    in
     close_in win; Sys.remove wname; Sys.remove oname; res
   with x -> close_in win; Sys.remove wname; Sys.remove oname;
             match x with

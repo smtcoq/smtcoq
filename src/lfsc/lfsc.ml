@@ -372,7 +372,7 @@ let call_abduce i env rt ro ra rf root lsmt =
       declare_fun cvc5 s args ret
     ) (Op.to_list ro);
     (* Expecting List.hd lsmt to be the negation of the goal *)
-    List.iter (fun x -> assume cvc5 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
+    List.iter (fun (_, x) -> assume cvc5 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
 
     let proof =
       let abduct1 = SmtCommands.abduct_string env rt ro ra rf
@@ -429,7 +429,7 @@ let call_cvc4_abduct i env rt ro ra rf root lsmt =
   ) (Op.to_list ro);
 
   (* Assert hypotheses and negation of goal *)
-  List.iter (fun x -> assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
+  List.iter (fun (_, x) -> assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
   assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) fl);
 
   let proof =
@@ -476,7 +476,7 @@ let call_cvc4 _ env rt ro ra rf root lsmt =
   ) (Op.to_list ro);
 
   (* Assert hypotheses and negation of goal *)
-  List.iter (fun x -> assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
+  List.iter (fun (_, x) -> assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) x)) (List.tl lsmt);
   assume cvc4 (asprintf "%a" (Form.to_smt ~debug:false) fl);
 
   let proof =

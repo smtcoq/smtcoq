@@ -743,7 +743,15 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
   let create_lemma l =
     let cl = RocqInterface.retyping_get_type_of env sigma l in
     match of_coq_lemma rt ro ra_quant rf_quant env sigma solver_logic cl with
-      | Some smt -> Some ((cl, l), smt)
+      | Some smt ->
+         let name =
+           if (RocqInterface.isVar l) then
+             let id = RocqInterface.destVar l in
+             RocqInterface.string_of_name (RocqInterface.name_of_id id)
+           else
+             ""
+         in
+         Some ((cl, l), (name, smt))
       | None -> None
   in
   let l_pl_ls = SmtMisc.filter_map create_lemma lcpl in
@@ -752,7 +760,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
   let lem_tbl : (int, RocqInterface.constr * RocqInterface.constr) Hashtbl.t =
     Hashtbl.create 100
   in
-  let new_ref ((l, pl), ls) =
+  let new_ref ((l, pl), (_, ls)) =
     Hashtbl.add lem_tbl (Form.index ls) (l, pl)
   in
 
@@ -767,7 +775,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
              with Not_found ->
                let oc = open_out "/tmp/find_lemma.log" in
                let fmt = Format.formatter_of_out_channel oc in
-               List.iter (fun u -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) u) lsmt;
+               List.iter (fun (_, u) -> Format.fprintf fmt "%a\n" (Form.to_smt ~debug:true) u) lsmt;
                Format.fprintf fmt "\n%a\n" (Form.to_smt ~debug:true) hl;
                flush oc; close_out oc; failwith "find_lemma"
        end
@@ -780,7 +788,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
         let l = Form.of_coq (Atom.of_coq rt ro ra solver_logic env sigma) rf a in
         let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant a in
         let nl = if (RocqInterface.eq_constr b (Lazy.force ctrue)) then Form.neg l else l in
-        let lsmt = Form.flatten rf nl :: lsmt in
+        let lsmt = ("Goal", Form.flatten rf nl) :: lsmt in
         let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
         build_body rt ro ra rf (Form.to_coq l) b max_id_confl vm_cast (Some find_lemma)
       ) else (
@@ -790,7 +798,7 @@ let core_tactic call_solver i solver_logic rt ro ra rf ra_quant rf_quant vm_cast
         let _ = Form.of_coq (Atom.of_coq ~eqsym:true rt ro ra_quant solver_logic env sigma) rf_quant b in
         let l = Form.get rf (Fapp(Fiff,[|l1;l2|])) in
         let nl = Form.neg l in
-        let lsmt = Form.flatten rf nl :: lsmt in
+        let lsmt = ("Goal", Form.flatten rf nl) :: lsmt in
         let max_id_confl = make_proof call_solver i env rt ro ra_quant rf_quant nl lsmt in
         build_body_eq rt ro ra rf (Form.to_coq l1) (Form.to_coq l2)
           (Form.to_coq nl) max_id_confl vm_cast (Some find_lemma)) in

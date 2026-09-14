@@ -106,6 +106,19 @@ let indexed_op_index i =
 let debruijn_indexed_op i ty =
   (Index i, {tparams = [||]; tres = ty; op_val = RocqInterface.mkRel i})
 
+
+(* Printing the uninterpreted symbol as the SMT solvers sees it *)
+let to_smt_in fmt i = Format.fprintf fmt "op_%i" i
+let to_smt_index fmt i =
+  match i with
+    | Index index -> to_smt_in fmt index
+    | Rel_name name -> Format.fprintf fmt "%s" name
+
+(* Pretty-printing the corresponding Rocq interpreted term *)
+let pp_indexed fmt (_, op) =
+  Format.fprintf fmt "%s" (Pp.string_of_ppcmds (RocqInterface.pr_constr op.op_val))
+
+
 module Op =
   struct
     let c_to_coq = function
@@ -725,11 +738,7 @@ module Atom =
         | Anop (op,a) -> to_smt_nop op a
         | Aapp ((i,op),a) ->
            let op_smt () =
-             (match i with
-                | Index index ->
-                   (Format.fprintf fmt "op_%i" index;
-                    if debug then Format.fprintf fmt " (aka %s)" (Pp.string_of_ppcmds (RocqInterface.pr_constr op.op_val));)
-                | Rel_name name -> Format.fprintf fmt "%s" name);
+             to_smt_index fmt i;
              if pi then to_smt_op op
            in
            if Array.length a = 0 then (

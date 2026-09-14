@@ -86,14 +86,21 @@ let rec to_coq = function
   | TFArray (ti, te) ->
      mklApp cTFArray [|to_coq ti; to_coq te|]
 
+let to_smt_indexed fmt i = Format.fprintf fmt "Tindex_%i" i.index
+
 let rec to_smt fmt = function
   | TZ -> Format.fprintf fmt "Int"
   | Tbool -> Format.fprintf fmt "Bool"
   | Tpositive -> Format.fprintf fmt "Int"
   | TBV i -> Format.fprintf fmt "(_ BitVec %i)" i
-  | Tindex i -> Format.fprintf fmt "Tindex_%i" i.index
+  | Tindex i -> to_smt_indexed fmt i
   | TFArray (ti, te) ->
      Format.fprintf fmt "(Array %a %a)" to_smt ti to_smt te
+
+let pp_indexed fmt it =
+  match it.hval with
+    | CompDec t
+    | Delayed t -> Format.fprintf fmt "%s" (Pp.string_of_ppcmds (RocqInterface.pr_constr t))
 
 let rec logic = function
   | TZ | Tpositive -> SL.singleton LLia

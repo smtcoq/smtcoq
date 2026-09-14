@@ -69,6 +69,14 @@ val dummy_indexed_op: index -> btype array -> btype -> indexed_op
 val indexed_op_index : indexed_op -> int
 val debruijn_indexed_op : int -> btype -> indexed_op
 
+(* Printing the uninterpreted symbol as the SMT solvers sees it *)
+val to_smt_in : Format.formatter -> int -> unit
+val to_smt_index : Format.formatter -> index -> unit
+
+(* Pretty-printing the corresponding Rocq interpreted term *)
+val pp_indexed : Format.formatter -> indexed_op -> unit
+
+
 module Op :
   sig
 
