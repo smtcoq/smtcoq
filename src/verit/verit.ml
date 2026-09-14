@@ -159,7 +159,7 @@ let export out_channel rt ro lsmt =
 
   List.iter (fun (i,t) ->
     let bt = Tindex t in
-    let s = Format.asprintf "%a" SmtBtype.to_smt bt in
+    let s = Format.asprintf "%a" SmtBtype.to_smt_indexed t in
     SmtMaps.add_btype s bt;
     Format.fprintf fmt "; %a\n(declare-sort %s 0)@." SmtBtype.pp t s
   ) (SmtBtype.to_list rt);
