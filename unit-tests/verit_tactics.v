@@ -541,7 +541,7 @@ Lemma lcongr3 (P:Z -> Z -> bool) x y z:
   x = y -> P z x -> P z y.
 Proof using. verit. Qed.
 
-Lemma test20_bool :  forall x, (forall a, a <? x) -> 0 <=? x = false.
+Lemma test20_bool :  forall x, (forall a, a <? x) -> (0 <=? x) = false.
 Proof using. verit. Qed.
 
 Lemma test20 :  forall x, (forall a, a < x) -> ~ (0 <= x).
