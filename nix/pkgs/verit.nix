@@ -33,5 +33,8 @@ verit.overrideAttrs {
     sed -i -e '20iextern' src/instantiation/inst-trigger.c
     sed -i -e '403iextern' src/SAT/veriT-SAT.h
     sed -i -e '29d' src/parsers/tptp/tptplex.l
+
+    # Bus error on aarch64-darwin
+    sed -i -e '216s/.*/if (new_alloc <= old_alloc) return;/g' src/instantiation/inst-index.c
   '';
 }
