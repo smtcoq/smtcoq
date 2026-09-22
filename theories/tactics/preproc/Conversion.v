@@ -283,8 +283,8 @@ Ltac2 preprocess1 addcompdecs hs :=
     )
   ).
 
-Ltac2 preprocess2 () :=
-  let hs := intros_and_return_props () in
+Ltac2 preprocess2 hs :=
+  let hs := intros_and_return_props hs in
   post_trakt hs;
   hs.
 
