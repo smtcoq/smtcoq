@@ -187,6 +187,13 @@ let export out_channel rt ro lsmt =
   ) (Op.to_list ro);
 
   let print_assert c u =
+    let c =
+      let l = String.length c in
+      if l > 7 && String.equal (String.sub c 0 7) "SMTCoq_" then
+        String.sub c 7 (l-7)
+      else
+        c
+    in
     print_string_comment fmt c;
     Format.fprintf fmt "(assert %a)\n" (fun f -> Form.to_smt f) u
   in

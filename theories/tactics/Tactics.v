@@ -71,7 +71,8 @@ Ltac2 verit_call_tactic nocheck timeout r :=
 Ltac2 verit_tac global inbool nocheck timeout addcompdecs :=
   Control.enter (fun () =>
     ltac1:(intros; unfold is_true in *);
-    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let local := List.map (fun (id, _) => (Some id, Control.hyp id)) (get_hyps_prop ()) in
+    let global := List.map (fun t => (None, t)) global in
     let hsglob := pose_hyps global [] in
     let hs := pose_hyps local hsglob in
     if inbool then (
@@ -81,7 +82,7 @@ Ltac2 verit_tac global inbool nocheck timeout addcompdecs :=
         preprocess1 addcompdecs hs;
         let n := Control.numgoals () in
         Control.focus n n (fun () =>
-          let hs' := preprocess2 () in
+          let hs' := preprocess2 hs in
           let hs' := List.map Control.hyp hs' in
           let r := tupleify hs' in
           verit_call_tactic nocheck timeout r
@@ -172,7 +173,7 @@ Ltac prop2boolImp :=
 Ltac2 cvc4_tac nocheck :=
   Control.enter (fun () =>
     ltac1:(intros; unfold is_true in *);
-    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let local := List.map (fun (id, _) => (Some id, Control.hyp id)) (get_hyps_prop ()) in
     let hs := pose_hyps local [] in
     preprocess1 true hs;
     let n := Control.numgoals () in
@@ -198,12 +199,12 @@ Tactic Notation "smt_no_check"           :=
 Ltac2 abduce_tac i :=
   Control.enter (fun () =>
     ltac1:(intros; unfold is_true in *);
-    let local := List.map (fun (id, _) => Control.hyp id) (get_hyps_prop ()) in
+    let local := List.map (fun (id, _) => (Some id, Control.hyp id)) (get_hyps_prop ()) in
     let hs := pose_hyps local [] in
     preprocess1 true hs;
     let n := Control.numgoals () in
     Control.focus n n (fun () =>
-      let hs' := preprocess2 () in
+      let hs' := preprocess2 hs in
       let hs' := List.map Control.hyp hs' in
       let r := tupleify hs' in
       ltac1:(i r |- cvc5_bool_abduct i r)
