@@ -1835,7 +1835,7 @@ Ltac2 intros_and_return_props hs :=
 (* Abort. *)
 
 
-(* Collection all the hypotheses of type Prop *)
+(* Collect all the hypotheses of type Prop *)
 
 Ltac2 get_hyps_prop () :=
   let h := Control.hyps () in
