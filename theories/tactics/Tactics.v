@@ -82,7 +82,7 @@ Ltac2 verit_tac global inbool nocheck timeout addcompdecs :=
         preprocess1 addcompdecs hs;
         let n := Control.numgoals () in
         Control.focus n n (fun () =>
-          let hs' := preprocess2 () in
+          let hs' := preprocess2 hs in
           let hs' := List.map Control.hyp hs' in
           let r := tupleify hs' in
           verit_call_tactic nocheck timeout r
@@ -204,7 +204,7 @@ Ltac2 abduce_tac i :=
     preprocess1 true hs;
     let n := Control.numgoals () in
     Control.focus n n (fun () =>
-      let hs' := preprocess2 () in
+      let hs' := preprocess2 hs in
       let hs' := List.map Control.hyp hs' in
       let r := tupleify hs' in
       ltac1:(i r |- cvc5_bool_abduct i r)

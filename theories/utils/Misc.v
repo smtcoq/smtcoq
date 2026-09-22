@@ -1805,21 +1805,26 @@ Ltac2 rec revert_hyps hs :=
 
 (* Introduce hypotheses and return the names of hypothesis of sort Prop *)
 
-Ltac2 rec intros_and_return_props_aux acc name :=
+Ltac2 rec intros_and_return_props_aux acc hs name :=
   match! goal with
   | [ |- forall (_ : ?t), _ ] =>
-      let h := Fresh.in_goal name in
+      let (h, hs) :=
+        match hs with
+        | [] => (Fresh.in_goal name, [])
+        | h::hs => (h, hs)
+        end
+      in
       ltac1:(h |- intro h) (Ltac1.of_ident h);
       match! Constr.type t with
-      | Prop => intros_and_return_props_aux (h::acc) name
-      | _ => intros_and_return_props_aux acc name
+      | Prop => intros_and_return_props_aux (h::acc) hs name
+      | _ => intros_and_return_props_aux acc hs name
       end
   | [ |- _ ] => acc
   end.
 
-Ltac2 intros_and_return_props () :=
+Ltac2 intros_and_return_props hs :=
   match Ident.of_string "H" with
-  | Some name => intros_and_return_props_aux [] name
+  | Some name => intros_and_return_props_aux [] hs name
   | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Misc.intros_and_return_props")))
   end.
 
