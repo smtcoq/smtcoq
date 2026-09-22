@@ -1755,23 +1755,31 @@ Ltac2 generalize_hyps hs :=
 
 (* Assert a list of hypotheses *)
 
-Ltac2 pose_hyps_aux hs acc id :=
+Ltac2 pose_hyps_aux hs acc :=
   List.fold_left (
-    fun (a, ids) h' =>
+    fun (a, ids) (id, h') =>
+      let id' :=
+        match id with
+        | Some id =>
+            match Ident.of_string (String.app "SMTCoq_" (Ident.to_string id)) with
+            | Some id' => id'
+            | None => id
+            end
+        | None =>
+            match Ident.of_string "H" with
+            | Some id' => id'
+            | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Misc.pose_hyps")))
+            end
+        end
+      in
       (* Starting from 9.1, the following two lines can be replaced by Fresh.next *)
-      let h := Fresh.fresh ids id in
+      let h := Fresh.fresh ids id' in
       let ids' := Fresh.Free.union ids (Fresh.Free.of_ids [h]) in
       ltac1:(h h' |- assert (h := h')) (Ltac1.of_ident h) (Ltac1.of_constr h');
       (h::a, ids')
   ) acc hs.
 
-Ltac2 pose_hyps hs acc :=
-  match Ident.of_string "H" with
-  | Some id =>
-      let (r, _) := pose_hyps_aux hs (acc, Fresh.Free.of_goal ()) id in
-      r
-  | None => Control.throw (Tactic_failure (Some (Message.of_string "Error in Misc.pose_hyps")))
-  end.
+Ltac2 pose_hyps hs acc := fst (pose_hyps_aux hs (acc, Fresh.Free.of_goal ())).
 
 (* Goal True. *)
 (*   let hs := pose_hyps ['(@List.nil_cons positive 5%positive nil); '(@List.nil_cons N 42%N nil); 'List.nil_cons] [] in *)
