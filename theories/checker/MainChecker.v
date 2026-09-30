@@ -220,7 +220,7 @@ Module Cnf_Checker.
 
   Local Open Scope list_scope.
 
-  Local Notation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 =? i2) (fun _ _ => false)) (only parsing).
+  Local Abbreviation check_flatten t_form := (check_flatten t_form (fun i1 i2 => i1 =? i2) (fun _ _ => false)) (only parsing).
 
   Definition step_checker t_form s (st:step) :=
     match st with
@@ -384,7 +384,7 @@ Inductive step :=
 
   Local Open Scope list_scope.
 
-  Local Notation check_flatten t_atom t_form := (check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom)) (only parsing).
+  Local Abbreviation check_flatten t_atom t_form := (check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom)) (only parsing).
 
   Definition step_checker s (st:step) :=
     match st with
@@ -944,7 +944,7 @@ Module Checker_Ext.
 
   Local Open Scope list_scope.
 
-  Local Notation check_flatten t_atom t_form := (check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom)) (only parsing).
+  Local Abbreviation check_flatten t_atom t_form := (check_flatten t_form (check_hatom t_atom) (check_neg_hatom t_atom)) (only parsing).
 
   Definition step_checker s (st:step) :=
     match st with

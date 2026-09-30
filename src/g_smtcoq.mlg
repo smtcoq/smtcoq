@@ -86,6 +86,7 @@ END
 let lemmas_list = Summary.ref ~name:"Selected lemmas" []
 
 let cache_lemmas lems =
+  let open Summary.Ref in
   lemmas_list := lems
 
 let declare_lemmas : RocqVersionCompat.constr_expr list -> Libobject.obj =
@@ -100,12 +101,15 @@ let declare_lemmas : RocqVersionCompat.constr_expr list -> Libobject.obj =
   declare_object obj
 
 let add_lemmas lems =
+  let open Summary.Ref in
   Lib.add_leaf (declare_lemmas (lems @ !lemmas_list))
 
 let clear_lemmas () =
   Lib.add_leaf (declare_lemmas [])
 
-let get_lemmas () = !lemmas_list
+let get_lemmas () =
+  let open Summary.Ref in
+  !lemmas_list
 
 }
 

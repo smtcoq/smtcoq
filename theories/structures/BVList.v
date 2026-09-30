@@ -70,7 +70,7 @@ Module Type BITVECTOR.
   Parameter bv_ult    : forall n, bitvector n -> bitvector n -> bool.
   Parameter bv_slt    : forall n, bitvector n -> bitvector n -> bool.
 
-  Notation bv_subt bv1 bv2 := (bv_add bv1 (bv_neg bv2)).
+  Abbreviation bv_subt bv1 bv2 := (bv_add bv1 (bv_neg bv2)).
 
   Parameter bv_ultP   : forall n, bitvector n -> bitvector n -> Prop.
   Parameter bv_sltP   : forall n, bitvector n -> bitvector n -> Prop.
@@ -258,7 +258,7 @@ Module RAW2BITVECTOR (M:RAWBITVECTOR) <: BITVECTOR.
   Definition bv_add n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_add bv1 bv2) (M.bv_add_size (wf bv1) (wf bv2)).
 
-  Notation bv_subt bv1 bv2 := (bv_add bv1 (bv_neg bv2)).
+  Abbreviation bv_subt bv1 bv2 := (bv_add bv1 (bv_neg bv2)).
 
   Definition bv_mult n (bv1 bv2:bitvector n) : bitvector n :=
     @MkBitvector n (M.bv_mult bv1 bv2) (M.bv_mult_size (wf bv1) (wf bv2)).
