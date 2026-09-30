@@ -19,3 +19,16 @@ let evd_univ_entry evd = Evd.univ_entry ~poly:PolyFlags.default evd
 (* TODO: when switching to econstr, may have universe constraints *)
 let empty_named_universes_entry =
   UState.univ_entry ~poly:PolyFlags.default UState.empty
+
+let hash_constr = Constr.hash
+
+module Summary = struct
+  module Ref = struct
+    type 'a t = 'a ref
+    let get r = !r
+    let set r v = r := v
+    let (!) = get
+    let (:=) = set
+  end
+  let ref ~name x = ref x
+end
