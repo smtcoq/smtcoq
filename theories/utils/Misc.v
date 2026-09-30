@@ -383,6 +383,7 @@ reflexivity.
 Qed.
 
 Lemma sub1_lsr : forall i, i <> 0 -> (i - 1) >> 1 = if bit i 0 then i >> 1 else i >> 1 - 1.
+Proof.
 intro i.
 rewrite <- to_Z_eq, to_Z_0; intro Hi0.
 assert (Hi : (0 < to_Z i < wB)%Z).
@@ -706,6 +707,7 @@ Qed.
 
 Lemma to_list_In : forall {A} (t: array A) i,
   (i <? length t) = true -> In (t.[i]) (to_list t).
+Proof.
   intros A t i; assert (Bt := to_Z_bounded (length t)); assert (Bi := to_Z_bounded i); rewrite ltb_spec; unfold to_list.
   rewrite <- in_rev.
   apply foldi_ind.

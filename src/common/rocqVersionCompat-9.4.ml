@@ -19,3 +19,16 @@ let evd_univ_entry evd = Evd.univ_entry ~poly:PolyFlags.default evd
 (* TODO: when switching to econstr, may have universe constraints *)
 let empty_named_universes_entry =
   UState.univ_entry ~poly:PolyFlags.default UState.empty
+
+let hash_constr = Termops.ConstrData.hash
+
+module Summary = struct
+  module Ref = struct
+    type 'a t = 'a Summary.Ref.t
+    let get = Summary.Ref.get
+    let set = Summary.Ref.set
+    let (!) = Summary.Ref.(!)
+    let (:=) = Summary.Ref.(:=)
+  end
+  let ref ~name v = Summary.ref ~name v
+end

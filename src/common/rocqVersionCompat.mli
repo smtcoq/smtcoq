@@ -26,3 +26,18 @@ val constrextern_extern_constr :
 val evd_univ_entry : Evd.evar_map -> UState.named_universes_entry
 
 val empty_named_universes_entry : UState.named_universes_entry
+
+val hash_constr : Constr.t -> int
+
+module Summary :
+sig
+  module Ref :
+  sig
+    type 'a t
+    val get : 'a t -> 'a
+    val set : 'a t -> 'a -> unit
+    val (!) : 'a t -> 'a
+    val (:=) : 'a t -> 'a -> unit
+  end
+  val ref : name:string -> 'a -> 'a Ref.t
+end
