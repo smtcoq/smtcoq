@@ -332,6 +332,7 @@ Module Raw.
 
   Lemma MapsTo_inj : forall x e e' l (Hl:Sort l),
       MapsTo x e l -> MapsTo x e' l -> e = e'.
+  Proof.
     induction l.
     - intros. apply empty_1 in H. contradiction.
     - intros.
@@ -435,6 +436,7 @@ Module Raw.
   Qed.
 
   Lemma mem_3 : forall m (Hm:Sort m) x, mem x m = false -> ~ In x m.
+  Proof.
     intros.
     rewrite <- not_true_iff_false in H.
     unfold not in *. intros; apply H.
@@ -940,6 +942,7 @@ Section FArray.
     }.
 
   Lemma empty_nodefault : NoDefault (Raw.empty key elt).
+  Proof.
     unfold NoDefault.
     intros.
     apply Raw.empty_1.
@@ -1141,6 +1144,7 @@ Section FArray.
   Definition eq m m' := eq_list m.(this) m'.(this).
 
   Lemma nodefault_tail : forall x m, NoDefault (x :: m) -> NoDefault m.
+  Proof.
     unfold NoDefault. unfold not in *. intros.
     apply (H k). unfold Raw.MapsTo. apply InA_cons_tl. apply H0.
   Qed.
@@ -1459,6 +1463,7 @@ Section FArray.
   Qed.
 
   Lemma add_d_rem : forall m x, add x default_value m = remove x m.
+  Proof.
     intros.
     unfold add, remove.
     specialize (raw_add_d_rem m.(sorted) x). intro.
@@ -1656,6 +1661,7 @@ Section FArray.
  Qed.
 
   Lemma notequal_neq : forall a b, equal a b = false -> a <> b.
+  Proof.
     intros.
     red. intros.
     apply not_true_iff_false in H.
@@ -1820,6 +1826,7 @@ Section FArray.
 
 
     Example d : forall a b (u:a <> b), let i := diff_index u in select a i <> select b i.
+    Proof.
       unfold diff_index.
       intros.
       destruct (diff_index_p u). simpl. auto.

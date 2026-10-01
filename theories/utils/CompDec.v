@@ -140,6 +140,7 @@ Global Instance inh_of_compdec {t} `{c: CompDec t} : (Inhabited t) :=
   let (_, _, _, _, inh) := c in inh.
 
 Global Instance comp_of_compdec {t} `{c: CompDec t} : @Comparable t (ord_of_compdec (t:=t)).
+Proof.
   destruct c; trivial.
 Defined.
 

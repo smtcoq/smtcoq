@@ -2008,6 +2008,7 @@ Qed.
             check_args get_type l targs && Typ.eqb tr T) = false) ->
         (let (tf, f0) := f in
           apply_func (fst tf) (snd tf) f0 (List.map interp_hatom l)) = bvtrue.
+      Proof.
         induction l as [ |h l IHl]; simpl; intros [tf f]; simpl.
         (* Base case *)
         destruct tf as [[ | ] tr]; simpl; auto; intro H; generalize (H tr); rewrite Typ.eqb_refl; discriminate.

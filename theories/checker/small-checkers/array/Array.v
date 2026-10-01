@@ -906,6 +906,7 @@ Section certif.
     Qed.
 
   Lemma valid_check_ext lres : C.valid rho (check_ext lres).
+  Proof.
     unfold check_ext, eq_sel_sym.
     case_eq (Lit.is_pos lres); intro Heq; simpl; try now apply C.interp_true.
     case_eq (t_form .[ Lit.blit lres]); try (intros; now apply C.interp_true).

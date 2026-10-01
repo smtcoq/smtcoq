@@ -109,6 +109,6 @@ let main_failure lexbuf msg =
 module ConstrHash = struct
   type t = RocqInterface.constr
   let equal = RocqInterface.eq_constr
-  let hash = RocqInterface.hash_constr
+  let hash = RocqVersionCompat.hash_constr
 end
 module ConstrHashtbl = Hashtbl.Make(ConstrHash)
