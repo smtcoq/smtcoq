@@ -1,3 +1,6 @@
+pin-depends: [
+  ["rocq-trakt.dev" "git+https://github.com/rocq-trakt/trakt"]
+]
 messages: "
   ======================================================================
   Thanks for installing SMTCoq !

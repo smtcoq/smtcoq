@@ -2,4 +2,4 @@
  (generate_project_file)
  (package rocq-smtcoq)
  (name SMTCoq.utils)
- (theories Stdlib))
+ (theories Stdlib Ltac2))

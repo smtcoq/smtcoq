@@ -55,6 +55,9 @@ build: [
 ]
 dev-repo: "git+https://github.com/smtcoq/smtcoq.git"
 x-maintenance-intent: ["(latest)"]
+pin-depends: [
+  ["rocq-trakt.dev" "git+https://github.com/rocq-trakt/trakt"]
+]
 messages: "
   ======================================================================
   Thanks for installing SMTCoq !

@@ -70,11 +70,10 @@ Module Map := FMapAVL.Make(IntOrderedType).
 
 (* An array is represented as a tuple of a finite map, the default
    element, and the length *)
-Universe parray.
-Definition array (A: Type@{parray}) : Type@{parray} :=
+Definition array (A:Type) : Type :=
   (Map.t A * A * int)%type.
 
-Definition make {A:Type@{parray}} (l:int) (d:A) : array A := (Map.empty A, d, l).
+Definition make {A:Type} (l:int) (d:A) : array A := (Map.empty A, d, l).
 
 Definition get {A:Type} (t:array A) (i:int) : A :=
   let (td, l) := t in
@@ -117,6 +116,7 @@ From Stdlib Require FSets.FMapFacts.
 Module P := FSets.FMapFacts.WProperties_fun IntOrderedType Map.
 
 Lemma get_outofbound : forall A (t:array A) i, (i <? length t) = false -> t.[i] = default t.
+Proof.
 intros A t i; unfold get.
 destruct t as ((t, d), l).
 unfold length; intro Hi; rewrite Hi; clear Hi.
@@ -124,6 +124,7 @@ reflexivity.
 Qed.
 
 Lemma get_set_same : forall A t i (a:A), (i <? length t) = true -> t.[i<-a].[i] = a.
+Proof.
 intros A t i a.
 destruct t as ((t, d), l).
 unfold set, get, length.
@@ -141,6 +142,7 @@ reflexivity.
 Qed.
 
 Lemma get_set_other : forall A t i j (a:A), i <> j -> t.[i<-a].[j] = t.[j].
+Proof.
 intros A t i j a Hij.
 destruct t as ((t, d), l).
 unfold set, get, length.
@@ -154,6 +156,7 @@ assumption.
 Qed.
 
 Lemma default_set : forall A t i (a:A), default (t.[i<-a]) = default t.
+Proof.
 intros A t i a.
 destruct t as ((t, d), l).
 unfold default, set.
@@ -161,6 +164,7 @@ case (l <=? i); reflexivity.
 Qed.
 
 Lemma get_make : forall A (a:A) size i, (make size a).[i] = a.
+Proof.
 intros A a size i.
 unfold make, get.
 rewrite P.F.empty_o.
@@ -168,6 +172,7 @@ case (i <? size); reflexivity.
 Qed.
 
 Lemma leb_length : forall A (t:array A), (length t <=? max_length) = true.
+Proof.
 intros A t.
 generalize (length t); clear t.
 intro i.
@@ -179,6 +184,7 @@ Qed.
 
 Lemma length_make : forall A size (a:A),
   length (make size a) = if size <=? max_length then size else max_length.
+Proof.
 intros A size a.
 unfold length, make.
 replace (size <=? max_length) with true.
@@ -192,6 +198,7 @@ Qed.
 
 Lemma length_set : forall A t i (a:A),
   length (t.[i<-a]) = length t.
+Proof.
 intros A t i a.
 destruct t as ((t, d), l).
 unfold length, set.
@@ -199,11 +206,13 @@ case (l <=? i); reflexivity.
 Qed.
 
 Lemma get_copy : forall A (t:array A) i, (copy t).[i] = t.[i].
+Proof.
 intros A t i.
 unfold copy; reflexivity.
 Qed.
 
 Lemma length_copy : forall A (t:array A), length (copy t) = length t.
+Proof.
 intros A t.
 unfold copy; reflexivity.
 Qed.
@@ -220,14 +229,17 @@ Axiom array_ext : forall A (t1 t2:array A),
 (* Lemmas *)
 
 Lemma default_copy A (t:array A) : default (copy t) = default t.
+Proof.
 unfold copy; reflexivity.
 Qed.
 
 Lemma default_make A (a : A) size : default (make size a) = a.
+Proof.
 unfold default, make; reflexivity.
 Qed.
 
 Lemma get_set_same_default A (t : array A) (i : int) : t.[i <- default t].[i] = default t.
+Proof.
 unfold default, get, set.
 destruct t as ((t, d), l).
 case_eq (i <? l).
@@ -254,6 +266,7 @@ Qed.
 
 Lemma get_not_default_lt A (t:array A) x :
  t.[x] <> default t -> (x <? length t) = true.
+Proof.
 unfold get, default, length.
 destruct t as ((t, d), l).
 case (x <? l); tauto.

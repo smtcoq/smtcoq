@@ -10,4 +10,6 @@
 (rule
  (targets rocqVersionCompat.ml)
  (action
-  (copy rocqVersionCompat-%{rocq:version.major}.%{rocq:version.minor}.ml rocqVersionCompat.ml)))
+  (copy
+   rocqVersionCompat-%{rocq:version.major}.%{rocq:version.minor}.ml
+   rocqVersionCompat.ml)))

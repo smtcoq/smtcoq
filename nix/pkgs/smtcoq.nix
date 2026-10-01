@@ -46,8 +46,23 @@ mkRocqDerivation rec {
   ] null;
 
   release."dev" = {
-    src = lib.cleanSource ../..;
-    hash = "";
+    hash = null;
+    src = lib.cleanSourceWith {
+      src = ../..;
+
+      filter =
+        path: type:
+        let
+          name = baseNameOf path;
+        in
+        type == "directory"
+        || name == "dune"
+        || name == "dune.inc"
+        || name == "dune-project"
+        || builtins.match ".*\\.(v|elpi)$" name != null
+        || builtins.match ".*\\.(ml|mli|mll|mly|mlg|mlpack)$" name != null
+        || builtins.match ".*\\.(cnf|lfsc|smt2|sh|plf|vtlog|zlog)$" name != null;
+    };
   };
 
   propagatedBuildInputs = [

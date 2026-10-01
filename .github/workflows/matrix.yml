@@ -1,9 +1,7 @@
-name: Build SMTCoq against supported released versions
+name: Build SMTCoq
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
+  pull_request_target:
     branches: [ main ]
 
 concurrency:
@@ -11,20 +9,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  matrix:
+  build:
+    name: ${{ matrix.name }}
+    secrets:
+      ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
+      ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
+      ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: SMTCoq
+            repository: .
+            override-input: self
+          - name: Sniper
+            repository: github:SMTCoq/Sniper
+            override-input: SMTCoq
+
+    uses: lafeychine/rocq-utils/.github/workflows/matrix-template.yml@main
+    with:
+      repository: ${{ matrix.repository }}
+      override-input: ${{ matrix.override-input }}
+      use-attic: true
+      # NOTE: This is acceptable, these secrets are used for read/write access to the CI cache.
+      allow-unsafe-pr-checkout: true
+
+  build-success:
+    if: ${{ always() }}
+    needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v7
-      - uses: nixbuild/nix-quick-install-action@v35
-
-      - uses: ryanccn/attic-action@v0
-        with:
-          cache: smtcoq
-          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          token: ${{ secrets.ATTIC_TOKEN }}
-
-      - name: Build the current version in nixpkgs
-        run: nix build .#smtcoq --print-build-logs
-
-      - name: Build the whole matrix of supported released versions
-        run: nix flake check --print-build-logs
+      - name: Has the matrix failed?
+        if: ${{ needs.build.result != 'success' }}
+        run: exit 1

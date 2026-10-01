@@ -40,8 +40,8 @@ Section Checker.
   Variable t_atom : PArray.array atom.
   Variable t_form : PArray.array form.
 
-  Local Abbreviation get_form := (PArray.get t_form) (only parsing).
-  Local Abbreviation get_atom := (PArray.get t_atom) (only parsing).
+  Local Notation get_form := (PArray.get t_form) (only parsing).
+  Local Notation get_atom := (PArray.get t_atom) (only parsing).
 
   (** * Bit-blasting a constant bitvector:
 
@@ -1012,16 +1012,16 @@ Definition shr_lit_be (a: list _lit) (b: list bool): list _lit :=
               (ch_form : Form.check_form t_form)
               (wt_t_atom : Atom.wt t_i t_func t_atom).
 
-    Local Abbreviation check_atom :=
+    Local Notation check_atom :=
       (check_aux t_i t_func (get_type t_i t_func t_atom)).
 
-    Local Abbreviation interp_form_hatom :=
+    Local Notation interp_form_hatom :=
       (Atom.interp_form_hatom t_i t_func t_atom).
 
-    Local Abbreviation interp_form_hatom_bv :=
+    Local Notation interp_form_hatom_bv :=
       (Atom.interp_form_hatom_bv t_i t_func t_atom).
 
-    Local Abbreviation rho :=
+    Local Notation rho :=
       (Form.interp_state_var interp_form_hatom interp_form_hatom_bv t_form).
 
   Fixpoint interp_carry (c: carry) : bool :=
@@ -1035,9 +1035,9 @@ Definition shr_lit_be (a: list _lit) (b: list bool): list _lit :=
 
     Hypothesis Hs : S.valid rho s.
 
-    Local Abbreviation t_interp := (t_interp t_i t_func t_atom).
+    Local Notation t_interp := (t_interp t_i t_func t_atom).
 
-    Local Abbreviation interp_atom :=
+    Local Notation interp_atom :=
       (interp_aux t_i t_func (get t_interp)).
 
     Let wf_t_atom : Atom.wf t_atom.
@@ -1082,7 +1082,7 @@ Definition shr_lit_be (a: list _lit) (b: list bool): list _lit :=
 
       Hypothesis wf_t_i : wf.
       Variable interp_bvatom : atom -> forall s, BITVECTOR_LIST.bitvector s.
-      Abbreviation atom := int (only parsing).
+      Notation atom := int (only parsing).
 
 Lemma id'' a : N.of_nat (N.to_nat a) = a.
 Proof.

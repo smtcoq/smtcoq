@@ -25,10 +25,11 @@ val string_of_name : name -> string
 type constr = Constr.t
 type types = constr
 val eq_constr : constr -> constr -> bool
-val hash_constr : constr -> int
 val mkProp : types
 val mkConst : Names.Constant.t -> constr
 val mkVar : id -> constr
+val isVar : constr -> bool
+val destVar : constr -> id
 val mkRel : int -> constr
 val isRel : constr -> bool
 val destRel : constr -> int
