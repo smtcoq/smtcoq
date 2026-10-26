@@ -56,13 +56,16 @@ mkRocqDerivation rec {
         let
           name = baseNameOf path;
         in
-        type == "directory"
-        || name == "dune"
-        || name == "dune.inc"
-        || name == "dune-project"
-        || builtins.match ".*\\.(v|elpi)$" name != null
-        || builtins.match ".*\\.(ml|mli|mll|mly|mlg|mlpack)$" name != null
-        || builtins.match ".*\\.(cnf|lfsc|smt2|sh|plf|vtlog|zlog)$" name != null;
+        (lib.cleanSourceFilter path type && name != "_build")
+        && (
+          type == "directory"
+          || name == "dune"
+          || name == "dune.inc"
+          || name == "dune-project"
+          || builtins.match ".*\\.(v|elpi)$" name != null
+          || builtins.match ".*\\.(ml|mli|mll|mly|mlg|mlpack)$" name != null
+          || builtins.match ".*\\.(cnf|lfsc|smt2|sh|plf|vtlog|zlog)$" name != null
+        );
     };
   };
 
