@@ -92,11 +92,11 @@
         "rocq-utils": "rocq-utils"
       },
       "locked": {
-        "lastModified": 1793005398,
-        "narHash": "sha256-o4UmRJ3USzpWcT2JO4R6fKWkSb9wgDNmtxL6OyC02nA=",
+        "lastModified": 1793031196,
+        "narHash": "sha256-jNfi86VM0F/65vTycQr/Gm8i2pKt7EYIYGhvnidKRRo=",
         "owner": "rocq-trakt",
         "repo": "trakt",
-        "rev": "c906278660efaa4e82d45c7e8ffe92ed38e1f0c0",
+        "rev": "8c3b58b514888e3d9c680f513b5864b4e5aab950",
         "type": "github"
       },
       "original": {
