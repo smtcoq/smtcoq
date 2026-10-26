@@ -20,12 +20,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1779971959,
-        "narHash": "sha256-R5nauXyqyfRUFiZycFFZdkF7wl6eaUpPLst35+2nJQY=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ec942ba042dad5ef097e2ef3a3effc034241f011",
-        "type": "github"
+        "lastModified": 1792615934,
+        "narHash": "sha256-q1ku4ygV7tdmv5Q9QYwhVDsNMZRJcRYjVczoX5+XWBo=",
+        "rev": "da6dc0e7b26060f2f71ce3ef7088fb56ee44fa36",
+        "type": "tarball",
+        "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.12400.da6dc0e7b260/nixexprs.tar.zst"
       },
       "original": {
         "id": "nixpkgs",
@@ -93,11 +92,11 @@
         "rocq-utils": "rocq-utils"
       },
       "locked": {
-        "lastModified": 1788946368,
-        "narHash": "sha256-VSnyWWU568iaosQQJz6WFwys99LLF4wqNZAI6RGKTYE=",
+        "lastModified": 1793005398,
+        "narHash": "sha256-o4UmRJ3USzpWcT2JO4R6fKWkSb9wgDNmtxL6OyC02nA=",
         "owner": "rocq-trakt",
         "repo": "trakt",
-        "rev": "dcbfe6c85b3e39ae273f8f5a0fd2653366e76f53",
+        "rev": "c906278660efaa4e82d45c7e8ffe92ed38e1f0c0",
         "type": "github"
       },
       "original": {
