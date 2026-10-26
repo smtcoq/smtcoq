@@ -5,6 +5,7 @@
   stdenv,
 
   # Dependencies
+  git,
   cvc4,
   cvc5,
   flock,
@@ -65,6 +66,7 @@ mkRocqDerivation rec {
     };
   };
 
+  nativeBuildInputs = [ git ];
   propagatedBuildInputs = [
     cvc4
     cvc5
