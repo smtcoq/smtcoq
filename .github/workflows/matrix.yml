@@ -12,9 +12,9 @@ jobs:
   build:
     name: ${{ matrix.name }}
     secrets:
-      ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
-      ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
-      ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+      CELLER_ENDPOINT: ${{ secrets.CELLER_ENDPOINT }}
+      CELLER_CACHE: ${{ secrets.CELLER_CACHE }}
+      CELLER_TOKEN: ${{ secrets.CELLER_TOKEN }}
 
     strategy:
       fail-fast: false
@@ -31,9 +31,6 @@ jobs:
     with:
       repository: ${{ matrix.repository }}
       override-input: ${{ matrix.override-input }}
-      use-attic: true
-      # NOTE: This is acceptable, these secrets are used for read/write access to the CI cache.
-      allow-unsafe-pr-checkout: true
 
   build-success:
     if: ${{ always() }}

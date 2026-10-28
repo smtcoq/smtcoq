@@ -34,7 +34,10 @@ jobs:
           repository: ${{ matrix.owner}}/${{ matrix.name }}
           token: ${{ steps.nix-updater.outputs.token }}
 
-      - uses: nixbuild/nix-quick-install-action@v35
+      - uses: NixOS/nix-installer-action@v1
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
 
       - name: Update Nix
         run: nix flake update ${{ github.event.client_payload.name }}
