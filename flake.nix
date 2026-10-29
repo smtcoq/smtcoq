@@ -66,7 +66,7 @@
           };
 
           checks = pkgs.lib.listToAttrs (
-            map (self.lib.mkSMTCoq pkgs) (self.lib.mkRocqConstraints pkgs.rocqPackages "smtcoq")
+            map (self.lib.mkSMTCoq pkgs) (self.lib.mkRocqConstraints pkgs "smtcoq")
           );
         };
     };
