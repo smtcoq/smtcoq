@@ -43,7 +43,7 @@ mkRocqDerivation rec {
   useDune = true;
 
   defaultVersion = lib.switch rocq-core.rocq-version [
-    (case (lib.versions.range "9.0" "9.2") "dev")
+    (case (lib.versions.isGt "9.0") "dev")
   ] null;
 
   release."dev" = {
@@ -69,7 +69,6 @@ mkRocqDerivation rec {
     };
   };
 
-  nativeBuildInputs = [ git ];
   propagatedBuildInputs = [
     cvc4
     cvc5
